@@ -1,0 +1,49 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+<h1 class="title">Games</h1>
+
+<div class="columns">
+    <div class="column is-one-fifth">
+        SIDEBAR
+    </div>
+    <div class="column">
+        {% if is_filtered %}
+        <a class="is-pulled-right" href="{% url 'game-list' %}">Clear</a>
+        {% endif %}
+
+        <form action=".">
+            <div class="select">
+                <select name="year" onchange="form.submit()">
+                    {% for year in years %}
+                        <option>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>All Time</th>
+                    <th>Name</th>
+                    <th>Year of Release</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in game_list %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ game.rank }}</td>
+                    <td>{{ game.name }}</td>
+                    <td>
+                        <a href="?year={{ game.year_of_release }}">{{ game.year_of_release }}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
