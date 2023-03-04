@@ -1,13 +1,14 @@
 
 from pathlib import Path
 
-ALLOWED_HOSTS = []
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 DEBUG = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'en-us'
 ROOT_URLCONF = 'gamesranking.urls'
 SECRET_KEY = 'django-insecure-1z!z3&19q6!xbdn#1$_h8+by0-*rima#3%ga&bbb^^l3p&y@!!'
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = 'static/'
 TIME_ZONE = 'UTC'
 USE_I18N = False
@@ -38,6 +39,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+     "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 TEMPLATES = [
@@ -81,3 +83,9 @@ AUTH_PASSWORD_VALIDATORS = [
 INTERNAL_IPS = [
     '127.0.0.1',
 ]
+
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'gamesranking.herokuapp.com',
+]
+
