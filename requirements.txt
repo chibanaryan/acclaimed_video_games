@@ -1,3 +1,4 @@
 django
 django-extensions
 ipython
+django-debug-toolbar

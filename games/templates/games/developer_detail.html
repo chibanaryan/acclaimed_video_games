@@ -1,0 +1,28 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+    <h1 class="title">{{ developer }}</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Game</th>
+                <th>Rank</th>
+                <th>Year of Release</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for game in developer.games.all %}
+            <tr>
+                <td> 
+                    <a href="{% url 'game-detail' game.pk %}">
+                        {{ game.name }}
+                    </a>
+                </td>
+                <td>{{ game.rank }}</td>
+                <td>{{ game.year_of_release }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

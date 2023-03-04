@@ -1,0 +1,43 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+    <h1 class="title">{{ game }}</h1>
+
+    <div class="block">
+        <dl class="detail">
+            <dt>Developer:</dt>
+            <dd>
+                {% if game.developer %}
+                    <a href="{% url 'developer-detail' game.developer.pk %}">
+                        {{ game.developer }}
+                    </a>
+                {% endif %}
+            </dd>
+        </dl>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>List</th>
+                <th>Rank</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for list in game.lists.all %}
+                <tr>
+                    <td>
+                        {% if list.list.url %}
+                            <a href="{{ list.list.url }}" target="_blank">
+                                {{ list.list }}
+                            </a>
+                        {% else %}
+                            {{ list.list }}
+                        {% endif %}
+                    </td>
+                    <td>{{ list.rank }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

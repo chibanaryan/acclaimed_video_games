@@ -11,3 +11,13 @@ class DeveloperAdmin(admin.ModelAdmin):
 class GameAdmin(admin.ModelAdmin):
     list_display = ['name', 'rank', 'developer', 'year_of_release']
     list_filter = ['year_of_release']
+    search_fields = ['name']
+
+@admin.register(models.List)
+class ListAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.ListMembership)
+class ListMembershipAdmin(admin.ModelAdmin):
+    pass

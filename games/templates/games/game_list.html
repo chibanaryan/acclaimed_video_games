@@ -3,31 +3,49 @@
 {% block content %}
 <h1 class="title">Games</h1>
 
-<div class="columns">
-    <div class="column is-one-fifth">
-        SIDEBAR
-    </div>
-    <div class="column">
+
         {% if is_filtered %}
-        <a class="is-pulled-right" href="{% url 'game-list' %}">Clear</a>
+        <a class="is-pulled-right" href="{% url 'index' %}">Clear</a>
         {% endif %}
 
         <form action=".">
             <div class="select">
                 <select name="year" onchange="form.submit()">
+                    <option selected value="">All years</option>
                     {% for year in years %}
-                        <option>{{ year }}</option>
+                        <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="select">
+                <select name="decade" onchange="form.submit()">
+                    <option selected value="">All decades</option>
+                    {% for decade in decades %}
+                        <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="select">
+                <select name="developer" onchange="form.submit()">
+                    <option selected value="">All developers</option>
+                    {% for id, name in developers %}
+                        <option {% if id == selected_developer %}selected{% endif %} value="{{ id }}">{{ name }}</option>
                     {% endfor %}
                 </select>
             </div>
         </form>
 
-        <table class="table">
+        <table class="table is-fullwidth">
             <thead>
                 <tr>
                     <th>Rank</th>
+                    {% if is_filtered %}
                     <th>All Time</th>
+                    {% endif %}
                     <th>Name</th>
+                    <th>Developer</th>
                     <th>Year of Release</th>
                 </tr>
             </thead>
@@ -35,8 +53,21 @@
                 {% for game in game_list %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
+                    {% if is_filtered %}
                     <td>{{ game.rank }}</td>
-                    <td>{{ game.name }}</td>
+                    {% endif %}
+                    <td>
+                        <a href="{% url 'game-detail' game.pk %}">
+                            {{ game.name }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if game.developer %}
+                            <a href="{% url 'developer-detail' game.developer.pk %}">
+                                {{ game.developer }}
+                            </a>
+                        {% endif %}
+                    </td>
                     <td>
                         <a href="?year={{ game.year_of_release }}">{{ game.year_of_release }}</a>
                     </td>
@@ -44,6 +75,20 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-</div>
+
+        <nav class="pagination is-rounded">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a class="pagination-previous" href="?page=1">1</a>
+                    <a class="pagination-previous" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                {% endif %}
+        
+                {% if page_obj.has_next %}
+                    <a class="pagination-next" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    <a class="pagination-next" href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a>
+                {% endif %}
+            </span>
+        </nav>
+
+
 {% endblock %}
