@@ -6,38 +6,44 @@
     <title>Games Rankings</title>
     <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'games/style.css' %}">
-
 </head>
 
 <body>
-    <div class="container">
-
-        <nav class="navbar" role="navigation" aria-label="main navigation">
-            <div class="navbar-brand">
-                <a class="navbar-item" href="{% url 'index' %}">
-                    Home
-                </a>
-
-                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false"
-                    data-target="navbarBasicExample">
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                </a>
-            </div>
-
-            <div id="navbarBasicExample" class="navbar-menu">
-                <div class="navbar-start">
-                    <a class="navbar-item">
-                        First
+    <header>
+        <div class="container">
+            <nav class="navbar" role="navigation" aria-label="main navigation">
+                <div class="navbar-brand">
+                    <a class="navbar-item" href="{% url 'index' %}">
+                        Home
                     </a>
                 </div>
-            </div>
-        </nav>
+                <div class="navbar-menu">
+                    <div class="navbar-start">
+                        <a class="navbar-item" href="{% url 'index' %}">
+                            Games
+                        </a>
+                        <a class="navbar-item" href="{% url 'developer-list' %}">
+                            Developers
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
 
-        {% block content %}
-        {% endblock %}
-    </div>
+    <section class="container">     
+        <div id="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            This is the footer
+        </div>
+    </footer>
+
 </body>
 
 </html>

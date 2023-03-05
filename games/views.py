@@ -1,7 +1,9 @@
+import string
 from dataclasses import dataclass
 from datetime import datetime
 
-from django.db.models import Min
+from django.db.models import Count, Min, Value, Avg, CharField
+from django.db.models.functions import Concat, Left, Cast
 from django.views.generic import DetailView, ListView
 
 from . import models
@@ -15,20 +17,28 @@ class Filter:
 
 
 class GameListView(ListView):
-    paginate_by = 25
+    paginate_by = 50
 
     filters = [
         Filter(param='year', field='year_of_release', coerce=int),
         Filter(param='developer', field='developer_id', coerce=int),
-        Filter(param='decade', field='year_of_release__gte', coerce=int),
+        Filter(param='decade', field='decade', coerce=str),
+        Filter(param='letter', field='first_letter__iexact', coerce=str)
     ]
 
     def get_queryset(self):
-        qs = models.Game.objects.all()
+        qs = models.Game.objects.select_related(
+            'developer',
+        ).annotate(
+            decade=Concat(
+                Left(Cast('year_of_release', output_field=CharField()), 3), Value('0')),
+            first_letter=Left('name', 1),
+        )
 
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)
             if param_val:
+                param_val = filter.coerce(param_val)
                 qs = qs.filter(**{filter.field: param_val})
 
         return qs
@@ -41,13 +51,23 @@ class GameListView(ListView):
         )['min_year']
         max_year = datetime.today().year
         all_years = range(min_year, max_year)
-        decades = sorted(list(set(int(x / 10) * 10 for x in all_years)))
+        decades = sorted(list(set(str(int(x / 10) * 10) for x in all_years)))
 
         context['developers'] = models.Developer.objects.values_list(
             'id', 'name')
         context['years'] = all_years
         context['is_filtered'] = self.request.GET
         context['decades'] = decades
+        context['letters'] = list(string.ascii_uppercase)
+
+        page_obj = context['page_obj']
+        offset = (page_obj.number - 1) * page_obj.paginator.per_page + 1
+        limit = page_obj.paginator.per_page - 1
+        total = page_obj.paginator.count
+
+        context['total'] = total
+        context['offset'] = offset
+        context['limit'] = min((total, limit + offset))
 
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)
@@ -63,3 +83,16 @@ class GameDetailView(DetailView):
 
 class DeveloperDetailView(DetailView):
     model = models.Developer
+
+
+class DeveloperListView(ListView):
+
+    def get_queryset(self):
+        qs = models.Developer.objects.annotate(
+            games_count=Count('games'),
+            games_rank_avg=Avg('games__rank'),
+        ).order_by(
+            'games_rank_avg',
+        )
+
+        return qs

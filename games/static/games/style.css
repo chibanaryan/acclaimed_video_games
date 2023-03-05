@@ -1,3 +1,19 @@
+footer {
+    height: 5em;
+    background-color: #444;
+    margin-top: 2em;
+    padding-top: 2em;
+}
+
 dl.detail dt {
     font-weight: bold;
+}
+
+header {
+    border-bottom: 2px solid;
+    margin-bottom: 1em;
+}
+
+#content {
+    min-height: 1024px;
 }

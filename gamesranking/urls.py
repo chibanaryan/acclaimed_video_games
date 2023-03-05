@@ -3,14 +3,16 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from games.views import GameDetailView, GameListView, DeveloperDetailView
+from games.views import GameDetailView, GameListView, DeveloperDetailView, DeveloperListView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('', GameListView.as_view(), name='index'),
+    path('developers/', DeveloperListView.as_view(), name='developer-list'),
     path('games/<int:pk>/', GameDetailView.as_view(), name='game-detail'),
-    path('developers/<int:pk>/', DeveloperDetailView.as_view(), name='developer-detail'),
+    path('developers/<int:pk>/', DeveloperDetailView.as_view(),
+         name='developer-detail'),
 
     path('__debug__/', include('debug_toolbar.urls')),
 

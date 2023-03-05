@@ -1,0 +1,31 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+    <h1 class="title">Developers</h1>
+    <table class="table is-fullwidth">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Games</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for developer in developer_list %}
+                <tr>
+                    <td>{{ developer.games_rank_avg }}</td>
+                    <td>
+                        <a href="{% url 'index' %}?developer={{ developer.pk }}">
+                            {{ developer.games_count }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'developer-detail' developer.pk %}">
+                            {{ developer.name }}
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

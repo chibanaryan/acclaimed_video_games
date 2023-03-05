@@ -2,12 +2,11 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 DEBUG = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'en-us'
 ROOT_URLCONF = 'gamesranking.urls'
-SECRET_KEY = 'django-insecure-1z!z3&19q6!xbdn#1$_h8+by0-*rima#3%ga&bbb^^l3p&y@!!'
+SECRET_KEY = 'f-)nfhk38jyp91-8)j3!ncq-v5g45obw9_ytrmjkvck0#$alr9'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = 'static/'
 TIME_ZONE = 'UTC'
@@ -24,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'django_extensions',
-    'debug_toolbar',
+    #'debug_toolbar',
 
     'games',
 ]
@@ -38,8 +37,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
-     "whitenoise.middleware.WhiteNoiseMiddleware",
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 TEMPLATES = [
@@ -87,5 +86,5 @@ INTERNAL_IPS = [
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'gamesranking.herokuapp.com',
+    'sean2000.pythonanywhere.com',
 ]
-
