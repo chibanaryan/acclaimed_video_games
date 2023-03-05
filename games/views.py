@@ -1,11 +1,11 @@
 import string
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Callable
 
 from django.db.models import Count, Min, Value, Avg, CharField
 from django.db.models.functions import Concat, Left, Cast
 from django.views.generic import DetailView, ListView
-
 from . import models
 
 
@@ -14,16 +14,21 @@ class Filter:
     param: str
     field: str
     coerce: type = str
+    label: Callable[[str], str] = lambda x: x
 
 
 class GameListView(ListView):
+    """
+    Game list page
+    """
     paginate_by = 50
 
     filters = [
         Filter(param='year', field='year_of_release', coerce=int),
-        Filter(param='developer', field='developer_id', coerce=int),
-        Filter(param='decade', field='decade', coerce=str),
-        Filter(param='letter', field='first_letter__iexact', coerce=str)
+        Filter(param='decade', field='decade',
+               coerce=str, label=lambda x: f'{x}s'),
+        Filter(param='letter', field='first_letter__iexact',
+               coerce=str, label=lambda x: f'Letter {x}')
     ]
 
     def get_queryset(self):
@@ -56,7 +61,6 @@ class GameListView(ListView):
         context['developers'] = models.Developer.objects.values_list(
             'id', 'name')
         context['years'] = all_years
-        context['is_filtered'] = self.request.GET
         context['decades'] = decades
         context['letters'] = list(string.ascii_uppercase)
 
@@ -69,24 +73,40 @@ class GameListView(ListView):
         context['offset'] = offset
         context['limit'] = min((total, limit + offset))
 
+        filter_labels = []
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)
             if param_val:
                 context['selected_' + filter.param] = filter.coerce(param_val)
+                filter_labels.append(filter.label(param_val))
+
+        context['filter_label'] = ','.join(filter_labels)
+
+        args = self.request.GET.copy()
+        args.pop('page', None)
+        context['is_filtered'] = args
 
         return context
 
 
 class GameDetailView(DetailView):
+    """
+    Game detail page
+    """
     model = models.Game
 
 
 class DeveloperDetailView(DetailView):
+    """
+    Developer detail page
+    """
     model = models.Developer
 
 
 class DeveloperListView(ListView):
-
+    """
+    Developer list page
+    """
     def get_queryset(self):
         qs = models.Developer.objects.annotate(
             games_count=Count('games'),
