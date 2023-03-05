@@ -6,7 +6,6 @@ from django.urls import include, path
 from games.views import GameDetailView, GameListView, DeveloperDetailView, DeveloperListView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
 
     path('', GameListView.as_view(), name='index'),
     path('developers/', DeveloperListView.as_view(), name='developer-list'),
@@ -14,6 +13,8 @@ urlpatterns = [
     path('developers/<int:pk>/', DeveloperDetailView.as_view(),
          name='developer-detail'),
 
+    path('admin/', admin.site.urls),
+    path('pages/', include('django.contrib.flatpages.urls')),
     path('__debug__/', include('debug_toolbar.urls')),
 
 ]

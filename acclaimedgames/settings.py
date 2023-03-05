@@ -5,14 +5,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'en-us'
-ROOT_URLCONF = 'gamesranking.urls'
+ROOT_URLCONF = 'acclaimedgames.urls'
 SECRET_KEY = 'f-)nfhk38jyp91-8)j3!ncq-v5g45obw9_ytrmjkvck0#$alr9'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = 'static/'
 TIME_ZONE = 'UTC'
 USE_I18N = False
 USE_TZ = False
-WSGI_APPLICATION = 'gamesranking.wsgi.application'
+WSGI_APPLICATION = 'acclaimedgames.wsgi.application'
+SITE_ID = 1
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -21,6 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.flatpages',
+    'django.contrib.sites',
 
     'django_extensions',
     #'debug_toolbar',
@@ -36,8 +39,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
+    #'debug_toolbar.middleware.DebugToolbarMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
@@ -85,6 +88,5 @@ INTERNAL_IPS = [
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
-    'gamesranking.herokuapp.com',
     'sean2000.pythonanywhere.com',
 ]

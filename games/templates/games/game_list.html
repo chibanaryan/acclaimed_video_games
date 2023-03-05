@@ -23,14 +23,14 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="select">
+        <!-- <div class="select">
             <select name="developer" onchange="form.submit()">
                 <option selected value="">All developers</option>
                 {% for id, name in developers %}
                     <option {% if id == selected_developer %}selected{% endif %} value="{{ id }}">{{ name }}</option>
                 {% endfor %}
             </select>
-        </div>
+        </div> -->
         {% if is_filtered %}
             <a class="button" href="{% url 'index' %}">
                 Clear

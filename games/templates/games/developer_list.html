@@ -5,24 +5,20 @@
     <table class="table is-fullwidth">
         <thead>
             <tr>
-                <th>Rank</th>
-                <th>Games</th>
                 <th>Name</th>
+                <th># Games</th>
             </tr>
         </thead>
         <tbody>
             {% for developer in developer_list %}
                 <tr>
-                    <td>{{ developer.games_rank_avg }}</td>
-                    <td>
-                        <a href="{% url 'index' %}?developer={{ developer.pk }}">
-                            {{ developer.games_count }}
-                        </a>
-                    </td>
                     <td>
                         <a href="{% url 'developer-detail' developer.pk %}">
                             {{ developer.name }}
                         </a>
+                    </td>
+                    <td>
+                        {{ developer.games_count }}
                     </td>
                 </tr>
             {% endfor %}

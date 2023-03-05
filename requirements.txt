@@ -4,5 +4,6 @@ django-environ
 django-extensions
 gunicorn
 ipython
+markdown
 psycopg2
 whitenoise
