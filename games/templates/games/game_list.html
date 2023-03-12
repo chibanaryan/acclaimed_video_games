@@ -1,19 +1,20 @@
 {% extends 'games/base.html' %}
 
 {% block extrahead %} 
-<style>
-    form {
-        display: inline;
-        margin-block: 0;
-    }
-</style>
+    <style>
+        form {
+            display: inline;
+            margin-block: 0;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
     <h1 class="title">Games</h1>
     <h2 class="subtitle">{{ offset }} to {{ limit }} of {{ total }} results</h2> 
-    <div class="block">  
-        <form action="." >
+
+    <div class="field is-grouped">  
+        <form action="." class="control" >
             <div class="select">
                 <select name="year" onchange="form.submit()">
                     <option selected value="">All years</option>
@@ -23,8 +24,7 @@
                 </select>
             </div>
         </form>
-
-        <form action="." >
+        <form action="." class="control">
             <div class="select">
                 <select name="decade" onchange="form.submit()">
                     <option selected value="">All decades</option>
@@ -34,38 +34,48 @@
                 </select>
             </div>
         </form>
+        <form action="." class="control">
+            <div class="select">
+                <select name="platform" onchange="form.submit()">
+                    <option selected value="">All platforms</option>
+                    {% for platform in platforms %}
+                        <option {% if platform.code == selected_platform %}selected{% endif %} value="{{ platform.code }}">{{ platform }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+        <form action="." class="control">
+            <div class="control has-icons-left">
+                <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
+                <span class="icon is-small is-left">
+                    <i class="mdi mdi-magnify"></i>
+                  </span>
+            </div>
+        </form>
 
         {% if is_filtered %}
             <a class="button" href="{% url 'index' %}">
-                Clear
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>     
+                &nbsp;&nbsp;Clear
             </a>
         {% endif %}
-    </div>
-
-    <div class="block">
-        {% for letter in letters %}
-            <a class="button is-info {% if letter != selected_letter %} is-light{% endif %} is-small" href="?letter={{ letter }}">{{ letter }}</a>
-        {% endfor %}
     </div>
 
     <table class="table is-fullwidth">
         <thead>
             <tr>
-                {% if is_filtered %}
-                <th>{{ filter_label }} Rank</th>
-                {% endif %}
                 <th>All Time Rank</th>
                 <th>Name</th>
-                <th>Developer</th>
+                <th>Developers</th>
+                <th>Platforms</th>
                 <th>Year of Release</th>
             </tr>
         </thead>
         <tbody>
             {% for game in game_list %}
                 <tr>
-                    {% if is_filtered %}
-                    <td>{{ forloop.counter0|add:offset }}</td>
-                    {% endif %}
                     <td>{{ game.rank }}</td>
                     <td>
                         <a href="{% url 'game-detail' game.pk %}">
@@ -73,11 +83,18 @@
                         </a>
                     </td>
                     <td>
-                        {% if game.developer %}
-                            <a href="{% url 'developer-detail' game.developer.pk %}">
-                                {{ game.developer }}
+                        {% for developer in game.developers.all %}
+                            <a href="{% url 'developer-alias-redirect' developer.pk %}">
+                                {{ developer.name }}
                             </a>
-                        {% endif %}
+                            {% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for platform in game.platforms.all %} 
+                            {{ platform.code }}
+                            {% if not forloop.last %},{% endif %}
+                        {% endfor %}
                     </td>
                     <td>
                         <a href="?year={{ game.year_of_release }}">{{ game.year_of_release }}</a>
@@ -86,7 +103,6 @@
             {% endfor %}
         </tbody>
     </table>
- 
     <nav class="pagination is-centered">
         <ul class="pagination-list">
             <li>

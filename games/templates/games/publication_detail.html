@@ -1,0 +1,46 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+    <h1 class="title is-3">{{ publication }} Lists</h1>
+
+    {% regroup publication.lists.all by get_type_display as grouped %} 
+    {% for group in grouped %} 
+        <h2 class="title is-5">{{ group.grouper }} Lists</h2>
+        <table class="table is-fullwidth">
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for list in group.list %}
+                    <tr>
+                        <td>{{ list.year }}</td>
+                        <td>
+                            <a target="_blank" href="{{ list.url }}">
+                                {{ list }}
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% endfor %}
+
+    <!-- <nav class="pagination is-centered">
+        <ul class="pagination-list">
+            <li>
+                {% if page_obj.has_previous %}
+                    <a class="pagination-previous" href="?page={{ page_obj.previous_page_number }}">&laquo;&nbsp;Previous</a>
+                {% endif %}
+            </li>
+            <li>
+                {% if page_obj.has_next %}
+                    <a class="pagination-next" href="?page={{ page_obj.next_page_number }}">Next&nbsp;&raquo;</a>
+                {% endif %}
+            </li>
+        </ul>
+    </nav> -->
+{% endblock %}

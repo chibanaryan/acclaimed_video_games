@@ -2,26 +2,35 @@
 
 {% block content %}
     <h1 class="title">{{ developer }}</h1>
-
-    <table class="table">
+    <h2 class="subtitle is-4 mt-5">{{ games.count }} Game{{ games.count| pluralize }}</h2>
+    <table class="table is-fullwidth">
         <thead>
             <tr>
-                <th>Game</th>
-                <th>Rank</th>
+                <th>Name</th>
                 <th>Year of Release</th>
+                <th>Rank</th>
+                <th>Developer</th>
             </tr>
         </thead>
         <tbody>
-            {% for game in developer.games.all %}
-            <tr>
-                <td> 
-                    <a href="{% url 'game-detail' game.pk %}">
-                        {{ game.name }}
-                    </a>
-                </td>
-                <td>{{ game.rank }}</td>
-                <td>{{ game.year_of_release }}</td>
-            </tr>
+            {% for game in games %}
+                <tr>
+                    <td> 
+                        <a href="{% url 'game-detail' game.pk %}">
+                            {{ game.name }}
+                        </a>
+                    </td>
+                    <td>{{ game.year_of_release }}</td>
+                    <td>{{ game.rank }}</td>
+                    <td>
+                        {% for developer in game.developers.all %}
+                            <a href="{% url 'developer-alias-redirect' developer.pk %}">
+                                {{ developer.name }}
+                            </a>
+                            {% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>

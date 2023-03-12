@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
 
     'django_extensions',
-    #'debug_toolbar',
+    'debug_toolbar',
 
     'games',
 ]
@@ -34,13 +34,15 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
-    #'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
@@ -90,3 +92,12 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'sean2000.pythonanywhere.com',
 ]
+
+CACHES = {
+    'default': {
+        #'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'LOCATION': '/tmp/django_cache',
+    }
+}
+CACHE_MIDDLEWARE_SECONDS = 60 * 60 * 24

@@ -1,0 +1,40 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+    <a class="button is-pulled-right" href="{% url 'list-list' %}">View all lists</a>
+    <h1 class="title">Source Lists</h1>
+    <table class="table is-fullwidth">
+        <thead>
+            <tr>
+                <th>Publication</th>
+                <th>Lists</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for publication in publication_list %}
+                <tr>
+                    <td>
+                        <a href="{% url 'publication-detail' publication.pk %}">{{ publication }}</a>
+                    </td>
+                    <td>
+                        {{ publication.lists.count }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- <nav class="pagination is-centered">
+        <ul class="pagination-list">
+            <li>
+                {% if page_obj.has_previous %}
+                    <a class="pagination-previous" href="?page={{ page_obj.previous_page_number }}">&laquo;&nbsp;Previous</a>
+                {% endif %}
+            </li>
+            <li>
+                {% if page_obj.has_next %}
+                    <a class="pagination-next" href="?page={{ page_obj.next_page_number }}">Next&nbsp;&raquo;</a>
+                {% endif %}
+            </li>
+        </ul>
+    </nav> -->
+{% endblock %}

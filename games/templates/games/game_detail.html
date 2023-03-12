@@ -2,20 +2,32 @@
 
 {% block content %}
     <h1 class="title">{{ game }}</h1>
-
     <div class="block">
         <dl class="detail">
-            <dt>Developer:</dt>
+            <dt>All time rank:</dt>
+            <dd>{{ game.rank }}</dd>
+            <dt>Developers:</dt>
             <dd>
-                {% if game.developer %}
-                    <a href="{% url 'developer-detail' game.developer.pk %}">
-                        {{ game.developer }}
+                {% for developer in game.developers.all %}
+                    <a href="{% url 'developer-alias-redirect' developer.pk %}">
+                        {{ developer.name }}
                     </a>
-                {% endif %}
+                    {% if not forloop.last %},{% endif %}
+                {% endfor %}
             </dd>
+            <dt>Platforms:</dt>
+            <dd>
+                {% for platform in game.platforms.all %} 
+                    <a href="{% url 'platform-detail' platform.pk %}" title="{{ platform.name }}">
+                        {{ platform.code }}
+                    </a>
+                    {% if not forloop.last %},{% endif %}
+                {% endfor %}
+            </dd>
+            <dt>Year of release:</dt>
+            <dd>{{ game.year_of_release }}</dd>
         </dl>
     </div>
-
     <table class="table">
         <thead>
             <tr>

@@ -1,11 +1,13 @@
-import string
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable
 
-from django.db.models import Count, Min, Value, Avg, CharField
-from django.db.models.functions import Concat, Left, Cast
-from django.views.generic import DetailView, ListView
+from django.db.models import Avg, CharField, Count, Min, Value
+from django.db.models.functions import Cast, Concat, Left
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.views.generic import DetailView, ListView, RedirectView
+
 from . import models
 
 
@@ -27,13 +29,13 @@ class GameListView(ListView):
         Filter(param='year', field='year_of_release', coerce=int),
         Filter(param='decade', field='decade',
                coerce=str, label=lambda x: f'{x}s'),
-        Filter(param='letter', field='first_letter__iexact',
-               coerce=str, label=lambda x: f'Letter {x}')
+        Filter(param='q', field='name__icontains', coerce=str),
+        Filter(param='platform', field='platforms__code', coerce=str),
     ]
 
     def get_queryset(self):
-        qs = models.Game.objects.select_related(
-            'developer',
+        qs = models.Game.objects.prefetch_related(
+            'developers',
         ).annotate(
             decade=Concat(
                 Left(Cast('year_of_release', output_field=CharField()), 3), Value('0')),
@@ -62,7 +64,8 @@ class GameListView(ListView):
             'id', 'name')
         context['years'] = all_years
         context['decades'] = decades
-        context['letters'] = list(string.ascii_uppercase)
+
+        context['platforms'] = models.Platform.objects.all()
 
         page_obj = context['page_obj']
         offset = (page_obj.number - 1) * page_obj.paginator.per_page + 1
@@ -102,17 +105,111 @@ class DeveloperDetailView(DetailView):
     """
     model = models.Developer
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['games'] = models.Game.objects.filter(
+            developers__developer=self.object,
+        ).order_by(
+            'developers',
+            'name',
+        ).distinct()
+
+        return context
+
 
 class DeveloperListView(ListView):
     """
     Developer list page
     """
+
     def get_queryset(self):
         qs = models.Developer.objects.annotate(
-            games_count=Count('games'),
-            games_rank_avg=Avg('games__rank'),
+            games_count=Count('aliases__games'),
+        ).filter(
+            games_count__gt=0
         ).order_by(
-            'games_rank_avg',
+            'name',
         )
 
         return qs
+
+
+class DeveloperAliasRedirectView(RedirectView):
+    """
+    Developer alias view that redirects to the canonical developer
+    """
+
+    def get_redirect_url(self, *args, **kwargs):
+
+        alias = get_object_or_404(models.DeveloperAlias, **kwargs)
+        url = reverse('developer-detail', args=[alias.developer.pk])
+
+        return url
+
+
+class PlatformDetailView(DetailView):
+    model = models.Platform
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['games'] = self.object.games.prefetch_related(
+            'developers',
+        ).distinct()
+
+        return context
+    
+
+class ListListView(ListView):
+    """
+    List list page
+    """
+    paginate_by = 50
+    filters = [
+        Filter(param='publisher', field='publisher_id', coerce=int),
+        Filter(param='year', field='year', coerce=int),
+        Filter(param='type', field='type', coerce=str),
+    ]
+
+    def get_queryset(self):
+        qs = models.List.objects.order_by('publisher', 'year', 'name')
+
+        for filter in self.filters:
+            param_val = self.request.GET.get(filter.param)
+            if param_val:
+                param_val = filter.coerce(param_val)
+                qs = qs.filter(**{filter.field: param_val})
+
+        return qs
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['publishers'] = models.Publication.objects.all()
+        context['years'] = sorted(list(set(models.List.objects.values_list('year', flat=True).distinct())))
+
+        args = self.request.GET.copy()
+        args.pop('page', None)
+        context['is_filtered'] = args
+
+        for filter in self.filters:
+            param_val = self.request.GET.get(filter.param)
+            if param_val:
+                context['selected_' + filter.param] = filter.coerce(param_val)
+
+        return context
+    
+
+class PublicationListView(ListView):
+    """
+    Publication list page
+    """
+    model = models.Publication
+
+
+class PublicationDetailView(DetailView):
+    """
+    Publication detail page
+    """
+    model = models.Publication

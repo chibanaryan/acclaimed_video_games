@@ -1,0 +1,37 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+    <h1 class="title">Platform: {{ platform }}</h1>
+    <h2 class="subtitle">{{ platform.games.count }} Game{{ platform.games.count| pluralize }}</h2>
+    <table class="table is-fullwidth">
+        <thead>
+            <tr>
+                <th>Developer</th>
+                <th>Game</th>
+                <th>Rank</th>
+                <th>Year of Release</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for game in games %}
+            <tr>
+                <td>
+                    {% for developer in game.developers.all %}
+                        <a href="{% url 'developer-alias-redirect' developer.pk %}">
+                            {{ developer.name }}
+                        </a>
+                        {% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                </td>
+                <td> 
+                    <a href="{% url 'game-detail' game.pk %}">
+                        {{ game.name }}
+                    </a>
+                </td>
+                <td>{{ game.rank }}</td>
+                <td>{{ game.year_of_release }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

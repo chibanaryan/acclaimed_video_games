@@ -1,0 +1,80 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+    <h1 class="title">Source Lists</h1>
+
+    <div class="field is-grouped">  
+        <form action="." class="control" >
+            <div class="select">
+                <select name="publisher" onchange="form.submit()">
+                    <option selected value="">All publishers</option>
+                    {% for publisher in publishers %}
+                        <option {% if publisher.id == selected_publisher %}selected{% endif %} value="{{ publisher.id }}">{{ publisher }}</option>
+                    {% endfor %}
+                </select>
+            </div>   
+            <div class="select">
+                <select name="year" onchange="form.submit()">
+                    <option selected value="">All years</option>
+                    {% for year in years %}
+                        <option {% if year == selected_year %}selected{% endif %} >{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>   
+            <div class="select">
+                <select name="type" onchange="form.submit()">
+                    <option selected value="">All types</option>
+                    <option {% if selected_type == 'M' %}selected{% endif %} value="M">Main</option>
+                    <option {% if selected_type == 'E' %}selected{% endif %} value="E">End of year</option>
+                </select>
+            </div>   
+        </form>
+        {% if is_filtered %}
+            <a class="button" href="{% url 'list-list' %}">
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>     
+                &nbsp;&nbsp;Clear
+            </a>
+        {% endif %}
+    </div>
+
+    <table class="table is-fullwidth">
+        <thead>
+            <tr>
+                <th>Publication</th>
+                <th>Year</th>
+                <th>Name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for list in list_list %}
+                <tr>
+                    <td>{{ list.publisher }}</td>
+                    <td>{{ list.year }}</td>
+                    <td>
+                        <a target="_blank" href="{{ list.url }}">
+                            {{ list }}
+                        </a>
+                    </td>
+                    <td>{{ list.get_type_display }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <nav class="pagination is-centered">
+        <ul class="pagination-list">
+            <li>
+                {% if page_obj.has_previous %}
+                    <a class="pagination-previous" href="?page={{ page_obj.previous_page_number }}">&laquo;&nbsp;Previous</a>
+                {% endif %}
+            </li>
+            <li>
+                {% if page_obj.has_next %}
+                    <a class="pagination-next" href="?page={{ page_obj.next_page_number }}">Next&nbsp;&raquo;</a>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+{% endblock %}

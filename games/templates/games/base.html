@@ -1,12 +1,12 @@
 {% load static %}
-
 <html>
 
 <head>
     <title>Acclaimed Video Games</title>
     <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'games/style.css' %}">
-    {% block extrahead %} 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.1.96/css/materialdesignicons.min.css">
+    {% block extrahead %}
     {% endblock %}
 </head>
 
@@ -27,6 +27,9 @@
                         <a class="navbar-item" href="{% url 'developer-list' %}">
                             Developers
                         </a>
+                        <a class="navbar-item" href="{% url 'publication-list' %}">
+                            Source Lists
+                        </a>
                         <a class="navbar-item" href="/about/">
                             About
                         </a>
@@ -35,20 +38,17 @@
             </nav>
         </div>
     </header>
-
-    <section class="container">     
+    <section class="container">
         <div id="content">
             {% block content %}
             {% endblock %}
         </div>
     </section>
-
     <footer>
         <div class="container">
             This is the footer
         </div>
     </footer>
-
 </body>
 
 </html>
