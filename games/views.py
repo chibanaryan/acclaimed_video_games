@@ -36,6 +36,7 @@ class GameListView(ListView):
     def get_queryset(self):
         qs = models.Game.objects.prefetch_related(
             'developers',
+            'platforms',
         ).annotate(
             decade=Concat(
                 Left(Cast('year_of_release', output_field=CharField()), 3), Value('0')),
@@ -159,7 +160,7 @@ class PlatformDetailView(DetailView):
         ).distinct()
 
         return context
-    
+
 
 class ListListView(ListView):
     """
@@ -173,7 +174,13 @@ class ListListView(ListView):
     ]
 
     def get_queryset(self):
-        qs = models.List.objects.order_by('publisher', 'year', 'name')
+        qs = models.List.objects.select_related(
+            'publisher',
+        ).order_by(
+            'publisher',
+            'year',
+            'name',
+        )
 
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)
@@ -182,12 +189,13 @@ class ListListView(ListView):
                 qs = qs.filter(**{filter.field: param_val})
 
         return qs
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         context['publishers'] = models.Publication.objects.all()
-        context['years'] = sorted(list(set(models.List.objects.values_list('year', flat=True).distinct())))
+        context['years'] = sorted(
+            list(set(models.List.objects.values_list('year', flat=True).distinct())))
 
         args = self.request.GET.copy()
         args.pop('page', None)
@@ -199,13 +207,17 @@ class ListListView(ListView):
                 context['selected_' + filter.param] = filter.coerce(param_val)
 
         return context
-    
+
 
 class PublicationListView(ListView):
     """
     Publication list page
     """
-    model = models.Publication
+    
+    def get_queryset(self) :
+        return models.Publication.objects.prefetch_related(
+            'lists',
+        )
 
 
 class PublicationDetailView(DetailView):
