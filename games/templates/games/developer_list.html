@@ -10,10 +10,10 @@
             </tr>
         </thead>
         <tbody>
-            {% for developer in developer_list %}
+            {% for developer in developeralias_list %}
                 <tr>
                     <td>
-                        <a href="{% url 'developer-detail' developer.pk %}">
+                        <a href="{% url 'developer-alias-redirect' developer.pk %}">
                             {{ developer.name }}
                         </a>
                     </td>

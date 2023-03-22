@@ -7,7 +7,7 @@ import csv
 def run(*args):
     txt_path = args[0]
     rows = csv.reader(open(txt_path), delimiter='\t', lineterminator='\r\n')
-    for publisher_name, year, _, name, url in rows:
+    for publisher_name, year, type, name, url in rows:
         publisher, created = models.Publication.objects.get_or_create(
             name=publisher_name,
         )
@@ -17,6 +17,7 @@ def run(*args):
             year=year,
             name=name,
             url=url,
+            type=type[0],
         )
 
         print(list)

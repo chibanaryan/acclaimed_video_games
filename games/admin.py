@@ -32,7 +32,8 @@ class GameAdmin(admin.ModelAdmin):
 
 @admin.register(models.List)
 class ListAdmin(admin.ModelAdmin):
-    list_filter = ['publisher']
+    list_display = ['__str__', 'publisher', 'type']
+    list_filter = ['type', 'publisher']
 
 
 @admin.register(models.ListMembership)

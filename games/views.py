@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable
+from django.db.models.functions import Lower
 
 from django.db.models import Avg, CharField, Count, Min, Value
 from django.db.models.functions import Cast, Concat, Left
@@ -112,6 +113,7 @@ class DeveloperDetailView(DetailView):
         context['games'] = models.Game.objects.filter(
             developers__developer=self.object,
         ).order_by(
+            'year_of_release',
             'developers',
             'name',
         ).distinct()
@@ -123,14 +125,15 @@ class DeveloperListView(ListView):
     """
     Developer list page
     """
+    template_name = 'games/developer_list.html'
 
     def get_queryset(self):
-        qs = models.Developer.objects.annotate(
-            games_count=Count('aliases__games'),
+        qs = models.DeveloperAlias.objects.annotate(
+            games_count=Count('games'),
         ).filter(
             games_count__gt=0
         ).order_by(
-            'name',
+            Lower('name'),
         )
 
         return qs
