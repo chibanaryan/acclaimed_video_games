@@ -20,21 +20,21 @@ class DeveloperAdmin(admin.ModelAdmin):
 @admin.register(models.DeveloperAlias)
 class DeveloperAliasAdmin(admin.ModelAdmin):
     search_fields = ['name']
-    filter_horizontal = ['developers']
+    #filter_horizontal = ['developers']
 
 @admin.register(models.Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = ['name', 'rank', 'year_of_release']
     list_filter = ['year_of_release']
     search_fields = ['name']
-    filter_horizontal = ['developers', 'platforms']
+    #filter_horizontal = ['developers', 'platforms']
 
 
 @admin.register(models.List)
 class ListAdmin(admin.ModelAdmin):
     list_display = ['__str__', 'publisher', 'type']
     list_filter = ['type', 'publisher']
-
+    search_fields = ['name']
 
 @admin.register(models.ListMembership)
 class ListMembershipAdmin(admin.ModelAdmin):

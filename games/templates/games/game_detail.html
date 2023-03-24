@@ -31,23 +31,35 @@
     <table class="table">
         <thead>
             <tr>
+                <th>Publication</th>
+                <th>Year</th>
                 <th>List</th>
                 <th>Rank</th>
             </tr>
         </thead>
         <tbody>
-            {% for list in game.lists.all %}
+            {% for membership in game.lists.all %}
                 <tr>
                     <td>
-                        {% if list.list.url %}
-                            <a href="{{ list.list.url }}" target="_blank">
-                                {{ list.list }}
+                        {% ifchanged membership.list.publisher %}
+                            {{ membership.list.publisher }}
+                        {% endifchanged %}
+                    </td>
+                    <td>
+                        {{ membership.list.year }}
+                    </td>
+                    <td>
+                        {% if membership.list.url %}
+                            <a href="{{ membership.list.url }}" target="_blank">
+                                {{ membership.list }}
                             </a>
                         {% else %}
-                            {{ list.list }}
+                            {{ membership.list }}
                         {% endif %}
                     </td>
-                    <td>{{ list.rank }}</td>
+                    <td>
+                        {{ membership.rank }}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
