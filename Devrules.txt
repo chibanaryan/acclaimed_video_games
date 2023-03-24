@@ -1,0 +1,38 @@
+1-Up Studio	1-Up Studio	Brownie Brown
+2K Czech	2K Czech	Illusion Softworks
+2K Boston	2K Boston	Irrational Games
+3D Realms	3D Realms	Apogee Software
+Apogee Software	3D Realms
+Blue Sky Productions	Looking Glass Studios
+Brownie Brown	1-Up Studio
+Chunsoft	Chunsoft	Spike Chunsoft
+DMA Design	Rockstar North	Rockstar Studios
+EA Black Box	EA Vancouver	EA Canada	Extended Play Productions
+EA Canada	EA Vancouver	EA Black Box	Extended Play Productions
+EA Pacific	EA Pacific	Westwood Pacific
+EA Tiburon	EA Tiburon	Tiburon Entertainment
+EA Vancouver	EA Vancouver	EA Black Box	EA Canada	Extended Play Productions
+Extended Play Productions	EA Black Box	EA Canada	EA Vancouver
+FreeStyleGames	Ubisoft Leamington
+Illusion Softworks	2K Czech
+iNiS	Liona Interactive	iNiS Corporation
+iNiS Corporation	Liona Interactive	iNiS
+Irrational Games	2K Boston
+Liona Interactive	iNiS	iNiS Corporation
+Looking Glass Studios	Looking Glass Studios	Blue Sky Productions
+Polyphony Digital	Polyphony Digital	Polys Entertainment
+Polys Entertainment	Polyphony Digital
+Rockstar Leeds	Rockstar Leeds	Rockstar Studios
+Rockstar North	Rockstar North	DMA Design	Rockstar Studios
+Rockstar San Diego	Rockstar San Diego	Rockstar Studios
+Rockstar Vancouver	Rockstar Vancouver	Rockstar Studios
+Spike	Spike	Spike Chunsoft
+Spike Chunsoft	Spike Chunsoft	Chunsoft	Spike
+Square	Square	Square Enix
+Square Enix	Square Enix	Square
+Tiburon Entertainment	EA Tiburon
+Ubi Pictures	Ubisoft Montpellier	Ubisoft Pictures
+Ubisoft Leamington	Ubisoft Leamington	FreeStyleGames
+Ubisoft Montpellier	Ubisoft Montpellier	Ubi Pictures	Ubisoft Pictures
+Ubisoft Pictures	Ubisoft Montpellier	Ubi Pictures
+Westwood Pacific	EA Pacific
