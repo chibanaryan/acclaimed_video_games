@@ -32,10 +32,11 @@ class DeveloperAlias(models.Model):
     """
     A different name that a developer may use
     """
-    developer = models.ForeignKey(
-        'Developer',
-        on_delete=models.CASCADE,
-        related_name='aliases')
+    # developer = models.ForeignKey(
+    #     'Developer',
+    #     on_delete=models.CASCADE,
+    #     related_name='aliases')
+    developers = models.ManyToManyField('Developer', related_name='aliases')
     name = models.CharField(max_length=100, unique=True)
 
     class Meta:
@@ -43,10 +44,10 @@ class DeveloperAlias(models.Model):
         verbose_name_plural = 'Developer aliases'
 
     def __str__(self) -> str:
-        if self.name != self.developer.name:
-            return f'{self.name} ({self.developer})'
-        else:
-            return self.name
+        # if self.name != self.developer.name:
+        #     return f'{self.name} ({self.developer})'
+        # else:
+        return self.name
 
 
 class Game(models.Model):

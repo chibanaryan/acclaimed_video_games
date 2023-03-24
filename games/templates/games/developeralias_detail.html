@@ -1,8 +1,18 @@
 {% extends 'games/base.html' %}
 
 {% block content %}
-    <h1 class="title">{{ developer }}</h1>
-    <h2 class="subtitle is-4 mt-5">{{ games.count }} Game{{ games.count| pluralize }}</h2>
+    <h1 class="title">{{ developeralias }}</h1>
+
+    <ul>
+        {% for developer in developeralias.developers.all %} 
+            <li>
+                <a href="{% url 'developer-detail' developer.pk %}">
+                    {{ developer }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
     <table class="table is-fullwidth">
         <thead>
             <tr>
@@ -24,9 +34,8 @@
                     <td>{{ game.rank }}</td>
                     <td>
                         {% for developer in game.developers.all %}
-                            <a href="{% url 'developer-alias-detail' developer.pk %}">
                                 {{ developer.name }}
-                            </a>
+                        
                             {% if not forloop.last %},{% endif %}
                         {% endfor %}
                     </td>

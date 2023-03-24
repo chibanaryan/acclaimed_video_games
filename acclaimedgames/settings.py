@@ -1,6 +1,15 @@
 
 from pathlib import Path
 
+import environ
+
+root = environ.Path(__file__) - 2
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+environ.Env.read_env()
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -62,11 +71,15 @@ TEMPLATES = [
     },
 ]
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': env.db(),
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -91,6 +104,7 @@ INTERNAL_IPS = [
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'sean2000.pythonanywhere.com',
+    'acclaimedgames.herokuapp.com',
 ]
 
 CACHES = {

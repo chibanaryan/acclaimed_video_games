@@ -111,7 +111,7 @@ class DeveloperDetailView(DetailView):
         context = super().get_context_data(**kwargs)
 
         context['games'] = models.Game.objects.filter(
-            developers__developer=self.object,
+            developers__developers=self.object,
         ).order_by(
             'year_of_release',
             'developers',
@@ -139,17 +139,35 @@ class DeveloperListView(ListView):
         return qs
 
 
-class DeveloperAliasRedirectView(RedirectView):
+class DeveloperAliasDetailView(DetailView):
     """
-    Developer alias view that redirects to the canonical developer
+    Developer alias detail page
     """
+    model = models.DeveloperAlias
 
-    def get_redirect_url(self, *args, **kwargs):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-        alias = get_object_or_404(models.DeveloperAlias, **kwargs)
-        url = reverse('developer-detail', args=[alias.developer.pk])
+        context['games'] = self.object.games.order_by(
+            'year_of_release',
+            'developers',
+            'name',
+        ).distinct()
 
-        return url
+        return context
+
+
+# class DeveloperAliasRedirectView(RedirectView):
+#     """
+#     Developer alias view that redirects to the canonical developer
+#     """
+
+#     def get_redirect_url(self, *args, **kwargs):
+
+#         alias = get_object_or_404(models.DeveloperAlias, **kwargs)
+#         url = reverse('developer-detail', args=[alias.developer.pk])
+
+#         return url
 
 
 class PlatformDetailView(DetailView):
