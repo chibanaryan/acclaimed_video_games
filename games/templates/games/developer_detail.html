@@ -24,7 +24,7 @@
                     <td>{{ game.rank }}</td>
                     <td>
                         {% for developer in game.developers.all %}
-                            <a href="{% url 'developer-alias-detail' developer.pk %}">
+                            <a href="{% url 'developer-alias-redirect' developer.pk %}">
                                 {{ developer.name }}
                             </a>
                             {% if not forloop.last %},{% endif %}

@@ -3,9 +3,14 @@
 {% block content %}
     <h1 class="title">{{ game }}</h1>
     <div class="block">
+
         <dl class="detail">
             <dt>All time rank:</dt>
             <dd>{{ game.rank }}</dd>
+            <dt>{{ game.year_of_release }} rank:</dt>
+            <dd>{{ rank_for_year }}</dd>
+            <dt>{{ decade }} rank:</dt>
+            <dd>{{ rank_for_decade }}</dd>
             <dt>Developers:</dt>
             <dd>
                 {% for developer in game.developers.all %}
@@ -27,6 +32,7 @@
             <dt>Year of release:</dt>
             <dd>{{ game.year_of_release }}</dd>
         </dl>
+        
     </div>
     <table class="table">
         <thead>

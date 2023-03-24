@@ -11,11 +11,11 @@ environ.Env.read_env()
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEBUG = True
+DEBUG = env('DEBUG', default=False)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'en-us'
 ROOT_URLCONF = 'acclaimedgames.urls'
-SECRET_KEY = 'f-)nfhk38jyp91-8)j3!ncq-v5g45obw9_ytrmjkvck0#$alr9'
+SECRET_KEY = env('SECRET_KEY', default='XXX')
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = 'static/'
 TIME_ZONE = 'UTC'
@@ -71,13 +71,6 @@ TEMPLATES = [
     },
 ]
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     'default': env.db(),
 }
@@ -105,13 +98,12 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'sean2000.pythonanywhere.com',
     'acclaimedgames.herokuapp.com',
+    'acclaimedvideogames.com',
+    'www.acclaimedvideogames.com',
 ]
 
 CACHES = {
-    'default': {
-        #'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-        'LOCATION': '/tmp/django_cache',
-    }
+    'default': env.cache(),
 }
+
 CACHE_MIDDLEWARE_SECONDS = 60 * 60 * 24

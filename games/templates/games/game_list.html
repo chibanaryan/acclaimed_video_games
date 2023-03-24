@@ -66,6 +66,9 @@
     <table class="table is-fullwidth">
         <thead>
             <tr>
+                {% if show_search_rank %}
+                    <th>Rank</th>
+                {% endif %}
                 <th>All Time Rank</th>
                 <th>Name</th>
                 <th>Developers</th>
@@ -76,6 +79,11 @@
         <tbody>
             {% for game in game_list %}
                 <tr>
+                    {% if show_search_rank %}
+                        <td>
+                            {{ forloop.counter }}
+                        </td>
+                    {% endif %}
                     <td>{{ game.rank }}</td>
                     <td>
                         <a href="{% url 'game-detail' game.pk %}">
@@ -92,7 +100,9 @@
                     </td>
                     <td>
                         {% for platform in game.platforms.all %} 
-                            {{ platform.code }}
+                            <a href="?platform={{ platform.code }}">
+                                {{ platform.code }}
+                            </a>       
                             {% if not forloop.last %},{% endif %}
                         {% endfor %}
                     </td>
@@ -105,16 +115,14 @@
     </table>
     <nav class="pagination is-centered">
         <ul class="pagination-list">
-            <li>
-                {% if page_obj.has_previous %}
-                    <a class="pagination-previous" href="?page={{ page_obj.previous_page_number }}">&laquo;&nbsp;Previous</a>
-                {% endif %}
-            </li>
-            <li>
-                {% if page_obj.has_next %}
-                    <a class="pagination-next" href="?page={{ page_obj.next_page_number }}">Next&nbsp;&raquo;</a>
-                {% endif %}
-            </li>
+            {% for i in page_obj.paginator.page_range %}
+                <li>
+                    <a class="pagination-link{% if page_obj.number == i %} is-current{% endif %}"  
+                        href="?{% if args %}{{ args }}&{% endif %}page={{ i }}">
+                    {{ i }} 
+                    </a>
+                </li>
+            {% endfor %}
         </ul>
     </nav>
 {% endblock %}

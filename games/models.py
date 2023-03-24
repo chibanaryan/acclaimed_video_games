@@ -36,7 +36,7 @@ class DeveloperAlias(models.Model):
         'Developer',
         on_delete=models.CASCADE,
         related_name='aliases')
-    #developers = models.ManyToManyField('Developer', related_name='aliases')
+    # developers = models.ManyToManyField('Developer', related_name='aliases')
     name = models.CharField(max_length=100, unique=True)
 
     class Meta:

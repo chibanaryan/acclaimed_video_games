@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable
 from django.db.models.functions import Lower
-
+from urllib.parse import urlencode
 from django.db.models import Avg, CharField, Count, Min, Value
 from django.db.models.functions import Cast, Concat, Left
 from django.shortcuts import get_object_or_404
@@ -24,7 +24,7 @@ class GameListView(ListView):
     """
     Game list page
     """
-    paginate_by = 50
+    paginate_by = 100
 
     filters = [
         Filter(param='year', field='year_of_release', coerce=int),
@@ -90,6 +90,9 @@ class GameListView(ListView):
         args = self.request.GET.copy()
         args.pop('page', None)
         context['is_filtered'] = args
+        context['args'] = urlencode(args)
+        context['show_search_rank'] = args.get(
+            'year') or args.get('decade') or args.get('platform')
 
         return context
 
@@ -99,6 +102,25 @@ class GameDetailView(DetailView):
     Game detail page
     """
     model = models.Game
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        game = self.object
+
+        base_year = int(game.year_of_release / 10) * 10
+        context['decade'] = f'{base_year}s'
+
+        year_games = list(models.Game.objects.filter(
+            year_of_release=game.year_of_release))
+        context['rank_for_year'] = year_games.index(game) + 1
+
+        top_year = base_year + 9
+        decade_games = list(models.Game.objects.filter(
+            year_of_release__gte=base_year, year_of_release__lte=top_year))
+        context['rank_for_decade'] = decade_games.index(game) + 1
+
+        return context
 
 
 class DeveloperDetailView(DetailView):
@@ -111,7 +133,7 @@ class DeveloperDetailView(DetailView):
         context = super().get_context_data(**kwargs)
 
         context['games'] = models.Game.objects.filter(
-            developers__developers=self.object,
+            developers__developer=self.object,
         ).order_by(
             'year_of_release',
             'developers',
@@ -137,24 +159,6 @@ class DeveloperListView(ListView):
         )
 
         return qs
-
-
-# class DeveloperAliasDetailView(DetailView):
-#     """
-#     Developer alias detail page
-#     """
-#     model = models.DeveloperAlias
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-
-#         context['games'] = self.object.games.order_by(
-#             'year_of_release',
-#             'developers',
-#             'name',
-#         ).distinct()
-
-#         return context
 
 
 class DeveloperAliasRedirectView(RedirectView):
@@ -235,7 +239,7 @@ class PublicationListView(ListView):
     Publication list page
     """
 
-    def get_queryset(self) :
+    def get_queryset(self):
         return models.Publication.objects.prefetch_related(
             'lists',
         )
@@ -246,3 +250,13 @@ class PublicationDetailView(DetailView):
     Publication detail page
     """
     model = models.Publication
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['list_groups'] = [
+            ('Main Lists', self.object.lists.filter(type='M')),
+            ('End of Year Lists', self.object.lists.filter(type='E')),
+        ]
+
+        return context
