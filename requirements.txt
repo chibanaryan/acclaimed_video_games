@@ -1,9 +1,0 @@
-django
-django-debug-toolbar
-django-environ
-django-extensions
-gunicorn
-ipython
-markdown
-psycopg2
-whitenoise
