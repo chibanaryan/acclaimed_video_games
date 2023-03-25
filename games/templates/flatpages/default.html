@@ -4,6 +4,9 @@
 
 {% block content %}
 <div class="content">
-    {{ flatpage.content|markdown|safe }}
+    <h1 class="title is-1">{{ flatpage.title }}</h1>
+    <div>
+        {{ flatpage.content|markdown|safe }}
+    </div>
 </div>
 {% endblock %}

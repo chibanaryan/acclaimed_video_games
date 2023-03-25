@@ -1,0 +1,12 @@
+<nav class="pagination is-centered">
+    <ul class="pagination-list">
+        {% for i in page_obj.paginator.page_range %}
+            <li>
+                <a class="pagination-link{% if page_obj.number == i %} is-current{% endif %}"  
+                    href="?{% if args %}{{ args }}&{% endif %}page={{ i }}">
+                {{ i }} 
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</nav>

@@ -197,7 +197,7 @@ class ListListView(ListView):
     """
     List list page
     """
-    paginate_by = 50
+    paginate_by = 100
     filters = [
         Filter(param='publisher', field='publisher_id', coerce=int),
         Filter(param='year', field='year', coerce=int),
@@ -231,6 +231,7 @@ class ListListView(ListView):
         args = self.request.GET.copy()
         args.pop('page', None)
         context['is_filtered'] = args
+        context['args'] = urlencode(args)
 
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)

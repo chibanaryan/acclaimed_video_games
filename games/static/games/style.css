@@ -1,3 +1,4 @@
+
 footer {
     min-height: 15em;
     background-color: #444;
@@ -18,4 +19,10 @@ header {
 
 #content {
     min-height: 1024px;
+}
+
+header,
+.container,
+footer {
+    padding: 0 1em;
 }
