@@ -6,11 +6,23 @@
 
         <dl class="detail">
             <dt>All time rank:</dt>
-            <dd>{{ game.rank }}</dd>
+            <dd>
+                <a href="{% url 'games-list' %}?highlight={{ game.id }}">
+                    {{ game.rank }}
+                </a>
+            </dd>
             <dt>{{ game.year_of_release }} rank:</dt>
-            <dd>{{ rank_for_year }}</dd>
-            <dt>{{ decade }} rank:</dt>
-            <dd>{{ rank_for_decade }}</dd>
+            <dd>
+                <a href="{% url 'games-list' %}?year={{ game.year_of_release }}&highlight={{ game.id }}">
+                    {{ rank_for_year }}
+                </a>
+            </dd>
+            <dt>{{ decade }}s rank:</dt>
+            <dd>
+                <a href="{% url 'games-list' %}?decade={{ decade }}&highlight={{ game.id }}">
+                    {{ rank_for_decade }}
+                </a>
+            </dd>
             <dt>Developers:</dt>
             <dd>
                 {% for developer in game.developers.all %}
@@ -23,7 +35,7 @@
             <dt>Platforms:</dt>
             <dd>
                 {% for platform in game.platforms.all %} 
-                    <a href="{% url 'platform-detail' platform.pk %}" title="{{ platform.name }}">
+                    <a href="{% url 'games-list' %}?platform={{ platform.code }}" title="{{ platform.name }}">
                         {{ platform.code }}
                     </a>
                     {% if not forloop.last %},{% endif %}

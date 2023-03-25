@@ -10,14 +10,14 @@
 {% endblock %}
 
 {% block content %}
-    <h1 class="title">Games</h1>
+    <h1 class="title">Top 500 Games</h1>
     <h2 class="subtitle">{{ offset }} to {{ limit }} of {{ total }} results</h2> 
 
     <div class="field is-grouped">  
         <form action="." class="control" >
             <div class="select">
                 <select name="year" onchange="form.submit()">
-                    <option selected value="">All years</option>
+                    <option selected value="">Years</option>
                     {% for year in years %}
                         <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
                     {% endfor %}
@@ -27,7 +27,7 @@
         <form action="." class="control">
             <div class="select">
                 <select name="decade" onchange="form.submit()">
-                    <option selected value="">All decades</option>
+                    <option selected value="">Decades</option>
                     {% for decade in decades %}
                         <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
                     {% endfor %}
@@ -37,7 +37,7 @@
         <form action="." class="control">
             <div class="select">
                 <select name="platform" onchange="form.submit()">
-                    <option selected value="">All platforms</option>
+                    <option selected value="">Platforms</option>
                     {% for platform in platforms %}
                         <option {% if platform.code == selected_platform %}selected{% endif %} value="{{ platform.code }}">{{ platform }}</option>
                     {% endfor %}
@@ -78,7 +78,7 @@
         </thead>
         <tbody>
             {% for game in game_list %}
-                <tr>
+                <tr {% if highlight == game.id %}class="is-selected"{% endif %}>
                     {% if show_search_rank %}
                         <td>
                             {{ forloop.counter }}

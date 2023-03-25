@@ -6,13 +6,11 @@ from django.urls import include, path
 from games import views
 
 urlpatterns = [
-    path('', views.GameListView.as_view(), name='index'),
-    path('__debug__/', include('debug_toolbar.urls')),
+    path('', views.IndexView.as_view(), name='index'),
+    path('games/', views.GameListView.as_view(), name='games-list'),
     path('admin/', admin.site.urls),
     path('developer-aliases/<int:pk>/', views.DeveloperAliasRedirectView.as_view(),
          name='developer-alias-redirect'),
-    #     path('developer-aliases/<int:pk>/',
-    #          views.DeveloperAliasDetailView.as_view(), name='developer-alias-detail'),
     path('developers/', views.DeveloperListView.as_view(), name='developer-list'),
     path('developers/<int:pk>/', views.DeveloperDetailView.as_view(),
          name='developer-detail'),
@@ -23,8 +21,7 @@ urlpatterns = [
          name='publication-detail'),
     path('games/<int:pk>/', views.GameDetailView.as_view(), name='game-detail'),
     path('pages/', include('django.contrib.flatpages.urls')),
-    path('platforms/<int:pk>/', views.PlatformDetailView.as_view(),
-         name='platform-detail'),
+    path('__debug__/', include('debug_toolbar.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

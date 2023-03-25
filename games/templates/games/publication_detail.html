@@ -4,27 +4,29 @@
     <h1 class="title is-3">{{ publication }} Lists</h1>
 
     {% for type, lists in list_groups %} 
-        <h2 class="title is-5">{{ type }}</h2>
-        <table class="table is-fullwidth">
-            <thead>
-                <tr>
-                    <th>Year</th>
-                    <th>Name</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for list in lists %}
+        {% if lists %}
+            <h2 class="title is-5">{{ type }}</h2>
+            <table class="table is-fullwidth">
+                <thead>
                     <tr>
-                        <td>{{ list.year }}</td>
-                        <td>
-                            <a target="_blank" href="{{ list.url }}">
-                                {{ list }}
-                            </a>
-                        </td>
+                        <th>Year</th>
+                        <th>Name</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for list in lists %}
+                        <tr>
+                            <td>{{ list.year }}</td>
+                            <td>
+                                <a target="_blank" href="{{ list.url }}">
+                                    {{ list }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
     {% endfor %}
 
 {% endblock %}

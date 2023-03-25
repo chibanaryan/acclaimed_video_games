@@ -7,7 +7,7 @@ from django.db.models import Avg, CharField, Count, Min, Value
 from django.db.models.functions import Cast, Concat, Left
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.views.generic import DetailView, ListView, RedirectView
+from django.views.generic import DetailView, ListView, RedirectView, TemplateView
 
 from . import models
 
@@ -18,6 +18,22 @@ class Filter:
     field: str
     coerce: type = str
     label: Callable[[str], str] = lambda x: x
+
+
+def round_down(num, base=10):
+    return num // base * base
+
+
+class IndexView(TemplateView):
+    template_name = 'games/index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['games'] = models.Game.objects.all()[:10]
+        context['list_count'] = round_down(models.List.objects.count(), 50)
+        context['publication_count'] = round_down(
+            models.Publication.objects.count())
+        return context
 
 
 class GameListView(ListView):
@@ -94,6 +110,9 @@ class GameListView(ListView):
         context['show_search_rank'] = args.get(
             'year') or args.get('decade') or args.get('platform')
 
+        if args.get('highlight'):
+            context['highlight'] = int(args.get('highlight'))
+
         return context
 
 
@@ -109,7 +128,7 @@ class GameDetailView(DetailView):
         game = self.object
 
         base_year = int(game.year_of_release / 10) * 10
-        context['decade'] = f'{base_year}s'
+        context['decade'] = base_year
 
         year_games = list(models.Game.objects.filter(
             year_of_release=game.year_of_release))
@@ -172,19 +191,6 @@ class DeveloperAliasRedirectView(RedirectView):
         url = reverse('developer-detail', args=[alias.developer.pk])
 
         return url
-
-
-class PlatformDetailView(DetailView):
-    model = models.Platform
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context['games'] = self.object.games.prefetch_related(
-            'developers',
-        ).distinct()
-
-        return context
 
 
 class ListListView(ListView):

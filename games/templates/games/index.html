@@ -1,0 +1,44 @@
+{% extends 'games/base.html' %}
+
+{% block content %}
+<div class="block">
+    <h1 class="title is-1">Acclaimed Video Games</h1>
+    <div class="columns">
+        <div class="column">
+            <p class="is-size-4">
+                The most critically acclaimed video games of all time, based 
+                on more than <a href="{% url 'list-list' %}">{{ list_count }} critic lists</a> from more than 
+                <a href="{% url 'publication-list' %}">{{ publication_count }} publications</a>. 
+            </p>
+            <h3 class="title is-3 mt-5">Current Top 10</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Game</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in games %}
+                        <tr>
+                            <td>
+                                {{ game.rank }}
+                            </td>
+                            <td>
+                                <a href="{% url 'games-list' %}?highlight={{ game.id }}">
+                                    {{ game }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="is-size-5">
+                Last update: 12th March 2023
+            </p>
+        </div>
+        <div class="column">
+    </div>
+
+</div>
+{% endblock %}
