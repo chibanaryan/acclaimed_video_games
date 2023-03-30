@@ -1,5 +1,9 @@
 {% extends 'games/base.html' %}
 
+{% block title %}
+Acclaimed Video Games – Top 500
+{% endblock %}
+
 {% block extrahead %} 
     <style>
         form {
@@ -100,7 +104,7 @@
                     </td>
                     <td>
                         {% for platform in game.platforms.all %} 
-                            <a href="?platform={{ platform.code }}">
+                            <a href="?platform={{ platform.code }}" title="{{ platform.name }}">
                                 {{ platform.code }}
                             </a>       
                             {% if not forloop.last %},{% endif %}

@@ -1,4 +1,20 @@
 from django.db import models
+from django.utils.text import slugify
+
+
+class Snippet(models.Model):
+    """A reusable piece of text"""
+    slug = models.SlugField(unique=True)
+    text = models.TextField()
+
+    def __str__(self):
+        return self.slug
+
+    def save(self, *args, **kwargs):
+        slugified_slug = slugify(self.slug)
+        if self.slug != slugified_slug:
+            self.slug = slugified_slug
+        super().save(*args, **kwargs)
 
 
 class Platform(models.Model):

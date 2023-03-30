@@ -1,14 +1,14 @@
 {% extends 'games/base.html' %}
 
+{% load games_tags %}
+
 {% block content %}
 <div class="block">
     <h1 class="title is-1">Acclaimed Video Games</h1>
     <div class="columns">
         <div class="column">
             <p class="is-size-4">
-                The most critically acclaimed video games of all time, based 
-                on more than <a href="{% url 'list-list' %}">{{ list_count }} critic lists</a> from more than 
-                <a href="{% url 'publication-list' %}">{{ publication_count }} publications</a>. 
+                {% snippet 'front-page' %}
             </p>
             <h3 class="title is-3 mt-5">Current Top 10</h3>
             <table class="table">
@@ -39,6 +39,5 @@
         </div>
         <div class="column">
     </div>
-
 </div>
 {% endblock %}
