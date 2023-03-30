@@ -8,7 +8,6 @@ from games import views
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
     path('games/', views.GameListView.as_view(), name='games-list'),
-    path('admin/', admin.site.urls),
     path('developer-aliases/<int:pk>/', views.DeveloperAliasRedirectView.as_view(),
          name='developer-alias-redirect'),
     path('developers/', views.DeveloperListView.as_view(), name='developer-list'),
@@ -20,7 +19,9 @@ urlpatterns = [
     path('publications/<int:pk>/', views.PublicationDetailView.as_view(),
          name='publication-detail'),
     path('games/<int:pk>/', views.GameDetailView.as_view(), name='game-detail'),
-    path('pages/', include('django.contrib.flatpages.urls')),
+    # path('pages/', include('django.contrib.flatpages.urls')),
+
+    path('admin/', admin.site.urls),
     path('__debug__/', include('debug_toolbar.urls')),
 ]
 
