@@ -80,7 +80,8 @@ class Game(models.Model):
         'Platform',
         blank=True,
         related_name='games')
-
+    modified = models.DateTimeField(auto_now=True)
+    
     class Meta:
         ordering = ['rank']
 

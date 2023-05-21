@@ -37,6 +37,7 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['games'] = models.Game.objects.all()[:10]
+        context['last_update'] = models.Game.objects.latest('modified').modified
         context['list_count'] = round_down(models.List.objects.count(), 50)
         context['publication_count'] = round_down(
             models.Publication.objects.count())
