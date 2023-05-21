@@ -1,0 +1,46 @@
+{% extends 'games/base.html' %}
+
+{% block title %} - Login{% endblock %}
+
+{% block content %}
+    <h1 class="title">Login</h1>
+
+    {% if form.errors %}
+        <p class="notification">Your username and password didn't match. Please try again.</p>
+    {% endif %}
+
+    {% if next %}
+        {% if user.is_authenticated %}
+            <p class="notification">Your account doesn't have access to this page. To proceed,
+                please login with an account that has access.</p>
+        {% else %}
+            <p class="notification">Please login to see this page.</p>
+        {% endif %}
+    {% endif %}
+
+    <div class="columns">
+        <div class="column is-half">
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="field">
+                    <label class="label" for="id_username">Username:</label>
+                    <div class="control">
+                        <input class="input" type="text" name="username"  id="id_username" >
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label"  for="id_password">Password:</label>
+                    <div class="control">
+                        <input class="input"  type="password" name="password"  id="id_password" >
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="control">
+                        <input type="submit" value="Login" class="button">
+                    </div>
+                </div>
+                <input type="hidden" name="next" value="{{ next }}">
+            </form>
+        </div>
+    </div>
+{% endblock %}

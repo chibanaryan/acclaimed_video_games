@@ -26,3 +26,11 @@ header,
 footer {
     padding: 0 1em;
 }
+
+.messages {
+    position: fixed;
+    top: 20px;
+    left: 43%;
+    right: 43%;
+    z-index: 100;
+}

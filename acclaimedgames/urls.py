@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
 from games import views
@@ -19,9 +20,11 @@ urlpatterns = [
     path('publications/<int:pk>/', views.PublicationDetailView.as_view(),
          name='publication-detail'),
     path('games/<int:pk>/', views.GameDetailView.as_view(), name='game-detail'),
-    # path('pages/', include('django.contrib.flatpages.urls')),
-
+    path('import/', views.ImportView.as_view(), name='import'),
+    
     path('admin/', admin.site.urls),
+    path("accounts/login/", auth_views.LoginView.as_view(), name='login'),
+
     path('__debug__/', include('debug_toolbar.urls')),
 ]
 

@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import environ
+from django.contrib import messages
 
 root = environ.Path(__file__) - 2
 env = environ.Env(
@@ -107,3 +108,8 @@ CACHES = {
 }
 
 CACHE_MIDDLEWARE_SECONDS = 60 * 60 * 24
+
+MESSAGE_TAGS = {
+    messages.INFO: "is-primary",
+    messages.ERROR: "is-danger",
+}

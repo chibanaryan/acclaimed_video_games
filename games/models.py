@@ -70,7 +70,7 @@ class Game(models.Model):
     A video game
     """
     name = models.CharField(max_length=100)
-    rank = models.IntegerField()
+    rank = models.IntegerField(unique=True)
     year_of_release = models.PositiveSmallIntegerField()
     developers = models.ManyToManyField(
         'DeveloperAlias',

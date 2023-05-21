@@ -2,6 +2,11 @@ from django.contrib import admin
 from . import models
 
 
+class DeveloperAliasInlineAdmin(admin.TabularInline):
+    model = models.DeveloperAlias
+    extra = 0
+
+
 @admin.register(models.Platform)
 class PlatformAdmin(admin.ModelAdmin):
     pass
@@ -10,21 +15,20 @@ class PlatformAdmin(admin.ModelAdmin):
 @admin.register(models.Developer)
 class DeveloperAdmin(admin.ModelAdmin):
     search_fields = ['name']
-    # inlines = [DeveloperAliasInlineAdmin]
+    inlines = [DeveloperAliasInlineAdmin]
 
 
 @admin.register(models.DeveloperAlias)
 class DeveloperAliasAdmin(admin.ModelAdmin):
     search_fields = ['name']
-    # filter_horizontal = ['developers']
 
-    
+
 @admin.register(models.Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = ['name', 'rank', 'year_of_release']
     list_filter = ['year_of_release']
     search_fields = ['name']
-    # filter_horizontal = ['developers', 'platforms']
+    filter_horizontal = ['developers', 'platforms']
 
 
 @admin.register(models.List)

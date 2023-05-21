@@ -1,15 +1,22 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Callable
-from django.db.models.functions import Lower
+from typing import Any, Callable, Dict
 from urllib.parse import urlencode
-from django.db.models import Avg, CharField, Count, Min, Value
-from django.db.models.functions import Cast, Concat, Left
-from django.shortcuts import get_object_or_404
-from django.urls import reverse
-from django.views.generic import DetailView, ListView, RedirectView, TemplateView
 
-from . import models
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import CharField, Count, Min, QuerySet, Value
+from django.db.models.functions import Cast, Concat, Left, Lower
+from django.forms import Form
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse, reverse_lazy
+from django.views.generic import (DetailView, FormView, ListView, RedirectView,
+                                  TemplateView)
+
+from games.forms import ImportForm
+
+from . import models, utils, constants
 
 
 @dataclass
@@ -20,14 +27,14 @@ class Filter:
     label: Callable[[str], str] = lambda x: x
 
 
-def round_down(num, base=10):
+def round_down(num, base=10) -> int:
     return num // base * base
 
 
 class IndexView(TemplateView):
     template_name = 'games/index.html'
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['games'] = models.Game.objects.all()[:10]
         context['list_count'] = round_down(models.List.objects.count(), 50)
@@ -50,7 +57,7 @@ class GameListView(ListView):
         Filter(param='platform', field='platforms__code', coerce=str),
     ]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         qs = models.Game.objects.prefetch_related(
             'developers',
             'platforms',
@@ -68,12 +75,12 @@ class GameListView(ListView):
 
         return qs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         min_year = models.Game.objects.aggregate(
             min_year=Min('year_of_release'),
-        )['min_year']
+        )['min_year'] or 1970
         max_year = datetime.today().year
         all_years = range(min_year, max_year)
         decades = sorted(list(set(str(int(x / 10) * 10) for x in all_years)))
@@ -122,7 +129,7 @@ class GameDetailView(DetailView):
     """
     model = models.Game
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         game = self.object
@@ -148,7 +155,7 @@ class DeveloperDetailView(DetailView):
     """
     model = models.Developer
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         context['games'] = models.Game.objects.filter(
@@ -168,7 +175,7 @@ class DeveloperListView(ListView):
     """
     template_name = 'games/developer_list.html'
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         qs = models.DeveloperAlias.objects.annotate(
             games_count=Count('games'),
         ).filter(
@@ -185,7 +192,7 @@ class DeveloperAliasRedirectView(RedirectView):
     Developer alias view that redirects to the canonical developer
     """
 
-    def get_redirect_url(self, *args, **kwargs):
+    def get_redirect_url(self, *args, **kwargs) -> HttpResponse:
 
         alias = get_object_or_404(models.DeveloperAlias, **kwargs)
         url = reverse('developer-detail', args=[alias.developer.pk])
@@ -204,7 +211,7 @@ class ListListView(ListView):
         Filter(param='type', field='type', coerce=str),
     ]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         qs = models.List.objects.select_related(
             'publisher',
         ).order_by(
@@ -221,7 +228,7 @@ class ListListView(ListView):
 
         return qs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         context['publishers'] = models.Publication.objects.all()
@@ -246,7 +253,7 @@ class PublicationListView(ListView):
     Publication list page
     """
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         return models.Publication.objects.prefetch_related(
             'lists',
         )
@@ -258,7 +265,7 @@ class PublicationDetailView(DetailView):
     """
     model = models.Publication
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         context['list_groups'] = [
@@ -267,3 +274,25 @@ class PublicationDetailView(DetailView):
         ]
 
         return context
+
+
+class ImportView(LoginRequiredMixin, FormView):
+    template_name = 'games/import.html'
+    form_class = ImportForm
+    success_url = reverse_lazy('import')
+
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['import_types'] = constants.TYPES
+        return context
+
+    def form_valid(self, form: Form) -> HttpResponse:
+        import_data = form.cleaned_data
+
+        res, message = utils.import_data(import_data)
+        if res:
+            messages.info(self.request, message)
+        else:
+            messages.error(self.request, message)
+
+        return super().form_valid(form)

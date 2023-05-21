@@ -1,0 +1,85 @@
+{% extends 'games/base.html' %}
+
+{% block title %} - Import{% endblock %}
+
+{% block extrahead %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let fileInputs = document.querySelectorAll('.file.has-name')
+        for (let fileInput of fileInputs) {
+            let input = fileInput.querySelector('.file-input')
+            let name = fileInput.querySelector('.file-name')
+
+            input.addEventListener('change', () => {
+                let files = input.files
+                if (files.length === 0) {
+                    name.innerText = 'No file selected'
+                } else {
+                    name.innerText = files[0].name
+                }
+            })
+        }
+
+        let forms = document.getElementsByTagName('form')
+        for (let form of forms) {
+            form.addEventListener('reset', () => {
+                let names = form.querySelectorAll('.file-name')
+                for (let name of names) {
+                    name.innerText = 'No file selected'
+                }
+            })
+        }
+    })
+</script>
+{% endblock %}
+
+{% block content %}
+<h1 class="title">Import data</h1>
+
+<form class="is-pulled-right" 
+    method="POST" 
+    action="." 
+    onsubmit="return confirm('Are you sure you want to delete all data?');">
+    {% csrf_token %}
+    <input type="hidden" name="delete" value="true">
+    <button class="button is-danger">Delete existing data</button>
+</form>
+
+<form method="POST" action="." enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="field">
+        <label class="label" for="id_type">Type:</label>
+        <div class="control">
+            <div class="select">
+                <select name="type" id="id_type">
+                    {% for code, label in import_types %}
+                    <option value="{{ code }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="file has-name">
+            <label class="file-label">
+                <input class="file-input" type="file" name="file" id="id_file">
+                <span class="file-cta">
+                    <span class="file-label">
+                        Upload a file&hellip;
+                    </span>
+                </span>
+                <span class="file-name"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="control">
+            <button class="button is-link">Submit</button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

@@ -28,6 +28,11 @@
                 });
             });
         });
+        
+        setTimeout(() => {
+            document.querySelectorAll('.messages').forEach(x => x.remove());
+        }, 5000);
+
     </script>
     {% block extrahead %}
     {% endblock %}
@@ -35,20 +40,30 @@
 
 <body>
     <header>
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="notification {% if message.tags %}{{ message.tags }}{% endif %}"">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
         <div class="container">
             <nav class="navbar" role="navigation" aria-label="main navigation">
                 <div class="navbar-brand">
                     <a class="navbar-item" href="{% url 'index' %}">
                         Home
                     </a>
-                    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false"
-                        data-target="navbarBasicExample">
+                    <a role="button" 
+                        class="navbar-burger" 
+                        aria-label="menu" 
+                        aria-expanded="false"
+                        data-target="navbar">
                         <span aria-hidden="true"></span>
                         <span aria-hidden="true"></span>
                         <span aria-hidden="true"></span>
                     </a>
                 </div>
-                <div id="navbarBasicExample" class="navbar-menu">
+                <div id="navbar" class="navbar-menu">
                     <div class="navbar-start">
                         <a class="navbar-item" href="{% url 'games-list' %}">
                             Top 500 Games
