@@ -33,7 +33,7 @@ class GameAdmin(admin.ModelAdmin):
 
 @admin.register(models.List)
 class ListAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'publisher', 'type']
+    list_display = ['__str__', 'order', 'publisher', 'type']
     list_filter = ['type', 'publisher']
     search_fields = ['name']
 

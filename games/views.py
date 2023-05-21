@@ -37,7 +37,8 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['games'] = models.Game.objects.all()[:10]
-        context['last_update'] = models.Game.objects.latest('modified').modified
+        context['last_update'] = models.Game.objects.latest(
+            'modified').modified
         context['list_count'] = round_down(models.List.objects.count(), 50)
         context['publication_count'] = round_down(
             models.Publication.objects.count())
@@ -147,6 +148,12 @@ class GameDetailView(DetailView):
             year_of_release__gte=base_year, year_of_release__lte=top_year))
         context['rank_for_decade'] = decade_games.index(game) + 1
 
+        context['list_groups'] = [
+            ('All Time Lists', game.lists.filter(list__type=constants.LIST_ALLTIME)),
+            ('Other Lists', game.lists.filter(list__type=constants.LIST_OTHER)),
+            ('End of Year Lists', game.lists.filter(list__type=constants.LIST_EOY)),
+        ]
+
         return context
 
 
@@ -233,6 +240,7 @@ class ListListView(ListView):
         context = super().get_context_data(**kwargs)
 
         context['publishers'] = models.Publication.objects.all()
+        context['list_types'] = constants.LIST_TYPES
         context['years'] = sorted(
             list(set(models.List.objects.values_list('year', flat=True).distinct())))
 
@@ -270,8 +278,9 @@ class PublicationDetailView(DetailView):
         context = super().get_context_data(**kwargs)
 
         context['list_groups'] = [
-            ('Main Lists', self.object.lists.filter(type='M')),
-            ('End of Year Lists', self.object.lists.filter(type='E')),
+            ('All Time Lists', self.object.lists.filter(type=constants.LIST_ALLTIME)),
+            ('Other Lists', self.object.lists.filter(type=constants.LIST_OTHER)),
+            ('End of Year Lists', self.object.lists.filter(type=constants.LIST_EOY)),
         ]
 
         return context

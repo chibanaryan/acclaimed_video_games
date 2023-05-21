@@ -36,8 +36,7 @@
 {% block content %}
 <h1 class="title">Import data</h1>
 
-<form class="is-pulled-right" 
-    method="POST" 
+<form method="POST" 
     action="." 
     onsubmit="return confirm('Are you sure you want to delete all data?');">
     {% csrf_token %}
@@ -45,7 +44,9 @@
     <button class="button is-danger">Delete existing data</button>
 </form>
 
-<form method="POST" action="." enctype="multipart/form-data">
+<form method="POST" 
+    action="." 
+    enctype="multipart/form-data">
     {% csrf_token %}
 
     <div class="field">

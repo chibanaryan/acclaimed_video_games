@@ -48,40 +48,49 @@
         </dl>
         
     </div>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Publication</th>
-                <th>Year</th>
-                <th>List</th>
-                <th>Rank</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for membership in game.lists.all %}
-                <tr>
-                    <td>
-                        {% ifchanged membership.list.publisher %}
-                            {{ membership.list.publisher }}
-                        {% endifchanged %}
-                    </td>
-                    <td>
-                        {{ membership.list.year }}
-                    </td>
-                    <td>
-                        {% if membership.list.url %}
-                            <a href="{{ membership.list.url }}" target="_blank">
-                                {{ membership.list }}
-                            </a>
-                        {% else %}
-                            {{ membership.list }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {{ membership.rank }}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
+
+    {% for type, lists in list_groups %} 
+        {% if lists %}
+            <h2 class="title is-5">{{ type }}</h2>
+            <table class="table is-fullwidth">
+                <thead>
+                    <tr>
+                        <th style="width: 15em">Publication</th>
+                        <th style="width: 5em">Year</th>
+                        <th>List</th>
+                        <th style="width: 5em">Rank</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for membership in lists %}
+                        <tr data-list="{{ membership.list.id }}">
+                            <td>
+                                {% ifchanged membership.list.publisher %}
+                                    {{ membership.list.publisher }}
+                                {% endifchanged %}
+                            </td>
+                            <td>
+                                {{ membership.list.year }}
+                            </td>
+                            <td>
+                                {% if membership.list.url %}
+                                    <a href="{{ membership.list.url }}" target="_blank">
+                                        {{ membership.list }}
+                                    </a>
+                                {% else %}
+                                    {{ membership.list }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ membership.rank }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endfor %}
+
+
     </table>
 {% endblock %}

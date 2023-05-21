@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from . import constants
 
 
 class Snippet(models.Model):
@@ -81,7 +82,7 @@ class Game(models.Model):
         blank=True,
         related_name='games')
     modified = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['rank']
 
@@ -103,10 +104,6 @@ class List(models.Model):
     """
     A list published by a critic or publication
     """
-    TYPES = [
-        ('M', 'Main'),
-        ('E', 'End of year'),
-    ]
     publisher = models.ForeignKey(
         'Publication',
         null=True,
@@ -116,10 +113,14 @@ class List(models.Model):
     name = models.CharField(max_length=100)
     url = models.URLField(null=True, blank=True)
     year = models.PositiveSmallIntegerField()
-    type = models.CharField(max_length=1, choices=TYPES, default='M')
+    type = models.CharField(
+        max_length=1, 
+        choices=constants.LIST_TYPES, 
+        default=constants.LIST_EOY)
+    order = models.PositiveIntegerField(unique=True, null=True)
 
     class Meta:
-        ordering = ['type', 'name']
+        ordering = ['order', 'type', 'name']
         unique_together = ['publisher', 'name', 'year']
 
     def __str__(self) -> str:

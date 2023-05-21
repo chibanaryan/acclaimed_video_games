@@ -26,9 +26,10 @@
             </div>   
             <div class="select">
                 <select name="type" onchange="form.submit()">
-                    <option selected value="">All types</option>
-                    <option {% if selected_type == 'M' %}selected{% endif %} value="M">Main</option>
-                    <option {% if selected_type == 'E' %}selected{% endif %} value="E">End of year</option>
+                    <option selected value="">All list types</option>
+                    {% for code, label in list_types %}
+                        <option {% if selected_type == code %}selected{% endif %} value="{{ code }}">{{ label }}</option>
+                    {% endfor %}
                 </select>
             </div>   
         </form>
@@ -53,7 +54,7 @@
         </thead>
         <tbody>
             {% for list in list_list %}
-                <tr>
+                <tr data-list="{{ list.id }}">
                     <td>{{ list.publisher }}</td>
                     <td>{{ list.year }}</td>
                     <td>

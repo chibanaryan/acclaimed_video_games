@@ -1,6 +1,8 @@
 import csv
 from io import TextIOWrapper
 
+from django.db import connection
+
 from . import constants, models
 
 
@@ -39,10 +41,17 @@ def delete_existing_data():
         models.Game,
     ]
 
+    # Delete objects
     total = 0
     for model in models_to_delete:
         count, _ = model.objects.all().delete()
         total += count
+
+    # Reset id sequences
+    with connection.cursor() as cursor:
+        for model in models_to_delete:
+            cursor.execute(
+                f'ALTER SEQUENCE {model._meta.db_table}_id_seq RESTART WITH 1;')
 
     return (True, f'{total} objects deleted')
 
@@ -53,7 +62,8 @@ def import_lists(f):
     count = 0
     updated = 0
 
-    for publisher_name, year, type, name, url in rows:
+    for line_number, bits in enumerate(rows):
+        publisher_name, year, type, name, url = bits
         publisher, created = models.Publication.objects.get_or_create(
             name=publisher_name,
         )
@@ -62,6 +72,7 @@ def import_lists(f):
             publisher=publisher,
             year=year,
             name=name,
+            order=line_number + 1,
             defaults={
                 'url': url,
                 'type': type[0],
@@ -78,36 +89,28 @@ def import_lists(f):
 
 def import_listmemberships(f):
 
-    count = 0
-    updated = 0
+    list_map = {x.order: x for x in models.List.objects.all()}
+    memberships = []
 
-    for rank, line in enumerate(f):
+    for line_number, line in enumerate(f):
         bits = line.strip().split('\t')
-        game = models.Game.objects.get(rank=rank + 1)
+        game = models.Game.objects.get(rank=line_number + 1)
 
         for bit in bits:
             list_id, position = [int(x) for x in bit.split(':')]
 
-            source_list = None
-            try:
-                source_list = models.List.objects.get(id=list_id + 1)
-            except models.List.DoesNotExist:
+            source_list = list_map.get(list_id + 1)
+            if not source_list:
                 continue
 
-            obj, created = models.ListMembership.objects.update_or_create(
-                list=source_list,
-                game=game,
-                defaults={
-                    'rank': position,
-                }
+            memberships.append(
+                models.ListMembership(
+                    list=source_list, game=game, rank=position)
             )
 
-            if created:
-                count += 1
-            else:
-                updated += 1
+    objects = models.ListMembership.objects.bulk_create(memberships)
 
-    return (True, f'List memberships: {count} created, {updated} updated')
+    return (True, f'List memberships: {len(objects)} created')
 
 
 def import_games(f):
