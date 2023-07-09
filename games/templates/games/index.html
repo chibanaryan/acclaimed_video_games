@@ -1,16 +1,20 @@
 {% extends 'games/base.html' %}
 
+{% load static %}
 {% load games_tags %}
 
 {% block content %}
 <div class="block">
-    <h1 class="title is-1">Acclaimed Video Games</h1>
+    <!-- <h1 class="title is-1">Acclaimed Video Games</h1> -->
     <div class="columns">
+        <div class="column py-0">
+            <img src="{% static 'games/avg_logo.png' %}">
+        </div> 
         <div class="column">
             <p class="is-size-4">
                 {% snippet 'front-page' %}
             </p>
-            <h3 class="title is-3 mt-5">Current Top 10</h3>
+            <h3 class="title is-size-4 mt-5">Current Top 10</h3>
             <table class="table">
                 <thead>
                     <tr>
@@ -37,7 +41,6 @@
                 Last update: {{ last_update | date:"dS M Y" }}
             </p>
         </div>
-        <div class="column">
-    </div>
+    </div>  
 </div>
 {% endblock %}

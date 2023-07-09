@@ -8,14 +8,22 @@
             display: inline;
             margin-block: 0;
         }
+
+        .is-selected,
+        .is-selected a {
+            background-color: #00d1b2;
+            color: #fff;
+        }
+        .columns.is-mobile>.column.is-four-fifths {
+            width: 90%;
+        }
     </style>
 {% endblock %}
 
 {% block content %}
-    <h1 class="title">Top 500 Games</h1>
+    <h1 class="title is-size-4">Top 500 Games</h1>
     <h2 class="subtitle">{{ offset }} to {{ limit }} of {{ total }} results</h2> 
-
-    <div class="field is-grouped">  
+    <div class="field is-grouped is-grouped-multiline">  
         <form action="." class="control" >
             <div class="select">
                 <select name="year" onchange="form.submit()">
@@ -65,55 +73,67 @@
         {% endif %}
     </div>
 
-    <table class="table is-fullwidth">
-        <thead>
-            <tr>
+    <div class="columns is-mobile game-header has-text-weight-bold mt-1 is-size-6">
+        <div class="column">
+            Rank
+        </div>
+        <div class="column is-four-fifths">
+            Game
+        </div>
+    </div>
+
+    {% for game in game_list %}
+        <div class="columns is-mobile game-row {% if highlight == game.id %}is-selected{% endif %}">
+            <div class="column">
                 {% if show_search_rank %}
-                    <th>Rank</th>
+                {{ forloop.counter }}<br>
+                {% else %} 
+                {{ game.rank }} 
                 {% endif %}
-                <th>All Time Rank</th>
-                <th>Name</th>
-                <th>Developers</th>
-                <th>Platforms</th>
-                <th>Year of Release</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for game in game_list %}
-                <tr {% if highlight == game.id %}class="is-selected"{% endif %}>
+            </div>
+            <div class="column is-four-fifths">
+                <a href="{% url 'game-detail' game.pk %}" class="game-name has-text-weight-medium is-size-6 mb-3">
+                    {{ game.name }}
+                </a>
+                <div class="columns ">
                     {% if show_search_rank %}
-                        <td>
-                            {{ forloop.counter }}
-                        </td>
+                        <div class="column py-0"> 
+                            <label class="has-text-weight-medium is-size-6" style="white-space: nowrap">All-time rank:</label>
+                            <a href="{% url 'games-list' %}?highlight={{ game.id }}" class="is-size-6">
+                                {{ game.rank }}
+                            </a>    
+                        </div>
                     {% endif %}
-                    <td>{{ game.rank }}</td>
-                    <td>
-                        <a href="{% url 'game-detail' game.pk %}">
-                            {{ game.name }}
-                        </a>
-                    </td>
-                    <td>
-                        {% for developer in game.developers.all %}
-                            <a href="{% url 'developer-alias-redirect' developer.pk %}">
-                                {{ developer.name }}
-                            </a>
-                            {% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    </td>
-                    <td>
+                    <div class="column py-0">
+                        {% with game.developers.all as developers %}
+                            <label class="has-text-weight-medium is-size-6">Developer{{ developers.count|pluralize}}:</label>
+                            {% for developer in developers %}
+                                <a href="{% url 'developer-alias-redirect' developer.pk %}" class="is-size-6">
+                                    {{ developer.name }}
+                                </a>
+                                {% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <div class="column py-0">
+                        <label class="has-text-weight-medium is-size-6">Platform:</label>
                         {% for platform in game.platforms.all %} 
-                            <a href="?platform={{ platform.code }}" title="{{ platform.name }}">
+                            <a href="?platform={{ platform.code }}" title="{{ platform.name }}" class="is-size-6">
                                 {{ platform.code }}
-                            </a>       
-                            {% if not forloop.last %},{% endif %}
+                            </a>{% if not forloop.last %},{% endif %}
                         {% endfor %}
-                    </td>
-                    <td>
-                        <a href="?year={{ game.year_of_release }}">{{ game.year_of_release }}</a>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% include 'games/_pagination.html' %}
+                    </div>
+                    <div class="column pt-0">
+                        <label class="has-text-weight-medium is-size-6">Year:</label>
+                        <a href="?year={{ game.year_of_release }}" class="is-size-6">{{ game.year_of_release }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="my-6">
+        {% include 'games/_pagination.html' %}
+    </div>
+
 {% endblock %}

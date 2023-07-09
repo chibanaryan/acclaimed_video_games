@@ -1,4 +1,3 @@
-
 footer {
     min-height: 15em;
     background-color: #444;
@@ -33,4 +32,50 @@ footer {
     left: 43%;
     right: 43%;
     z-index: 100;
+}
+.game-name {
+    display: inline-block;
+}
+.game-row {
+    border-bottom: 1px solid #dbdbdb;
+}
+.game-header {
+    border-bottom: 1px solid #dbdbdb;
+    color: #363636;
+}
+
+/* Dark theme changes */
+.navbar {
+    border: None;
+    background-color: transparent;
+}
+
+.table {
+    background-color: transparent;
+}
+
+.game-name {
+    display: inline-block;
+}
+
+.game-row {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+.game-header {
+    border-bottom: 1px solid #4a4a4a;
+    color: #fff;
+}
+
+header,
+footer {
+    background-color: #131313;
+}
+
+header {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+footer {
+    border-top: 1px solid #4a4a4a;
 }

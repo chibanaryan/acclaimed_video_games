@@ -2,36 +2,49 @@
 
 {% block title %} - Lists{% endblock %}
 
+{% block extrahead %} 
+    <style>
+        .field.is-grouped.is-grouped-multiline .control {
+            margin-bottom: 0.75rem;
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
-    <h1 class="title">Source Lists</h1>
+    <h1 class="title is-size-4">Source Lists</h1>
 
-    <div class="field is-grouped">  
-        <form action="." class="control" >
-            <div class="select">
-                <select name="publisher" onchange="form.submit()">
-                    <option selected value="">All publishers</option>
-                    {% for publisher in publishers %}
-                        <option {% if publisher.id == selected_publisher %}selected{% endif %} value="{{ publisher.id }}">{{ publisher }}</option>
-                    {% endfor %}
-                </select>
-            </div>   
-            <div class="select">
-                <select name="year" onchange="form.submit()">
-                    <option selected value="">All years</option>
-                    {% for year in years %}
-                        <option {% if year == selected_year %}selected{% endif %} >{{ year }}</option>
-                    {% endfor %}
-                </select>
-            </div>   
-            <div class="select">
-                <select name="type" onchange="form.submit()">
-                    <option selected value="">All list types</option>
-                    {% for code, label in list_types %}
-                        <option {% if selected_type == code %}selected{% endif %} value="{{ code }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>   
+    <div class="field is-grouped is-grouped-multiline">  
+        <form action=".">
+            <div class="control">
+                <div class="select">
+                    <select name="publisher" onchange="form.submit()">
+                        <option selected value="">All publishers</option>
+                        {% for publisher in publishers %}
+                            <option {% if publisher.id == selected_publisher %}selected{% endif %} value="{{ publisher.id }}">{{ publisher }}</option>
+                        {% endfor %}
+                    </select>
+                </div>  
+            </div> 
+            <div class="control">
+                <div class="select">
+                    <select name="year" onchange="form.submit()">
+                        <option selected value="">All years</option>
+                        {% for year in years %}
+                            <option {% if year == selected_year %}selected{% endif %} >{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>   
+            </div>
+            <div class="control">
+                <div class="select">
+                    <select name="type" onchange="form.submit()">
+                        <option selected value="">All list types</option>
+                        {% for code, label in list_types %}
+                            <option {% if selected_type == code %}selected{% endif %} value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>   
+            </div>
         </form>
         {% if is_filtered %}
             <a class="button" href="{% url 'list-list' %}">
