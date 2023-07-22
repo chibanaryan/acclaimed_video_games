@@ -9,7 +9,7 @@ class DeveloperAliasInlineAdmin(admin.TabularInline):
 
 @admin.register(models.Platform)
 class PlatformAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['name', 'code']
 
 
 @admin.register(models.Developer)

@@ -122,6 +122,24 @@ class GameListView(ListView):
         if args.get('highlight'):
             context['highlight'] = int(args.get('highlight'))
 
+        # Build extra_title
+        if args:
+            extras = []
+            for k, v in args.items():
+                if k == 'decade':
+                    extras.append(f'{v}s')
+                elif k == 'q':
+                    extras.append(f'"{v}"')
+                elif k == 'platform':
+                    platform = models.Platform.objects.get(code=v)
+                    extras.append(platform.name)
+                else:
+                    extras.append(v)
+
+            context['title'] = ','.join(extras) 
+        else:
+            context['title'] = 'Top 500'
+
         return context
 
 

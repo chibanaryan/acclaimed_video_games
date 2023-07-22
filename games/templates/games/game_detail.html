@@ -1,11 +1,10 @@
 {% extends 'games/base.html' %}
 
-{% block title %} - Game - {{ game }}{% endblock %}
+{% block title %}{{ game }} |{% endblock %}
 
 {% block content %}
     <h1 class="title">{{ game }}</h1>
     <div class="block">
-
         <dl class="detail">
             <dt>All time rank:</dt>
             <dd>
@@ -46,51 +45,82 @@
             <dt>Year of release:</dt>
             <dd>{{ game.year_of_release }}</dd>
         </dl>
-        
     </div>
 
-    {% for type, lists in list_groups %} 
-        {% if lists %}
-            <h2 class="title is-5">{{ type }}</h2>
-            <table class="table is-fullwidth">
-                <thead>
-                    <tr>
-                        <th style="width: 15em">Publication</th>
-                        <th style="width: 5em">Year</th>
-                        <th>List</th>
-                        <th style="width: 5em">Rank</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for membership in lists %}
-                        <tr data-list="{{ membership.list.id }}">
-                            <td>
-                                {% ifchanged membership.list.publisher %}
-                                    {{ membership.list.publisher }}
-                                {% endifchanged %}
-                            </td>
-                            <td>
-                                {{ membership.list.year }}
-                            </td>
-                            <td>
-                                {% if membership.list.url %}
-                                    <a href="{{ membership.list.url }}" target="_blank">
-                                        {{ membership.list }}
-                                    </a>
-                                {% else %}
-                                    {{ membership.list }}
-                                {% endif %}
-                            </td>
-                            <td>
-                                {{ membership.rank }}
-                            </td>
+    <div class="is-hidden-mobile">
+        {% for type, lists in list_groups %}
+            {% if lists %}
+                <h2 class="title is-5">{{ type }}</h2>
+                <table class="table is-fullwidth">
+                    <thead>
+                        <tr>
+                            <th style="width: 15em">Publication</th>
+                            <th>List</th>
+                            <th style="width: 5em">Year</th>
+                            <th style="width: 5em">Rank</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-    {% endfor %}
+                    </thead>
+                    <tbody>
+                        {% for membership in lists %}
+                            <tr data-list="{{ membership.list.id }}">
+                                <td>
+                                    {% ifchanged membership.list.publisher %}
+                                        {{ membership.list.publisher }}
+                                    {% endifchanged %}
+                                </td>
+                                <td>
+                                    {% if membership.list.url %}
+                                        <a href="{{ membership.list.url }}" target="_blank">
+                                            {{ membership.list }}
+                                        </a>
+                                    {% else %}
+                                        {{ membership.list }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ membership.list.year }}
+                                </td>
+                                <td>
+                                    {{ membership.rank }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endfor %}
+    </div>
 
+    <div class="is-hidden-tablet">
+        {% for type, lists in list_groups %} 
+            <h2 class="title is-5">{{ type }}</h2>
+            {% if lists %}
+                {% for membership in lists %}
+                    <div class="is-mobile game-row mb-3 pb-3 {% if highlight == game.id %}is-selected{% endif %}">
+                        <div class="has-text-weight-medium is-size-6">
+                            {{ membership.list.publisher }}
+                        </div>  
+                        <div>
+                            {% if membership.list.url %}
+                                <a href="{{ membership.list.url }}" target="_blank">
+                                    {{ membership.list }}
+                                </a>
+                            {% else %}
+                                {{ membership.list }}
+                            {% endif %}
+                        </div>
+                        <div class="py-0">
+                            <label class="has-text-weight-medium is-size-6">Rank:</label> 
+                            {{ membership.rank }}
+                        </div>
+                        <div class="pt-0">
+                            <label class="has-text-weight-medium is-size-6">Year:</label> 
+                            {{ membership.list.year }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </div>
 
-    </table>
 {% endblock %}
