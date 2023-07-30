@@ -113,3 +113,6 @@ MESSAGE_TAGS = {
     messages.INFO: "is-primary",
     messages.ERROR: "is-danger",
 }
+
+IGDB_CLIENT_ID = env('IGDB_CLIENT_ID', default='XXX')
+IGDB_CLIENT_SECRET = env('IGDB_CLIENT_SECRET', default='XXX')

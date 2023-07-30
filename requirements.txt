@@ -6,4 +6,5 @@ gunicorn
 ipython
 markdown
 psycopg2
+requests
 whitenoise

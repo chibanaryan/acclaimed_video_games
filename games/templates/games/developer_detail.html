@@ -17,10 +17,15 @@
         <tbody>
             {% for game in games %}
                 <tr>
-                    <td> 
+                       
+                    <td>
                         <a href="{% url 'game-detail' game.pk %}">
                             {{ game.name }}
                         </a>
+                        {% if game.thumbnail %}
+                            <br>
+                            <img class="my-3" src="{{ game.thumbnail }}" >
+                        {% endif %}
                     </td>
                     <td>{{ game.year_of_release }}</td>
                     <td>{{ game.rank }}</td>

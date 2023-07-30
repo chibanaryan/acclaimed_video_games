@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
-from . import constants
-
+from . import constants, igdb
 
 class Snippet(models.Model):
     """A reusable piece of text"""
@@ -82,12 +81,37 @@ class Game(models.Model):
         blank=True,
         related_name='games')
     modified = models.DateTimeField(auto_now=True)
+    igdb_id = models.IntegerField(null=True, blank=True, unique=True)
+    igdb_artwork_id = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        unique=True)
 
     class Meta:
         ordering = ['rank']
 
     def __str__(self) -> str:
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.igdb_id or not self.igdb_artwork_id:
+            data = igdb.api.get_game_info(self)
+            if data:
+                self.igdb_id = data['game_id']
+                self.igdb_artwork_id = data['artwork_id']
+
+        return super().save(*args, **kwargs)
+
+    @property
+    def thumbnail(self):
+        if self.igdb_artwork_id:
+            return f'https://images.igdb.com/igdb/image/upload/t_cover_small/{self.igdb_artwork_id}'
+
+    @property
+    def image(self):
+        if self.igdb_artwork_id:
+            return f'https://images.igdb.com/igdb/image/upload/t_cover_big/{self.igdb_artwork_id}'
 
 
 class Publication(models.Model):
@@ -114,8 +138,8 @@ class List(models.Model):
     url = models.URLField(null=True, blank=True)
     year = models.PositiveSmallIntegerField()
     type = models.CharField(
-        max_length=1, 
-        choices=constants.LIST_TYPES, 
+        max_length=1,
+        choices=constants.LIST_TYPES,
         default=constants.LIST_EOY)
     order = models.PositiveIntegerField(unique=True, null=True)
 
