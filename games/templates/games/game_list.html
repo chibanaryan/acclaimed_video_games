@@ -77,6 +77,9 @@
         <div class="column">
             Rank
         </div>
+        <div class="column is-hidden-mobile">
+            Artwork
+        </div>
         <div class="column is-four-fifths">
             Game
         </div>
@@ -91,10 +94,20 @@
                 {{ game.rank }} 
                 {% endif %}
             </div>
+            <div class="column is-hidden-mobile">
+                {% if game.thumbnail %}
+                    <img src="{{ game.thumbnail }}" >
+                {% endif %}
+            </div>
             <div class="column is-four-fifths">
                 <a href="{% url 'game-detail' game.pk %}" class="game-name has-text-weight-medium is-size-6 mb-3">
                     {{ game.name }}
                 </a>
+                <div class="mb-4 is-hidden-tablet">
+                    {% if game.thumbnail %}
+                        <img src="{{ game.thumbnail }}" >
+                    {% endif %}
+                </div>
                 <div class="columns ">
                     {% if show_search_rank %}
                         <div class="column py-0"> 
@@ -127,7 +140,7 @@
                         <label class="has-text-weight-medium is-size-6">Year:</label>
                         <a href="?year={{ game.year_of_release }}" class="is-size-6">{{ game.year_of_release }}</a>
                     </div>
-                </div>
+                </div>   
             </div>
         </div>
     {% endfor %}

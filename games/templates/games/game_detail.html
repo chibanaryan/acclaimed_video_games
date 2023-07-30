@@ -4,47 +4,52 @@
 
 {% block content %}
     <h1 class="title">{{ game }}</h1>
-    <div class="block">
-        <dl class="detail">
-            <dt>All time rank:</dt>
-            <dd>
-                <a href="{% url 'games-list' %}?highlight={{ game.id }}">
-                    {{ game.rank }}
-                </a>
-            </dd>
-            <dt>{{ game.year_of_release }} rank:</dt>
-            <dd>
-                <a href="{% url 'games-list' %}?year={{ game.year_of_release }}&highlight={{ game.id }}">
-                    {{ rank_for_year }}
-                </a>
-            </dd>
-            <dt>{{ decade }}s rank:</dt>
-            <dd>
-                <a href="{% url 'games-list' %}?decade={{ decade }}&highlight={{ game.id }}">
-                    {{ rank_for_decade }}
-                </a>
-            </dd>
-            <dt>Developers:</dt>
-            <dd>
-                {% for developer in game.developers.all %}
-                    <a href="{% url 'developer-alias-redirect' developer.pk %}">
-                        {{ developer.name }}
+    <div class="columns">
+        <div class="column">
+            <dl class="detail">
+                <dt>All time rank:</dt>
+                <dd>
+                    <a href="{% url 'games-list' %}?highlight={{ game.id }}">
+                        {{ game.rank }}
                     </a>
-                    {% if not forloop.last %},{% endif %}
-                {% endfor %}
-            </dd>
-            <dt>Platforms:</dt>
-            <dd>
-                {% for platform in game.platforms.all %} 
-                    <a href="{% url 'games-list' %}?platform={{ platform.code }}" title="{{ platform.name }}">
-                        {{ platform.code }}
+                </dd>
+                <dt>{{ game.year_of_release }} rank:</dt>
+                <dd>
+                    <a href="{% url 'games-list' %}?year={{ game.year_of_release }}&highlight={{ game.id }}">
+                        {{ rank_for_year }}
                     </a>
-                    {% if not forloop.last %},{% endif %}
-                {% endfor %}
-            </dd>
-            <dt>Year of release:</dt>
-            <dd>{{ game.year_of_release }}</dd>
-        </dl>
+                </dd>
+                <dt>{{ decade }}s rank:</dt>
+                <dd>
+                    <a href="{% url 'games-list' %}?decade={{ decade }}&highlight={{ game.id }}">
+                        {{ rank_for_decade }}
+                    </a>
+                </dd>
+                <dt>Developers:</dt>
+                <dd>
+                    {% for developer in game.developers.all %}
+                        <a href="{% url 'developer-alias-redirect' developer.pk %}">
+                            {{ developer.name }}
+                        </a>
+                        {% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                </dd>
+                <dt>Platforms:</dt>
+                <dd>
+                    {% for platform in game.platforms.all %} 
+                        <a href="{% url 'games-list' %}?platform={{ platform.code }}" title="{{ platform.name }}">
+                            {{ platform.code }}
+                        </a>
+                        {% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                </dd>
+                <dt>Year of release:</dt>
+                <dd>{{ game.year_of_release }}</dd>
+            </dl>
+        </div>
+        <div class="column">
+            <img src="{{ game.image }}">
+        </div>
     </div>
 
     <div class="is-hidden-mobile">
