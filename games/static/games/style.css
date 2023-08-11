@@ -79,3 +79,18 @@ header {
 footer {
     border-top: 1px solid #4a4a4a;
 }
+
+.game-row .rank {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-row .rank span{
+    font-family: Handjet, sans-serif;
+    font-size: 60px;
+    font-weight: 800;
+    text-shadow: -3px 3px 0px #5d5b5b;
+    color: #fff;
+}

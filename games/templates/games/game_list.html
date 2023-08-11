@@ -8,14 +8,9 @@
             display: inline;
             margin-block: 0;
         }
-
-        .is-selected,
-        .is-selected a {
-            background-color: #00d1b2;
-            color: #fff;
-        }
-        .columns.is-mobile>.column.is-four-fifths {
-            width: 90%;
+        .is-selected, .is-selected a {
+            background-color: #f4c21c;
+            color: black;
         }
     </style>
 {% endblock %}
@@ -87,14 +82,16 @@
 
     {% for game in game_list %}
         <div class="columns is-mobile game-row {% if highlight == game.id %}is-selected{% endif %}">
-            <div class="column">
-                {% if show_search_rank %}
-                {{ forloop.counter }}<br>
-                {% else %} 
-                {{ game.rank }} 
-                {% endif %}
+            <div class="column rank">
+                <span>
+                    {% if show_search_rank %}
+                        {{ forloop.counter }}<br>
+                    {% else %} 
+                        {{ game.rank }} 
+                    {% endif %}
+                </span>
             </div>
-            <div class="column is-hidden-mobile">               
+            <div class="column is-hidden-mobile thumbnail">               
                 {% if game.thumbnail %}
                     <a href="{% url 'game-detail' game.pk %}">
                         <img src="{{ game.thumbnail }}" >

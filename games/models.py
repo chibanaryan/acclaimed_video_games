@@ -1,6 +1,11 @@
+import logging
+
 from django.db import models
 from django.utils.text import slugify
+
 from . import constants, igdb
+
+logger = logging.getLogger(__name__)
 
 class Snippet(models.Model):
     """A reusable piece of text"""
@@ -70,7 +75,7 @@ class Game(models.Model):
     A video game
     """
     name = models.CharField(max_length=100)
-    rank = models.IntegerField(unique=True)
+    rank = models.IntegerField()
     year_of_release = models.PositiveSmallIntegerField()
     developers = models.ManyToManyField(
         'DeveloperAlias',
@@ -81,12 +86,11 @@ class Game(models.Model):
         blank=True,
         related_name='games')
     modified = models.DateTimeField(auto_now=True)
-    igdb_id = models.IntegerField(null=True, blank=True, unique=True)
+    igdb_id = models.IntegerField(null=True, blank=True)
     igdb_artwork_id = models.CharField(
         max_length=100,
         null=True,
-        blank=True,
-        unique=True)
+        blank=True)
 
     class Meta:
         ordering = ['rank']
@@ -96,10 +100,13 @@ class Game(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.igdb_id or not self.igdb_artwork_id:
-            data = igdb.api.get_game_info(self)
-            if data:
-                self.igdb_id = data['game_id']
-                self.igdb_artwork_id = data['artwork_id']
+            try:
+                data = igdb.api.get_game_info(self)
+                if data:
+                    self.igdb_id = data['game_id']
+                    self.igdb_artwork_id = data['artwork_id']
+            except Exception as e:
+                logger.error(e)
 
         return super().save(*args, **kwargs)
 

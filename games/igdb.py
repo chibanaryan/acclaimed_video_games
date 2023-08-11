@@ -25,7 +25,6 @@ class IgbdApi():
             return False
 
     def get_game_info(self, game):
-
         res = requests.post(
             'https://api.igdb.com/v4/games/',
             headers=self.headers,
