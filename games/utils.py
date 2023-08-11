@@ -23,10 +23,10 @@ def import_data(data):
             constants.TYPE_DEVELOPER: import_developers,
         }
 
-        #try:
-        return functions.get(import_type)(f)
-        #except Exception as e:
-        #    return (False, f"Could not process uploaded file: {e}")
+        try:
+            return functions.get(import_type)(f)
+        except Exception as e:
+            return (False, f"Could not process uploaded file: {e}")
 
 
 def delete_existing_data():

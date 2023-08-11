@@ -7,6 +7,7 @@ from . import constants, igdb
 
 logger = logging.getLogger(__name__)
 
+
 class Snippet(models.Model):
     """A reusable piece of text"""
     slug = models.SlugField(unique=True)
@@ -97,18 +98,21 @@ class Game(models.Model):
 
     def __str__(self) -> str:
         return self.name
-    
+
     def save(self, *args, **kwargs):
-        if not self.igdb_id or not self.igdb_artwork_id:
-            try:
-                data = igdb.api.get_game_info(self)
-                if data:
-                    self.igdb_id = data['game_id']
-                    self.igdb_artwork_id = data['artwork_id']
-            except Exception as e:
-                logger.error(e)
+        # if not self.igdb_id or not self.igdb_artwork_id:
+        #     self.get_igdb_data()
 
         return super().save(*args, **kwargs)
+
+    def get_igdb_data(self):
+        try:
+            data = igdb.api.get_game_info(self)
+            if data:
+                self.igdb_id = data['game_id']
+                self.igdb_artwork_id = data['artwork_id']
+        except Exception as e:
+            logger.error(e)
 
     @property
     def thumbnail(self):
