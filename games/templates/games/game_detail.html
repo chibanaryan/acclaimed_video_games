@@ -2,6 +2,14 @@
 
 {% block title %}{{ game }} |{% endblock %}
 
+{% block extrahead %} 
+    <style>
+        .description p {
+            margin-bottom: 1em;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
     <h1 class="title">{{ game }}</h1>
     <div class="columns">
@@ -48,8 +56,16 @@
             </dl>
         </div>
         <div class="column">
-            <img src="{{ game.image }}">
+            <figure>
+                <img src="{{ game.image }}">
+                <figcaption class="has-text-grey-dark">from igdb.com</figcaption>
+            </figure>
         </div>
+    </div>
+
+    <div class="description box">
+        {{ game.description|linebreaks }}
+        <small class="has-text-grey-dark">from IGDB.com</small>
     </div>
 
     <div class="is-hidden-mobile">

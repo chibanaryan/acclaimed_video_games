@@ -1,3 +1,4 @@
+from typing import Any
 from django.contrib import admin
 from . import models
 
@@ -25,7 +26,8 @@ class DeveloperAliasAdmin(admin.ModelAdmin):
 
 @admin.register(models.Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ['name', 'rank', 'year_of_release', 'igdb_id', 'igdb_artwork_id']
+    list_display = ['name', 'rank', 'year_of_release',
+                    'igdb_id', 'igdb_artwork_id']
     list_filter = ['year_of_release']
     search_fields = ['name']
     filter_horizontal = ['developers', 'platforms']

@@ -7,4 +7,5 @@ ipython
 markdown
 psycopg2
 requests
+sentry-sdk[django]
 whitenoise

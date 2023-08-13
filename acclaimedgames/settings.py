@@ -2,7 +2,9 @@
 from pathlib import Path
 
 import environ
+import sentry_sdk
 from django.contrib import messages
+from sentry_sdk.integrations.django import DjangoIntegration
 
 root = environ.Path(__file__) - 2
 env = environ.Env(
@@ -10,6 +12,13 @@ env = environ.Env(
 )
 environ.Env.read_env()
 
+sentry_sdk.init(
+    dsn="https://464839bc01a7d54f332ce808c6b6868b@o72598.ingest.sentry.io/4505695966789632",
+    integrations=[DjangoIntegration()],
+    send_default_pii=True,
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = env('DEBUG', default=False)

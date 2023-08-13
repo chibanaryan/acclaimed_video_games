@@ -4,7 +4,18 @@
 
 {% block content %}
     <h1 class="title">{{ developer }}</h1>
-    <h2 class="subtitle is-4 mt-5">{{ games.count }} Game{{ games.count| pluralize }}</h2>
+
+    {% if developer.other_aliases.exists %}
+        <h2>Including:</h2>
+        <ul>
+            {% for alias in developer.other_aliases %}
+                <li><em>{{ alias.name }}</em></li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2 class="subtitle is-4 mt-5">{{ games|length }} Game{{ games|length|pluralize }}</h2>
+
     <table class="table is-fullwidth">
         <thead>
             <tr>

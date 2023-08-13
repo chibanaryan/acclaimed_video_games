@@ -136,7 +136,7 @@ class GameListView(ListView):
                 else:
                     extras.append(v)
 
-            context['title'] = ','.join(extras) 
+            context['title'] = ','.join(extras)
         else:
             context['title'] = 'Top 500'
 
@@ -167,7 +167,8 @@ class GameDetailView(DetailView):
         context['rank_for_decade'] = decade_games.index(game) + 1
 
         context['list_groups'] = [
-            ('All Time Lists', game.lists.filter(list__type=constants.LIST_ALLTIME)),
+            ('All Time Lists', game.lists.filter(
+                list__type=constants.LIST_ALLTIME)),
             ('Other Lists', game.lists.filter(list__type=constants.LIST_OTHER)),
             ('End of Year Lists', game.lists.filter(list__type=constants.LIST_EOY)),
         ]
@@ -184,13 +185,18 @@ class DeveloperDetailView(DetailView):
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
-        context['games'] = models.Game.objects.filter(
+        games = models.Game.objects.filter(
             developers__developer=self.object,
         ).order_by(
             'year_of_release',
             'developers',
             'name',
         ).distinct()
+
+        # Remove duplicates
+        games = {x.id: x for x in games}.values()
+
+        context['games'] = games
 
         return context
 
@@ -296,7 +302,8 @@ class PublicationDetailView(DetailView):
         context = super().get_context_data(**kwargs)
 
         context['list_groups'] = [
-            ('All Time Lists', self.object.lists.filter(type=constants.LIST_ALLTIME)),
+            ('All Time Lists', self.object.lists.filter(
+                type=constants.LIST_ALLTIME)),
             ('Other Lists', self.object.lists.filter(type=constants.LIST_OTHER)),
             ('End of Year Lists', self.object.lists.filter(type=constants.LIST_EOY)),
         ]

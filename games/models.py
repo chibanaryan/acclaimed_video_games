@@ -48,6 +48,10 @@ class Developer(models.Model):
 
     def __str__(self) -> str:
         return self.name
+    
+    @property
+    def other_aliases(self) -> models.QuerySet:
+        return self.aliases.exclude(name=self.name)
 
 
 class DeveloperAlias(models.Model):
@@ -59,6 +63,7 @@ class DeveloperAlias(models.Model):
         on_delete=models.CASCADE,
         related_name='aliases')
     name = models.CharField(max_length=100, unique=True)
+    igdb_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -76,8 +81,9 @@ class Game(models.Model):
     A video game
     """
     name = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
     rank = models.IntegerField()
-    year_of_release = models.PositiveSmallIntegerField()
+    year_of_release = models.PositiveSmallIntegerField(null=True, blank=True)
     developers = models.ManyToManyField(
         'DeveloperAlias',
         blank=True,
@@ -100,19 +106,47 @@ class Game(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        # if not self.igdb_id or not self.igdb_artwork_id:
-        #     self.get_igdb_data()
-
+        self.get_igdb_data()
         return super().save(*args, **kwargs)
 
     def get_igdb_data(self):
-        try:
-            data = igdb.api.get_game_info(self)
-            if data:
-                self.igdb_id = data['game_id']
-                self.igdb_artwork_id = data['artwork_id']
-        except Exception as e:
-            logger.error(e)
+        if not self.igdb_id:
+            return
+
+        data = igdb.api.get_game_info_by_id(self.igdb_id)
+        self.igdb_artwork_id = data.get('cover')
+        self.year_of_release = data.get('year')
+        self.description = '\n\n'.join(
+            [x for x in [data.get('storyline'), data.get('summary')] if x])
+
+        developer_aliases = []
+        for d in data['developers']:
+
+            # This developer is a parent
+            if not d.get('parent'):
+                developer, created = Developer.objects.get_or_create(
+                    name=d['name'],
+                )
+
+            # This developer has a parent
+            else:
+                parent_name = d.get('parent').get('name')
+                if parent_name:
+                    developer, created = Developer.objects.get_or_create(
+                        name=parent_name
+                    )
+
+            developer_alias, created = DeveloperAlias.objects.get_or_create(
+                developer=developer,
+                name=d['name'],
+                defaults={
+                    'igdb_id': d['id'],
+                }
+            )
+
+            developer_aliases.append(developer_alias)
+
+        self.developers.set(developer_aliases)
 
     @property
     def thumbnail(self):
@@ -123,7 +157,7 @@ class Game(models.Model):
     def image(self):
         if self.igdb_artwork_id:
             return f'https://images.igdb.com/igdb/image/upload/t_cover_big/{self.igdb_artwork_id}'
-
+    
 
 class Publication(models.Model):
     """
