@@ -17,7 +17,9 @@
 
 {% block content %}
     <h1 class="title is-size-4">Top 500 Games</h1>
-    <h2 class="subtitle">{{ offset }} to {{ limit }} of {{ total }} results</h2> 
+
+    <h2 class="subtitle">{{ offset }} to {{ limit }}{% if is_filtered %} of {{ total }} results{% endif %}</h2> 
+
     <div class="field is-grouped is-grouped-multiline">  
         <form action="." class="control" >
             <div class="select">
@@ -78,94 +80,101 @@
         {% endif %}
     </div>
 
-    <div class="columns is-mobile game-header has-text-weight-bold mt-1 is-size-6">
-        <div class="column">
-            Rank
-        </div>
-        <div class="column is-hidden-mobile">
-            Cover
-        </div>
-        <div class="column is-four-fifths">
-            Game
-        </div>
-    </div>
-
-    {% for game in game_list %}
-        <div class="columns is-mobile game-row {% if highlight == game.id %}is-selected{% endif %}">
-            <div class="column rank">
-                <span>
-                    {% if show_search_rank %}
-                        {{ forloop.counter }}<br>
-                    {% else %} 
-                        {{ game.rank }} 
-                    {% endif %}
-                </span>
+    <div class="columns">
+        <div class="column is-two-thirds">
+            <div class="mt-5">
+                {% include 'games/_pagination.html' %}
             </div>
-            <div class="column is-hidden-mobile thumbnail">               
-                {% if game.thumbnail %}
-                    <a href="{% url 'game-detail' game.pk %}">
-                        <img src="{{ game.thumbnail }}" >
-                    </a>
-                {% endif %}         
-            </div>
-            <div class="column is-four-fifths">
-                <a href="{% url 'game-detail' game.pk %}" class="game-name has-text-weight-medium is-size-6 mb-3">
-                    {{ game.name }}
-                </a>
-                <div class="mb-4 is-hidden-tablet">
-                    {% if game.thumbnail %}
-                        <a href="{% url 'game-detail' game.pk %}">
-                            <img src="{{ game.thumbnail }}">
-                        </a>
-                    {% endif %}
+            <div class="columns is-mobile game-header has-text-weight-bold mt-1 is-size-6">
+                <div class="column">
+                    Rank
                 </div>
-                <div class="columns ">
-                    {% if show_search_rank %}
-                        <div class="column py-0"> 
-                            <label class="has-text-weight-medium is-size-6" style="white-space: nowrap">All-time rank:</label>
-                            <a href="{% url 'games-list' %}?highlight={{ game.id }}" class="is-size-6">
-                                {{ game.rank }}
-                            </a>    
-                        </div>
-                    {% endif %}
-                    <div class="column py-0">
-                        {% with game.developers.all as developers %}
-                            <label class="has-text-weight-medium is-size-6">Developer{{ developers.count|pluralize}}:</label>
-                            {% for developer in developers %}
-                                <a href="{% url 'developer-alias-redirect' developer.pk %}" class="is-size-6">
-                                    {{ developer.name }}
-                                </a>
-                                {% if not forloop.last %},{% endif %}
-                            {% endfor %}
-                        {% endwith %}
+                <div class="column">
+                    Game
+                </div>
+                <div class="column is-four-fifths">
+                </div>
+            </div>
+            {% for game in game_list %}
+                <div class="columns is-mobile game-row {% if highlight == game.id %}is-selected{% endif %}" id="game-{{ game.id}}">
+                    <div class="column rank">
+                        <span class="is-hidden-mobile large">
+                            {% if show_search_rank %}
+                                {{ forloop.counter }}<br>
+                            {% else %} 
+                                {{ game.rank }} 
+                            {% endif %}
+                        </span>
+                        <span class="is-hidden-tablet">
+                            {% if show_search_rank %}
+                                {{ forloop.counter }}<br>
+                            {% else %} 
+                                {{ game.rank }} 
+                            {% endif %}
+                        </span>
                     </div>
-                    <div class="column py-0">
-                        <label class="has-text-weight-medium is-size-6">Platform{{ game.platforms.all | pluralize }}:</label>
-                        {% for platform in game.platforms.all %} 
-                            <a href="?platform={{ platform.code }}" title="{{ platform.name }}" class="is-size-6">
-                                {{ platform.code }}
-                            </a>{% if not forloop.last %},{% endif %}
-                        {% endfor %}
+                    <div class="column thumbnail">               
+                        {% if game.thumbnail %}
+                            <a href="{% url 'game-detail' game.pk %}">
+                                <img src="{{ game.thumbnail }}" >
+                            </a>
+                        {% endif %}         
                     </div>
-                    <div class="column py-0">
-                        <label class="has-text-weight-medium is-size-6">Genre{{ game.genres.all | pluralize }}:</label>
-                        {% for genre in game.genres.all %} 
-                            <a href="?genre={{ genre.id }}" title="{{ genre.name }}" class="is-size-6">
-                                {{ genre.name }}
-                            </a>{% if not forloop.last %},{% endif %}
-                        {% endfor %}
+                    <div class="column is-four-fifths">
+                        <a href="{% url 'game-detail' game.pk %}" class="game-name has-text-weight-bold is-size-5 mb-3">
+                            {{ game.name }}
+                        </a>
+                        <div>
+                            {% if show_search_rank %}
+                                <div class="pb-0"> 
+                                    <label class="has-text-weight-medium is-size-6" style="white-space: nowrap">All-time rank:</label>
+                                    <a href="{% url 'games-list' %}?highlight={{ game.id }}" class="is-size-6">
+                                        {{ game.rank }}
+                                    </a>    
+                                </div>
+                            {% endif %}
+                            <div class="py-0">
+                                {% with game.developers.all as developers %}
+                                    <label class="has-text-weight-medium is-size-6">Developer{{ developers.count|pluralize}}:</label>
+                                    {% for developer in developers %}
+                                        <a href="{% url 'developer-alias-redirect' developer.pk %}" class="is-size-6">
+                                            {{ developer.name }}
+                                        </a>
+                                        {% if not forloop.last %},{% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                            <div class="py-0">
+                                <label class="has-text-weight-medium is-size-6">Platform{{ game.platforms.all | pluralize }}:</label>
+                                {% for platform in game.platforms.all %} 
+                                    <a href="?platform={{ platform.code }}" title="{{ platform.name }}" class="is-size-6">
+                                        {{ platform.code }}
+                                    </a>{% if not forloop.last %},{% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class=" py-0">
+                                <label class="has-text-weight-medium is-size-6">Genre{{ game.genres.all | pluralize }}:</label>
+                                {% for genre in game.genres.all %} 
+                                    <a href="?genre={{ genre.id }}" title="{{ genre.name }}" class="is-size-6">
+                                        {{ genre.name }}
+                                    </a>{% if not forloop.last %},{% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class=" pt-0">
+                                <label class="has-text-weight-medium is-size-6">Year:</label>
+                                <a href="?year={{ game.year_of_release }}" class="is-size-6">{{ game.year_of_release }}</a>
+                            </div>
+                        </div>   
                     </div>
-                    <div class="column pt-0">
-                        <label class="has-text-weight-medium is-size-6">Year:</label>
-                        <a href="?year={{ game.year_of_release }}" class="is-size-6">{{ game.year_of_release }}</a>
-                    </div>
-                </div>   
+                </div>
+            {% endfor %}
+            <div class="my-6">
+                {% include 'games/_pagination.html' %}
             </div>
         </div>
-    {% endfor %}
-
-    <div class="my-6">
-        {% include 'games/_pagination.html' %}
+        <div class="column">
+            <!-- Right sidebar -->
+        </div>
     </div>
 
 {% endblock %}

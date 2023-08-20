@@ -53,3 +53,8 @@ class PublicationAdmin(admin.ModelAdmin):
 @admin.register(models.Snippet)
 class SnippetAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(models.Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'date', 'active']

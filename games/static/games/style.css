@@ -43,6 +43,9 @@ footer {
     border-bottom: 1px solid #dbdbdb;
     color: #363636;
 }
+.game-row .thumbnail img {
+    max-width: inherit;
+}
 
 /* Dark theme changes */
 .navbar {
@@ -87,7 +90,7 @@ footer {
     justify-content: center;
 }
 
-.game-row .rank span{
+.game-row .rank .large {
     font-family: Handjet, sans-serif;
     font-size: 60px;
     font-weight: 800;

@@ -42,6 +42,8 @@ class IndexView(TemplateView):
         context['list_count'] = round_down(models.List.objects.count(), 50)
         context['publication_count'] = round_down(
             models.Publication.objects.count())
+        context['posts'] = models.Post.objects.filter(active=True)
+
         return context
 
 
@@ -116,18 +118,21 @@ class GameListView(ListView):
 
         args = self.request.GET.copy()
         args.pop('page', None)
-        context['is_filtered'] = args
         context['args'] = urlencode(args)
-        context['show_search_rank'] = args.get(
-            'year') or args.get('decade') or args.get('platform')
+        context['show_search_rank'] = args.get('year') or \
+            args.get('decade') or \
+            args.get('platform') or \
+            args.get('genre')
 
         if args.get('highlight'):
             context['highlight'] = int(args.get('highlight'))
 
         # Build extra_title
+        extras = []
         if args:
-            extras = []
             for k, v in args.items():
+                if not v:
+                    continue
                 if k == 'decade':
                     extras.append(f'{v}s')
                 elif k == 'q':
@@ -135,12 +140,17 @@ class GameListView(ListView):
                 elif k == 'platform':
                     platform = models.Platform.objects.get(code=v)
                     extras.append(platform.name)
+                elif k == 'genre':
+                    genre = models.Genre.objects.get(id=v)
+                    extras.append(genre.name)
                 else:
                     extras.append(v)
-
+        if extras:
             context['title'] = ','.join(extras)
         else:
             context['title'] = 'Top 500'
+
+        context['is_filtered'] = len(extras) > 0
 
         return context
 

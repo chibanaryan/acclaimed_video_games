@@ -5,7 +5,6 @@
 
 {% block content %}
 <div class="block">
-    <!-- <h1 class="title is-1">Acclaimed Video Games</h1> -->
     <div class="columns">
         <div class="column py-0">
             <img src="{% static 'games/avg_logo.png' %}">
@@ -29,7 +28,7 @@
                                 {{ game.rank }}
                             </td>
                             <td>
-                                <a href="{% url 'games-list' %}?highlight={{ game.id }}">
+                                <a href="{% url 'games-list' %}?highlight={{ game.id }}#game-{{ game.id }}">
                                     {{ game }}
                                 </a>
                             </td>
@@ -37,9 +36,23 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <p class="is-size-5">
+            <p class="has-text-grey-dark">
                 Last update: {{ last_update | date:"dS M Y" }}
             </p>
+            {% if posts %}
+                <div class="posts">
+                    <h3 class="title is-size-4 mt-5">Latest News</h3>
+                    {% for post in posts %}
+                        <div class="is-clearfix my-5 content box">
+                            {% if post.title %}
+                                <h4>{{ post.title }}</h4>
+                            {% endif %}
+                            {{ post.text|markdown|safe }}
+                            <div class="has-text-grey-dark is-pulled-right">{{ post.date|timesince }} ago</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
     </div>  
 </div>

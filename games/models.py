@@ -1,7 +1,7 @@
 import logging
 
 from django.db import models
-from django.utils.text import slugify
+from django.utils.text import Truncator, slugify
 
 from . import constants, igdb
 
@@ -117,9 +117,9 @@ class Game(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def save(self, *args, **kwargs):
-        self.get_igdb_data()
-        return super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.get_igdb_data()
+    #     return super().save(*args, **kwargs)
 
     def get_igdb_data(self):
         if not self.igdb_id:
@@ -130,7 +130,6 @@ class Game(models.Model):
         self.year_of_release = data.get('year')
         self.description = '\n\n'.join(
             [x for x in [data.get('storyline'), data.get('summary')] if x])
-        #self.genre = data.get('genre')
 
         developer_aliases = []
         for d in data['developers']:
@@ -227,3 +226,19 @@ class ListMembership(models.Model):
 
     def __str__(self) -> str:
         return f'{self.list} - {self.game} - {self.rank}'
+
+
+class Post(models.Model):
+    """
+    A blog-style news post
+    """
+    title = models.CharField(max_length=100, null=True, blank=True)
+    text = models.TextField()
+    date = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self) -> str:
+        return self.title or Truncator(self.text).words(10)
