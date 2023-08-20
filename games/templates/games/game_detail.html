@@ -53,6 +53,14 @@
                 </dd>
                 <dt>Year of release:</dt>
                 <dd>{{ game.year_of_release }}</dd>
+                <dt>Genres:</dt>
+                <dd>
+                    {% for genre in game.genres.all %}
+                        <a href="{% url 'games-list' %}?genre={{ genre.id }}" title="{{ genre.name }}">
+                            {{ genre }}
+                        </a>
+                    {% endfor %}
+                </dd>
             </dl>
         </div>
         <div class="column">

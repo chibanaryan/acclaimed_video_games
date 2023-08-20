@@ -9,9 +9,9 @@ class IgbdApi():
         self.client_id = client_id
         self.client_secret = client_secret
         self.headers = {}
-
         self.company_cache = {}
         self.game_cache = {}
+        self.genre_cache = {}
         self.get_auth_token()
 
     def get_auth_token(self):
@@ -54,6 +54,25 @@ class IgbdApi():
             return results[0]
         except:
             return
+        
+    def get_genre_by_id(self, genre_id: int):
+        if genre_id in self.genre_cache:
+            return self.genre_cache[genre_id]
+
+        res = requests.post(
+            'https://api.igdb.com/v4/genres/',
+            headers=self.headers,
+            data=f'where id={genre_id}; fields name;'
+        )
+
+        try:
+            results = res.json()
+            assert len(results) == 1
+            genre_name = results[0]['name']
+            self.genre_cache[genre_id] = genre_name
+            return genre_name
+        except:
+            return
 
     def get_game_info_by_id(self, game_id: int):
         if game_id in self.game_cache:
@@ -62,7 +81,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/games/',
             headers=self.headers,
-            data=f'where id={game_id}; fields cover,first_release_date,summary,storyline,involved_companies.*;'
+            data=f'where id={game_id}; fields cover,genres,first_release_date,summary,storyline,involved_companies.*;'
         )
 
         if res.status_code == 401:
@@ -127,9 +146,10 @@ class IgbdApi():
         game_data = {
             'cover': self.get_cover_by_id(data['cover']),
             'developers': developer_objs,
-            'year': datetime.fromtimestamp(data['first_release_date']).year,
-            'summary': data.get('summary'),
+            'genres': [self.get_genre_by_id(x) for x in data.get('genres', [])],
             'storyline': data.get('storyline'),
+            'summary': data.get('summary'),
+            'year': datetime.fromtimestamp(data['first_release_date']).year,
         }
 
         self.game_cache[game_id] = game_data

@@ -48,7 +48,7 @@ class Developer(models.Model):
 
     def __str__(self) -> str:
         return self.name
-    
+
     @property
     def other_aliases(self) -> models.QuerySet:
         return self.aliases.exclude(name=self.name)
@@ -76,11 +76,23 @@ class DeveloperAlias(models.Model):
             return self.name
 
 
+class Genre(models.Model):
+    """A video game genre"""
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Game(models.Model):
     """
     A video game
     """
     name = models.CharField(max_length=100)
+    genres = models.ManyToManyField('Genre')
     description = models.TextField(null=True, blank=True)
     rank = models.IntegerField()
     year_of_release = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -118,6 +130,7 @@ class Game(models.Model):
         self.year_of_release = data.get('year')
         self.description = '\n\n'.join(
             [x for x in [data.get('storyline'), data.get('summary')] if x])
+        #self.genre = data.get('genre')
 
         developer_aliases = []
         for d in data['developers']:
@@ -148,6 +161,13 @@ class Game(models.Model):
 
         self.developers.set(developer_aliases)
 
+        genres = []
+        for genre_name in data.get('genres'):
+            genre, created = Genre.objects.get_or_create(name=genre_name)
+            genres.append(genre)
+
+        self.genres.set(genres)
+
     @property
     def thumbnail(self):
         if self.igdb_artwork_id:
@@ -157,7 +177,7 @@ class Game(models.Model):
     def image(self):
         if self.igdb_artwork_id:
             return f'https://images.igdb.com/igdb/image/upload/t_cover_big/{self.igdb_artwork_id}'
-    
+
 
 class Publication(models.Model):
     """

@@ -30,7 +30,7 @@ class GameAdmin(admin.ModelAdmin):
                     'igdb_id', 'igdb_artwork_id']
     list_filter = ['year_of_release']
     search_fields = ['name']
-    filter_horizontal = ['developers', 'platforms']
+    filter_horizontal = ['developers', 'platforms', 'genres']
 
 
 @admin.register(models.List)

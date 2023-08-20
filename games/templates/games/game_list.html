@@ -50,6 +50,16 @@
             </div>
         </form>
         <form action="." class="control">
+            <div class="select">
+                <select name="genre" onchange="form.submit()">
+                    <option selected value="">Genres</option>
+                    {% for genre in genres %}
+                        <option {% if genre.id == selected_genre %}selected{% endif %} value="{{ genre.id }}">{{ genre.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+        <form action="." class="control">
             <div class="control has-icons-left">
                 <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
                 <span class="icon is-small is-left">
@@ -130,10 +140,18 @@
                         {% endwith %}
                     </div>
                     <div class="column py-0">
-                        <label class="has-text-weight-medium is-size-6">Platform:</label>
+                        <label class="has-text-weight-medium is-size-6">Platform{{ game.platforms.all | pluralize }}:</label>
                         {% for platform in game.platforms.all %} 
                             <a href="?platform={{ platform.code }}" title="{{ platform.name }}" class="is-size-6">
                                 {{ platform.code }}
+                            </a>{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="column py-0">
+                        <label class="has-text-weight-medium is-size-6">Genre{{ game.genres.all | pluralize }}:</label>
+                        {% for genre in game.genres.all %} 
+                            <a href="?genre={{ genre.id }}" title="{{ genre.name }}" class="is-size-6">
+                                {{ genre.name }}
                             </a>{% if not forloop.last %},{% endif %}
                         {% endfor %}
                     </div>

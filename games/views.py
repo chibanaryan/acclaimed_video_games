@@ -57,6 +57,7 @@ class GameListView(ListView):
                coerce=str, label=lambda x: f'{x}s'),
         Filter(param='q', field='name__icontains', coerce=str),
         Filter(param='platform', field='platforms__code', coerce=str),
+        Filter(param='genre', field='genres', coerce=int),
     ]
 
     def get_queryset(self) -> QuerySet:
@@ -93,6 +94,7 @@ class GameListView(ListView):
         context['decades'] = decades
 
         context['platforms'] = models.Platform.objects.all()
+        context['genres'] = models.Genre.objects.all()
 
         page_obj = context['page_obj']
         offset = (page_obj.number - 1) * page_obj.paginator.per_page + 1
