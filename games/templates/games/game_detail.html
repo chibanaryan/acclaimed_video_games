@@ -59,6 +59,7 @@
                         <a href="{% url 'games-list' %}?genre={{ genre.id }}" title="{{ genre.name }}">
                             {{ genre }}
                         </a>
+                        {% if not forloop.last %},{% endif %}
                     {% endfor %}
                 </dd>
             </dl>

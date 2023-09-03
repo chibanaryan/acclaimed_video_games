@@ -18,7 +18,7 @@
 {% block content %}
     <h1 class="title is-size-4">Top 500 Games</h1>
 
-    <h2 class="subtitle">{{ offset }} to {{ limit }}{% if is_filtered %} of {{ total }} results{% endif %}</h2> 
+    <h2 class="subtitle">{{ offset|add:"1" }} to {{ limit|add:"1" }}{% if is_filtered %} of {{ total }} results{% endif %}</h2> 
 
     <div class="field is-grouped is-grouped-multiline">  
         <form action="." class="control" >
@@ -100,14 +100,14 @@
                     <div class="column rank">
                         <span class="is-hidden-mobile large">
                             {% if show_search_rank %}
-                                {{ forloop.counter }}<br>
+                                {{ forloop.counter|add:offset }}<br>
                             {% else %} 
                                 {{ game.rank }} 
                             {% endif %}
                         </span>
                         <span class="is-hidden-tablet">
                             {% if show_search_rank %}
-                                {{ forloop.counter }}<br>
+                                {{ forloop.counter|add:offset }}<br>
                             {% else %} 
                                 {{ game.rank }} 
                             {% endif %}

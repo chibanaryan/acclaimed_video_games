@@ -64,6 +64,7 @@ class GameListView(ListView):
 
     def get_queryset(self) -> QuerySet:
         qs = models.Game.objects.prefetch_related(
+            'genres',
             'developers',
             'platforms',
         ).annotate(
@@ -99,7 +100,7 @@ class GameListView(ListView):
         context['genres'] = models.Genre.objects.all()
 
         page_obj = context['page_obj']
-        offset = (page_obj.number - 1) * page_obj.paginator.per_page + 1
+        offset = (page_obj.number - 1) * page_obj.paginator.per_page   
         limit = page_obj.paginator.per_page - 1
         total = page_obj.paginator.count
 
