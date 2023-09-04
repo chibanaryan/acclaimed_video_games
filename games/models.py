@@ -117,9 +117,9 @@ class Game(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    # def save(self, *args, **kwargs):
-    #     self.get_igdb_data()
-    #     return super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        self.get_igdb_data()
+        return super().save(*args, **kwargs)
 
     def get_igdb_data(self):
         if not self.igdb_id:

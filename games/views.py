@@ -149,7 +149,7 @@ class GameListView(ListView):
         if extras:
             context['title'] = ','.join(extras)
         else:
-            context['title'] = 'Top 500'
+            context['title'] = 'Top 750'
 
         context['is_filtered'] = len(extras) > 0
 

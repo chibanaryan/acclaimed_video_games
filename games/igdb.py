@@ -99,7 +99,7 @@ class IgbdApi():
         supporters = []
         publishers = []
 
-        for involved_company_dict in data['involved_companies']:
+        for involved_company_dict in data.get('involved_companies', []):
             company_id = involved_company_dict['company']
 
             if involved_company_dict['developer']:
@@ -129,6 +129,9 @@ class IgbdApi():
         developer_objs = []
         for company_id in company_ids:
             company_obj = self.get_company_by_id(company_id)
+            if not company_obj:
+                continue
+
             parent_id = company_obj.get('parent')
             if parent_id:
                 parent_obj = self.get_company_by_id(parent_id)
