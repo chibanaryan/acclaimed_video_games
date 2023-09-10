@@ -33,16 +33,16 @@ footer {
     right: 43%;
     z-index: 100;
 }
-.game-name {
-    display: inline-block;
-}
+
 .game-row {
     border-bottom: 1px solid #dbdbdb;
 }
+
 .game-header {
     border-bottom: 1px solid #dbdbdb;
     color: #363636;
 }
+
 .game-row .thumbnail img {
     max-width: inherit;
 }
@@ -93,6 +93,14 @@ footer {
 .game-row .rank .large {
     font-family: Handjet, sans-serif;
     font-size: 60px;
+    font-weight: 800;
+    text-shadow: -3px 3px 0px #5d5b5b;
+    color: #fff;
+}
+
+.game-row .rank .medium {
+    font-family: Handjet, sans-serif;
+    font-size: 30px;
     font-weight: 800;
     text-shadow: -3px 3px 0px #5d5b5b;
     color: #fff;

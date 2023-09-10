@@ -17,7 +17,7 @@ urlpatterns = [
     path('lists/', views.ListListView.as_view(), name='list-list'),
     path('publications/', views.PublicationListView.as_view(),
          name='publication-list'),
-    path('publications/<int:pk>/', views.PublicationDetailView.as_view(),
+    path('publications/<slug:slug>/', views.PublicationDetailView.as_view(),
          name='publication-detail'),
     path('games/<int:pk>/', views.GameDetailView.as_view(), name='game-detail'),
     path('import/', views.ImportView.as_view(), name='import'),

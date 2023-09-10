@@ -16,7 +16,7 @@
             {% for publication in publication_list %}
                 <tr>
                     <td>
-                        <a href="{% url 'publication-detail' publication.pk %}">{{ publication }}</a>
+                        <a href="{% url 'publication-detail' publication.slug %}">{{ publication }}</a>
                     </td>
                     <td>
                         {{ publication.lists.count }}

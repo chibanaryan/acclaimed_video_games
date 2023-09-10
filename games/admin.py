@@ -21,6 +21,7 @@ class DeveloperAdmin(admin.ModelAdmin):
 
 @admin.register(models.DeveloperAlias)
 class DeveloperAliasAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'igdb_id']
     search_fields = ['name']
 
 
@@ -31,6 +32,10 @@ class GameAdmin(admin.ModelAdmin):
     list_filter = ['year_of_release']
     search_fields = ['name']
     filter_horizontal = ['developers', 'platforms', 'genres']
+
+    def save_model(self, request, obj: models.Game, form, change):
+        obj.get_igdb_data()
+        obj.save()
 
 
 @admin.register(models.List)
@@ -47,7 +52,7 @@ class ListMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(models.Publication)
 class PublicationAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['__str__', 'slug']
 
 
 @admin.register(models.Snippet)

@@ -100,7 +100,7 @@ class GameListView(ListView):
         context['genres'] = models.Genre.objects.all()
 
         page_obj = context['page_obj']
-        offset = (page_obj.number - 1) * page_obj.paginator.per_page   
+        offset = (page_obj.number - 1) * page_obj.paginator.per_page
         limit = page_obj.paginator.per_page - 1
         total = page_obj.paginator.count
 
@@ -122,8 +122,7 @@ class GameListView(ListView):
         context['args'] = urlencode(args)
         context['show_search_rank'] = args.get('year') or \
             args.get('decade') or \
-            args.get('platform') or \
-            args.get('genre')
+            args.get('platform') 
 
         if args.get('highlight'):
             context['highlight'] = int(args.get('highlight'))
@@ -133,6 +132,8 @@ class GameListView(ListView):
         if args:
             for k, v in args.items():
                 if not v:
+                    continue
+                if k == 'highlight':
                     continue
                 if k == 'decade':
                     extras.append(f'{v}s')
@@ -162,22 +163,35 @@ class GameDetailView(DetailView):
     """
     model = models.Game
 
+    def get_object(self,*args, **kwargs):
+        """
+        Lookup object by its igdb_id 
+        """
+        queryset = self.get_queryset()
+        
+        pk = self.kwargs.get(self.pk_url_kwarg)
+        if pk is not None:
+            queryset = queryset.filter(igdb_id=pk)
+
+        return queryset.get()
+
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         game = self.object
 
-        base_year = int(game.year_of_release / 10) * 10
-        context['decade'] = base_year
+        if game.year_of_release:
+            base_year = int(game.year_of_release / 10) * 10
+            context['decade'] = base_year
 
-        year_games = list(models.Game.objects.filter(
-            year_of_release=game.year_of_release))
-        context['rank_for_year'] = year_games.index(game) + 1
+            year_games = list(models.Game.objects.filter(
+                year_of_release=game.year_of_release))
+            context['rank_for_year'] = year_games.index(game) + 1
 
-        top_year = base_year + 9
-        decade_games = list(models.Game.objects.filter(
-            year_of_release__gte=base_year, year_of_release__lte=top_year))
-        context['rank_for_decade'] = decade_games.index(game) + 1
+            top_year = base_year + 9
+            decade_games = list(models.Game.objects.filter(
+                year_of_release__gte=base_year, year_of_release__lte=top_year))
+            context['rank_for_decade'] = decade_games.index(game) + 1
 
         context['list_groups'] = [
             ('All Time Lists', game.lists.filter(
@@ -238,8 +252,7 @@ class DeveloperAliasRedirectView(RedirectView):
     """
 
     def get_redirect_url(self, *args, **kwargs) -> HttpResponse:
-
-        alias = get_object_or_404(models.DeveloperAlias, **kwargs)
+        alias = get_object_or_404(models.DeveloperAlias, igdb_id=kwargs['pk'])
         url = reverse('developer-detail', args=[alias.developer.pk])
 
         return url

@@ -4,7 +4,6 @@
 
 {% block content %}
     <h1 class="title">{{ developer }}</h1>
-
     {% if developer.other_aliases.exists %}
         <h2>Including:</h2>
         <ul>
@@ -13,43 +12,8 @@
             {% endfor %}
         </ul>
     {% endif %}
-
     <h2 class="subtitle is-4 mt-5">{{ games|length }} Game{{ games|length|pluralize }}</h2>
-
-    <table class="table is-fullwidth">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Year of Release</th>
-                <th>Rank</th>
-                <th>Developer</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for game in games %}
-                <tr>
-                       
-                    <td>
-                        <a href="{% url 'game-detail' game.pk %}">
-                            {{ game.name }}
-                        </a>
-                        {% if game.thumbnail %}
-                            <br>
-                            <img class="my-3" src="{{ game.thumbnail }}" >
-                        {% endif %}
-                    </td>
-                    <td>{{ game.year_of_release }}</td>
-                    <td>{{ game.rank }}</td>
-                    <td>
-                        {% for developer in game.developers.all %}
-                            <a href="{% url 'developer-alias-redirect' developer.pk %}">
-                                {{ developer.name }}
-                            </a>
-                            {% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% for game in games %}
+        {% include 'games/_game_row.html' with show_search_rank="True" %}
+    {% endfor %}
 {% endblock %}

@@ -42,6 +42,7 @@ class Developer(models.Model):
     A company or organization that produces video games
     """
     name = models.CharField(max_length=100)
+    igdb_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -117,9 +118,9 @@ class Game(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def save(self, *args, **kwargs):
-        self.get_igdb_data()
-        return super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.get_igdb_data()
+    #     return super().save(*args, **kwargs)
 
     def get_igdb_data(self):
         if not self.igdb_id:
@@ -136,19 +137,25 @@ class Game(models.Model):
 
             # This developer is a parent
             if not d.get('parent'):
-                developer, created = Developer.objects.get_or_create(
+                developer, created = Developer.objects.update_or_create(
                     name=d['name'],
+                    defaults={
+                        'igdb_id': d['id'],
+                    }
                 )
 
             # This developer has a parent
             else:
                 parent_name = d.get('parent').get('name')
                 if parent_name:
-                    developer, created = Developer.objects.get_or_create(
-                        name=parent_name
+                    developer, created = Developer.objects.update_or_create(
+                        name=parent_name,
+                        defaults={
+                            'igdb_id': d['id'],
+                        }
                     )
 
-            developer_alias, created = DeveloperAlias.objects.get_or_create(
+            developer_alias, created = DeveloperAlias.objects.update_or_create(
                 developer=developer,
                 name=d['name'],
                 defaults={
@@ -183,9 +190,15 @@ class Publication(models.Model):
     A magazine, website etc that publishes lists
     """
     name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField()
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        return super().save(*args, **kwargs)
 
 
 class List(models.Model):

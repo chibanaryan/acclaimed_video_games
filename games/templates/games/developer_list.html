@@ -15,7 +15,7 @@
             {% for developer in developeralias_list %}
                 <tr>
                     <td>
-                        <a href="{% url 'developer-alias-redirect' developer.pk %}">
+                        <a href="{% url 'developer-alias-redirect' developer.igdb_id %}">
                             {{ developer }}
                         </a>
                     </td>
