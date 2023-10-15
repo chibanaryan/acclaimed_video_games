@@ -18,7 +18,7 @@
 {% block content %}
     <h1 class="title is-size-4">Top 750 Games</h1>
 
-    <h2 class="subtitle">{{ offset|add:"1" }} to {{ limit|add:"1" }}{% if is_filtered %} of {{ total }} results{% endif %}</h2> 
+    <h2 class="subtitle">{{ subtitle }}</h2> 
 
     <div class="field is-grouped is-grouped-multiline">  
         <form action="." class="control" >
@@ -82,21 +82,25 @@
 
     <div class="columns">
         <div class="column is-two-thirds">
-
-            <div class="mt-5">
-                {% include 'games/_pagination.html' %}
-            </div>
-
+            {% if show_pagination %}
+                <div class="mt-5">
+                    {% include 'games/_pagination.html' %}
+                </div>
+            {% endif %}
             <div class="mt-5">
                 {% for game in game_list %}
                     {% include 'games/_game_row.html' with show_rank="True" %}
+                {% empty %}
+                    <p class="is-size-3">
+                        No results found
+                    </p>
                 {% endfor %}
             </div>
-
-            <div class="my-6">
-                {% include 'games/_pagination.html' %}
-            </div>
-            
+            {% if show_pagination %}
+                <div class="my-6">
+                    {% include 'games/_pagination.html' %}
+                </div>
+            {% endif %}
         </div>
         <div class="column">
             <!-- Right sidebar -->

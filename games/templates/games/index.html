@@ -12,7 +12,7 @@
                 {% snippet 'front-page' %}
             </p>
             <h3 class="title is-size-4 mt-5">Current Top 10</h3>
-            <table class="table">
+            <table class="table is-fullwidth">
                 <thead>
                     <tr>
                         <th>Rank</th>
@@ -26,7 +26,7 @@
                                 {{ game.rank }}
                             </td>
                             <td>
-                                <a href="{% url 'games-list' %}?highlight={{ game.id }}#game-{{ game.id }}">
+                                <a href="{% url 'game-detail' game.igdb_id %}">
                                     {{ game }}
                                 </a>
                             </td>
@@ -34,11 +34,12 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div> 
-        <div class="column">
-            <p class="has-text-grey-dark">
+            <a href="{% url 'games-list' %}" class="button">See the full list&hellip;</a>
+            <p class="has-text-grey-dark mt-2">
                 Last update: {{ last_update | date:"dS M Y" }}
             </p>
+        </div> 
+        <div class="column">
             {% if posts %}
                 <div class="posts">
                     <h3 class="title is-size-4 mt-5">Latest News</h3>

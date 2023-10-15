@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import CharField, Count, Min, QuerySet, Value
+from django.db.models import CharField, Count, Min, QuerySet, Value, Q
 from django.db.models.functions import Cast, Concat, Left, Lower
 from django.forms import Form
 from django.http import HttpResponse
@@ -16,7 +16,7 @@ from django.views.generic import (DetailView, FormView, ListView, RedirectView,
 
 from games.forms import ImportForm
 
-from . import models, utils, constants
+from . import constants, models, utils
 
 
 @dataclass
@@ -57,7 +57,7 @@ class GameListView(ListView):
         Filter(param='year', field='year_of_release', coerce=int),
         Filter(param='decade', field='decade',
                coerce=str, label=lambda x: f'{x}s'),
-        Filter(param='q', field='name__icontains', coerce=str),
+        #Filter(param='q', field='name__search', coerce=str),
         Filter(param='platform', field='platforms__code', coerce=str),
         Filter(param='genre', field='genres', coerce=int),
     ]
@@ -76,8 +76,13 @@ class GameListView(ListView):
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)
             if param_val:
-                param_val = filter.coerce(param_val)
+                param_val = filter.coerce(param_val.strip())
                 qs = qs.filter(**{filter.field: param_val})
+
+        # Search queries
+        q = self.request.GET.get('q')
+        if q:
+            qs = qs.filter(Q(name__search=q) | Q(name__icontains=q))
 
         return qs
 
@@ -101,12 +106,19 @@ class GameListView(ListView):
 
         page_obj = context['page_obj']
         offset = (page_obj.number - 1) * page_obj.paginator.per_page
-        limit = page_obj.paginator.per_page - 1
+        limit = page_obj.paginator.per_page - 1 + offset
         total = page_obj.paginator.count
 
-        context['total'] = total
+        if limit > total:
+            limit = total
+
         context['offset'] = offset
-        context['limit'] = min((total, limit + offset))
+        context['show_pagination'] = len(page_obj.paginator.page_range) > 1
+
+        if total:
+            context['subtitle'] = f'{offset + 1} to {limit} of {total} results'
+        else:
+            context['subtitle'] = '0 results'
 
         filter_labels = []
         for filter in self.filters:
@@ -233,6 +245,7 @@ class DeveloperListView(ListView):
     Developer list page
     """
     template_name = 'games/developer_list.html'
+    paginate_by = 100
 
     def get_queryset(self) -> QuerySet:
         qs = models.DeveloperAlias.objects.annotate(
@@ -243,8 +256,34 @@ class DeveloperListView(ListView):
             Lower('name'),
         )
 
-        return qs
+        # Search queries
+        q = self.request.GET.get('q')
+        if q:
+            qs = qs.filter(Q(name__search=q) | Q(name__icontains=q))
 
+        return qs
+    
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['is_filtered'] = self.request.GET.get('q')
+        
+        page_obj = context['page_obj']
+        offset = (page_obj.number - 1) * page_obj.paginator.per_page
+        limit = page_obj.paginator.per_page - 1 + offset
+        total = page_obj.paginator.count
+
+        if limit > total:
+            limit = total
+
+        context['show_pagination'] = len(page_obj.paginator.page_range) > 1
+        
+        if total:
+            context['subtitle'] = f'{offset + 1} to {limit} of {total} results'
+        else:
+            context['subtitle'] = '0 results'
+
+        return context
+    
 
 class DeveloperAliasRedirectView(RedirectView):
     """
