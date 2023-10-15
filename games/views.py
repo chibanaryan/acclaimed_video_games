@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -22,9 +22,22 @@ from . import constants, models, utils
 @dataclass
 class Filter:
     param: str
-    field: str
+    fields: List[str]
     coerce: type = str
     label: Callable[[str], str] = lambda x: x
+
+    def filter_queryset(self, qs, param_val):
+        if not param_val:
+            return qs
+
+        param_val = self.coerce(param_val.strip())
+        if self.fields:
+            query = Q()
+            for field in self.fields:
+                query |= Q(**{field: param_val})
+        qs = qs.filter(query)
+
+        return qs
 
 
 def round_down(num, base=10) -> int:
@@ -54,12 +67,13 @@ class GameListView(ListView):
     paginate_by = 100
 
     filters = [
-        Filter(param='year', field='year_of_release', coerce=int),
-        Filter(param='decade', field='decade',
+        Filter(param='year', fields=['year_of_release'], coerce=int),
+        Filter(param='decade', fields=['decade'],
                coerce=str, label=lambda x: f'{x}s'),
-        #Filter(param='q', field='name__search', coerce=str),
-        Filter(param='platform', field='platforms__code', coerce=str),
-        Filter(param='genre', field='genres', coerce=int),
+        Filter(param='q', fields=['name__search',
+               'name__icontains'], coerce=str),
+        Filter(param='platform', fields=['platforms__code'], coerce=str),
+        Filter(param='genre', fields=['genres'], coerce=int),
     ]
 
     def get_queryset(self) -> QuerySet:
@@ -75,14 +89,7 @@ class GameListView(ListView):
 
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)
-            if param_val:
-                param_val = filter.coerce(param_val.strip())
-                qs = qs.filter(**{filter.field: param_val})
-
-        # Search queries
-        q = self.request.GET.get('q')
-        if q:
-            qs = qs.filter(Q(name__search=q) | Q(name__icontains=q))
+            qs = filter.filter_queryset(qs, param_val)
 
         return qs
 
@@ -134,7 +141,7 @@ class GameListView(ListView):
         context['args'] = urlencode(args)
         context['show_search_rank'] = args.get('year') or \
             args.get('decade') or \
-            args.get('platform') 
+            args.get('platform')
 
         if args.get('highlight'):
             context['highlight'] = int(args.get('highlight'))
@@ -175,12 +182,12 @@ class GameDetailView(DetailView):
     """
     model = models.Game
 
-    def get_object(self,*args, **kwargs):
+    def get_object(self, *args, **kwargs):
         """
         Lookup object by its igdb_id 
         """
         queryset = self.get_queryset()
-        
+
         pk = self.kwargs.get(self.pk_url_kwarg)
         if pk is not None:
             queryset = queryset.filter(igdb_id=pk)
@@ -247,6 +254,13 @@ class DeveloperListView(ListView):
     template_name = 'games/developer_list.html'
     paginate_by = 100
 
+    filters = [
+        Filter(
+            param='q',
+            fields=['name__search', 'name__icontains'],
+            coerce=str),
+    ]
+
     def get_queryset(self) -> QuerySet:
         qs = models.DeveloperAlias.objects.annotate(
             games_count=Count('games'),
@@ -256,17 +270,16 @@ class DeveloperListView(ListView):
             Lower('name'),
         )
 
-        # Search queries
-        q = self.request.GET.get('q')
-        if q:
-            qs = qs.filter(Q(name__search=q) | Q(name__icontains=q))
+        for filter in self.filters:
+            param_val = self.request.GET.get(filter.param)
+            qs = filter.filter_queryset(qs, param_val)
 
         return qs
-    
+
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['is_filtered'] = self.request.GET.get('q')
-        
+
         page_obj = context['page_obj']
         offset = (page_obj.number - 1) * page_obj.paginator.per_page
         limit = page_obj.paginator.per_page - 1 + offset
@@ -276,14 +289,21 @@ class DeveloperListView(ListView):
             limit = total
 
         context['show_pagination'] = len(page_obj.paginator.page_range) > 1
-        
+
         if total:
             context['subtitle'] = f'{offset + 1} to {limit} of {total} results'
         else:
             context['subtitle'] = '0 results'
 
+        filter_labels = []
+        for filter in self.filters:
+            param_val = self.request.GET.get(filter.param)
+            if param_val:
+                context['selected_' + filter.param] = filter.coerce(param_val)
+                filter_labels.append(filter.label(param_val))
+
         return context
-    
+
 
 class DeveloperAliasRedirectView(RedirectView):
     """
@@ -303,9 +323,9 @@ class ListListView(ListView):
     """
     paginate_by = 100
     filters = [
-        Filter(param='publisher', field='publisher_id', coerce=int),
-        Filter(param='year', field='year', coerce=int),
-        Filter(param='type', field='type', coerce=str),
+        Filter(param='publisher', fields=['publisher_id'], coerce=int),
+        Filter(param='year', fields=['year'], coerce=int),
+        Filter(param='type', fields=['type'], coerce=str),
     ]
 
     def get_queryset(self) -> QuerySet:
@@ -319,9 +339,7 @@ class ListListView(ListView):
 
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)
-            if param_val:
-                param_val = filter.coerce(param_val)
-                qs = qs.filter(**{filter.field: param_val})
+            qs = filter.filter_queryset(qs, param_val)
 
         return qs
 
