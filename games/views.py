@@ -113,7 +113,7 @@ class GameListView(ListView):
 
         page_obj = context['page_obj']
         offset = (page_obj.number - 1) * page_obj.paginator.per_page
-        limit = page_obj.paginator.per_page - 1 + offset
+        limit = page_obj.paginator.per_page + offset
         total = page_obj.paginator.count
 
         if limit > total:
@@ -282,7 +282,7 @@ class DeveloperListView(ListView):
 
         page_obj = context['page_obj']
         offset = (page_obj.number - 1) * page_obj.paginator.per_page
-        limit = page_obj.paginator.per_page - 1 + offset
+        limit = page_obj.paginator.per_page + offset
         total = page_obj.paginator.count
 
         if limit > total:
