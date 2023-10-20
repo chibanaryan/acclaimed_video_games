@@ -70,8 +70,15 @@ class GameListView(ListView):
         Filter(param='year', fields=['year_of_release'], coerce=int),
         Filter(param='decade', fields=['decade'],
                coerce=str, label=lambda x: f'{x}s'),
-        Filter(param='q', fields=['name__search',
-               'name__icontains'], coerce=str),
+        Filter(
+            param='q',
+            fields=[
+                'name__search',
+                'name__icontains',
+                'name_normalized__search',
+                'name_normalized__icontains',
+            ],
+            coerce=str),
         Filter(param='platform', fields=['platforms__code'], coerce=str),
         Filter(param='genre', fields=['genres'], coerce=int),
     ]

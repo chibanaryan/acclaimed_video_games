@@ -9,4 +9,5 @@ psycopg2
 requests
 sentry-sdk
 sentry-sdk[django]
+unidecode
 whitenoise

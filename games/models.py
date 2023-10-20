@@ -2,6 +2,7 @@ import logging
 
 from django.db import models
 from django.utils.text import Truncator, slugify
+from unidecode import unidecode
 
 from . import constants, igdb
 
@@ -93,6 +94,7 @@ class Game(models.Model):
     A video game
     """
     name = models.CharField(max_length=100)
+    name_normalized = models.CharField(max_length=100, null=True, blank=True)
     genres = models.ManyToManyField('Genre')
     description = models.TextField(null=True, blank=True)
     rank = models.IntegerField()
@@ -118,9 +120,13 @@ class Game(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    # def save(self, *args, **kwargs):
-    #     self.get_igdb_data()
-    #     return super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        # Save the normalized version of the name 
+        normalized = unidecode(self.name)
+        if self.name != normalized:
+            self.name_normalized = normalized
+
+        super().save(*args, **kwargs)
 
     def get_igdb_data(self):
         if not self.igdb_id:
