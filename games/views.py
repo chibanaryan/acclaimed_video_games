@@ -222,7 +222,8 @@ class GameDetailView(DetailView):
         context['list_groups'] = [
             ('All Time Lists', game.lists.filter(
                 list__type=constants.LIST_ALLTIME)),
-            ('Other Lists', game.lists.filter(list__type=constants.LIST_OTHER)),
+            ('Miscellaneous Lists', game.lists.filter(
+                list__type=constants.LIST_MISC)),
             ('End of Year Lists', game.lists.filter(list__type=constants.LIST_EOY)),
         ]
 
@@ -394,7 +395,8 @@ class PublicationDetailView(DetailView):
         context['list_groups'] = [
             ('All Time Lists', self.object.lists.filter(
                 type=constants.LIST_ALLTIME)),
-            ('Other Lists', self.object.lists.filter(type=constants.LIST_OTHER)),
+            ('Miscellaneous Lists', self.object.lists.filter(
+                type=constants.LIST_MISC)),
             ('End of Year Lists', self.object.lists.filter(type=constants.LIST_EOY)),
         ]
 

@@ -13,11 +13,13 @@ TYPES = [
 ]
 
 LIST_EOY = 'E'
-LIST_OTHER = 'O'
+LIST_MISC = 'M'
 LIST_ALLTIME = 'A'
+LIST_DECADE = 'D'
 
 LIST_TYPES = [
     (LIST_ALLTIME, 'All time'),
-    (LIST_OTHER, 'Other'),
     (LIST_EOY, 'End of year'),
+    (LIST_MISC, 'Miscellaneous'),
+    (LIST_DECADE, 'Decade'),
 ]
