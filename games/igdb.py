@@ -62,8 +62,8 @@ class IgbdApi():
         assert len(results) == 1
         return results[0]['url'].split('/')[-1]
 
-    def _get_company_by_id(self, company_id: int):
-        if company_id in self.company_cache:
+    def _get_company_by_id(self, company_id: int, cache_results: True):
+        if cache_results and company_id in self.company_cache:
             return self.company_cache[company_id]
 
         res = requests.post(
@@ -80,8 +80,8 @@ class IgbdApi():
         except:
             return
 
-    def _get_genre_by_id(self, genre_id: int):
-        if genre_id in self.genre_cache:
+    def _get_genre_by_id(self, genre_id: int, cache_results: True):
+        if cache_results and genre_id in self.genre_cache:
             return self.genre_cache[genre_id]
 
         res = requests.post(
@@ -99,8 +99,8 @@ class IgbdApi():
         except:
             return
 
-    def _get_release_dates_by_id(self, game_id: int):
-        if game_id in self.release_dates:
+    def _get_release_dates_by_id(self, game_id: int, cache_results: True):
+        if cache_results and game_id in self.release_dates:
             return self.release_dates[game_id]
 
         res = requests.post(
@@ -112,11 +112,11 @@ class IgbdApi():
 
         self.release_dates[game_id] = dates
         return dates
-
-    def get_game_info_by_id(self, game_id: int):
-
+    
+    def get_game_info_by_id(self, game_id: int, cache_results: True):
+    
         # Check cache first
-        if game_id in self.game_cache:
+        if cache_results and game_id in self.game_cache:
             return self.game_cache[game_id]
 
         # Get game data from API
@@ -128,7 +128,7 @@ class IgbdApi():
 
         if res.status_code == 401:
             if self._get_auth_token():
-                return self.game_info_by_id(game_id)
+                return self.game_info_by_id(game_id, cache_results)
             else:
                 return
 
@@ -171,13 +171,13 @@ class IgbdApi():
 
         developer_objs = []
         for company_id in company_ids:
-            company_obj = self._get_company_by_id(company_id)
+            company_obj = self._get_company_by_id(company_id, cache_results)
             if not company_obj:
                 continue
 
             parent_id = company_obj.get('parent')
             if parent_id:
-                parent_obj = self._get_company_by_id(parent_id)
+                parent_obj = self._get_company_by_id(parent_id, cache_results)
             else:
                 parent_obj = None
 
@@ -192,12 +192,12 @@ class IgbdApi():
         # Get the full release date
         release_date = datetime.fromtimestamp(data['first_release_date'])
 
-        release_dates = self._get_release_dates_by_id(game_id)
+        release_dates = self._get_release_dates_by_id(game_id, cache_results)
         full_release_status = self.release_date_statuses['Full Release']
         full_release_dates = [
             datetime.fromtimestamp(x['date'])
             for x in release_dates
-            if x.get('status') == full_release_status
+            if x.get('status') == full_release_status and x.get('date')
         ]
         if full_release_dates:
             release_date = list(sorted(full_release_dates))[0]
@@ -205,7 +205,7 @@ class IgbdApi():
         game_data = {
             'cover': self._get_cover_by_id(data['cover']),
             'developers': developer_objs,
-            'genres': [self._get_genre_by_id(x) for x in data.get('genres', [])],
+            'genres': [self._get_genre_by_id(x, cache_results) for x in data.get('genres', [])],
             'storyline': data.get('storyline'),
             'summary': data.get('summary'),
             'year': release_date.year,
