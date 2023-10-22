@@ -11,6 +11,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         for game in Game.objects.all():
+            # if game.igdb_artwork_id:
+            #     continue
+            
             try:
                 game.get_igdb_data()
                 game.save()

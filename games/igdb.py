@@ -2,19 +2,35 @@ import requests
 from django.conf import settings
 from datetime import datetime
 
+game_status_map = {
+    0: 'released',
+    2: 'alpha',
+    3: 'beta',
+    4: 'early_access',
+    5: 'offline',
+    6: 'cancelled',
+    7: 'rumored',
+    8: 'delisted',
+}
+
 
 class IgbdApi():
 
     def __init__(self, client_id, client_secret):
         self.client_id = client_id
         self.client_secret = client_secret
+
         self.headers = {}
         self.company_cache = {}
         self.game_cache = {}
         self.genre_cache = {}
-        self.get_auth_token()
+        self.release_date_statuses = {}
+        self.release_dates = {}
 
-    def get_auth_token(self):
+        self._get_auth_token()
+        self._get_release_statuses()
+
+    def _get_auth_token(self):
         data = requests.post(
             f'https://id.twitch.tv/oauth2/token?client_id={self.client_id}&client_secret={self.client_secret}&grant_type=client_credentials'
         ).json()
@@ -28,7 +44,16 @@ class IgbdApi():
         else:
             return False
 
-    def get_cover_by_id(self, cover_id: int):
+    def _get_release_statuses(self):
+        results = requests.post(
+            'https://api.igdb.com/v4/release_date_statuses/',
+            headers=self.headers,
+            data=f'fields name;'
+        ).json()
+
+        self.release_date_statuses = {x['name']: x['id'] for x in results}
+
+    def _get_cover_by_id(self, cover_id: int):
         results = requests.post(
             'https://api.igdb.com/v4/covers/',
             headers=self.headers,
@@ -37,7 +62,7 @@ class IgbdApi():
         assert len(results) == 1
         return results[0]['url'].split('/')[-1]
 
-    def get_company_by_id(self, company_id: int):
+    def _get_company_by_id(self, company_id: int):
         if company_id in self.company_cache:
             return self.company_cache[company_id]
 
@@ -54,8 +79,8 @@ class IgbdApi():
             return results[0]
         except:
             return
-        
-    def get_genre_by_id(self, genre_id: int):
+
+    def _get_genre_by_id(self, genre_id: int):
         if genre_id in self.genre_cache:
             return self.genre_cache[genre_id]
 
@@ -74,10 +99,27 @@ class IgbdApi():
         except:
             return
 
+    def _get_release_dates_by_id(self, game_id: int):
+        if game_id in self.release_dates:
+            return self.release_dates[game_id]
+
+        res = requests.post(
+            'https://api.igdb.com/v4/release_dates/',
+            headers=self.headers,
+            data=f'where game={game_id}; fields date, status;'
+        )
+        dates = res.json()
+
+        self.release_dates[game_id] = dates
+        return dates
+
     def get_game_info_by_id(self, game_id: int):
+
+        # Check cache first
         if game_id in self.game_cache:
             return self.game_cache[game_id]
 
+        # Get game data from API
         res = requests.post(
             'https://api.igdb.com/v4/games/',
             headers=self.headers,
@@ -85,7 +127,7 @@ class IgbdApi():
         )
 
         if res.status_code == 401:
-            if self.get_auth_token():
+            if self._get_auth_token():
                 return self.game_info_by_id(game_id)
             else:
                 return
@@ -94,6 +136,7 @@ class IgbdApi():
         assert len(results) == 1
         data = results[0]
 
+        # Get developer information
         developers = []
         porters = []
         supporters = []
@@ -128,13 +171,13 @@ class IgbdApi():
 
         developer_objs = []
         for company_id in company_ids:
-            company_obj = self.get_company_by_id(company_id)
+            company_obj = self._get_company_by_id(company_id)
             if not company_obj:
                 continue
 
             parent_id = company_obj.get('parent')
             if parent_id:
-                parent_obj = self.get_company_by_id(parent_id)
+                parent_obj = self._get_company_by_id(parent_id)
             else:
                 parent_obj = None
 
@@ -146,13 +189,26 @@ class IgbdApi():
                 }
             )
 
+        # Get the full release date
+        release_date = datetime.fromtimestamp(data['first_release_date'])
+
+        release_dates = self._get_release_dates_by_id(game_id)
+        full_release_status = self.release_date_statuses['Full Release']
+        full_release_dates = [
+            datetime.fromtimestamp(x['date'])
+            for x in release_dates
+            if x.get('status') == full_release_status
+        ]
+        if full_release_dates:
+            release_date = list(sorted(full_release_dates))[0]
+
         game_data = {
-            'cover': self.get_cover_by_id(data['cover']),
+            'cover': self._get_cover_by_id(data['cover']),
             'developers': developer_objs,
-            'genres': [self.get_genre_by_id(x) for x in data.get('genres', [])],
+            'genres': [self._get_genre_by_id(x) for x in data.get('genres', [])],
             'storyline': data.get('storyline'),
             'summary': data.get('summary'),
-            'year': datetime.fromtimestamp(data['first_release_date']).year,
+            'year': release_date.year,
         }
 
         self.game_cache[game_id] = game_data
