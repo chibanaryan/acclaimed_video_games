@@ -39,7 +39,7 @@ class GameAdmin(admin.ModelAdmin):
     filter_horizontal = ['developers', 'platforms', 'genres']
 
     def save_model(self, request, obj: models.Game, form, change):
-        obj.get_igdb_data()
+        obj.get_igdb_data(cache_results=False)
         obj.save()
 
 

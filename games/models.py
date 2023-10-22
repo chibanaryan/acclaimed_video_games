@@ -128,11 +128,11 @@ class Game(models.Model):
 
         super().save(*args, **kwargs)
 
-    def get_igdb_data(self):
+    def get_igdb_data(self, cache_results=True):
         if not self.igdb_id:
             return
 
-        data = igdb.api.get_game_info_by_id(self.igdb_id)
+        data = igdb.api.get_game_info_by_id(self.igdb_id, cache_results)
         self.igdb_artwork_id = data.get('cover')
         self.year_of_release = data.get('year')
         self.description = '\n\n'.join(
