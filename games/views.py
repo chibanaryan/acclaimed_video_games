@@ -83,6 +83,14 @@ class GameListView(ListView):
         Filter(param='genre', fields=['genres'], coerce=int),
     ]
 
+    def get_normalized_args(self):
+        args = self.request.GET.copy()
+        if args.get('year') and args.get('decade'):
+            args.pop('decade')
+            
+        return args
+
+
     def get_queryset(self) -> QuerySet:
         qs = models.Game.objects.prefetch_related(
             'genres',
@@ -94,8 +102,10 @@ class GameListView(ListView):
             first_letter=Left('name', 1),
         )
 
+        args = self.get_normalized_args()
+
         for filter in self.filters:
-            param_val = self.request.GET.get(filter.param)
+            param_val = args.get(filter.param)
             qs = filter.filter_queryset(qs, param_val)
 
         return qs
@@ -134,49 +144,52 @@ class GameListView(ListView):
         else:
             context['subtitle'] = '0 results'
 
+        args = self.get_normalized_args()
         filter_labels = []
         for filter in self.filters:
-            param_val = self.request.GET.get(filter.param)
+            param_val = args.get(filter.param)
             if param_val:
                 context['selected_' + filter.param] = filter.coerce(param_val)
                 filter_labels.append(filter.label(param_val))
 
         context['filter_label'] = ','.join(filter_labels)
 
-        args = self.request.GET.copy()
         args.pop('page', None)
         context['args'] = urlencode(args)
-        context['show_search_rank'] = args.get('year') or \
-            args.get('decade') or \
-            args.get('platform')
 
         if args.get('highlight'):
             context['highlight'] = int(args.get('highlight'))
 
-        # Build extra_title
-        extras = []
+        # Build title 
+        extras = {}
         if args:
             for k, v in args.items():
+                val = v
+                key = k
                 if not v:
                     continue
                 if k == 'highlight':
                     continue
                 if k == 'decade':
-                    extras.append(f'{v}s')
+                    val = f'{v}s'
                 elif k == 'q':
-                    extras.append(f'"{v}"')
+                    key = 'text'
+                    val = f'"{v}"'
                 elif k == 'platform':
                     platform = models.Platform.objects.get(code=v)
-                    extras.append(platform.name)
+                    val = platform.name
                 elif k == 'genre':
                     genre = models.Genre.objects.get(id=v)
-                    extras.append(genre.name)
-                else:
-                    extras.append(v)
+                    val = genre.name
+
+                extras[key] = val
+
         if extras:
-            context['title'] = ','.join(extras)
+            context['title'] = 'Games matching - ' + ', '.join(f'{k}: {extras[k]}' for k in extras)
+            context['short_title'] = ','.join(extras.values())
         else:
-            context['title'] = 'Top 750'
+            context['title'] = 'All Time'
+            context['short_title'] = context['title']
 
         context['is_filtered'] = len(extras) > 0
 
@@ -222,6 +235,8 @@ class GameDetailView(DetailView):
         context['list_groups'] = [
             ('All Time Lists', game.lists.filter(
                 list__type=constants.LIST_ALLTIME)),
+            ('Decade Lists', game.lists.filter(
+                list__type=constants.LIST_DECADE)),
             ('Miscellaneous Lists', game.lists.filter(
                 list__type=constants.LIST_MISC)),
             ('End of Year Lists', game.lists.filter(list__type=constants.LIST_EOY)),
@@ -370,17 +385,6 @@ class ListListView(ListView):
                 context['selected_' + filter.param] = filter.coerce(param_val)
 
         return context
-
-
-class PublicationListView(ListView):
-    """
-    Publication list page
-    """
-
-    def get_queryset(self) -> QuerySet:
-        return models.Publication.objects.prefetch_related(
-            'lists',
-        )
 
 
 class PublicationDetailView(DetailView):

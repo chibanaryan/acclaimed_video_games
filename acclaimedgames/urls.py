@@ -15,8 +15,6 @@ urlpatterns = [
     path('developers/<int:pk>/', views.DeveloperDetailView.as_view(),
          name='developer-detail'),
     path('lists/', views.ListListView.as_view(), name='list-list'),
-    path('publications/', views.PublicationListView.as_view(),
-         name='publication-list'),
     path('publications/<slug:slug>/', views.PublicationDetailView.as_view(),
          name='publication-detail'),
     path('games/<int:pk>/', views.GameDetailView.as_view(), name='game-detail'),

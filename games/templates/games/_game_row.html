@@ -1,60 +1,28 @@
 <div class="columns is-mobile game-row {% if highlight == game.id %}is-selected{% endif %}" id="game-{{ game.id}}">
- 
-    {% if show_rank %}
-        <div class="column rank is-one-quarter">
-            <div class="columns">
-                <div class="column">
-                    <span class="is-hidden-mobile large">
-                        {% if show_search_rank %}
-                            {{ forloop.counter|add:offset }}<br>
-                        {% else %} 
-                            {{ game.rank }} 
-                        {% endif %}
-                    </span>
-                    <span class="is-hidden-tablet medium">
-                        {% if show_search_rank %}
-                            {{ forloop.counter|add:offset }}<br>
-                        {% else %} 
-                            {{ game.rank }} 
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="column is-two-thirds">
-                    {% if game.thumbnail %}
-                        <a href="{% url 'game-detail' game.igdb_id %}">
-                            <img src="{{ game.thumbnail }}" >
-                        </a>
-                    {% endif %}     
-                </div>
-            </div>     
-        </div>
-    {% else %}
-        <div class="column rank is-one-fifth">
-            {% if game.thumbnail %}
-                <a href="{% url 'game-detail' game.igdb_id %}">
-                    <img src="{{ game.thumbnail }}" >
-                </a>
-            {% endif %}        
-        </div>
-    {% endif %}
-    
-    
+    <div class="column rank is-one-quarter">
+        <div class="columns">
+            <div class="column">
+                <span class="is-hidden-mobile large">
+                    {{ game.rank }} 
+                </span>
+                <span class="is-hidden-tablet medium">
+                    {{ game.rank }} 
+                </span>
+            </div>
+            <div class="column is-two-thirds">
+                {% if game.thumbnail %}
+                    <a href="{% url 'game-detail' game.igdb_id %}">
+                        <img src="{{ game.thumbnail }}" >
+                    </a>
+                {% endif %}     
+            </div>
+        </div>     
+    </div>
     <div class="column">
-
         <a href="{% url 'game-detail' game.igdb_id %}" class="game-name has-text-weight-bold is-size-6 mb-3">
             {{ game.name }}
         </a>
-
         <div>
-            {% if show_search_rank %}
-                <div class="pb-0"> 
-                    <label class="has-text-weight-medium is-size-6">All-time rank:</label>
-                    <a href="{% url 'games-list' %}?highlight={{ game.id }}" class="is-size-6">
-                        {{ game.rank }}
-                    </a>    
-                </div>
-            {% endif %}
-
             <div class="py-0">
                 {% with game.developers.all as developers %}
                     <label class="has-text-weight-medium is-size-6">Developer{{ developers.count|pluralize}}:</label>
@@ -66,7 +34,6 @@
                     {% endfor %}
                 {% endwith %}
             </div>
-
             <div class="py-0">
                 <label class="has-text-weight-medium is-size-6">Platform{{ game.platforms.all | pluralize }}:</label>
                 {% for platform in game.platforms.all %} 
@@ -75,7 +42,6 @@
                     </a>{% if not forloop.last %},{% endif %}
                 {% endfor %}
             </div>
-
             <div class="py-0">
                 <label class="has-text-weight-medium is-size-6">Genre{{ game.genres.all | pluralize }}:</label>
                 {% for genre in game.genres.all %} 
@@ -84,12 +50,10 @@
                     </a>{% if not forloop.last %},{% endif %}
                 {% endfor %}
             </div>
-
             <div class="pt-0">
                 <label class="has-text-weight-medium is-size-6">Year:</label>
                 <a href="{% url 'games-list' %}?year={{ game.year_of_release }}" class="is-size-6">{{ game.year_of_release }}</a>
             </div>
-
         </div>   
     </div>
 </div>

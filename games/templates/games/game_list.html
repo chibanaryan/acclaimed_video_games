@@ -1,6 +1,6 @@
 {% extends 'games/base.html' %}
 
-{% block title %}{{ title }} |{% endblock %}
+{% block title %}{{ short_title }} |{% endblock %}
 
 {% block extrahead %} 
     <style>
@@ -16,12 +16,11 @@
 {% endblock %}
 
 {% block content %}
-    <h1 class="title is-size-4">Top 750 Games</h1>
-
+    <h1 class="title is-size-4">{{ title }}</h1>
     <h2 class="subtitle">{{ subtitle }}</h2> 
 
-    <div class="field is-grouped is-grouped-multiline">  
-        <form action="." class="control" >
+    <form action="." class="field is-grouped is-grouped-multiline">
+        <div class="control">
             <div class="select">
                 <select name="year" onchange="form.submit()">
                     <option selected value="">Years</option>
@@ -30,8 +29,8 @@
                     {% endfor %}
                 </select>
             </div>
-        </form>
-        <form action="." class="control">
+        </div>
+        <div class="control">
             <div class="select">
                 <select name="decade" onchange="form.submit()">
                     <option selected value="">Decades</option>
@@ -40,8 +39,8 @@
                     {% endfor %}
                 </select>
             </div>
-        </form>
-        <form action="." class="control">
+        </div>
+        <div class="control">
             <div class="select">
                 <select name="platform" onchange="form.submit()">
                     <option selected value="">Platforms</option>
@@ -50,8 +49,8 @@
                     {% endfor %}
                 </select>
             </div>
-        </form>
-        <form action="." class="control">
+        </div>
+        <div class="control">
             <div class="select">
                 <select name="genre" onchange="form.submit()">
                     <option selected value="">Genres</option>
@@ -60,26 +59,25 @@
                     {% endfor %}
                 </select>
             </div>
-        </form>
-        <form action="." class="control">
+        </div>
+        <div class="control">
             <div class="control has-icons-left">
                 <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
                 <span class="icon is-small is-left">
                     <i class="mdi mdi-magnify"></i>
-                  </span>
+                </span>
             </div>
-        </form>
+        </div>
+    </form>
 
-        {% if is_filtered %}
-            <a class="button" href="{% url 'games-list' %}">
-                <span class="icon">
-                    <span class="mdi mdi-close"></span>
-                </span>     
-                &nbsp;&nbsp;Clear
-            </a>
-        {% endif %}
-    </div>
-
+    {% if is_filtered %}
+        <a class="button" href="{% url 'games-list' %}">
+            <span class="icon">
+                <span class="mdi mdi-close"></span>
+            </span>     
+            &nbsp;&nbsp;Clear
+        </a>
+    {% endif %}
     <div class="columns">
         <div class="column is-two-thirds">
             {% if show_pagination %}
@@ -89,7 +87,7 @@
             {% endif %}
             <div class="mt-5">
                 {% for game in game_list %}
-                    {% include 'games/_game_row.html' with show_rank="True" %}
+                    {% include 'games/_game_row.html' %}
                 {% empty %}
                     <p class="is-size-3">
                         No results found
@@ -106,5 +104,4 @@
             <!-- Right sidebar -->
         </div>
     </div>
-
 {% endblock %}
