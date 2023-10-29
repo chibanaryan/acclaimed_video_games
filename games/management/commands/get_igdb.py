@@ -2,9 +2,7 @@
 from django.core.management.base import BaseCommand
 
 from games.models import Game
-import logging
 
-logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = 'Fetch game data from IGDB'
@@ -13,10 +11,10 @@ class Command(BaseCommand):
         for game in Game.objects.all():
             # if game.igdb_artwork_id:
             #     continue
-            
+
             try:
                 game.get_igdb_data()
                 game.save()
-                logger.info(f'{game} updated')
+                print(f'{game.rank} - {game} updated')
             except Exception as e:
-                logger.error(str(e))
+                print.error(str(e))

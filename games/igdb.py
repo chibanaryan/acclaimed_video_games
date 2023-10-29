@@ -197,7 +197,7 @@ class IgbdApi():
         full_release_dates = [
             datetime.fromtimestamp(x['date'])
             for x in release_dates
-            if x.get('status') == full_release_status
+            if x.get('status') == full_release_status and x.get('date')
         ]
         if full_release_dates:
             release_date = list(sorted(full_release_dates))[0]
