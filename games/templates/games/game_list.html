@@ -19,47 +19,62 @@
     <h1 class="title is-size-4">{{ title }}</h1>
     <h2 class="subtitle">{{ subtitle }}</h2> 
 
-    <form action="." class="field is-grouped is-grouped-multiline">
-        <div class="control">
-            <div class="select">
-                <select name="year" onchange="form.submit()">
-                    <option selected value="">Years</option>
-                    {% for year in years %}
-                        <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-                    {% endfor %}
-                </select>
+    <form action=".">
+        <div class="field is-grouped is-grouped-multiline">
+            <div class="control">
+                <button class="button" type="submit" name="alltime" value="true" onchange="form.year.value = '';form.decade.value = ''; form.submit()">
+                    All time
+                </button>
             </div>
-        </div>
-        <div class="control">
-            <div class="select">
-                <select name="decade" onchange="form.submit()">
-                    <option selected value="">Decades</option>
-                    {% for decade in decades %}
-                        <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
-                    {% endfor %}
-                </select>
+            <div class="control">
+                <div class="select"> 
+                    <select name="year" onchange="form.decade.value = ''; form.submit()">
+                        <option selected value="">Years</option>
+                        {% for year in years %}
+                            <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select> 
+                </div>
             </div>
-        </div>
-        <div class="control">
-            <div class="select">
-                <select name="platform" onchange="form.submit()">
-                    <option selected value="">Platforms</option>
-                    {% for platform in platforms %}
-                        <option {% if platform.code == selected_platform %}selected{% endif %} value="{{ platform.code }}">{{ platform }}</option>
-                    {% endfor %}
-                </select>
+            <div class="control">
+                <div class="select">
+                    <select name="decade" onchange="form.year.value = ''; form.submit()">
+                        <option selected value="">Decades</option>
+                        {% for decade in decades %}
+                            <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-        </div>
-        <div class="control">
-            <div class="select">
-                <select name="genre" onchange="form.submit()">
-                    <option selected value="">Genres</option>
-                    {% for genre in genres %}
-                        <option {% if genre.id == selected_genre %}selected{% endif %} value="{{ genre.id }}">{{ genre.name }}</option>
-                    {% endfor %}
-                </select>
+        </div> 
+        <div class="field is-grouped is-grouped-multiline">
+            <div class="control">
+                <div class="select">
+                    <select name="platform">
+                        <option selected value="">Platforms</option>
+                        {% for platform in platforms %}
+                            <option {% if platform.code == selected_platform %}selected{% endif %} value="{{ platform.code }}">{{ platform }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-        </div>
+            <div class="control">
+                <div class="select">
+                    <select name="genre">
+                        <option selected value="">Genres</option>
+                        {% for genre in genres %}
+                            <option {% if genre.id == selected_genre %}selected{% endif %} value="{{ genre.id }}">{{ genre.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="control">
+                <button class="button" type="submit">Apply</button>
+            </div>
+        </div>  
+    </form>
+
+    <form action="." class="field is-grouped is-grouped-multiline mt-3">
         <div class="control">
             <div class="control has-icons-left">
                 <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
@@ -71,13 +86,14 @@
     </form>
 
     {% if is_filtered %}
-        <a class="button" href="{% url 'games-list' %}">
+        <a class="button" href="{% url 'games-list' %}?year={{ selected_year }}&decade={{ selected_decade }}">
             <span class="icon">
                 <span class="mdi mdi-close"></span>
             </span>     
             &nbsp;&nbsp;Clear
         </a>
     {% endif %}
+
     <div class="columns">
         <div class="column is-two-thirds">
             {% if show_pagination %}

@@ -85,11 +85,50 @@ class GameListView(ListView):
 
     def get_normalized_args(self):
         args = self.request.GET.copy()
-        if args.get('year') and args.get('decade'):
+
+        if args.get('alltime'):
+            args.pop('year')
             args.pop('decade')
-            
+            args.pop('alltime')
+
         return args
 
+    def get_title(self, args, short=False):
+        base_title = ''
+        is_all_time = not args.get('decade') and not args.get('year')
+
+        if args.get('decade'):
+            base_title = f'{args["decade"]}s'
+        elif args.get('year'):
+            base_title = args['year']
+        else:
+            base_title = 'All time'
+
+        extra_bits = []
+        if args.get('platform'):
+            platform = models.Platform.objects.get(code=args['platform'])
+            if short:
+                extra_bits.append(platform.code)
+            else:
+                extra_bits.append(platform.name)
+        if args.get('genre'):
+            genre = models.Genre.objects.get(id=args['genre'])
+            extra_bits.append(genre.name)
+
+        extra_title = ', '.join(extra_bits)
+        result = ''
+
+        if is_all_time:
+            if extra_title:
+                result = extra_title
+            else:
+                result = base_title
+        elif extra_title:
+            result = f'{base_title} - {extra_title}'
+        else:
+            result = base_title
+
+        return result
 
     def get_queryset(self) -> QuerySet:
         qs = models.Game.objects.prefetch_related(
@@ -160,38 +199,10 @@ class GameListView(ListView):
         if args.get('highlight'):
             context['highlight'] = int(args.get('highlight'))
 
-        # Build title 
-        extras = {}
-        if args:
-            for k, v in args.items():
-                val = v
-                key = k
-                if not v:
-                    continue
-                if k == 'highlight':
-                    continue
-                if k == 'decade':
-                    val = f'{v}s'
-                elif k == 'q':
-                    key = 'text'
-                    val = f'"{v}"'
-                elif k == 'platform':
-                    platform = models.Platform.objects.get(code=v)
-                    val = platform.name
-                elif k == 'genre':
-                    genre = models.Genre.objects.get(id=v)
-                    val = genre.name
+        context['title'] = self.get_title(args)
+        context['short_title'] = self.get_title(args, short=True)
 
-                extras[key] = val
-
-        if extras:
-            context['title'] = 'Games matching - ' + ', '.join(f'{k}: {extras[k]}' for k in extras)
-            context['short_title'] = ','.join(extras.values())
-        else:
-            context['title'] = 'All Time'
-            context['short_title'] = context['title']
-
-        context['is_filtered'] = len(extras) > 0
+        context['is_filtered'] = len(args) > 0
 
         return context
 
