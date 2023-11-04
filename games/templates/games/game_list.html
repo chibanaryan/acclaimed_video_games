@@ -18,23 +18,16 @@
 {% block content %}
     <h1 class="title is-size-4">{{ title }}</h1>
     <h2 class="subtitle">{{ subtitle }}</h2> 
-
     <form action=".">
         <div class="field is-grouped is-grouped-multiline">
             <div class="control">
-                <button class="button" type="submit" name="alltime" value="true" onchange="form.year.value = '';form.decade.value = ''; form.submit()">
+                <button class="button is-link" 
+                    type="submit" 
+                    name="alltime" 
+                    value="true" 
+                    onchange="form.year.value = '';form.decade.value = ''; form.submit()">
                     All time
                 </button>
-            </div>
-            <div class="control">
-                <div class="select"> 
-                    <select name="year" onchange="form.decade.value = ''; form.submit()">
-                        <option selected value="">Years</option>
-                        {% for year in years %}
-                            <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-                        {% endfor %}
-                    </select> 
-                </div>
             </div>
             <div class="control">
                 <div class="select">
@@ -46,7 +39,18 @@
                     </select>
                 </div>
             </div>
+            <div class="control">
+                <div class="select"> 
+                    <select name="year" onchange="form.decade.value = ''; form.submit()">
+                        <option selected value="">Years</option>
+                        {% for year in years %}
+                            <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select> 
+                </div>
+            </div>
         </div> 
+        <h4 class="is-size-5 mb-2">Filters</h4>
         <div class="field is-grouped is-grouped-multiline">
             <div class="control">
                 <div class="select">
@@ -71,9 +75,16 @@
             <div class="control">
                 <button class="button" type="submit">Apply</button>
             </div>
+            {% if is_filtered %}
+                <a class="button" href="{% url 'games-list' %}?year={{ selected_year }}&decade={{ selected_decade }}">
+                    <span class="icon">
+                        <span class="mdi mdi-close"></span>
+                    </span>     
+                    &nbsp;&nbsp;Clear
+                </a>
+            {% endif %}
         </div>  
     </form>
-
     <form action="." class="field is-grouped is-grouped-multiline mt-3">
         <div class="control">
             <div class="control has-icons-left">
@@ -84,16 +95,6 @@
             </div>
         </div>
     </form>
-
-    {% if is_filtered %}
-        <a class="button" href="{% url 'games-list' %}?year={{ selected_year }}&decade={{ selected_decade }}">
-            <span class="icon">
-                <span class="mdi mdi-close"></span>
-            </span>     
-            &nbsp;&nbsp;Clear
-        </a>
-    {% endif %}
-
     <div class="columns">
         <div class="column is-two-thirds">
             {% if show_pagination %}
@@ -115,9 +116,6 @@
                     {% include 'games/_pagination.html' %}
                 </div>
             {% endif %}
-        </div>
-        <div class="column">
-            <!-- Right sidebar -->
         </div>
     </div>
 {% endblock %}

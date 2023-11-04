@@ -3,10 +3,18 @@
         <div class="columns">
             <div class="column">
                 <span class="is-hidden-mobile large">
-                    {{ game.rank }} 
+                    {% if show_relative_rank %}
+                        {{ forloop.counter }}
+                    {% else %}
+                        {{ game.rank }}
+                    {% endif %} 
                 </span>
                 <span class="is-hidden-tablet medium">
-                    {{ game.rank }} 
+                    {% if show_relative_rank %}
+                        {{ forloop.counter }}
+                    {% else %}
+                        {{ game.rank }}
+                    {% endif %}  
                 </span>
             </div>
             <div class="column is-two-thirds">
@@ -23,6 +31,12 @@
             {{ game.name }}
         </a>
         <div>
+            {% if show_relative_rank %}
+                <div class="py-0">
+                    <label class="has-text-weight-medium is-size-6">All-time rank:</label>
+                    {{ game.rank }}
+                </div>
+            {% endif %}
             <div class="py-0">
                 {% with game.developers.all as developers %}
                     <label class="has-text-weight-medium is-size-6">Developer{{ developers.count|pluralize}}:</label>

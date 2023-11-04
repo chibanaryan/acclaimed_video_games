@@ -190,17 +190,17 @@ class IgbdApi():
             )
 
         # Get the full release date
-        release_date = datetime.fromtimestamp(data['first_release_date'])
-
-        release_dates = self._get_release_dates_by_id(game_id, cache_results)
         full_release_status = self.release_date_statuses['Full Release']
-        full_release_dates = [
-            datetime.fromtimestamp(x['date'])
-            for x in release_dates
-            if x.get('status') == full_release_status and x.get('date')
-        ]
+        full_release_dates = []
+        for obj in self._get_release_dates_by_id(game_id, cache_results):
+            if not obj.get('status') or obj.get('status') == full_release_status:
+                if obj.get('date'):
+                    full_release_dates.append(datetime.fromtimestamp(obj['date']))
+
         if full_release_dates:
             release_date = list(sorted(full_release_dates))[0]
+        else:
+            release_date = datetime.fromtimestamp(data['first_release_date'])
 
         game_data = {
             'cover': self._get_cover_by_id(data['cover']),
