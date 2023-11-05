@@ -3,15 +3,19 @@
         <div class="columns">
             <div class="column">
                 <span class="is-hidden-mobile large">
-                    {% if show_relative_rank %}
-                        {{ forloop.counter }}
+                    {% if show_year_rank %}
+                        {{ game.year_rank }}
+                    {% elif show_decade_rank %}
+                        {{ game.decade_rank }}
                     {% else %}
                         {{ game.rank }}
                     {% endif %} 
                 </span>
                 <span class="is-hidden-tablet medium">
-                    {% if show_relative_rank %}
-                        {{ forloop.counter }}
+                    {% if show_year_rank %}
+                        {{ game.year_rank }}
+                    {% elif show_decade_rank %}
+                        {{ game.decade_rank }}
                     {% else %}
                         {{ game.rank }}
                     {% endif %}  
@@ -31,7 +35,7 @@
             {{ game.name }}
         </a>
         <div>
-            {% if show_relative_rank %}
+            {% if show_year_rank or show_decade_rank %}
                 <div class="py-0">
                     <label class="has-text-weight-medium is-size-6">All-time rank:</label>
                     {{ game.rank }}

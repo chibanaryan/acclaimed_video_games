@@ -30,6 +30,8 @@ class GameAdmin(admin.ModelAdmin):
     list_display = [
         'name',
         'rank',
+        'year_rank',
+        'decade_rank',
         'year_of_release',
         'igdb_id',
         'igdb_artwork_id',

@@ -224,8 +224,11 @@ class GameListView(ListView):
             args.get('platform') or \
             args.get('genre')
         
-        context['show_relative_rank'] = args.get('year') or args.get('decade')
-        
+        context['show_year_rank'] = args.get('year') 
+        context['show_decade_rank'] = args.get('decade')
+
+        context['args'] = urlencode(args)
+
         return context
 
 

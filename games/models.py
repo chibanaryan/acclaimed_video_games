@@ -5,7 +5,6 @@ from django.utils.text import Truncator, slugify
 from unidecode import unidecode
 
 from . import constants, igdb
-
 logger = logging.getLogger(__name__)
 
 
@@ -114,6 +113,9 @@ class Game(models.Model):
         null=True,
         blank=True)
 
+    year_rank = models.IntegerField(null=True, blank=True)
+    decade_rank = models.IntegerField(null=True, blank=True)
+
     class Meta:
         ordering = ['rank']
 
@@ -121,10 +123,14 @@ class Game(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        # Save the normalized version of the name 
+        # Save the normalized version of the name
         normalized = unidecode(self.name)
         if self.name != normalized:
             self.name_normalized = normalized
+
+        from . import utils
+        self.year_rank = utils.get_ranking_for_year(self)
+        self.decade_rank = utils.get_ranking_for_decade(self)
 
         super().save(*args, **kwargs)
 

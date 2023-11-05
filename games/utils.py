@@ -1,7 +1,9 @@
 import csv
+from datetime import datetime
 from io import TextIOWrapper
 
 from django.db import connection
+from django.db.models import Min
 
 from . import constants, models
 
@@ -206,3 +208,64 @@ def import_developers(f):
             updated += 1
 
     return (True, f'Developers: {count} created, {updated} updated')
+
+
+def year_to_decade(year):
+    return int(year / 10) * 10
+
+
+year_rankings = {}
+decade_rankings = {}
+
+
+def _load_rankings():
+
+    if year_rankings and decade_rankings:
+        return
+
+    min_year = models.Game.objects.aggregate(min_year=Min('year_of_release'))[
+        'min_year'] or 1970
+    max_year = datetime.today().year
+    all_years = range(min_year, max_year)
+    decades = sorted(list(set(year_to_decade(x) for x in all_years)))
+
+    for year in all_years:
+        ids = list(models.Game.objects.filter(
+            year_of_release=year,
+        ).order_by(
+            'rank',
+        ).values_list(
+            'id',
+            flat=True,
+        ))
+        year_rankings[year] = ids
+
+    for decade in decades:
+        end = decade + 9
+
+        ids = list(models.Game.objects.filter(
+            year_of_release__gte=decade,
+            year_of_release__lte=end,
+        ).order_by(
+            'rank'
+        ).values_list(
+            'id',
+            flat=True,
+        ))
+
+        decade_rankings[decade] = ids
+
+
+def get_ranking_for_year(game):
+    _load_rankings()
+
+    ids = year_rankings[game.year_of_release]
+    return ids.index(game.id) + 1
+
+
+def get_ranking_for_decade(game):
+    _load_rankings()
+
+    decade = year_to_decade(game.year_of_release)
+    ids = decade_rankings[decade]
+    return ids.index(game.id) + 1
