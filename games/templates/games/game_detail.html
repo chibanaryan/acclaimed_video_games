@@ -17,20 +17,20 @@
             <dl class="detail">
                 <dt>All time rank:</dt>
                 <dd>
-                    <a href="{% url 'games-list' %}?highlight={{ game.id }}">
+                    <a href="{% url 'games-list' %}?highlight={{ game.id }}#game-{{game.id }}">
                         {{ game.rank }}
-                    </a>
-                </dd>
-                <dt>{{ game.year_of_release }} rank:</dt>
-                <dd>
-                    <a href="{% url 'games-list' %}?year={{ game.year_of_release }}&highlight={{ game.id }}">
-                        {{ rank_for_year }}
                     </a>
                 </dd>
                 <dt>{{ decade }}s rank:</dt>
                 <dd>
-                    <a href="{% url 'games-list' %}?decade={{ decade }}&highlight={{ game.id }}">
+                    <a href="{% url 'games-list' %}?decade={{ decade }}&highlight={{ game.id }}#game-{{game.id }}">
                         {{ rank_for_decade }}
+                    </a>
+                </dd>
+                <dt>{{ game.year_of_release }} rank:</dt>
+                <dd>
+                    <a href="{% url 'games-list' %}?year={{ game.year_of_release }}&highlight={{ game.id }}#game-{{game.id }}">
+                        {{ rank_for_year }}
                     </a>
                 </dd>
                 <dt>Developers:</dt>
@@ -61,6 +61,10 @@
                         </a>
                         {% if not forloop.last %},{% endif %}
                     {% endfor %}
+                </dd>
+                <dt>IGDB Link:</dt>
+                <dd>
+                    <a href="{{ game.igdb_url}}" target="_blank">{{ game.igdb_url}}</a>
                 </dd>
             </dl>
         </div>

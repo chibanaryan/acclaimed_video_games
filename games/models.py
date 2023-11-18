@@ -112,7 +112,7 @@ class Game(models.Model):
         max_length=100,
         null=True,
         blank=True)
-
+    igdb_url = models.URLField(null=True, blank=True)
     year_rank = models.IntegerField(null=True, blank=True)
     decade_rank = models.IntegerField(null=True, blank=True)
 
@@ -139,6 +139,7 @@ class Game(models.Model):
             return
 
         data = igdb.api.get_game_info_by_id(self.igdb_id, cache_results)
+        self.igdb_url = data.get('url')
         self.igdb_artwork_id = data.get('cover')
         self.year_of_release = data.get('year')
         self.description = '\n\n'.join(

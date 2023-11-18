@@ -35,6 +35,7 @@ class GameAdmin(admin.ModelAdmin):
         'year_of_release',
         'igdb_id',
         'igdb_artwork_id',
+        'igdb_url',
     ]
     list_filter = ['year_of_release']
     search_fields = ['name']

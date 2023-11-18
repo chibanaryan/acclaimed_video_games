@@ -95,29 +95,28 @@ class GameListView(ListView):
 
         return args
 
-    def get_title(self, args, short=False):
+    def get_title(self, args):
         base_title = ''
         is_all_time = not args.get('decade') and not args.get('year')
 
+        prefix = 'Most Acclaimed Games of'
+
         if args.get('decade'):
-            base_title = f'{args["decade"]}s'
+            base_title = f"{prefix} the {args['decade']}s"
         elif args.get('year'):
-            base_title = args['year']
+            base_title = f"{prefix} {args['year']}"
         else:
-            base_title = 'All time'
+            base_title = f'{prefix} All Time'
 
         extra_bits = []
         if args.get('platform'):
             platform = models.Platform.objects.get(code=args['platform'])
-            if short:
-                extra_bits.append(platform.code)
-            else:
-                extra_bits.append(platform.name)
+            extra_bits.append(platform.name)
         if args.get('genre'):
             genre = models.Genre.objects.get(id=args['genre'])
             extra_bits.append(genre.name)
         if args.get('q'):
-            extra_bits.append('Results matching "' + args["q"] + '"')
+            extra_bits.append('"' + args["q"] + '"')
 
         extra_title = ', '.join(extra_bits)
         result = ''
@@ -171,10 +170,14 @@ class GameListView(ListView):
         # Get list of platforms and genres
         platforms = models.Platform.objects.all()
         genres = models.Genre.objects.all()
+        rank_heading = 'All time rank'
 
         if args.get('year'):
-            platforms = platforms.filter(games__year_of_release=args['year']).distinct()
-            genres = genres.filter(game__year_of_release=args['year']).distinct()
+            platforms = platforms.filter(
+                games__year_of_release=args['year']).distinct()
+            genres = genres.filter(
+                game__year_of_release=args['year']).distinct()
+            rank_heading = f"{args['year']} rank"
 
         if args.get('decade'):
             start = int(args['decade'])
@@ -187,9 +190,13 @@ class GameListView(ListView):
                 game__year_of_release__gte=start,
                 game__year_of_release__lte=end,
             ).distinct()
+            rank_heading = f"{args['decade']}s rank"
 
         context['platforms'] = platforms
         context['genres'] = genres
+
+        if args.get('highlight'):
+            context['highlight'] = int(args.get('highlight'))
 
         # Handle pagination
         page_obj = context['page_obj']
@@ -210,7 +217,6 @@ class GameListView(ListView):
             context['subtitle'] = '0 results'
 
         context['title'] = self.get_title(args)
-        context['short_title'] = self.get_title(args, short=True)
 
         # Build list of selected filters
         for filter in self.filters:
@@ -223,9 +229,10 @@ class GameListView(ListView):
             args.get('decade') or \
             args.get('platform') or \
             args.get('genre')
-        
-        context['show_year_rank'] = args.get('year') 
+
+        context['show_year_rank'] = args.get('year')
         context['show_decade_rank'] = args.get('decade')
+        context['rank_heading'] = rank_heading
 
         context['args'] = urlencode(args)
 

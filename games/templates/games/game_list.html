@@ -1,6 +1,6 @@
 {% extends 'games/base.html' %}
 
-{% block title %}{{ short_title }} |{% endblock %}
+{% block title %}{{ title }} |{% endblock %}
 
 {% block extrahead %} 
     <style>
@@ -16,8 +16,7 @@
 {% endblock %}
 
 {% block content %}
-    <h1 class="title is-size-4">{{ title }}</h1>
-    <h2 class="subtitle">{{ subtitle }}</h2> 
+
     <form action=".">
         <div class="field is-grouped is-grouped-multiline">
             <div class="control">
@@ -49,8 +48,22 @@
                     </select> 
                 </div>
             </div>
-        </div> 
-        <h4 class="is-size-5 mb-2">Filters</h4>
+            <div class="control has-icons-left">
+                <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
+                <span class="icon is-small is-left">
+                    <i class="mdi mdi-magnify"></i>
+                </span>
+            </div>
+            <div class="control">
+                <button class="button" type="submit">Search</button>
+            </div>
+        </div>
+    </form>
+
+    <h1 class="title is-size-4 mt-5">{{ title }}</h1>
+    <h2 class="subtitle">{{ subtitle }}</h2> 
+
+    <form action=".">
         <div class="field is-grouped is-grouped-multiline">
             <div class="control">
                 <div class="select">
@@ -83,18 +96,9 @@
                     &nbsp;&nbsp;Clear
                 </a>
             {% endif %}
-        </div>  
-    </form>
-    <form action="." class="field is-grouped is-grouped-multiline mt-3">
-        <div class="control">
-            <div class="control has-icons-left">
-                <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
-                <span class="icon is-small is-left">
-                    <i class="mdi mdi-magnify"></i>
-                </span>
-            </div>
         </div>
     </form>
+
     <div class="columns">
         <div class="column is-two-thirds">
             {% if show_pagination %}
@@ -102,7 +106,8 @@
                     {% include 'games/_pagination.html' %}
                 </div>
             {% endif %}
-            <div class="mt-5">
+            <div class="mt-2">   
+                <h3 class="subtitle mb-2">{{ rank_heading }}</h3>   
                 {% for game in game_list %}
                     {% include 'games/_game_row.html' %}
                 {% empty %}

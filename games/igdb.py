@@ -123,7 +123,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/games/',
             headers=self.headers,
-            data=f'where id={game_id}; fields cover,genres,first_release_date,summary,storyline,involved_companies.*;'
+            data=f'where id={game_id}; fields cover,genres,first_release_date,summary,storyline,url,involved_companies.*;'
         )
 
         if res.status_code == 401:
@@ -208,6 +208,7 @@ class IgbdApi():
             'genres': [self._get_genre_by_id(x, cache_results) for x in data.get('genres', [])],
             'storyline': data.get('storyline'),
             'summary': data.get('summary'),
+            'url': data.get('url'),
             'year': release_date.year,
         }
 
