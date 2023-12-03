@@ -1,5 +1,7 @@
 {% extends 'games/base.html' %}
 
+{% load games_tags %}
+
 {% block title %}{{ title }} |{% endblock %}
 
 {% block extrahead %} 
@@ -12,13 +14,16 @@
             background-color: #f4c21c;
             color: black;
         }
+        .pagination-ellipsis {
+            margin: 0;
+        }
     </style>
 {% endblock %}
 
 {% block content %}
 
     <form action=".">
-        <div class="field is-grouped is-grouped-multiline">
+        <div class="field is-grouped">
             <div class="control">
                 <button class="button is-link" 
                     type="submit" 
@@ -31,7 +36,7 @@
             <div class="control">
                 <div class="select">
                     <select name="decade" onchange="form.year.value = ''; form.submit()">
-                        <option selected value="">Decades</option>
+                        <option selected value="">Decade</option>
                         {% for decade in decades %}
                             <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
                         {% endfor %}
@@ -41,13 +46,15 @@
             <div class="control">
                 <div class="select"> 
                     <select name="year" onchange="form.decade.value = ''; form.submit()">
-                        <option selected value="">Years</option>
+                        <option selected value="">Year</option>
                         {% for year in years %}
                             <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
                         {% endfor %}
                     </select> 
                 </div>
             </div>
+        </div>
+        <div class="field has-addons">
             <div class="control has-icons-left">
                 <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
                 <span class="icon is-small is-left">
@@ -58,12 +65,10 @@
                 <button class="button" type="submit">Search</button>
             </div>
         </div>
-    </form>
 
-    <h1 class="title is-size-4 mt-5">{{ title }}</h1>
-    <h2 class="subtitle">{{ subtitle }}</h2> 
+        <h1 class="title is-size-4 mt-5">{{ title }}</h1>
+        <h2 class="subtitle">{{ subtitle }}</h2> 
 
-    <form action=".">
         <div class="field is-grouped is-grouped-multiline">
             <div class="control">
                 <div class="select">
@@ -102,12 +107,17 @@
     <div class="columns">
         <div class="column is-two-thirds">
             {% if show_pagination %}
-                <div class="mt-5">
-                    {% include 'games/_pagination.html' %}
+                <div class="mt-5 is-hidden-tablet">
+                    {% pagination %}
+                </div>
+                <div class="mt-5 is-hidden-mobile">
+                    {% pagination 5 %}
                 </div>
             {% endif %}
             <div class="mt-2">   
-                <h3 class="subtitle mb-2">{{ rank_heading }}</h3>   
+                {% if game_list %}
+                    <h3 class="subtitle mb-4">{{ rank_heading }}</h3>
+                {% endif %} 
                 {% for game in game_list %}
                     {% include 'games/_game_row.html' %}
                 {% empty %}
@@ -117,8 +127,11 @@
                 {% endfor %}
             </div>
             {% if show_pagination %}
-                <div class="my-6">
-                    {% include 'games/_pagination.html' %}
+                <div class="mt-5 is-hidden-tablet">
+                    {% pagination %}
+                </div>
+                <div class="mt-5 is-hidden-mobile">
+                    {% pagination 5 %}
                 </div>
             {% endif %}
         </div>

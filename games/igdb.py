@@ -112,9 +112,9 @@ class IgbdApi():
 
         self.release_dates[game_id] = dates
         return dates
-    
+
     def get_game_info_by_id(self, game_id: int, cache_results: True):
-    
+
         # Check cache first
         if cache_results and game_id in self.game_cache:
             return self.game_cache[game_id]
@@ -195,7 +195,8 @@ class IgbdApi():
         for obj in self._get_release_dates_by_id(game_id, cache_results):
             if not obj.get('status') or obj.get('status') == full_release_status:
                 if obj.get('date'):
-                    full_release_dates.append(datetime.fromtimestamp(obj['date']))
+                    full_release_dates.append(
+                        datetime.fromtimestamp(obj['date']))
 
         if full_release_dates:
             release_date = list(sorted(full_release_dates))[0]
@@ -217,4 +218,5 @@ class IgbdApi():
         return game_data
 
 
-api = IgbdApi(settings.IGDB_CLIENT_ID, settings.IGDB_CLIENT_SECRET)
+def get_api():
+    return IgbdApi(settings.IGDB_CLIENT_ID, settings.IGDB_CLIENT_SECRET)
