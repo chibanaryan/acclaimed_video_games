@@ -23,52 +23,52 @@
 {% block content %}
 
     <form action=".">
-        <div class="field is-grouped">
-            <div class="control">
-                <button class="button is-link" 
-                    type="submit" 
-                    name="alltime" 
-                    value="true" 
-                    onchange="form.year.value = '';form.decade.value = ''; form.submit()">
-                    All time
-                </button>
-            </div>
-            <div class="control">
-                <div class="select">
-                    <select name="decade" onchange="form.year.value = ''; form.submit()">
-                        <option selected value="">Decade</option>
-                        {% for decade in decades %}
-                            <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
-                        {% endfor %}
-                    </select>
+        <div class="field is-grouped is-grouped-multiline">
+            <div class="field is-grouped ">
+                <div class="control">
+                    <button class="button is-link" 
+                        type="submit" 
+                        name="alltime" 
+                        value="true" 
+                        onchange="form.year.value = '';form.decade.value = ''; form.submit()">
+                        All time
+                    </button>
+                </div>
+                <div class="control">
+                    <div class="select">
+                        <select name="decade" onchange="form.year.value = ''; form.submit()">
+                            <option selected value="">Decade</option>
+                            {% for decade in decades %}
+                                <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="control mr-3">
+                    <div class="select"> 
+                        <select name="year" onchange="form.decade.value = ''; form.submit()">
+                            <option selected value="">Year</option>
+                            {% for year in years %}
+                                <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select> 
+                    </div>
                 </div>
             </div>
-            <div class="control">
-                <div class="select"> 
-                    <select name="year" onchange="form.decade.value = ''; form.submit()">
-                        <option selected value="">Year</option>
-                        {% for year in years %}
-                            <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-                        {% endfor %}
-                    </select> 
+            <div class="field has-addons">
+                <div class="control has-icons-left">
+                    <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
+                    <span class="icon is-small is-left">
+                        <i class="mdi mdi-magnify"></i>
+                    </span>
+                </div>
+                <div class="control">
+                    <button class="button" type="submit">Search</button>
                 </div>
             </div>
         </div>
-        <div class="field has-addons">
-            <div class="control has-icons-left">
-                <input class="input" type="text" name="q" placeholder="Search by name" value="{{ selected_q }}">
-                <span class="icon is-small is-left">
-                    <i class="mdi mdi-magnify"></i>
-                </span>
-            </div>
-            <div class="control">
-                <button class="button" type="submit">Search</button>
-            </div>
-        </div>
-
         <h1 class="title is-size-4 mt-5">{{ title }}</h1>
         <h2 class="subtitle">{{ subtitle }}</h2> 
-
         <div class="field is-grouped is-grouped-multiline">
             <div class="control">
                 <div class="select">
@@ -111,7 +111,7 @@
                     {% pagination %}
                 </div>
                 <div class="mt-5 is-hidden-mobile">
-                    {% pagination 5 %}
+                    {% pagination 6 %}
                 </div>
             {% endif %}
             <div class="mt-2">   
@@ -131,7 +131,7 @@
                     {% pagination %}
                 </div>
                 <div class="mt-5 is-hidden-mobile">
-                    {% pagination 5 %}
+                    {% pagination 6 %}
                 </div>
             {% endif %}
         </div>
