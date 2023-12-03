@@ -95,50 +95,10 @@ class GameListView(ListView):
 
         return args
 
-    # def get_title(self, args):
-    #     base_title = ''
-    #     is_all_time = not args.get('decade') and not args.get('year')
-
-    #     prefix = 'Most Acclaimed Games of'
-
-    #     if args.get('decade'):
-    #         base_title = f"{prefix} the {args['decade']}s"
-    #     elif args.get('year'):
-    #         base_title = f"{prefix} {args['year']}"
-    #     else:
-    #         base_title = f'{prefix} All Time'
-
-    #     extra_bits = []
-    #     if args.get('platform'):
-    #         platform = models.Platform.objects.get(code=args['platform'])
-    #         extra_bits.append(platform.name)
-    #     if args.get('genre'):
-    #         genre = models.Genre.objects.get(id=args['genre'])
-    #         extra_bits.append(genre.name)
-    #     if args.get('q'):
-    #         extra_bits.append('"' + args["q"] + '"')
-
-    #     extra_title = ', '.join(extra_bits)
-    #     result = ''
-
-    #     if is_all_time:
-    #         if extra_title:
-    #             result = extra_title
-    #         else:
-    #             result = base_title
-    #     elif extra_title:
-    #         result = f'{base_title} - {extra_title}'
-    #     else:
-    #         result = base_title
-
-    #     return result
-
     def get_title(self, args):
         prefix = ''
         base_title = ''
-
         is_all_time = not args.get('decade') and not args.get('year')
-        has_filters = args.get('platform') or args.get('genre')
 
         if is_all_time:
             base_title = f'All Time'
