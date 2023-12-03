@@ -225,10 +225,7 @@ class GameListView(ListView):
                 context['selected_' + filter.param] = filter.coerce(param_val)
 
         # Is the list filtered?
-        context['is_filtered'] = args.get('year') or \
-            args.get('decade') or \
-            args.get('platform') or \
-            args.get('genre')
+        context['is_filtered'] = args.get('q') or args.get('platform') or args.get('genre')
 
         context['show_year_rank'] = args.get('year')
         context['show_decade_rank'] = args.get('decade')
