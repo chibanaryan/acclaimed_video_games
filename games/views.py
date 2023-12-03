@@ -95,18 +95,62 @@ class GameListView(ListView):
 
         return args
 
+    # def get_title(self, args):
+    #     base_title = ''
+    #     is_all_time = not args.get('decade') and not args.get('year')
+
+    #     prefix = 'Most Acclaimed Games of'
+
+    #     if args.get('decade'):
+    #         base_title = f"{prefix} the {args['decade']}s"
+    #     elif args.get('year'):
+    #         base_title = f"{prefix} {args['year']}"
+    #     else:
+    #         base_title = f'{prefix} All Time'
+
+    #     extra_bits = []
+    #     if args.get('platform'):
+    #         platform = models.Platform.objects.get(code=args['platform'])
+    #         extra_bits.append(platform.name)
+    #     if args.get('genre'):
+    #         genre = models.Genre.objects.get(id=args['genre'])
+    #         extra_bits.append(genre.name)
+    #     if args.get('q'):
+    #         extra_bits.append('"' + args["q"] + '"')
+
+    #     extra_title = ', '.join(extra_bits)
+    #     result = ''
+
+    #     if is_all_time:
+    #         if extra_title:
+    #             result = extra_title
+    #         else:
+    #             result = base_title
+    #     elif extra_title:
+    #         result = f'{base_title} - {extra_title}'
+    #     else:
+    #         result = base_title
+
+    #     return result
+
     def get_title(self, args):
+        prefix = ''
         base_title = ''
+
         is_all_time = not args.get('decade') and not args.get('year')
+        has_filters = args.get('platform') or args.get('genre')
 
-        prefix = 'Most Acclaimed Games of'
-
-        if args.get('decade'):
-            base_title = f"{prefix} the {args['decade']}s"
+        if is_all_time:
+            base_title = f'All Time'
+            prefix = 'Most Acclaimed Games of'
+        elif args.get('decade'):
+            base_title = f"{args['decade']}s"
+            prefix = 'Most Acclaimed Games of the'
         elif args.get('year'):
-            base_title = f"{prefix} {args['year']}"
+            base_title = f"{args['year']}"
+            prefix = 'Most Acclaimed Games of'
         else:
-            base_title = f'{prefix} All Time'
+            prefix = ''
 
         extra_bits = []
         if args.get('platform'):
@@ -119,19 +163,15 @@ class GameListView(ListView):
             extra_bits.append('"' + args["q"] + '"')
 
         extra_title = ', '.join(extra_bits)
-        result = ''
 
-        if is_all_time:
-            if extra_title:
-                result = extra_title
+        if extra_title:
+            if is_all_time:
+                prefix = ''
+                base_title = extra_title
             else:
-                result = base_title
-        elif extra_title:
-            result = f'{base_title} - {extra_title}'
-        else:
-            result = base_title
+                base_title = f'{base_title} - {extra_title}'
 
-        return result
+        return prefix, base_title
 
     def get_queryset(self) -> QuerySet:
         qs = models.Game.objects.prefetch_related(
@@ -216,7 +256,9 @@ class GameListView(ListView):
         else:
             context['subtitle'] = '0 results'
 
-        context['title'] = self.get_title(args)
+        prefix, base_title = self.get_title(args)
+        context['title'] = f'{prefix} {base_title}'
+        context['short_title'] = base_title
 
         # Build list of selected filters
         for filter in self.filters:
@@ -225,7 +267,9 @@ class GameListView(ListView):
                 context['selected_' + filter.param] = filter.coerce(param_val)
 
         # Is the list filtered?
-        context['is_filtered'] = args.get('q') or args.get('platform') or args.get('genre')
+        context['is_filtered'] = args.get('platform') or \
+            args.get('genre') or \
+            args.get('q')
 
         context['show_year_rank'] = args.get('year')
         context['show_decade_rank'] = args.get('decade')

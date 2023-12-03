@@ -2,7 +2,7 @@
 
 {% load games_tags %}
 
-{% block title %}{{ title }} |{% endblock %}
+{% block title %}{{ short_title }} |{% endblock %}
 
 {% block extrahead %} 
     <style>
@@ -36,7 +36,7 @@
                 </div>
                 <div class="control">
                     <div class="select">
-                        <select name="decade" onchange="form.year.value = ''; form.submit()">
+                        <select name="decade" onchange="form.genre.value = ''; form.platform.value = ''; form.year.value = ''; form.submit()">
                             <option selected value="">Decade</option>
                             {% for decade in decades %}
                                 <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
@@ -46,7 +46,7 @@
                 </div>
                 <div class="control mr-3">
                     <div class="select"> 
-                        <select name="year" onchange="form.decade.value = ''; form.submit()">
+                        <select name="year" onchange="form.genre.value = ''; form.platform.value = ''; form.decade.value = ''; form.submit()">
                             <option selected value="">Year</option>
                             {% for year in years %}
                                 <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
