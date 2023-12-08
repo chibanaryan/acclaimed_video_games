@@ -1,5 +1,7 @@
 {% extends 'games/base.html' %}
 
+{% load games_tags %}
+
 {% block title %}Developers |{% endblock %}
 
 {% block content %}
@@ -23,6 +25,9 @@
             </a>
         {% endif %}
     </div>
+    {% if show_pagination %}
+        {% pagination %}
+    {% endif %}
     <table class="table is-fullwidth">
         <thead>
             <tr>
@@ -46,6 +51,6 @@
         </tbody>
     </table>
     {% if show_pagination %}
-        {% include 'games/_pagination.html' %}
+        {% pagination %}
     {% endif %}
 {% endblock %}

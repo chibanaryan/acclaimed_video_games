@@ -146,6 +146,10 @@ class GameListView(ListView):
 
         args = self.get_normalized_args()
 
+        # If q is present then remove all other args
+        if args.get('q'):
+            args = {'q': args['q']}
+
         for filter in self.filters:
             param_val = args.get(filter.param)
             qs = filter.filter_queryset(qs, param_val)
