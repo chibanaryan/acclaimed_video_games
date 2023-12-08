@@ -1,5 +1,7 @@
 {% extends 'games/base.html' %}
 
+{% load games_tags %}
+
 {% block title %}Lists |{% endblock %}
 
 {% block extrahead %} 
@@ -12,9 +14,8 @@
 
 {% block content %}
     <h1 class="title is-size-4">Source Lists</h1>
-
     <div class="field is-grouped is-grouped-multiline">  
-        <form action="." class="control">
+        <form action=".">
             <div class="select">
                 <select name="publisher" onchange="form.submit()">
                     <option selected value="">All publishers</option>
@@ -50,7 +51,7 @@
         {% endif %}
     </div>
 
-    <table class="table is-fullwidth mt-5">
+    <table class="table is-fullwidth mt-5 is-hidden-mobile">
         <thead>
             <tr>
                 <th>Publication</th>
@@ -73,7 +74,33 @@
                 </tr>
             {% endfor %}
         </tbody>
-    </table>
-    {% include 'games/_pagination.html' %}
-    </nav>
+    </table> 
+
+    <div class="columns is-hidden-tablet">
+        <div class="column is-two-thirds">
+            {% for list in list_list %}
+                <div class="game-row py-3">
+                    <td>
+                        <label class="has-text-weight-medium is-size-6">{{ list.publisher }}</label>
+                    </td>
+                    <div>
+                        <a target="_blank" href="{{ list.url }}">
+                            {{ list }}
+                        </a>
+                    </div>
+                    <div>
+                        <label class="has-text-weight-medium is-size-6">Year:</label>
+                        {{ list.year }}
+                    </div>
+                    <div>
+                        <label class="has-text-weight-medium is-size-6">Type:</label>
+                        {{ list.get_type_display }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% pagination %}
+
 {% endblock %}

@@ -1,5 +1,7 @@
 {% extends 'games/base.html' %}
 
+{% load games_tags %}
+
 {% block title %}Developers |{% endblock %}
 
 {% block content %}
@@ -46,6 +48,6 @@
         </tbody>
     </table>
     {% if show_pagination %}
-        {% include 'games/_pagination.html' %}
+        {% pagination %}
     {% endif %}
 {% endblock %}
