@@ -87,6 +87,7 @@ class GameListView(ListView):
         args = self.request.GET.copy()
 
         if args.get('alltime'):
+            #args.pop('q')
             args.pop('year')
             args.pop('decade')
             args.pop('alltime')
@@ -145,6 +146,8 @@ class GameListView(ListView):
         )
 
         args = self.get_normalized_args()
+
+        print(args)
 
         # If q is present then remove all other args
         if args.get('q'):
@@ -252,7 +255,7 @@ class GameDetailView(DetailView):
 
     def get_object(self, *args, **kwargs):
         """
-        Lookup object by its igdb_id 
+        Lookup object by its igdb_id
         """
         queryset = self.get_queryset()
 

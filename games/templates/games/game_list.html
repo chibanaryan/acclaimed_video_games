@@ -4,7 +4,7 @@
 
 {% block title %}{{ short_title }} |{% endblock %}
 
-{% block extrahead %} 
+{% block extrahead %}
     <style>
         form {
             display: inline;
@@ -25,17 +25,17 @@
         <div class="field is-grouped is-grouped-multiline">
             <div class="field is-grouped ">
                 <div class="control">
-                    <button class="button is-link" 
-                        type="submit" 
-                        name="alltime" 
-                        value="true" 
-                        onclick="form.q.value = ''; form.genre.value = ''; form.platform.value = ''; form.year.value = ''; form.decade.value = ''; form.submit()">
+                    <button class="button is-link"
+                        type="submit"
+                        name="alltime"
+                        value="true"
+                        onclick="form.genre.value = ''; form.platform.value = ''; form.year.value = ''; form.decade.value = ''; form.submit()">
                         All time
                     </button>
                 </div>
                 <div class="control">
                     <div class="select">
-                        <select name="decade" 
+                        <select name="decade"
                             onchange="form.q.value = ''; form.genre.value = ''; form.platform.value = ''; form.year.value = ''; if(form.decade.value) form.submit()">
                             <option selected value="">Decade</option>
                             {% for decade in decades %}
@@ -45,24 +45,24 @@
                     </div>
                 </div>
                 <div class="control mr-3">
-                    <div class="select"> 
-                        <select name="year" 
+                    <div class="select">
+                        <select name="year"
                             onchange="form.q.value = ''; form.genre.value = ''; form.platform.value = ''; form.decade.value = ''; if(form.year.value) form.submit()">
                             <option selected value="">Year</option>
                             {% for year in years %}
                                 <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
                             {% endfor %}
-                        </select> 
+                        </select>
                     </div>
                 </div>
             </div>
             <div class="field has-addons">
                 <div class="control has-icons-left">
-                    <input class="input" 
-                        type="text" 
-                        name="q" 
-                        placeholder="Search by name" 
-                        value="{{ selected_q }}" 
+                    <input class="input"
+                        type="text"
+                        name="q"
+                        placeholder="Search by name"
+                        value="{{ selected_q }}"
                         onkeyup="form.genre.value = ''; form.platform.value = ''; form.decade.value = ''; form.year.value = '';">
                     <span class="icon is-small is-left">
                         <i class="mdi mdi-magnify"></i>
@@ -74,7 +74,7 @@
             </div>
         </div>
         <h1 class="title is-size-4 mt-5">{{ title }}</h1>
-        <h2 class="subtitle">{{ subtitle }}</h2> 
+        <h2 class="subtitle">{{ subtitle }}</h2>
         <div class="field is-grouped is-grouped-multiline">
             <div class="control">
                 <div class="select">
@@ -103,7 +103,7 @@
                 <a class="button" href="{% url 'games-list' %}?year={{ selected_year }}&decade={{ selected_decade }}">
                     <span class="icon">
                         <span class="mdi mdi-close"></span>
-                    </span>     
+                    </span>
                     &nbsp;&nbsp;Clear
                 </a>
             {% endif %}
@@ -119,10 +119,10 @@
                     {% pagination %}
                 </div>
             {% endif %}
-            <div class="mt-2">   
+            <div class="mt-2">
                 {% if game_list %}
                     <h3 class="subtitle mb-4">{{ rank_heading }}</h3>
-                {% endif %} 
+                {% endif %}
                 {% for game in game_list %}
                     {% include 'games/_game_row.html' %}
                 {% empty %}
