@@ -83,19 +83,6 @@ class GameListView(ListView):
         Filter(param='genre', fields=['genres'], coerce=int),
     ]
 
-    def get_normalized_args(self):
-        args = self.request.GET.copy()
-
-        if args.get('alltime'):
-            #args.pop('q')
-            args.pop('year')
-            args.pop('decade')
-            args.pop('alltime')
-
-        args = {k: v for (k, v) in args.items() if v}
-
-        return args
-
     def get_title(self, args):
         prefix = ''
         base_title = ''
@@ -145,23 +132,15 @@ class GameListView(ListView):
             first_letter=Left('name', 1),
         )
 
-        args = self.get_normalized_args()
-
-        print(args)
-
-        # If q is present then remove all other args
-        if args.get('q'):
-            args = {'q': args['q']}
-
         for filter in self.filters:
-            param_val = args.get(filter.param)
+            param_val = self.request.GET.get(filter.param)
             qs = filter.filter_queryset(qs, param_val)
 
         return qs
 
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        args = self.get_normalized_args()
+        args = self.request.GET
 
         # Get list of decades and years
         min_year = models.Game.objects.aggregate(
