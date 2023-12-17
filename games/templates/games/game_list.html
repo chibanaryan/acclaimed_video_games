@@ -20,97 +20,141 @@
     </style>
 {% endblock %}
 
+{% block extrajs %}
+<script>
+    function submitForm(field) {
+        const form = field.form;
+        if(field.name == 'alltime') {
+            form.decade.value = '';
+            form.year.value = '';
+            form.platform.value = '';
+            form.genre.value = '';
+        } else if(field.name == 'decade') {
+            form.year.value = '';
+            form.platform.value = '';
+            form.genre.value = '';
+        } else if(field.name == 'year') {
+            form.decade.value = '';
+            form.platform.value = '';
+            form.genre.value = '';
+        }
+        form.submit();
+    }
+
+    document.querySelectorAll('select').forEach((select) => {
+        select.addEventListener('change', (event) => {
+            event.preventDefault();
+            submitForm(event.target);
+        });
+    });
+
+    document.getElementById('alltime').addEventListener('click', (event) => {
+        event.preventDefault();
+        submitForm(event.target);
+    });
+
+    document.getElementById('q').addEventListener('keyup', (event) => {
+        event.preventDefault();
+        let form = event.target.form;
+        form.decade.value = '';
+        form.year.value = '';
+        form.genre.value = '';
+        form.platform.value = '';
+    });
+</script>
+{% endblock %}
+
 {% block content %}
-    <form action=".">
-        <div class="field is-grouped is-grouped-multiline">
-            <div class="field is-grouped ">
-                <div class="control">
-                    <button class="button is-link"
-                        type="submit"
-                        name="alltime"
-                        value="true"
-                        onclick="form.genre.value = ''; form.platform.value = ''; form.year.value = ''; form.decade.value = ''; form.submit()">
-                        All time
-                    </button>
-                </div>
-                <div class="control">
-                    <div class="select">
-                        <select name="decade"
-                            onchange="form.q.value = ''; form.genre.value = ''; form.platform.value = ''; form.year.value = ''; if(form.decade.value) form.submit()">
-                            <option selected value="">Decade</option>
-                            {% for decade in decades %}
-                                <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="control mr-3">
-                    <div class="select">
-                        <select name="year"
-                            onchange="form.q.value = ''; form.genre.value = ''; form.platform.value = ''; form.decade.value = ''; if(form.year.value) form.submit()">
-                            <option selected value="">Year</option>
-                            {% for year in years %}
-                                <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="field has-addons">
-                <div class="control has-icons-left">
-                    <input class="input"
-                        type="text"
-                        name="q"
-                        placeholder="Search by name"
-                        value="{{ selected_q }}"
-                        onkeyup="form.genre.value = ''; form.platform.value = ''; form.decade.value = ''; form.year.value = '';">
-                    <span class="icon is-small is-left">
-                        <i class="mdi mdi-magnify"></i>
-                    </span>
-                </div>
-                <div class="control">
-                    <button class="button" type="submit">Search</button>
-                </div>
-            </div>
-        </div>
-        <h1 class="title is-size-4 mt-5">{{ title }}</h1>
-        <h2 class="subtitle">{{ subtitle }}</h2>
-        <div class="field is-grouped is-grouped-multiline">
-            <div class="control">
-                <div class="select">
-                    <select name="platform">
-                        <option selected value="">Platforms</option>
-                        {% for platform in platforms %}
-                            <option {% if platform.code == selected_platform %}selected{% endif %} value="{{ platform.code }}">{{ platform }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="control">
-                <div class="select">
-                    <select name="genre">
-                        <option selected value="">Genres</option>
-                        {% for genre in genres %}
-                            <option {% if genre.id == selected_genre %}selected{% endif %} value="{{ genre.id }}">{{ genre.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="control">
-                <button class="button" type="submit">Apply</button>
-            </div>
-            {% if is_filtered %}
-                <a class="button" href="{% url 'games-list' %}?year={{ selected_year }}&decade={{ selected_decade }}">
-                    <span class="icon">
-                        <span class="mdi mdi-close"></span>
-                    </span>
-                    &nbsp;&nbsp;Clear
-                </a>
-            {% endif %}
-        </div>
-    </form>
     <div class="columns">
         <div class="column is-two-thirds">
+            <form action="." class="is-pulled-right mb-3">
+                <div class="field has-addons">
+                    <div class="control has-icons-left">
+                        <input id="q" 
+                            class="input"
+                            type="text"
+                            name="q"
+                            placeholder="Search by name"
+                            value="{{ selected_q }}">
+                        <span class="icon is-small is-left">
+                            <i class="mdi mdi-magnify"></i>
+                        </span>
+                    </div>
+                    <div class="control">
+                        <button class="button" type="submit">Search</button>
+                    </div>
+                </div>
+            </form>
+            <div class="is-hidden-tablet is-clearfix"></div>         
+            <form action=".">
+                <div class="field is-grouped is-grouped-multiline">
+                    <div class="control">
+                        <button 
+                            id="alltime"
+                            class="button is-link"
+                            type="submit"
+                            name="alltime"
+                            value="true">
+                            All time
+                        </button>
+                    </div>
+                    <div class="control">
+                        <div class="select">
+                            <select name="decade" >
+                                <option selected value="">Decade</option>
+                                {% for decade in decades %}
+                                    <option {% if decade == selected_decade %}selected{% endif %} value="{{ decade }}">{{ decade }}s</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <div class="select">
+                            <select name="year" >
+                                <option selected value="">Year</option>
+                                {% for year in years %}
+                                    <option {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <h1 class="title is-size-4 mt-5">{{ title }}</h1>
+                <h2 class="subtitle">{{ subtitle }}</h2>   
+                <div class="field is-grouped is-grouped-multiline">
+                    <div class="control">
+                        <div class="select">
+                            <select name="platform" >
+                                <option selected value="">Platforms</option>
+                                {% for platform in platforms %}
+                                    <option {% if platform.code == selected_platform %}selected{% endif %} value="{{ platform.code }}">{{ platform }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <div class="select">
+                            <select name="genre"  >
+                                <option selected value="">Genres</option>
+                                {% for genre in genres %}
+                                    <option {% if genre.id == selected_genre %}selected{% endif %} value="{{ genre.id }}">{{ genre.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <button class="button" type="submit">Apply</button>
+                    </div>
+                    {% if is_filtered %}
+                        <a class="button" href="{% url 'games-list' %}?year={{ selected_year }}&decade={{ selected_decade }}">
+                            <span class="icon">
+                                <span class="mdi mdi-close"></span>
+                            </span>
+                            &nbsp;&nbsp;Clear
+                        </a>
+                    {% endif %}
+                </div>
+            </form> 
             {% if show_pagination %}
                 <div class="mt-5 is-hidden-tablet">
                     {% pagination 5 %}
