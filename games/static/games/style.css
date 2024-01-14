@@ -3,6 +3,12 @@ footer {
     background-color: #444;
     margin-top: 2em;
     padding-top: 2em;
+    text-align: center;
+    color: #363636;
+}
+
+footer a {
+    color: #363636;
 }
 
 dl.detail dt {
@@ -21,8 +27,7 @@ header {
 }
 
 header,
-.container,
-footer {
+.container {
     padding: 0 1em;
 }
 

@@ -45,7 +45,6 @@
                 <div class="navbar-brand is-hidden-tablet">
                     <a class="navbar-item has-text-weight-bold pl-0" href="{% url 'index' %}">
                         <img src="{% static 'games/avg_logo_small.png' %}">
-                        <!-- Home -->
                     </a>
                     <a class="navbar-item pl-0" href="{% url 'games-list' %}">
                         Top 750 
@@ -56,14 +55,18 @@
                     <a class="navbar-item pl-0" href="{% url 'list-list' %}">
                          Lists
                     </a>
-                    <a class="navbar-item pl-0" href="/about/">
+                    {% comment %} <a class="navbar-item pl-0" href="/about/">
                         About
+                    </a> {% endcomment %}
+                    <a class="navbar-item" href="/palestine/">
+                        <img src="{% static 'games/palestine-flag-xs.png' %}" 
+                            style="height: 20px" 
+                            title="Statement on Palestine">
                     </a>
                 </div>
                 <div class="navbar-brand is-hidden-mobile">
                     <a class="navbar-item has-text-weight-bold" href="{% url 'index' %}">
                         <img src="{% static 'games/avg_logo_small.png' %}">
-                        <!-- Home -->
                     </a>
                     <a class="navbar-item" href="{% url 'games-list' %}">
                         Top 750 Games
@@ -77,6 +80,11 @@
                     <a class="navbar-item" href="/about/">
                         About / FAQ
                     </a>
+                    <a class="navbar-item" href="/palestine/">
+                        <img src="{% static 'games/palestine-flag-xs.png' %}" 
+                            style="height: 20px" 
+                            title="Statement on Palestine">
+                    </a>
                 </div>
             </nav>
         </div>
@@ -89,6 +97,13 @@
     </section>
     <footer>
         <div class="container">
+            <a href="{% url "index" %}">
+                Home
+            </a>
+            •
+            <a href="/about/">
+                About / FAQ
+            </a>
         </div>
     </footer>
     {% block extrajs %}
