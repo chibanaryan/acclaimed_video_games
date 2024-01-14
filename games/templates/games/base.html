@@ -40,7 +40,7 @@
                 {% endfor %}
             </div>
         {% endif %}
-        <div class="container">
+        <div class="container p-0">
             <nav class="navbar mx-1" role="navigation" aria-label="main navigation">
                 <div class="navbar-brand is-hidden-tablet">
                     <a class="navbar-item has-text-weight-bold pl-0" href="{% url 'index' %}">
@@ -55,12 +55,12 @@
                     <a class="navbar-item pl-0" href="{% url 'list-list' %}">
                          Lists
                     </a>
-                    {% comment %} <a class="navbar-item pl-0" href="/about/">
+                    <a class="navbar-item pl-0" href="/about/">
                         About
-                    </a> {% endcomment %}
-                    <a class="navbar-item" href="/palestine/">
+                    </a> 
+                    <a class="navbar-item pl-0" href="/palestine/">
                         <img src="{% static 'games/palestine-flag-xs.png' %}" 
-                            style="height: 20px" 
+                            style="height: 12px" 
                             title="Statement on Palestine">
                     </a>
                 </div>
@@ -82,7 +82,7 @@
                     </a>
                     <a class="navbar-item" href="/palestine/">
                         <img src="{% static 'games/palestine-flag-xs.png' %}" 
-                            style="height: 20px" 
+                            style="height: 15px" 
                             title="Statement on Palestine">
                     </a>
                 </div>
