@@ -7,6 +7,8 @@ from unidecode import unidecode
 from . import constants, igdb
 logger = logging.getLogger(__name__)
 
+api = igdb.get_api()
+
 
 class Snippet(models.Model):
     """A reusable piece of text"""
@@ -129,8 +131,11 @@ class Game(models.Model):
             self.name_normalized = normalized
 
         from . import utils
-        self.year_rank = utils.get_ranking_for_year(self)
-        self.decade_rank = utils.get_ranking_for_decade(self)
+        try:
+            self.year_rank = utils.get_ranking_for_year(self)
+            self.decade_rank = utils.get_ranking_for_decade(self)
+        except Exception as e:
+            logger.error(str(e))
 
         super().save(*args, **kwargs)
 
@@ -138,7 +143,7 @@ class Game(models.Model):
         if not self.igdb_id:
             return
 
-        data = igdb.api.get_game_info_by_id(self.igdb_id, cache_results)
+        data = api.get_game_info_by_id(self.igdb_id, cache_results)
         self.igdb_url = data.get('url')
         self.igdb_artwork_id = data.get('cover')
         self.year_of_release = data.get('year')

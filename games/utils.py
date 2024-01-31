@@ -120,7 +120,7 @@ def import_games(f):
     count = 0
     updated = 0
 
-    for rank, game_name, platforms, igdb_id in rows:
+    for rank, game_name, year, platforms, igdb_id in rows:
         platform_codes = platforms.split(',')
         platforms = []
         for code in platform_codes:
@@ -137,6 +137,7 @@ def import_games(f):
             defaults={
                 'rank': int(rank),
                 'name': game_name,
+                #'year_of_release': int(year),
             }
         )
         game.platforms.set(platforms)
