@@ -189,7 +189,7 @@ class IgbdApi():
                 }
             )
 
-        # Get the full release date
+        # Get the full release dates
         full_release_status = self.release_date_statuses['Full Release']
         full_release_dates = []
         for obj in self._get_release_dates_by_id(game_id, cache_results):
@@ -197,11 +197,14 @@ class IgbdApi():
                 if obj.get('date'):
                     full_release_dates.append(
                         datetime.fromtimestamp(obj['date']))
+               
+        # Add first release date to list of release dates     
+        if data.get('first_release_date'):
+            full_release_dates.append(datetime.fromtimestamp(data['first_release_date']))
 
-        if full_release_dates:
-            release_date = list(sorted(full_release_dates))[0]
-        else:
-            release_date = datetime.fromtimestamp(data['first_release_date'])
+        # Choose the earliest release data
+        full_release_dates.sort()
+        release_date = full_release_dates[0]
 
         game_data = {
             'cover': self._get_cover_by_id(data['cover']),
