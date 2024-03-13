@@ -198,7 +198,11 @@ class IgbdApi():
                     full_release_dates.append(
                         datetime.fromtimestamp(obj['date']))
 
-        # Choose the earliest release date
+        # Add first release date to list of release dates
+        if data.get('first_release_date'):
+            full_release_dates.append(datetime.fromtimestamp(data['first_release_date']))
+
+        # Choose the earliest release data
         full_release_dates.sort()
         release_date = full_release_dates[0]
 
