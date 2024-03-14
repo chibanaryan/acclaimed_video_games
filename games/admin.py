@@ -36,6 +36,7 @@ class GameAdmin(admin.ModelAdmin):
         'igdb_id',
         'igdb_artwork_id',
         'igdb_url',
+        '_genres',
     ]
     list_filter = ['year_of_release']
     search_fields = ['name']
@@ -44,6 +45,9 @@ class GameAdmin(admin.ModelAdmin):
     # def save_model(self, request, obj: models.Game, form, change):
     #     obj.get_igdb_data(cache_results=False)
     #     obj.save()
+        
+    def _genres(self, obj):
+        return ', '.join(obj.genres.values_list('name', flat=True))
 
 
 @admin.register(models.List)

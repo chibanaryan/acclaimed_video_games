@@ -96,7 +96,7 @@ class Game(models.Model):
     """
     name = models.CharField(max_length=100)
     name_normalized = models.CharField(max_length=100, null=True, blank=True)
-    genres = models.ManyToManyField('Genre')
+    genres = models.ManyToManyField('Genre', blank=True)
     description = models.TextField(null=True, blank=True)
     rank = models.IntegerField()
     year_of_release = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -189,7 +189,6 @@ class Game(models.Model):
         for genre_name in data.get('genres'):
             genre, created = Genre.objects.get_or_create(name=genre_name)
             genres.append(genre)
-
         self.genres.set(genres)
 
     @property

@@ -13,6 +13,17 @@ game_status_map = {
     8: 'delisted',
 }
 
+genre_themes = [
+    '4X',
+    'Action',
+    'Horror',
+    'Open World',
+    'Party',
+    'Sandbox',
+    'Stealth',
+    'Survival',
+]
+
 
 class IgbdApi():
 
@@ -29,6 +40,7 @@ class IgbdApi():
 
         self._get_auth_token()
         self._get_release_statuses()
+        self._get_themes()
 
     def _get_auth_token(self):
         data = requests.post(
@@ -44,6 +56,14 @@ class IgbdApi():
         else:
             return False
 
+    def _get_themes(self):
+        results = requests.post(
+            'https://api.igdb.com/v4/themes/',
+            headers=self.headers,
+            data=f'fields name;'
+        ).json()
+        self.themes = {x['id']: x['name'] for x in results}
+        
     def _get_release_statuses(self):
         results = requests.post(
             'https://api.igdb.com/v4/release_date_statuses/',
@@ -123,7 +143,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/games/',
             headers=self.headers,
-            data=f'where id={game_id}; fields cover,genres,first_release_date,summary,storyline,url,involved_companies.*;'
+            data=f'where id={game_id}; fields cover,genres,first_release_date,summary,storyline,url,themes,involved_companies.*;'
         )
 
         if res.status_code == 401:
@@ -135,7 +155,7 @@ class IgbdApi():
         results = res.json()
         assert len(results) == 1
         data = results[0]
-
+        
         # Get developer information
         developers = []
         porters = []
@@ -205,11 +225,16 @@ class IgbdApi():
         # Choose the earliest release data
         full_release_dates.sort()
         release_date = full_release_dates[0]
-
+        
+        # Get genres
+        theme_names = [self.themes.get(x) for x in data.get('themes', []) if self.themes.get(x) in genre_themes]
+        genre_names = [self._get_genre_by_id(x, cache_results) for x in data.get('genres', [])]
+        genres = list(set(theme_names + genre_names))
+        
         game_data = {
             'cover': self._get_cover_by_id(data['cover']),
             'developers': developer_objs,
-            'genres': [self._get_genre_by_id(x, cache_results) for x in data.get('genres', [])],
+            'genres': genres,
             'storyline': data.get('storyline'),
             'summary': data.get('summary'),
             'url': data.get('url'),
