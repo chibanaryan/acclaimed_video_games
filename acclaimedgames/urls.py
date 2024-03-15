@@ -19,7 +19,8 @@ urlpatterns = [
          name='publication-detail'),
     path('games/<int:pk>/', views.GameDetailView.as_view(), name='game-detail'),
     path('import/', views.ImportView.as_view(), name='import'),
-    
+    path('news/', views.PostListView.as_view(), name='post-list'),
+
     path('admin/', admin.site.urls),
     path("accounts/login/", auth_views.LoginView.as_view(), name='login'),
 

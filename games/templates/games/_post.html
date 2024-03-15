@@ -1,0 +1,9 @@
+{% load games_tags %}
+
+<div class="is-clearfix my-5 content box">
+    {% if post.title %}
+        <h4>{{ post.title }}</h4>
+    {% endif %}
+    {{ post.text | markdown | safe }}
+    <div class="has-text-grey-dark is-pulled-right">{{ post.date | timesince }} ago</div>
+</div>

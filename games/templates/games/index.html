@@ -80,20 +80,15 @@
                 Last update: {{ last_update | date:"dS M Y" }}
             </p>
         </div> 
-
         <div class="column">
             {% if posts %}
                 <div class="posts">
                     <h3 class="title is-size-4 mt-5">Latest News</h3>
                     {% for post in posts %}
-                        <div class="is-clearfix my-5 content box">
-                            {% if post.title %}
-                                <h4>{{ post.title }}</h4>
-                            {% endif %}
-                            {{ post.text | markdown | safe }}
-                            <div class="has-text-grey-dark is-pulled-right">{{ post.date | timesince }} ago</div>
-                        </div>
+                        {% include 'games/_post.html' with posts=posts %}
                     {% endfor %}
+                    <a href="{% url 'post-list' %}" 
+                        class="button is-link is-pulled-right">Older posts&hellip;</a>
                 </div>
             {% endif %}
         </div>

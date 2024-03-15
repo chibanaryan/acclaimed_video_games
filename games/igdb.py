@@ -60,7 +60,7 @@ class IgbdApi():
         results = requests.post(
             'https://api.igdb.com/v4/themes/',
             headers=self.headers,
-            data=f'fields name;'
+            data='fields name;'
         ).json()
         self.themes = {x['id']: x['name'] for x in results}
         

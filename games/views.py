@@ -55,7 +55,7 @@ class IndexView(TemplateView):
         context['list_count'] = round_down(models.List.objects.count(), 50)
         context['publication_count'] = round_down(
             models.Publication.objects.count())
-        context['posts'] = models.Post.objects.filter(active=True)
+        context['posts'] = models.Post.objects.filter(active=True)[:5]
 
         return context
 
@@ -457,3 +457,11 @@ class ImportView(LoginRequiredMixin, FormView):
             messages.error(self.request, message)
 
         return super().form_valid(form)
+
+
+class PostListView(ListView):
+    """
+    Post list page
+    """
+    model = models.Post
+    paginate_by = 10 
