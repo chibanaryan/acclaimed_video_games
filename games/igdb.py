@@ -14,10 +14,10 @@ game_status_map = {
 }
 
 genre_themes = [
-    '4X',
+    '4X (explore, expand, exploit, and exterminate)',
     'Action',
     'Horror',
-    'Open World',
+    'Open world',
     'Party',
     'Sandbox',
     'Stealth',
@@ -60,7 +60,7 @@ class IgbdApi():
         results = requests.post(
             'https://api.igdb.com/v4/themes/',
             headers=self.headers,
-            data='fields name;'
+            data='limit 500; fields name;'
         ).json()
         self.themes = {x['id']: x['name'] for x in results}
         
@@ -68,7 +68,7 @@ class IgbdApi():
         results = requests.post(
             'https://api.igdb.com/v4/release_date_statuses/',
             headers=self.headers,
-            data=f'fields name;'
+            data='fields name;'
         ).json()
 
         self.release_date_statuses = {x['name']: x['id'] for x in results}

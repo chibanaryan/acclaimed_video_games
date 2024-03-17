@@ -464,4 +464,4 @@ class PostListView(ListView):
     Post list page
     """
     model = models.Post
-    paginate_by = 10 
+    paginate_by = 5 
