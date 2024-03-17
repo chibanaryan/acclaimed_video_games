@@ -97,8 +97,12 @@
     </section>
     <footer>
         <div class="container">
-            <a href="{% url "index" %}">
+            <a href="{% url 'index' %}">
                 Home
+            </a>
+            •
+            <a href="{% url 'post-list' %}">
+                News
             </a>
             •
             <a href="/about/">
@@ -109,5 +113,4 @@
     {% block extrajs %}
     {% endblock %}
 </body>
-
 </html>

@@ -8,7 +8,12 @@ from games import views
 
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
+
     path('games/', views.GameListView.as_view(), name='games-list'),
+    path('games/year/<slug:slug>/',
+         views.GameYearListView.as_view(),
+         name='games-year-list'),
+
     path('developer-aliases/<int:pk>/', views.DeveloperAliasRedirectView.as_view(),
          name='developer-alias-redirect'),
     path('developers/', views.DeveloperListView.as_view(), name='developer-list'),

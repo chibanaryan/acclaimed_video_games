@@ -1,0 +1,61 @@
+{% extends 'games/base.html' %}
+
+{% load games_tags %}
+
+{% block extrahead %}
+    <style>
+        .dropdown-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="field is-grouped">
+        <div class="dropdown is-hoverable control">
+            <div class="dropdown-trigger">
+                <button class="button" aria-haspopup="true" aria-controls="dropdown-menu-decade">
+                    Decades
+                </button>
+            </div>
+            <div class="dropdown-menu" id="dropdown-menu-decade" role="menu">
+                <div class="dropdown-content">
+                    {% for decade in decades %}
+                        <div class="dropdown-item">
+                            <a href="{% url 'games-year-list' decade %}">
+                                {{ decade }}
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="dropdown is-hoverable control">
+            <div class="dropdown-trigger">
+                <button class="button" aria-haspopup="true" aria-controls="dropdown-menu-year">
+                    Years
+                </button>
+            </div>
+            <div class="dropdown-menu" id="dropdown-menu-year" role="menu">
+                <div class="dropdown-content">
+                    {% for year in years %}
+                        <div class="dropdown-item">
+                            <a href="{% url 'games-year-list' year %}">
+                                {{ year }}
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for game in game_list %}
+        {% include 'games/_game_row.html' %}
+    {% empty %}
+        <p class="is-size-3">No results found</p>
+    {% endfor %}
+
+{% endblock %}
