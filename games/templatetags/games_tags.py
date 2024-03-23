@@ -3,7 +3,7 @@ from django import template
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 
-from ..models import Snippet
+from ..models import Snippet, Platform, Genre
 
 register = template.Library()
 
@@ -28,6 +28,14 @@ def get_snippet(slug, create=True):
 @register.simple_tag
 def snippet(name):
     return mark_safe(get_snippet(name))
+
+
+@register.inclusion_tag('games/_search_form.html', takes_context=True)
+def search_form(context):
+    return {
+        'platforms': Platform.objects.all(),
+        'genres': Genre.objects.all(),
+    }
 
 
 @register.inclusion_tag('games/_pagination.html', takes_context=True)
@@ -60,11 +68,14 @@ def pagination(context, max_pages=10):
         pages.append(page)
 
     if len(pages) > max_pages:
-        min_pages = [x for x in pages if x['current'] or x['first'] or x['last']]
+        min_pages = [x for x in pages if x['current']
+                     or x['first'] or x['last']]
         min_page_orders = [x['order'] for x in min_pages]
         num_extra_pages_required = max_pages - len(min_pages)
-        available_pages = [x for x in pages if x['order'] not in min_page_orders]
-        extra_pages = sorted(available_pages, key=lambda x: x['distance_from_current'])[:num_extra_pages_required]
+        available_pages = [
+            x for x in pages if x['order'] not in min_page_orders]
+        extra_pages = sorted(available_pages, key=lambda x: x['distance_from_current'])[
+            :num_extra_pages_required]
         raw_pages = min_pages + extra_pages
         raw_pages.sort(key=lambda x: x['order'])
 

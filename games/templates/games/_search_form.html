@@ -1,0 +1,49 @@
+<form action="{% url 'games-search' %}">
+    <div class="field is-grouped">
+        <div class="control">
+            <label>
+                Start year:
+                <input class="input" type="number" name="start">
+            </label>
+        </div>
+        <div class="control">
+            <label>
+                End year:
+                <input  class="input" type="number" name="end">
+            </label>
+        </div>
+        <div class="control">
+            <label>Platform:</label>
+            <div>
+                {% for platform in platforms %}
+                    <label class="checkbox">
+                        <input type="checkbox" name="platform-{{ platform.id}}" class="checkbox">
+                        {{ platform }}
+                    </label><br>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="control">
+            <label>Genre:</label>
+            <div class="select" >
+                <select name="genre_option">
+                    <option>All of</option>
+                    <option>Any of</option>
+                    <option>Exactly</option>
+                    <option>None of</option>
+                </select>
+            </div>
+            <div>
+                {% for genre in genres %}
+                    <label class="checkbox">
+                        <input type="checkbox" name="genre-{{ genre.id}}" class="checkbox">
+                        {{ genre }}
+                    </label><br>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="button">Submit</button>
+    </div>
+</form>

@@ -1,3 +1,4 @@
+from functools import lru_cache
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -6,7 +7,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import CharField, Count, Min, QuerySet, Value, Q
+from django.db.models import CharField, Count, Min, Q, QuerySet, Value
 from django.db.models.functions import Cast, Concat, Left, Lower
 from django.forms import Form
 from django.http import HttpResponse
@@ -69,17 +70,17 @@ class GameYearListView(ListView):
 
     template_name = 'games/game_year_list.html'
 
-    def get_queryset(self) -> QuerySet:
-        qs = models.Game.objects.prefetch_related(
-            'genres',
-            'developers',
-            'platforms',
-        )
+    @lru_cache
+    def get_data(self):
         slug = self.kwargs['slug']
-
+        
         alltime_match = slug == 'alltime'
         decade_match = decade_pattern.match(slug)
         year_match = year_pattern.match(slug)
+        start = None
+        end = None
+        title = None
+        title_prefix = 'Most Acclaimed Games of'
 
         if decade_match:
             start, end = [int(x) for x in decade_match.groups()]
@@ -93,23 +94,42 @@ class GameYearListView(ListView):
             else:
                 end += 2000
 
-            qs = qs.filter(
-                year_of_release__gte=start,
-                year_of_release__lte=end,
-            ).distinct()
+            title = f'{title_prefix} {start} to {end}'
 
         elif year_match:
-            year = int(year_match.groups()[0])
-            qs = qs.filter(year_of_release=year)
+            start = int(year_match.groups()[0])
+            end = start
+            title = f'{title_prefix} {start}'
 
         elif alltime_match:
-            pass
+            title = '{title_prefix} Alltime'
+
+        return {
+            'start': start,
+            'end': end,
+            'title': title,
+        }
+
+    def get_queryset(self) -> QuerySet:
+        qs = models.Game.objects.prefetch_related(
+            'genres',
+            'developers',
+            'platforms',
+        )
+
+        data = self.get_data()
+
+        if data.get('start') and data.get('end'):
+            qs = qs.filter(
+                year_of_release__gte=data['start'],
+                year_of_release__lte=data['end'],
+            ).distinct()
 
         return qs
 
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        #args = self.request.GET
+        data = self.get_data()
 
         # Get list of decades and years
         min_year = models.Game.objects.aggregate(
@@ -117,14 +137,45 @@ class GameYearListView(ListView):
         )['min_year'] or 1970
         max_year = datetime.today().year
         all_years = range(min_year, max_year)
+
+        year_count_map = dict(
+            models.Game.objects.values_list(
+                'year_of_release'
+            ).annotate(
+                count=Count('id')
+            ).order_by(
+                'year_of_release'
+            ))
+
+        all_years_with_counts = [(x, year_count_map.get(x, 0))
+                                 for x in all_years]
         decades = sorted(list(set(int(x / 10) * 10 for x in all_years)))
         decades = [f'{x}-{str(x + 9)[2:4]}' for x in decades]
 
-        context['years'] = all_years
+        context['years'] = all_years_with_counts
         context['decades'] = decades
+        context['title'] = data['title']
 
         return context
 
+
+class GameSearchView(ListView):
+    paginate_by = 100
+    template_name = 'games/search.html'
+    
+    def get_queryset(self) -> QuerySet:
+        qs = models.Game.objects.prefetch_related(
+            'genres',
+            'developers',
+            'platforms',
+        ).annotate(
+            decade=Concat(
+                Left(Cast('year_of_release', output_field=CharField()), 3), Value('0')),
+            first_letter=Left('name', 1),
+        )
+        
+        return qs
+    
 
 class GameListView(ListView):
     """
@@ -530,4 +581,4 @@ class PostListView(ListView):
     Post list page
     """
     model = models.Post
-    paginate_by = 10
+    paginate_by = 5

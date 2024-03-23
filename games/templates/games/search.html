@@ -1,0 +1,13 @@
+{% extends 'games/base.html' %}
+
+{% load games_tags %}
+
+{% block content %}
+    <h2 class=title>{{ title }}</h2>    
+    {% search_form %}
+    {% for game in game_list %}
+        {% include 'games/_game_row.html' %}
+    {% empty %}
+        <p class="is-size-3">No results found</p>
+    {% endfor %}
+{% endblock%}

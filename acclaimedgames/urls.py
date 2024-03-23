@@ -10,6 +10,7 @@ urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
 
     path('games/', views.GameListView.as_view(), name='games-list'),
+    path('games/search/', views.GameSearchView.as_view(), name='games-search'),
     path('games/year/<slug:slug>/',
          views.GameYearListView.as_view(),
          name='games-year-list'),

@@ -11,51 +11,46 @@
     </style>
 {% endblock %}
 
+{% block extrajs %}
+<script>
+    function submit(slug) {
+        location.href = `/games/year/${slug}/`;
+    }
+</script>
+{% endblock %}
+
 {% block content %}
+    <h2 class=title>{{ title }}</h2>    
+
+    {% search_form %}
 
     <div class="field is-grouped">
-        <div class="dropdown is-hoverable control">
-            <div class="dropdown-trigger">
-                <button class="button" aria-haspopup="true" aria-controls="dropdown-menu-decade">
-                    Decades
-                </button>
-            </div>
-            <div class="dropdown-menu" id="dropdown-menu-decade" role="menu">
-                <div class="dropdown-content">
+        <label class="p-2">Decade</label>
+        <div class="control">
+            <div class="select">
+                <select onchange="submit(this.value)">
                     {% for decade in decades %}
-                        <div class="dropdown-item">
-                            <a href="{% url 'games-year-list' decade %}">
-                                {{ decade }}
-                            </a>
-                        </div>
+                        <option>
+                            {{ decade }}
+                        </option>
                     {% endfor %}
-                </div>
+                </select>
             </div>
         </div>
-        <div class="dropdown is-hoverable control">
-            <div class="dropdown-trigger">
-                <button class="button" aria-haspopup="true" aria-controls="dropdown-menu-year">
-                    Years
-                </button>
-            </div>
-            <div class="dropdown-menu" id="dropdown-menu-year" role="menu">
-                <div class="dropdown-content">
-                    {% for year in years %}
-                        <div class="dropdown-item">
-                            <a href="{% url 'games-year-list' year %}">
-                                {{ year }}
-                            </a>
-                        </div>
+        <label class="p-2">Year</label>
+        <div class="control">
+            <div class="select">
+                <select onchange="submit(this.value)">
+                    {% for year, count in years %}
+                        <option value="{{ year }}" {% if not count %}disabled{% endif %}>{{ year }} ({{ count }})</option>
                     {% endfor %}
-                </div>
+                </select>
             </div>
         </div>
     </div>
-
     {% for game in game_list %}
         {% include 'games/_game_row.html' %}
     {% empty %}
         <p class="is-size-3">No results found</p>
     {% endfor %}
-
 {% endblock %}

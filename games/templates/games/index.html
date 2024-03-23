@@ -49,18 +49,15 @@
     </style>
 {% endblock %}
 
-
 {% block content %}
 <div class="block">
     <div class="columns">
-
         <div class="column py-0">
             <img src="{% static 'games/avg_logo.png' %}">
             <p class="is-size-4">
                 {% snippet 'front-page' %}
             </p>
             <h3 class="title is-size-4 mt-5">Current Top 10</h3>
-
             <div class="top-ten is-clearfix">
                 {% for game in games %}
                     <div class="game">
@@ -70,12 +67,10 @@
                         </a>
                     </div>
                 {% endfor %}
-
                 <div class="link">
                     <a href="{% url 'games-list' %}" class="button">See the full list&hellip;</a>
                 </div>
             </div>
-
             <p class="has-text-grey-dark mt-2">
                 Last update: {{ last_update | date:"dS M Y" }}
             </p>
@@ -87,8 +82,8 @@
                     {% for post in posts %}
                         {% include 'games/_post.html' with posts=posts %}
                     {% endfor %}
-                    <a href="{% url 'post-list' %}" 
-                        class="button is-link is-pulled-right">Older posts&hellip;</a>
+                    <a href="{% url 'post-list' %}?page=2" 
+                        class="button is-link is-pulled-right">Older posts&nbsp;&raquo;</a>
                 </div>
             {% endif %}
         </div>
