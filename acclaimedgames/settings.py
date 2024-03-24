@@ -43,11 +43,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
     'django.contrib.sites',
-    'django.contrib.postgres',
+    'django.contrib.postgres',  
+    'django.forms',
 
     'django_extensions',
     'debug_toolbar',
-
+    'crispy_forms',
+    'crispy_bulma',
+    
     'games',
 ]
 
@@ -127,3 +130,6 @@ MESSAGE_TAGS = {
 
 IGDB_CLIENT_ID = env('IGDB_CLIENT_ID', default='XXX')
 IGDB_CLIENT_SECRET = env('IGDB_CLIENT_SECRET', default='XXX')
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["bulma"]
+CRISPY_TEMPLATE_PACK = "bulma"

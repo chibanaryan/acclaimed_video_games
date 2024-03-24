@@ -1,13 +1,34 @@
 {% extends 'games/base.html' %}
 
+{% load crispy_forms_tags %}
 {% load games_tags %}
 
+{% block extrahead %}
+    <style>
+        #div_id_genres {
+            max-height: 308px;
+            overflow-y: auto;
+        }
+        #div_id_platforms {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+    </style>
+{% endblock %}  
+
 {% block content %}
-    <h2 class=title>{{ title }}</h2>    
-    {% search_form %}
+    <h2 class="title">{{ title }}</h2>    
+
+    {% crispy form %}
+
     {% for game in game_list %}
         {% include 'games/_game_row.html' %}
     {% empty %}
         <p class="is-size-3">No results found</p>
     {% endfor %}
+
+    <div class="mt-5 is-hidden-mobile">
+        {% pagination %}
+    </div>
+
 {% endblock%}

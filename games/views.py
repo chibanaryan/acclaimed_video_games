@@ -1,3 +1,4 @@
+from collections import defaultdict
 from functools import lru_cache
 import re
 from dataclasses import dataclass
@@ -10,13 +11,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import CharField, Count, Min, Q, QuerySet, Value
 from django.db.models.functions import Cast, Concat, Left, Lower
 from django.forms import Form
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (DetailView, FormView, ListView, RedirectView,
                                   TemplateView)
 
-from games.forms import ImportForm
+from games.forms import ImportForm, SearchForm
 
 from . import constants, models, utils
 
@@ -73,7 +74,7 @@ class GameYearListView(ListView):
     @lru_cache
     def get_data(self):
         slug = self.kwargs['slug']
-        
+
         alltime_match = slug == 'alltime'
         decade_match = decade_pattern.match(slug)
         year_match = year_pattern.match(slug)
@@ -102,7 +103,7 @@ class GameYearListView(ListView):
             title = f'{title_prefix} {start}'
 
         elif alltime_match:
-            title = '{title_prefix} Alltime'
+            title = f'{title_prefix} Alltime'
 
         return {
             'start': start,
@@ -155,6 +156,7 @@ class GameYearListView(ListView):
         context['years'] = all_years_with_counts
         context['decades'] = decades
         context['title'] = data['title']
+        context['form'] = SearchForm()
 
         return context
 
@@ -162,20 +164,70 @@ class GameYearListView(ListView):
 class GameSearchView(ListView):
     paginate_by = 100
     template_name = 'games/search.html'
-    
+
     def get_queryset(self) -> QuerySet:
         qs = models.Game.objects.prefetch_related(
             'genres',
-            'developers',
             'platforms',
+            'developers',
         ).annotate(
-            decade=Concat(
-                Left(Cast('year_of_release', output_field=CharField()), 3), Value('0')),
-            first_letter=Left('name', 1),
+            genre_count=Count('genres')
         )
-        
+
+        form = SearchForm(self.request.GET)
+        if form.is_valid():
+            args = form.cleaned_data
+            if args.get('genres'):
+                genres = args.get('genres')
+                genre_option = args.get('genre_option')
+
+                if genre_option == constants.SEARCH_ANY:
+                    q = Q()
+                    for genre in genres:
+                        q |= Q(genres=genre)
+                    qs = qs.filter(q)
+                
+                elif genre_option == constants.SEARCH_ALL:
+                    for genre in genres:
+                        qs = qs.filter(genres=genre)
+                    
+                elif genre_option == constants.SEARCH_EXACTLY:
+                    for genre in genres:
+                        qs = qs.filter(genres=genre)
+                    qs = qs.filter(genre_count=len(genres))
+
+                elif genre_option == constants.SEARCH_NONE:
+                    qs = qs.exclude(genres__in=genres)
+
+            if args.get('platforms'):
+                qs = qs.filter(platforms__in=args['platforms'])
+
+            if args.get('start'):
+                qs = qs.filter(year_of_release__gte=args['start'])
+
+            if args.get('end'):
+                qs = qs.filter(year_of_release__lte=args['end'])
+
         return qs
-    
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+
+        context['form'] = SearchForm(self.request.GET)
+
+        paginator = context['paginator']
+        context['title'] = f'{paginator.count} search results'
+
+        return context
+
+    # def get(self, request: HttpRequest, *args, **kwargs):
+    #     form = SearchForm(self.request.GET)
+
+    #     if form.is_valid():
+    #         print(form.cleaned_data)
+
+    #     return super().get(request, *args, **kwargs)
+
 
 class GameListView(ListView):
     """

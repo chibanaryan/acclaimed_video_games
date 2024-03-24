@@ -22,7 +22,7 @@
 {% block content %}
     <h2 class=title>{{ title }}</h2>    
 
-    {% search_form %}
+    <a href="{% url 'games-search' %}" class="button is-pulled-right">Advanced Search</a>
 
     <div class="field is-grouped">
         <label class="p-2">Decade</label>

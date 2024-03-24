@@ -46,7 +46,7 @@
                     <a class="navbar-item has-text-weight-bold pl-0" href="{% url 'index' %}">
                         <img src="{% static 'games/avg_logo_small.png' %}">
                     </a>
-                    <a class="navbar-item pl-0" href="{% url 'games-list' %}">
+                    <a class="navbar-item pl-0" href="{% url 'games-year-list' 'alltime' %}">
                         Top 750 
                     </a>
                     <a class="navbar-item pl-0" href="{% url 'developer-list' %}">
@@ -68,8 +68,8 @@
                     <a class="navbar-item has-text-weight-bold" href="{% url 'index' %}">
                         <img src="{% static 'games/avg_logo_small.png' %}">
                     </a>
-                    <a class="navbar-item" href="{% url 'games-list' %}">
-                        Top 750 Games
+                    <a class="navbar-item" href="{% url 'games-year-list' 'alltime' %}">
+                        Top 750 
                     </a>
                     <a class="navbar-item" href="{% url 'developer-list' %}">
                         Developers

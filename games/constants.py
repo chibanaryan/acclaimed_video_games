@@ -23,3 +23,8 @@ LIST_TYPES = [
     (LIST_MISC, 'Miscellaneous'),
     (LIST_DECADE, 'Decade'),
 ]
+
+SEARCH_ALL = 'ALL'
+SEARCH_ANY = 'ANY'
+SEARCH_EXACTLY = 'EXACTLY'
+SEARCH_NONE = 'NONE'

@@ -2,6 +2,8 @@ django
 django-debug-toolbar
 django-environ
 django-extensions
+django-crispy-forms
+crispy-bulma
 gunicorn
 ipython
 markdown
