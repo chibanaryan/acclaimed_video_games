@@ -1,49 +1,52 @@
-<div class="columns is-mobile game-row {% if highlight == game.id %}is-selected{% endif %}" id="game-{{ game.id}}">
-    <div class="column rank is-one-quarter">
+<div class="columns is-mobile game-row {% if highlight == game.id %}{% endif %}" id="game-{{ game.id }}">
+    <div class="column is-narrow">
         <div class="columns">
-            <div class="column">
-                <span class="is-hidden-mobile large">
-                    {% if show_year_rank %}
-                        {{ game.year_rank }}
-                    {% elif show_decade_rank %}
-                        {{ game.decade_rank }}
-                    {% else %}
-                        {{ game.rank }}
-                    {% endif %} 
-                </span>
-                <span class="is-hidden-tablet medium">
-                    {% if show_year_rank %}
-                        {{ game.year_rank }}
-                    {% elif show_decade_rank %}
-                        {{ game.decade_rank }}
-                    {% else %}
-                        {{ game.rank }}
-                    {% endif %}  
-                </span>
-            </div>
-            <div class="column is-two-thirds">
+            {% if not no_rank_column %}
+                <div class="column is-narrow rank">
+                    <span class="is-hidden-mobile large">
+                        {% if show_year_rank %}
+                            {{ game.year_rank }}
+                        {% elif show_decade_rank %}
+                            {{ game.decade_rank }}
+                        {% else %}
+                            {{ game.rank }}
+                        {% endif %}
+                    </span>
+                    <span class="is-hidden-tablet medium">
+                        {% if show_year_rank %}
+                            {{ game.year_rank }}
+                        {% elif show_decade_rank %}
+                            {{ game.decade_rank }}
+                        {% else %}
+                            {{ game.rank }}
+                        {% endif %}
+                    </span>
+                </div>
+            {% endif %}
+            <div class="column is-narrow">
                 {% if game.thumbnail %}
-                    <a href="{% url 'game-detail' game.igdb_id %}">
-                        <img src="{{ game.thumbnail }}" >
-                    </a>
-                {% endif %}     
+                    <a href="{% url 'game-detail' game.slug %}"><img src="{{ game.thumbnail }}" /></a>
+                {% endif %}
             </div>
-        </div>     
+        </div>
     </div>
     <div class="column">
-        <a href="{% url 'game-detail' game.igdb_id %}" class="game-name has-text-weight-bold is-size-6 mb-3">
+        <a href="{% url 'game-detail' game.slug %}" class="game-name has-text-weight-bold is-size-6 mb-3">
             {{ game.name }}
+            ({{ game.year_of_release }})
         </a>
         <div>
-            {% if show_year_rank or show_decade_rank %}
+            {% if show_year_rank or show_decade_rank or no_rank_column %}
                 <div class="py-0">
                     <label class="has-text-weight-medium is-size-6">All time rank:</label>
-                    {{ game.rank }}
+                    <strong>{{ game.rank }}<strong>
                 </div>
             {% endif %}
             <div class="py-0">
                 {% with game.developers.all as developers %}
-                    <label class="has-text-weight-medium is-size-6">Developer{{ developers.count|pluralize}}:</label>
+                    <label class="has-text-weight-medium is-size-6">
+                        Developer{{ developers.count|pluralize }}:
+                    </label>
                     {% for developer in developers %}
                         <a href="{% url 'developer-alias-redirect' developer.igdb_id %}" class="is-size-6">
                             {{ developer.name }}
@@ -53,25 +56,25 @@
                 {% endwith %}
             </div>
             <div class="py-0">
-                <label class="has-text-weight-medium is-size-6">Platform{{ game.platforms.all | pluralize }}:</label>
-                {% for platform in game.platforms.all %} 
-                    <a href="{% url 'games-list' %}?platform={{ platform.code }}" title="{{ platform.name }}" class="is-size-6">
+                <label class="has-text-weight-medium is-size-6">
+                    Platform{{ game.platforms.all|pluralize }}:
+                </label>
+                {% for platform in game.platforms.all %}
+                    <a href="{% url 'games-search' %}?platforms={{ platform.pk }}" title="{{ platform.name }}" class="is-size-6">
                         {{ platform.code }}
-                    </a>{% if not forloop.last %},{% endif %}
+                    </a>
+                    {% if not forloop.last %},{% endif %}
                 {% endfor %}
             </div>
             <div class="py-0">
-                <label class="has-text-weight-medium is-size-6">Genre{{ game.genres.all | pluralize }}:</label>
-                {% for genre in game.genres.all %} 
-                    <a href="{% url 'games-list' %}?genre={{ genre.id }}" title="{{ genre.name }}" class="is-size-6">
+                <label class="has-text-weight-medium is-size-6">Genre{{ game.genres.all|pluralize }}:</label>
+                {% for genre in game.genres.all %}
+                    <a href="{% url 'games-search' %}?genres={{ genre.pk }}" title="{{ genre.name }}" class="is-size-6">
                         {{ genre.name }}
-                    </a>{% if not forloop.last %},{% endif %}
+                    </a>
+                    {% if not forloop.last %},{% endif %}
                 {% endfor %}
             </div>
-            <div class="pt-0">
-                <label class="has-text-weight-medium is-size-6">Year:</label>
-                <a href="{% url 'games-list' %}?year={{ game.year_of_release }}" class="is-size-6">{{ game.year_of_release }}</a>
-            </div>
-        </div>   
+        </div>
     </div>
 </div>

@@ -44,6 +44,7 @@ class Developer(models.Model):
     A company or organization that produces video games
     """
     name = models.CharField(max_length=100)
+    slug = models.SlugField(null=True, blank=True)
     igdb_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
@@ -96,6 +97,7 @@ class Game(models.Model):
     """
     name = models.CharField(max_length=100)
     name_normalized = models.CharField(max_length=100, null=True, blank=True)
+    slug = models.SlugField(null=True, blank=True)
     genres = models.ManyToManyField('Genre', blank=True)
     description = models.TextField(null=True, blank=True)
     rank = models.IntegerField()
@@ -144,6 +146,7 @@ class Game(models.Model):
             return
 
         data = api.get_game_info_by_id(self.igdb_id, cache_results)
+        self.slug = data.get('slug')
         self.igdb_url = data.get('url')
         self.igdb_artwork_id = data.get('cover')
         self.year_of_release = data.get('year')
@@ -158,18 +161,20 @@ class Game(models.Model):
                 developer, created = Developer.objects.update_or_create(
                     name=d['name'],
                     defaults={
+                        'slug': d['slug'],
                         'igdb_id': d['id'],
                     }
                 )
 
             # This developer has a parent
             else:
-                parent_name = d.get('parent').get('name')
-                if parent_name:
+                parent_obj = d.get('parent')
+                if parent_obj:
                     developer, created = Developer.objects.update_or_create(
-                        name=parent_name,
+                        name=parent_obj['name'],
                         defaults={
-                            'igdb_id': d['id'],
+                            'slug': parent_obj['slug'],
+                            'igdb_id': parent_obj['id'],
                         }
                     )
 

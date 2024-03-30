@@ -14,6 +14,6 @@
     {% endif %}
     <h2 class="subtitle is-4 mt-5">{{ games|length }} Game{{ games|length|pluralize }}</h2>
     {% for game in games %}
-        {% include 'games/_game_row.html' with show_search_rank="True" %}
+        {% include 'games/_game_row.html' with no_rank_column="True" %}
     {% endfor %}
 {% endblock %}

@@ -20,29 +20,35 @@
 {% endblock %}
 
 {% block content %}
-    <h2 class=title>{{ title }}</h2>    
+    <a href="{% url 'games-search' %}" class="button is-link is-pulled-right">
+        Advanced Search
+    </a>
+    <h2 class="title">{{ title }}</h2>    
 
-    <a href="{% url 'games-search' %}" class="button is-pulled-right">Advanced Search</a>
-
-    <div class="field is-grouped">
-        <label class="p-2">Decade</label>
+    <div class="field is-grouped mb-5">
+        <div class="control">
+            <a href="{% url 'games-year-list' 'alltime' %}" class="button">Alltime</a>
+        </div>
         <div class="control">
             <div class="select">
                 <select onchange="submit(this.value)">
+                    <option value="">All decades</option>
                     {% for decade in decades %}
-                        <option>
+                        <option {% if decade == decade_slug %}selected{% endif%}>
                             {{ decade }}
                         </option>
                     {% endfor %}
                 </select>
             </div>
         </div>
-        <label class="p-2">Year</label>
         <div class="control">
             <div class="select">
                 <select onchange="submit(this.value)">
+                    <option value="">All years</option>
                     {% for year, count in years %}
-                        <option value="{{ year }}" {% if not count %}disabled{% endif %}>{{ year }} ({{ count }})</option>
+                        <option value="{{ year }}" {% if not count %}disabled{% endif %} {% if year == year_slug %}selected{% endif%}>
+                            {{ year }} ({{ count }})
+                        </option>
                     {% endfor %}
                 </select>
             </div>
@@ -53,4 +59,12 @@
     {% empty %}
         <p class="is-size-3">No results found</p>
     {% endfor %}
+    {% if paginator.num_pages > 1 %}
+        <div class="mt-5 is-hidden-tablet">
+            {% pagination 5 %}
+        </div>
+        <div class="mt-5 is-hidden-mobile">
+            {% pagination %}
+        </div>
+    {% endif %}
 {% endblock %}

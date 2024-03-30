@@ -17,19 +17,19 @@
             <dl class="detail">
                 <dt>All time rank:</dt>
                 <dd>
-                    <a href="{% url 'games-list' %}?highlight={{ game.id }}#game-{{game.id }}">
+                    <a href="{% url 'games-year-list' 'alltime' %}?highlight={{ game.id }}#game-{{game.id }}">
                         {{ game.rank }}
                     </a>
                 </dd>
                 <dt>{{ decade }}s rank:</dt>
                 <dd>
-                    <a href="{% url 'games-list' %}?decade={{ decade }}&highlight={{ game.id }}#game-{{game.id }}">
+                    <a href="{% url 'games-year-list' decade %}?decade={{ decade }}&highlight={{ game.id }}#game-{{game.id }}">
                         {{ rank_for_decade }}
                     </a>
                 </dd>
                 <dt>{{ game.year_of_release }} rank:</dt>
                 <dd>
-                    <a href="{% url 'games-list' %}?year={{ game.year_of_release }}&highlight={{ game.id }}#game-{{game.id }}">
+                    <a href="{% url 'games-year-list' game.year_of_release %}?year={{ game.year_of_release }}&highlight={{ game.id }}#game-{{game.id }}">
                         {{ rank_for_year }}
                     </a>
                 </dd>
@@ -45,7 +45,7 @@
                 <dt>Platforms:</dt>
                 <dd>
                     {% for platform in game.platforms.all %} 
-                        <a href="{% url 'games-list' %}?platform={{ platform.code }}" title="{{ platform.name }}">
+                        <a href="{% url 'games-search' %}?platforms={{ platform.code }}" title="{{ platform.name }}">
                             {{ platform.code }}
                         </a>
                         {% if not forloop.last %},{% endif %}
@@ -56,7 +56,7 @@
                 <dt>Genres:</dt>
                 <dd>
                     {% for genre in game.genres.all %}
-                        <a href="{% url 'games-list' %}?genre={{ genre.id }}" title="{{ genre.name }}">
+                        <a href="{% url 'games-search' %}?genres={{ genre.id }}" title="{{ genre.name }}">
                             {{ genre }}
                         </a>
                         {% if not forloop.last %},{% endif %}
@@ -75,12 +75,10 @@
             </figure>
         </div>
     </div>
-
     <div class="description box">
         {{ game.description|linebreaks }}
         <small class="has-text-grey-dark">from IGDB.com</small>
     </div>
-
     <div class="is-hidden-mobile">
         {% for type, lists in list_groups %}
             {% if lists %}
@@ -124,7 +122,6 @@
             {% endif %}
         {% endfor %}
     </div>
-
     <div class="is-hidden-tablet">
         {% for type, lists in list_groups %} 
             <h2 class="title is-5">{{ type }}</h2>
@@ -156,5 +153,4 @@
             {% endif %}
         {% endfor %}
     </div>
-
 {% endblock %}

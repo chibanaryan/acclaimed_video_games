@@ -13,15 +13,17 @@
     </div>
     <div class="pagination">
         {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}" 
-                class="button is-link">&laquo;&nbsp;Newer posts</a>
-        {% else %}
-            <a href="{% url 'index' %}" 
-                class="button is-link">&laquo;&nbsp;Return to home page</a>
-        {% endif %}
+            {% if page_obj.number == 2 %}
+                <a href="{% url 'index' %}" 
+                    class="button is-link">&laquo;&nbsp;Return to home page</a>
+            {% else %}
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                    class="button is-link">&laquo;&nbsp;Newer posts</a>
+            {% endif %}
+        {% endif %}   
         {% if page_obj.has_next %}
             <a href="?page={{ page_obj.next_page_number }}"
                 class="button is-link is-pulled-right">Older posts&nbsp;&raquo;</a>
         {% endif %}
     </div>
-{% endblock %}
+{% endblock %}  

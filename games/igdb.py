@@ -89,7 +89,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/companies/',
             headers=self.headers,
-            data=f'where id={company_id}; fields id,name,parent;'
+            data=f'where id={company_id}; fields id,name,slug,parent;'
         )
 
         try:
@@ -126,7 +126,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/release_dates/',
             headers=self.headers,
-            data=f'where game={game_id}; fields date, status;'
+            data=f'limit 500; where game={game_id}; fields date, status;'
         )
         dates = res.json()
 
@@ -143,7 +143,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/games/',
             headers=self.headers,
-            data=f'where id={game_id}; fields cover,genres,first_release_date,summary,storyline,url,themes,involved_companies.*;'
+            data=f'where id={game_id}; fields slug,cover,genres,first_release_date,summary,storyline,url,themes,involved_companies.*;'
         )
 
         if res.status_code == 401:
@@ -205,6 +205,7 @@ class IgbdApi():
                 {
                     'id': company_id,
                     'name': company_obj['name'],
+                    'slug': company_obj['slug'],
                     'parent': parent_obj,
                 }
             )
@@ -239,6 +240,7 @@ class IgbdApi():
             'summary': data.get('summary'),
             'url': data.get('url'),
             'year': release_date.year,
+            'slug': data.get('slug'),
         }
 
         self.game_cache[game_id] = game_data

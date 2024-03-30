@@ -1,3 +1,4 @@
+from urllib.parse import urlencode
 import markdown as md
 from django import template
 from django.template.defaultfilters import stringfilter
@@ -40,8 +41,7 @@ def search_form(context):
 
 @register.inclusion_tag('games/_pagination.html', takes_context=True)
 def pagination(context, max_pages=10):
-
-    args = context.get('args', '')
+    args = urlencode(context.request.GET.dict())
     pages = []
     current_page_number = context['page_obj'].number
     paginator = context['page_obj'].paginator

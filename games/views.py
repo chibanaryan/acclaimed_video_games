@@ -1,17 +1,16 @@
-from collections import defaultdict
-from functools import lru_cache
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from functools import lru_cache
 from typing import Any, Callable, Dict, List
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import CharField, Count, Min, Q, QuerySet, Value
-from django.db.models.functions import Cast, Concat, Left, Lower
+from django.db.models import Count, Min, Q, QuerySet
+from django.db.models.functions import Lower
 from django.forms import Form
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (DetailView, FormView, ListView, RedirectView,
@@ -20,6 +19,14 @@ from django.views.generic import (DetailView, FormView, ListView, RedirectView,
 from games.forms import ImportForm, SearchForm
 
 from . import constants, models, utils
+
+
+decade_pattern = re.compile(r'^\d{2}(\d{2})-(\d{2})$')
+year_pattern = re.compile(r'^(\d{4})$')
+
+
+def round_down(num, base=10) -> int:
+    return num // base * base
 
 
 @dataclass
@@ -43,10 +50,6 @@ class Filter:
         return qs
 
 
-def round_down(num, base=10) -> int:
-    return num // base * base
-
-
 class IndexView(TemplateView):
     template_name = 'games/index.html'
 
@@ -63,12 +66,8 @@ class IndexView(TemplateView):
         return context
 
 
-decade_pattern = re.compile(r'^\d{2}(\d{2})-(\d{2})$')
-year_pattern = re.compile(r'^(\d{4})$')
-
-
 class GameYearListView(ListView):
-
+    paginate_by = 100
     template_name = 'games/game_year_list.html'
 
     @lru_cache
@@ -82,6 +81,8 @@ class GameYearListView(ListView):
         end = None
         title = None
         title_prefix = 'Most Acclaimed Games of'
+        decade_slug = None
+        year_slug = None
 
         if decade_match:
             start, end = [int(x) for x in decade_match.groups()]
@@ -96,19 +97,23 @@ class GameYearListView(ListView):
                 end += 2000
 
             title = f'{title_prefix} {start} to {end}'
+            decade_slug = slug
 
         elif year_match:
             start = int(year_match.groups()[0])
             end = start
             title = f'{title_prefix} {start}'
+            year_slug = slug
 
         elif alltime_match:
-            title = f'{title_prefix} Alltime'
+            title = f'{title_prefix} All Time'
 
         return {
             'start': start,
             'end': end,
             'title': title,
+            'decade_slug': decade_slug,
+            'year_slug': year_slug,
         }
 
     def get_queryset(self) -> QuerySet:
@@ -148,15 +153,15 @@ class GameYearListView(ListView):
                 'year_of_release'
             ))
 
-        all_years_with_counts = [(x, year_count_map.get(x, 0))
+        all_years_with_counts = [(str(x), year_count_map.get(x, 0))
                                  for x in all_years]
         decades = sorted(list(set(int(x / 10) * 10 for x in all_years)))
         decades = [f'{x}-{str(x + 9)[2:4]}' for x in decades]
 
         context['years'] = all_years_with_counts
         context['decades'] = decades
-        context['title'] = data['title']
         context['form'] = SearchForm()
+        context.update(data)
 
         return context
 
@@ -172,6 +177,8 @@ class GameSearchView(ListView):
             'developers',
         ).annotate(
             genre_count=Count('genres')
+        ).order_by(
+            'rank'
         )
 
         form = SearchForm(self.request.GET)
@@ -180,217 +187,36 @@ class GameSearchView(ListView):
             if args.get('genres'):
                 genres = args.get('genres')
                 genre_option = args.get('genre_option')
-
                 if genre_option == constants.SEARCH_ANY:
                     q = Q()
                     for genre in genres:
                         q |= Q(genres=genre)
                     qs = qs.filter(q)
-                
                 elif genre_option == constants.SEARCH_ALL:
                     for genre in genres:
                         qs = qs.filter(genres=genre)
-                    
                 elif genre_option == constants.SEARCH_EXACTLY:
                     for genre in genres:
                         qs = qs.filter(genres=genre)
                     qs = qs.filter(genre_count=len(genres))
-
                 elif genre_option == constants.SEARCH_NONE:
                     qs = qs.exclude(genres__in=genres)
-
+                else:
+                    qs = qs.filter(genres__in=genres)
             if args.get('platforms'):
                 qs = qs.filter(platforms__in=args['platforms'])
-
             if args.get('start'):
                 qs = qs.filter(year_of_release__gte=args['start'])
-
             if args.get('end'):
                 qs = qs.filter(year_of_release__lte=args['end'])
 
-        return qs
+        return qs.distinct()
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-
         context['form'] = SearchForm(self.request.GET)
-
         paginator = context['paginator']
         context['title'] = f'{paginator.count} search results'
-
-        return context
-
-    # def get(self, request: HttpRequest, *args, **kwargs):
-    #     form = SearchForm(self.request.GET)
-
-    #     if form.is_valid():
-    #         print(form.cleaned_data)
-
-    #     return super().get(request, *args, **kwargs)
-
-
-class GameListView(ListView):
-    """
-    Game list page
-    """
-    paginate_by = 100
-
-    filters = [
-        Filter(param='year', fields=['year_of_release'], coerce=int),
-        Filter(param='decade', fields=['decade'],
-               coerce=str, label=lambda x: f'{x}s'),
-        Filter(
-            param='q',
-            fields=[
-                'name__search',
-                'name__icontains',
-                'name_normalized__search',
-                'name_normalized__icontains',
-            ],
-            coerce=str),
-        Filter(param='platform', fields=['platforms__code'], coerce=str),
-        Filter(param='genre', fields=['genres'], coerce=int),
-    ]
-
-    def get_title(self, args):
-        prefix = ''
-        base_title = ''
-        is_all_time = not args.get('decade') and not args.get('year')
-
-        if is_all_time:
-            base_title = 'All Time'
-            prefix = 'Most Acclaimed Games of'
-        elif args.get('decade'):
-            base_title = f"{args['decade']}s"
-            prefix = 'Most Acclaimed Games of the'
-        elif args.get('year'):
-            base_title = f"{args['year']}"
-            prefix = 'Most Acclaimed Games of'
-        else:
-            prefix = ''
-
-        extra_bits = []
-        if args.get('platform'):
-            platform = models.Platform.objects.get(code=args['platform'])
-            extra_bits.append(platform.name)
-        if args.get('genre'):
-            genre = models.Genre.objects.get(id=args['genre'])
-            extra_bits.append(genre.name)
-        if args.get('q'):
-            extra_bits.append('"' + args["q"] + '"')
-
-        extra_title = ', '.join(extra_bits)
-
-        if extra_title:
-            if is_all_time:
-                prefix = ''
-                base_title = extra_title
-            else:
-                base_title = f'{base_title} - {extra_title}'
-
-        return prefix, base_title
-
-    def get_queryset(self) -> QuerySet:
-        qs = models.Game.objects.prefetch_related(
-            'genres',
-            'developers',
-            'platforms',
-        ).annotate(
-            decade=Concat(
-                Left(Cast('year_of_release', output_field=CharField()), 3), Value('0')),
-            first_letter=Left('name', 1),
-        )
-
-        for filter in self.filters:
-            param_val = self.request.GET.get(filter.param)
-            qs = filter.filter_queryset(qs, param_val)
-
-        return qs
-
-    def get_context_data(self, **kwargs) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        args = self.request.GET
-
-        # Get list of decades and years
-        min_year = models.Game.objects.aggregate(
-            min_year=Min('year_of_release'),
-        )['min_year'] or 1970
-        max_year = datetime.today().year
-        all_years = range(min_year, max_year)
-        decades = sorted(list(set(str(int(x / 10) * 10) for x in all_years)))
-
-        context['years'] = all_years
-        context['decades'] = decades
-
-        # Get list of platforms and genres
-        platforms = models.Platform.objects.all()
-        genres = models.Genre.objects.all()
-        rank_heading = 'All time rank'
-
-        if args.get('year'):
-            platforms = platforms.filter(
-                games__year_of_release=args['year']).distinct()
-            genres = genres.filter(
-                game__year_of_release=args['year']).distinct()
-            rank_heading = f"{args['year']} rank"
-
-        if args.get('decade'):
-            start = int(args['decade'])
-            end = start + 9
-            platforms = platforms.filter(
-                games__year_of_release__gte=start,
-                games__year_of_release__lte=end,
-            ).distinct()
-            genres = genres.filter(
-                game__year_of_release__gte=start,
-                game__year_of_release__lte=end,
-            ).distinct()
-            rank_heading = f"{args['decade']}s rank"
-
-        context['platforms'] = platforms
-        context['genres'] = genres
-
-        if args.get('highlight'):
-            context['highlight'] = int(args.get('highlight'))
-
-        # Handle pagination
-        page_obj = context['page_obj']
-        offset = (page_obj.number - 1) * page_obj.paginator.per_page
-        limit = page_obj.paginator.per_page + offset
-        total = page_obj.paginator.count
-
-        if limit > total:
-            limit = total
-
-        context['offset'] = offset
-        context['show_pagination'] = len(page_obj.paginator.page_range) > 1
-
-        # Build titles
-        if total:
-            context['subtitle'] = f'{offset + 1} to {limit} of {total} results'
-        else:
-            context['subtitle'] = '0 results'
-
-        prefix, base_title = self.get_title(args)
-        context['title'] = f'{prefix} {base_title}'
-        context['short_title'] = base_title
-
-        # Build list of selected filters
-        for filter in self.filters:
-            param_val = args.get(filter.param)
-            if param_val:
-                context['selected_' + filter.param] = filter.coerce(param_val)
-
-        # Is the list filtered?
-        context['is_filtered'] = args.get('platform') or \
-            args.get('genre') or \
-            args.get('q')
-
-        context['show_year_rank'] = args.get('year')
-        context['show_decade_rank'] = args.get('decade')
-        context['rank_heading'] = rank_heading
-
-        context['args'] = urlencode(args)
 
         return context
 
@@ -400,18 +226,6 @@ class GameDetailView(DetailView):
     Game detail page
     """
     model = models.Game
-
-    def get_object(self, *args, **kwargs):
-        """
-        Lookup object by its igdb_id
-        """
-        queryset = self.get_queryset()
-
-        pk = self.kwargs.get(self.pk_url_kwarg)
-        if pk is not None:
-            queryset = queryset.filter(igdb_id=pk)
-
-        return queryset.get()
 
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -534,7 +348,7 @@ class DeveloperAliasRedirectView(RedirectView):
 
     def get_redirect_url(self, *args, **kwargs) -> HttpResponse:
         alias = get_object_or_404(models.DeveloperAlias, igdb_id=kwargs['pk'])
-        url = reverse('developer-detail', args=[alias.developer.pk])
+        url = reverse('developer-detail', args=[alias.developer.slug])
 
         return url
 
