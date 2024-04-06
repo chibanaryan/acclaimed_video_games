@@ -1,0 +1,88 @@
+<template>
+    <div class="columns game-row">
+        <div class="column is-narrow">
+            <span class="rank large px-5 py-3">
+                {{ game.rank }}
+            </span>
+        </div>
+        <div class="column is-narrow">
+            <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }">
+                <img :src="game.thumbnail">
+            </router-link>
+        </div>
+        <div class="column">
+            <div>
+                <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }"
+                    class="game-name has-text-weight-bold is-size-6 mb-3">
+                    {{ game.name }}
+                    ({{ game.yearOfRelease }})
+                </router-link>
+            </div>
+            <!-- <div class="py-0">
+                <label class="has-text-weight-medium is-size-6">All time rank:</label>
+                <strong>{{ game.rank }} </strong>
+            </div> -->
+            <div class="py-0">
+                <label class="has-text-weight-medium is-size-6">
+                    Developers:
+                </label>
+                <span v-for="developer, i in game.developers"
+                    :key="developer.id"
+                    class="is-size-6">
+                    <router-link :to="{ name: 'developer-alias-redirect', params: { id: developer.id } }"
+                        v-for="developer in game.developers"
+                        :key="developer.id">
+                        {{ developer.name }}
+                    </router-link>
+                    <template v-if="i < (game.developers.length - 1)">,&nbsp;</template>
+                </span>
+            </div>
+            <div class="py-0">
+                <label class="has-text-weight-medium is-size-6">
+                    Platforms:
+                </label>
+                <span v-for="platform, i in game.platforms"
+                    :key="platform.id"
+                    class="is-size-6">
+                    <a @click="$emit('selected', { platform: platform })">{{ platform.name }}</a><template
+                        v-if="i < (game.platforms.length - 1)">,&nbsp;</template>
+                </span>
+            </div>
+            <div class="py-0">
+                <label class="has-text-weight-medium is-size-6">
+                    Genres:
+                </label>
+                <span v-for="genre, i in game.genres"
+                    :key="genre.id"
+                    class="is-size-6">
+                    <a @click="$emit('selected', { genre: genre })">{{ genre.name }}</a><template
+                        v-if="i < (game.genres.length - 1)">,&nbsp;</template>
+                </span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    props: ['game'],
+}
+
+</script>
+
+<style scoped>
+.game-row .rank {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: Handjet, sans-serif;
+    font-weight: 800;
+    text-shadow: -3px 3px 0px #5d5b5b;
+}
+
+.game-row .rank.large {
+    font-size: 60px;
+}
+</style>

@@ -43,14 +43,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
     'django.contrib.sites',
-    'django.contrib.postgres',  
+    'django.contrib.postgres',
     'django.forms',
+    'corsheaders',
 
     'django_extensions',
     'debug_toolbar',
     'crispy_forms',
     'crispy_bulma',
-    
+    'rest_framework',
+
     'games',
 ]
 
@@ -58,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,7 +75,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR/'frontend/dist'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -84,6 +87,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 DATABASES = {
     'default': env.db(),
@@ -133,3 +137,15 @@ IGDB_CLIENT_SECRET = env('IGDB_CLIENT_SECRET', default='XXX')
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = ["bulma"]
 CRISPY_TEMPLATE_PACK = "bulma"
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,
+}
+CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:8080']
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'frontend/dist/static'
+]

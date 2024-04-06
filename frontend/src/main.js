@@ -1,0 +1,11 @@
+import '@mdi/font/css/materialdesignicons.css';
+import 'bulma/css/bulma.css';
+import * as Vue from 'vue';
+import App from './App.vue';
+import router from './router';
+
+const app = Vue.createApp(App);
+app.use(router);
+app.mount('#app');
+
+export default app;

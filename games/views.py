@@ -1,8 +1,7 @@
 import re
-from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
-from typing import Any, Callable, Dict, List
+from typing import Any, Dict
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -15,11 +14,9 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (DetailView, FormView, ListView, RedirectView,
                                   TemplateView)
-
 from games.forms import ImportForm, SearchForm
 
 from . import constants, models, utils
-
 
 decade_pattern = re.compile(r'^\d{2}(\d{2})-(\d{2})$')
 year_pattern = re.compile(r'^(\d{4})$')
@@ -27,27 +24,6 @@ year_pattern = re.compile(r'^(\d{4})$')
 
 def round_down(num, base=10) -> int:
     return num // base * base
-
-
-@dataclass
-class Filter:
-    param: str
-    fields: List[str]
-    coerce: type = str
-    label: Callable[[str], str] = lambda x: x
-
-    def filter_queryset(self, qs, param_val):
-        if not param_val:
-            return qs
-
-        param_val = self.coerce(param_val.strip())
-        if self.fields:
-            query = Q()
-            for field in self.fields:
-                query |= Q(**{field: param_val})
-        qs = qs.filter(query)
-
-        return qs
 
 
 class IndexView(TemplateView):
@@ -291,7 +267,7 @@ class DeveloperListView(ListView):
     paginate_by = 100
 
     filters = [
-        Filter(
+        utils.Filter(
             param='q',
             fields=['name__search', 'name__icontains'],
             coerce=str),
@@ -359,9 +335,9 @@ class ListListView(ListView):
     """
     paginate_by = 100
     filters = [
-        Filter(param='publisher', fields=['publisher_id'], coerce=int),
-        Filter(param='year', fields=['year'], coerce=int),
-        Filter(param='type', fields=['type'], coerce=str),
+        utils.Filter(param='publisher', fields=['publisher_id'], coerce=int),
+        utils.Filter(param='year', fields=['year'], coerce=int),
+        utils.Filter(param='type', fields=['type'], coerce=str),
     ]
 
     def get_queryset(self) -> QuerySet:
