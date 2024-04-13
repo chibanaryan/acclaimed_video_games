@@ -34,19 +34,19 @@
             </tr>
         </tbody>
     </table>
-    <pagination-component :hasPrev="hasPrev"
+    <simple-pagination-component :hasPrev="hasPrev"
         hasNext="hasNext"
-        @pagechanged="onPageChange"></pagination-component>
+        @pagechanged="onPageChange"></simple-pagination-component>
 </template>
 
 <script>
 import BaseListComponent from './BaseListComponent';
-import PaginationComponent from './PaginationComponent';
+import SimplePaginationComponent from './SimplePaginationComponent';
 import DeveloperAlias from '../models/DeveloperAlias';
 
 export default {
     mixins: [BaseListComponent],
-    components: { PaginationComponent },
+    components: { SimplePaginationComponent },
     data() {
         return {
             filters: {

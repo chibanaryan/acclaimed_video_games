@@ -42,7 +42,7 @@
         </header>
         <section>
             <div class="container">
-                <router-view class="view"></router-view>
+                <router-view class="view" :key="$route.name"></router-view>
             </div>
         </section>
         <footer>

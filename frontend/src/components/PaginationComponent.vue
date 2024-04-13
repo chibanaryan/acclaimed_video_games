@@ -1,47 +1,36 @@
 <template>
     <nav class="pagination"
-        role="navigation"
-        aria-label="pagination">
-        <a class="pagination-previous"
-            v-if="hasPrev"
-            @click="showPrev">
-            <span class="icon">
-                <span class="mdi mdi-chevron-double-left"></span>
-            </span>
-            <span>
-                Previous
-            </span>
-        </a>
-        <a class="pagination-next"
-            v-if="hasNext"
-            @click="showNext">
-            <span>
-                Next
-            </span>
-            <span class="icon">
-                <span class="mdi mdi-chevron-double-right"></span>
-            </span>
-        </a>
+        v-if="pages.length > 1">
+        <ul class="pagination-list">
+            <li v-for="page in pages"
+                :key="page">
+                <a class="pagination-link"
+                    :class="{ 'is-current': currentPage == page }"
+                    @click="onPageClick(page)">
+                    {{ page }}
+                </a>
+            </li>
+        </ul>
     </nav>
 </template>
 
 <script>
 export default {
-    props: ['hasPrev', 'hasNext'],
+    props: ['total', 'limit', 'offset'],
+    emits: ['pagechanged'],
+    computed: {
+        pages() {
+            const numPages = parseInt(this.total / this.limit) + 1;
+            return Array(numPages).keys().map(x => x + 1);
+        },
+        currentPage() {
+            return parseInt(this.offset / this.limit) + 1;
+        }
+    },
     methods: {
-        showPrev() {
-            this.$emit('pagechanged', 'previous');
-        },
-        showNext() {
-            this.$emit('pagechanged', 'next');
-        },
+        onPageClick(page) {
+            this.$emit('pagechanged', { offset: this.limit * (page - 1) });
+        }
     }
 }
 </script>
-
-<style scoped>
-.pagination {
-    margin: 0 auto;
-    width: 30%;
-}
-</style>
