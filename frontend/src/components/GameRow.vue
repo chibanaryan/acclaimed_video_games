@@ -30,11 +30,10 @@
                     :key="developer.id"
                     class="is-size-6">
                     <router-link :to="{ name: 'developer-alias-redirect', params: { id: developer.id } }"
-                        v-for="developer in game.developers"
-                        :key="developer.id">
+                        :key="developer.id"
+                        class="is-size-6">
                         {{ developer.name }}
-                    </router-link>
-                    <template v-if="i < (game.developers.length - 1)">,&nbsp;</template>
+                    </router-link><template v-if="i < (game.developers.length - 1)">,&nbsp;</template>
                 </span>
             </div>
             <div class="py-0">
@@ -44,8 +43,9 @@
                 <span v-for="platform, i in game.platforms"
                     :key="platform.id"
                     class="is-size-6">
-                    <a @click="$emit('selected', { platform: platform })">{{ platform.name }}</a><template
-                        v-if="i < (game.platforms.length - 1)">,&nbsp;</template>
+                    <router-link :to="{ name: 'games-search', query: { platforms: platform.id } }">
+                        {{ platform.name }}
+                    </router-link><template v-if="i < (game.platforms.length - 1)">,&nbsp;</template>
                 </span>
             </div>
             <div class="py-0">
@@ -55,8 +55,9 @@
                 <span v-for="genre, i in game.genres"
                     :key="genre.id"
                     class="is-size-6">
-                    <a @click="$emit('selected', { genre: genre })">{{ genre.name }}</a><template
-                        v-if="i < (game.genres.length - 1)">,&nbsp;</template>
+                    <router-link :to="{ name: 'games-search', query: { genres: genre.id } }">
+                        {{ genre.name }}
+                    </router-link><template v-if="i < (game.genres.length - 1)">,&nbsp;</template>
                 </span>
             </div>
         </div>

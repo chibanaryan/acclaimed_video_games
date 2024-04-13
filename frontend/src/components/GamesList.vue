@@ -1,5 +1,11 @@
 <template>
     <h1 class="title">{{ pageTitle }}</h1>
+    <div class="control is-pulled-right">
+        <router-link :to="{ name: 'games-search' }"
+            class="button is-link">
+            Advanced Filters
+        </router-link>
+    </div>
     <div class="field is-grouped is-multiline">
         <div class="control">
             <a @click="selected.alltime = true"
@@ -38,14 +44,19 @@
             </a>
         </div>
     </div>
-    <div v-if="items">
+    <div v-if="loading"
+        class="loading">
+        <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
+    </div>
+    <div v-if="items && !loading"
+        class="mt-5">
         <game-row v-for="game in items"
             :key="game.id"
             :game="game"></game-row>
+        <pagination-component :hasPrev="hasPrev"
+            hasNext="hasNext"
+            @pagechanged="onPageChange"></pagination-component>
     </div>
-    <pagination-component :hasPrev="hasPrev"
-        hasNext="hasNext"
-        @pagechanged="onPageChange"></pagination-component>
 </template>
 
 <script>

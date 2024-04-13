@@ -22,11 +22,22 @@
                     </router-link>
                 </div>
             </div>
+            <div class="py-3"> 
+                Last update: {{ lastUpdate?.fromNow() }}
+            </div>
         </div>
         <div class="column">
+            <h3 class="title is-size-4">Latest News</h3>
             <post-item v-for="post in posts"
                 :key="post.id"
                 :post="post"></post-item>
+            <router-link :to="{ name: 'post-list', query: { offset: 5 } }"
+                class="button is-link is-pulled-right">
+                <span>Older posts</span>
+                <span class="icon">
+                    <span class="mdi mdi-chevron-double-right"></span>
+                </span>
+            </router-link>
         </div>
     </div>
 </template>
@@ -36,6 +47,7 @@ import SnippetComponent from './SnippetComponent';
 import PostItem from './PostItem';
 import Post from '../models/Post';
 import Game from '../models/Game';
+import moment from 'moment';
 
 export default {
     components: { SnippetComponent, PostItem },
@@ -43,6 +55,7 @@ export default {
         return {
             posts: [],
             games: [],
+            lastUpdate: null,
         }
     },
     async created() {
@@ -53,6 +66,11 @@ export default {
         data = await fetch(`${process.env.VUE_APP_API_URL}games/?limit=10`)
             .then(resp => resp.json());
         this.games = data.results.map(x => new Game(x));
+
+        let meta = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
+            .then(resp => resp.json());
+        this.lastUpdate = moment(meta.games.last_update);
+
     }
 }
 </script>
@@ -75,7 +93,7 @@ export default {
     float: left;
     width: 322px;
     height: 120px;
-    padding: 10px;
+    padding: 40px;
     position: relative;
 }
 

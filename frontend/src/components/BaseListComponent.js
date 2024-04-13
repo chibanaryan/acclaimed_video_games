@@ -16,6 +16,7 @@ export default {
                 offset: 0,
                 order_by: null,
             },
+            loading: false,
             sortField: null,
             sortOrder: 'DESC',
             items: [],
@@ -61,7 +62,15 @@ export default {
     },
     methods: {
         loadUrlArgs() {
-            // Override in sub components
+            let args = this.$route.query;
+            if (!args)
+                return;
+
+            if (args.limit)
+                this.filters.limit = parseInt(args.limit);
+
+            if (args.offset)
+                this.filters.offset = parseInt(args.offset);
         },
         clearFilters() {
             this.filters = Object.assign({}, this._cache.filters);
@@ -74,12 +83,11 @@ export default {
             }
             this.filters.order_by = this.sortOrder == 'DESC' ? this.sortField : `-${this.sortField}`
         },
-
         onPageChange(e) {
             if (e == 'previous')
-                this.filters.offset -= this.filters.limit;
+                this.filters.offset -= parseInt(this.filters.limit);
             else if (e == 'next')
-                this.filters.offset += this.filters.limit;
+                this.filters.offset += parseInt(this.filters.limit);
         },
         async loadMeta() {
             this.meta = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
@@ -88,8 +96,10 @@ export default {
     },
     watch: {
         filters: {
-            handler() {
-                this.loadItems();
+            async handler() {
+                this.loading = true;
+                await this.loadItems();
+                this.loading = false;
             },
             deep: true
         }

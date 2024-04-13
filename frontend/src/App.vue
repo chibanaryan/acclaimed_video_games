@@ -72,6 +72,14 @@ export default {
 </script>
 
 <style>
+html {
+    background-color: #000;
+}
+
+section {
+    min-height: 800px;
+}
+
 footer {
     min-height: 15em;
     background-color: #444;
@@ -216,5 +224,21 @@ header {
 
 footer {
     border-top: 1px solid #4a4a4a;
+}
+
+.box {
+    background-color: #242424;
+    box-shadow: none;
+}
+
+.title {
+    font-weight: 600;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30vh;
 }
 </style>

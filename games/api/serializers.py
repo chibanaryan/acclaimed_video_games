@@ -1,7 +1,7 @@
 from django.contrib.flatpages.models import FlatPage
 from rest_framework import serializers
 
-from .. import models
+from .. import models, constants
 
 
 class IdNameSerializer(serializers.Serializer):
@@ -19,7 +19,44 @@ class IdSlugNameSerializer(IdNameSerializer):
     slug = serializers.CharField()
 
 
-class GameSerializer(serializers.ModelSerializer):
+class GameListMembershipSerializer(serializers.ModelSerializer):
+    list = serializers.CharField(source='list.name')
+    publication = serializers.CharField(source='list.publisher.name')
+    type = serializers.CharField(source='list.type')
+    url = serializers.CharField(source='list.url')
+    year = serializers.IntegerField(source='list.year')
+
+    class Meta:
+        model = models.ListMembership
+        fields = [
+            'list',
+            'publication',
+            'rank',
+            'type',
+            'url',
+            'year',
+        ]
+
+
+game_fields = [
+    'id',
+    'decade_rank',
+    'description',
+    'developers',
+    'genres',
+    'igdb_artwork_id',
+    'igdb_url',
+    'name',
+    'name_normalized',
+    'platforms',
+    'rank',
+    'slug',
+    'year_of_release',
+    'year_rank',
+]
+
+
+class GameSummarySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='igdb_id')
     developers = IdNameSerializer(many=True)
     genres = IdNameSerializer(many=True)
@@ -27,22 +64,15 @@ class GameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Game
-        fields = [
-            'id',
-            'decade_rank',
-            'description',
-            'developers',
-            'genres',
-            'igdb_artwork_id',
-            'igdb_url',
-            'name',
-            'name_normalized',
-            'platforms',
-            'rank',
-            'slug',
-            'year_of_release',
-            'year_rank',
-        ]
+        fields = game_fields
+
+
+class GameDetailSerializer(GameSummarySerializer):
+    lists = GameListMembershipSerializer(many=True)
+
+    class Meta:
+        model = models.Game
+        fields = game_fields + ['lists']
 
 
 class DeveloperSerializer(serializers.ModelSerializer):

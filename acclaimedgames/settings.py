@@ -144,7 +144,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100,
 }
-CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:8080']
+CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:8080', 'http://localhost:8080']
 
 STATICFILES_DIRS = [
     BASE_DIR / 'frontend/dist/static'

@@ -13,8 +13,12 @@ from . import serializers
 
 class GameListView(ListAPIView):
 
-    serializer_class = serializers.GameSerializer
+    serializer_class = serializers.GameSummarySerializer
     filters = [
+        utils.Filter(
+            param='q',
+            fields=['name__icontains'],
+        ),
         utils.Filter(
             param='developer',
             fields=['developers__developer__igdb_id'],
@@ -59,12 +63,12 @@ class GameListView(ListAPIView):
             platforms = [int(x) for x in platforms.split(',')]
             qs = qs.filter(platforms__in=platforms)
 
-        return qs
+        return qs.distinct()
 
 
 class GameDetailView(RetrieveAPIView):
     lookup_field = 'slug'
-    serializer_class = serializers.GameSerializer
+    serializer_class = serializers.GameDetailSerializer
 
     def get_queryset(self):
         qs = models.Game.objects.all()
@@ -212,6 +216,7 @@ class MetaView(APIView):
         data['games'] = {
             'years': all_years_with_counts,
             'decades': decades,
+            'last_update': models.Game.objects.latest('modified').modified
         }
 
         return Response(data)
