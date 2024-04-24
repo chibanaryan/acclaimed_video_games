@@ -1,14 +1,26 @@
 <template>
+    <div class="control is-pulled-right">
+        <router-link :to="{ name: 'games-list', params: { slug: 'search' } }"
+            v-if="mode == 'simple'"
+            class="button is-link">
+            Advanced Filters
+        </router-link>
+        <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
+            v-if="mode == 'advanced'"
+            class="button is-link">
+            Simple Filters
+        </router-link>
+    </div>
     <h1 class="title">
         <template v-if="mode == 'simple'">
-            Most Acclaimed Games of {{ $route.params.slug }}
+            Most Acclaimed Games of {{ prettySlug }}
         </template>
         <template v-else>
-            {{ pageTitle }}
+            {{ pageTitle }} Results
         </template>
     </h1>
     <div v-if="mode == 'advanced'">
-        <div class="control is-pulled-right">
+        <div class="control is-pulled-right ml-5">
             <a @click="clearFilters"
                 v-if="isFiltered"
                 class="button">
@@ -57,6 +69,12 @@
                     </div>
                     <label>Genres</label>
                 </div>
+                <div v-if="filters.genres?.length"
+                    class="tags">
+                    <span v-for="genre in filters.genres"
+                        :key="genre.id"
+                        class="tag is-primary">{{ genre.name }}</span>
+                </div>
                 <select v-model="filters.genres"
                     multiple
                     class="is-hidden-tablet">
@@ -73,6 +91,13 @@
                 <div class="p-2">
                     <label>Platforms</label>
                 </div>
+                <div v-if="filters.platforms?.length"
+                    class="tags">
+                    <span v-for="platform in filters.platforms"
+                        :key="platform.id"
+                        class="tag is-primary">{{ platform.name
+                        }}</span>
+                </div>
                 <select v-model="filters.platforms"
                     multiple
                     class="is-hidden-tablet">
@@ -87,29 +112,13 @@
             </div>
         </div>
     </div>
-    <div v-else>
-        <div class="control is-pulled-right">
-            <router-link :to="{ name: 'games-search' }"
-                class="button is-link">
-                Advanced Filters
-            </router-link>
-        </div>
+    <div v-if="mode == 'simple'">
         <div class="field is-grouped is-multiline">
             <div class="control">
                 <a @click="selected.alltime = true"
-                    class="button">
-                    Alltime
+                    class="button is-link">
+                    All time
                 </a>
-            </div>
-            <div class="control">
-                <div class="select">
-                    <select v-model="selected.year">
-                        <option :value="null">All years</option>
-                        <option v-for="year in meta.games.years"
-                            :key="year.year"
-                            :value="year.year">{{ year.year }} ({{ year.count }})</option>
-                    </select>
-                </div>
             </div>
             <div class="control">
                 <div class="select">
@@ -120,6 +129,23 @@
                             :value="decade">{{ decade }}</option>
                     </select>
                 </div>
+            </div>
+            <div class="control">
+                <div class="select">
+                    <select v-model="selected.year">
+                        <option :value="null">All years</option>
+                        <option v-for="year in meta.games.years"
+                            :key="year.year"
+                            :value="year.year">{{ year.year }} ({{
+                            year.count }})</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control is-expanded">
+                <input type="text"
+                    v-model="filters.q"
+                    class="input"
+                    placeholder="Search">
             </div>
             <div class="control">
                 <a @click="clearFilters"
@@ -133,13 +159,13 @@
             </div>
         </div>
     </div>
-
-    <div v-if="loading"
-        class="loading">
-        <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
-    </div>
-    <div v-if="items && !loading"
+    <div v-if="items"
         class="mt-5">
+        <pagination-component :total="resultsCount"
+            :limit="filters.limit"
+            :offset="filters.offset"
+            @pagechanged="onPageChange">
+        </pagination-component>
         <game-row v-for="game in items"
             :key="game.id"
             :game="game"></game-row>
@@ -161,6 +187,7 @@ import BaseListComponent from './BaseListComponent';
 import GameRow from './GameRow';
 import MultiSelectComponent from './MultiSelectComponent';
 import PaginationComponent from './PaginationComponent';
+import _ from "lodash";
 
 export default {
     mixins: [BaseListComponent],
@@ -192,25 +219,7 @@ export default {
         }
     },
     async created() {
-        console.log(this.$route);
-        if (this.$route.params.slug) {
-            let { start, end } = parseSlug(this.$route.params.slug);
-            this.filters.start = start;
-            this.filters.end = end;
-            this.mode = 'simple';
-        } else {
-            this.mode = 'advanced';
-        }
-
-        let data = await fetch(`${process.env.VUE_APP_API_URL}genres/`)
-            .then(resp => resp.json());
-        this.genres = data.results.map(x => new Genre(x));
-
-        data = await fetch(`${process.env.VUE_APP_API_URL}platforms/`)
-            .then(resp => resp.json());
-        this.platforms = data.results.map(x => new Platform(x));
-
-        this.loadUrlArgs();
+        await this.init();
     },
     computed: {
         cleanedFilters() {
@@ -223,16 +232,49 @@ export default {
                 filters.platforms = filters.platforms.map(x => x.id).join(',');
 
             return new URLSearchParams(filters);
-        }
+        },
+        prettySlug() {
+            const slug = this.$route.params.slug;
+            if (!slug)
+                return null;
+            else if (slug == 'alltime')
+                return 'All Time';
+            else if (slug.includes('-'))
+                return `the ${slug.split('-')[0]}s`;
+            else
+                return slug;
+        },
     },
     methods: {
-        async loadItems() {
+        async init() {
+            if (this.$route.params.slug == 'search') {
+                this.mode = 'advanced';
+            } else {
+                let { start, end } = parseSlug(this.$route.params.slug);
+                this.filters.start = start;
+                this.filters.end = end;
+                this.mode = 'simple';
+            }
+
+            let data = await fetch(`${process.env.VUE_APP_API_URL}genres/`)
+                .then(resp => resp.json());
+            this.genres = data.results.map(x => new Genre(x));
+
+            data = await fetch(`${process.env.VUE_APP_API_URL}platforms/`)
+                .then(resp => resp.json());
+            this.platforms = data.results.map(x => new Platform(x));
+
+            this.loadUrlArgs();
+        },
+        loadItems: _.debounce(async function () {
+            this.$store.commit('loading', true);
             let url = `${process.env.VUE_APP_API_URL}games/?${this.cleanedFilters}`;
             let data = await fetch(url)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new Game(x));
             this.resultsCount = data.count;
-        },
+            this.$store.commit('loading', false);
+        }, 200),
         async loadUrlArgs() {
             if (!this.genres.length || !this.platforms.length)
                 return;
@@ -251,9 +293,29 @@ export default {
                 this.filters.genres = [this.genres.find(x => x.id == genreId)];
             }
         },
-        onPageChange(e) {
-            Object.assign(this.filters, e);
-        }
+        clearFilters() {
+            this.filters = {
+                q: null,
+                limit: 100,
+                offset: 0,
+                start: null,
+                end: null,
+                genres: [],
+                platforms: [],
+                genre_option: 'A',
+            };
+
+            this.selected = {
+                year: null,
+                decade: null,
+                alltime: null,
+            };
+
+            if (this.mode == 'simple')
+                this.$router.push({ name: 'games-list', params: { slug: 'alltime' } });
+            else
+                this.$router.push({ name: 'games-list', params: { slug: 'search' } });
+        },
     },
     watch: {
         'selected.alltime': function (val) {
@@ -287,6 +349,20 @@ export default {
             this.filters.end = end;
             this.$router.push({ name: 'games-list', params: { slug: this.selected.decade.toString() } });
         },
+        'filters.q': function () {
+            this.filters.offset = 0;
+        },
+        'filters.start': function () {
+            this.filters.offset = 0;
+        },
+        'filters.end': function () {
+            this.filters.offset = 0;
+        },
+        $route: {
+            async handler() {
+                await this.init();
+            }
+        }
     }
 }
 </script>

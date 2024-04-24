@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'django_extensions',
-    'debug_toolbar',
+    # 'debug_toolbar',
     'crispy_forms',
     'crispy_bulma',
     'rest_framework',
@@ -68,9 +68,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
+
+# if DEBUG:
+#     INSTALLED_APPS.append('debug_toolbar')
+#     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 TEMPLATES = [
     {

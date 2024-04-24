@@ -1,30 +1,45 @@
 <template>
-    <div class="columns game-row">
+    <div class="columns is-mobile game-row">
         <div class="column is-narrow">
-            <span class="rank large px-5 py-3">
-                {{ game.rank }}
-            </span>
-        </div>
-        <div class="column is-narrow">
-            <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }">
-                <img :src="game.thumbnail">
-            </router-link>
+            <div class="columns">
+                <div v-if="showRank"
+                    class="column">
+                    <span class="rank large px-5 py-3 is-hidden-mobile">
+                        {{ game.rank }}
+                    </span>
+                    <span class="rank medium px-5 py-3 is-hidden-tablet">
+                        {{ game.rank }}
+                    </span>
+                </div>
+                <div class="column">
+                    <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }">
+                        <img :src="game.thumbnail">
+                    </router-link>
+                </div>
+            </div>
         </div>
         <div class="column">
             <div>
                 <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }"
                     class="game-name has-text-weight-bold is-size-6 mb-3">
                     {{ game.name }}
+                </router-link>
+                <router-link :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }">
                     ({{ game.yearOfRelease }})
                 </router-link>
             </div>
-            <!-- <div class="py-0">
-                <label class="has-text-weight-medium is-size-6">All time rank:</label>
-                <strong>{{ game.rank }} </strong>
-            </div> -->
+            <div v-if="!showRank"
+                class="py-0">
+                <label class="has-text-weight-medium is-size-6">
+                    All time rank:
+                </label>
+                <span class="has-text-weight-medium is-size-6">
+                    {{ game.rank }}
+                </span>
+            </div>
             <div class="py-0">
                 <label class="has-text-weight-medium is-size-6">
-                    Developers:
+                    Developer{{ game.developers.length == 1 ? '' : 's' }}:
                 </label>
                 <span v-for="developer, i in game.developers"
                     :key="developer.id"
@@ -38,26 +53,29 @@
             </div>
             <div class="py-0">
                 <label class="has-text-weight-medium is-size-6">
-                    Platforms:
+                    Platform{{ game.platforms.length == 1 ? '' : 's' }}:
                 </label>
                 <span v-for="platform, i in game.platforms"
                     :key="platform.id"
                     class="is-size-6">
-                    <router-link :to="{ name: 'games-search', query: { platforms: platform.id } }">
+                    <router-link
+                        :to="{ name: 'games-list', params: { slug: 'search' }, query: { platforms: platform.id } }">
                         {{ platform.name }}
-                    </router-link><template v-if="i < (game.platforms.length - 1)">,&nbsp;</template>
+                    </router-link>
+                    <template v-if="i < (game.platforms.length - 1)">,&nbsp;</template>
                 </span>
             </div>
             <div class="py-0">
                 <label class="has-text-weight-medium is-size-6">
-                    Genres:
+                    Genre{{ game.genres.length == 1 ? '' : 's' }}:
                 </label>
                 <span v-for="genre, i in game.genres"
                     :key="genre.id"
                     class="is-size-6">
-                    <router-link :to="{ name: 'games-search', query: { genres: genre.id } }">
+                    <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { genres: genre.id } }">
                         {{ genre.name }}
-                    </router-link><template v-if="i < (game.genres.length - 1)">,&nbsp;</template>
+                    </router-link>
+                    <template v-if="i < (game.genres.length - 1)">,&nbsp;</template>
                 </span>
             </div>
         </div>
@@ -66,7 +84,12 @@
 
 <script>
 export default {
-    props: ['game'],
+    props: {
+        game: null,
+        showRank: {
+            default: true,
+        },
+    }
 }
 
 </script>
@@ -81,9 +104,14 @@ export default {
     font-family: Handjet, sans-serif;
     font-weight: 800;
     text-shadow: -3px 3px 0px #5d5b5b;
+    min-width: 122px;
 }
 
 .game-row .rank.large {
     font-size: 60px;
+}
+
+.game-row .rank.medium {
+    font-size: 30px;
 }
 </style>

@@ -31,16 +31,25 @@ export default {
     },
     created() {
         this.selectableItems = this.items.map(x => new SelectableItem(x));
-        this.modelValue.forEach(x => {
-            const match = this.selectableItems.find(y => y.id == x.id);
-            match.selected = true;
-        })
     },
     computed: {
         selected() {
             return this.selectableItems.filter(x => x.selected).map(x => x.item);
         }
     },
+    watch: {
+        modelValue(val) {
+            if (!val) {
+                this.selectableItems.forEach(x => x.selected = false);
+                return;
+            }
+
+            let selectedIds = val.map(x => x.id);
+            this.selectableItems.forEach(x => {
+                x.selected = selectedIds.includes(x.item.id);
+            })
+        }
+    }
 }
 </script>
 

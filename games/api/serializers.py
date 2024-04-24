@@ -116,6 +116,7 @@ class ListSerializer(serializers.ModelSerializer):
             'publisher',
             'year',
             'type',
+            'url',
         ]
 
 

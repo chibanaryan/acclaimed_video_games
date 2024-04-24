@@ -139,7 +139,6 @@ def import_games(f):
             defaults={
                 'rank': int(rank),
                 'name': game_name,
-                # 'year_of_release': int(year),
             }
         )
         game.platforms.set(platforms)

@@ -1,5 +1,5 @@
 <template>
-    <nav class="pagination"
+    <nav class="pagination is-centered"
         v-if="pages.length > 1">
         <ul class="pagination-list">
             <li v-for="page in pages"
@@ -21,7 +21,8 @@ export default {
     computed: {
         pages() {
             const numPages = parseInt(this.total / this.limit) + 1;
-            return Array(numPages).keys().map(x => x + 1);
+            const pages = Array(numPages).keys().map(x => x + 1);
+            return Array.from(pages);
         },
         currentPage() {
             return parseInt(this.offset / this.limit) + 1;
@@ -34,3 +35,16 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+nav {
+    display: flex;
+    align-content: center;
+    justify-content: center;
+}
+
+nav .navbar-menu {
+    flex-grow: initial;
+    flex-shrink: initial;
+}
+</style>

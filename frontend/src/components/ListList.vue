@@ -1,6 +1,5 @@
 <template>
     <h1 class="title is-size-4">Source Lists</h1>
-
     <div class="field is-grouped is-multiline">
         <div class="select">
             <select v-model="filters.publisher">
@@ -11,19 +10,19 @@
             </select>
         </div>
         <div class="select">
-            <select v-model="filters.type">
-                <option :value="null">All list types</option>
-                <option v-for="type in listTypes"
-                    :key="type[0]"
-                    :value="type[0]">{{ type[1] }}</option>
-            </select>
-        </div>
-        <div class="select">
             <select v-model="filters.year">
                 <option :value="null">All years</option>
                 <option v-for="year in meta.lists.years"
                     :key="year.year"
                     :value="year.year">{{ year.year }} ({{ year.count }})</option>
+            </select>
+        </div>
+        <div class="select">
+            <select v-model="filters.type">
+                <option :value="null">All list types</option>
+                <option v-for="type in listTypes"
+                    :key="type[0]"
+                    :value="type[0]">{{ type[1] }}</option>
             </select>
         </div>
         <div class="control">
@@ -37,7 +36,17 @@
             </a>
         </div>
     </div>
-    <table class="table is-fullwidth">
+    <pagination-component :total="resultsCount"
+        :limit="filters.limit"
+        :offset="filters.offset"
+        @pagechanged="onPageChange">
+    </pagination-component>
+    <div v-if="loading"
+        class="loading">
+        <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
+    </div>
+    <table v-if="items && !loading"
+        class="table is-fullwidth">
         <thead>
             <tr>
                 <th>Publication</th>
@@ -51,29 +60,38 @@
                 :key="list.id">
                 <td>{{ list.publisher }}</td>
                 <td>{{ list.year }}</td>
-                <td>{{ list.name }}</td>
+                <td>
+                    <a :href="list.url"
+                        v-if="list.url"
+                        target="_blank">
+                        {{ list.name }}
+                    </a>
+                    <span v-else>{{ list.name }}</span>
+                </td>
                 <td>{{ list.typeName }}</td>
             </tr>
         </tbody>
     </table>
-    <simple-pagination-component :hasPrev="hasPrev"
-        hasNext="hasNext"
-        @pagechanged="onPageChange"></simple-pagination-component>
+    <pagination-component :total="resultsCount"
+        :limit="filters.limit"
+        :offset="filters.offset"
+        @pagechanged="onPageChange">
+    </pagination-component>
 </template>
 
 <script>
-import List from '../models/List';
 import { LIST_TYPE_LABELS } from '../constants';
+import List from '../models/List';
 import BaseListComponent from './BaseListComponent';
-import SimplePaginationComponent from './SimplePaginationComponent';
+import PaginationComponent from './PaginationComponent';
 
 export default {
     mixins: [BaseListComponent],
-    components: { SimplePaginationComponent },
+    components: { PaginationComponent },
     data() {
         return {
             filters: {
-                limit: 20,
+                limit: 100,
                 offset: 0,
                 type: null,
                 publisher: null,

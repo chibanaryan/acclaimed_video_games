@@ -29,23 +29,24 @@
         </dd>
         <dt>Platforms:</dt>
         <dd>
-            <a v-for="(platform, i) in game.platforms"
-                :key="platform.id"
-                href="">
+            <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { platforms: platform.id } }"
+                v-for="(platform, i) in game.platforms"
+                :key="platform.id">
                 {{ platform.name }}
                 <template v-if="i < game.platforms.length - 1">,&nbsp;</template>
-            </a>
+            </router-link>
         </dd>
         <dt>Year of release:</dt>
         <dd>{{ game.yearOfRelease }}</dd>
         <dt>Genres:</dt>
         <dd>
-            <a v-for="(genre, i) in game.genres"
+            <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { genres: genre.id } }"
+                v-for="(genre, i) in game.genres"
                 :key="genre.id"
                 href="">
                 {{ genre.name }}
                 <template v-if="i < game.genres.length - 1">,&nbsp;</template>
-            </a>
+            </router-link>
         </dd>
         <dt>IGDB Link:</dt>
         <dd>

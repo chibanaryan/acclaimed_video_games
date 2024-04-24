@@ -63,27 +63,23 @@ class GameListView(ListAPIView):
             platforms = [int(x) for x in platforms.split(',')]
             qs = qs.filter(platforms__in=platforms)
 
+        order_by = self.request.GET.get('order_by')
+        if order_by:
+            qs = qs.order_by(order_by)
+
         return qs.distinct()
 
 
 class GameDetailView(RetrieveAPIView):
     lookup_field = 'slug'
     serializer_class = serializers.GameDetailSerializer
-
-    def get_queryset(self):
-        qs = models.Game.objects.all()
-
-        return qs
+    queryset = models.Game.objects.all()
 
 
 class DeveloperDetailView(RetrieveAPIView):
     lookup_field = 'slug'
     serializer_class = serializers.DeveloperSerializer
-
-    def get_queryset(self):
-        qs = models.Developer.objects.all()
-
-        return qs
+    queryset = models.Developer.objects.all()
 
 
 class DeveloperAliasListView(ListAPIView):
@@ -144,32 +140,18 @@ class ListListView(ListAPIView):
 
 
 class PublicationListView(ListAPIView):
-
     serializer_class = serializers.PublicationSerializer
-
-    def get_queryset(self):
-        qs = models.Publication.objects.all()
-
-        return qs
+    queryset = models.Publication.objects.all()
 
 
 class PublicationDetailView(RetrieveAPIView):
     serializer_class = serializers.PublicationSerializer
-
-    def get_queryset(self):
-        qs = models.Publication.objects.all()
-
-        return qs
+    queryset = models.Publication.objects.all()
 
 
 class PostListView(ListAPIView):
-
     serializer_class = serializers.PostSerializer
-
-    def get_queryset(self):
-        qs = models.Post.objects.all()
-
-        return qs
+    queryset = models.Post.objects.all()
 
 
 class MetaView(APIView):
@@ -241,12 +223,10 @@ class PageDetailView(RetrieveAPIView):
 
 
 class GenreListView(ListAPIView):
-
     serializer_class = serializers.GenreSerializer
     queryset = models.Genre.objects.all()
 
 
 class PlatformListView(ListAPIView):
-
     serializer_class = serializers.PlatformSerializer
     queryset = models.Platform.objects.all()

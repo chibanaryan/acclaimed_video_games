@@ -5,10 +5,37 @@
     <body>
         <header>
             <div class="container">
-
                 <nav class="navbar mx-1"
                     role="navigation"
                     aria-label="main navigation">
+                    <div class="navbar-brand is-hidden-tablet">
+                        <router-link :to="{ name: 'home' }"
+                            class="navbar-item has-text-weight-bold pl-0">
+                            <img src="/static/games/avg_logo_small.png">
+                        </router-link>
+                        <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
+                            class="navbar-item pl-0">
+                            Top 750
+                        </router-link>
+                        <router-link :to="{ name: 'developers-list' }"
+                            class="navbar-item pl-0">
+                            Developers
+                        </router-link>
+                        <router-link :to="{ name: 'list-list' }"
+                            class="navbar-item pl-0">
+                            Lists
+                        </router-link>
+                        <router-link :to="{ name: 'page-detail', params: { slug: 'about' } }"
+                            class="navbar-item pl-0">
+                            About
+                        </router-link>
+                        <router-link :to="{ name: 'page-detail', params: { slug: 'palestine' } }"
+                            class="navbar-item">
+                            <img src="/static/games/palestine-flag-xs.png"
+                                style="height: 15px"
+                                title="Statement on Palestine">
+                        </router-link>
+                    </div>
                     <div class="navbar-brand is-hidden-mobile">
                         <router-link :to="{ name: 'home' }"
                             class="navbar-item has-text-weight-bold pl-0">
@@ -42,7 +69,8 @@
         </header>
         <section>
             <div class="container">
-                <router-view class="view" :key="$route.name"></router-view>
+                <router-view class="view"
+                    :key="$route.name"></router-view>
             </div>
         </section>
         <footer>
@@ -61,13 +89,16 @@
             </div>
         </footer>
     </body>
-
 </template>
 
 <script>
-
 export default {
     name: 'App',
+    computed: {
+        loading() {
+            return this.$store.state.loading;
+        },
+    }
 }
 </script>
 
@@ -170,27 +201,6 @@ footer {
     border-top: 1px solid #4a4a4a;
 }
 
-/* 
-.game-row .rank {
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-family: Handjet, sans-serif;
-    font-weight: 800;
-    text-shadow: -3px 3px 0px #5d5b5b;
-}
-
-.game-row .rank .large {
-    font-size: 60px;
-}
-
-.game-row .rank .medium {
-    font-size: 30px;
-} 
-*/
-
 .navbar {
     border: None;
     background-color: transparent;
@@ -240,5 +250,19 @@ footer {
     align-items: center;
     justify-content: center;
     height: 30vh;
+}
+
+a.navbar-item {
+    color: #fff;
+}
+
+.v-enter-active,
+.v-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
 }
 </style>

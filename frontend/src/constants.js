@@ -8,7 +8,7 @@ const LIST_TYPES = {
 const LIST_TYPE_LABELS = {
     [LIST_TYPES.EOY]: "End of year",
     [LIST_TYPES.MISC]: "Miscellaneous",
-    [LIST_TYPES.ALLTIME]: "Alltime",
+    [LIST_TYPES.ALLTIME]: "All time",
     [LIST_TYPES.DECADE]: "Decade",
 }
 

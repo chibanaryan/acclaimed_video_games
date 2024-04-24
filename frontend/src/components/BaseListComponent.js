@@ -88,6 +88,8 @@ export default {
                 this.filters.offset -= parseInt(this.filters.limit);
             else if (e == 'next')
                 this.filters.offset += parseInt(this.filters.limit);
+            else
+                Object.assign(this.filters, e);
         },
         async loadMeta() {
             this.meta = await fetch(`${process.env.VUE_APP_API_URL}meta/`)

@@ -1,5 +1,6 @@
 <template>
-    <h1 class="title">Developers</h1>
+    <h1 class="title is-spaced">Developers</h1>
+    <h2 class="subtitle">{{ pageTitle }} results</h2>
     <div class="field">
         <div class="control has-icons-left">
             <input v-model="filters.q"
@@ -10,7 +11,16 @@
             </span>
         </div>
     </div>
-    <table v-if="items"
+    <pagination-component :total="resultsCount"
+        :limit="filters.limit"
+        :offset="filters.offset"
+        @pagechanged="onPageChange">
+    </pagination-component>
+    <div v-if="loading"
+        class="loading">
+        <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
+    </div>
+    <table v-if="items && !loading"
         class="table is-fullwidth">
         <thead>
             <tr>
@@ -34,23 +44,26 @@
             </tr>
         </tbody>
     </table>
-    <simple-pagination-component :hasPrev="hasPrev"
-        hasNext="hasNext"
-        @pagechanged="onPageChange"></simple-pagination-component>
+    <pagination-component :total="resultsCount"
+        :limit="filters.limit"
+        :offset="filters.offset"
+        @pagechanged="onPageChange">
+    </pagination-component>
 </template>
 
 <script>
 import BaseListComponent from './BaseListComponent';
-import SimplePaginationComponent from './SimplePaginationComponent';
+import PaginationComponent from './PaginationComponent';
 import DeveloperAlias from '../models/DeveloperAlias';
+import _ from "lodash";
 
 export default {
     mixins: [BaseListComponent],
-    components: { SimplePaginationComponent },
+    components: { PaginationComponent },
     data() {
         return {
             filters: {
-                limit: 20,
+                limit: 100,
                 offset: 0,
                 q: null,
             },
@@ -58,12 +71,19 @@ export default {
         }
     },
     methods: {
-        async loadItems() {
+        loadItems: _.debounce(async function () {
+            this.loading = true;
             let data = await fetch(`${process.env.VUE_APP_API_URL}developer-aliases/?${this.cleanedFilters}`)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new DeveloperAlias(x));
             this.resultsCount = data.count;
-        }
+            this.loading = false;
+        }, 200),
     },
+    watch: {
+        'filters.q': function () {
+            this.filters.offset = 0;
+        }
+    }
 }
 </script>
