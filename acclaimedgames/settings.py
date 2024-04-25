@@ -72,14 +72,14 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
-# if DEBUG:
-#     INSTALLED_APPS.append('debug_toolbar')
-#     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR/'frontend/dist'],
+        'DIRS': [BASE_DIR / 'frontend/dist'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

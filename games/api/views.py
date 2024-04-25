@@ -73,7 +73,7 @@ class GameListView(ListAPIView):
 class GameDetailView(RetrieveAPIView):
     lookup_field = 'slug'
     serializer_class = serializers.GameDetailSerializer
-    queryset = models.Game.objects.all()
+    queryset = models.Game.objects.prefetch_related('lists')
 
 
 class DeveloperDetailView(RetrieveAPIView):

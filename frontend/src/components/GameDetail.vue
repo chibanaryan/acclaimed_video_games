@@ -33,7 +33,7 @@
                         <td>
                             <a :href="list.url"
                                 target="_blank">
-                                {{ list.list }}
+                                {{ list.name }}
                             </a>
                         </td>
                         <td>{{ list.year }}</td>

@@ -1,6 +1,6 @@
 from django.contrib.flatpages.models import FlatPage
 from rest_framework import serializers
-
+from django.db.models import F
 from .. import models, constants
 
 
@@ -19,23 +19,23 @@ class IdSlugNameSerializer(IdNameSerializer):
     slug = serializers.CharField()
 
 
-class GameListMembershipSerializer(serializers.ModelSerializer):
-    list = serializers.CharField(source='list.name')
-    publication = serializers.CharField(source='list.publisher.name')
-    type = serializers.CharField(source='list.type')
-    url = serializers.CharField(source='list.url')
-    year = serializers.IntegerField(source='list.year')
+# class GameListMembershipSerializer(serializers.ModelSerializer):
+#     list = serializers.CharField(source='list.name')
+#     publication = serializers.CharField(source='list.publisher.name')
+#     type = serializers.CharField(source='list.type')
+#     url = serializers.CharField(source='list.url')
+#     year = serializers.IntegerField(source='list.year')
 
-    class Meta:
-        model = models.ListMembership
-        fields = [
-            'list',
-            'publication',
-            'rank',
-            'type',
-            'url',
-            'year',
-        ]
+#     class Meta:
+#         model = models.ListMembership
+#         fields = [
+#             'list',
+#             'publication',
+#             'rank',
+#             'type',
+#             'url',
+#             'year',
+#         ]
 
 
 game_fields = [
@@ -68,11 +68,21 @@ class GameSummarySerializer(serializers.ModelSerializer):
 
 
 class GameDetailSerializer(GameSummarySerializer):
-    lists = GameListMembershipSerializer(many=True)
+    lists = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Game
         fields = game_fields + ['lists']
+
+    def get_lists(self, obj):
+        return obj.lists.values(
+            'rank',
+            name=F('list__name'),
+            publication=F('list__publisher__name'),
+            type=F('list__type'),
+            url=F('list__url'),
+            year=F('list__year'),
+        )
 
 
 class DeveloperSerializer(serializers.ModelSerializer):

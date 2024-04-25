@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import DeveloperAliasRedirect from './components/DeveloperAliasRedirect';
 import DeveloperDetail from './components/DeveloperDetail';
 import DeveloperList from './components/DeveloperList';
@@ -23,7 +23,7 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHashHistory(''),
+    history: createWebHistory(),
     routes,
 })
 
