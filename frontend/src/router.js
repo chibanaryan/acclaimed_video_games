@@ -33,7 +33,9 @@ router.beforeEach((to, from, next) => {
 })
 
 router.afterEach(() => {
-    store.commit('loading', false);
+    setTimeout(() => {
+        store.commit('loading', false);
+    }, 200)
 })
 
 export default router;

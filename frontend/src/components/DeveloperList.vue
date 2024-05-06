@@ -16,10 +16,6 @@
         :offset="filters.offset"
         @pagechanged="onPageChange">
     </pagination-component>
-    <div v-if="loading"
-        class="loading">
-        <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
-    </div>
     <table v-if="items && !loading"
         class="table is-fullwidth">
         <thead>
@@ -72,13 +68,11 @@ export default {
     },
     methods: {
         loadItems: _.debounce(async function () {
-            this.loading = true;
             let data = await fetch(`${process.env.VUE_APP_API_URL}developer-aliases/?${this.cleanedFilters}`)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new DeveloperAlias(x));
             this.resultsCount = data.count;
-            this.loading = false;
-        }, 200),
+        }, 200, { leading: true }),
     },
     watch: {
         'filters.q': function () {

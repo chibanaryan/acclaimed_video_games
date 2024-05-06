@@ -16,7 +16,6 @@ export default {
                 offset: 0,
                 order_by: null,
             },
-            loading: false,
             sortField: null,
             sortOrder: 'DESC',
             items: [],
@@ -99,9 +98,12 @@ export default {
     watch: {
         filters: {
             async handler() {
-                this.loading = true;
+                this.$store.commit('loading', true);
                 await this.loadItems();
-                this.loading = false;
+                this.$store.commit('loading', false);
+                // setTimeout(() => {
+                //     this.$store.commit('loading', false);
+                // }, 200)
             },
             deep: true
         }

@@ -1,29 +1,35 @@
 <template>
     <h1 class="title is-size-4">Source Lists</h1>
-    <div class="field is-grouped is-multiline">
-        <div class="select">
-            <select v-model="filters.publisher">
-                <option :value="null">All publishers</option>
-                <option v-for="publisher in publishers"
-                    :key="publisher.id"
-                    :value="publisher.id">{{ publisher.name }}</option>
-            </select>
+    <div class="field is-grouped is-grouped-multiline">
+        <div class="control">
+            <div class="select">
+                <select v-model="filters.publisher">
+                    <option :value="null">All publishers</option>
+                    <option v-for="publisher in publishers"
+                        :key="publisher.id"
+                        :value="publisher.id">{{ publisher.name }}</option>
+                </select>
+            </div>
         </div>
-        <div class="select">
-            <select v-model="filters.year">
-                <option :value="null">All years</option>
-                <option v-for="year in meta.lists.years"
-                    :key="year.year"
-                    :value="year.year">{{ year.year }} ({{ year.count }})</option>
-            </select>
+        <div class="control">
+            <div class="select">
+                <select v-model="filters.year">
+                    <option :value="null">All years</option>
+                    <option v-for="year in meta.lists.years"
+                        :key="year.year"
+                        :value="year.year">{{ year.year }} ({{ year.count }})</option>
+                </select>
+            </div>
         </div>
-        <div class="select">
-            <select v-model="filters.type">
-                <option :value="null">All list types</option>
-                <option v-for="type in listTypes"
-                    :key="type[0]"
-                    :value="type[0]">{{ type[1] }}</option>
-            </select>
+        <div class="control">
+            <div class="select">
+                <select v-model="filters.type">
+                    <option :value="null">All list types</option>
+                    <option v-for="type in listTypes"
+                        :key="type[0]"
+                        :value="type[0]">{{ type[1] }}</option>
+                </select>
+            </div>
         </div>
         <div class="control">
             <a @click="clearFilters"
@@ -45,8 +51,9 @@
         class="loading">
         <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
     </div>
+
     <table v-if="items && !loading"
-        class="table is-fullwidth">
+        class="table is-fullwidth is-hidden-mobile">
         <thead>
             <tr>
                 <th>Publication</th>
@@ -72,6 +79,29 @@
             </tr>
         </tbody>
     </table>
+    <div class="is-hidden-tablet">
+        <div v-for="list in items"
+            :key="list.id"
+            class="list-item">
+            <div>{{ list.publisher }}</div>
+            <div>
+                <a :href="list.url"
+                    v-if="list.url"
+                    target="_blank">
+                    {{ list.name }}
+                </a>
+            </div>
+            <div>
+                <label>Year:</label>
+                {{ list.year }}
+            </div>
+            <div>
+                <label>Type:</label>
+                {{ list.typeName }}
+            </div>
+        </div>
+    </div>
+
     <pagination-component :total="resultsCount"
         :limit="filters.limit"
         :offset="filters.offset"
@@ -121,3 +151,14 @@ export default {
     },
 }
 </script>
+
+<style>
+.list-item {
+    padding: 1em 0.5em;
+    border-bottom: 1px solid silver;
+}
+
+.list-item:last-child {
+    border: none;
+}
+</style>

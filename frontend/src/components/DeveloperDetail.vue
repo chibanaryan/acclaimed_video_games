@@ -5,14 +5,18 @@
         <ul>
             <li v-for="alias in developer.aliases"
                 :key="alias.id">
-                <em>{{ alias.name }}</em>
+                <label class="checkbox">
+                    <input v-model="alias.selected"
+                        type="checkbox">
+                    {{ alias.name }}
+                </label>
             </li>
         </ul>
         <h2 class="subtitle is-4 mt-5">
             {{ games.length }} Game{{ games.length == 1 ? '' : 's' }}
         </h2>
         <div>
-            <game-row v-for="game in games"
+            <game-row v-for="game in filteredGames"
                 :key="game.id"
                 :game="game"
                 :show-rank="false"></game-row>
@@ -37,10 +41,24 @@ export default {
         let data = await fetch(`${process.env.VUE_APP_API_URL}developers/${this.$route.params.slug}/`)
             .then(resp => resp.json());
         this.developer = new Developer(data);
+        this.developer.aliases.forEach(x => x.selected = true);
 
         data = await fetch(`${process.env.VUE_APP_API_URL}games/?developer=${this.developer.id}&order_by=year_of_release`)
             .then(resp => resp.json());
         this.games = data.results.map(x => new Game(x));
+    },
+    computed: {
+        selectedAliases() {
+            return this.developer.aliases.filter(x => x.selected);
+        },
+        filteredGames() {
+            const selectedAliasIds = this.selectedAliases.map(x => x.id);
+            return this.games.filter(x => {
+                const developerIds = x.developers.map(y => y.id);
+                const intersection = selectedAliasIds.filter(y => developerIds.includes(y));
+                return intersection.length > 0;
+            })
+        }
     }
 }
 </script>

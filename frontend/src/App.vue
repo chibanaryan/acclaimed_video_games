@@ -5,70 +5,15 @@
     <body>
         <header>
             <div class="container">
-                <nav class="navbar mx-1"
-                    role="navigation"
-                    aria-label="main navigation">
-                    <div class="navbar-brand is-hidden-tablet">
-                        <router-link :to="{ name: 'home' }"
-                            class="navbar-item has-text-weight-bold pl-0">
-                            <img src="/static/games/avg_logo_small.png">
-                        </router-link>
-                        <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
-                            class="navbar-item pl-0">
-                            Top 750
-                        </router-link>
-                        <router-link :to="{ name: 'developers-list' }"
-                            class="navbar-item pl-0">
-                            Developers
-                        </router-link>
-                        <router-link :to="{ name: 'list-list' }"
-                            class="navbar-item pl-0">
-                            Lists
-                        </router-link>
-                        <router-link :to="{ name: 'page-detail', params: { slug: 'about' } }"
-                            class="navbar-item pl-0">
-                            About
-                        </router-link>
-                        <router-link :to="{ name: 'page-detail', params: { slug: 'palestine' } }"
-                            class="navbar-item">
-                            <img src="/static/games/palestine-flag-xs.png"
-                                style="height: 15px"
-                                title="Statement on Palestine">
-                        </router-link>
-                    </div>
-                    <div class="navbar-brand is-hidden-mobile">
-                        <router-link :to="{ name: 'home' }"
-                            class="navbar-item has-text-weight-bold pl-0">
-                            <img src="/static/games/avg_logo_small.png">
-                        </router-link>
-                        <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
-                            class="navbar-item">
-                            Top 750
-                        </router-link>
-                        <router-link :to="{ name: 'developers-list' }"
-                            class="navbar-item">
-                            Developers
-                        </router-link>
-                        <router-link :to="{ name: 'list-list' }"
-                            class="navbar-item">
-                            Source Lists
-                        </router-link>
-                        <router-link :to="{ name: 'page-detail', params: { slug: 'about' } }"
-                            class="navbar-item">
-                            About / FAQ
-                        </router-link>
-                        <router-link :to="{ name: 'page-detail', params: { slug: 'palestine' } }"
-                            class="navbar-item">
-                            <img src="/static/games/palestine-flag-xs.png"
-                                style="height: 15px"
-                                title="Statement on Palestine">
-                        </router-link>
-                    </div>
-                </nav>
+                <nav-component></nav-component>
             </div>
         </header>
         <section>
             <div class="container">
+                <div v-if="loading"
+                    class="loading">
+                    <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
+                </div>
                 <router-view class="view"
                     :key="$route.name"></router-view>
             </div>
@@ -92,8 +37,13 @@
 </template>
 
 <script>
+import NavComponent from "./components/NavComponent";
+
 export default {
     name: 'App',
+    components: {
+        NavComponent,
+    },
     computed: {
         loading() {
             return this.$store.state.loading;
@@ -201,10 +151,10 @@ footer {
     border-top: 1px solid #4a4a4a;
 }
 
-.navbar {
+/* .navbar {
     border: None;
     background-color: transparent;
-}
+} */
 
 .table {
     background-color: transparent;
@@ -246,15 +196,15 @@ footer {
 }
 
 .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 30vh;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-a.navbar-item {
+/* a.navbar-item {
     color: #fff;
-}
+} */
 
 .v-enter-active,
 .v-leave-active {

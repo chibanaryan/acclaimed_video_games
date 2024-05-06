@@ -27,7 +27,7 @@ LANGUAGE_CODE = 'en-us'
 ROOT_URLCONF = 'acclaimedgames.urls'
 SECRET_KEY = env('SECRET_KEY', default='XXX')
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 TIME_ZONE = 'UTC'
 USE_I18N = False
 USE_TZ = False
@@ -150,6 +150,4 @@ REST_FRAMEWORK = {
 }
 CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:8080', 'http://localhost:8080']
 
-STATICFILES_DIRS = [
-    BASE_DIR / 'frontend/dist/static'
-]
+STATIC_ROOT = BASE_DIR / 'frontend/dist/static'

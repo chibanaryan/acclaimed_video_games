@@ -9,11 +9,11 @@
                 <img :src="game.image">
             </div>
         </div>
-        <div class="description box">
+        <!-- <div class="description box">
             <div v-html="game.renderedDescription">
             </div>
             <small class="has-text-grey-dark mt-3">from IGDB.com</small>
-        </div>
+        </div> -->
         <div v-for="group in groupedLists"
             :key="group[0]">
             <h2 class="title is-5">{{ group[0] }} Lists</h2>

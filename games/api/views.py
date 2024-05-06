@@ -17,7 +17,7 @@ class GameListView(ListAPIView):
     filters = [
         utils.Filter(
             param='q',
-            fields=['name__icontains'],
+            fields=['name__search', 'name__icontains'],
         ),
         utils.Filter(
             param='developer',
@@ -86,7 +86,10 @@ class DeveloperAliasListView(ListAPIView):
 
     serializer_class = serializers.DeveloperAliasSerializer
     filters = [
-        utils.Filter(param='q', fields=['name__icontains'], coerce=str),
+        utils.Filter(
+            param='q',
+            fields=['name__search', 'name__icontains'],
+        )
     ]
 
     def get_queryset(self):

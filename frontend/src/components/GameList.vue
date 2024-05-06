@@ -1,16 +1,4 @@
 <template>
-    <div class="control is-pulled-right">
-        <router-link :to="{ name: 'games-list', params: { slug: 'search' } }"
-            v-if="mode == 'simple'"
-            class="button is-link">
-            Advanced Filters
-        </router-link>
-        <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
-            v-if="mode == 'advanced'"
-            class="button is-link">
-            Simple Filters
-        </router-link>
-    </div>
     <h1 class="title">
         <template v-if="mode == 'simple'">
             Most Acclaimed Games of {{ prettySlug }}
@@ -20,38 +8,35 @@
         </template>
     </h1>
     <div v-if="mode == 'advanced'">
-        <div class="control is-pulled-right ml-5">
-            <a @click="clearFilters"
-                v-if="isFiltered"
-                class="button">
-                <span class="icon">
-                    <span class="mdi mdi-close"></span>
-                </span>
-                <span>Clear filters</span>
-            </a>
-        </div>
-        <div class="field is-grouped is-grouped-multiline filters">
-            <div class="control is-expanded">
-                <input type="text"
-                    v-model="filters.q"
-                    class="input"
-                    placeholder="Search">
+        <div class="columns">
+            <div class="column">
+                <div class="p-2">
+                    <label class="has-text-weight-bold">Release year</label>
+                </div>
+                <div class="field is-grouped is-grouped-multiline mt-4">
+                    <div class="control">
+                        <label class="pr-2">From:</label>
+                        <input type="range"
+                            min="1970"
+                            :max="maxYear"
+                            v-model="filters.start"
+                            placeholder="Start year">
+                        <p>{{ filters.start }}</p>
+                    </div>
+
+                    <div class="control">
+                        <label class="pr-2">To:</label>
+                        <input type="range"
+                            v-model="filters.end"
+                            min="1970"
+                            :max="maxYear"
+                            placeholder="End year">
+                        <p>{{ filters.end }}</p>
+                    </div>
+                </div>
             </div>
-            <div class="control">
-                <input type="number"
-                    v-model="filters.start"
-                    class="input"
-                    placeholder="Start year">
-            </div>
-            <div class="control">
-                <input type="number"
-                    v-model="filters.end"
-                    class="input"
-                    placeholder="End year">
-            </div>
-        </div>
-        <div class="field is-grouped is-grouped-multiline filters">
-            <div v-if="genres.length">
+            <div v-if="genres.length"
+                class="column">
                 <div class="p-2">
                     <div class="control is-pulled-right">
                         <label class="radio">
@@ -67,13 +52,7 @@
                                 value="A">
                         </label>
                     </div>
-                    <label>Genres</label>
-                </div>
-                <div v-if="filters.genres?.length"
-                    class="tags">
-                    <span v-for="genre in filters.genres"
-                        :key="genre.id"
-                        class="tag is-primary">{{ genre.name }}</span>
+                    <label class="has-text-weight-bold">Genres</label>
                 </div>
                 <select v-model="filters.genres"
                     multiple
@@ -83,20 +62,16 @@
                         :key="genre.id"
                         :value="genre">{{ genre.name }}</option>
                 </select>
-                <multi-select-component :items="genres"
-                    v-model="filters.genres"
-                    class="is-hidden-mobile"></multi-select-component>
-            </div>
-            <div v-if="platforms.length">
-                <div class="p-2">
-                    <label>Platforms</label>
+                <div class="is-hidden-mobile">
+                    <selectable-tag-list v-model="filters.genres"></selectable-tag-list>
+                    <multi-select-component :items="genres"
+                        v-model="filters.genres"></multi-select-component>
                 </div>
-                <div v-if="filters.platforms?.length"
-                    class="tags">
-                    <span v-for="platform in filters.platforms"
-                        :key="platform.id"
-                        class="tag is-primary">{{ platform.name
-                        }}</span>
+            </div>
+            <div v-if="platforms.length"
+                class="column">
+                <div class="p-2">
+                    <label class="has-text-weight-bold">Platforms</label>
                 </div>
                 <select v-model="filters.platforms"
                     multiple
@@ -106,57 +81,83 @@
                         :key="platform.id"
                         :value="platform">{{ platform.name }}</option>
                 </select>
-                <multi-select-component :items="platforms"
-                    v-model="filters.platforms"
-                    class="is-hidden-mobile"></multi-select-component>
+                <div class="is-hidden-mobile">
+                    <selectable-tag-list v-model="filters.platforms"></selectable-tag-list>
+                    <multi-select-component :items="platforms"
+                        v-model="filters.platforms"></multi-select-component>
+                </div>
             </div>
         </div>
+        <div class="buttons">
+            <a @click="clearFilters"
+                v-if="isFiltered"
+                class="button">
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>
+                <span>Clear filters</span>
+            </a>
+            <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
+                v-if="mode == 'advanced'"
+                class="button is-link">
+                <span class="icon">
+                    <span class="mdi mdi-form-select"></span>
+                </span>
+                <span>
+                    Simple Filters
+                </span>
+            </router-link>
+        </div>
     </div>
-    <div v-if="mode == 'simple'">
-        <div class="field is-grouped is-multiline">
-            <div class="control">
-                <a @click="selected.alltime = true"
-                    class="button is-link">
-                    All time
-                </a>
+    <div v-if="mode == 'simple'"
+        class="field is-grouped is-grouped-multiline">
+        <div class="control">
+            <a @click="selected.alltime = true"
+                class="button is-link">
+                All time
+            </a>
+        </div>
+        <div class="control">
+            <div class="select">
+                <select v-model="selected.decade">
+                    <option :value="null">Decades</option>
+                    <option v-for="decade in meta.games.decades"
+                        :key="decade"
+                        :value="decade">{{ decade }}</option>
+                </select>
             </div>
-            <div class="control">
-                <div class="select">
-                    <select v-model="selected.decade">
-                        <option :value="null">All decades</option>
-                        <option v-for="decade in meta.games.decades"
-                            :key="decade"
-                            :value="decade">{{ decade }}</option>
-                    </select>
-                </div>
+        </div>
+        <div class="control">
+            <div class="select">
+                <select v-model="selected.year">
+                    <option :value="null">Years</option>
+                    <option v-for="year in meta.games.years"
+                        :key="year.year"
+                        :value="year.year">{{ year.year }} ({{
+                        year.count }})</option>
+                </select>
             </div>
-            <div class="control">
-                <div class="select">
-                    <select v-model="selected.year">
-                        <option :value="null">All years</option>
-                        <option v-for="year in meta.games.years"
-                            :key="year.year"
-                            :value="year.year">{{ year.year }} ({{
-                            year.count }})</option>
-                    </select>
-                </div>
-            </div>
-            <div class="control is-expanded">
-                <input type="text"
-                    v-model="filters.q"
-                    class="input"
-                    placeholder="Search">
-            </div>
-            <div class="control">
-                <a @click="clearFilters"
-                    v-if="isFiltered"
-                    class="button">
-                    <span class="icon">
-                        <span class="mdi mdi-close"></span>
-                    </span>
-                    <span>Clear filters</span>
-                </a>
-            </div>
+        </div>
+        <div v-if="isFiltered"
+            class="control">
+            <a @click="clearFilters"
+                class="button">
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>
+                <span>Clear filters</span>
+            </a>
+        </div>
+        <div class="control">
+            <router-link :to="{ name: 'games-list', params: { slug: 'search' } }"
+                class="button is-link">
+                <span class="icon">
+                    <span class="mdi mdi-tune-variant"></span>
+                </span>
+                <span>
+                    Advanced Filters
+                </span>
+            </router-link>
         </div>
     </div>
     <div v-if="items"
@@ -180,6 +181,7 @@
 
 <script>
 import { cleanData, parseSlug } from "@/utils.js";
+import _ from "lodash";
 import Game from '../models/Game';
 import Genre from '../models/Genre';
 import Platform from '../models/Platform';
@@ -187,14 +189,15 @@ import BaseListComponent from './BaseListComponent';
 import GameRow from './GameRow';
 import MultiSelectComponent from './MultiSelectComponent';
 import PaginationComponent from './PaginationComponent';
-import _ from "lodash";
+import SelectableTagList from './SelectableTagList';
 
 export default {
     mixins: [BaseListComponent],
     components: {
         GameRow,
+        MultiSelectComponent,
         PaginationComponent,
-        MultiSelectComponent
+        SelectableTagList,
     },
     data() {
         return {
@@ -216,9 +219,13 @@ export default {
             genres: [],
             platforms: [],
             mode: 'simple',
+            loading: false,
         }
     },
     async created() {
+        this.filters.start = 1970;
+        this.filters.end = this.maxYear;
+
         await this.init();
     },
     computed: {
@@ -244,6 +251,9 @@ export default {
             else
                 return slug;
         },
+        maxYear() {
+            return new Date().getFullYear();
+        }
     },
     methods: {
         async init() {
@@ -267,14 +277,12 @@ export default {
             this.loadUrlArgs();
         },
         loadItems: _.debounce(async function () {
-            this.$store.commit('loading', true);
             let url = `${process.env.VUE_APP_API_URL}games/?${this.cleanedFilters}`;
             let data = await fetch(url)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new Game(x));
             this.resultsCount = data.count;
-            this.$store.commit('loading', false);
-        }, 200),
+        }, 200, { leading: true }),
         async loadUrlArgs() {
             if (!this.genres.length || !this.platforms.length)
                 return;
@@ -298,8 +306,8 @@ export default {
                 q: null,
                 limit: 100,
                 offset: 0,
-                start: null,
-                end: null,
+                start: 1970,
+                end: this.maxYear,
                 genres: [],
                 platforms: [],
                 genre_option: 'A',
@@ -354,9 +362,13 @@ export default {
         },
         'filters.start': function () {
             this.filters.offset = 0;
+            if (this.filters.end < this.filters.start)
+                this.filters.end = this.filters.start;
         },
         'filters.end': function () {
             this.filters.offset = 0;
+            if (this.filters.start > this.filters.end)
+                this.filters.start = this.filters.end;
         },
         $route: {
             async handler() {
