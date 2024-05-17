@@ -60,7 +60,7 @@
                     class="is-size-6">
                     <router-link
                         :to="{ name: 'games-list', params: { slug: 'search' }, query: { platforms: platform.id } }">
-                        {{ platform.name }}
+                        {{ platform.code }}
                     </router-link>
                     <template v-if="i < (game.platforms.length - 1)">,&nbsp;</template>
                 </span>

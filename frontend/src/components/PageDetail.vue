@@ -1,6 +1,8 @@
 <template>
     <h1 class="title">{{ page?.title }}</h1>
-    {{ page?.content }}
+    <div v-if="page"
+        v-html="page.content"
+        class="content"></div>
 </template>
 
 <script>

@@ -1,10 +1,12 @@
 import logging
 
+import markdown
 from django.db import models
 from django.utils.text import Truncator, slugify
 from unidecode import unidecode
 
 from . import constants, igdb
+
 logger = logging.getLogger(__name__)
 
 api = igdb.get_api()
@@ -44,7 +46,7 @@ class Developer(models.Model):
     A company or organization that produces video games
     """
     name = models.CharField(max_length=100)
-    slug = models.SlugField(null=True, blank=True)
+    slug = models.SlugField(max_length=100, null=True, blank=True)
     igdb_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
@@ -97,7 +99,7 @@ class Game(models.Model):
     """
     name = models.CharField(max_length=100)
     name_normalized = models.CharField(max_length=100, null=True, blank=True)
-    slug = models.SlugField(null=True, blank=True)
+    slug = models.SlugField(max_length=100, null=True, blank=True)
     genres = models.ManyToManyField('Genre', blank=True)
     description = models.TextField(null=True, blank=True)
     rank = models.IntegerField()
@@ -212,7 +214,7 @@ class Publication(models.Model):
     A magazine, website etc that publishes lists
     """
     name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField()
+    slug = models.SlugField(max_length=100)
 
     def __str__(self) -> str:
         return self.name
@@ -277,3 +279,8 @@ class Post(models.Model):
 
     def __str__(self) -> str:
         return self.title or Truncator(self.text).words(10)
+
+    @property
+    def text_rendered(self):
+        return markdown.markdown(self.text)
+    

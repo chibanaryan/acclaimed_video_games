@@ -1,7 +1,9 @@
+import markdown
 from django.contrib.flatpages.models import FlatPage
-from rest_framework import serializers
 from django.db.models import F
-from .. import models, constants
+from rest_framework import serializers
+
+from .. import models
 
 
 class IdNameSerializer(serializers.Serializer):
@@ -19,23 +21,8 @@ class IdSlugNameSerializer(IdNameSerializer):
     slug = serializers.CharField()
 
 
-# class GameListMembershipSerializer(serializers.ModelSerializer):
-#     list = serializers.CharField(source='list.name')
-#     publication = serializers.CharField(source='list.publisher.name')
-#     type = serializers.CharField(source='list.type')
-#     url = serializers.CharField(source='list.url')
-#     year = serializers.IntegerField(source='list.year')
-
-#     class Meta:
-#         model = models.ListMembership
-#         fields = [
-#             'list',
-#             'publication',
-#             'rank',
-#             'type',
-#             'url',
-#             'year',
-#         ]
+class IdCodeNameSerializer(IdNameSerializer):
+    code = serializers.CharField()
 
 
 game_fields = [
@@ -60,7 +47,7 @@ class GameSummarySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='igdb_id')
     developers = IdNameSerializer(many=True)
     genres = IdNameSerializer(many=True)
-    platforms = IdNameSerializer(many=True)
+    platforms = IdCodeNameSerializer(many=True)
 
     class Meta:
         model = models.Game
@@ -116,14 +103,14 @@ class DeveloperAliasSerializer(serializers.ModelSerializer):
 
 class ListSerializer(serializers.ModelSerializer):
 
-    publisher = serializers.CharField(source='publisher.name')
+    publication = serializers.CharField(source='publisher.name')
 
     class Meta:
         model = models.List
         fields = [
             'id',
             'name',
-            'publisher',
+            'publication',
             'year',
             'type',
             'url',
@@ -142,6 +129,8 @@ class PublicationSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
 
+    text = serializers.CharField(source='text_rendered')
+
     class Meta:
         model = models.Post
         fields = [
@@ -155,6 +144,8 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PageSerializer(serializers.ModelSerializer):
 
+    content = serializers.SerializerMethodField()
+
     class Meta:
         model = FlatPage
         fields = [
@@ -163,6 +154,9 @@ class PageSerializer(serializers.ModelSerializer):
             'title',
             'content',
         ]
+
+    def get_content(self, obj: FlatPage):
+        return markdown.markdown(obj.content)
 
 
 class GenreSerializer(serializers.ModelSerializer):

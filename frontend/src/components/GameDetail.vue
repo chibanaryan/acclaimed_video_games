@@ -9,38 +9,13 @@
                 <img :src="game.image">
             </div>
         </div>
-        <!-- <div class="description box">
-            <div v-html="game.renderedDescription">
-            </div>
-            <small class="has-text-grey-dark mt-3">from IGDB.com</small>
-        </div> -->
         <div v-for="group in groupedLists"
             :key="group[0]">
             <h2 class="title is-5">{{ group[0] }} Lists</h2>
-            <table class="table is-fullwidth mb-5">
-                <thead>
-                    <tr>
-                        <th style="width: 15em">Publication</th>
-                        <th>List</th>
-                        <th style="width: 5em">Year</th>
-                        <th style="width: 5em">Rank</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="list in group[1]"
-                        :key="list">
-                        <td>{{ list.publication }}</td>
-                        <td>
-                            <a :href="list.url"
-                                target="_blank">
-                                {{ list.name }}
-                            </a>
-                        </td>
-                        <td>{{ list.year }}</td>
-                        <td>{{ list.rank }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <list-results-component :items="group[1]"
+                :show-type="false"
+                :show-rank="true">
+            </list-results-component>
         </div>
     </div>
 </template>
@@ -50,9 +25,13 @@ import { LIST_TYPE_LABELS } from "@/constants";
 import _ from "lodash";
 import Game from '../models/Game';
 import GameProperties from './GameProperties';
+import ListResultsComponent from './ListResultsComponent';
 
 export default {
-    components: { GameProperties },
+    components: {
+        ListResultsComponent,
+        GameProperties
+    },
     data() {
         return {
             game: null,
@@ -69,6 +48,9 @@ export default {
             grouped = grouped.map(x => {
                 return [LIST_TYPE_LABELS[x[0]], x[1]];
             })
+
+            let sortingArr = ['All time', 'Decade', 'Miscellaneous', 'End of year'];
+            grouped.sort((a, b) => sortingArr.indexOf(a[0]) - sortingArr.indexOf(b[0]));
             return grouped;
         }
     }

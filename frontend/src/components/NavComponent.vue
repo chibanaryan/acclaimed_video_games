@@ -10,7 +10,7 @@
             </router-link>
             <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
                 class="navbar-item">
-                Top 750
+                Top 1000
             </router-link>
             <game-search-component class="is-hidden-tablet navbar-item is-expanded"></game-search-component>
             <a @click="expanded = !expanded"

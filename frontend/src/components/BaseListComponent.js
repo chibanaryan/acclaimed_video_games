@@ -101,9 +101,7 @@ export default {
                 this.$store.commit('loading', true);
                 await this.loadItems();
                 this.$store.commit('loading', false);
-                // setTimeout(() => {
-                //     this.$store.commit('loading', false);
-                // }, 200)
+                history.pushState(null, document.title, `?${this.cleanedFilters}`);
             },
             deep: true
         }

@@ -1,12 +1,12 @@
 <template>
-    <nav class="pagination is-centered"
-        v-if="pages.length > 1">
+    <nav class="pagination is-centered" v-if="pages.length > 1">
         <ul class="pagination-list">
-            <li v-for="page in pages"
-                :key="page">
-                <a class="pagination-link"
+            <li v-for="page in pages" :key="page">
+                <a
+                    class="pagination-link"
                     :class="{ 'is-current': currentPage == page }"
-                    @click="onPageClick(page)">
+                    @click="onPageClick(page)"
+                >
                     {{ page }}
                 </a>
             </li>
@@ -16,24 +16,26 @@
 
 <script>
 export default {
-    props: ['total', 'limit', 'offset'],
-    emits: ['pagechanged'],
+    props: ["total", "limit", "offset"],
+    emits: ["pagechanged"],
     computed: {
         pages() {
-            const numPages = parseInt(this.total / this.limit) + 1;
-            const pages = Array(numPages).keys().map(x => x + 1);
+            const numPages = Math.ceil(this.total / this.limit);
+            const pages = Array(numPages)
+                .keys()
+                .map((x) => x + 1);
             return Array.from(pages);
         },
         currentPage() {
             return parseInt(this.offset / this.limit) + 1;
-        }
+        },
     },
     methods: {
         onPageClick(page) {
-            this.$emit('pagechanged', { offset: this.limit * (page - 1) });
-        }
-    }
-}
+            this.$emit("pagechanged", { offset: this.limit * (page - 1) });
+        },
+    },
+};
 </script>
 
 <style scoped>

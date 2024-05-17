@@ -122,10 +122,11 @@ def import_games(f):
     count = 0
     updated = 0
 
-    for rank, game_name, year, platforms, igdb_id in rows:
+    for rank, game_name, igdb_id, platforms in rows:
         platform_codes = platforms.split(',')
         platforms = []
         for code in platform_codes:
+            code = code.strip()
             platform, created = models.Platform.objects.get_or_create(
                 code=code,
                 defaults={
@@ -158,15 +159,17 @@ def import_platforms(f):
     updated = 0
 
     for code, name in rows:
+        code = code.strip()
+        name = name.strip()
+        
         platform, created = models.Platform.objects.update_or_create(
             code=code,
             defaults={
                 'name': name,
             }
         )
-
-        if created:
-            count += 1
+        
+        print(platform.code, platform.name)
 
         if created:
             count += 1

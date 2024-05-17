@@ -51,57 +51,10 @@
         class="loading">
         <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
     </div>
-
-    <table v-if="items && !loading"
-        class="table is-fullwidth is-hidden-mobile">
-        <thead>
-            <tr>
-                <th>Publication</th>
-                <th>Year</th>
-                <th>Name</th>
-                <th>Type</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="list in items"
-                :key="list.id">
-                <td>{{ list.publisher }}</td>
-                <td>{{ list.year }}</td>
-                <td>
-                    <a :href="list.url"
-                        v-if="list.url"
-                        target="_blank">
-                        {{ list.name }}
-                    </a>
-                    <span v-else>{{ list.name }}</span>
-                </td>
-                <td>{{ list.typeName }}</td>
-            </tr>
-        </tbody>
-    </table>
-    <div class="is-hidden-tablet">
-        <div v-for="list in items"
-            :key="list.id"
-            class="list-item">
-            <div>{{ list.publisher }}</div>
-            <div>
-                <a :href="list.url"
-                    v-if="list.url"
-                    target="_blank">
-                    {{ list.name }}
-                </a>
-            </div>
-            <div>
-                <label>Year:</label>
-                {{ list.year }}
-            </div>
-            <div>
-                <label>Type:</label>
-                {{ list.typeName }}
-            </div>
-        </div>
-    </div>
-
+    <list-results-component :items="items"
+        :show-type="true"
+        :show-rank="false">
+    </list-results-component>
     <pagination-component :total="resultsCount"
         :limit="filters.limit"
         :offset="filters.offset"
@@ -113,11 +66,16 @@
 import { LIST_TYPE_LABELS } from '../constants';
 import List from '../models/List';
 import BaseListComponent from './BaseListComponent';
+import ListResultsComponent from './ListResultsComponent';
 import PaginationComponent from './PaginationComponent';
+
 
 export default {
     mixins: [BaseListComponent],
-    components: { PaginationComponent },
+    components: {
+        ListResultsComponent,
+        PaginationComponent,
+    },
     data() {
         return {
             filters: {

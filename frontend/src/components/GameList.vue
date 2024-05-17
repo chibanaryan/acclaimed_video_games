@@ -133,8 +133,9 @@
                     <option :value="null">Years</option>
                     <option v-for="year in meta.games.years"
                         :key="year.year"
-                        :value="year.year">{{ year.year }} ({{
-                        year.count }})</option>
+                        :value="year.year">
+                        {{ year.year }} ({{ year.count }})
+                    </option>
                 </select>
             </div>
         </div>
@@ -266,11 +267,11 @@ export default {
                 this.mode = 'simple';
             }
 
-            let data = await fetch(`${process.env.VUE_APP_API_URL}genres/`)
+            let data = await fetch(`${process.env.VUE_APP_API_URL}genres/?limit=999`)
                 .then(resp => resp.json());
             this.genres = data.results.map(x => new Genre(x));
 
-            data = await fetch(`${process.env.VUE_APP_API_URL}platforms/`)
+            data = await fetch(`${process.env.VUE_APP_API_URL}platforms/?limit=999`)
                 .then(resp => resp.json());
             this.platforms = data.results.map(x => new Platform(x));
 
@@ -300,6 +301,12 @@ export default {
                 let genreId = parseInt(args.genres);
                 this.filters.genres = [this.genres.find(x => x.id == genreId)];
             }
+
+            if (args.limit)
+                this.filters.limit = parseInt(args.limit);
+
+            if (args.offset)
+                this.filters.offset = parseInt(args.offset);
         },
         clearFilters() {
             this.filters = {

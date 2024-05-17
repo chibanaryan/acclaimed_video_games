@@ -31,15 +31,16 @@
                         class="dropdown-item">
                         <div class="media">
                             <div class="media-left">
-                                <figure class="image is-32x32">
+                                <figure class="image">
                                     <img :src="result.thumbnail">
                                 </figure>
                             </div>
                             <div class="media-content">
-                                <div class="has-text-weight-semibold">{{ result.name }} ({{ result.yearOfRelease }})
+                                <div class="has-text-weight-semibold">
+                                    {{ result.name }} ({{ result.yearOfRelease }})
                                 </div>
-                                <div class="has-text-weight-light">{{ result.developers.map(x => x.name).join(', ')
-                                    }}
+                                <div class="has-text-weight-light">
+                                    All time rank: {{ result.rank }}
                                 </div>
                             </div>
                         </div>

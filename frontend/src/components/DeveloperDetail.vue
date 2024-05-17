@@ -2,7 +2,7 @@
     <div v-if="developer">
         <h1 class="title">{{ developer.name }}</h1>
         <h2>Including:</h2>
-        <ul>
+        <ul v-if="developer.aliases.length > 1">
             <li v-for="alias in developer.aliases"
                 :key="alias.id">
                 <label class="checkbox">
