@@ -224,10 +224,11 @@ export default {
         }
     },
     async created() {
+        this.$store.commit('loading', true);
         this.filters.start = 1970;
         this.filters.end = this.maxYear;
-
         await this.init();
+        this.$store.commit('loading', false);
     },
     computed: {
         cleanedFilters() {

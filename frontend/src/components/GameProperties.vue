@@ -11,7 +11,9 @@
         <tr>
             <th>{{ game.decade }}s rank:</th>
             <td>
-                <router-link :to="{ name: 'games-list', params: { slug: game.decadeSlug } }">
+                <router-link
+                    :to="{ name: 'games-list', params: { slug: game.decadeSlug } }"
+                >
                     {{ game.decadeRank }}
                 </router-link>
             </td>
@@ -19,7 +21,9 @@
         <tr>
             <th>{{ game.yearOfRelease }} rank:</th>
             <td>
-                <router-link :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }">
+                <router-link
+                    :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }"
+                >
                     {{ game.yearRank }}
                 </router-link>
             </td>
@@ -27,9 +31,14 @@
         <tr>
             <th>Developers:</th>
             <td>
-                <router-link :to="{ name: 'developer-alias-redirect', params: { id: developer.id } }"
+                <router-link
+                    :to="{
+                        name: 'developer-alias-redirect',
+                        params: { id: developer.id },
+                    }"
                     v-for="(developer, i) in game.developers"
-                    :key="developer.id">
+                    :key="developer.id"
+                >
                     {{ developer.name }}
                     <template v-if="i < game.developers.length - 1">,&nbsp;</template>
                 </router-link>
@@ -38,9 +47,15 @@
         <tr>
             <th>Platforms:</th>
             <td>
-                <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { platforms: platform.id } }"
+                <router-link
+                    :to="{
+                        name: 'games-list',
+                        params: { slug: 'search' },
+                        query: { platforms: platform.id },
+                    }"
                     v-for="(platform, i) in game.platforms"
-                    :key="platform.id">
+                    :key="platform.id"
+                >
                     {{ platform.name }}
                     <template v-if="i < game.platforms.length - 1">,&nbsp;</template>
                 </router-link>
@@ -53,19 +68,25 @@
         <tr>
             <th>Genres:</th>
             <td>
-                <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { genres: genre.id } }"
+                <router-link
+                    :to="{
+                        name: 'games-list',
+                        params: { slug: 'search' },
+                        query: { genres: genre.id },
+                    }"
                     v-for="(genre, i) in game.genres"
                     :key="genre.id"
-                    href="">
-                    {{ genre.name }}<template v-if="i < game.genres.length - 1">,&nbsp;</template>
+                    href=""
+                >
+                    {{ genre.name
+                    }}<template v-if="i < game.genres.length - 1">,&nbsp;</template>
                 </router-link>
             </td>
         </tr>
         <tr>
             <th>IGDB Link:</th>
             <td>
-                <a :href="game.igdbUrl"
-                    target="_blank">{{ game.igdbUrl }}</a>
+                <a :href="game.igdbUrl" target="_blank">{{ game.igdbUrl }}</a>
             </td>
         </tr>
     </table>
@@ -73,8 +94,8 @@
 
 <script>
 export default {
-    props: ['game'],
-}
+    props: ["game"],
+};
 </script>
 
 <style scoped>

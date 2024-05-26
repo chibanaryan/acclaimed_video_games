@@ -1,19 +1,17 @@
 <template>
-    <div class="columns is-mobile game-row">
+
+    <div class="columns is-hidden-mobile game-row">
         <div class="column is-narrow">
             <div class="columns">
                 <div v-if="showRank"
-                    class="column">
-                    <span class="rank large px-5 py-3 is-hidden-mobile">
-                        {{ game.rank }}
-                    </span>
-                    <span class="rank medium px-5 py-3 is-hidden-tablet">
+                    class="column is-narrow">
+                    <span class="rank">
                         {{ game.rank }}
                     </span>
                 </div>
-                <div class="column">
+                <div class="column is-narrow">
                     <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }">
-                        <img :src="game.thumbnail">
+                        <img :src="game.thumbnail" />
                     </router-link>
                 </div>
             </div>
@@ -28,73 +26,67 @@
                     ({{ game.yearOfRelease }})
                 </router-link>
             </div>
-            <div v-if="!showRank"
-                class="py-0">
-                <label class="has-text-weight-medium is-size-6">
-                    All time rank:
-                </label>
-                <span class="has-text-weight-medium is-size-6">
-                    {{ game.rank }}
-                </span>
+            <game-row-properties :game="game"
+                :show-rank="false">
+            </game-row-properties>
+        </div>
+    </div>
+
+    <div class="is-hidden-desktop game-row pb-4">
+        <div class="pt-4">
+            <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }"
+                class="game-name has-text-weight-bold is-size-6 mb-3">
+                <span v-if="showRank">{{ game.rank }}.</span>
+                {{ game.name }}
+            </router-link>
+            <router-link :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }">
+                ({{ game.yearOfRelease }})
+            </router-link>
+        </div>
+        <div class="columns is-mobile">
+            <div class="column is-narrow">
+                <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }">
+                    <img :src="game.thumbnail" />
+                </router-link>
             </div>
-            <div class="py-0">
-                <label class="has-text-weight-medium is-size-6">
-                    Developer{{ game.developers.length == 1 ? '' : 's' }}:
-                </label>
-                <span v-for="developer, i in game.developers"
-                    :key="developer.id"
-                    class="is-size-6">
-                    <router-link :to="{ name: 'developer-alias-redirect', params: { id: developer.id } }"
-                        :key="developer.id"
-                        class="is-size-6">
-                        {{ developer.name }}
-                    </router-link><template v-if="i < (game.developers.length - 1)">,&nbsp;</template>
-                </span>
-            </div>
-            <div class="py-0">
-                <label class="has-text-weight-medium is-size-6">
-                    Platform{{ game.platforms.length == 1 ? '' : 's' }}:
-                </label>
-                <span v-for="platform, i in game.platforms"
-                    :key="platform.id"
-                    class="is-size-6">
-                    <router-link
-                        :to="{ name: 'games-list', params: { slug: 'search' }, query: { platforms: platform.id } }">
-                        {{ platform.code }}
-                    </router-link>
-                    <template v-if="i < (game.platforms.length - 1)">,&nbsp;</template>
-                </span>
-            </div>
-            <div class="py-0">
-                <label class="has-text-weight-medium is-size-6">
-                    Genre{{ game.genres.length == 1 ? '' : 's' }}:
-                </label>
-                <span v-for="genre, i in game.genres"
-                    :key="genre.id"
-                    class="is-size-6">
-                    <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { genres: genre.id } }">
-                        {{ genre.name }}
-                    </router-link>
-                    <template v-if="i < (game.genres.length - 1)">,&nbsp;</template>
-                </span>
+            <div class="column">
+                <game-row-properties :game="game"
+                    :show-rank="false">
+                </game-row-properties>
             </div>
         </div>
     </div>
+
 </template>
 
 <script>
+import GameRowProperties from "./GameRowProperties";
+
 export default {
     props: {
         game: null,
         showRank: {
             default: true,
         },
-    }
-}
-
+    },
+    components: { GameRowProperties },
+};
 </script>
 
 <style scoped>
+.game-row {
+    border-bottom: 1px solid #616161;
+}
+
+.game-header {
+    border-bottom: 1px solid #dbdbdb;
+    color: #363636;
+}
+
+.game-row .thumbnail img {
+    max-width: inherit;
+}
+
 .game-row .rank {
     text-align: center;
     display: flex;
@@ -105,13 +97,6 @@ export default {
     font-weight: 800;
     text-shadow: -3px 3px 0px #5d5b5b;
     min-width: 122px;
-}
-
-.game-row .rank.large {
     font-size: 60px;
-}
-
-.game-row .rank.medium {
-    font-size: 30px;
 }
 </style>

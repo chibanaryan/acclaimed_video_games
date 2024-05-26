@@ -1,14 +1,17 @@
 <template>
-    <nav class="pagination is-centered" v-if="pages.length > 1">
+    <nav class="pagination is-centered"
+        v-if="pages.length > 1">
         <ul class="pagination-list">
-            <li v-for="page in pages" :key="page">
-                <a
+            <li v-for="page in pages"
+                :key="page">
+                <a v-if="page"
                     class="pagination-link"
                     :class="{ 'is-current': currentPage == page }"
-                    @click="onPageClick(page)"
-                >
+                    @click="onPageClick(page)">
                     {{ page }}
                 </a>
+                <span v-else
+                    class="pagination-ellipsis">&hellip;</span>
             </li>
         </ul>
     </nav>
@@ -21,10 +24,43 @@ export default {
     computed: {
         pages() {
             const numPages = Math.ceil(this.total / this.limit);
-            const pages = Array(numPages)
+            let pages = Array(numPages)
                 .keys()
                 .map((x) => x + 1);
-            return Array.from(pages);
+
+            pages = Array.from(pages);
+
+            const currentPageIsFirstPage = this.currentPage == 1
+            const currentPageIsSecondPage = this.currentPage == 2
+            const currentPageIsSecondLastPage = this.currentPage == pages.length - 1;
+            const currentPageIsLastPage = this.currentPage == pages.length;
+
+            pages = pages.filter(x => {
+                const firstPage = x == 1;
+                const lastPage = x == pages.length;
+                const isCurrent = x == this.currentPage;
+                const distanceFromCurrent = Math.abs(this.currentPage - x);
+
+                let minDistance = 2;
+                if (currentPageIsFirstPage || currentPageIsLastPage)
+                    minDistance = 4;
+                else if (currentPageIsSecondPage || currentPageIsSecondLastPage)
+                    minDistance = 3;
+
+                const isCloseToCurrent = distanceFromCurrent < minDistance;
+
+                return firstPage || lastPage || isCurrent || isCloseToCurrent;
+            })
+
+            let lastPage = 0;
+            for (let i = 0; i < pages.length; i++) {
+                let page = pages[i];
+                if ((page - lastPage) > 1)
+                    pages.splice(i, 0, null);
+                lastPage = page;
+            }
+
+            return pages;
         },
         currentPage() {
             return parseInt(this.offset / this.limit) + 1;

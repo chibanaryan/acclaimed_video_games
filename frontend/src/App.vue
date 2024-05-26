@@ -102,19 +102,6 @@ header,
     z-index: 100;
 }
 
-.game-row {
-    border-bottom: 1px solid #dbdbdb;
-}
-
-.game-header {
-    border-bottom: 1px solid #dbdbdb;
-    color: #363636;
-}
-
-.game-row .thumbnail img {
-    max-width: inherit;
-}
-
 /* Dark theme changes */
 .navbar {
     border: None;
@@ -127,15 +114,6 @@ header,
 
 .game-name {
     display: inline-block;
-}
-
-.game-row {
-    border-bottom: 1px solid #4a4a4a;
-}
-
-.game-header {
-    border-bottom: 1px solid #4a4a4a;
-    color: #fff;
 }
 
 header,
@@ -188,6 +166,7 @@ footer {
 
 .box {
     background-color: #242424;
+    color: rgb(235, 236, 240);
     box-shadow: none;
 }
 
