@@ -2,6 +2,9 @@ django
 django-debug-toolbar
 django-environ
 django-extensions
+django-crispy-forms
+djangorestframework
+crispy-bulma
 gunicorn
 ipython
 markdown
@@ -13,3 +16,4 @@ sentry-sdk[django]
 unidecode
 wheel
 whitenoise
+django-cors-headers

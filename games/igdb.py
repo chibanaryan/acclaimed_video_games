@@ -63,7 +63,7 @@ class IgbdApi():
             data='limit 500; fields name;'
         ).json()
         self.themes = {x['id']: x['name'] for x in results}
-        
+
     def _get_release_statuses(self):
         results = requests.post(
             'https://api.igdb.com/v4/release_date_statuses/',
@@ -89,7 +89,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/companies/',
             headers=self.headers,
-            data=f'where id={company_id}; fields id,name,parent;'
+            data=f'where id={company_id}; fields id,name,slug,parent;'
         )
 
         try:
@@ -126,7 +126,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/release_dates/',
             headers=self.headers,
-            data=f'where game={game_id}; fields date, status;'
+            data=f'limit 500; where game={game_id}; fields date, status;'
         )
         dates = res.json()
 
@@ -143,7 +143,7 @@ class IgbdApi():
         res = requests.post(
             'https://api.igdb.com/v4/games/',
             headers=self.headers,
-            data=f'where id={game_id}; fields cover,genres,first_release_date,summary,storyline,url,themes,involved_companies.*;'
+            data=f'where id={game_id}; fields slug,cover,genres,first_release_date,summary,storyline,url,themes,involved_companies.*;'
         )
 
         if res.status_code == 401:
@@ -155,7 +155,7 @@ class IgbdApi():
         results = res.json()
         assert len(results) == 1
         data = results[0]
-        
+
         # Get developer information
         developers = []
         porters = []
@@ -205,32 +205,47 @@ class IgbdApi():
                 {
                     'id': company_id,
                     'name': company_obj['name'],
+                    'slug': company_obj['slug'],
                     'parent': parent_obj,
                 }
             )
 
         # Get the full release dates
         full_release_status = self.release_date_statuses['Full Release']
+        all_release_dates = self._get_release_dates_by_id(
+            game_id, cache_results)
         full_release_dates = []
-        for obj in self._get_release_dates_by_id(game_id, cache_results):
+        for obj in all_release_dates:
             if not obj.get('status') or obj.get('status') == full_release_status:
                 if obj.get('date'):
                     full_release_dates.append(
                         datetime.fromtimestamp(obj['date']))
 
+        # Fallback to any release dates
+        if not full_release_dates and all_release_dates:
+            obj = all_release_dates[0]
+            full_release_dates.append(
+                datetime.fromtimestamp(obj['date']))
+
         # Add first release date to list of release dates
         if data.get('first_release_date'):
-            full_release_dates.append(datetime.fromtimestamp(data['first_release_date']))
+            full_release_dates.append(
+                datetime.fromtimestamp(data['first_release_date']))
 
         # Choose the earliest release data
-        full_release_dates.sort()
-        release_date = full_release_dates[0]
-        
+        if full_release_dates:
+            full_release_dates.sort()
+            release_date = full_release_dates[0]
+        else:
+            release_date = None
+
         # Get genres
-        theme_names = [self.themes.get(x) for x in data.get('themes', []) if self.themes.get(x) in genre_themes]
-        genre_names = [self._get_genre_by_id(x, cache_results) for x in data.get('genres', [])]
+        theme_names = [self.themes.get(x) for x in data.get(
+            'themes', []) if self.themes.get(x) in genre_themes]
+        genre_names = [self._get_genre_by_id(
+            x, cache_results) for x in data.get('genres', [])]
         genres = list(set(theme_names + genre_names))
-        
+
         game_data = {
             'cover': self._get_cover_by_id(data['cover']),
             'developers': developer_objs,
@@ -238,7 +253,8 @@ class IgbdApi():
             'storyline': data.get('storyline'),
             'summary': data.get('summary'),
             'url': data.get('url'),
-            'year': release_date.year,
+            'year': release_date.year if release_date else None,
+            'slug': data.get('slug'),
         }
 
         self.game_cache[game_id] = game_data

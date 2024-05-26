@@ -1,9 +1,11 @@
 import csv
+from dataclasses import dataclass
 from datetime import datetime
 from io import TextIOWrapper
+from typing import Callable, List
 
 from django.db import connection
-from django.db.models import Min
+from django.db.models import Min, Q
 
 from . import constants, models
 
@@ -120,10 +122,11 @@ def import_games(f):
     count = 0
     updated = 0
 
-    for rank, game_name, year, platforms, igdb_id in rows:
+    for rank, game_name, igdb_id, platforms in rows:
         platform_codes = platforms.split(',')
         platforms = []
         for code in platform_codes:
+            code = code.strip()
             platform, created = models.Platform.objects.get_or_create(
                 code=code,
                 defaults={
@@ -137,7 +140,6 @@ def import_games(f):
             defaults={
                 'rank': int(rank),
                 'name': game_name,
-                #'year_of_release': int(year),
             }
         )
         game.platforms.set(platforms)
@@ -157,15 +159,17 @@ def import_platforms(f):
     updated = 0
 
     for code, name in rows:
+        code = code.strip()
+        name = name.strip()
+        
         platform, created = models.Platform.objects.update_or_create(
             code=code,
             defaults={
                 'name': name,
             }
         )
-
-        if created:
-            count += 1
+        
+        print(platform.code, platform.name)
 
         if created:
             count += 1
@@ -270,3 +274,24 @@ def get_ranking_for_decade(game):
     decade = year_to_decade(game.year_of_release)
     ids = decade_rankings[decade]
     return ids.index(game.id) + 1
+
+
+@dataclass
+class Filter:
+    param: str
+    fields: List[str]
+    coerce: type = str
+    label: Callable[[str], str] = lambda x: x
+
+    def filter_queryset(self, qs, param_val):
+        if not param_val:
+            return qs
+
+        param_val = self.coerce(param_val.strip())
+        if self.fields:
+            query = Q()
+            for field in self.fields:
+                query |= Q(**{field: param_val})
+        qs = qs.filter(query)
+
+        return qs

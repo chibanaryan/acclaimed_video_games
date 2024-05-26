@@ -15,6 +15,7 @@ class PlatformAdmin(admin.ModelAdmin):
 
 @admin.register(models.Developer)
 class DeveloperAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'slug']
     search_fields = ['name']
     inlines = [DeveloperAliasInlineAdmin]
 
@@ -29,6 +30,7 @@ class DeveloperAliasAdmin(admin.ModelAdmin):
 class GameAdmin(admin.ModelAdmin):
     list_display = [
         'name',
+        'slug',
         'rank',
         'year_rank',
         'decade_rank',
@@ -42,9 +44,9 @@ class GameAdmin(admin.ModelAdmin):
     search_fields = ['name']
     filter_horizontal = ['developers', 'platforms', 'genres']
 
-    # def save_model(self, request, obj: models.Game, form, change):
-    #     obj.get_igdb_data(cache_results=False)
-    #     obj.save()
+    def save_model(self, request, obj: models.Game, form, change):
+        obj.get_igdb_data(cache_results=False)
+        obj.save()
         
     def _genres(self, obj):
         return ', '.join(obj.genres.values_list('name', flat=True))

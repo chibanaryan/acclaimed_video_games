@@ -27,7 +27,7 @@ LANGUAGE_CODE = 'en-us'
 ROOT_URLCONF = 'acclaimedgames.urls'
 SECRET_KEY = env('SECRET_KEY', default='XXX')
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 TIME_ZONE = 'UTC'
 USE_I18N = False
 USE_TZ = False
@@ -44,9 +44,14 @@ INSTALLED_APPS = [
     'django.contrib.flatpages',
     'django.contrib.sites',
     'django.contrib.postgres',
+    'django.forms',
+    'corsheaders',
 
     'django_extensions',
-    'debug_toolbar',
+    # 'debug_toolbar',
+    'crispy_forms',
+    'crispy_bulma',
+    'rest_framework',
 
     'games',
 ]
@@ -55,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,14 +68,18 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
+
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'frontend/dist'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -81,6 +91,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 DATABASES = {
     'default': env.db(),
@@ -128,3 +139,15 @@ MESSAGE_TAGS = {
 IGDB_CLIENT_ID = env('IGDB_CLIENT_ID', default='XXX')
 IGDB_CLIENT_SECRET = env('IGDB_CLIENT_SECRET', default='XXX')
 
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["bulma"]
+CRISPY_TEMPLATE_PACK = "bulma"
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,
+}
+CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:8080', 'http://localhost:8080']
+
+STATIC_ROOT = BASE_DIR / 'frontend/dist/static'

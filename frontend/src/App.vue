@@ -1,0 +1,197 @@
+<template>
+
+    <head></head>
+
+    <body>
+        <header>
+            <div class="container">
+                <nav-component></nav-component>
+            </div>
+        </header>
+        <section>
+            <div class="container">
+                <div v-if="loading"
+                    class="loading">
+                    <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
+                </div>
+                <router-view class="view"
+                    :key="$route.path"></router-view>
+            </div>
+        </section>
+        <footer>
+            <div class="container">
+                <router-link :to="{ name: 'home' }">
+                    Home
+                </router-link>
+                •
+                <router-link :to="{ name: 'post-list' }">
+                    News
+                </router-link>
+                •
+                <router-link :to="{ name: 'page-detail', params: { slug: 'about' } }">
+                    About / FAQ
+                </router-link>
+            </div>
+        </footer>
+    </body>
+</template>
+
+<script>
+import NavComponent from "./components/NavComponent";
+
+export default {
+    name: 'App',
+    components: {
+        NavComponent,
+    },
+    computed: {
+        loading() {
+            return this.$store.state.loading;
+        },
+    }
+}
+</script>
+
+<style>
+html {
+    background-color: #000;
+}
+
+section {
+    min-height: 800px;
+}
+
+footer {
+    min-height: 15em;
+    background-color: #444;
+    margin-top: 2em;
+    padding-top: 2em;
+    text-align: center;
+    color: #363636;
+}
+
+footer a {
+    color: #363636;
+}
+
+dl.detail dt {
+    font-weight: bold;
+    float: left;
+    width: 10em;
+}
+
+header {
+    border-bottom: 2px solid;
+    margin-bottom: 1em;
+}
+
+#content {
+    min-height: 1024px;
+}
+
+header,
+.container {
+    padding: 0 1em;
+}
+
+.messages {
+    position: fixed;
+    top: 20px;
+    left: 43%;
+    right: 43%;
+    z-index: 100;
+}
+
+/* Dark theme changes */
+.navbar {
+    border: None;
+    background-color: transparent;
+}
+
+.table {
+    background-color: transparent;
+}
+
+.game-name {
+    display: inline-block;
+}
+
+header,
+footer {
+    background-color: #131313;
+}
+
+header {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+footer {
+    border-top: 1px solid #4a4a4a;
+}
+
+/* .navbar {
+    border: None;
+    background-color: transparent;
+} */
+
+.table {
+    background-color: transparent;
+}
+
+.game-name {
+    display: inline-block;
+}
+
+.game-row {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+.game-header {
+    border-bottom: 1px solid #4a4a4a;
+    color: #fff;
+}
+
+header,
+footer {
+    background-color: #131313;
+}
+
+header {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+footer {
+    border-top: 1px solid #4a4a4a;
+}
+
+.box {
+    background-color: #242424;
+    color: rgb(235, 236, 240);
+    box-shadow: none;
+}
+
+.title {
+    font-weight: 600;
+}
+
+.loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* a.navbar-item {
+    color: #fff;
+} */
+
+.v-enter-active,
+.v-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
+}
+</style>

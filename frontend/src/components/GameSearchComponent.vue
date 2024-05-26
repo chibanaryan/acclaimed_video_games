@@ -1,0 +1,204 @@
+<template>
+    <div class="navbar-item">
+
+        <!-- Desktop version -->
+        <div class="is-hidden-mobile desktop-search">
+
+            <button @click="toggleInputDesktop"
+                v-show="!active">
+                <span class="icon">
+                    <span class="mdi mdi-magnify"></span>
+                </span>
+                <span>Search</span>
+            </button>
+
+            <div v-show="active"
+                class="dropdown "
+                :class="{ 'is-active': results.length }">
+
+                <div class="field has-addons m-0">
+                    <div class="control has-icons-left">
+                        <span class="icon">
+                            <span class="mdi mdi-magnify"></span>
+                        </span>
+                        <input v-model="q"
+                            @blur="onBlur()"
+                            ref="searchInputDesktop"
+                            placeholder="Search games"
+                            type="text"
+                            class="input">
+                    </div>
+                    <div v-if="q"
+                        class="control">
+                        <a @click="q = null"
+                            class="button">
+                            <span class="icon">
+                                <span class="mdi mdi-close"></span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="dropdown-menu">
+                    <div class="dropdown-content">
+                        <div v-for="result in results"
+                            :key="result.id">
+                            <game-search-result :result="result"
+                                class="dropdown-item"></game-search-result>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Mobile version -->
+        <div class="is-hidden-tablet mobile-search">
+
+            <button @click="toggleInputMobile"
+                v-show="!active">
+                <span class="icon">
+                    <span class="mdi mdi-magnify"></span>
+                </span>
+            </button>
+
+            <div v-show="active"
+                class="results-wrapper">
+
+                <div class="field has-addons">
+                    <div class="control has-icons-left is-expanded">
+                        <span class="icon">
+                            <span class="mdi mdi-magnify"></span>
+                        </span>
+                        <input v-model="q"
+                            @blur="onBlur()"
+                            ref="searchInputMobile"
+                            placeholder="Search games"
+                            type="text"
+                            class="input">
+                    </div>
+                    <div v-if="q"
+                        class="control">
+                        <a @click="q = null"
+                            class="button">
+                            <span class="icon">
+                                <span class="mdi mdi-close"></span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+
+                <div v-if="results.length"
+                    class="results">
+                    <game-search-result v-for="result in results"
+                        :key="result.id"
+                        :result="result"></game-search-result>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</template>
+
+<script>
+import Game from '@/models/Game';
+import _ from "lodash";
+import GameSearchResult from "./GameSearchResult";
+
+export default {
+    components: { GameSearchResult },
+    data() {
+        return {
+            q: null,
+            results: [],
+            active: false,
+        }
+    },
+    methods: {
+        loadResults: _.debounce(async function () {
+            let url = `${process.env.VUE_APP_API_URL}games/?q=${this.q}&limit=5&order_by=rank`;
+            let data = await fetch(url)
+                .then(resp => resp.json());
+            this.results = data.results.map(x => new Game(x));
+        }, 200, { leading: true }),
+        clearResults() {
+            setTimeout(() => {
+                this.q = null;
+                this.results = [];
+            }, 200)
+        },
+        toggleInputDesktop() {
+            this.active = !this.active;
+            if (this.active)
+                setTimeout(() => {
+                    this.$refs.searchInputDesktop.focus()
+                }, 100)
+        },
+        toggleInputMobile() {
+            this.active = !this.active;
+            if (this.active)
+                setTimeout(() => {
+                    this.$refs.searchInputMobile.focus()
+                }, 100)
+        },
+        onBlur() {
+            setTimeout(() => {
+                this.clearResults();
+                this.active = false;
+            }, 200)
+        }
+    },
+    watch: {
+        q(val) {
+            if (val)
+                this.loadResults();
+            else
+                this.clearResults();
+        }
+    }
+}
+</script>
+
+<style lang="sass" scoped>
+
+.desktop-search
+    input.input 
+        transition: all 0.5s ease
+        width: 0
+
+    input.input:focus 
+        width: 100%
+
+.mobile-search 
+    .results-wrapper
+        position: fixed
+        top: 0
+        left: 0
+        right: 0
+        z-index: 100
+        background-color: #131313
+        //box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5)
+        
+
+        .field
+            padding: 1rem
+
+        .results
+            padding: 0
+            padding-bottom: 0.375rem
+
+            .result
+                display: block
+                font-size: 0.875rem
+                line-height: 1.5
+                padding-inline-end: 3rem
+                padding:  0.375rem 1rem 
+                text-align: inherit
+                white-space: nowrap
+                width: 100%
+
+            .result:first-child
+                padding-top: 0
+
+</style>
