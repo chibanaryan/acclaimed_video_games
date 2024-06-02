@@ -31,13 +31,15 @@
             <post-item v-for="post in posts"
                 :key="post.id"
                 :post="post"></post-item>
-            <router-link :to="{ name: 'post-list', query: { offset: 5 } }"
-                class="button is-link is-pulled-right">
-                <span>Older posts</span>
-                <span class="icon">
-                    <span class="mdi mdi-chevron-double-right"></span>
-                </span>
-            </router-link>
+            <div class="is-clearfix">
+                <router-link :to="{ name: 'post-list', query: { offset: 5 } }"
+                    class="button is-link is-pulled-right">
+                    <span>Older posts</span>
+                    <span class="icon">
+                        <span class="mdi mdi-chevron-double-right"></span>
+                    </span>
+                </router-link>
+            </div>
         </div>
     </div>
 </template>

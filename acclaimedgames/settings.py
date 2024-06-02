@@ -57,6 +57,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "django.middleware.cache.UpdateCacheMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
@@ -70,6 +71,7 @@ MIDDLEWARE = [
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 if DEBUG:
@@ -129,7 +131,7 @@ CACHES = {
     'default': env.cache(),
 }
 
-CACHE_MIDDLEWARE_SECONDS = 60 * 60 * 24
+CACHE_MIDDLEWARE_SECONDS = 60 * 60 
 
 MESSAGE_TAGS = {
     messages.INFO: "is-primary",

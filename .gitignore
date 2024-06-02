@@ -12,7 +12,6 @@
 .vscode
 __pycache__
 familyfiles
-frontend/dist
 htmlcov/*
 node_modules
 static/*

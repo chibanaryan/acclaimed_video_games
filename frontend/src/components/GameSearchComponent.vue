@@ -3,17 +3,7 @@
 
         <!-- Desktop version -->
         <div class="is-hidden-mobile desktop-search">
-
-            <button @click="toggleInputDesktop"
-                v-show="!active">
-                <span class="icon">
-                    <span class="mdi mdi-magnify"></span>
-                </span>
-                <span>Search</span>
-            </button>
-
-            <div v-show="active"
-                class="dropdown "
+            <div class="dropdown "
                 :class="{ 'is-active': results.length }">
 
                 <div class="field has-addons m-0">
@@ -151,25 +141,19 @@ export default {
     },
     watch: {
         q(val) {
-            if (val)
-                this.loadResults();
-            else
+            if (val) {
+                if (val.length > 1)
+                    this.loadResults();
+            }
+            else {
                 this.clearResults();
+            }
         }
     }
 }
 </script>
 
 <style lang="sass" scoped>
-
-.desktop-search
-    input.input 
-        transition: all 0.5s ease
-        width: 0
-
-    input.input:focus 
-        width: 100%
-
 .mobile-search 
     .results-wrapper
         position: fixed
@@ -177,9 +161,7 @@ export default {
         left: 0
         right: 0
         z-index: 100
-        background-color: #131313
-        //box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5)
-        
+        background-color: #131313        
 
         .field
             padding: 1rem

@@ -3,7 +3,7 @@
         class="result">
         <div class="media">
             <div class="media-left">
-                <figure class="image">
+                <figure class="image is-32x32">
                     <img :src="result.thumbnail">
                 </figure>
             </div>
@@ -15,7 +15,7 @@
                     All time rank: {{ result.rank }}
                 </div>
             </div>
-        </div>
+        </div> 
     </router-link>
 </template>
 
@@ -24,3 +24,9 @@ export default {
     props: ['result']
 }
 </script>
+
+<style lang="sass" scoped>
+.image 
+    img 
+        max-height: 100px
+</style>

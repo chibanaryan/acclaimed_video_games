@@ -25,5 +25,4 @@ urlpatterns = [
     path('meta/', views.MetaView.as_view(), name='meta'),
     path('genres/', views.GenreListView.as_view(), name='genre-list'),
     path('platforms/', views.PlatformListView.as_view(), name='platform-list'),
-
 ]

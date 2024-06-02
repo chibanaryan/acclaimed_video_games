@@ -90,7 +90,7 @@ export default {
         }
     },
     async created() {
-        let data = await fetch(`${process.env.VUE_APP_API_URL}publications/`)
+        let data = await fetch(`${process.env.VUE_APP_API_URL}publications/?limit=999`)
             .then(resp => resp.json());
         this.publishers = data.results;
     },

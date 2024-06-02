@@ -80,8 +80,14 @@ export default {
 }
 </script>
 
-<style>
-header .container .navbar .navbar-menu {
-    background-color: #131313
-}
+<style lang="sass" scoped>
+.navbar 
+    .navbar-menu 
+        background-color: #131313
+
+    // .navbar-item
+    //     .image
+    //         img
+    //             height: 100px
+    //             max-height: 100px
 </style>

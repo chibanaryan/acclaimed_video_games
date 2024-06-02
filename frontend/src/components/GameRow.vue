@@ -1,6 +1,5 @@
 <template>
-
-    <div class="columns is-hidden-mobile game-row">
+    <div class="columns is-hidden-mobile game-row desktop">
         <div class="column is-narrow">
             <div class="columns">
                 <div v-if="showRank"
@@ -27,18 +26,17 @@
                 </router-link>
             </div>
             <game-row-properties :game="game"
-                :show-rank="false">
-            </game-row-properties>
+                :show-rank="false"> </game-row-properties>
         </div>
     </div>
 
-    <div class="is-hidden-desktop game-row pb-4">
-        <div class="pt-4">
+    <div class="is-hidden-desktop is-hidden-tablet game-row mobile pb-4">
+        <div class="py-3">
             <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }"
-                class="game-name has-text-weight-bold is-size-6 mb-3">
-                <span v-if="showRank">{{ game.rank }}.</span>
-                {{ game.name }}
-            </router-link>
+                class="game-name has-text-weight-bold is-size-6">
+                <span v-if="showRank"
+                    class="rank">{{ game.rank }}</span>
+                {{ game.name }} </router-link>
             <router-link :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }">
                 ({{ game.yearOfRelease }})
             </router-link>
@@ -56,7 +54,6 @@
             </div>
         </div>
     </div>
-
 </template>
 
 <script>
@@ -73,30 +70,35 @@ export default {
 };
 </script>
 
-<style scoped>
-.game-row {
-    border-bottom: 1px solid #616161;
-}
+<style lang="sass" scoped>
 
-.game-header {
-    border-bottom: 1px solid #dbdbdb;
-    color: #363636;
-}
+.game-row 
+    border-bottom: 1px solid #616161
 
-.game-row .thumbnail img {
-    max-width: inherit;
-}
+    .thumbnail img 
+        max-width: inherit
 
-.game-row .rank {
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-family: Handjet, sans-serif;
-    font-weight: 800;
-    text-shadow: -3px 3px 0px #5d5b5b;
-    min-width: 122px;
-    font-size: 60px;
-}
+    &.desktop
+        .rank 
+            text-align: center
+            display: flex
+            align-items: center
+            justify-content: center
+            color: #fff
+            font-family: Handjet, sans-serif
+            font-weight: 800
+            text-shadow: -3px 3px 0px #5d5b5b
+            min-width: 122px
+            font-size: 60px
+
+    &.mobile
+        .rank 
+            color: #fff
+            font-family: Handjet, sans-serif
+            font-weight: 800
+            text-shadow: -2px 2px 0px #5d5b5b
+            font-size: 25px
+            margin-right: 5px
+            vertical-align: middle
+
 </style>

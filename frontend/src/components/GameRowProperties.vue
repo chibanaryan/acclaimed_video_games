@@ -19,7 +19,7 @@
                 :key="developer.id"
                 class="is-size-6">
                 {{ developer.name }}
-            </router-link><template v-if="i < (game.developers.length - 1)">,&nbsp;</template>
+            </router-link><template v-if="i < (game.developers.length - 1)">, </template>
         </span>
     </div>
     <div class="py-0">
@@ -32,7 +32,7 @@
             <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { platforms: platform.id } }">
                 {{ platform.code }}
             </router-link>
-            <template v-if="i < (game.platforms.length - 1)">,&nbsp;</template>
+            <template v-if="i < (game.platforms.length - 1)">, </template>
         </span>
     </div>
     <div class="py-0">

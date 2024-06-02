@@ -112,34 +112,9 @@ header,
     background-color: transparent;
 }
 
-.game-name {
-    display: inline-block;
-}
-
-header,
-footer {
-    background-color: #131313;
-}
-
-header {
-    border-bottom: 1px solid #4a4a4a;
-}
-
-footer {
-    border-top: 1px solid #4a4a4a;
-}
-
-/* .navbar {
-    border: None;
-    background-color: transparent;
-} */
-
-.table {
-    background-color: transparent;
-}
-
-.game-name {
-    display: inline-block;
+.table.plain th,
+.table.plain td {
+    border: none;
 }
 
 .game-row {
