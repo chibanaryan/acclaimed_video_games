@@ -41,6 +41,7 @@ export default {
         let data = await fetch(`${process.env.VUE_APP_API_URL}games/${this.$route.params.slug}/`)
             .then(resp => resp.json());
         this.game = new Game(data);
+        this.emitter.emit('title', this.game.name);
     },
     computed: {
         groupedLists() {

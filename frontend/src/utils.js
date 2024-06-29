@@ -26,6 +26,7 @@ const yearPattern = /(\d{4})/;
 const parseSlug = (slug) => {
     let start;
     let end;
+    let type;
 
     if (decadePattern.test(slug)) {
         let match = slug.match(decadePattern);
@@ -43,17 +44,20 @@ const parseSlug = (slug) => {
         else
             end += 2000;
 
+        type = 'decade';
+
     } else if (yearPattern.test(slug)) {
         let match = slug.match(yearPattern);
         let year = parseInt(match[1]);
 
         start = year;
         end = year;
+        type = 'year';
     } else {
-        // Alltime
+        type = 'alltime';
     }
 
-    return { start, end };
+    return { start, end, type };
 }
 
 export { snakeToCamel, camelToSnake, cleanData, parseSlug };

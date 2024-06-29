@@ -1,5 +1,7 @@
 <template>
-    <div class="columns is-hidden-mobile game-row desktop">
+    <div :class="{ highlight: game.id == highlight }"
+        class="columns is-hidden-mobile game-row desktop"
+        :id="`game-${game.id}`">
         <div class="column is-narrow">
             <div class="columns">
                 <div v-if="showRank"
@@ -29,7 +31,6 @@
                 :show-rank="false"> </game-row-properties>
         </div>
     </div>
-
     <div class="is-hidden-desktop is-hidden-tablet game-row mobile pb-4">
         <div class="py-3">
             <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }"
@@ -65,8 +66,11 @@ export default {
         showRank: {
             default: true,
         },
+        highlight: Boolean,
     },
-    components: { GameRowProperties },
+    components: {
+        GameRowProperties,
+    },
 };
 </script>
 
@@ -100,5 +104,8 @@ export default {
             font-size: 25px
             margin-right: 5px
             vertical-align: middle
+
+    &.highlight
+        background: #393939
 
 </style>

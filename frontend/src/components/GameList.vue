@@ -175,7 +175,8 @@
         </pagination-component>
         <game-row v-for="game in items"
             :key="game.id"
-            :game="game"></game-row>
+            :game="game"
+            :highlight="highlight"></game-row>
         <pagination-component :total="resultsCount"
             :limit="filters.limit"
             :offset="filters.offset"
@@ -186,7 +187,7 @@
 
 <script>
 import { cleanData, parseSlug } from "@/utils.js";
-import _ from "lodash";
+//import _ from "lodash";
 import Game from "../models/Game";
 import Genre from "../models/Genre";
 import Platform from "../models/Platform";
@@ -195,6 +196,8 @@ import GameRow from "./GameRow";
 import MultiSelectComponent from "./MultiSelectComponent";
 import PaginationComponent from "./PaginationComponent";
 import SelectableTagList from "./SelectableTagList";
+
+let controller = null;
 
 export default {
     mixins: [BaseListComponent],
@@ -225,9 +228,11 @@ export default {
             platforms: [],
             mode: "simple",
             loading: false,
+            highlight: null,
         };
     },
     async created() {
+        this.highlight = this.$route.query.highlight;
         this.$store.commit("loading", true);
         this.filters.start = 1970;
         this.filters.end = this.maxYear;
@@ -289,22 +294,41 @@ export default {
             this.platforms = data.results.map((x) => new Platform(x));
 
             this.loadUrlArgs();
+            this.updateTitle();
         },
-        loadItems: _.debounce(
-            async function () {
-                let url = `${process.env.VUE_APP_API_URL}games/?${this.cleanedFilters}`;
-                let data = await fetch(url).then((resp) => resp.json());
+        async loadItems() {
+            if (controller)
+                controller.abort();
+
+            controller = new AbortController();
+
+            let url = `${process.env.VUE_APP_API_URL}games/?${this.cleanedFilters}`;
+
+            try {
+                let data = await fetch(url, { signal: controller.signal })
+                    .then((resp) => resp.json());
+
                 this.items = data.results.map((x) => new Game(x));
                 this.resultsCount = data.count;
-            },
-            200,
-            { leading: true }
-        ),
+            } catch (err) {
+                // Do nothing
+            } finally {
+                controller = null;
+
+                setTimeout(() => {
+                    let highlightElement = document.getElementById(`game-${this.highlight}`);
+                    if (highlightElement)
+                        highlightElement.scrollIntoView({ behavior: "smooth" });
+                }, 1000)
+            }
+        },
         async loadUrlArgs() {
-            if (!this.genres.length || !this.platforms.length) return;
+            if (!this.genres.length || !this.platforms.length)
+                return;
 
             let args = this.$route.query;
-            if (!args) return;
+            if (!args)
+                return;
 
             if (args.platforms) {
                 let platformId = parseInt(args.platforms);
@@ -316,9 +340,11 @@ export default {
                 this.filters.genres = [this.genres.find((x) => x.id == genreId)];
             }
 
-            if (args.limit) this.filters.limit = parseInt(args.limit);
+            if (args.limit)
+                this.filters.limit = parseInt(args.limit);
 
-            if (args.offset) this.filters.offset = parseInt(args.offset);
+            if (args.offset)
+                this.filters.offset = parseInt(args.offset);
         },
         clearFilters() {
             this.filters = {
@@ -346,6 +372,21 @@ export default {
         updateUrl(route) {
             let url = this.$router.resolve(route).path;
             history.pushState(null, document.title, url);
+            this.updateTitle(route);
+        },
+        updateTitle(route) {
+            let slug = (route || this.$route).params.slug;
+            if (slug == 'alltime')
+                slug = "All time";
+            else if (slug == 'search')
+                slug = 'Advanced';
+            else {
+                let slugData = parseSlug(slug);
+                if (slugData.type == 'decade')
+                    slug = slugData.start + 's';
+            }
+
+            this.emitter.emit('title', slug);
         }
     },
     watch: {

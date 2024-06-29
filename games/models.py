@@ -151,7 +151,7 @@ class Game(models.Model):
         self.slug = data.get('slug')
         self.igdb_url = data.get('url')
         self.igdb_artwork_id = data.get('cover')
-        self.year_of_release = data.get('year')
+        #self.year_of_release = data.get('year')    # Use our own year rather than IGDB
         self.description = '\n\n'.join(
             [x for x in [data.get('storyline'), data.get('summary')] if x])
 

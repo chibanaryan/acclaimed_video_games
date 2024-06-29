@@ -28,7 +28,7 @@
         </div>
 
         <div class="navbar-menu"
-            :class="{ 'is-active': expanded }">
+            :class="{ 'is-active': expanded }" @click="handleMenuClick">
             <div class="navbar-start">
                 <router-link :to="{ name: 'developers-list' }"
                     class="navbar-item">
@@ -48,7 +48,6 @@
                     <span class="icon">
                         <img :src="flagPalestine">
                     </span>
-                    <span class="is-hidden-tablet">Statement on Palestine</span>
                 </router-link>
             </div>
         </div>
@@ -76,18 +75,11 @@ export default {
         flagPalestine() {
             return IMAGES.FLAG_PALESTINE;
         }
+    },
+    methods: {
+        handleMenuClick() {
+            this.expanded = false;
+        }
     }
 }
 </script>
-
-<style lang="sass" scoped>
-.navbar 
-    .navbar-menu 
-        background-color: #131313
-
-    // .navbar-item
-    //     .image
-    //         img
-    //             height: 100px
-    //             max-height: 100px
-</style>

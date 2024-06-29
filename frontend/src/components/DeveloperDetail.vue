@@ -46,6 +46,8 @@ export default {
         data = await fetch(`${process.env.VUE_APP_API_URL}games/?developer=${this.developer.id}&order_by=year_of_release`)
             .then(resp => resp.json());
         this.games = data.results.map(x => new Game(x));
+
+        this.emitter.emit('title', this.developer.name);
     },
     computed: {
         selectedAliases() {

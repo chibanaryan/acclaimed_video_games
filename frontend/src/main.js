@@ -1,5 +1,6 @@
 import '@mdi/font/css/materialdesignicons.css';
 import 'bulma/css/bulma.css';
+import mitt from 'mitt';
 import * as Vue from 'vue';
 import vueGTag from 'vue-gtag';
 import App from './App.vue';
@@ -15,6 +16,8 @@ app.use(vueGTag, {
     },
     router,
 });
+app.config.globalProperties.emitter = mitt();
+
 app.mount('#app');
 
 export default app;

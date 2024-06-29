@@ -1,9 +1,11 @@
 <template>
 
-    <head></head>
+    <head>
+        <title>{{ title }}</title>
+    </head>
 
     <body>
-        <header>
+        <header id="header">
             <div class="container">
                 <nav-component></nav-component>
             </div>
@@ -44,129 +46,136 @@ export default {
     components: {
         NavComponent,
     },
+    data() {
+        return {
+            pageTitle: null,
+        }
+    },
+    created() {
+        this.emitter.on('title', (title) => {
+            if (title)
+                this.pageTitle = title;
+        })
+    },
     computed: {
         loading() {
             return this.$store.state.loading;
         },
+        title() {
+            if (this.pageTitle)
+                return `${this.pageTitle} | Acclaimed Games`;
+            else
+                return 'Acclaimed Games';
+        }
+    },
+    watch: {
+        '$route.meta.title': {
+            handler(val) {
+                this.pageTitle = val;
+            }
+        }
     }
 }
 </script>
 
-<style>
-html {
-    background-color: #000;
-}
+<style lang="sass">
+html 
+    background-color: #000
 
-section {
-    min-height: 800px;
-}
+header 
+    border-bottom: 2px solid
+    margin-bottom: 1em
 
-footer {
-    min-height: 15em;
-    background-color: #444;
-    margin-top: 2em;
-    padding-top: 2em;
-    text-align: center;
-    color: #363636;
-}
+section 
+    min-height: 800px
 
-footer a {
-    color: #363636;
-}
+footer 
+    min-height: 15em
+    background-color: #444
+    margin-top: 2em
+    padding-top: 2em
+    text-align: center
+    color: #8b8b8b
 
-dl.detail dt {
-    font-weight: bold;
-    float: left;
-    width: 10em;
-}
+    a 
+        color: #8b8b8b
 
-header {
-    border-bottom: 2px solid;
-    margin-bottom: 1em;
-}
+dl.detail 
+    dt 
+        font-weight: bold
+        float: left
+        width: 10em
 
-#content {
-    min-height: 1024px;
-}
+#content 
+    min-height: 1024px
 
 header,
-.container {
-    padding: 0 1em;
-}
+.container 
+    padding: 0 1em
 
-.messages {
-    position: fixed;
-    top: 20px;
-    left: 43%;
-    right: 43%;
-    z-index: 100;
-}
+.messages 
+    position: fixed
+    top: 20px
+    left: 43%
+    right: 43%
+    z-index: 100
 
 /* Dark theme changes */
-.navbar {
-    border: None;
-    background-color: transparent;
-}
+.navbar 
+    border: None
+    background-color: transparent
 
-.table {
-    background-color: transparent;
-}
+.table 
+    background-color: transparent
 
 .table.plain th,
-.table.plain td {
-    border: none;
-}
+.table.plain td 
+    border: none
 
-.game-row {
-    border-bottom: 1px solid #4a4a4a;
-}
+.game-row 
+    border-bottom: 1px solid #4a4a4a
 
-.game-header {
-    border-bottom: 1px solid #4a4a4a;
-    color: #fff;
-}
+.game-header 
+    border-bottom: 1px solid #4a4a4a
+    color: #fff
 
 header,
-footer {
-    background-color: #131313;
-}
+footer 
+    background-color: #131313
 
-header {
-    border-bottom: 1px solid #4a4a4a;
-}
+header 
+    border-bottom: 1px solid #4a4a4a
 
-footer {
-    border-top: 1px solid #4a4a4a;
-}
+footer 
+    border-top: 1px solid #4a4a4a
 
-.box {
-    background-color: #242424;
-    color: rgb(235, 236, 240);
-    box-shadow: none;
-}
+.box 
+    background-color: #242424
+    color: rgb(235, 236, 240)
+    box-shadow: none
 
-.title {
-    font-weight: 600;
-}
+.title 
+    font-weight: 600
 
-.loading {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
+.loading 
+    position: fixed
+    top: 50%
+    left: 50%
+    transform: translate(-50%, -50%)
 
-/* a.navbar-item {
-    color: #fff;
-} */
+.navbar 
+    .navbar-menu 
+        background-color: #131313
+
+a.dropdown-item:hover 
+    color: #fff
 
 .v-enter-active,
-.v-leave-active {
-    transition: opacity 0.5s ease;
-}
+.v-leave-active 
+    transition: opacity 0.5s ease
 
 .v-enter-from,
-.v-leave-to {
-    opacity: 0;
-}
+.v-leave-to 
+    opacity: 0
+
 </style>

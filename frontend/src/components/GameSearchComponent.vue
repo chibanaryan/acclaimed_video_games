@@ -4,7 +4,7 @@
         <!-- Desktop version -->
         <div class="is-hidden-mobile desktop-search">
             <div class="dropdown "
-                :class="{ 'is-active': results.length }">
+                :class="{ 'is-active': showMenu }">
 
                 <div class="field has-addons m-0">
                     <div class="control has-icons-left">
@@ -31,6 +31,8 @@
 
                 <div class="dropdown-menu">
                     <div class="dropdown-content">
+                        <div v-if="results.length == 0"
+                            class="dropdown-item">Please enter two or more characters</div>
                         <div v-for="result in results"
                             :key="result.id">
                             <game-search-result :result="result"
@@ -78,8 +80,10 @@
                     </div>
                 </div>
 
-                <div v-if="results.length"
+                <div v-if="showMenu"
                     class="results">
+                    <div v-if="results.length == 0"
+                        class="dropdown-item">Please enter two or more characters</div>
                     <game-search-result v-for="result in results"
                         :key="result.id"
                         :result="result"></game-search-result>
@@ -103,6 +107,7 @@ export default {
             q: null,
             results: [],
             active: false,
+            showMenu: false,
         }
     },
     methods: {
@@ -112,12 +117,6 @@ export default {
                 .then(resp => resp.json());
             this.results = data.results.map(x => new Game(x));
         }, 200, { leading: true }),
-        clearResults() {
-            setTimeout(() => {
-                this.q = null;
-                this.results = [];
-            }, 200)
-        },
         toggleInputDesktop() {
             this.active = !this.active;
             if (this.active)
@@ -134,20 +133,18 @@ export default {
         },
         onBlur() {
             setTimeout(() => {
-                this.clearResults();
+                this.q = null;
+                this.results = [];
                 this.active = false;
             }, 200)
         }
     },
     watch: {
         q(val) {
-            if (val) {
-                if (val.length > 1)
-                    this.loadResults();
-            }
-            else {
-                this.clearResults();
-            }
+            this.showMenu = val?.length > 0;
+            val?.length > 1
+                ? this.loadResults()
+                : this.results = [];
         }
     }
 }

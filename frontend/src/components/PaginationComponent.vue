@@ -69,6 +69,7 @@ export default {
     methods: {
         onPageClick(page) {
             this.$emit("pagechanged", { offset: this.limit * (page - 1) });
+            document.getElementById('header').scrollIntoView({ behavior: "smooth" });
         },
     },
 };

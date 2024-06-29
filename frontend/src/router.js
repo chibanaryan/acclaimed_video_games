@@ -11,15 +11,69 @@ import PostList from './components/PostList';
 import store from './store';
 
 const routes = [
-    { path: '/', component: HomePage, name: 'home' },
-    { path: '/developer-alias/:id/', component: DeveloperAliasRedirect, name: 'developer-alias-redirect' },
-    { path: '/developers/', component: DeveloperList, name: 'developers-list' },
-    { path: '/developers/:slug/', component: DeveloperDetail, name: 'developer-detail' },
-    { path: '/games/:slug/', component: GameList, name: 'games-list' },
-    { path: '/game/:slug/', component: GameDetail, name: 'game-detail' },
-    { path: '/lists/', component: ListList, name: 'list-list' },
-    { path: '/page/:slug/', component: PageDetail, name: 'page-detail' },
-    { path: '/posts/', component: PostList, name: 'post-list' },
+    {
+        path: '/',
+        component: HomePage,
+        name: 'home',
+        meta: {
+            title: 'Home',
+        },
+    },
+    {
+        path: '/developer-alias/:id/',
+        component: DeveloperAliasRedirect,
+        name: 'developer-alias-redirect',
+        meta: {},
+    },
+    {
+        path: '/developers/',
+        component: DeveloperList,
+        name: 'developers-list',
+        meta: {
+            title: 'Developers',
+        }
+    },
+    {
+        path: '/developers/:slug/',
+        component: DeveloperDetail,
+        name: 'developer-detail',
+        meta: {}
+    },
+    {
+        path: '/games/:slug/',
+        component: GameList,
+        name: 'games-list',
+        meta: {}
+    },
+    {
+        path: '/game/:slug/',
+        component: GameDetail,
+        name: 'game-detail',
+        meta: {
+        }
+    },
+    {
+        path: '/lists/',
+        component: ListList,
+        name: 'list-list',
+        meta: {
+            title: 'Source Lists',
+        }
+    },
+    {
+        path: '/page/:slug/',
+        component: PageDetail,
+        name: 'page-detail',
+        meta: {}
+    },
+    {
+        path: '/posts/',
+        component: PostList,
+        name: 'post-list',
+        meta: {
+            title: 'News',
+        }
+    },
 ]
 
 const router = createRouter({
