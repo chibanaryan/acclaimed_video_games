@@ -2,7 +2,6 @@
     <nav class="navbar"
         role="navigation"
         aria-label="main navigation">
-
         <div class="navbar-brand">
             <router-link :to="{ name: 'home' }"
                 class="navbar-item has-text-weight-bold pl-0">
@@ -26,7 +25,6 @@
                 <span aria-hidden="true"></span>
             </a>
         </div>
-
         <div class="navbar-menu"
             :class="{ 'is-active': expanded }" @click="handleMenuClick">
             <div class="navbar-start">
@@ -51,7 +49,6 @@
                 </router-link>
             </div>
         </div>
-
     </nav>
 </template>
 
