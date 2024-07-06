@@ -17,7 +17,12 @@ class GameListView(ListAPIView):
     filters = [
         utils.Filter(
             param='q',
-            fields=['name__search', 'name__icontains'],
+            fields=[
+                'name_normalized__search',
+                'name_normalized__icontains',
+                'name__search',
+                'name__icontains',
+            ],
         ),
         utils.Filter(
             param='developer',
@@ -66,7 +71,7 @@ class GameListView(ListAPIView):
         order_by = self.request.GET.get('order_by')
         if order_by:
             qs = qs.order_by(order_by)
-
+            
         return qs.distinct()
 
 

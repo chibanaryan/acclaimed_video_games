@@ -19,7 +19,8 @@
             <game-row v-for="game in filteredGames"
                 :key="game.id"
                 :game="game"
-                :show-rank="false"></game-row>
+                :show-rank="false"
+                :show-rank-in-details="true"></game-row>
         </div>
     </div>
 </template>

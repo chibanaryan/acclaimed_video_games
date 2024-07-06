@@ -5,7 +5,27 @@
         </template>
         <template v-else> {{ pageTitle }} Results </template>
     </h1>
+
+    <!-- Advanced filters -->
     <div v-if="mode == 'advanced'">
+        <div class="buttons">
+            <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
+                v-if="mode == 'advanced'"
+                class="button is-link">
+                <span class="icon">
+                    <span class="mdi mdi-form-select"></span>
+                </span>
+                <span> Simple Filters </span>
+            </router-link>
+            <a @click="clearFilters"
+                v-if="isFiltered"
+                class="button">
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>
+                <span>Clear filters</span>
+            </a>
+        </div>
         <div class="columns">
             <div class="column">
                 <div class="p-2">
@@ -16,24 +36,16 @@
                         <table class="table plain">
                             <tr>
                                 <td>From:</td>
-                                <td>{{ filters.start }}</td>
                                 <td>
-                                    <input type="range"
-                                        min="1970"
-                                        :max="maxYear"
-                                        v-model="filters.start"
-                                        placeholder="Start year" />
+                                    <range-slider v-model.lazy="filters.start"
+                                        placeholder="Start year"></range-slider>
                                 </td>
                             </tr>
                             <tr>
                                 <td>To:</td>
-                                <td>{{ filters.end }}</td>
                                 <td>
-                                    <input type="range"
-                                        v-model="filters.end"
-                                        min="1970"
-                                        :max="maxYear"
-                                        placeholder="End year" />
+                                    <range-slider v-model.lazy="filters.end"
+                                        placeholder="End year"></range-slider>
                                 </td>
                             </tr>
                         </table>
@@ -97,26 +109,14 @@
                 </div>
             </div>
         </div>
-        <div class="buttons">
-            <a @click="clearFilters"
-                v-if="isFiltered"
-                class="button">
-                <span class="icon">
-                    <span class="mdi mdi-close"></span>
-                </span>
-                <span>Clear filters</span>
-            </a>
-            <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
-                v-if="mode == 'advanced'"
-                class="button is-link">
-                <span class="icon">
-                    <span class="mdi mdi-form-select"></span>
-                </span>
-                <span> Simple Filters </span>
-            </router-link>
-        </div>
+        <search-input v-model="filters.q"
+            :debounce-input="true"
+            placeholder="Search by name">
+        </search-input>
     </div>
-    <div v-if="mode == 'simple'"
+
+    <!-- Simple filters -->
+    <div v-if="mode == 'simple' && meta?.games"
         class="field is-grouped is-grouped-multiline">
         <div class="control">
             <a @click="selected.alltime = true"
@@ -146,16 +146,6 @@
                 </select>
             </div>
         </div>
-        <div v-if="isFiltered"
-            class="control">
-            <a @click="clearFilters"
-                class="button">
-                <span class="icon">
-                    <span class="mdi mdi-close"></span>
-                </span>
-                <span>Clear filters</span>
-            </a>
-        </div>
         <div class="control">
             <router-link :to="{ name: 'games-list', params: { slug: 'search' } }"
                 class="button is-link">
@@ -180,14 +170,14 @@
         <pagination-component :total="resultsCount"
             :limit="filters.limit"
             :offset="filters.offset"
-            @pagechanged="onPageChange">
+            @pagechanged="onPageChange"
+            class="mt-5">
         </pagination-component>
     </div>
 </template>
 
 <script>
 import { cleanData, parseSlug } from "@/utils.js";
-//import _ from "lodash";
 import Game from "../models/Game";
 import Genre from "../models/Genre";
 import Platform from "../models/Platform";
@@ -195,7 +185,9 @@ import BaseListComponent from "./BaseListComponent";
 import GameRow from "./GameRow";
 import MultiSelectComponent from "./MultiSelectComponent";
 import PaginationComponent from "./PaginationComponent";
+import SearchInput from "./SearchInput";
 import SelectableTagList from "./SelectableTagList";
+import RangeSlider from "./RangeSlider";
 
 let controller = null;
 
@@ -205,7 +197,9 @@ export default {
         GameRow,
         MultiSelectComponent,
         PaginationComponent,
+        SearchInput,
         SelectableTagList,
+        RangeSlider,
     },
     data() {
         return {
@@ -217,7 +211,7 @@ export default {
                 end: null,
                 genres: [],
                 platforms: [],
-                genre_option: "A",
+                genre_option: "L",
             },
             selected: {
                 year: null,
@@ -229,19 +223,25 @@ export default {
             mode: "simple",
             loading: false,
             highlight: null,
+            initialized: false,
         };
     },
-    async created() {
+    async mounted() {
         this.highlight = this.$route.query.highlight;
         this.$store.commit("loading", true);
-        this.filters.start = 1970;
-        this.filters.end = this.maxYear;
         await this.init();
         this.$store.commit("loading", false);
     },
     computed: {
         isFiltered() {
-            return this.filters.start || this.filters.end;
+            if (this.mode == 'simple')
+                return false;
+            else
+                return this.filters.q ||
+                    this.filters.genres.length ||
+                    this.filters.platforms.length ||
+                    this.filters.start != this.minYear ||
+                    this.filters.end != this.maxYear;
         },
         cleanedFilters() {
             let filters = Object.assign({}, cleanData(this.filters));
@@ -252,10 +252,10 @@ export default {
             if (!filters.end)
                 delete filters.end;
 
-            if (filters.genres.length)
+            if (filters.genres?.length)
                 filters.genres = filters.genres.map((x) => x.id).join(",");
 
-            if (filters.platforms.length)
+            if (filters.platforms?.length)
                 filters.platforms = filters.platforms.map((x) => x.id).join(",");
 
             return new URLSearchParams(filters);
@@ -268,6 +268,12 @@ export default {
             else
                 return 'All Time';
         },
+        minYear() {
+            if (this.meta?.games?.years.length)
+                return this.meta.games.years[0]['year'];
+            else
+                return 1970;
+        },
         maxYear() {
             return new Date().getFullYear();
         },
@@ -277,9 +283,16 @@ export default {
             if (this.$route.params.slug == "search") {
                 this.mode = "advanced";
             } else {
-                let { start, end } = parseSlug(this.$route.params.slug);
+                const slug = this.$route.params.slug;
+                let { start, end, type } = parseSlug(slug);
                 this.filters.start = parseInt(start);
                 this.filters.end = parseInt(end);
+
+                if (type == 'decade')
+                    this.selected.decade = slug;
+                else if (type == 'year')
+                    this.selected.year = slug;
+
                 this.mode = "simple";
             }
 
@@ -293,8 +306,15 @@ export default {
             ).then((resp) => resp.json());
             this.platforms = data.results.map((x) => new Platform(x));
 
+            this.filters.start = this.filters.start || this.minYear;
+            this.filters.end = this.filters.end || this.maxYear;
+
             this.loadUrlArgs();
             this.updateTitle();
+
+            setTimeout(() => {
+                this.initialized = true;
+            }, 1000)
         },
         async loadItems() {
             if (controller)
@@ -323,12 +343,7 @@ export default {
             }
         },
         async loadUrlArgs() {
-            if (!this.genres.length || !this.platforms.length)
-                return;
-
-            let args = this.$route.query;
-            if (!args)
-                return;
+            let args = this.$route.query || new URL(location.url).searchParams;
 
             if (args.platforms) {
                 let platformId = parseInt(args.platforms);
@@ -345,6 +360,9 @@ export default {
 
             if (args.offset)
                 this.filters.offset = parseInt(args.offset);
+
+            if (args.q)
+                this.filters.q = args.q;
         },
         clearFilters() {
             this.filters = {
@@ -355,7 +373,7 @@ export default {
                 end: null,
                 genres: [],
                 platforms: [],
-                genre_option: "A",
+                genre_option: "L",
             };
 
             this.selected = {
@@ -363,6 +381,9 @@ export default {
                 decade: null,
                 alltime: null,
             };
+
+            this.filters.start = this.minYear;
+            this.filters.end = this.maxYear;
 
             if (this.mode == "simple")
                 this.updateUrl({ name: "games-list", params: { slug: "alltime" } });
@@ -387,6 +408,10 @@ export default {
             }
 
             this.emitter.emit('title', slug);
+        },
+        resetOffset() {
+            if (this.initialized)
+                this.filters.offset = 0;
         }
     },
     watch: {
@@ -425,15 +450,15 @@ export default {
             this.updateUrl({ name: 'games-list', params: { slug: this.selected.decade.toString() } });
         },
         "filters.q": function () {
-            this.filters.offset = 0;
+            this.resetOffset()
         },
         "filters.start": function () {
-            this.filters.offset = 0;
+            this.resetOffset()
             if (this.filters.end < this.filters.start)
                 this.filters.end = this.filters.start;
         },
         "filters.end": function () {
-            this.filters.offset = 0;
+            this.resetOffset()
             if (this.filters.start > this.filters.end)
                 this.filters.start = this.filters.end;
         },

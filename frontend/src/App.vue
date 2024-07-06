@@ -63,9 +63,9 @@ export default {
         },
         title() {
             if (this.pageTitle)
-                return `${this.pageTitle} | Acclaimed Games`;
+                return `${this.pageTitle} | Acclaimed Video Games`;
             else
-                return 'Acclaimed Games';
+                return 'Acclaimed Video Games';
         }
     },
     watch: {

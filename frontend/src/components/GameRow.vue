@@ -28,7 +28,7 @@
                 </router-link>
             </div>
             <game-row-properties :game="game"
-                :show-rank="false"> </game-row-properties>
+                :show-rank="showRankInDetails"> </game-row-properties>
         </div>
     </div>
     <div class="is-hidden-desktop is-hidden-tablet game-row mobile pb-4">
@@ -50,7 +50,7 @@
             </div>
             <div class="column">
                 <game-row-properties :game="game"
-                    :show-rank="false">
+                    :show-rank="showRankInDetails">
                 </game-row-properties>
             </div>
         </div>
@@ -65,6 +65,9 @@ export default {
         game: null,
         showRank: {
             default: true,
+        },
+        showRankInDetails: {
+            default: false,
         },
         highlight: Boolean,
     },

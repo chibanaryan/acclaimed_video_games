@@ -12,6 +12,7 @@
                             <span class="mdi mdi-magnify"></span>
                         </span>
                         <input v-model="q"
+                            @focus="onFocus()"
                             @blur="onBlur()"
                             ref="searchInputDesktop"
                             placeholder="Search games"
@@ -32,12 +33,17 @@
                 <div class="dropdown-menu">
                     <div class="dropdown-content">
                         <div v-if="results.length == 0"
-                            class="dropdown-item">Please enter two or more characters</div>
+                            class="dropdown-item">{{ message }}</div>
                         <div v-for="result in results"
                             :key="result.id">
                             <game-search-result :result="result"
                                 class="dropdown-item"></game-search-result>
                         </div>
+                        <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { q: q } }"
+                            v-if="results.length"
+                            class="dropdown-item">
+                            See all results &hellip;
+                        </router-link>
                     </div>
                 </div>
 
@@ -50,7 +56,7 @@
             <button @click="toggleInputMobile"
                 v-show="!active">
                 <span class="icon">
-                    <span class="mdi mdi-magnify"></span>
+                    <span class="mdi mdi-magnify mdi-24px"></span>
                 </span>
             </button>
 
@@ -63,7 +69,9 @@
                             <span class="mdi mdi-magnify"></span>
                         </span>
                         <input v-model="q"
+                            @focus="onFocus()"
                             @blur="onBlur()"
+                            @keyup="onKeyup"
                             ref="searchInputMobile"
                             placeholder="Search games"
                             type="text"
@@ -83,10 +91,15 @@
                 <div v-if="showMenu"
                     class="results">
                     <div v-if="results.length == 0"
-                        class="dropdown-item">Please enter two or more characters</div>
+                        class="dropdown-item">{{ message }}</div>
                     <game-search-result v-for="result in results"
                         :key="result.id"
                         :result="result"></game-search-result>
+                    <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { q: q } }"
+                        v-if="results.length"
+                        class="dropdown-item">
+                        See all results &hellip;
+                    </router-link>
                 </div>
             </div>
 
@@ -136,12 +149,22 @@ export default {
                 this.q = null;
                 this.results = [];
                 this.active = false;
+                this.showMenu = false;
             }, 200)
+        },
+        onFocus() {
+            this.showMenu = true;
+        },
+    },
+    computed: {
+        message() {
+            return this.q?.length <= 1
+                ? "Please enter two or more characters"
+                : "No results found";
         }
     },
     watch: {
         q(val) {
-            this.showMenu = val?.length > 0;
             val?.length > 1
                 ? this.loadResults()
                 : this.results = [];

@@ -122,7 +122,7 @@ def import_games(f):
     count = 0
     updated = 0
 
-    for rank, game_name, igdb_id, platforms in rows:
+    for rank, game_name, year, igdb_id, platforms in rows:
         platform_codes = platforms.split(',')
         platforms = []
         for code in platform_codes:
@@ -140,6 +140,7 @@ def import_games(f):
             defaults={
                 'rank': int(rank),
                 'name': game_name,
+                'year_of_release': year,
             }
         )
         game.platforms.set(platforms)
@@ -292,6 +293,7 @@ class Filter:
             query = Q()
             for field in self.fields:
                 query |= Q(**{field: param_val})
+            
         qs = qs.filter(query)
 
         return qs

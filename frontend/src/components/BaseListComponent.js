@@ -1,12 +1,12 @@
-import { cleanData } from "@/utils.js";
+import { cleanData, getMeta } from "@/utils.js";
 import _ from "lodash";
 
 export default {
-    mounted() {
+    async created() {
+        this.meta = await getMeta();
         this._cache.filters = Object.assign({}, this.filters);
         this.loadUrlArgs();
-        this.loadItems();
-        this.loadMeta();
+        await this.loadItems();
     },
     data() {
         return {
@@ -70,6 +70,9 @@ export default {
 
             if (args.offset)
                 this.filters.offset = parseInt(args.offset);
+
+            if (args.q)
+                this.filters.q = args.q;
         },
         clearFilters() {
             this.filters = Object.assign({}, this._cache.filters);
@@ -90,10 +93,10 @@ export default {
             else
                 Object.assign(this.filters, e);
         },
-        async loadMeta() {
-            this.meta = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
-                .then(resp => resp.json());
-        }
+        // async loadMeta() {
+        //     this.meta = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
+        //         .then(resp => resp.json());
+        // }
     },
     watch: {
         filters: {

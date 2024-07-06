@@ -1,13 +1,13 @@
+import { isObject, isEmpty } from "lodash";
+
 const cleanData = (data) => {
     let cleaned = Object.assign({}, data);
-
     Object.keys(cleaned).forEach(key => {
         let val = cleaned[key];
-        if (val === null || val == undefined || val.isNaN) {
+        if (val === null || val == undefined || val.isNaN || (isObject(val) && isEmpty(val))) {
             delete cleaned[key];
         }
     });
-
     return cleaned;
 };
 
@@ -60,4 +60,14 @@ const parseSlug = (slug) => {
     return { start, end, type };
 }
 
-export { snakeToCamel, camelToSnake, cleanData, parseSlug };
+let metadata = null;
+
+const getMeta = async () => {
+    if (!metadata)
+        metadata = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
+            .then(resp => resp.json());
+
+    return metadata;
+}
+
+export { snakeToCamel, camelToSnake, cleanData, parseSlug, getMeta };

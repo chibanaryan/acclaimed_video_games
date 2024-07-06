@@ -51,6 +51,7 @@ import Post from '../models/Post';
 import Game from '../models/Game';
 import moment from 'moment';
 import { IMAGES } from '@/constants';
+import { getMeta } from '@/utils';
 
 export default {
     components: { SnippetComponent, PostItem },
@@ -70,10 +71,8 @@ export default {
             .then(resp => resp.json());
         this.games = data.results.map(x => new Game(x));
 
-        let meta = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
-            .then(resp => resp.json());
+        let meta = await getMeta();
         this.lastUpdate = moment(meta.games.last_update);
-
     },
     computed: {
         logoLarge() {
