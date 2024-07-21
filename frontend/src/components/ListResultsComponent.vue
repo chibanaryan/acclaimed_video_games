@@ -33,13 +33,16 @@
         <div v-for="list in items"
             :key="list.id"
             class="list-item">
-            <div>{{ list.publication }}</div>
+            <div>
+                <strong>{{ list.publication }}</strong>
+            </div>
             <div>
                 <a :href="list.url"
                     v-if="list.url"
                     target="_blank">
                     {{ list.name }}
                 </a>
+                <span v-else>{{ list.name }}</span>
             </div>
             <div>
                 <label>Year:</label>

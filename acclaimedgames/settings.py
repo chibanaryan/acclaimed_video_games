@@ -120,9 +120,6 @@ INTERNAL_IPS = [
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
-    '192.168.0.67',
-    'sean2000.pythonanywhere.com',
-    'acclaimedgames.herokuapp.com',
     'acclaimedvideogames.com',
     'www.acclaimedvideogames.com',
 ]

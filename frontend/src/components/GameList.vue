@@ -258,6 +258,10 @@ export default {
             if (filters.platforms?.length)
                 filters.platforms = filters.platforms.map((x) => x.id).join(",");
 
+            if (this.mode == 'simple') {
+                delete filters.genre_option;
+            }
+
             return new URLSearchParams(filters);
         },
         prettySlug() {

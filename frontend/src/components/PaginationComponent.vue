@@ -24,11 +24,11 @@ export default {
     computed: {
         pages() {
             const numPages = Math.ceil(this.total / this.limit);
-            let pages = Array(numPages)
-                .keys()
-                .map((x) => x + 1);
-
-            pages = Array.from(pages);
+            let pages = Array.from(
+                Array(numPages)
+                    .keys()
+                )
+                .map(x => x + 1);
 
             const currentPageIsFirstPage = this.currentPage == 1
             const currentPageIsSecondPage = this.currentPage == 2
