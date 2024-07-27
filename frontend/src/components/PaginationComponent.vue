@@ -4,12 +4,17 @@
         <ul class="pagination-list">
             <li v-for="page in pages"
                 :key="page">
-                <a v-if="page"
-                    class="pagination-link"
-                    :class="{ 'is-current': currentPage == page }"
-                    @click="onPageClick(page)">
-                    {{ page }}
-                </a>
+                <template v-if="page">
+                    <a v-if="!loading"
+                        class="pagination-link"
+                        :class="{ 'is-current': currentPage == page }"
+                        @click="onPageClick(page)">
+                        {{ page }}
+                    </a>
+                    <span v-else
+                        :class="{ 'is-current': currentPage == page }"
+                        class="pagination-link"> {{ page }}</span>
+                </template>
                 <span v-else
                     class="pagination-ellipsis">&hellip;</span>
             </li>
@@ -27,7 +32,7 @@ export default {
             let pages = Array.from(
                 Array(numPages)
                     .keys()
-                )
+            )
                 .map(x => x + 1);
 
             const currentPageIsFirstPage = this.currentPage == 1
@@ -65,9 +70,15 @@ export default {
         currentPage() {
             return parseInt(this.offset / this.limit) + 1;
         },
+        loading() {
+            return this.$store.state.loading;
+        },
     },
     methods: {
         onPageClick(page) {
+            if (this.loading)
+                return;
+
             this.$emit("pagechanged", { offset: this.limit * (page - 1) });
             document.getElementById('header').scrollIntoView({ behavior: "smooth" });
         },

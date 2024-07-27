@@ -159,20 +159,22 @@
     <div v-if="items"
         class="mt-5">
         <pagination-component :total="resultsCount"
-            :limit="filters.limit"
-            :offset="filters.offset"
+            :limit="pagination.limit"
+            :offset="pagination.offset"
             @pagechanged="onPageChange">
         </pagination-component>
-        <game-row v-for="game in items"
-            :key="game.id"
-            :game="game"
-            :highlight="highlight"></game-row>
-        <pagination-component :total="resultsCount"
-            :limit="filters.limit"
-            :offset="filters.offset"
-            @pagechanged="onPageChange"
-            class="mt-5">
-        </pagination-component>
+        <template v-if="!loading">
+            <game-row v-for="game in items"
+                :key="game.id"
+                :game="game"
+                :highlight="highlight"></game-row>
+            <pagination-component :total="resultsCount"
+                :limit="pagination.limit"
+                :offset="pagination.offset"
+                @pagechanged="onPageChange"
+                class="mt-5">
+            </pagination-component>
+        </template>
     </div>
 </template>
 
@@ -205,13 +207,15 @@ export default {
         return {
             filters: {
                 q: null,
-                limit: 100,
-                offset: 0,
                 start: null,
                 end: null,
                 genres: [],
                 platforms: [],
                 genre_option: "L",
+            },
+            pagination: {
+                limit: 100,
+                offset: 0,
             },
             selected: {
                 year: null,
@@ -262,6 +266,9 @@ export default {
                 delete filters.genre_option;
             }
 
+            filters.limit = this.pagination.limit;
+            filters.offset = this.pagination.offset;
+
             return new URLSearchParams(filters);
         },
         prettySlug() {
@@ -289,8 +296,12 @@ export default {
             } else {
                 const slug = this.$route.params.slug;
                 let { start, end, type } = parseSlug(slug);
-                this.filters.start = parseInt(start);
-                this.filters.end = parseInt(end);
+
+                if (start)
+                    this.filters.start = parseInt(start);
+
+                if (end)
+                    this.filters.end = parseInt(end);
 
                 if (type == 'decade')
                     this.selected.decade = slug;
@@ -360,10 +371,10 @@ export default {
             }
 
             if (args.limit)
-                this.filters.limit = parseInt(args.limit);
+                this.pagination.limit = parseInt(args.limit);
 
             if (args.offset)
-                this.filters.offset = parseInt(args.offset);
+                this.pagination.offset = parseInt(args.offset);
 
             if (args.q)
                 this.filters.q = args.q;
@@ -371,14 +382,17 @@ export default {
         clearFilters() {
             this.filters = {
                 q: null,
-                limit: 100,
-                offset: 0,
                 start: null,
                 end: null,
                 genres: [],
                 platforms: [],
                 genre_option: "L",
             };
+
+            this.pagination = {
+                limit: 100,
+                offset: 0,
+            }
 
             this.selected = {
                 year: null,
@@ -415,8 +429,8 @@ export default {
         },
         resetOffset() {
             if (this.initialized)
-                this.filters.offset = 0;
-        }
+                this.pagination.offset = 0;
+        },
     },
     watch: {
         "selected.alltime": function (val) {

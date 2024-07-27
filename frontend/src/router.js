@@ -8,7 +8,6 @@ import HomePage from './components/HomePage';
 import ListList from './components/ListList';
 import PageDetail from './components/PageDetail';
 import PostList from './components/PostList';
-import store from './store';
 
 const routes = [
     {
@@ -79,17 +78,6 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes,
-})
-
-router.beforeEach((to, from, next) => {
-    store.commit('loading', true);
-    next();
-})
-
-router.afterEach(() => {
-    setTimeout(() => {
-        store.commit('loading', false);
-    }, 200)
 })
 
 export default router;

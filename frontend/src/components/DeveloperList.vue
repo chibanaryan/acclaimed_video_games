@@ -12,8 +12,8 @@
         </div>
     </div>
     <pagination-component :total="resultsCount"
-        :limit="filters.limit"
-        :offset="filters.offset"
+        :limit="pagination.limit"
+        :offset="pagination.offset"
         @pagechanged="onPageChange">
     </pagination-component>
     <table v-if="items && !loading"
@@ -41,8 +41,9 @@
         </tbody>
     </table>
     <pagination-component :total="resultsCount"
-        :limit="filters.limit"
-        :offset="filters.offset"
+        :limit="pagination.limit"
+        :offset="pagination.offset"
+        v-if="!loading"
         @pagechanged="onPageChange">
     </pagination-component>
 </template>
@@ -56,28 +57,14 @@ import _ from "lodash";
 export default {
     mixins: [BaseListComponent],
     components: { PaginationComponent },
-    data() {
-        return {
-            filters: {
-                limit: 100,
-                offset: 0,
-                q: null,
-            },
-            resultsCount: 0,
-        }
-    },
     methods: {
         loadItems: _.debounce(async function () {
-            let data = await fetch(`${process.env.VUE_APP_API_URL}developer-aliases/?${this.cleanedFilters}`)
+            let url = `${process.env.VUE_APP_API_URL}developer-aliases/?${this.cleanedFilters}`;
+            let data = await fetch(url)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new DeveloperAlias(x));
             this.resultsCount = data.count;
         }, 200, { leading: true }),
     },
-    watch: {
-        'filters.q': function () {
-            this.filters.offset = 0;
-        }
-    }
 }
 </script>

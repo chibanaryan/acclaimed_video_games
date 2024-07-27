@@ -12,9 +12,11 @@ export default {
         return {
             filters: {
                 q: null,
-                limit: null,
-                offset: 0,
                 order_by: null,
+            },
+            pagination: {
+                limit: 100,
+                offset: 0,
             },
             sortField: null,
             sortOrder: 'DESC',
@@ -34,20 +36,25 @@ export default {
     },
     computed: {
         cleanedFilters() {
-            return new URLSearchParams(cleanData(this.filters));
+            let filters = cleanData(this.filters);
+
+            filters.limit = this.pagination.limit;
+            filters.offset = this.pagination.offset;
+
+            return new URLSearchParams(filters);
         },
         hasPrev() {
-            return this.filters.offset > 0;
+            return this.pagination.offset > 0;
         },
         hasNext() {
-            return this.items.length > 0 && (this.resultsCount > this.filters.offset + this.items.length);
+            return this.items.length > 0 && (this.resultsCount > this.pagination.offset + this.items.length);
         },
         isFiltered() {
             return !(_.isEqual(this.filters, this._cache.filters));
         },
         pageTitle() {
-            let start = this.filters.offset + 1;
-            let end = this.filters.offset + this.items.length;
+            let start = this.pagination.offset + 1;
+            let end = this.pagination.offset + this.items.length;
             let total = this.resultsCount || 0;
 
             if (end > total)
@@ -58,6 +65,9 @@ export default {
             else
                 return `Showing ${start.toLocaleString()} to ${end.toLocaleString()} of ${total.toLocaleString()}`
         },
+        loading() {
+            return this.$store.state.loading;
+        },
     },
     methods: {
         loadUrlArgs() {
@@ -66,10 +76,10 @@ export default {
                 return;
 
             if (args.limit)
-                this.filters.limit = parseInt(args.limit);
+                this.pagination.limit = parseInt(args.limit);
 
             if (args.offset)
-                this.filters.offset = parseInt(args.offset);
+                this.pagination.offset = parseInt(args.offset);
 
             if (args.q)
                 this.filters.q = args.q;
@@ -85,28 +95,42 @@ export default {
             }
             this.filters.order_by = this.sortOrder == 'DESC' ? this.sortField : `-${this.sortField}`
         },
-        onPageChange(e) {
+        async onPageChange(e) {
             if (e == 'previous')
-                this.filters.offset -= parseInt(this.filters.limit);
+                this.pagination.offset -= parseInt(this.pagination.limit);
             else if (e == 'next')
-                this.filters.offset += parseInt(this.filters.limit);
+                this.pagination.offset += parseInt(this.pagination.limit);
             else
-                Object.assign(this.filters, e);
+                Object.assign(this.pagination, e);
+
+            // Update the current route's query with the new limit and offset
+            let query = Object.assign({}, this.$route.query);
+            query.limit = this.pagination.limit;
+            query.offset = this.pagination.offset;
+
+            let route = this.$route;
+            route.query = query;
+
+            // Need to push a dummy route so the next one will register as a change
+            this.$router.push({});
+
+            setTimeout(() => {
+                this.$router.replace(route);
+            }, 1);
+
+            // Update the browser URL
+            history.pushState(null, document.title, `?${this.cleanedFilters}`);
+
+            await this.loadItems();
         },
-        // async loadMeta() {
-        //     this.meta = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
-        //         .then(resp => resp.json());
-        // }
     },
     watch: {
         filters: {
             async handler() {
-                this.$store.commit('loading', true);
-                await this.loadItems();
-                this.$store.commit('loading', false);
                 history.pushState(null, document.title, `?${this.cleanedFilters}`);
+                await this.loadItems();
             },
             deep: true
-        }
+        },
     }
 };

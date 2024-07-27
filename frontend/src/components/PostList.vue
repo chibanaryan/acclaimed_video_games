@@ -8,7 +8,7 @@
             <div class="level-item"
                 v-if="hasPrev">
                 <router-link :to="{ name: 'home' }"
-                    v-if="filters.offset <= filters.limit"
+                    v-if="pagination.offset <= pagination.limit"
                     class="button">
                     <span class="icon">
                         <span class="mdi mdi-chevron-double-left"></span>
@@ -54,14 +54,6 @@ import PostItem from './PostItem';
 export default {
     mixins: [BaseListComponent],
     components: { PostItem },
-    data() {
-        return {
-            filters: {
-                limit: 5,
-                offset: 0,
-            }
-        }
-    },
     methods: {
         async loadItems() {
             let data = await fetch(`${process.env.VUE_APP_API_URL}posts/?${this.cleanedFilters}`)

@@ -1,11 +1,12 @@
 import '@mdi/font/css/materialdesignicons.css';
 import 'bulma/css/bulma.css';
-import mitt from 'mitt';
 import * as Vue from 'vue';
-import vueGTag from 'vue-gtag';
 import App from './App.vue';
+import fetchIntercept from "fetch-intercept";
+import mitt from 'mitt';
 import router from './router';
 import store from './store';
+import vueGTag from 'vue-gtag';
 
 const app = Vue.createApp(App);
 app.use(router);
@@ -19,5 +20,16 @@ app.use(vueGTag, {
 app.config.globalProperties.emitter = mitt();
 
 app.mount('#app');
+
+fetchIntercept.register({
+    request: (url, config) => {
+        store.commit('loading', true);
+        return [url, config];
+    },
+    response: (response) => {
+        store.commit('loading', false);
+        return response;
+    },
+})
 
 export default app;

@@ -43,8 +43,8 @@
         </div>
     </div>
     <pagination-component :total="resultsCount"
-        :limit="filters.limit"
-        :offset="filters.offset"
+        :limit="pagination.limit"
+        :offset="pagination.offset"
         @pagechanged="onPageChange">
     </pagination-component>
     <div v-if="loading"
@@ -56,8 +56,8 @@
         :show-rank="false">
     </list-results-component>
     <pagination-component :total="resultsCount"
-        :limit="filters.limit"
-        :offset="filters.offset"
+        :limit="pagination.limit"
+        :offset="pagination.offset"
         @pagechanged="onPageChange">
     </pagination-component>
 </template>
@@ -79,8 +79,8 @@ export default {
     data() {
         return {
             filters: {
-                limit: 100,
-                offset: 0,
+                //limit: 100,
+                //offset: 0,
                 type: null,
                 publisher: null,
                 year: null,
