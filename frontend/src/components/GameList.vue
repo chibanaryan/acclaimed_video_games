@@ -111,7 +111,8 @@
         </div>
         <search-input v-model="filters.q"
             :debounce-input="true"
-            placeholder="Search by name">
+            placeholder="Search by name"
+            class="is-flex">
         </search-input>
     </div>
 
@@ -264,6 +265,12 @@ export default {
 
             if (this.mode == 'simple') {
                 delete filters.genre_option;
+
+                if (filters.start == this.minYear)
+                    delete filters.start;
+
+                if (filters.end == this.maxYear)
+                    delete filters.end;
             }
 
             filters.limit = this.pagination.limit;
