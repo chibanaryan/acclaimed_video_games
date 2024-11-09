@@ -4,10 +4,16 @@
         :id="`game-${game.id}`">
         <div class="column is-narrow">
             <div class="columns">
-                <div v-if="showRank"
+                <div v-if="showRank == 'alltime'"
                     class="column is-narrow">
                     <span class="rank">
                         {{ game.rank }}
+                    </span>
+                </div>
+                <div v-if="showRank == 'filtered'"
+                    class="column is-narrow">
+                    <span class="rank">
+                        {{ index }}
                     </span>
                 </div>
                 <div class="column is-narrow">
@@ -28,15 +34,21 @@
                 </router-link>
             </div>
             <game-row-properties :game="game"
-                :show-rank="showRankInDetails"> </game-row-properties>
+                :show-rank="showRankInDetails || showRank == 'filtered'"> </game-row-properties>
         </div>
     </div>
     <div class="is-hidden-desktop is-hidden-tablet game-row mobile pb-4">
         <div class="py-3">
             <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }"
                 class="game-name has-text-weight-bold is-size-6">
-                <span v-if="showRank"
-                    class="rank">{{ game.rank }}</span>
+                <span v-if="showRank == 'alltime'"
+                    class="rank">
+                    {{ game.rank }}
+                </span>
+                <span v-if="showRank == 'filtered'"
+                    class="rank">
+                    {{ index }}
+                </span>
                 {{ game.name }} </router-link>
             <router-link :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }">
                 ({{ game.yearOfRelease }})
@@ -50,7 +62,7 @@
             </div>
             <div class="column">
                 <game-row-properties :game="game"
-                    :show-rank="showRankInDetails">
+                    :show-rank="showRankInDetails || showRank == 'filtered'">
                 </game-row-properties>
             </div>
         </div>
@@ -63,8 +75,9 @@ import GameRowProperties from "./GameRowProperties";
 export default {
     props: {
         game: null,
+        index: Number,
         showRank: {
-            default: true,
+            default: 'alltime',
         },
         showRankInDetails: {
             default: false,

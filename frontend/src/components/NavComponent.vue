@@ -40,6 +40,10 @@
                     class="navbar-item">
                     About
                 </router-link>
+                <router-link :to="{ name: 'page-detail', params: { slug: 'donate' } }"
+                    class="navbar-item">
+                    Donate
+                </router-link>
                 <router-link :to="{ name: 'page-detail', params: { slug: 'palestine' } }"
                     class="navbar-item"
                     title="Statement on Palestine">

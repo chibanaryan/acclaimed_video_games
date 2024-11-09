@@ -51,6 +51,25 @@
                         </table>
                     </div>
                 </div>
+                <div class="p-2">
+                    <label class="has-text-weight-bold">Displayed rank</label>
+                </div>
+                <div class="field ml-3">
+                    <div class="control">
+                        <label>
+                            Filtered
+                            <input v-model="showRank"
+                                type="radio"
+                                value="filtered" />
+                        </label>
+                        <label class="ml-2">
+                            All time
+                            <input v-model="showRank"
+                                type="radio"
+                                value="alltime" />
+                        </label>
+                    </div>
+                </div>
             </div>
             <div v-if="genres.length"
                 class="column">
@@ -165,10 +184,14 @@
             @pagechanged="onPageChange">
         </pagination-component>
         <template v-if="!loading">
-            <game-row v-for="game in items"
+
+            <game-row v-for="(game, index) in items"
+                :index="index + 1"
                 :key="game.id"
                 :game="game"
-                :highlight="highlight"></game-row>
+                :highlight="highlight"
+                :show-rank="showRank"></game-row>
+
             <pagination-component :total="resultsCount"
                 :limit="pagination.limit"
                 :offset="pagination.offset"
@@ -229,6 +252,7 @@ export default {
             loading: false,
             highlight: null,
             initialized: false,
+            showRank: 'filtered',
         };
     },
     async mounted() {
@@ -450,22 +474,26 @@ export default {
             this.filters.end = null;
 
             this.updateUrl({ name: 'games-list', params: { slug: 'alltime' } })
+            this.resetOffset()
         },
         "selected.year": function (val) {
             if (!val)
                 return;
 
+            this.showRank = 'filtered';
             this.selected.decade = null;
             this.selected.alltime = null;
             this.filters.start = this.selected.year;
             this.filters.end = this.selected.year;
 
             this.updateUrl({ name: 'games-list', params: { slug: this.selected.year.toString() } });
+            this.resetOffset()
         },
         "selected.decade": function (val) {
             if (!val)
                 return;
 
+            this.showRank = 'filtered';
             this.selected.year = null;
             this.selected.alltime = null;
             let { start, end } = parseSlug(this.selected.decade);
@@ -473,19 +501,27 @@ export default {
             this.filters.end = end;
 
             this.updateUrl({ name: 'games-list', params: { slug: this.selected.decade.toString() } });
-        },
-        "filters.q": function () {
             this.resetOffset()
         },
         "filters.start": function () {
-            this.resetOffset()
             if (this.filters.end < this.filters.start)
                 this.filters.end = this.filters.start;
         },
         "filters.end": function () {
-            this.resetOffset()
             if (this.filters.start > this.filters.end)
                 this.filters.start = this.filters.end;
+        },
+        selected: {
+            handler() {
+                this.resetOffset()
+            },
+            deep: true,
+        },
+        filters: {
+            handler() {
+                this.resetOffset()
+            },
+            deep: true,
         },
         $route: {
             async handler() {
