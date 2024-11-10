@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = 'Fetch game data from IGDB'
 
     def handle(self, *args, **kwargs):
-        for game in Game.objects.all():
+        for game in Game.objects.filter(igdb_artwork_id__isnull=True):
             try:
                 game.get_igdb_data()
                 game.save()

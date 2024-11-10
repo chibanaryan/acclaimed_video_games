@@ -1,7 +1,7 @@
 import logging
 
 import markdown
-from django.db import models
+from django.db import IntegrityError, models
 from django.utils.text import Truncator, slugify
 from unidecode import unidecode
 
@@ -147,11 +147,10 @@ class Game(models.Model):
         if not self.igdb_id:
             return
 
-        data = api.get_game_info_by_id(self.igdb_id)
+        data = api.get_game_info_by_id(self.igdb_id, cache_results)
         self.slug = data.get('slug')
         self.igdb_url = data.get('url')
         self.igdb_artwork_id = data.get('cover')
-        #self.year_of_release = data.get('year')    # Use our own year rather than IGDB
         self.description = '\n\n'.join(
             [x for x in [data.get('storyline'), data.get('summary')] if x])
 
@@ -180,13 +179,16 @@ class Game(models.Model):
                         }
                     )
 
-            developer_alias, created = DeveloperAlias.objects.update_or_create(
-                developer=developer,
-                name=d['name'],
-                defaults={
-                    'igdb_id': d['id'],
-                }
-            )
+            try:
+                developer_alias, created = DeveloperAlias.objects.update_or_create(
+                    developer=developer,
+                    name=d['name'],
+                    defaults={
+                        'igdb_id': d['id'],
+                    }
+                )
+            except IntegrityError:
+                developer_alias = DeveloperAlias.objects.get(name=d['name'])
 
             developer_aliases.append(developer_alias)
 
@@ -283,4 +285,3 @@ class Post(models.Model):
     @property
     def text_rendered(self):
         return markdown.markdown(self.text)
-    
