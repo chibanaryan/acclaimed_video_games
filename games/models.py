@@ -147,7 +147,7 @@ class Game(models.Model):
         if not self.igdb_id:
             return
 
-        data = api.get_game_info_by_id(self.igdb_id, cache_results)
+        data = api.get_game_info_by_id(self.igdb_id)
         self.slug = data.get('slug')
         self.igdb_url = data.get('url')
         self.igdb_artwork_id = data.get('cover')

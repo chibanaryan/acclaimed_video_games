@@ -252,7 +252,7 @@ export default {
             loading: false,
             highlight: null,
             initialized: false,
-            showRank: 'filtered',
+            showRank: 'alltime',
         };
     },
     async mounted() {
@@ -468,6 +468,7 @@ export default {
             if (!val)
                 return;
 
+            this.showRank = 'alltime';
             this.selected.decade = null;
             this.selected.year = null;
             this.filters.start = null;

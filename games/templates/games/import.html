@@ -36,24 +36,37 @@
 {% block content %}
 <h1 class="title">Import data</h1>
 
-<form method="POST" 
-    action="." 
+<form method="POST"
+    action="."
     onsubmit="return confirm('Are you sure you want to delete all data?');">
     {% csrf_token %}
-    <input type="hidden" name="delete" value="true">
+    <input type="hidden"
+        name="delete"
+        value="true">
     <button class="button is-danger">Delete existing data</button>
 </form>
 
-<form method="POST" 
-    action="." 
+<form method="POST"
+    action=".">
+    {% csrf_token %}
+    <input type="hidden"
+        name="igdb"
+        value="true">
+    <button class="button">Get IGDB data</button>
+</form>
+
+<form method="POST"
+    action="."
     enctype="multipart/form-data">
     {% csrf_token %}
 
     <div class="field">
-        <label class="label" for="id_type">Type:</label>
+        <label class="label"
+            for="id_type">Type:</label>
         <div class="control">
             <div class="select">
-                <select name="type" id="id_type">
+                <select name="type"
+                    id="id_type">
                     {% for code, label in import_types %}
                     <option value="{{ code }}">{{ label }}</option>
                     {% endfor %}
@@ -65,7 +78,10 @@
     <div class="field">
         <div class="file has-name">
             <label class="file-label">
-                <input class="file-input" type="file" name="file" id="id_file">
+                <input class="file-input"
+                    type="file"
+                    name="file"
+                    id="id_file">
                 <span class="file-cta">
                     <span class="file-label">
                         Upload a file&hellip;

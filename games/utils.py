@@ -15,6 +15,9 @@ def import_data(data):
     if data.get('delete'):
         return delete_existing_data()
 
+    if data.get('igdb'):
+        return import_igdb()
+
     if data.get('file'):
         f = TextIOWrapper(data['file'], encoding='utf-8')
         import_type = data['type']
@@ -31,6 +34,11 @@ def import_data(data):
             return functions.get(import_type)(f)
         except Exception as e:
             return (False, f"Could not process uploaded file: {e}")
+
+
+def import_igdb():
+    for game in models.Game.objects.all():
+        game.get_igdb_data()
 
 
 def delete_existing_data():
@@ -162,14 +170,14 @@ def import_platforms(f):
     for code, name in rows:
         code = code.strip()
         name = name.strip()
-        
+
         platform, created = models.Platform.objects.update_or_create(
             code=code,
             defaults={
                 'name': name,
             }
         )
-        
+
         print(platform.code, platform.name)
 
         if created:
@@ -293,7 +301,7 @@ class Filter:
             query = Q()
             for field in self.fields:
                 query |= Q(**{field: param_val})
-            
+
         qs = qs.filter(query)
 
         return qs

@@ -1,6 +1,5 @@
 import requests
 from django.conf import settings
-from datetime import datetime
 
 game_status_map = {
     0: 'released',
@@ -39,7 +38,6 @@ class IgbdApi():
         self.release_dates = {}
 
         self._get_auth_token()
-        self._get_release_statuses()
         self._get_themes()
 
     def _get_auth_token(self):
@@ -64,16 +62,8 @@ class IgbdApi():
         ).json()
         self.themes = {x['id']: x['name'] for x in results}
 
-    def _get_release_statuses(self):
-        results = requests.post(
-            'https://api.igdb.com/v4/release_date_statuses/',
-            headers=self.headers,
-            data='fields name;'
-        ).json()
-
-        self.release_date_statuses = {x['name']: x['id'] for x in results}
-
     def _get_cover_by_id(self, cover_id: int):
+        print(f'Getting data for cover {cover_id}')
         results = requests.post(
             'https://api.igdb.com/v4/covers/',
             headers=self.headers,
@@ -86,6 +76,7 @@ class IgbdApi():
         if cache_results and company_id in self.company_cache:
             return self.company_cache[company_id]
 
+        print(f'Getting data for company {company_id}')
         res = requests.post(
             'https://api.igdb.com/v4/companies/',
             headers=self.headers,
@@ -104,6 +95,7 @@ class IgbdApi():
         if cache_results and genre_id in self.genre_cache:
             return self.genre_cache[genre_id]
 
+        print(f'Getting data for genre {genre_id}')
         res = requests.post(
             'https://api.igdb.com/v4/genres/',
             headers=self.headers,
@@ -133,133 +125,112 @@ class IgbdApi():
         self.release_dates[game_id] = dates
         return dates
 
-    def get_game_info_by_id(self, game_id: int, cache_results: True):
+    def _get_chunks(self, lst, n):
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n]
 
-        # Check cache first
-        if cache_results and game_id in self.game_cache:
-            return self.game_cache[game_id]
+    def _get_games_chunk(self, game_ids):
 
         # Get game data from API
         res = requests.post(
             'https://api.igdb.com/v4/games/',
             headers=self.headers,
-            data=f'where id={game_id}; fields slug,cover,genres,first_release_date,summary,storyline,url,themes,involved_companies.*;'
+            data=f'where id={game_ids}; limit {len(game_ids)}; fields id,slug,cover,genres,first_release_date,summary,storyline,url,themes,involved_companies.*;'
         )
 
-        if res.status_code == 401:
-            if self._get_auth_token():
-                return self.game_info_by_id(game_id, cache_results)
-            else:
-                return
-
         results = res.json()
-        assert len(results) == 1
-        data = results[0]
+        for data in results:
+            game_id = data['id']
 
-        # Get developer information
-        developers = []
-        porters = []
-        supporters = []
-        publishers = []
+            # Get developer information
+            developers = []
+            porters = []
+            supporters = []
+            publishers = []
 
-        for involved_company_dict in data.get('involved_companies', []):
-            company_id = involved_company_dict['company']
+            for involved_company_dict in data.get('involved_companies', []):
+                company_id = involved_company_dict['company']
 
-            if involved_company_dict['developer']:
-                developers.append(company_id)
+                if involved_company_dict['developer']:
+                    developers.append(company_id)
 
-            if involved_company_dict['supporting']:
-                supporters.append(company_id)
+                if involved_company_dict['supporting']:
+                    supporters.append(company_id)
 
-            if involved_company_dict['publisher']:
-                publishers.append(company_id)
+                if involved_company_dict['publisher']:
+                    publishers.append(company_id)
 
-            if involved_company_dict['porting']:
-                porters.append(company_id)
+                if involved_company_dict['porting']:
+                    porters.append(company_id)
 
-        company_ids = []
+            company_ids = []
 
-        if developers:
-            company_ids += developers
-        else:
-            if supporters:
-                company_ids += supporters
-            elif publishers:
-                company_ids += publishers
-            elif porters:
-                company_ids += porters
-
-        developer_objs = []
-        for company_id in company_ids:
-            company_obj = self._get_company_by_id(company_id, cache_results)
-            if not company_obj:
-                continue
-
-            parent_id = company_obj.get('parent')
-            if parent_id:
-                parent_obj = self._get_company_by_id(parent_id, cache_results)
+            if developers:
+                company_ids += developers
             else:
-                parent_obj = None
+                if supporters:
+                    company_ids += supporters
+                elif publishers:
+                    company_ids += publishers
+                elif porters:
+                    company_ids += porters
 
-            developer_objs.append(
-                {
-                    'id': company_id,
-                    'name': company_obj['name'],
-                    'slug': company_obj['slug'],
-                    'parent': parent_obj,
-                }
-            )
+            developer_objs = []
+            for company_id in company_ids:
+                company_obj = self._get_company_by_id(company_id, True)
+                if not company_obj:
+                    continue
 
-        # Get the full release dates
-        full_release_status = self.release_date_statuses['Full Release']
-        all_release_dates = self._get_release_dates_by_id(
-            game_id, cache_results)
-        full_release_dates = []
-        for obj in all_release_dates:
-            if not obj.get('status') or obj.get('status') == full_release_status:
-                if obj.get('date'):
-                    full_release_dates.append(
-                        datetime.fromtimestamp(obj['date']))
+                parent_id = company_obj.get('parent')
+                if parent_id:
+                    parent_obj = self._get_company_by_id(parent_id, True)
+                else:
+                    parent_obj = None
 
-        # Fallback to any release dates
-        if not full_release_dates and all_release_dates:
-            obj = all_release_dates[0]
-            full_release_dates.append(
-                datetime.fromtimestamp(obj['date']))
+                developer_objs.append(
+                    {
+                        'id': company_id,
+                        'name': company_obj['name'],
+                        'slug': company_obj['slug'],
+                        'parent': parent_obj,
+                    }
+                )
 
-        # Add first release date to list of release dates
-        if data.get('first_release_date'):
-            full_release_dates.append(
-                datetime.fromtimestamp(data['first_release_date']))
+            # Get genres
+            theme_names = [self.themes.get(x) for x in data.get(
+                'themes', []) if self.themes.get(x) in genre_themes]
+            genre_names = [self._get_genre_by_id(
+                x, True) for x in data.get('genres', [])]
+            genres = list(set(theme_names + genre_names))
 
-        # Choose the earliest release data
-        if full_release_dates:
-            full_release_dates.sort()
-            release_date = full_release_dates[0]
-        else:
-            release_date = None
+            game_data = {
+                'cover': self._get_cover_by_id(data['cover']),
+                'developers': developer_objs,
+                'genres': genres,
+                'storyline': data.get('storyline'),
+                'summary': data.get('summary'),
+                'url': data.get('url'),
+                'slug': data.get('slug'),
+            }
 
-        # Get genres
-        theme_names = [self.themes.get(x) for x in data.get(
-            'themes', []) if self.themes.get(x) in genre_themes]
-        genre_names = [self._get_genre_by_id(
-            x, cache_results) for x in data.get('genres', [])]
-        genres = list(set(theme_names + genre_names))
-
-        game_data = {
-            'cover': self._get_cover_by_id(data['cover']),
-            'developers': developer_objs,
-            'genres': genres,
-            'storyline': data.get('storyline'),
-            'summary': data.get('summary'),
-            'url': data.get('url'),
-            'year': release_date.year if release_date else None,
-            'slug': data.get('slug'),
-        }
-
-        self.game_cache[game_id] = game_data
+            print(f'Game {game_id} data downloaded')
+            self.game_cache[game_id] = game_data
 
         return game_data
+
+    def get_game_info_by_id(self, game_id: int):
+        # Build cache first
+        if game_id not in self.game_cache:
+            self.get_all_games()
+
+        return self.game_cache.get(game_id)
+
+    def get_all_games(self):
+        from .models import Game
+        game_ids = tuple(Game.objects.values_list('id', flat=True))
+        for chunk in self._get_chunks(game_ids, 100):
+            print(f'Fetching games {chunk[0]} to {chunk[-1]}')
+            self._get_games_chunk(chunk)
 
 
 def get_api():
