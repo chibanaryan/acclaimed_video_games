@@ -184,14 +184,12 @@
             @pagechanged="onPageChange">
         </pagination-component>
         <template v-if="!loading">
-
             <game-row v-for="(game, index) in items"
-                :index="index + 1"
+                :index="pagination.offset + index + 1"
                 :key="game.id"
                 :game="game"
                 :highlight="highlight"
                 :show-rank="showRank"></game-row>
-
             <pagination-component :total="resultsCount"
                 :limit="pagination.limit"
                 :offset="pagination.offset"
