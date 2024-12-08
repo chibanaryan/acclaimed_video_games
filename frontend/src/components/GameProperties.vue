@@ -3,7 +3,7 @@
         <tr>
             <th>All time rank:</th>
             <td>
-                <router-link :to="gameRankRoute">
+                <router-link :to="getGameRankRoute('alltime', game.rank)">
                     {{ game.rank }}
                 </router-link>
             </td>
@@ -11,8 +11,7 @@
         <tr>
             <th>{{ game.decade }}s rank:</th>
             <td>
-                <router-link
-                    :to="{ name: 'games-list', params: { slug: game.decadeSlug }, query: { highlight: game.id } }">
+                <router-link :to="getGameRankRoute(game.decadeSlug, game.decadeRank)">
                     {{ game.decadeRank }}
                 </router-link>
             </td>
@@ -20,8 +19,7 @@
         <tr>
             <th>{{ game.yearOfRelease }} rank:</th>
             <td>
-                <router-link
-                    :to="{ name: 'games-list', params: { slug: game.yearOfRelease }, query: { highlight: game.id } }">
+                <router-link :to="getGameRankRoute(game.yearOfRelease, game.yearRank)">
                     {{ game.yearRank }}
                 </router-link>
             </td>
@@ -92,16 +90,16 @@
 <script>
 export default {
     props: ["game"],
-    computed: {
-        gameRankRoute() {
+    methods: {
+        getGameRankRoute(slug, rank) {
             return {
                 name: 'games-list',
                 params: {
-                    slug: 'alltime',
+                    slug: slug,
                 },
                 query: {
                     limit: 100,
-                    offset: parseInt(this.game.rank / 100) * 100,
+                    offset: parseInt(rank / 100) * 100,
                     highlight: this.game.id,
                 }
             }

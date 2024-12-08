@@ -95,7 +95,7 @@ export default {
             }
             this.filters.order_by = this.sortOrder == 'DESC' ? this.sortField : `-${this.sortField}`
         },
-        async onPageChange(e) {
+        async onPageChange(e) {            
             if (e == 'previous')
                 this.pagination.offset -= parseInt(this.pagination.limit);
             else if (e == 'next')
@@ -113,6 +113,8 @@ export default {
 
             // Need to push a dummy route so the next one will register as a change
             this.$router.push({});
+
+            console.log(route.params);
 
             setTimeout(() => {
                 this.$router.replace(route);

@@ -178,24 +178,46 @@
     </div>
     <div v-if="items"
         class="mt-5">
-        <pagination-component :total="resultsCount"
-            :limit="pagination.limit"
-            :offset="pagination.offset"
-            @pagechanged="onPageChange">
-        </pagination-component>
+
         <template v-if="!loading">
+
+            <pagination-component :total="resultsCount"
+                :limit="pagination.limit"
+                :offset="pagination.offset"
+                :show-all-pages="true"
+                @pagechanged="onPageChange"
+                class="is-hidden-mobile">
+            </pagination-component>
+
+            <pagination-component :total="resultsCount"
+                :limit="pagination.limit"
+                :offset="pagination.offset"
+                @pagechanged="onPageChange"
+                class="is-hidden-tablet">
+            </pagination-component>
+
             <game-row v-for="(game, index) in items"
                 :index="pagination.offset + index + 1"
                 :key="game.id"
                 :game="game"
                 :highlight="highlight"
                 :show-rank="showRank"></game-row>
+
+            <pagination-component :total="resultsCount"
+                :limit="pagination.limit"
+                :offset="pagination.offset"
+                :show-all-pages="true"
+                @pagechanged="onPageChange"
+                class="mt-5 is-hidden-mobile">
+            </pagination-component>
+
             <pagination-component :total="resultsCount"
                 :limit="pagination.limit"
                 :offset="pagination.offset"
                 @pagechanged="onPageChange"
-                class="mt-5">
+                class="mt-5 is-hidden-tablet">
             </pagination-component>
+
         </template>
     </div>
 </template>
@@ -471,8 +493,12 @@ export default {
             this.selected.year = null;
             this.filters.start = null;
             this.filters.end = null;
+            this.highlight = null;
 
-            this.updateUrl({ name: 'games-list', params: { slug: 'alltime' } })
+            this.updateUrl({
+                name: 'games-list',
+                params: { slug: 'alltime' },
+            })
             this.resetOffset()
         },
         "selected.year": function (val) {
@@ -484,8 +510,12 @@ export default {
             this.selected.alltime = null;
             this.filters.start = this.selected.year;
             this.filters.end = this.selected.year;
+            //this.highlight = null;
 
-            this.updateUrl({ name: 'games-list', params: { slug: this.selected.year.toString() } });
+            this.updateUrl({
+                name: 'games-list',
+                params: { slug: this.selected.year.toString() },
+            });
             this.resetOffset()
         },
         "selected.decade": function (val) {
@@ -498,8 +528,12 @@ export default {
             let { start, end } = parseSlug(this.selected.decade);
             this.filters.start = start;
             this.filters.end = end;
+            //this.highlight = null;
 
-            this.updateUrl({ name: 'games-list', params: { slug: this.selected.decade.toString() } });
+            this.updateUrl({
+                name: 'games-list',
+                params: { slug: this.selected.decade.toString() },
+            });
             this.resetOffset()
         },
         "filters.start": function () {

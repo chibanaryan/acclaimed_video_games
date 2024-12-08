@@ -24,7 +24,7 @@
 
 <script>
 export default {
-    props: ["total", "limit", "offset"],
+    props: ["total", "limit", "offset", "showAllPages"],
     emits: ["pagechanged"],
     computed: {
         pages() {
@@ -41,6 +41,10 @@ export default {
             const currentPageIsLastPage = this.currentPage == pages.length;
 
             pages = pages.filter(x => {
+
+                if (this.showAllPages)
+                    return true;
+
                 const firstPage = x == 1;
                 const lastPage = x == pages.length;
                 const isCurrent = x == this.currentPage;
