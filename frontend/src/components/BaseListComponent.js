@@ -114,7 +114,7 @@ export default {
             // Need to push a dummy route so the next one will register as a change
             this.$router.push({});
 
-            console.log(route.params);
+            //console.log(route.params);
 
             setTimeout(() => {
                 this.$router.replace(route);
