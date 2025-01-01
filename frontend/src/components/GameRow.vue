@@ -29,7 +29,7 @@
                     class="game-name has-text-weight-bold is-size-6 mb-3">
                     {{ game.name }}
                 </router-link>
-                <router-link :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }">
+                <router-link :to="{ name: 'games-list' }">
                     ({{ game.yearOfRelease }})
                 </router-link>
             </div>
@@ -50,7 +50,7 @@
                     {{ index }}
                 </span>
                 {{ game.name }} </router-link>
-            <router-link :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }">
+            <router-link :to="{ name: 'games-list' }">
                 ({{ game.yearOfRelease }})
             </router-link>
         </div>

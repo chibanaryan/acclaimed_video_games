@@ -28,6 +28,7 @@
 <script>
 export default {
     props: ['hasPrev', 'hasNext'],
+    emits: ['pagechanged'],
     methods: {
         showPrev() {
             this.$emit('pagechanged', 'previous');

@@ -6,176 +6,33 @@
         <template v-else> {{ pageTitle }} Results </template>
     </h1>
 
-    <!-- Advanced filters -->
-    <div v-if="mode == 'advanced'">
-        <div class="buttons">
-            <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
-                v-if="mode == 'advanced'"
-                class="button is-link">
-                <span class="icon">
-                    <span class="mdi mdi-form-select"></span>
-                </span>
-                <span> Simple Filters </span>
-            </router-link>
-            <a @click="clearFilters"
-                v-if="isFiltered"
-                class="button">
-                <span class="icon">
-                    <span class="mdi mdi-close"></span>
-                </span>
-                <span>Clear filters</span>
-            </a>
-        </div>
-        <div class="columns">
-            <div class="column">
-                <div class="p-2">
-                    <label class="has-text-weight-bold">Release year</label>
-                </div>
-                <div class="field">
-                    <div class="control">
-                        <table class="table plain">
-                            <tr>
-                                <td>From:</td>
-                                <td>
-                                    <range-slider v-model.lazy="filters.start"
-                                        placeholder="Start year"></range-slider>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>To:</td>
-                                <td>
-                                    <range-slider v-model.lazy="filters.end"
-                                        placeholder="End year"></range-slider>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                <div class="p-2">
-                    <label class="has-text-weight-bold">Displayed rank</label>
-                </div>
-                <div class="field ml-3">
-                    <div class="control">
-                        <label>
-                            Filtered
-                            <input v-model="showRank"
-                                type="radio"
-                                value="filtered" />
-                        </label>
-                        <label class="ml-2">
-                            All time
-                            <input v-model="showRank"
-                                type="radio"
-                                value="alltime" />
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <div v-if="genres.length"
-                class="column">
-                <div class="p-2">
-                    <div class="control is-pulled-right">
-                        <label class="radio">
-                            All
-                            <input v-model="filters.genre_option"
-                                type="radio"
-                                value="L" />
-                        </label>
-                        <label class="radio">
-                            Any
-                            <input v-model="filters.genre_option"
-                                type="radio"
-                                value="A" />
-                        </label>
-                    </div>
-                    <label class="has-text-weight-bold">Genres</label>
-                </div>
-                <select v-model="filters.genres"
-                    multiple
-                    class="is-hidden-tablet">
-                    <option :value="null">All genres</option>
-                    <option v-for="genre in genres"
-                        :key="genre.id"
-                        :value="genre">
-                        {{ genre.name }}
-                    </option>
-                </select>
-                <div class="is-hidden-mobile">
-                    <selectable-tag-list v-model="filters.genres"></selectable-tag-list>
-                    <multi-select-component :items="genres"
-                        v-model="filters.genres"></multi-select-component>
-                </div>
-            </div>
-            <div v-if="platforms.length"
-                class="column">
-                <div class="p-2">
-                    <label class="has-text-weight-bold">Platforms</label>
-                </div>
-                <select v-model="filters.platforms"
-                    multiple
-                    class="is-hidden-tablet">
-                    <option :value="null">All platforms</option>
-                    <option v-for="platform in platforms"
-                        :key="platform.id"
-                        :value="platform">
-                        {{ platform.name }}
-                    </option>
-                </select>
-                <div class="is-hidden-mobile">
-                    <selectable-tag-list v-model="filters.platforms"></selectable-tag-list>
-                    <multi-select-component :items="platforms"
-                        v-model="filters.platforms"></multi-select-component>
-                </div>
-            </div>
-        </div>
-        <search-input v-model="filters.q"
-            :debounce-input="true"
-            placeholder="Search by name"
-            class="is-flex">
-        </search-input>
+    <div class="buttons is-pulled-right">
+        <a v-if="mode == 'simple'"
+            @click="mode = 'advanced'"
+            class="button is-link">
+            <span class="icon">
+                <span class="mdi mdi-tune-variant"></span>
+            </span>
+            <span>Advanced Filters</span>
+        </a>
+        <a v-if="mode == 'advanced'"
+            @click="mode = 'simple'"
+            class="button is-link">
+            <span class="icon">
+                <span class="mdi mdi-form-select"></span>
+            </span>
+            <span> Simple Filters </span>
+        </a>
     </div>
 
+    <!-- Advanced filters -->
+    <advanced-filters v-if="mode == 'advanced'"
+        v-model="filters"></advanced-filters>
+
     <!-- Simple filters -->
-    <div v-if="mode == 'simple' && meta?.games"
-        class="field is-grouped is-grouped-multiline">
-        <div class="control">
-            <a @click="selected.alltime = true"
-                class="button is-link"> All time </a>
-        </div>
-        <div class="control">
-            <div class="select">
-                <select v-model="selected.decade">
-                    <option :value="null">Decades</option>
-                    <option v-for="decade in meta.games.decades"
-                        :key="decade"
-                        :value="decade">
-                        {{ decade }}
-                    </option>
-                </select>
-            </div>
-        </div>
-        <div class="control">
-            <div class="select">
-                <select v-model="selected.year">
-                    <option :value="null">Years</option>
-                    <option v-for="year in meta.games.years"
-                        :key="year.year"
-                        :value="year.year">
-                        {{ year.year }} ({{ year.count }})
-                    </option>
-                </select>
-            </div>
-        </div>
-        <div class="control">
-            <router-link :to="{ name: 'games-list', params: { slug: 'search' } }"
-                class="button is-link">
-                <span class="icon">
-                    <span class="mdi mdi-tune-variant"></span>
-                </span>
-                <span> Advanced Filters </span>
-            </router-link>
-        </div>
-    </div>
+    <simple-filters v-if="mode == 'simple'"
+        v-model="simpleFilters"></simple-filters>
+
     <div v-if="items"
         class="mt-5">
 
@@ -225,27 +82,21 @@
 <script>
 import { cleanData, parseSlug } from "@/utils.js";
 import Game from "../models/Game";
-import Genre from "../models/Genre";
-import Platform from "../models/Platform";
+import AdvancedFilters from "./AdvancedFilters";
 import BaseListComponent from "./BaseListComponent";
 import GameRow from "./GameRow";
-import MultiSelectComponent from "./MultiSelectComponent";
 import PaginationComponent from "./PaginationComponent";
-import SearchInput from "./SearchInput";
-import SelectableTagList from "./SelectableTagList";
-import RangeSlider from "./RangeSlider";
+import SimpleFilters from "./SimpleFilters";
 
 let controller = null;
 
 export default {
     mixins: [BaseListComponent],
     components: {
+        AdvancedFilters,
         GameRow,
-        MultiSelectComponent,
         PaginationComponent,
-        SearchInput,
-        SelectableTagList,
-        RangeSlider,
+        SimpleFilters,
     },
     data() {
         return {
@@ -261,36 +112,27 @@ export default {
                 limit: 100,
                 offset: 0,
             },
-            selected: {
+            simpleFilters: {
                 year: null,
                 decade: null,
                 alltime: null,
             },
-            genres: [],
-            platforms: [],
             mode: "simple",
             loading: false,
-            highlight: null,
+            //highlight: null,
             initialized: false,
             showRank: 'alltime',
         };
     },
     async mounted() {
-        this.highlight = this.$route.query.highlight;
-        this.$store.commit("loading", true);
+        //this.highlight = this.$route.query.highlight;
+        this.$store.commit("setLoading", true);
         await this.init();
-        this.$store.commit("loading", false);
+        this.$store.commit("setLoading", false);
     },
     computed: {
-        isFiltered() {
-            if (this.mode == 'simple')
-                return false;
-            else
-                return this.filters.q ||
-                    this.filters.genres.length ||
-                    this.filters.platforms.length ||
-                    this.filters.start != this.minYear ||
-                    this.filters.end != this.maxYear;
+        highlight() {
+            return this.$route.query.highlight;
         },
         cleanedFilters() {
             let filters = Object.assign({}, cleanData(this.filters));
@@ -320,63 +162,24 @@ export default {
             filters.limit = this.pagination.limit;
             filters.offset = this.pagination.offset;
 
-            return new URLSearchParams(filters);
+            return filters;
         },
         prettySlug() {
-            if (this.selected.year)
-                return this.selected.year;
-            else if (this.selected.decade)
-                return this.selected.decade;
+            if (this.simpleFilters?.year)
+                return this.simpleFilters.year;
+            else if (this.simpleFilters?.decade)
+                return this.simpleFilters.decade;
             else
                 return 'All Time';
-        },
-        minYear() {
-            if (this.meta?.games?.years.length)
-                return this.meta.games.years[0]['year'];
-            else
-                return 1970;
-        },
-        maxYear() {
-            return new Date().getFullYear();
         },
     },
     methods: {
         async init() {
-            if (this.$route.params.slug == "search") {
-                this.mode = "advanced";
-            } else {
-                const slug = this.$route.params.slug;
-                let { start, end, type } = parseSlug(slug);
-
-                if (start)
-                    this.filters.start = parseInt(start);
-
-                if (end)
-                    this.filters.end = parseInt(end);
-
-                if (type == 'decade')
-                    this.selected.decade = slug;
-                else if (type == 'year')
-                    this.selected.year = slug;
-
-                this.mode = "simple";
-            }
-
-            let data = await fetch(
-                `${process.env.VUE_APP_API_URL}genres/?limit=999`
-            ).then((resp) => resp.json());
-            this.genres = data.results.map((x) => new Genre(x));
-
-            data = await fetch(
-                `${process.env.VUE_APP_API_URL}platforms/?limit=999`
-            ).then((resp) => resp.json());
-            this.platforms = data.results.map((x) => new Platform(x));
-
             this.filters.start = this.filters.start || this.minYear;
             this.filters.end = this.filters.end || this.maxYear;
 
             this.loadUrlArgs();
-            this.updateTitle();
+            this.loadItems();
 
             setTimeout(() => {
                 this.initialized = true;
@@ -388,7 +191,7 @@ export default {
 
             controller = new AbortController();
 
-            let url = `${process.env.VUE_APP_API_URL}games/?${this.cleanedFilters}`;
+            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.cleanedFilters)}`;
 
             try {
                 let data = await fetch(url, { signal: controller.signal })
@@ -403,12 +206,19 @@ export default {
 
                 setTimeout(() => {
                     let highlightElement = document.getElementById(`game-${this.highlight}`);
-                    if (highlightElement)
+                    if (highlightElement) {
                         highlightElement.scrollIntoView({ behavior: "smooth" });
+
+                        // setTimeout(() => {
+                        //     highlightElement.classList.remove('highlight');
+                        // }, 2000)
+                    }
                 }, 1000)
             }
+
+            //history.pushState(null, document.title, `?${this.cleanedFilters}`);
         },
-        async loadUrlArgs() {
+        loadUrlArgs() {
             let args = this.$route.query || new URL(location.url).searchParams;
 
             if (args.platforms) {
@@ -429,54 +239,18 @@ export default {
 
             if (args.q)
                 this.filters.q = args.q;
-        },
-        clearFilters() {
-            this.filters = {
-                q: null,
-                start: null,
-                end: null,
-                genres: [],
-                platforms: [],
-                genre_option: "L",
-            };
 
-            this.pagination = {
-                limit: 100,
-                offset: 0,
-            }
+            if (args.start)
+                this.filters.start = args.start;
 
-            this.selected = {
-                year: null,
-                decade: null,
-                alltime: null,
-            };
+            if (args.end)
+                this.filters.end = args.end;
 
-            this.filters.start = this.minYear;
-            this.filters.end = this.maxYear;
-
-            if (this.mode == "simple")
-                this.updateUrl({ name: "games-list", params: { slug: "alltime" } });
-            else
-                this.updateUrl({ name: "games-list", params: { slug: "search" } });
-        },
-        updateUrl(route) {
-            let url = this.$router.resolve(route).path;
-            history.pushState(null, document.title, url);
-            this.updateTitle(route);
-        },
-        updateTitle(route) {
-            let slug = (route || this.$route).params.slug;
-            if (slug == 'alltime')
-                slug = "All time";
-            else if (slug == 'search')
-                slug = 'Advanced';
-            else {
-                let slugData = parseSlug(slug);
-                if (slugData.type == 'decade')
-                    slug = slugData.start + 's';
-            }
-
-            this.emitter.emit('title', slug);
+            if (args.start && args.end)
+                if (args.start == args.end)
+                    this.simpleFilters.year = args.start;
+                else
+                    this.simpleFilters.decade = `${args.start}-${args.end.toString().substring(2, 4)}`;
         },
         resetOffset() {
             if (this.initialized)
@@ -484,67 +258,39 @@ export default {
         },
     },
     watch: {
-        "selected.alltime": function (val) {
+        "simpleFilters.alltime": function (val) {
             if (!val)
                 return;
 
             this.showRank = 'alltime';
-            this.selected.decade = null;
-            this.selected.year = null;
             this.filters.start = null;
             this.filters.end = null;
-            this.highlight = null;
-
-            this.updateUrl({
-                name: 'games-list',
-                params: { slug: 'alltime' },
-            })
-            this.resetOffset()
-        },
-        "selected.year": function (val) {
-            if (!val)
-                return;
-
-            this.showRank = 'filtered';
-            this.selected.decade = null;
-            this.selected.alltime = null;
-            this.filters.start = this.selected.year;
-            this.filters.end = this.selected.year;
             //this.highlight = null;
 
-            this.updateUrl({
-                name: 'games-list',
-                params: { slug: this.selected.year.toString() },
-            });
             this.resetOffset()
         },
-        "selected.decade": function (val) {
+        "simpleFilters.year": function (val) {
             if (!val)
                 return;
 
             this.showRank = 'filtered';
-            this.selected.year = null;
-            this.selected.alltime = null;
-            let { start, end } = parseSlug(this.selected.decade);
+            this.filters.start = this.simpleFilters?.year;
+            this.filters.end = this.simpleFilters?.year;
+
+            this.resetOffset()
+        },
+        "simpleFilters.decade": function (val) {
+            if (!val)
+                return;
+
+            this.showRank = 'filtered';
+            let { start, end } = parseSlug(this.simpleFilters.decade);
             this.filters.start = start;
             this.filters.end = end;
-            //this.highlight = null;
 
-            this.updateUrl({
-                name: 'games-list',
-                params: { slug: this.selected.decade.toString() },
-            });
             this.resetOffset()
         },
-        "filters.start": function () {
-            if (this.filters.end < this.filters.start)
-                this.filters.end = this.filters.start;
-        },
-        "filters.end": function () {
-            if (this.filters.start > this.filters.end)
-                this.filters.start = this.filters.end;
-        },
-        selected: {
+        simpleFilters: {
             handler() {
                 this.resetOffset()
             },
@@ -552,20 +298,15 @@ export default {
         },
         filters: {
             handler() {
-                this.resetOffset()
+                this.resetOffset();
             },
             deep: true,
         },
         $route: {
             async handler() {
-                await this.init();
+                this.loadUrlArgs();
             },
         },
     },
 };
 </script>
-
-<style lang="sass" scoped>
-input[type=range]
-    width: 15em
-</style>

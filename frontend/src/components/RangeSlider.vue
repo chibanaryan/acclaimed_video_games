@@ -25,6 +25,7 @@ export default {
         },
         placeholder: String,
     },
+    emits: ['update:modelValue'],
     data() {
         return {
             label: null,

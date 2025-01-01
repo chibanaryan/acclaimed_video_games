@@ -39,7 +39,7 @@
                             <game-search-result :result="result"
                                 class="dropdown-item"></game-search-result>
                         </div>
-                        <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { q: q } }"
+                        <router-link :to="{ name: 'games-list', query: { q: q } }"
                             v-if="results.length"
                             class="dropdown-item">
                             See all results &hellip;
@@ -95,7 +95,7 @@
                     <game-search-result v-for="result in results"
                         :key="result.id"
                         :result="result"></game-search-result>
-                    <router-link :to="{ name: 'games-list', params: { slug: 'search' }, query: { q: q } }"
+                    <router-link :to="{ name: 'games-list', query: { q: q } }"
                         v-if="results.length"
                         class="dropdown-item">
                         See all results &hellip;

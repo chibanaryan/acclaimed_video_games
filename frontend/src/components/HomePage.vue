@@ -16,7 +16,7 @@
                     </router-link>
                 </div>
                 <div class="link">
-                    <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
+                    <router-link :to="{ name: 'games-list' }"
                         class="button">
                         See the full list&hellip;
                     </router-link>
@@ -45,13 +45,12 @@
 </template>
 
 <script>
-import SnippetComponent from './SnippetComponent';
-import PostItem from './PostItem';
-import Post from '../models/Post';
-import Game from '../models/Game';
-import moment from 'moment';
 import { IMAGES } from '@/constants';
-import { getMeta } from '@/utils';
+import moment from 'moment';
+import Game from '../models/Game';
+import Post from '../models/Post';
+import PostItem from './PostItem';
+import SnippetComponent from './SnippetComponent';
 
 export default {
     components: { SnippetComponent, PostItem },
@@ -71,8 +70,8 @@ export default {
             .then(resp => resp.json());
         this.games = data.results.map(x => new Game(x));
 
-        let meta = await getMeta();
-        this.lastUpdate = moment(meta.games.last_update);
+        await this.$store.dispatch('loadMeta');
+        this.lastUpdate = moment(this.$store.state.meta?.games?.last_update);
     },
     computed: {
         logoLarge() {

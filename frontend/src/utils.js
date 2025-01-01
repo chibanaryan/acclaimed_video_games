@@ -60,14 +60,14 @@ const parseSlug = (slug) => {
     return { start, end, type };
 }
 
-let metadata = null;
+// let metadata = null;
 
-const getMeta = async () => {
-    if (!metadata)
-        metadata = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
-            .then(resp => resp.json());
+// const getMeta = async () => {
+//     if (!metadata)
+//         metadata = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
+//             .then(resp => resp.json());
 
-    return metadata;
-}
+//     return metadata;
+// }
 
-export { snakeToCamel, camelToSnake, cleanData, parseSlug, getMeta };
+export { snakeToCamel, camelToSnake, cleanData, parseSlug };

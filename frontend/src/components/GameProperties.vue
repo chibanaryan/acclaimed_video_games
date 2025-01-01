@@ -3,7 +3,7 @@
         <tr>
             <th>All time rank:</th>
             <td>
-                <router-link :to="getGameRankRoute('alltime', game.rank)">
+                <router-link :to="getGameRankRoute(game.rank)">
                     {{ game.rank }}
                 </router-link>
             </td>
@@ -11,7 +11,7 @@
         <tr>
             <th>{{ game.decade }}s rank:</th>
             <td>
-                <router-link :to="getGameRankRoute(game.decadeSlug, game.decadeRank)">
+                <router-link :to="getGameRankRoute(game.decadeRank)">
                     {{ game.decadeRank }}
                 </router-link>
             </td>
@@ -19,7 +19,7 @@
         <tr>
             <th>{{ game.yearOfRelease }} rank:</th>
             <td>
-                <router-link :to="getGameRankRoute(game.yearOfRelease, game.yearRank)">
+                <router-link :to="getGameRankRoute(game.yearRank)">
                     {{ game.yearRank }}
                 </router-link>
             </td>
@@ -27,8 +27,7 @@
         <tr>
             <th>Developers:</th>
             <td>
-                <router-link
-                    :to="{ name: 'developer-alias-redirect', params: { id: developer.id }, }"
+                <router-link :to="{ name: 'developer-alias-redirect', params: { id: developer.id }, }"
                     v-for="(developer, i) in game.developers"
                     :key="developer.id">
                     {{ developer.name }}<template v-if="i < game.developers.length - 1">, </template>
@@ -38,8 +37,7 @@
         <tr>
             <th>Platforms:</th>
             <td>
-                <router-link
-                    :to="{ name: 'games-list', params: { slug: 'search' }, query: { platforms: platform.id }, }"
+                <router-link :to="{ name: 'games-list', query: { platforms: platform.id }, }"
                     v-for="(platform, i) in game.platforms"
                     :key="platform.id">
                     {{ platform.name }}<template v-if="i < game.platforms.length - 1">, </template>
@@ -49,7 +47,7 @@
         <tr>
             <th>Year of release:</th>
             <td>
-                <router-link :to="{ name: 'games-list', params: { slug: game.yearOfRelease } }">
+                <router-link :to="{ name: 'games-list', query: { start: game.yearOfRelease, end: game.yearOfRelease } }">
                     {{ game.yearOfRelease }}
                 </router-link>
             </td>
@@ -59,8 +57,7 @@
             <td>
                 <router-link :to="{
                     name: 'games-list',
-                    params: { slug: 'search' },
-                    query: { genres: genre.id },
+                    query: { genres: genre.id }
                 }"
                     v-for="(genre, i) in game.genres"
                     :key="genre.id"
@@ -91,12 +88,9 @@
 export default {
     props: ["game"],
     methods: {
-        getGameRankRoute(slug, rank) {
+        getGameRankRoute(rank) {
             return {
                 name: 'games-list',
-                params: {
-                    slug: slug,
-                },
                 query: {
                     limit: 100,
                     offset: parseInt(rank / 100) * 100,

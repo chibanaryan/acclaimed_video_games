@@ -1,9 +1,13 @@
-import { cleanData, getMeta } from "@/utils.js";
+import { cleanData } from "@/utils.js";
 import _ from "lodash";
 
 export default {
     async created() {
-        this.meta = await getMeta();
+        //console.log('Created');
+
+        await this.$store.dispatch('loadMeta');
+        this.meta = this.$store.state.meta;
+
         this._cache.filters = Object.assign({}, this.filters);
         this.loadUrlArgs();
         await this.loadItems();
@@ -34,6 +38,15 @@ export default {
             _cache: {},
         }
     },
+
+    // async beforeRouteEnter(to, from, next) {
+    //     console.log(to, from);
+        
+    //     next(vm => {
+    //         console.log(vm);
+    //     })
+    // },
+
     computed: {
         cleanedFilters() {
             let filters = cleanData(this.filters);
@@ -95,7 +108,7 @@ export default {
             }
             this.filters.order_by = this.sortOrder == 'DESC' ? this.sortField : `-${this.sortField}`
         },
-        async onPageChange(e) {            
+        async onPageChange(e) {
             if (e == 'previous')
                 this.pagination.offset -= parseInt(this.pagination.limit);
             else if (e == 'next')
@@ -104,35 +117,39 @@ export default {
                 Object.assign(this.pagination, e);
 
             // Update the current route's query with the new limit and offset
-            let query = Object.assign({}, this.$route.query);
-            query.limit = this.pagination.limit;
-            query.offset = this.pagination.offset;
-
             let route = this.$route;
-            route.query = query;
+            route.query.limit = this.pagination.limit;
+            route.query.offset = this.pagination.offset;
 
-            // Need to push a dummy route so the next one will register as a change
-            this.$router.push({});
-
-            //console.log(route.params);
-
-            setTimeout(() => {
-                this.$router.replace(route);
-            }, 1);
-
-            // Update the browser URL
-            history.pushState(null, document.title, `?${this.cleanedFilters}`);
-
-            await this.loadItems();
+            this.updateRoute(route);
+            //await this.loadItems();
         },
+        updateRoute(route) {
+            //this.$router.push('/');
+            this.$router.push(route);
+            //console.log(route);
+            
+            history.pushState(null, document.title, `?${new URLSearchParams(route.query)}`);
+        }
     },
     watch: {
         filters: {
             async handler() {
-                history.pushState(null, document.title, `?${this.cleanedFilters}`);
-                await this.loadItems();
+                let route = this.$route;
+                route.query = this.cleanedFilters;
+
+                this.updateRoute(route);
+                //await this.loadItems();
             },
             deep: true
+        },
+        "$route": {
+            handler(val) {
+                console.log(val);
+                
+                this.init();
+            },
+            deep: true,
         },
     }
 };

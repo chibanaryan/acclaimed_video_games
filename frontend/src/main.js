@@ -23,11 +23,11 @@ app.mount('#app');
 
 fetchIntercept.register({
     request: (url, config) => {
-        store.commit('loading', true);
+        store.commit('setLoading', true);
         return [url, config];
     },
     response: (response) => {
-        store.commit('loading', false);
+        store.commit('setLoading', false);
         return response;
     },
 })
