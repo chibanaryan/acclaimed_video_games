@@ -211,8 +211,11 @@ export default {
         modelValue(val) {
             this.filters = val;
         },
-        filters(val) {
-            this.$emit('update:modelValue', val);
+        filters: {
+            handler(val) {
+                this.$emit('update:modelValue', val);
+            }, 
+            deep: true,
         },
         "filters.start": function () {
             if (this.filters.end < this.filters.start)

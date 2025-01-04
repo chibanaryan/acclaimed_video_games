@@ -1,7 +1,7 @@
-import { isObject, isEmpty } from "lodash";
+import { isObject, isEmpty, cloneDeep } from "lodash";
 
 const cleanData = (data) => {
-    let cleaned = Object.assign({}, data);
+    let cleaned = cloneDeep(data);
     Object.keys(cleaned).forEach(key => {
         let val = cleaned[key];
         if (val === null || val == undefined || val.isNaN || (isObject(val) && isEmpty(val))) {
@@ -59,15 +59,5 @@ const parseSlug = (slug) => {
 
     return { start, end, type };
 }
-
-// let metadata = null;
-
-// const getMeta = async () => {
-//     if (!metadata)
-//         metadata = await fetch(`${process.env.VUE_APP_API_URL}meta/`)
-//             .then(resp => resp.json());
-
-//     return metadata;
-// }
 
 export { snakeToCamel, camelToSnake, cleanData, parseSlug };

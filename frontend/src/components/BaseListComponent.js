@@ -1,16 +1,14 @@
 import { cleanData } from "@/utils.js";
-import _ from "lodash";
+import { cloneDeep, isEqual } from "lodash";
+//import PersistentObjectStore from "@/objectStore";
 
 export default {
     async created() {
-        //console.log('Created');
-
+        //this._store = new PersistentObjectStore(this.$route.name);
         await this.$store.dispatch('loadMeta');
         this.meta = this.$store.state.meta;
-
-        this._cache.filters = Object.assign({}, this.filters);
-        this.loadUrlArgs();
-        await this.loadItems();
+        this._cache.filters = cloneDeep(this.filters);
+        await this.init();
     },
     data() {
         return {
@@ -36,19 +34,13 @@ export default {
                 }
             },
             _cache: {},
+            //_store: null,
+            loading: false,
         }
     },
-
-    // async beforeRouteEnter(to, from, next) {
-    //     console.log(to, from);
-        
-    //     next(vm => {
-    //         console.log(vm);
-    //     })
-    // },
-
     computed: {
         cleanedFilters() {
+            //console.log('BaseListComponent cleanedFilters');
             let filters = cleanData(this.filters);
 
             filters.limit = this.pagination.limit;
@@ -63,7 +55,7 @@ export default {
             return this.items.length > 0 && (this.resultsCount > this.pagination.offset + this.items.length);
         },
         isFiltered() {
-            return !(_.isEqual(this.filters, this._cache.filters));
+            return !(isEqual(this.filters, this._cache.filters));
         },
         pageTitle() {
             let start = this.pagination.offset + 1;
@@ -83,8 +75,12 @@ export default {
         },
     },
     methods: {
-        loadUrlArgs() {
-            let args = this.$route.query;
+        async init() {
+            this.loadFilters(this.$route.query);
+            await this.loadItems();
+        },
+        loadFilters(args) {
+            args = args || this.$route.query;
             if (!args)
                 return;
 
@@ -98,7 +94,7 @@ export default {
                 this.filters.q = args.q;
         },
         clearFilters() {
-            this.filters = Object.assign({}, this._cache.filters);
+            this.filters = cloneDeep(this._cache.filters);
         },
         sortBy(field) {
             if (field == this.sortField) {
@@ -109,47 +105,41 @@ export default {
             this.filters.order_by = this.sortOrder == 'DESC' ? this.sortField : `-${this.sortField}`
         },
         async onPageChange(e) {
-            if (e == 'previous')
-                this.pagination.offset -= parseInt(this.pagination.limit);
-            else if (e == 'next')
-                this.pagination.offset += parseInt(this.pagination.limit);
-            else
-                Object.assign(this.pagination, e);
+            Object.assign(this.pagination, e);
 
             // Update the current route's query with the new limit and offset
-            let route = this.$route;
-            route.query.limit = this.pagination.limit;
-            route.query.offset = this.pagination.offset;
+            let route = cloneDeep(this.$route);
+            route.query.offset = e.offset;
 
             this.updateRoute(route);
-            //await this.loadItems();
         },
         updateRoute(route) {
-            //this.$router.push('/');
+            // FIXME The default filters object is being passed here and overriding the correct route query
+
+            // if (!size(route.query) < size(this.$route.query))
+            //     return;
+
+            //console.log(this.$route.query);
+            //console.log(route.query);
+
             this.$router.push(route);
-            //console.log(route);
-            
-            history.pushState(null, document.title, `?${new URLSearchParams(route.query)}`);
+            //history.pushState(null, document.title, `?${new URLSearchParams(route.query)}`);
         }
     },
     watch: {
         filters: {
             async handler() {
-                let route = this.$route;
+                //console.log(JSON.stringify(val));
+                let route = cloneDeep(this.$route);
                 route.query = this.cleanedFilters;
-
                 this.updateRoute(route);
-                //await this.loadItems();
             },
             deep: true
         },
-        "$route": {
-            handler(val) {
-                console.log(val);
-                
+        '$route.query': {
+            handler() {
                 this.init();
             },
-            deep: true,
         },
-    }
+    },
 };

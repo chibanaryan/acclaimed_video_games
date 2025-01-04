@@ -9,7 +9,7 @@
             </router-link>
             <game-search-component class="navbar-item">
             </game-search-component>
-            <router-link :to="{ name: 'games-list', query: { alltime: 1, offset: 0 } }"
+            <router-link :to="{ name: 'games-list', params: { slug: 'alltime' } }"
                 class="navbar-item">
                 Top 1000
             </router-link>

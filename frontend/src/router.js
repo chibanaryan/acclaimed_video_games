@@ -1,4 +1,3 @@
-//import { isEmpty } from 'lodash';
 import { createRouter, createWebHistory } from 'vue-router';
 import DeveloperAliasRedirect from './components/DeveloperAliasRedirect';
 import DeveloperDetail from './components/DeveloperDetail';
@@ -9,6 +8,7 @@ import HomePage from './components/HomePage';
 import ListList from './components/ListList';
 import PageDetail from './components/PageDetail';
 import PostList from './components/PostList';
+import objectStore from "@/objectStore";
 
 const routes = [
     {
@@ -40,7 +40,7 @@ const routes = [
         meta: {}
     },
     {
-        path: '/games/',
+        path: '/games/:slug?/',
         component: GameList,
         name: 'games-list',
         meta: {}
@@ -80,20 +80,13 @@ const router = createRouter({
     routes,
 })
 
-// router.beforeEach((to, from) => {
-//     if (from.name == 'games-list') {
-//         let args = from.query || new URL(location.url).searchParams;
-//         localStorage.gameListArgs = JSON.stringify(args);
-//     } else if (to.name == 'games-list') {
-//         console.log(to);
 
-//         let savedArgs = localStorage.gameListArgs;
-//         if (savedArgs && !to.query.alltime)
-//             to.query = JSON.parse(savedArgs);
-//     }
-
-//     return true;
-// })
-
+router.afterEach((to, from) => {
+    if(to.name != from.name) {
+        if(from.name == 'games-list')
+            objectStore.set('lastQuery', from.query);
+    }
+    
+})
 
 export default router;

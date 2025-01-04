@@ -70,7 +70,7 @@ export default {
     },
     watch: {
         '$route.meta.title': {
-            handler(val) {
+            handler(val) {                
                 this.pageTitle = val;
             }
         }

@@ -11,12 +11,15 @@ import vueGTag from 'vue-gtag';
 const app = Vue.createApp(App);
 app.use(router);
 app.use(store);
-app.use(vueGTag, {
-    config: {
-        id: process.env.VUE_APP_GOOGLE_ANALYTICS_PROPERTY_ID
-    },
-    router,
-});
+
+if (process.env.NODE_ENV == 'production')
+    app.use(vueGTag, {
+        config: {
+            id: process.env.VUE_APP_GOOGLE_ANALYTICS_PROPERTY_ID
+        },
+        router,
+    });
+
 app.config.globalProperties.emitter = mitt();
 
 app.mount('#app');
@@ -31,5 +34,7 @@ fetchIntercept.register({
         return response;
     },
 })
+
+
 
 export default app;

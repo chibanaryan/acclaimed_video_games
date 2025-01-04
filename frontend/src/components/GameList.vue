@@ -87,6 +87,7 @@ import BaseListComponent from "./BaseListComponent";
 import GameRow from "./GameRow";
 import PaginationComponent from "./PaginationComponent";
 import SimpleFilters from "./SimpleFilters";
+import objectStore from "@/objectStore";
 
 let controller = null;
 
@@ -118,16 +119,27 @@ export default {
                 alltime: null,
             },
             mode: "simple",
-            loading: false,
+            //loading: false,
             //highlight: null,
             initialized: false,
             showRank: 'alltime',
+            genres: [],
+            platforms: [],
         };
     },
     async mounted() {
         //this.highlight = this.$route.query.highlight;
         this.$store.commit("setLoading", true);
-        await this.init();
+        //await this.init();
+
+        await this.$store.dispatch('loadGenres');
+        this.genres = this.$store.state.genres;
+
+        await this.$store.dispatch('loadPlatforms');
+        this.platforms = this.$store.state.platforms;
+
+        this.mode = localStorage.gamesListMode || this.mode;
+
         this.$store.commit("setLoading", false);
     },
     computed: {
@@ -135,7 +147,11 @@ export default {
             return this.$route.query.highlight;
         },
         cleanedFilters() {
-            let filters = Object.assign({}, cleanData(this.filters));
+            //console.log('GamesList cleanedFilters');
+            //console.log(JSON.stringify(this.filters));
+            //console.log(JSON.stringify(this.filters));
+
+            let filters = cleanData(this.filters);
 
             if (!filters.start)
                 delete filters.start;
@@ -144,10 +160,10 @@ export default {
                 delete filters.end;
 
             if (filters.genres?.length)
-                filters.genres = filters.genres.map((x) => x.id).join(",");
+                filters.genres = filters.genres.filter(x => x).map((x) => x.id).join(",");
 
             if (filters.platforms?.length)
-                filters.platforms = filters.platforms.map((x) => x.id).join(",");
+                filters.platforms = filters.platforms.filter(x => x).map((x) => x.id).join(",");
 
             if (this.mode == 'simple') {
                 delete filters.genre_option;
@@ -175,14 +191,21 @@ export default {
     },
     methods: {
         async init() {
+            //console.log(this.$route.query);
             this.filters.start = this.filters.start || this.minYear;
             this.filters.end = this.filters.end || this.maxYear;
 
-            this.loadUrlArgs();
-            this.loadItems();
+            this.loadFilters(this.$route.query);
+            await this.loadItems();
+
+            if (objectStore.get('lastQuery')) {
+                this.loadFilters(objectStore.get('lastQuery'));
+                objectStore.set('lastQuery', null);
+            }
 
             setTimeout(() => {
                 this.initialized = true;
+
             }, 1000)
         },
         async loadItems() {
@@ -208,27 +231,21 @@ export default {
                     let highlightElement = document.getElementById(`game-${this.highlight}`);
                     if (highlightElement) {
                         highlightElement.scrollIntoView({ behavior: "smooth" });
-
-                        // setTimeout(() => {
-                        //     highlightElement.classList.remove('highlight');
-                        // }, 2000)
                     }
                 }, 1000)
             }
-
-            //history.pushState(null, document.title, `?${this.cleanedFilters}`);
         },
-        loadUrlArgs() {
-            let args = this.$route.query || new URL(location.url).searchParams;
+        loadFilters(args) {
+            //let args = this.$route.query;// || new URL(location.href).searchParams;
 
             if (args.platforms) {
-                let platformId = parseInt(args.platforms);
-                this.filters.platforms = [this.platforms.find((x) => x.id == platformId)];
+                let ids = args.platforms.split(',').map(x => parseInt(x))
+                this.filters.platforms = this.platforms.filter((x) => ids.includes(x.id));
             }
 
             if (args.genres) {
-                let genreId = parseInt(args.genres);
-                this.filters.genres = [this.genres.find((x) => x.id == genreId)];
+                let ids = args.genres.split(',').map(x => parseInt(x))
+                this.filters.genres = this.genres.filter((x) => ids.includes(x.id));
             }
 
             if (args.limit)
@@ -251,6 +268,9 @@ export default {
                     this.simpleFilters.year = args.start;
                 else
                     this.simpleFilters.decade = `${args.start}-${args.end.toString().substring(2, 4)}`;
+
+            console.log(this.filters);
+
         },
         resetOffset() {
             if (this.initialized)
@@ -265,9 +285,10 @@ export default {
             this.showRank = 'alltime';
             this.filters.start = null;
             this.filters.end = null;
-            //this.highlight = null;
 
-            this.resetOffset()
+            this.$route.params.slug = 'alltime';
+
+            this.resetOffset();
         },
         "simpleFilters.year": function (val) {
             if (!val)
@@ -277,7 +298,9 @@ export default {
             this.filters.start = this.simpleFilters?.year;
             this.filters.end = this.simpleFilters?.year;
 
-            this.resetOffset()
+            this.$route.params.slug = this.simpleFilters.year;
+
+            this.resetOffset();
         },
         "simpleFilters.decade": function (val) {
             if (!val)
@@ -288,11 +311,21 @@ export default {
             this.filters.start = start;
             this.filters.end = end;
 
+            this.$route.params.slug = this.simpleFilters.decade;
+
             this.resetOffset()
+        },
+        mode(val) {
+            if (val == 'advanced')
+                this.$route.params.slug = 'search';
+            else if (val == 'simple')
+                this.$route.params.slug = 'alltime';
+
+            localStorage.gamesListMode = val;
         },
         simpleFilters: {
             handler() {
-                this.resetOffset()
+                this.resetOffset();
             },
             deep: true,
         },
@@ -301,11 +334,6 @@ export default {
                 this.resetOffset();
             },
             deep: true,
-        },
-        $route: {
-            async handler() {
-                this.loadUrlArgs();
-            },
         },
     },
 };

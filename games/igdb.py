@@ -218,4 +218,7 @@ class IgbdApi():
 
 
 def get_api():
-    return IgbdApi(settings.IGDB_CLIENT_ID, settings.IGDB_CLIENT_SECRET)
+    try:
+        return IgbdApi(settings.IGDB_CLIENT_ID, settings.IGDB_CLIENT_SECRET)
+    except:
+        return
