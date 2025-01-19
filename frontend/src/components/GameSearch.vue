@@ -1,19 +1,19 @@
 <template>
     <h1 class="title">
-        Most Acclaimed Games of {{ prettySlug }}
+        {{ pageTitle }} Results
     </h1>
 
-    <router-link :to="{ name: 'games-search' }"
+    <router-link :to="{ name: 'games-list' }"
         class="button is-link is-pulled-right">
         <span class="icon">
-            <span class="mdi mdi-tune-variant"></span>
+            <span class="mdi mdi-form-select"></span>
         </span>
         <span>
-            Advanced Search
+            Basic Search
         </span>
     </router-link>
 
-    <simple-filters v-model="filters"></simple-filters>
+    <advanced-filters v-model="filters"></advanced-filters>
 
     <div v-if="items"
         class="mt-5">
@@ -61,13 +61,14 @@
 </template>
 
 <script>
-import { cleanData, parseSlug } from "@/utils";
+import { objectStore } from "@/objectStore";
+import { cleanData } from "@/utils";
+import { cloneDeep } from "lodash";
 import Game from "../models/Game";
+import AdvancedFilters from "./AdvancedFilters";
 import BaseListComponent from "./BaseListComponent";
 import GameRow from "./GameRow";
 import PaginationComponent from "./PaginationComponent";
-import SimpleFilters from "./SimpleFilters";
-import { objectStore } from "@/objectStore";
 
 let controller = null;
 
@@ -76,7 +77,7 @@ export default {
     components: {
         GameRow,
         PaginationComponent,
-        SimpleFilters,
+        AdvancedFilters,
     },
     data() {
         return {
@@ -91,38 +92,33 @@ export default {
             objectStore: objectStore(this.$route.name),
         };
     },
+    async created() {
+        this.$store.commit("setLoading", true);
+
+        await this.$store.dispatch('loadGenres');
+        this.genres = this.$store.state.genres;
+
+        await this.$store.dispatch('loadPlatforms');
+        this.platforms = this.$store.state.platforms;
+
+        this.$store.commit("setLoading", false);
+    },
     computed: {
-        prettySlug() {
-            if (this.filters?.year)
-                return this.filters.year;
-            else if (this.filters?.decade)
-                return this.filters.decade;
-            else
-                return 'All Time';
-        },
         cleanedFilters() {
-            let filters = {};
-
-            if (this.filters.decade) {
-                let { start, end } = parseSlug(this.filters.decade);
-                filters.start = start;
-                filters.end = end;
-            }
-
-            if (this.filters.year) {
-                filters.start = this.filters.year;
-                filters.end = this.filters.year;
-            }
-
-            filters.limit = this.pagination.limit;
-            filters.offset = this.pagination.offset;
-
-            return filters;
-        },
-        urlArgs() {
             let filters = cleanData(this.filters);
+
+            console.log(filters);
+            
+
+            if (filters.genres?.length)
+                filters.genres = filters.genres.filter(x => x).map((x) => x.id).join(",");
+
+            if (filters.platforms?.length)
+                filters.platforms = filters.platforms.filter(x => x).map((x) => x.id).join(",");
+
             filters.limit = this.pagination.limit;
             filters.offset = this.pagination.offset;
+
             return filters;
         },
     },
@@ -145,7 +141,10 @@ export default {
 
             controller = new AbortController();
 
-            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.cleanedFilters)}`;
+            let args = cloneDeep(this.cleanedFilters);
+            delete args.mode;
+
+            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(args)}`;
 
             try {
                 let data = await fetch(url, { signal: controller.signal })
@@ -164,17 +163,10 @@ export default {
                         highlightElement.scrollIntoView({ behavior: "smooth" });
                     }
                 }, 1000)
+
             }
         },
     },
-    // watch: {
-    //     'filters.decade': function() {
-    //         this.pagination.offset = 0;
-    //     },
-    //     'filters.year': function() {
-    //         this.pagination.offset = 0;
-    //     },
-    // },
     beforeRouteLeave() {
         this.objectStore.set('filters', this.urlArgs);
     },

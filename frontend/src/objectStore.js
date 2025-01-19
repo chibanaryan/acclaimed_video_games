@@ -23,6 +23,8 @@ class PersistentObjectStore {
     }
 }
 
-const objectStore = new PersistentObjectStore('global');
+const globalStore = new PersistentObjectStore('global');
 
-export default objectStore;
+const objectStore = (key) => new PersistentObjectStore(key);
+
+export { globalStore, objectStore };

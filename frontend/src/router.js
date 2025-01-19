@@ -4,11 +4,11 @@ import DeveloperDetail from './components/DeveloperDetail';
 import DeveloperList from './components/DeveloperList';
 import GameDetail from './components/GameDetail';
 import GameList from './components/GameList';
+import GameSearch from './components/GameSearch';
 import HomePage from './components/HomePage';
 import ListList from './components/ListList';
 import PageDetail from './components/PageDetail';
 import PostList from './components/PostList';
-import objectStore from "@/objectStore";
 
 const routes = [
     {
@@ -40,9 +40,15 @@ const routes = [
         meta: {}
     },
     {
-        path: '/games/:slug?/',
+        path: '/games/',
         component: GameList,
         name: 'games-list',
+        meta: {}
+    },
+    {
+        path: '/games/search/',
+        component: GameSearch,
+        name: 'games-search',
         meta: {}
     },
     {
@@ -81,12 +87,12 @@ const router = createRouter({
 })
 
 
-router.afterEach((to, from) => {
-    if(to.name != from.name) {
-        if(from.name == 'games-list')
-            objectStore.set('lastQuery', from.query);
-    }
-    
-})
+// router.afterEach((to, from) => {
+//     if(to.name != from.name) {
+//         if(from.name == 'games-list')
+//             objectStore.set('lastQuery', from.query);
+//     }
+
+// })
 
 export default router;

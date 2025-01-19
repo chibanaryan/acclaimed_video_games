@@ -36,6 +36,10 @@ class GameListView(ListAPIView):
             param='end',
             fields=['year_of_release__lte'],
             coerce=int),
+        # utils.Filter(
+        #     param='year',
+        #     fields=['year_of_release'],
+        #     coerce=int),
     ]
 
     def get_queryset(self):
@@ -71,7 +75,7 @@ class GameListView(ListAPIView):
         order_by = self.request.GET.get('order_by')
         if order_by:
             qs = qs.order_by(order_by)
-            
+
         return qs.distinct()
 
 

@@ -1,10 +1,15 @@
 import { cleanData } from "@/utils.js";
-import { cloneDeep, isEqual } from "lodash";
-//import PersistentObjectStore from "@/objectStore";
+import { cloneDeep, isEmpty, isEqual } from "lodash";
 
 export default {
     async created() {
-        //this._store = new PersistentObjectStore(this.$route.name);
+
+        // window.addEventListener("popstate", (event) => {
+        //     if (event.state?.filters) {
+        //         this.loadFilters(event.state.filters);
+        //     }
+        // });
+
         await this.$store.dispatch('loadMeta');
         this.meta = this.$store.state.meta;
         this._cache.filters = cloneDeep(this.filters);
@@ -34,13 +39,10 @@ export default {
                 }
             },
             _cache: {},
-            //_store: null,
-            loading: false,
         }
     },
     computed: {
         cleanedFilters() {
-            //console.log('BaseListComponent cleanedFilters');
             let filters = cleanData(this.filters);
 
             filters.limit = this.pagination.limit;
@@ -73,6 +75,10 @@ export default {
         loading() {
             return this.$store.state.loading;
         },
+        urlArgs() {
+            // Override this in component if necessary
+            return this.cleanedFilters;
+        },
     },
     methods: {
         async init() {
@@ -80,18 +86,22 @@ export default {
             await this.loadItems();
         },
         loadFilters(args) {
-            args = args || this.$route.query;
-            if (!args)
+            if (isEmpty(args))
                 return;
 
-            if (args.limit)
+            console.log("loadFilters", args);
+            
+            if (args.limit) {
                 this.pagination.limit = parseInt(args.limit);
+                delete args.limit;
+            }
 
-            if (args.offset)
+            if (args.offset) {
                 this.pagination.offset = parseInt(args.offset);
+                delete args.offset;
+            }
 
-            if (args.q)
-                this.filters.q = args.q;
+            Object.assign(this.filters, args);
         },
         clearFilters() {
             this.filters = cloneDeep(this._cache.filters);
@@ -106,33 +116,25 @@ export default {
         },
         async onPageChange(e) {
             Object.assign(this.pagination, e);
-
-            // Update the current route's query with the new limit and offset
-            let route = cloneDeep(this.$route);
-            route.query.offset = e.offset;
-
-            this.updateRoute(route);
+            await this.loadItems();
+            this.updateUrl();
         },
-        updateRoute(route) {
-            // FIXME The default filters object is being passed here and overriding the correct route query
-
-            // if (!size(route.query) < size(this.$route.query))
-            //     return;
-
-            //console.log(this.$route.query);
-            //console.log(route.query);
-
-            this.$router.push(route);
-            //history.pushState(null, document.title, `?${new URLSearchParams(route.query)}`);
-        }
+        updateUrl() {                        
+            history.pushState(
+                {
+                    filters: this.urlArgs,
+                },
+                document.title,
+                `?${new URLSearchParams(this.urlArgs)}`);
+        },
     },
     watch: {
         filters: {
-            async handler() {
-                //console.log(JSON.stringify(val));
-                let route = cloneDeep(this.$route);
-                route.query = this.cleanedFilters;
-                this.updateRoute(route);
+            async handler(val) {
+                this.pagination.offset = 0;
+                console.log('filters changed', val);
+                await this.loadItems();
+                this.updateUrl();
             },
             deep: true
         },

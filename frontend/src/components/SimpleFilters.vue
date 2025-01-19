@@ -2,8 +2,8 @@
     <div v-if="meta.games"
         class="field is-grouped is-grouped-multiline">
         <div class="control">
-            <a @click="filters.alltime = true"
-                class="button is-link">All time </a>
+            <a @click="clearFilters"
+                class="button is-link">All time</a>
         </div>
         <div class="control">
             <div class="select">
@@ -52,40 +52,29 @@ export default {
             filters: {
                 decade: null,
                 year: null,
-                alltime: true,
             },
         }
     },
     computed: {
         isFiltered() {
             return this.filters.decade || this.filters.year;
-        }
+        },
     },
     methods: {
         clearFilters() {
             this.filters.decade = null;
             this.filters.year = null;
-            this.filters.alltime = true;
         }
     },
     watch: {
         modelValue(val) {
             this.filters = val;
         },
-        "filters.alltime": function (val) {
-            if (!val)
-                return;
-
-            this.filters.decade = null;
-            this.filters.year = null;
-            this.$emit('update:modelValue', this.filters);
-        },
         "filters.year": function (val) {
             if (!val)
                 return;
 
             this.filters.decade = null;
-            this.filters.alltime = false;
             this.$emit('update:modelValue', this.filters);
         },
         "filters.decade": function (val) {
@@ -93,7 +82,6 @@ export default {
                 return;
 
             this.filters.year = null;
-            this.filters.alltime = false;
             this.$emit('update:modelValue', this.filters);
         },
     },
