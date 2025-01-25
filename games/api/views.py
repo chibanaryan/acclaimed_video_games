@@ -36,10 +36,6 @@ class GameListView(ListAPIView):
             param='end',
             fields=['year_of_release__lte'],
             coerce=int),
-        # utils.Filter(
-        #     param='year',
-        #     fields=['year_of_release'],
-        #     coerce=int),
     ]
 
     def get_queryset(self):
@@ -58,12 +54,12 @@ class GameListView(ListAPIView):
         genres = self.request.GET.get('genres')
         if genres:
             genres = [int(x) for x in genres.split(',')]
-            if genre_option == 'A':  # Any
+            if genre_option == 'A':     # Any
                 q = Q()
                 for genre in genres:
                     q |= Q(genres=genre)
                 qs = qs.filter(q)
-            elif genre_option == 'L':  # All
+            else:                       # All
                 for genre in genres:
                     qs = qs.filter(genres=genre)
 

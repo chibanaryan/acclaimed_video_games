@@ -247,7 +247,7 @@ class List(models.Model):
     order = models.PositiveIntegerField(unique=True, null=True)
 
     class Meta:
-        ordering = ['order', 'type', 'name']
+        ordering = ['order', 'type', 'publisher', 'year', 'name']
         unique_together = ['publisher', 'name', 'year']
 
     def __str__(self) -> str:

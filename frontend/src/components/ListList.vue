@@ -79,8 +79,6 @@ export default {
     data() {
         return {
             filters: {
-                //limit: 100,
-                //offset: 0,
                 type: null,
                 publisher: null,
                 year: null,
@@ -101,7 +99,7 @@ export default {
     },
     methods: {
         async loadItems() {
-            let data = await fetch(`${process.env.VUE_APP_API_URL}lists/?${this.cleanedFilters}`)
+            let data = await fetch(`${process.env.VUE_APP_API_URL}lists/?${new URLSearchParams(this.cleanedFilters)}`)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new List(x));
             this.resultsCount = data.count;

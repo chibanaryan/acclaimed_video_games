@@ -40,18 +40,12 @@
                 </div>
                 <div class="field ml-3">
                     <div class="control">
-                        <label>
-                            Filtered
-                            <input v-model="showRank"
-                                type="radio"
-                                value="filtered" />
-                        </label>
-                        <label class="ml-2">
-                            All time
-                            <input v-model="showRank"
-                                type="radio"
-                                value="alltime" />
-                        </label>
+                        <div class="select">
+                            <select v-model="filters.rank_display">
+                                <option value="alltime">All time</option>
+                                <option value="filtered">Filtered</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -74,6 +68,7 @@
                     </div>
                     <label class="has-text-weight-bold">Genres</label>
                 </div>
+
                 <select v-model="filters.genres"
                     multiple
                     class="is-hidden-tablet">
@@ -84,17 +79,21 @@
                         {{ genre.name }}
                     </option>
                 </select>
+
                 <div class="is-hidden-mobile">
-                    <selectable-tag-list v-model="filters.genres"></selectable-tag-list>
                     <multi-select-component :items="genres"
                         v-model="filters.genres"></multi-select-component>
+                    <selectable-tag-list v-model="filters.genres"
+                        class="mt-3"></selectable-tag-list>
                 </div>
+
             </div>
             <div v-if="platforms.length"
                 class="column">
                 <div class="p-2">
                     <label class="has-text-weight-bold">Platforms</label>
                 </div>
+
                 <select v-model="filters.platforms"
                     multiple
                     class="is-hidden-tablet">
@@ -105,11 +104,14 @@
                         {{ platform.name }}
                     </option>
                 </select>
+
                 <div class="is-hidden-mobile">
-                    <selectable-tag-list v-model="filters.platforms"></selectable-tag-list>
                     <multi-select-component :items="platforms"
                         v-model="filters.platforms"></multi-select-component>
+                    <selectable-tag-list v-model="filters.platforms"
+                        class="mt-3"></selectable-tag-list>
                 </div>
+
             </div>
         </div>
         <search-input v-model="filters.q"
@@ -146,11 +148,14 @@ export default {
                 end: null,
                 genres: [],
                 platforms: [],
-                genre_option: "L",
+                genre_option: null,
+                rank_display: 'alltime',
             },
         }
     },
     async created() {
+        this.filters = this.modelValue;
+        
         await this.$store.dispatch('loadGenres');
         this.genres = this.$store.state.genres;
 
@@ -208,13 +213,13 @@ export default {
         },
     },
     watch: {
-        modelValue(val) {
+        modelValue(val) {  
             this.filters = val;
         },
         filters: {
             handler(val) {
                 this.$emit('update:modelValue', val);
-            }, 
+            },
             deep: true,
         },
         "filters.start": function () {

@@ -61,13 +61,13 @@
 </template>
 
 <script>
+import { objectStore } from "@/objectStore";
 import { cleanData, parseSlug } from "@/utils";
 import Game from "../models/Game";
 import BaseListComponent from "./BaseListComponent";
 import GameRow from "./GameRow";
 import PaginationComponent from "./PaginationComponent";
 import SimpleFilters from "./SimpleFilters";
-import { objectStore } from "@/objectStore";
 
 let controller = null;
 
@@ -130,11 +130,11 @@ export default {
         async init() {
             let savedFilters = this.objectStore.get('filters');
             if (savedFilters) {
-                this.loadFilters(savedFilters);
+                this.updateFilters(savedFilters);
                 this.objectStore.set('filters', null)
                 this.updateUrl();
             } else {
-                this.loadFilters(this.$route.query);
+                this.updateFilters(this.$route.query);
             }
 
             await this.loadItems();
@@ -167,14 +167,6 @@ export default {
             }
         },
     },
-    // watch: {
-    //     'filters.decade': function() {
-    //         this.pagination.offset = 0;
-    //     },
-    //     'filters.year': function() {
-    //         this.pagination.offset = 0;
-    //     },
-    // },
     beforeRouteLeave() {
         this.objectStore.set('filters', this.urlArgs);
     },

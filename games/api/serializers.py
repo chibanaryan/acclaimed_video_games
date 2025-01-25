@@ -62,7 +62,10 @@ class GameDetailSerializer(GameSummarySerializer):
         fields = game_fields + ['lists']
 
     def get_lists(self, obj):
-        return obj.lists.values(
+        return obj.lists.order_by(
+            'list__publisher__name',
+            'list__year',
+        ).values(
             'rank',
             name=F('list__name'),
             publication=F('list__publisher__name'),

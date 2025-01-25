@@ -48,7 +48,7 @@ export default {
             filters.limit = this.pagination.limit;
             filters.offset = this.pagination.offset;
 
-            return new URLSearchParams(filters);
+            return filters; 
         },
         hasPrev() {
             return this.pagination.offset > 0;
@@ -77,20 +77,18 @@ export default {
         },
         urlArgs() {
             // Override this in component if necessary
-            return this.cleanedFilters;
+            return cloneDeep(this.cleanedFilters);
         },
     },
     methods: {
         async init() {
-            this.loadFilters(this.$route.query);
+            this.updateFilters(this.$route.query);
             await this.loadItems();
         },
-        loadFilters(args) {
+        updateFilters(args) {
             if (isEmpty(args))
                 return;
 
-            console.log("loadFilters", args);
-            
             if (args.limit) {
                 this.pagination.limit = parseInt(args.limit);
                 delete args.limit;
@@ -119,7 +117,7 @@ export default {
             await this.loadItems();
             this.updateUrl();
         },
-        updateUrl() {                        
+        updateUrl() {            
             history.pushState(
                 {
                     filters: this.urlArgs,
@@ -130,9 +128,8 @@ export default {
     },
     watch: {
         filters: {
-            async handler(val) {
+            async handler() {
                 this.pagination.offset = 0;
-                console.log('filters changed', val);
                 await this.loadItems();
                 this.updateUrl();
             },

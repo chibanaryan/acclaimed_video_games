@@ -7,6 +7,7 @@ import GameList from './components/GameList';
 import GameSearch from './components/GameSearch';
 import HomePage from './components/HomePage';
 import ListList from './components/ListList';
+import NotFound from './components/NotFound';
 import PageDetail from './components/PageDetail';
 import PostList from './components/PostList';
 
@@ -79,6 +80,12 @@ const routes = [
             title: 'News',
         }
     },
+    {
+        path: '/:pathMatch(.*)*',
+        component: NotFound,
+        name: 'not-found',
+    },
+
 ]
 
 const router = createRouter({

@@ -22,7 +22,7 @@
 
 <script>
 import { LIST_TYPE_LABELS } from "@/constants";
-import _ from "lodash";
+import { groupBy } from "lodash";
 import Game from '../models/Game';
 import GameProperties from './GameProperties';
 import ListResultsComponent from './ListResultsComponent';
@@ -40,12 +40,12 @@ export default {
     async created() {
         let data = await fetch(`${process.env.VUE_APP_API_URL}games/${this.$route.params.slug}/`)
             .then(resp => resp.json());
-        this.game = new Game(data); 
+        this.game = new Game(data);
         this.emitter.emit('title', this.game.name);
     },
     computed: {
         groupedLists() {
-            let grouped = Object.entries(_.groupBy(this.game.lists, 'type'));
+            let grouped = Object.entries(groupBy(this.game.lists, 'type'));
             grouped = grouped.map(x => {
                 return [LIST_TYPE_LABELS[x[0]], x[1]];
             })
