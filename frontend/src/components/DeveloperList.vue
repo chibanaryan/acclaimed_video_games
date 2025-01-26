@@ -59,7 +59,7 @@ export default {
     components: { PaginationComponent },
     methods: {
         loadItems: _.debounce(async function () {
-            let url = `${process.env.VUE_APP_API_URL}developer-aliases/?${new URLSearchParams(this.cleanedFilters)}`;
+            let url = `${process.env.VUE_APP_API_URL}developer-aliases/?${new URLSearchParams(this.getArgs)}`;
             let data = await fetch(url)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new DeveloperAlias(x));

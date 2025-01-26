@@ -3,13 +3,6 @@ import { cloneDeep, isEmpty, isEqual } from "lodash";
 
 export default {
     async created() {
-
-        // window.addEventListener("popstate", (event) => {
-        //     if (event.state?.filters) {
-        //         this.loadFilters(event.state.filters);
-        //     }
-        // });
-
         await this.$store.dispatch('loadMeta');
         this.meta = this.$store.state.meta;
         this._cache.filters = cloneDeep(this.filters);
@@ -42,13 +35,13 @@ export default {
         }
     },
     computed: {
-        cleanedFilters() {
+        getArgs() {
             let filters = cleanData(this.filters);
 
             filters.limit = this.pagination.limit;
             filters.offset = this.pagination.offset;
 
-            return filters; 
+            return filters;
         },
         hasPrev() {
             return this.pagination.offset > 0;
@@ -75,31 +68,28 @@ export default {
         loading() {
             return this.$store.state.loading;
         },
-        urlArgs() {
-            // Override this in component if necessary
-            return cloneDeep(this.cleanedFilters);
-        },
     },
     methods: {
-        async init() {
+        async init() {            
             this.updateFilters(this.$route.query);
             await this.loadItems();
         },
         updateFilters(args) {
             if (isEmpty(args))
                 return;
-
+                        
             if (args.limit) {
                 this.pagination.limit = parseInt(args.limit);
-                delete args.limit;
+                //delete args.limit;
             }
 
             if (args.offset) {
                 this.pagination.offset = parseInt(args.offset);
-                delete args.offset;
+                //delete args.offset;
             }
 
             Object.assign(this.filters, args);
+
         },
         clearFilters() {
             this.filters = cloneDeep(this._cache.filters);
@@ -117,19 +107,25 @@ export default {
             await this.loadItems();
             this.updateUrl();
         },
-        updateUrl() {            
+        updateUrl(args) {            
             history.pushState(
                 {
-                    filters: this.urlArgs,
+                    filters: args,
                 },
                 document.title,
-                `?${new URLSearchParams(this.urlArgs)}`);
+                `?${new URLSearchParams(args)}`);
         },
     },
     watch: {
         filters: {
-            async handler() {
-                this.pagination.offset = 0;
+            async handler(val) {
+                console.log(val);
+                
+                if (val.stored)
+                    delete val.stored;
+                // else
+                //     this.pagination.offset = 0;
+
                 await this.loadItems();
                 this.updateUrl();
             },

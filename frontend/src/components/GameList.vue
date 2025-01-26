@@ -15,6 +15,25 @@
 
     <simple-filters v-model="filters"></simple-filters>
 
+    <div class="columns">
+        <div class="column">
+            filters
+            <pre>{{ filters }}</pre>
+        </div>
+        <div class="column">
+            getArgs
+            <pre>{{ getArgs }}</pre>
+        </div>
+        <div class="column">
+            pagination
+            <pre>{{ pagination }}</pre>
+        </div>
+        <div class="column">
+            objectStore
+            <pre>{{ objectStore.data }}</pre>
+        </div>
+    </div>
+
     <div v-if="items"
         class="mt-5">
 
@@ -62,12 +81,14 @@
 
 <script>
 import { objectStore } from "@/objectStore";
-import { cleanData, parseSlug } from "@/utils";
+import { parseSlug } from "@/utils";
+import { cloneDeep } from "lodash";
 import Game from "../models/Game";
 import BaseListComponent from "./BaseListComponent";
 import GameRow from "./GameRow";
 import PaginationComponent from "./PaginationComponent";
 import SimpleFilters from "./SimpleFilters";
+
 
 let controller = null;
 
@@ -100,7 +121,7 @@ export default {
             else
                 return 'All Time';
         },
-        cleanedFilters() {
+        getArgs() {
             let filters = {};
 
             if (this.filters.decade) {
@@ -119,20 +140,17 @@ export default {
 
             return filters;
         },
-        urlArgs() {
-            let filters = cleanData(this.filters);
-            filters.limit = this.pagination.limit;
-            filters.offset = this.pagination.offset;
-            return filters;
-        },
     },
     methods: {
         async init() {
             let savedFilters = this.objectStore.get('filters');
+
             if (savedFilters) {
+                this.pagination.limit = savedFilters.limit;
+                this.pagination.offset = savedFilters.offset;
                 this.updateFilters(savedFilters);
-                this.objectStore.set('filters', null)
-                this.updateUrl();
+                //this.objectStore.set('filters', null)
+                this.updateUrl(this.getArgs);
             } else {
                 this.updateFilters(this.$route.query);
             }
@@ -145,7 +163,7 @@ export default {
 
             controller = new AbortController();
 
-            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.cleanedFilters)}`;
+            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.getArgs)}`;
 
             try {
                 let data = await fetch(url, { signal: controller.signal })
@@ -167,8 +185,18 @@ export default {
             }
         },
     },
+    watch: {
+        pagination: {
+            handler(val) {
+                console.log(val);
+            },
+            deep: true
+        },
+    },
     beforeRouteLeave() {
-        this.objectStore.set('filters', this.urlArgs);
+        let savedFilters = cloneDeep(this.getArgs);
+        savedFilters.stored = true;
+        this.objectStore.set('filters', savedFilters);
     },
 }
 </script>

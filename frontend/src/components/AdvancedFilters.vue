@@ -155,7 +155,7 @@ export default {
     },
     async created() {
         this.filters = this.modelValue;
-        
+
         await this.$store.dispatch('loadGenres');
         this.genres = this.$store.state.genres;
 

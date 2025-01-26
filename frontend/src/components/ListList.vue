@@ -99,7 +99,7 @@ export default {
     },
     methods: {
         async loadItems() {
-            let data = await fetch(`${process.env.VUE_APP_API_URL}lists/?${new URLSearchParams(this.cleanedFilters)}`)
+            let data = await fetch(`${process.env.VUE_APP_API_URL}lists/?${new URLSearchParams(this.getArgs)}`)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new List(x));
             this.resultsCount = data.count;

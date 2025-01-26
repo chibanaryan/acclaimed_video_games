@@ -15,20 +15,24 @@
 
     <advanced-filters v-model="filters"></advanced-filters>
 
-    <!-- <div class="columns">
+    <div class="columns">
         <div class="column">
             filters
             <pre>{{ filters }}</pre>
         </div>
         <div class="column">
-            cleanedFilters
-            <pre>{{ cleanedFilters }}</pre>
+            getArgs
+            <pre>{{ getArgs }}</pre>
         </div>
         <div class="column">
-            urlArgs
-            <pre>{{ urlArgs }}</pre>
+            pagination
+            <pre>{{ pagination }}</pre>
         </div>
-    </div> -->
+        <div class="column">
+            objectStore
+            <pre>{{ objectStore.data }}</pre>
+        </div>
+    </div>
 
     <div v-if="items"
         class="mt-5">
@@ -78,7 +82,7 @@
 <script>
 import { objectStore } from "@/objectStore";
 import { cleanData } from "@/utils";
-import { isArray, isEmpty, isString } from "lodash";
+import { cloneDeep, isArray, isEmpty, isString } from "lodash";
 import Game from "../models/Game";
 import AdvancedFilters from "./AdvancedFilters";
 import BaseListComponent from "./BaseListComponent";
@@ -126,8 +130,8 @@ export default {
         this.$store.commit("setLoading", false);
     },
     computed: {
-        /** Convert filters to post data */
-        cleanedFilters() {
+        /** Convert filters to GET args */
+        getArgs() {
             let filters = cleanData(this.filters);
 
             delete filters.rank_display;
@@ -137,21 +141,6 @@ export default {
 
             if (isArray(filters.platforms))
                 filters.platforms = filters.platforms.filter(x => x).map((x) => x.id).join(",");
-
-            filters.limit = this.pagination.limit;
-            filters.offset = this.pagination.offset;
-
-            return filters;
-        },
-        /** Convert filters to URL parameters */
-        urlArgs() {
-            let filters = cleanData(this.filters);
-
-            if (isArray(filters.genres))
-                filters.genres = filters.genres.map((x) => x.id).join(",");
-
-            if (isArray(filters.platforms))
-                filters.platforms = filters.platforms.map((x) => x.id).join(",");
 
             filters.limit = this.pagination.limit;
             filters.offset = this.pagination.offset;
@@ -170,8 +159,8 @@ export default {
             let savedFilters = this.objectStore.get('filters');
             if (savedFilters) {
                 this.updateFilters(savedFilters);
-                this.updateUrl();
-                this.objectStore.set('filters', null)
+                this.updateUrl(this.getArgs);
+                //this.objectStore.set('filters', null)
             } else {
                 this.updateFilters(this.$route.query);
             }
@@ -185,12 +174,12 @@ export default {
 
             if (args.limit) {
                 this.pagination.limit = parseInt(args.limit);
-                delete args.limit;
+                //delete args.limit;
             }
 
             if (args.offset) {
                 this.pagination.offset = parseInt(args.offset);
-                delete args.offset;
+                //delete args.offset;
             }
 
             if (isString(args.genres)) {
@@ -211,7 +200,7 @@ export default {
 
             controller = new AbortController();
 
-            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.cleanedFilters)}`;
+            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.getArgs)}`;
 
             try {
                 let data = await fetch(url, { signal: controller.signal })
@@ -235,7 +224,9 @@ export default {
         },
     },
     beforeRouteLeave() {
-        this.objectStore.set('filters', this.urlArgs);
+        let savedFilters = cloneDeep(this.getArgs);
+        savedFilters.stored = true;
+        this.objectStore.set('filters', savedFilters);
     },
 }
 </script>
