@@ -70,7 +70,7 @@ export default {
     },
     watch: {
         '$route.meta.title': {
-            handler(val) {                
+            handler(val) {
                 this.pageTitle = val;
             }
         }
@@ -178,4 +178,12 @@ a.dropdown-item:hover
 .v-leave-to 
     opacity: 0
 
+#debug
+    position: fixed
+    right: 0
+    top: 0
+    background: rgba(0, 0, 0, 0.5)
+    width: 300px
+    max-height: 100%
+    overflow-y: auto
 </style>

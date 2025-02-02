@@ -11,7 +11,7 @@
         <tr>
             <th>{{ game.decade }}s rank:</th>
             <td>
-                <router-link :to="getGameRankRoute(game.decadeRank)">
+                <router-link :to="getGameRankRoute(game.decadeRank, game.decade, game.decade + 9)">
                     {{ game.decadeRank }}
                 </router-link>
             </td>
@@ -19,7 +19,7 @@
         <tr>
             <th>{{ game.yearOfRelease }} rank:</th>
             <td>
-                <router-link :to="getGameRankRoute(game.yearRank)">
+                <router-link :to="getGameRankRoute(game.yearRank, game.yearOfRelease, game.yearOfRelease)">
                     {{ game.yearRank }}
                 </router-link>
             </td>
@@ -47,7 +47,8 @@
         <tr>
             <th>Year of release:</th>
             <td>
-                <router-link :to="{ name: 'games-list', query: { start: game.yearOfRelease, end: game.yearOfRelease } }">
+                <router-link
+                    :to="{ name: 'games-list', query: { start: game.yearOfRelease, end: game.yearOfRelease } }">
                     {{ game.yearOfRelease }}
                 </router-link>
             </td>
@@ -88,14 +89,23 @@
 export default {
     props: ["game"],
     methods: {
-        getGameRankRoute(rank) {
+        getGameRankRoute(rank, start, end) {
+
+            let query = {
+                limit: 100,
+                offset: parseInt(rank / 100) * 100,
+                highlight: this.game.id,
+            };
+            if (start)
+                query.start = start;
+            if (end)
+                query.end = end;
+
+            console.log(rank, start, end, query);
+
             return {
                 name: 'games-list',
-                query: {
-                    limit: 100,
-                    offset: parseInt(rank / 100) * 100,
-                    highlight: this.game.id,
-                }
+                query,
             }
         }
     }

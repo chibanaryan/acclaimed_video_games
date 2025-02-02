@@ -1,12 +1,12 @@
 <template>
-    <div v-if="meta.games"
+    <div v-if="meta.games && filters"
         class="field is-grouped is-grouped-multiline">
         <div class="control">
             <a @click="clearFilters"
                 class="button is-link">All time</a>
         </div>
         <div class="control">
-            <div class="select">
+            <div class="select" @change="onSelectChange">
                 <select v-model="filters.decade">
                     <option :value="null">Decades</option>
                     <option v-for="decade in meta.games.decades"
@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="control">
-            <div class="select">
+            <div class="select" @change="onSelectChange">
                 <select v-model="filters.year">
                     <option :value="null">Years</option>
                     <option v-for="year in meta.games.years"
@@ -45,7 +45,7 @@
 <script>
 export default {
     props: ['modelValue'],
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'changed'],
     data() {
         return {
             meta: {},
@@ -54,6 +54,11 @@ export default {
                 year: null,
             },
         }
+    },
+    async created() {
+        this.filters = this.modelValue;
+        await this.$store.dispatch('loadMeta');
+        this.meta = this.$store.state.meta;
     },
     computed: {
         isFiltered() {
@@ -64,7 +69,11 @@ export default {
         clearFilters() {
             this.filters.decade = null;
             this.filters.year = null;
-        }
+            this.$emit('changed');
+        },
+        onSelectChange() {
+            this.$emit('changed');
+        },
     },
     watch: {
         modelValue(val) {
@@ -84,12 +93,6 @@ export default {
             this.filters.year = null;
             this.$emit('update:modelValue', this.filters);
         },
-    },
-    async created() {
-        this.filters = this.modelValue;
-
-        await this.$store.dispatch('loadMeta');
-        this.meta = this.$store.state.meta;
     },
 }
 </script>

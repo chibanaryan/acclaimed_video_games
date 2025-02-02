@@ -118,16 +118,9 @@ export default {
     },
     watch: {
         filters: {
-            async handler(val) {
-                console.log(val);
-                
-                if (val.stored)
-                    delete val.stored;
-                // else
-                //     this.pagination.offset = 0;
-
+            async handler() {
                 await this.loadItems();
-                this.updateUrl();
+                this.updateUrl(this.$route.query);
             },
             deep: true
         },
