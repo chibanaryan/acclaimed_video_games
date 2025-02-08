@@ -2,8 +2,28 @@
     <h1 class="title">
         {{ pageTitle }}
     </h1>
+    <div class="buttons is-pulled-right">
+        <a @click="clearFilters"
+            v-if="isFiltered"
+            class="button">
+            <span class="icon">
+                <span class="mdi mdi-close"></span>
+            </span>
+            <span>Clear filters</span>
+        </a>
+        <router-link :to="{ name: 'games-search' }"
+            class="button is-link is-pulled-right">
+            <span class="icon">
+                <span class="mdi mdi-tune-variant">
+                </span>
+            </span>
+            <span>
+                Advanced Search
+            </span>
+        </router-link>
+    </div>
     <simple-filters v-model="filters"
-        @changed="onFormChange"></simple-filters>
+        @change="onFormChange"></simple-filters>
     <div v-if="items"
         class="mt-5">
         <template v-if="!loading">
@@ -81,11 +101,14 @@ export default {
         }
     },
     async created() {
-        await this.$store.dispatch('loadMeta');
+        //await this.$store.dispatch('loadMeta');
         this.updateFilters(this.$route.query);
         await this.loadItems();
     },
     computed: {
+        isFiltered() {
+            return this.filters.decade || this.filters.year;
+        },
         pageTitle() {
             let bits = ['Most Acclaimed Games of'];
 

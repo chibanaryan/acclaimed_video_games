@@ -35,7 +35,7 @@ export default {
             default: true,
         }
     },
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'change'],
     data() {
         return {
             q: null,
@@ -49,10 +49,12 @@ export default {
         if (this.debounceInput)
             qWatcher = debounce(function (val) {
                 this.$emit('update:modelValue', val);
+                this.$emit('change');
             }, 300);
         else
             qWatcher = (val) => {
                 this.$emit('update:modelValue', val);
+                this.$emit('change');
             }
 
         this.$watch('q', qWatcher);

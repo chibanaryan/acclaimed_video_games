@@ -17,7 +17,7 @@
                     <span class="mdi mdi-loading mdi-spin mdi-48px"></span>
                 </div>
                 <router-view class="view"
-                    :key="$route.path"></router-view>
+                    :key="$route"></router-view>
             </div>
         </section>
         <footer>

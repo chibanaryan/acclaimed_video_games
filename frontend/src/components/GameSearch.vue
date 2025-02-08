@@ -1,102 +1,98 @@
 <template>
+    <pre id="debug">
+// getUrlArgs()
+{{ getUrlArgs() }}
+
+// Filters
+{{ filters }}
+    </pre>
     <h1 class="title">
-        {{ pageTitle }} Results
+        <span v-html="pageTitle"></span>
     </h1>
 
-    <router-link :to="{ name: 'games-list' }"
-        class="button is-link is-pulled-right">
-        <span class="icon">
-            <span class="mdi mdi-form-select"></span>
-        </span>
-        <span>
-            Basic Search
-        </span>
-    </router-link>
-
-    <advanced-filters v-model="filters"></advanced-filters>
-
-    <div class="columns">
-        <div class="column">
-            filters
-            <pre>{{ filters }}</pre>
-        </div>
-        <div class="column">
-            getArgs
-            <pre>{{ getArgs }}</pre>
-        </div>
-        <div class="column">
-            pagination
-            <pre>{{ pagination }}</pre>
-        </div>
-        <div class="column">
-            objectStore
-            <pre>{{ objectStore.data }}</pre>
-        </div>
+    <div class="buttons is-pulled-right">
+        <a @click="clearFilters"
+            v-if="isFiltered"
+            class="button">
+            <span class="icon">
+                <span class="mdi mdi-close"></span>
+            </span>
+            <span>Clear filters</span>
+        </a>
+        <router-link :to="{ name: 'games-list' }"
+            class="button is-link is-pulled-right">
+            <span class="icon">
+                <span class="mdi mdi-form-select">
+                </span>
+            </span>
+            <span>
+                Basic Search
+            </span>
+        </router-link>
     </div>
+
+    <advanced-filters v-model="filters"
+        :genres="genres"
+        :platforms="platforms"
+        @change="onFormChange"></advanced-filters>
 
     <div v-if="items"
         class="mt-5">
 
-        <template v-if="!loading">
-            <pagination-component :total="resultsCount"
-                :limit="pagination.limit"
-                :offset="pagination.offset"
-                :show-all-pages="true"
-                @pagechanged="onPageChange"
-                class="is-hidden-mobile">
-            </pagination-component>
+        <pagination-component :total="resultsCount"
+            :limit="pagination.limit"
+            :offset="pagination.offset"
+            :show-all-pages="true"
+            @pagechanged="onPageChange"
+            class="is-hidden-mobile">
+        </pagination-component>
 
-            <pagination-component :total="resultsCount"
-                :limit="pagination.limit"
-                :offset="pagination.offset"
-                @pagechanged="onPageChange"
-                class="is-hidden-tablet">
-            </pagination-component>
+        <pagination-component :total="resultsCount"
+            :limit="pagination.limit"
+            :offset="pagination.offset"
+            @pagechanged="onPageChange"
+            class="is-hidden-tablet">
+        </pagination-component>
 
-            <game-row v-for="(game, index) in items"
-                :index="pagination.offset + index + 1"
-                :key="game.id"
-                :game="game"
-                :highlight="highlight"
-                :show-rank="filters.rank_display"></game-row>
+        <game-row v-for="(game, index) in items"
+            :index="pagination.offset + index + 1"
+            :key="game.id"
+            :game="game"
+            :highlight="highlight"
+            :show-rank="filters.rank_display"></game-row>
 
-            <pagination-component :total="resultsCount"
-                :limit="pagination.limit"
-                :offset="pagination.offset"
-                :show-all-pages="true"
-                @pagechanged="onPageChange"
-                class="mt-5 is-hidden-mobile">
-            </pagination-component>
+        <pagination-component :total="resultsCount"
+            :limit="pagination.limit"
+            :offset="pagination.offset"
+            :show-all-pages="true"
+            @pagechanged="onPageChange"
+            class="mt-5 is-hidden-mobile">
+        </pagination-component>
 
-            <pagination-component :total="resultsCount"
-                :limit="pagination.limit"
-                :offset="pagination.offset"
-                @pagechanged="onPageChange"
-                class="mt-5 is-hidden-tablet">
-            </pagination-component>
+        <pagination-component :total="resultsCount"
+            :limit="pagination.limit"
+            :offset="pagination.offset"
+            @pagechanged="onPageChange"
+            class="mt-5 is-hidden-tablet">
+        </pagination-component>
 
-        </template>
     </div>
 </template>
 
 <script>
-import { objectStore } from "@/objectStore";
-import { cleanData } from "@/utils";
-import { cloneDeep, isArray, isEmpty, isString } from "lodash";
+import { isEmpty, isString } from "lodash";
 import Game from "../models/Game";
-import AdvancedFilters from "./AdvancedFilters";
-import BaseListComponent from "./BaseListComponent";
+import AdvancedFilters from './AdvancedFilters.vue';
 import GameRow from "./GameRow";
 import PaginationComponent from "./PaginationComponent";
 
 let controller = null;
 
 export default {
-    mixins: [BaseListComponent],
     components: {
+        AdvancedFilters,
         GameRow,
         PaginationComponent,
-        AdvancedFilters,
     },
     data() {
         return {
@@ -109,13 +105,15 @@ export default {
                 genre_option: 'L',
                 rank_display: 'alltime',
             },
+            items: [],
             genres: [],
             platforms: [],
             pagination: {
                 limit: 100,
                 offset: 0,
             },
-            objectStore: objectStore(this.$route.name),
+            resultsCount: 0,
+            meta: {},
         };
     },
     async created() {
@@ -127,60 +125,97 @@ export default {
         await this.$store.dispatch('loadPlatforms');
         this.platforms = this.$store.state.platforms;
 
+        await this.$store.dispatch('loadMeta');
+        this.meta = this.$store.state.meta;
+
+        this.updateFilters(this.$route.query);
+        await this.loadItems();
+
         this.$store.commit("setLoading", false);
     },
     computed: {
-        /** Convert filters to GET args */
-        getArgs() {
-            let filters = cleanData(this.filters);
+        minYear() {
+            if (this.meta?.games?.years.length)
+                return this.meta.games.years[0]['year'];
+            else
+                return 1970;
+        },
+        maxYear() {
+            return new Date().getFullYear();
+        },
+        pageTitle() {
+            if (this.$store.state.loading)
+                return "Loading&hellip;";
 
-            delete filters.rank_display;
+            let start = this.pagination.offset + 1;
+            let end = this.pagination.offset + this.pagination.limit;
 
-            if (isArray(filters.genres))
-                filters.genres = filters.genres.filter(x => x).map((x) => x.id).join(",");
+            if (end > this.resultsCount)
+                end = this.resultsCount;
 
-            if (isArray(filters.platforms))
-                filters.platforms = filters.platforms.filter(x => x).map((x) => x.id).join(",");
-
-            filters.limit = this.pagination.limit;
-            filters.offset = this.pagination.offset;
-
-            return filters;
+            return `Showing ${start.toLocaleString()} to ${end.toLocaleString()} of ${this.resultsCount.toLocaleString()} Results`;
+        },
+        isFiltered() {
+            if (!this.filters)
+                return false;
+            else
+                return this.filters.q ||
+                    this.filters.genres.length ||
+                    this.filters.platforms.length ||
+                    this.filters.start != this.minYear ||
+                    this.filters.end != this.maxYear;
         },
     },
     methods: {
-        async init() {
-            await this.$store.dispatch('loadGenres');
-            this.genres = this.$store.state.genres;
+        clearFilters() {
+            this.filters = {
+                q: null,
+                start: null,
+                end: null,
+                genres: [],
+                platforms: [],
+                genre_option: "L",
+            };
 
-            await this.$store.dispatch('loadPlatforms');
-            this.platforms = this.$store.state.platforms;
-
-            let savedFilters = this.objectStore.get('filters');
-            if (savedFilters) {
-                this.updateFilters(savedFilters);
-                this.updateUrl(this.getArgs);
-                //this.objectStore.set('filters', null)
-            } else {
-                this.updateFilters(this.$route.query);
-            }
-
-            await this.loadItems();
+            this.filters.start = this.minYear;
+            this.filters.end = this.maxYear;
+            this.updateUrl();
         },
-        /** Populate filters from URL args or local storage */
+        getUrlArgs() {
+            let args = {};
+            args.start = this.filters.start;
+            args.end = this.filters.end;
+
+            if (this.filters.q)
+                args.q = this.filters.q;
+
+            if (this.filters.genres.length)
+                args.genres = this.filters.genres.filter(x => x).map((x) => x.id).join(",");
+
+            if (this.filters.platforms.length)
+                args.platforms = this.filters.platforms.filter(x => x).map((x) => x.id).join(",");
+
+            args.limit = this.filters.limit;
+            args.offset = this.filters.offset;
+
+            return args;
+        },
         updateFilters(args) {
+
             if (isEmpty(args))
                 return;
 
-            if (args.limit) {
-                this.pagination.limit = parseInt(args.limit);
-                //delete args.limit;
-            }
+            if (args.start)
+                args.start = parseInt(args.start);
 
-            if (args.offset) {
+            if (args.end)
+                args.end = parseInt(args.end);
+
+            if (args.limit)
+                this.pagination.limit = parseInt(args.limit);
+
+            if (args.offset)
                 this.pagination.offset = parseInt(args.offset);
-                //delete args.offset;
-            }
 
             if (isString(args.genres)) {
                 let ids = args.genres.split(',').map(x => parseInt(x));
@@ -194,13 +229,21 @@ export default {
 
             Object.assign(this.filters, args);
         },
+        async updateUrl() {
+            let newRoute = {
+                name: 'games-search',
+                query: this.getUrlArgs(),
+            };
+            this.$router.push(newRoute);
+            await this.loadItems();
+        },
         async loadItems() {
             if (controller)
                 controller.abort();
 
             controller = new AbortController();
 
-            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.getArgs)}`;
+            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.getUrlArgs())}`;
 
             try {
                 let data = await fetch(url, { signal: controller.signal })
@@ -213,20 +256,27 @@ export default {
             } finally {
                 controller = null;
 
-                setTimeout(() => {
-                    let highlightElement = document.getElementById(`game-${this.highlight}`);
-                    if (highlightElement) {
-                        highlightElement.scrollIntoView({ behavior: "smooth" });
-                    }
-                }, 1000)
+                if (this.highlight)
+                    setTimeout(() => {
+                        let highlightElement = document.getElementById(`game-${this.highlight}`);
+                        if (highlightElement) {
+                            highlightElement.scrollIntoView({ behavior: "smooth" });
 
+                            setTimeout(() => {
+                                this.highlight = null;
+                            }, 2000);
+                        }
+                    }, 1000)
             }
         },
-    },
-    beforeRouteLeave() {
-        let savedFilters = cloneDeep(this.getArgs);
-        savedFilters.stored = true;
-        this.objectStore.set('filters', savedFilters);
+        onFormChange() {
+            this.pagination.offset = 0;
+            this.updateUrl();
+        },
+        async onPageChange(e) {
+            Object.assign(this.pagination, e);
+            this.updateUrl();
+        },
     },
 }
 </script>

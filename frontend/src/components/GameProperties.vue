@@ -90,7 +90,6 @@ export default {
     props: ["game"],
     methods: {
         getGameRankRoute(rank, start, end) {
-
             let query = {
                 limit: 100,
                 offset: parseInt(rank / 100) * 100,
@@ -100,8 +99,6 @@ export default {
                 query.start = start;
             if (end)
                 query.end = end;
-
-            console.log(rank, start, end, query);
 
             return {
                 name: 'games-list',

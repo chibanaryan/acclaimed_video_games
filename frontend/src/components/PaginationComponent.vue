@@ -48,7 +48,7 @@ export default {
                 const firstPage = x == 1;
                 const lastPage = x == pages.length;
                 const isCurrent = x == this.currentPage;
-                const distanceFromCurrent = Math.abs(this.currentPage - x);``
+                const distanceFromCurrent = Math.abs(this.currentPage - x); ``
 
                 let minDistance = 2;
                 if (currentPageIsFirstPage || currentPageIsLastPage)

@@ -5,7 +5,7 @@
             <label>
                 <input type="checkbox"
                     v-model="item.selected"
-                    @change="$emit('update:modelValue', selected)">
+                    @change="onInputChange">
                 {{ item.item }}
             </label>
         </div>
@@ -23,7 +23,7 @@ class SelectableItem {
 
 export default {
     props: ['modelValue', 'items'],
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'change'],
     data() {
         return {
             selectableItems: [],
@@ -37,6 +37,12 @@ export default {
             return this.selectableItems.filter(x => x.selected).map(x => x.item);
         }
     },
+    methods: {
+        onInputChange() {
+            this.$emit('change');
+            this.$emit('update:modelValue', this.selected);
+        }
+    },
     watch: {
         modelValue(val) {
             if (!val) {
@@ -48,7 +54,7 @@ export default {
             this.selectableItems.forEach(x => {
                 x.selected = selectedIds.includes(x.item.id);
             })
-        }
+        },
     }
 }
 </script>

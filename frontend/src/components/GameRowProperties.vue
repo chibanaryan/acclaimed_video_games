@@ -29,7 +29,7 @@
         <span v-for="platform, i in game.platforms"
             :key="platform.id"
             class="is-size-6">
-            <router-link :to="{ name: 'games-list', query: { platforms: platform.id } }">
+            <router-link :to="{ name: 'games-search', query: { platforms: platform.id } }">
                 {{ platform.code }}
             </router-link>
             <template v-if="i < (game.platforms.length - 1)">, </template>
@@ -42,7 +42,7 @@
         <span v-for="genre, i in game.genres"
             :key="genre.id"
             class="is-size-6">
-            <router-link :to="{ name: 'games-list', query: { genres: genre.id } }">
+            <router-link :to="{ name: 'games-search', query: { genres: genre.id } }">
                 {{ genre.name }}
             </router-link>
             <template v-if="i < (game.genres.length - 1)">, </template>

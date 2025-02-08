@@ -94,12 +94,4 @@ const router = createRouter({
 })
 
 
-// router.afterEach((to, from) => {
-//     if(to.name != from.name) {
-//         if(from.name == 'games-list')
-//             objectStore.set('lastQuery', from.query);
-//     }
-
-// })
-
 export default router;
