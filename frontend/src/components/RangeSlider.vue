@@ -32,6 +32,10 @@ export default {
             val: null,
         }
     },
+    created() {
+        this.val = this.modelValue;
+        this.label = this.modelValue;
+    },
     methods: {
         handleInput() {
             this.label = this.val;

@@ -1,6 +1,6 @@
 <template>
     <div v-if="meta.games && filters"
-        class="field is-grouped is-grouped-multiline">
+        class="field is-grouped">
         <div class="control">
             <a @click="clearFilters"
                 class="button is-link">All time</a>
@@ -87,3 +87,10 @@ export default {
     },
 }
 </script>
+
+<style lang="css">
+.field.is-grouped>.control:not(:last-child) {
+    margin-bottom: 0;
+    margin-right: 0;
+}
+</style>

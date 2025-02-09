@@ -2,33 +2,28 @@
     <h1 class="title">
         {{ pageTitle }}
     </h1>
-    <div class="buttons is-pulled-right">
-        <a @click="clearFilters"
-            v-if="isFiltered"
-            class="button">
-            <span class="icon">
-                <span class="mdi mdi-close"></span>
+    <router-link :to="{ name: 'games-search' }"
+        class="button is-link is-pulled-right is-hidden-mobile">
+        <span class="icon is-small">
+            <span class="mdi mdi-tune-variant">
             </span>
-            <span>Clear filters</span>
-        </a>
-        <router-link :to="{ name: 'games-search' }"
-            class="button is-link is-pulled-right">
-            <span class="icon">
-                <span class="mdi mdi-tune-variant">
-                </span>
+        </span>
+        <span>
+            Advanced Search
+        </span>
+    </router-link>
+    <router-link :to="{ name: 'games-search' }"
+        class="button is-link is-pulled-right is-hidden-tablet">
+        <span class="icon is-small">
+            <span class="mdi mdi-tune-variant">
             </span>
-            <span>
-                Advanced Search
-            </span>
-        </router-link>
-    </div>
+        </span>
+    </router-link>
     <simple-filters v-model="filters"
         @change="onFormChange"></simple-filters>
     <div v-if="items"
         class="mt-5">
         <template v-if="!loading">
-
-            <!-- Top pagination -->
             <pagination-component :total="resultsCount"
                 :limit="pagination.limit"
                 :offset="pagination.offset"
@@ -42,15 +37,11 @@
                 @pagechanged="onPageChange"
                 class="is-hidden-tablet">
             </pagination-component>
-
-            <!-- Game list-->
             <game-row v-for="(game, index) in items"
                 :index="pagination.offset + index + 1"
                 :key="game.id"
                 :game="game"
                 :highlight="highlight"></game-row>
-
-            <!-- Bottom pagination -->
             <pagination-component :total="resultsCount"
                 :limit="pagination.limit"
                 :offset="pagination.offset"
@@ -62,9 +53,8 @@
                 :limit="pagination.limit"
                 :offset="pagination.offset"
                 @pagechanged="onPageChange"
-                class="is-hidden-tablet">
+                class="is-hidden-tablet mt-3">
             </pagination-component>
-
         </template>
     </div>
 </template>
@@ -101,7 +91,6 @@ export default {
         }
     },
     async created() {
-        //await this.$store.dispatch('loadMeta');
         this.updateFilters(this.$route.query);
         await this.loadItems();
     },
@@ -120,6 +109,16 @@ export default {
                 bits.push('All Time');
 
             return bits.join(' ');
+        },
+        shortPageTitle() {
+            if (this.filters.decade) {
+                let slug = parseSlug(this.filters.decade);
+                return `${slug.start}s`;
+            } else if (this.filters.year) {
+                return this.filters.year;
+            } else {
+                return 'All time';
+            }
         },
         getArgs() {
             let args = {};
@@ -174,6 +173,7 @@ export default {
             };
             this.$router.push(newRoute);
             await this.loadItems();
+            this.emitter.emit('title', this.shortPageTitle);
         },
         async loadItems() {
 

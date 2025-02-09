@@ -1,23 +1,22 @@
 <template>
-    <!-- <pre id="debug">
-// getUrlArgs()
-{{ getUrlArgs() }}
-
-// Filters
-{{ filters }}
-    </pre> -->
     <h1 class="title">
         <span v-html="pageTitle"></span>
     </h1>
-
     <div class="buttons is-pulled-right">
         <a @click="clearFilters"
             v-if="isFiltered"
-            class="button">
+            class="is-hidden-mobile button">
             <span class="icon">
                 <span class="mdi mdi-close"></span>
             </span>
             <span>Clear filters</span>
+        </a>
+        <a @click="clearFilters"
+            v-if="isFiltered"
+            class="is-hidden-tablet button">
+            <span class="icon">
+                <span class="mdi mdi-close"></span>
+            </span>
         </a>
         <router-link :to="{ name: 'games-list' }"
             class="button is-link is-pulled-right">
@@ -30,15 +29,12 @@
             </span>
         </router-link>
     </div>
-
     <advanced-filters v-model="filters"
         :genres="genres"
         :platforms="platforms"
         @change="onFormChange"></advanced-filters>
-
     <div v-if="items"
         class="mt-5">
-
         <pagination-component :total="resultsCount"
             :limit="pagination.limit"
             :offset="pagination.offset"
@@ -46,21 +42,18 @@
             @pagechanged="onPageChange"
             class="is-hidden-mobile">
         </pagination-component>
-
         <pagination-component :total="resultsCount"
             :limit="pagination.limit"
             :offset="pagination.offset"
             @pagechanged="onPageChange"
             class="is-hidden-tablet">
         </pagination-component>
-
         <game-row v-for="(game, index) in items"
             :index="pagination.offset + index + 1"
             :key="game.id"
             :game="game"
             :highlight="highlight"
             :show-rank="filters.rank_display"></game-row>
-
         <pagination-component :total="resultsCount"
             :limit="pagination.limit"
             :offset="pagination.offset"
@@ -68,14 +61,12 @@
             @pagechanged="onPageChange"
             class="mt-5 is-hidden-mobile">
         </pagination-component>
-
         <pagination-component :total="resultsCount"
             :limit="pagination.limit"
             :offset="pagination.offset"
             @pagechanged="onPageChange"
             class="mt-5 is-hidden-tablet">
         </pagination-component>
-
     </div>
 </template>
 
@@ -183,13 +174,16 @@ export default {
         },
         getUrlArgs() {
             let args = {};
-
-            args.start = this.filters.start;
-            args.end = this.filters.end;
             args.rank_display = this.filters.rank_display;
             args.genre_option = this.filters.genre_option;
             args.limit = this.pagination.limit;
             args.offset = this.pagination.offset;
+
+            if (this.filters.start)
+                args.start = this.filters.start;
+
+            if (this.filters.end)
+                args.end = this.filters.end;
 
             if (this.filters.q)
                 args.q = this.filters.q;
@@ -209,9 +203,13 @@ export default {
 
             if (args.start)
                 args.start = parseInt(args.start);
+            else
+                args.start = this.minYear;
 
             if (args.end)
                 args.end = parseInt(args.end);
+            else
+                args.end = this.maxYear;
 
             if (args.limit)
                 this.pagination.limit = parseInt(args.limit);

@@ -16,9 +16,6 @@ const routes = [
         path: '/',
         component: HomePage,
         name: 'home',
-        meta: {
-            title: 'Home',
-        },
     },
     {
         path: '/developer-alias/:id/',
@@ -50,7 +47,9 @@ const routes = [
         path: '/games/search/',
         component: GameSearch,
         name: 'games-search',
-        meta: {}
+        meta: {
+            title: 'Search',
+        },
     },
     {
         path: '/game/:slug/',

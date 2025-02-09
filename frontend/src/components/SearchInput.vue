@@ -7,6 +7,7 @@
                     <span class="mdi mdi-magnify"></span>
                 </span>
                 <input class="input custom-input"
+                    ref="searchinput"
                     v-model="q"
                     @keyup.enter="$emit('change')"
                     :placeholder="placeholder">
@@ -21,7 +22,8 @@
                     </span>
                 </button>
             </div>
-            <div class="control">
+            <div v-if="showSubmitButton"
+                class="control">
                 <button v-if="q"
                     @click="$emit('change')"
                     title="Submit search text"
@@ -41,6 +43,9 @@ export default {
     props: {
         modelValue: String,
         placeholder: String,
+        showSubmitButton: {
+            default: false,
+        },
         debounceInput: {
             default: true,
         }
@@ -58,12 +63,13 @@ export default {
 
         const watchFunc = (val) => {
             this.$emit('update:modelValue', val);
+            //this.$emit('change');
             if (!val)
                 this.clearSearch();
         };
 
         if (this.debounceInput)
-            qWatcher = debounce(watchFunc, 300);
+            qWatcher = debounce(watchFunc, 1000);
         else
             qWatcher = watchFunc;
 
@@ -79,14 +85,10 @@ export default {
     watch: {
         modelValue(val) {
             this.q = val;
+
+            if (val)
+                this.$refs.searchinput.focus();
         }
     }
 }
 </script>
-
-<style lang="sass">
-.is-clear
-    .button
-        border-left: none
-        border-right: none
-</style>

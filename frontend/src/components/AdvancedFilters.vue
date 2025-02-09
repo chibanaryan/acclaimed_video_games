@@ -32,13 +32,20 @@
                 </div>
                 <div class="field ml-3">
                     <div class="control">
-                        <div class="select">
-                            <select v-model="filters.rank_display"
-                                @change="onSelectChange">
-                                <option value="alltime">All time</option>
-                                <option value="filtered">Filtered</option>
-                            </select>
-                        </div>
+                        <label class="radio">
+                            All time
+                            <input v-model="filters.rank_display"
+                                @change="onSelectChange"
+                                type="radio"
+                                value="alltime" />
+                        </label>
+                        <label class="radio">
+                            Filtered
+                            <input v-model="filters.rank_display"
+                                @change="onSelectChange"
+                                type="radio"
+                                value="filtered" />
+                        </label>
                     </div>
                 </div>
             </div>
@@ -117,6 +124,7 @@
         <search-input v-model="filters.q"
             @change="onSelectChange"
             :debounce-input="true"
+            :show-submit-button="true"
             placeholder="Search by name"
             class="is-flex">
         </search-input>
@@ -140,9 +148,6 @@ export default {
     },
     data() {
         return {
-            //meta: {},
-            //genres: [],
-            //platforms: [],
             filters: {
                 q: null,
                 start: null,
@@ -155,17 +160,7 @@ export default {
         }
     },
     async created() {
-        //console.log('created');
-
         this.filters = this.modelValue;
-
-        // await this.$store.dispatch('loadGenres');
-        // await this.$store.dispatch('loadPlatforms');
-        // await this.$store.dispatch('loadMeta');
-
-        // this.genres = this.$store.state.genres;
-        // this.platforms = this.$store.state.platforms;
-        // this.meta = this.$store.state.meta;
     },
     methods: {
         onSelectChange() {
