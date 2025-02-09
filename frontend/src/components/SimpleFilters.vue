@@ -56,6 +56,11 @@ export default {
         onSelectChange() {
             this.$emit('change');
         },
+        clearFilters() {
+            this.filters.decade = null;
+            this.filters.year = null;
+            this.$emit('change');
+        },
     },
     watch: {
         modelValue(val) {

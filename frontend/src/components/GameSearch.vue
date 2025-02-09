@@ -1,11 +1,11 @@
 <template>
-    <pre id="debug">
+    <!-- <pre id="debug">
 // getUrlArgs()
 {{ getUrlArgs() }}
 
 // Filters
 {{ filters }}
-    </pre>
+    </pre> -->
     <h1 class="title">
         <span v-html="pageTitle"></span>
     </h1>
@@ -183,8 +183,13 @@ export default {
         },
         getUrlArgs() {
             let args = {};
+
             args.start = this.filters.start;
             args.end = this.filters.end;
+            args.rank_display = this.filters.rank_display;
+            args.genre_option = this.filters.genre_option;
+            args.limit = this.pagination.limit;
+            args.offset = this.pagination.offset;
 
             if (this.filters.q)
                 args.q = this.filters.q;
@@ -194,9 +199,6 @@ export default {
 
             if (this.filters.platforms.length)
                 args.platforms = this.filters.platforms.filter(x => x).map((x) => x.id).join(",");
-
-            args.limit = this.filters.limit;
-            args.offset = this.filters.offset;
 
             return args;
         },

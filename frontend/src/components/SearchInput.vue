@@ -8,15 +8,25 @@
                 </span>
                 <input class="input custom-input"
                     v-model="q"
+                    @keyup.enter="$emit('change')"
                     :placeholder="placeholder">
             </div>
             <div class="control is-clear">
                 <button v-if="q"
                     @click="clearSearch"
+                    title="Clear search text"
                     class="button">
                     <span class="icon">
                         <span class="mdi mdi-close"></span>
                     </span>
+                </button>
+            </div>
+            <div class="control">
+                <button v-if="q"
+                    @click="$emit('change')"
+                    title="Submit search text"
+                    class="button">
+                    Submit
                 </button>
             </div>
         </div>
@@ -46,22 +56,24 @@ export default {
 
         let qWatcher = null;
 
+        const watchFunc = (val) => {
+            this.$emit('update:modelValue', val);
+            if (!val)
+                this.clearSearch();
+        };
+
         if (this.debounceInput)
-            qWatcher = debounce(function (val) {
-                this.$emit('update:modelValue', val);
-                this.$emit('change');
-            }, 300);
+            qWatcher = debounce(watchFunc, 300);
         else
-            qWatcher = (val) => {
-                this.$emit('update:modelValue', val);
-                this.$emit('change');
-            }
+            qWatcher = watchFunc;
 
         this.$watch('q', qWatcher);
     },
     methods: {
         clearSearch() {
             this.q = null;
+            this.$emit('update:modelValue', null);
+            this.$emit('change');
         },
     },
     watch: {
@@ -71,3 +83,10 @@ export default {
     }
 }
 </script>
+
+<style lang="sass">
+.is-clear
+    .button
+        border-left: none
+        border-right: none
+</style>
