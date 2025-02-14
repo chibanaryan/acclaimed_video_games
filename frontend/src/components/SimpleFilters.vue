@@ -1,9 +1,20 @@
 <template>
     <div v-if="meta.games && filters"
         class="field is-grouped">
-        <div class="control">
+        <div class="control is-hidden-mobile">
             <a @click="clearFilters"
-                class="button is-link">All time</a>
+                class="button is-link">
+                <span>All time</span>
+            </a>
+        </div>
+        <div v-if="isFiltered"
+            class="control is-hidden-tablet">
+            <a @click="clearFilters"
+                class="button">
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>
+            </a>
         </div>
         <div class="control">
             <div class="select"
@@ -51,6 +62,11 @@ export default {
         this.filters = this.modelValue;
         await this.$store.dispatch('loadMeta');
         this.meta = this.$store.state.meta;
+    },
+    computed: {
+        isFiltered() {
+            return this.filters.decade || this.filters.year;
+        }
     },
     methods: {
         onSelectChange() {

@@ -1,4 +1,4 @@
-import { objectStore } from "@/objectStore";
+import { globalStore } from "@/objectStore";
 import { cloneDeep, isEmpty, isObject } from "lodash";
 
 const cleanData = (data) => {
@@ -61,11 +61,13 @@ const parseSlug = (slug) => {
     return { start, end, type };
 }
 
-const loadPreviousScrollPosition = (routeName, delay = 500) => {
-    const scrollY = objectStore(routeName).get('scrollY');
+const loadPreviousScrollPosition = (delay = 500) => {
+    const scrollY = globalStore.get('scrollY');
+    console.log(scrollY);
     if (scrollY)
         setTimeout(() => {
             window.scroll(0, scrollY);
+            globalStore.set('scrollY', null)
         }, delay);
 }
 

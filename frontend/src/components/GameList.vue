@@ -2,25 +2,30 @@
     <h1 class="title">
         {{ pageTitle }}
     </h1>
-    <router-link :to="{ name: 'games-search' }"
-        class="button is-link is-pulled-right is-hidden-mobile">
-        <span class="icon is-small">
-            <span class="mdi mdi-tune-variant">
-            </span>
-        </span>
-        <span>
-            Advanced Search
-        </span>
-    </router-link>
-    <router-link :to="{ name: 'games-search' }"
-        class="button is-link is-pulled-right is-hidden-tablet">
-        <span class="icon is-small">
-            <span class="mdi mdi-tune-variant">
-            </span>
-        </span>
-    </router-link>
-    <simple-filters v-model="filters"
-        @change="onFormChange"></simple-filters>
+    <div class="is-clearfix">
+        <simple-filters v-model="filters"
+            @change="onFormChange"
+            class="is-pulled-left"></simple-filters>
+        <div class="is-pulled-right">
+            <router-link :to="{ name: 'games-search' }"
+                class="button is-link is-hidden-mobile">
+                <span class="icon is-small">
+                    <span class="mdi mdi-tune-variant">
+                    </span>
+                </span>
+                <span>
+                    Advanced Search
+                </span>
+            </router-link>
+            <router-link :to="{ name: 'games-search' }"
+                class="button is-link is-hidden-tablet">
+                <span class="icon is-small">
+                    <span class="mdi mdi-tune-variant">
+                    </span>
+                </span>
+            </router-link>
+        </div>
+    </div>
     <div v-if="items"
         class="mt-5">
         <template v-if="!loading">
@@ -93,8 +98,7 @@ export default {
     async created() {
         this.updateFilters(this.$route.query);
         await this.loadItems();
-
-        loadPreviousScrollPosition(this.$route.name)
+        loadPreviousScrollPosition();
     },
     computed: {
         isFiltered() {

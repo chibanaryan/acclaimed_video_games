@@ -29,7 +29,8 @@
                     class="game-name has-text-weight-bold is-size-6 mb-3">
                     {{ game.name }}
                 </router-link>
-                <router-link :to="{ name: 'games-list' }">
+                <router-link
+                    :to="{ name: 'games-list', query: { start: game.yearOfRelease, end: game.yearOfRelease } }">
                     ({{ game.yearOfRelease }})
                 </router-link>
             </div>

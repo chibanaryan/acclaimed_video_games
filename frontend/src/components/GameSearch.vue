@@ -125,7 +125,7 @@ export default {
 
         this.$store.commit("setLoading", false);
 
-        loadPreviousScrollPosition(this.$route.name)
+        loadPreviousScrollPosition();
     },
     computed: {
         minYear() {
@@ -273,8 +273,6 @@ export default {
             }
         },
         onFormChange() {
-            //console.log('onFormChange');
-            
             this.pagination.offset = 0;
             this.updateUrl();
         },

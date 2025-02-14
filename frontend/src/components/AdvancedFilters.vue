@@ -161,8 +161,7 @@ export default {
         this.filters = this.modelValue;
     },
     methods: {
-        onSelectChange(e) {
-            console.log(e);        
+        onSelectChange() {
             this.$emit('change');
         },
     },

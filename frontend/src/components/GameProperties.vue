@@ -37,7 +37,7 @@
         <tr>
             <th>Platforms:</th>
             <td>
-                <router-link :to="{ name: 'games-list', query: { platforms: platform.id }, }"
+                <router-link :to="{ name: 'games-search', query: { platforms: platform.id }, }"
                     v-for="(platform, i) in game.platforms"
                     :key="platform.id">
                     {{ platform.name }}<template v-if="i < game.platforms.length - 1">, </template>
@@ -56,15 +56,11 @@
         <tr>
             <th>Genres:</th>
             <td>
-                <router-link :to="{
-                    name: 'games-list',
-                    query: { genres: genre.id }
-                }"
+                <router-link :to="{ name: 'games-search', query: { genres: genre.id } }"
                     v-for="(genre, i) in game.genres"
-                    :key="genre.id"
-                    href="">
-                    {{ genre.name
-                    }}<template v-if="i < game.genres.length - 1">, </template>
+                    :key="genre.id">
+                    {{ genre.name }}
+                    <template v-if="i < game.genres.length - 1">, </template>
                 </router-link>
             </td>
         </tr>

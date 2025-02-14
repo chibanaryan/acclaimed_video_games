@@ -148,7 +148,7 @@ class Game(models.Model):
             return
 
         data = api.get_game_info_by_id(self.igdb_id, cache_results)
-        self.slug = data.get('slug')
+        self.slug = slugify(data.get('slug'))
         self.igdb_url = data.get('url')
         self.igdb_artwork_id = data.get('cover')
         self.description = '\n\n'.join(
