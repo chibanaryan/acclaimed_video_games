@@ -9,7 +9,7 @@
                 <input class="input custom-input"
                     ref="searchinput"
                     v-model="q"
-                    @keyup.enter="$emit('change')"
+                    @keyup="onTextChanged"
                     :placeholder="placeholder">
             </div>
             <div class="control is-clear">
@@ -46,9 +46,6 @@ export default {
         showSubmitButton: {
             default: false,
         },
-        debounceInput: {
-            default: true,
-        }
     },
     emits: ['update:modelValue', 'change'],
     data() {
@@ -58,28 +55,16 @@ export default {
     },
     created() {
         this.q = this.modelValue;
-
-        let qWatcher = null;
-
-        const watchFunc = (val) => {
-            this.$emit('update:modelValue', val);
-            //this.$emit('change');
-            if (!val)
-                this.clearSearch();
-        };
-
-        if (this.debounceInput)
-            qWatcher = debounce(watchFunc, 1000);
-        else
-            qWatcher = watchFunc;
-
-        this.$watch('q', qWatcher);
     },
     methods: {
+        onTextChanged: debounce(function () {
+            this.$emit('update:modelValue', this.q);
+            this.$emit('change', this.q);
+        }, 200),
         clearSearch() {
             this.q = null;
             this.$emit('update:modelValue', null);
-            this.$emit('change');
+            this.$emit('change', null);
         },
     },
     watch: {

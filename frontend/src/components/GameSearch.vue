@@ -273,6 +273,8 @@ export default {
             }
         },
         onFormChange() {
+            //console.log('onFormChange');
+            
             this.pagination.offset = 0;
             this.updateUrl();
         },

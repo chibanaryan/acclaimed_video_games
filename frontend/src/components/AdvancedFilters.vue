@@ -123,8 +123,6 @@
         </div>
         <search-input v-model="filters.q"
             @change="onSelectChange"
-            :debounce-input="true"
-            :show-submit-button="true"
             placeholder="Search by name"
             class="is-flex">
         </search-input>
@@ -163,7 +161,8 @@ export default {
         this.filters = this.modelValue;
     },
     methods: {
-        onSelectChange() {
+        onSelectChange(e) {
+            console.log(e);        
             this.$emit('change');
         },
     },
