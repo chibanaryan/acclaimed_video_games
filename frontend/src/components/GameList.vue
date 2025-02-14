@@ -60,7 +60,7 @@
 </template>
 
 <script>
-import { parseSlug } from "@/utils";
+import { loadPreviousScrollPosition, parseSlug } from "@/utils";
 import Game from "../models/Game";
 import GameRow from "./GameRow";
 import PaginationComponent from "./PaginationComponent";
@@ -93,6 +93,8 @@ export default {
     async created() {
         this.updateFilters(this.$route.query);
         await this.loadItems();
+
+        loadPreviousScrollPosition(this.$route.name)
     },
     computed: {
         isFiltered() {

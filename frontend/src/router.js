@@ -10,6 +10,7 @@ import ListList from './components/ListList';
 import NotFound from './components/NotFound';
 import PageDetail from './components/PageDetail';
 import PostList from './components/PostList';
+import { objectStore } from './objectStore';
 
 const routes = [
     {
@@ -92,5 +93,11 @@ const router = createRouter({
     routes,
 })
 
+
+router.beforeEach((to, from) => {
+    //console.log(from, to);
+    const fromStore = objectStore(from.name);
+    fromStore.set('scrollY', window.scrollY);
+})
 
 export default router;

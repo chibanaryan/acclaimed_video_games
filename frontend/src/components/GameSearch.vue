@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import { loadPreviousScrollPosition } from "@/utils";
 import { isEmpty, isString } from "lodash";
 import Game from "../models/Game";
 import AdvancedFilters from './AdvancedFilters.vue';
@@ -123,6 +124,8 @@ export default {
         await this.loadItems();
 
         this.$store.commit("setLoading", false);
+
+        loadPreviousScrollPosition(this.$route.name)
     },
     computed: {
         minYear() {

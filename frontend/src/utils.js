@@ -1,4 +1,5 @@
-import { isObject, isEmpty, cloneDeep } from "lodash";
+import { objectStore } from "@/objectStore";
+import { cloneDeep, isEmpty, isObject } from "lodash";
 
 const cleanData = (data) => {
     let cleaned = cloneDeep(data);
@@ -60,4 +61,19 @@ const parseSlug = (slug) => {
     return { start, end, type };
 }
 
-export { snakeToCamel, camelToSnake, cleanData, parseSlug };
+const loadPreviousScrollPosition = (routeName, delay = 500) => {
+    const scrollY = objectStore(routeName).get('scrollY');
+    if (scrollY)
+        setTimeout(() => {
+            window.scroll(0, scrollY);
+        }, delay);
+}
+
+export {
+    camelToSnake,
+    cleanData,
+    loadPreviousScrollPosition,
+    parseSlug,
+    snakeToCamel
+};
+
