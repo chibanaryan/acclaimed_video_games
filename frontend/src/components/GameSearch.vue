@@ -4,7 +4,6 @@
     </h1>
     <div class="buttons is-pulled-right">
         <a @click="clearFilters"
-            v-if="isFiltered"
             class="is-hidden-mobile button">
             <span class="icon">
                 <span class="mdi mdi-close"></span>
@@ -12,7 +11,6 @@
             <span>Clear filters</span>
         </a>
         <a @click="clearFilters"
-            v-if="isFiltered"
             class="is-hidden-tablet button">
             <span class="icon">
                 <span class="mdi mdi-close"></span>
@@ -91,7 +89,7 @@ export default {
             filters: {
                 q: null,
                 start: 1970,
-                end: new Date().getFullYear(),
+                end: new Date().getFullYear() - 1,
                 genres: [],
                 platforms: [],
                 genre_option: 'L',
@@ -120,27 +118,38 @@ export default {
         await this.$store.dispatch('loadMeta');
         this.meta = this.$store.state.meta;
 
+        this.filters.start = this.minYear;
+        this.filters.end = this.maxYear;
+
         this.updateFilters(this.$route.query);
         await this.loadItems();
 
         this.$store.commit("setLoading", false);
 
         loadPreviousScrollPosition();
+
+        this.updateFilters();
     },
     computed: {
-        minYear() {
-            if (this.meta?.games?.years.length)
-                return this.meta.games.years[0]['year'];
+        allYears() {
+            if (this.meta.games)
+                return this.meta.games.years.map(x => x.year);
             else
+                return [];
+        },
+        minYear() {
+            if (!this.allYears.length)
                 return 1970;
+
+            return this.allYears[0];
         },
         maxYear() {
-            return new Date().getFullYear();
+            if (!this.allYears.length)
+                return new Date().getFullYear();
+
+            return this.allYears[this.allYears.length - 1];
         },
         pageTitle() {
-            if (this.$store.state.loading)
-                return "Loading&hellip;";
-
             let start = this.pagination.offset + 1;
             let end = this.pagination.offset + this.pagination.limit;
 

@@ -42,11 +42,15 @@
                 @pagechanged="onPageChange"
                 class="is-hidden-tablet">
             </pagination-component>
+
             <game-row v-for="(game, index) in items"
-                :index="pagination.offset + index + 1"
+                :index="parseInt(pagination.offset) + index + 1"
+                show-rank="filtered"
+                :show-rank-in-details="true"
                 :key="game.id"
                 :game="game"
                 :highlight="highlight"></game-row>
+
             <pagination-component :total="resultsCount"
                 :limit="pagination.limit"
                 :offset="pagination.offset"

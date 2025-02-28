@@ -10,6 +10,7 @@ import ListList from './components/ListList';
 import NotFound from './components/NotFound';
 import PageDetail from './components/PageDetail';
 import PostList from './components/PostList';
+import { DEFAULT_TITLE } from './constants';
 import { globalStore } from './objectStore';
 
 const routes = [
@@ -17,6 +18,9 @@ const routes = [
         path: '/',
         component: HomePage,
         name: 'home',
+        meta: {
+            title: DEFAULT_TITLE,
+        }
     },
     {
         path: '/developer-alias/:id/',
@@ -42,7 +46,9 @@ const routes = [
         path: '/games/',
         component: GameList,
         name: 'games-list',
-        meta: {}
+        meta: {
+            title: DEFAULT_TITLE,
+        }
     },
     {
         path: '/games/search/',

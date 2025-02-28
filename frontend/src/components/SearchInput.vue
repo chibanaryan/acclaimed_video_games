@@ -9,7 +9,7 @@
                 <input class="input custom-input"
                     ref="searchinput"
                     v-model="q"
-                    @keyup="onTextChanged"
+                    @keyup="onKeyUp"
                     :placeholder="placeholder">
             </div>
             <div class="control is-clear">
@@ -37,6 +37,7 @@
 
 
 <script>
+import { objectStore } from "@/objectStore";
 import debounce from "lodash/debounce";
 
 export default {
@@ -51,18 +52,24 @@ export default {
     data() {
         return {
             q: null,
+            store: objectStore(this.$route.name),
         }
     },
-    created() {
+    mounted() {
         this.q = this.modelValue;
+
+        if (this.store.get('inputActive'))
+            this.$refs.searchinput.focus();
     },
     methods: {
-        onTextChanged: debounce(function () {
+        onKeyUp: debounce(function () {
+            this.store.set('inputActive', true);
             this.$emit('update:modelValue', this.q);
             this.$emit('change', this.q);
         }, 200),
         clearSearch() {
             this.q = null;
+            this.store.set('inputActive', false);
             this.$emit('update:modelValue', null);
             this.$emit('change', null);
         },
@@ -70,9 +77,6 @@ export default {
     watch: {
         modelValue(val) {
             this.q = val;
-
-            if (val)
-                this.$refs.searchinput.focus();
         }
     }
 }

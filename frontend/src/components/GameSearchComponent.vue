@@ -158,7 +158,7 @@ export default {
     },
     computed: {
         message() {
-            return this.q?.length <= 1
+            return (!this.q || this.q.length <= 1)
                 ? "Please enter two or more characters"
                 : "No results found";
         }

@@ -63,7 +63,6 @@ const parseSlug = (slug) => {
 
 const loadPreviousScrollPosition = (delay = 500) => {
     const scrollY = globalStore.get('scrollY');
-    console.log(scrollY);
     if (scrollY)
         setTimeout(() => {
             window.scroll(0, scrollY);

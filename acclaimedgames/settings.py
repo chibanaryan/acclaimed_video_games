@@ -3,7 +3,6 @@ from pathlib import Path
 
 import environ
 import sentry_sdk
-from django.contrib import messages
 from sentry_sdk.integrations.django import DjangoIntegration
 
 root = environ.Path(__file__) - 2
@@ -48,9 +47,6 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'django_extensions',
-    # 'debug_toolbar',
-    'crispy_forms',
-    'crispy_bulma',
     'rest_framework',
 
     'games',
@@ -69,7 +65,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.middleware.cache.FetchFromCacheMiddleware",
 ]
@@ -130,16 +125,8 @@ CACHES = {
 
 CACHE_MIDDLEWARE_SECONDS = 60 * 60 
 
-MESSAGE_TAGS = {
-    messages.INFO: "is-primary",
-    messages.ERROR: "is-danger",
-}
-
 IGDB_CLIENT_ID = env('IGDB_CLIENT_ID', default='XXX')
 IGDB_CLIENT_SECRET = env('IGDB_CLIENT_SECRET', default='XXX')
-
-CRISPY_ALLOWED_TEMPLATE_PACKS = ["bulma"]
-CRISPY_TEMPLATE_PACK = "bulma"
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [],
