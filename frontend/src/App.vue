@@ -40,6 +40,7 @@
 
 <script>
 import NavComponent from "./components/NavComponent";
+import { DEFAULT_TITLE } from "@/constants";
 
 export default {
     name: 'App',
@@ -62,10 +63,10 @@ export default {
             return this.$store.state.loading;
         },
         title() {
-            if (this.pageTitle)
-                return `${this.pageTitle} | Acclaimed Video Games`;
+            if (this.pageTitle && this.pageTitle != DEFAULT_TITLE)
+                return `${this.pageTitle} | ${DEFAULT_TITLE}`;
             else
-                return 'Acclaimed Video Games';
+                return DEFAULT_TITLE;
         }
     },
     watch: {

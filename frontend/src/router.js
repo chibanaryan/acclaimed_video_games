@@ -47,7 +47,7 @@ const routes = [
         component: GameList,
         name: 'games-list',
         meta: {
-            title: DEFAULT_TITLE,
+            title: 'All time',
         }
     },
     {

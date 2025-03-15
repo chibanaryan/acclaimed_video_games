@@ -1,17 +1,14 @@
 <template>
     <div :class="{ highlight: game.id == highlight }"
-        class="columns is-hidden-mobile game-row desktop"
-        :id="`game-${game.id}`">
+        class="columns is-hidden-mobile game-row desktop" :id="`game-${game.id}`">
         <div class="column is-narrow">
             <div class="columns">
-                <div v-if="showRank == 'alltime'"
-                    class="column is-narrow">
+                <div v-if="showRank == 'alltime'" class="column is-narrow">
                     <span class="rank">
                         {{ game.rank }}
                     </span>
                 </div>
-                <div v-if="showRank == 'filtered'"
-                    class="column is-narrow">
+                <div v-if="showRank == 'filtered'" class="column is-narrow">
                     <span class="rank">
                         {{ index }}
                     </span>
@@ -34,20 +31,18 @@
                     ({{ game.yearOfRelease }})
                 </router-link>
             </div>
-            <game-row-properties :game="game"
-                :show-rank="showRankInDetails || showRank == 'filtered'"> </game-row-properties>
+            <game-row-properties :game="game" :show-rank="showRankInDetails || showRank == 'filtered'">
+            </game-row-properties>
         </div>
     </div>
     <div class="is-hidden-desktop is-hidden-tablet game-row mobile pb-4">
         <div class="py-3">
             <router-link :to="{ name: 'game-detail', params: { slug: game.slug } }"
                 class="game-name has-text-weight-bold is-size-6">
-                <span v-if="showRank == 'alltime'"
-                    class="rank">
+                <span v-if="showRank == 'alltime'" class="rank">
                     {{ game.rank }}
                 </span>
-                <span v-if="showRank == 'filtered'"
-                    class="rank">
+                <span v-if="showRank == 'filtered'" class="rank">
                     {{ index }}
                 </span>
                 {{ game.name }} </router-link>
@@ -62,8 +57,7 @@
                 </router-link>
             </div>
             <div class="column">
-                <game-row-properties :game="game"
-                    :show-rank="showRankInDetails || showRank == 'filtered'">
+                <game-row-properties :game="game" :show-rank="showRankInDetails || showRank == 'filtered'">
                 </game-row-properties>
             </div>
         </div>
