@@ -45,8 +45,8 @@
 
             <game-row v-for="(game, index) in items"
                 :index="parseInt(pagination.offset) + index + 1"
-                show-rank="filtered"
-                :show-rank-in-details="true"
+                :show-rank="isFiltered ? 'filtered' : 'alltime'"
+                :show-rank-in-details="isFiltered"
                 :key="game.id"
                 :game="game"
                 :highlight="highlight"></game-row>
