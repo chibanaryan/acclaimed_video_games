@@ -193,7 +193,6 @@ export default {
                 controller.abort();
 
             controller = new AbortController();
-
             let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.getArgs)}`;
 
             try {
