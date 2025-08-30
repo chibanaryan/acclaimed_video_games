@@ -39,12 +39,12 @@ export default {
         }
     },
     async created() {
-        let data = await fetch(`${process.env.VUE_APP_API_URL}developers/${this.$route.params.slug}/`)
+        let data = await fetch(`${import.meta.env.VITE_API_URL}developers/${this.$route.params.slug}/`)
             .then(resp => resp.json());
         this.developer = new Developer(data);
         this.developer.aliases.forEach(x => x.selected = true);
 
-        data = await fetch(`${process.env.VUE_APP_API_URL}games/?developer=${this.developer.id}&order_by=year_of_release`)
+        data = await fetch(`${import.meta.env.VITE_API_URL}games/?developer=${this.developer.id}&order_by=year_of_release`)
             .then(resp => resp.json());
         this.games = data.results.map(x => new Game(x));
 

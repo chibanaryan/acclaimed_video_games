@@ -31,9 +31,17 @@ Activate the virtual environment
 
     source venv\Scripts\activate
 
+Install Python packages (first time only)
+
+    pip install -r requirements.txt
+
 Create the sqlite database (first time only)
 
     python manage.py migrate
+
+Create a local user account (first time only)
+
+    python manage.py createsuperuser
 
 Run Django development server
 

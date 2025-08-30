@@ -125,7 +125,7 @@ export default {
     },
     methods: {
         loadResults: _.debounce(async function () {
-            let url = `${process.env.VUE_APP_API_URL}games/?q=${this.q}&limit=5&order_by=rank`;
+            let url = `${import.meta.env.VITE_API_URL}games/?q=${this.q}&limit=5&order_by=rank`;
             let data = await fetch(url)
                 .then(resp => resp.json());
             this.results = data.results.map(x => new Game(x));

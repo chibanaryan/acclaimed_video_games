@@ -62,11 +62,11 @@ export default {
         }
     },
     async created() {
-        let data = await fetch(`${process.env.VUE_APP_API_URL}posts/?limit=5`)
+        let data = await fetch(`${import.meta.env.VITE_API_URL}posts/?limit=5`)
             .then(resp => resp.json());
         this.posts = data.results.map(x => new Post(x));
 
-        data = await fetch(`${process.env.VUE_APP_API_URL}games/?limit=10`)
+        data = await fetch(`${import.meta.env.VITE_API_URL}games/?limit=10`)
             .then(resp => resp.json());
         this.games = data.results.map(x => new Game(x));
 

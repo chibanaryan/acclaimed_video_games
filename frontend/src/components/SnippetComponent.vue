@@ -11,7 +11,7 @@ export default {
         }
     },
     async created() {
-        this.snippet = await fetch(`${process.env.VUE_APP_API_URL}snippets/${this.slug}/`)
+        this.snippet = await fetch(`${import.meta.env.VITE_API_URL}snippets/${this.slug}/`)
             .then(resp => resp.json());
     }
 }

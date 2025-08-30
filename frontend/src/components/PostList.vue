@@ -56,7 +56,7 @@ export default {
     components: { PostItem },
     methods: {
         async loadItems() {
-            let data = await fetch(`${process.env.VUE_APP_API_URL}posts/?${new URLSearchParams(this.getArgs)}`)
+            let data = await fetch(`${import.meta.env.VITE_API_URL}posts/?${new URLSearchParams(this.getArgs)}`)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new Post(x));
             this.resultsCount = data.count;

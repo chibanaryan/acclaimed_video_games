@@ -12,10 +12,10 @@ const app = Vue.createApp(App);
 app.use(router);
 app.use(store);
 
-if (process.env.NODE_ENV == 'production')
+if (import.meta.env.NODE_ENV == 'production')
     app.use(vueGTag, {
         config: {
-            id: process.env.VUE_APP_GOOGLE_ANALYTICS_PROPERTY_ID
+            id: import.meta.env.VITE_GOOGLE_ANALYTICS_PROPERTY_ID
         },
         router,
     });

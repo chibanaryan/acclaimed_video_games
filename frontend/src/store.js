@@ -18,7 +18,7 @@ const store = createStore({
                 return;
 
             let data = await fetch(
-                `${process.env.VUE_APP_API_URL}genres/?limit=999`
+                `${import.meta.env.VITE_API_URL}genres/?limit=999`
             ).then((resp) => resp.json());
 
             commit('setGenres', data.results.map((x) => new Genre(x)));
@@ -28,7 +28,7 @@ const store = createStore({
                 return;
 
             let data = await fetch(
-                `${process.env.VUE_APP_API_URL}platforms/?limit=999`
+                `${import.meta.env.VITE_API_URL}platforms/?limit=999`
             ).then((resp) => resp.json());
 
             commit('setPlatforms', data.results.map((x) => new Platform(x)));
@@ -38,7 +38,7 @@ const store = createStore({
                 return;
 
             let data = await fetch(
-                `${process.env.VUE_APP_API_URL}meta/`
+                `${import.meta.env.VITE_API_URL}meta/`
             ).then((resp) => resp.json());
 
             commit('setMeta', data);

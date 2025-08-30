@@ -193,7 +193,7 @@ export default {
                 controller.abort();
 
             controller = new AbortController();
-            let url = `${process.env.VUE_APP_API_URL}games/?${new URLSearchParams(this.getArgs)}`;
+            let url = `${import.meta.env.VITE_API_URL}games/?${new URLSearchParams(this.getArgs)}`;
 
             try {
                 let data = await fetch(url, { signal: controller.signal })
