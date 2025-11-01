@@ -12,7 +12,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('import/', views.ImportView.as_view(), name='import'),
     path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
-    path('__debug__/', include('debug_toolbar.urls')),
+    #path('__debug__/', include('debug_toolbar.urls')),
     
     # All other urls should get directed to the SPA
     re_path('.*', TemplateView.as_view(template_name='index.html')),

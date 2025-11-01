@@ -187,4 +187,5 @@ a.dropdown-item:hover
     width: 300px
     max-height: 100%
     overflow-y: auto
+    
 </style>

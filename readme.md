@@ -49,7 +49,7 @@ Run Django development server
 
 ### Web frontend
 
-Install Javascript dependencies (first time only)
+Install JavaScript dependencies (first time only)
 
     cd frontend
     npm install
@@ -59,6 +59,19 @@ Run Vue.js development server
     npm run dev
 
 ## Deploy New Version of Website
+
+Firstly build the frontend JavaScript app
+
+    cd frontend
+    npm run build
+
+Copy static files
+
+    python manage.py collectstatic
+
+Add the `dist` folder to the repo
+
+    git add dist
 
 To deploy to Heroku, push your local Git repo to the Heroku remote
 
