@@ -2,7 +2,8 @@ from unittest import mock
 
 from django.test import TestCase
 
-from .. import models, utils
+from .. import constants, models, utils
+from django.db import IntegrityError
 
 
 class RankingUtilsTests(TestCase):
@@ -138,3 +139,145 @@ class GameIgdbTests(TestCase):
                 game.get_igdb_data()
 
         self.assertIn("IGDB API unavailable", cm.output[0])
+
+    def test_get_igdb_data_requires_igdb_id(self):
+        game = models.Game.objects.create(name="Sample", rank=1, igdb_id=None)
+        with mock.patch("games.models.api") as api_mock:
+            game.get_igdb_data()
+        api_mock.get_game_info_by_id.assert_not_called()
+
+    def test_get_igdb_data_handles_alias_integrity_error(self):
+        game = models.Game.objects.create(
+            name="Sample", rank=1, igdb_id=555, year_of_release=1990
+        )
+        alias = models.DeveloperAlias.objects.create(
+            developer=models.Developer.objects.create(name="Existing Dev"),
+            name="Existing Alias",
+        )
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": "sample-game",
+            "url": "https://example.com/sample",
+            "cover": "cover_hash",
+            "storyline": "",
+            "summary": "",
+            "genres": [],
+            "developers": [
+                {
+                    "id": 1,
+                    "name": "Existing Alias",
+                    "slug": "existing-alias",
+                    "parent": None,
+                }
+            ],
+        }
+        with mock.patch("games.models.api", fake_api), mock.patch.object(
+            models.DeveloperAlias.objects,
+            "update_or_create",
+            side_effect=IntegrityError,
+        ), mock.patch.object(models.DeveloperAlias.objects, "get", return_value=alias):
+            game.get_igdb_data()
+        self.assertIn(alias, game.developers.all())
+
+
+class ModelHelpersTests(TestCase):
+
+    def test_snippet_str_and_slugify(self):
+        snippet = models.Snippet.objects.create(slug="My Snippet", text="Content")
+        self.assertEqual(str(snippet), "my-snippet")
+
+    def test_platform_str(self):
+        platform = models.Platform.objects.create(code="PC", name="Personal Computer")
+        self.assertEqual(str(platform), "Personal Computer")
+
+    def test_developer_str_and_other_aliases(self):
+        developer = models.Developer.objects.create(name="Studio")
+        alias = models.DeveloperAlias.objects.create(developer=developer, name="Studio")
+        other = models.DeveloperAlias.objects.create(
+            developer=developer, name="Alt Studio"
+        )
+        self.assertEqual(str(developer), "Studio")
+        self.assertEqual(list(developer.other_aliases), [other])
+
+    def test_developer_alias_str_variants(self):
+        developer = models.Developer.objects.create(name="Studio")
+        alias_same = models.DeveloperAlias.objects.create(
+            developer=developer, name="Studio"
+        )
+        alias_other = models.DeveloperAlias.objects.create(
+            developer=developer, name="Studio Alt"
+        )
+        self.assertEqual(str(alias_same), "Studio")
+        self.assertEqual(str(alias_other), "Studio Alt (Studio)")
+
+    def test_genre_str(self):
+        genre = models.Genre.objects.create(name="Action")
+        self.assertEqual(str(genre), "Action")
+
+    @mock.patch("games.utils.get_ranking_for_decade", return_value=5)
+    @mock.patch("games.utils.get_ranking_for_year", return_value=3)
+    def test_game_save_normalizes_name(self, year_mock, decade_mock):
+        game = models.Game.objects.create(
+            name="Álpha", rank=1, igdb_id=10, year_of_release=2000
+        )
+        self.assertEqual(game.name_normalized, "Alpha")
+        self.assertEqual(game.year_rank, 3)
+        self.assertEqual(game.decade_rank, 5)
+
+    @mock.patch("games.models.logger.error")
+    @mock.patch("games.utils.get_ranking_for_decade", side_effect=ValueError("bad"))
+    @mock.patch("games.utils.get_ranking_for_year", side_effect=ValueError("bad"))
+    def test_game_save_logs_errors_when_ranking_fails(
+        self, year_mock, decade_mock, logger_mock
+    ):
+        game = models.Game.objects.create(
+            name="Sample", rank=1, igdb_id=1, year_of_release=2000
+        )
+        logger_mock.assert_called()
+
+    def test_game_thumbnail_and_image(self):
+        game = models.Game.objects.create(
+            name="Art Game",
+            rank=1,
+            igdb_id=20,
+            year_of_release=2001,
+            igdb_artwork_id="art123",
+        )
+        self.assertIn("t_cover_small/art123", game.thumbnail)
+        self.assertIn("t_cover_big/art123", game.image)
+
+    def test_publication_str_and_slug_default(self):
+        publication = models.Publication.objects.create(name="GameSpot")
+        self.assertEqual(str(publication), "GameSpot")
+        self.assertEqual(publication.slug, "gamespot")
+
+    def test_list_str(self):
+        pub = models.Publication.objects.create(name="IGN")
+        lst = models.List.objects.create(
+            publisher=pub,
+            name="Top 10",
+            year=2020,
+            type=constants.LIST_EOY,
+            order=1,
+        )
+        self.assertEqual(str(lst), "Top 10")
+
+    def test_list_membership_str(self):
+        pub = models.Publication.objects.create(name="IGN")
+        lst = models.List.objects.create(
+            publisher=pub,
+            name="Top 10",
+            year=2020,
+            type=constants.LIST_EOY,
+            order=1,
+        )
+        game = models.Game.objects.create(
+            name="Alpha", rank=1, igdb_id=5, year_of_release=2000
+        )
+        membership = models.ListMembership.objects.create(list=lst, game=game, rank=1)
+        self.assertEqual(str(membership), "Top 10 - Alpha - 1")
+
+    def test_post_str_and_rendered_text(self):
+        post = models.Post.objects.create(title="", text="**Hello**", active=True)
+        self.assertIn("Hello", str(post))
+        self.assertIn("<strong>Hello</strong>", post.text_rendered)

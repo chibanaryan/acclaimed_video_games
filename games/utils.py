@@ -68,11 +68,12 @@ def delete_existing_data():
             total += count
 
         # Reset id sequences
-        with connection.cursor() as cursor:
-            for model in models_to_delete:
-                cursor.execute(
-                    f"ALTER SEQUENCE {model._meta.db_table}_id_seq RESTART WITH 1;"
-                )
+        if connection.vendor == "postgresql":
+            with connection.cursor() as cursor:
+                for model in models_to_delete:
+                    cursor.execute(
+                        f"ALTER SEQUENCE {model._meta.db_table}_id_seq RESTART WITH 1;"
+                    )
 
     return (True, f"{total} objects deleted")
 

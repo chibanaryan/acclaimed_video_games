@@ -1,7 +1,9 @@
+from django.contrib.flatpages.models import FlatPage
 from django.test import TestCase
 from rest_framework.test import APIClient
 
 from .. import models
+from ..api import serializers
 
 
 class GameListApiTests(TestCase):
@@ -61,6 +63,15 @@ class GameListApiTests(TestCase):
         names = self._get_game_names(developer=str(self.alias.developer.igdb_id))
         self.assertEqual(names, ["Alpha Quest"])
 
+    def test_filter_by_genres_any_option(self):
+        self.game2.genres.add(self.genre_action)
+        names = self._get_game_names(genres=str(self.genre_action.id), genre_option="A")
+        self.assertCountEqual(names, ["Alpha Quest", "Beta Saga"])
+
+    def test_order_by_parameter_applies(self):
+        names = self._get_game_names(order_by="-year_of_release")
+        self.assertEqual(names, ["Beta Saga", "Alpha Quest"])
+
 
 class ApiSmokeTests(TestCase):
 
@@ -82,6 +93,12 @@ class ApiSmokeTests(TestCase):
             rank=1,
             igdb_id=1234,
             year_of_release=2000,
+        )
+        self.alias = models.DeveloperAlias.objects.create(
+            developer=self.developer, name="Studio Alias", igdb_id=200
+        )
+        self.flatpage = FlatPage.objects.create(
+            url="/faq/", title="FAQ", content="**Docs**"
         )
 
     def test_lists_endpoint(self):
@@ -113,6 +130,11 @@ class ApiSmokeTests(TestCase):
         resp = self.client.get("/api/pages/missing/")
         self.assertEqual(resp.status_code, 404)
 
+    def test_page_endpoint_returns_content(self):
+        resp = self.client.get("/api/pages/faq/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["title"], "FAQ")
+
     def test_platforms_endpoint(self):
         resp = self.client.get("/api/platforms/")
         self.assertEqual(resp.status_code, 200)
@@ -122,3 +144,33 @@ class ApiSmokeTests(TestCase):
         resp = self.client.get("/api/genres/")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("results", resp.json())
+
+    def test_developer_alias_search_filters_results(self):
+        resp = self.client.get("/api/developer-aliases/", {"q": "Studio"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertGreaterEqual(resp.json()["count"], 1)
+
+
+class SerializerBehaviorTests(TestCase):
+
+    def test_game_detail_serializer_lists_field(self):
+        publication = models.Publication.objects.create(name="IGN")
+        lst = models.List.objects.create(
+            publisher=publication,
+            name="Top 10",
+            year=2020,
+            type="E",
+            order=1,
+        )
+        game = models.Game.objects.create(
+            name="Sample", rank=1, igdb_id=1010, year_of_release=2020
+        )
+        models.ListMembership.objects.create(list=lst, game=game, rank=1)
+        data = serializers.GameDetailSerializer(game).data
+        self.assertEqual(len(data["lists"]), 1)
+        self.assertEqual(data["lists"][0]["publication"], "IGN")
+
+    def test_page_serializer_renders_markdown(self):
+        page = FlatPage.objects.create(url="/terms/", title="Terms", content="**Hi**")
+        serializer = serializers.PageSerializer(page)
+        self.assertIn("<strong>Hi</strong>", serializer.data["content"])

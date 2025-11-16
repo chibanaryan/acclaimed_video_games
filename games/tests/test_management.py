@@ -22,6 +22,21 @@ class GetIgdbCommandTests(TestCase):
 
         mock_get.assert_called_once_with()
 
+    def test_command_logs_when_game_update_fails(self):
+        game = models.Game.objects.create(
+            name="Broken",
+            rank=3,
+            igdb_id=3,
+            year_of_release=1992,
+        )
+
+        with mock.patch.object(
+            models.Game, "get_igdb_data", side_effect=ValueError("boom")
+        ), mock.patch("builtins.print") as print_mock:
+            call_command("get_igdb")
+
+        print_mock.assert_any_call("boom")
+
 
 class ImportDataRoutingTests(TestCase):
 

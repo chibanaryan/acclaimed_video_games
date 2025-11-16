@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.contrib.flatpages.models import FlatPage
+from django.db import connection
 from django.db.models import Count, Min, Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
@@ -83,10 +84,13 @@ class DeveloperDetailView(RetrieveAPIView):
 class DeveloperAliasListView(ListAPIView):
 
     serializer_class = serializers.DeveloperAliasSerializer
+    search_fields = ["name__icontains"]
+    if connection.vendor == "postgresql":
+        search_fields = ["name__search"] + search_fields
     filters = [
         utils.Filter(
             param="q",
-            fields=["name__search", "name__icontains"],
+            fields=search_fields,
         )
     ]
 

@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from unittest import mock
 
-from games import constants
+from games import constants, views
 
 
 class ImportViewIntegrationTests(TestCase):
@@ -62,3 +62,21 @@ class ImportViewIntegrationTests(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(messages[0].message, "IGDB")
         mock_import.assert_called_once()
+
+    @mock.patch("games.views.utils.import_data", return_value=(False, "Failed"))
+    def test_failed_data_import_sets_error_message(self, mock_import):
+        self.client.login(username="tester", password="pass")
+        response = self.client.post(reverse("import"), {"igdb": True})
+        self.assertEqual(response.status_code, 302)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, "Failed")
+        mock_import.assert_called_once()
+
+    def test_context_contains_import_types(self):
+        factory = RequestFactory()
+        request = factory.get(reverse("import"))
+        view = views.ImportView()
+        view.request = request
+        context = view.get_context_data()
+        self.assertIn("import_types", context)
+        self.assertEqual(context["import_types"], constants.TYPES)

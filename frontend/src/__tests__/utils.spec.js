@@ -20,6 +20,7 @@ describe('utils', () => {
 
     it('parseSlug handles all cases', () => {
         expect(parseSlug('1970-79')).toEqual({ start: 1970, end: 1979, type: 'decade' });
+        expect(parseSlug('2000-09')).toEqual({ start: 2000, end: 2009, type: 'decade' });
         expect(parseSlug('1985')).toEqual({ start: 1985, end: 1985, type: 'year' });
         expect(parseSlug('all-time')).toEqual({ start: undefined, end: undefined, type: 'alltime' });
     });
