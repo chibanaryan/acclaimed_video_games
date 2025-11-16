@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: django-tests
+        name: Run Django test suite
+        entry: scripts/run_tests.sh
+        language: system
+        pass_filenames: false

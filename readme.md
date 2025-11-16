@@ -78,6 +78,23 @@ To deploy to Heroku, push your local Git repo to the Heroku remote
     git commit -av -m "Some changes"
     git push heroku master
 
+## Pre-commit Hooks
+
+This repo uses [pre-commit](https://pre-commit.com/) to ensure the Django test
+suite (`games/tests.py`) runs before every commit.
+
+1. Install the tool (usually once per machine):
+
+        pip install pre-commit
+
+2. From the project root, enable the hooks:
+
+        pre-commit install
+
+With that in place, `scripts/run_tests.sh` executes automatically and blocks a
+commit if the tests fail. Make sure your virtualenv is set up and dependencies
+installed before running `pre-commit install`.
+
 ## Import New Data
 
 1. Browse to `/import/`
@@ -96,4 +113,3 @@ Run the `get_igdb` command to import the data from IGDB (this will take some tim
 To run it on the remote Heroku server
 
     heroku run python manage.py get_igdb
-
