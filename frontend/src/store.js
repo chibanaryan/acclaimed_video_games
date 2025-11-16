@@ -37,11 +37,21 @@ const store = createStore({
             if (!isEmpty(state.meta))
                 return;
 
-            let data = await fetch(
-                `${import.meta.env.VITE_API_URL}meta/`
-            ).then((resp) => resp.json());
+            try {
+                let data = await fetch(
+                    `${import.meta.env.VITE_API_URL}meta/`
+                ).then((resp) => {
+                    if (!resp.ok)
+                        throw new Error(`Meta request failed: ${resp.status}`);
+                    return resp.json();
+                });
 
-            commit('setMeta', data);
+                commit('setMeta', data);
+            } catch (err) {
+                console.error('Unable to load metadata', err);
+                commit('setMeta', {});
+                throw err;
+            }
         },
     },
     mutations: {
