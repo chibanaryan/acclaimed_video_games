@@ -26,10 +26,7 @@
             </router-link>
         </div>
     </div>
-    <div v-if="error" class="notification is-danger mt-5">
-        <p><strong>Error:</strong> {{ error }}</p>
-    </div>
-    <div v-else-if="items"
+    <div v-if="items"
         class="mt-5">
         <template v-if="!loading">
             <pagination-component :total="resultsCount"
@@ -100,7 +97,6 @@ export default {
             resultsCount: 0,
             items: [],
             loading: false,
-            error: null,
         }
     },
     async created() {
@@ -192,7 +188,6 @@ export default {
         async loadItems() {
 
             this.loading = true;
-            this.error = null;
 
             if (controller)
                 controller.abort();
@@ -201,28 +196,17 @@ export default {
             let url = `${import.meta.env.VITE_API_URL}games/?${new URLSearchParams(this.getArgs)}`;
 
             try {
-                const response = await fetch(url, { signal: controller.signal });
-
-                if (!response.ok) {
-                    this.error = `Failed to load games (${response.status})`;
-                    return;
-                }
-
-                const data = await response.json();
+                let data = await fetch(url, { signal: controller.signal })
+                    .then((resp) => resp.json());
                 this.items = data.results.map((x) => new Game(x));
                 this.resultsCount = data.count;
             } catch (err) {
-                // Ignore abort errors (user navigated away or initiated new search)
-                if (err.name === 'AbortError') {
-                    return;
-                }
-                console.error('Error loading games:', err);
-                this.error = 'Network error - please check your connection and try again';
+                // Do nothing
             } finally {
                 controller = null;
                 this.loading = false;
 
-                if (this.highlight && !this.error)
+                if (this.highlight)
                     setTimeout(() => {
                         let highlightElement = document.getElementById(`game-${this.highlight}`);
                         if (highlightElement) {

@@ -100,8 +100,6 @@ With that in place:
 
 - Black runs automatically and formats Python code (commits will fail if files
   need reformatting).
-- Flake8 runs immediately afterward to flag lint violations (imports, unused
-  vars, long lines, etc.) so issues are caught before CI.
 - `scripts/run_tests.sh` executes automatically and blocks a commit if the
   Django tests fail.
 - The frontend suite (`cd frontend && npm run test`) runs automatically to catch

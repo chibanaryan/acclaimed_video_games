@@ -207,18 +207,12 @@ class Game(models.Model):
     @property
     def thumbnail(self):
         if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_small/"
-                f"{self.igdb_artwork_id}"
-            )
+            return f"https://images.igdb.com/igdb/image/upload/t_cover_small/{self.igdb_artwork_id}"
 
     @property
     def image(self):
         if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/"
-                f"{self.igdb_artwork_id}"
-            )
+            return f"https://images.igdb.com/igdb/image/upload/t_cover_big/{self.igdb_artwork_id}"
 
 
 class Publication(models.Model):

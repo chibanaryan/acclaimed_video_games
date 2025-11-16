@@ -77,13 +77,15 @@ export default {
         updateFilters(args) {
             if (isEmpty(args))
                 return;
-
+                        
             if (args.limit) {
                 this.pagination.limit = parseInt(args.limit);
+                //delete args.limit;
             }
 
             if (args.offset) {
                 this.pagination.offset = parseInt(args.offset);
+                //delete args.offset;
             }
 
             Object.assign(this.filters, args);

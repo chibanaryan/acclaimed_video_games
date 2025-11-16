@@ -1,3 +1,4 @@
+from io import BytesIO
 from unittest import mock
 
 from django.core.management import call_command
@@ -9,7 +10,7 @@ from .. import models, utils
 class GetIgdbCommandTests(TestCase):
 
     def test_updates_games_missing_artwork(self):
-        models.Game.objects.create(
+        without_art = models.Game.objects.create(
             name="Needs Art",
             rank=2,
             igdb_id=2,
@@ -22,7 +23,7 @@ class GetIgdbCommandTests(TestCase):
         mock_get.assert_called_once_with()
 
     def test_command_logs_when_game_update_fails(self):
-        models.Game.objects.create(
+        game = models.Game.objects.create(
             name="Broken",
             rank=3,
             igdb_id=3,

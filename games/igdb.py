@@ -1,12 +1,21 @@
 import logging
-from typing import Optional, Dict, Any
 
 import requests
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Genre themes that match our curated genre list
+game_status_map = {
+    0: "released",
+    2: "alpha",
+    3: "beta",
+    4: "early_access",
+    5: "offline",
+    6: "cancelled",
+    7: "rumored",
+    8: "delisted",
+}
+
 genre_themes = [
     "4X (explore, expand, exploit, and exterminate)",
     "Action",
@@ -20,48 +29,26 @@ genre_themes = [
 
 
 class IgbdApi:
-    """
-    Client for interacting with the IGDB (Internet Game Database) API.
 
-    Handles authentication, caching, and data retrieval from IGDB API endpoints.
-    """
+    def __init__(self, client_id, client_secret):
+        self.client_id = client_id
+        self.client_secret = client_secret
 
-    def __init__(self, client_id: str, client_secret: str) -> None:
-        """
-        Initialize the IGDB API client.
-
-        Args:
-            client_id: IGDB API client ID
-            client_secret: IGDB API client secret
-        """
-        self.client_id: str = client_id
-        self.client_secret: str = client_secret
-
-        self.headers: Dict[str, str] = {}
-        self.company_cache: Dict[int, Dict[str, Any]] = {}
-        self.game_cache: Dict[int, Dict[str, Any]] = {}
-        self.genre_cache: Dict[int, str] = {}
-        self.release_date_statuses: Dict[str, int] = {}
-        self.release_dates: Dict[int, Any] = {}
-        self.themes: Dict[int, str] = {}
+        self.headers = {}
+        self.company_cache = {}
+        self.game_cache = {}
+        self.genre_cache = {}
+        self.release_date_statuses = {}
+        self.release_dates = {}
 
         self._get_auth_token()
         self._get_release_statuses()
         self._get_themes()
 
-    def _get_auth_token(self) -> bool:
-        """
-        Authenticate with IGDB API and store access token in headers.
-
-        Returns:
-            bool: True if authentication was successful, False otherwise
-        """
-        token_url = (
-            "https://id.twitch.tv/oauth2/token?"
-            f"client_id={self.client_id}&client_secret={self.client_secret}"
-            "&grant_type=client_credentials"
-        )
-        data = requests.post(token_url).json()
+    def _get_auth_token(self):
+        data = requests.post(
+            f"https://id.twitch.tv/oauth2/token?client_id={self.client_id}&client_secret={self.client_secret}&grant_type=client_credentials"
+        ).json()
 
         if data.get("access_token"):
             self.headers = {
@@ -72,12 +59,7 @@ class IgbdApi:
         else:
             return False
 
-    def _get_themes(self) -> None:
-        """
-        Fetch and cache theme data from IGDB API.
-
-        Themes are stored in self.themes as a dict mapping theme IDs to names.
-        """
+    def _get_themes(self):
         try:
             res = requests.post(
                 "https://api.igdb.com/v4/themes/",
@@ -93,13 +75,7 @@ class IgbdApi:
 
         self.themes = {x["id"]: x["name"] for x in results}
 
-    def _get_release_statuses(self) -> None:
-        """
-        Fetch and cache release date status data from IGDB API.
-
-        Release statuses are stored in self.release_date_statuses as a dict
-        mapping status names to their IDs.
-        """
+    def _get_release_statuses(self):
         try:
             res = requests.post(
                 "https://api.igdb.com/v4/release_date_statuses/",
@@ -115,16 +91,7 @@ class IgbdApi:
 
         self.release_date_statuses = {x["name"]: x["id"] for x in results}
 
-    def _get_cover_by_id(self, cover_id: int) -> Optional[str]:
-        """
-        Fetch cover art filename from IGDB API by cover ID.
-
-        Args:
-            cover_id: IGDB cover ID to fetch
-
-        Returns:
-            Cover filename if successful, None otherwise
-        """
+    def _get_cover_by_id(self, cover_id: int):
         try:
             res = requests.post(
                 "https://api.igdb.com/v4/covers/",
@@ -135,28 +102,15 @@ class IgbdApi:
             results = res.json()
         except Exception as exc:
             logger.warning("Unable to load IGDB cover %s: %s", cover_id, exc)
-            return None
+            return
 
         if len(results) != 1:
             logger.warning("Unexpected cover response for %s: %s", cover_id, results)
-            return None
+            return
 
         return results[0]["url"].split("/")[-1]
 
-    def _get_company_by_id(
-        self, company_id: int, cache_results: bool = True
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Fetch company (developer/publisher) data from IGDB API by company ID.
-
-        Args:
-            company_id: IGDB company ID to fetch
-            cache_results: Whether to use/store results in cache (default: True)
-
-        Returns:
-            Company data dict with id, name, slug, parent fields if successful,
-            None otherwise
-        """
+    def _get_company_by_id(self, company_id: int, cache_results: True):
         if cache_results and company_id in self.company_cache:
             return self.company_cache[company_id]
 
@@ -170,30 +124,18 @@ class IgbdApi:
             results = res.json()
         except Exception as exc:
             logger.warning("Unable to load IGDB company %s: %s", company_id, exc)
-            return None
+            return
 
         if len(results) != 1:
             logger.warning(
                 "Unexpected company response for %s: %s", company_id, results
             )
-            return None
+            return
 
         self.company_cache[company_id] = results[0]
         return results[0]
 
-    def _get_genre_by_id(
-        self, genre_id: int, cache_results: bool = True
-    ) -> Optional[str]:
-        """
-        Fetch genre name from IGDB API by genre ID.
-
-        Args:
-            genre_id: IGDB genre ID to fetch
-            cache_results: Whether to use/store results in cache (default: True)
-
-        Returns:
-            Genre name if successful, None otherwise
-        """
+    def _get_genre_by_id(self, genre_id: int, cache_results: True):
         if cache_results and genre_id in self.genre_cache:
             return self.genre_cache[genre_id]
 
@@ -207,42 +149,18 @@ class IgbdApi:
             results = res.json()
         except Exception as exc:
             logger.warning("Unable to load IGDB genre %s: %s", genre_id, exc)
-            return None
+            return
 
         if len(results) != 1:
             logger.warning("Unexpected genre response for %s: %s", genre_id, results)
-            return None
+            return
 
         genre_name = results[0]["name"]
         self.genre_cache[genre_id] = genre_name
         return genre_name
 
-    def get_game_info_by_id(
-        self, game_id: int, cache_results: bool = True
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Fetch comprehensive game information from IGDB API by game ID.
+    def get_game_info_by_id(self, game_id: int, cache_results: True):
 
-        This method retrieves game data including cover art, developers,
-        genres, and metadata. It intelligently selects developers from
-        involved companies, preferring actual developers over supporters,
-        publishers, and porters in that order.
-
-        Args:
-            game_id: IGDB game ID to fetch
-            cache_results: Whether to use/store results in cache (default: True)
-
-        Returns:
-            Dict containing game data with keys:
-                - cover: Cover art filename
-                - developers: List of developer dicts with id, name, slug, parent
-                - genres: List of genre names (combination of genres and themes)
-                - storyline: Game storyline text
-                - summary: Game summary text
-                - url: IGDB URL for the game
-                - slug: IGDB slug for the game
-            Returns None if the game cannot be fetched or authentication fails.
-        """
         # Check cache first
         if cache_results and game_id in self.game_cache:
             return self.game_cache[game_id]
@@ -251,11 +169,7 @@ class IgbdApi:
         res = requests.post(
             "https://api.igdb.com/v4/games/",
             headers=self.headers,
-            data=(
-                "where id="
-                f"{game_id}; fields slug,cover,genres,first_release_date,"
-                "summary,storyline,url,themes,involved_companies.*;"
-            ),
+            data=f"where id={game_id}; fields slug,cover,genres,first_release_date,summary,storyline,url,themes,involved_companies.*;",
         )
 
         if res.status_code == 401:
@@ -348,18 +262,8 @@ class IgbdApi:
         return game_data
 
 
-def get_api() -> Optional[IgbdApi]:
-    """
-    Create and return an IGDB API client instance.
-
-    Returns:
-        IgbdApi: Configured IGDB API client, or None if initialization fails
-    """
+def get_api():
     try:
         return IgbdApi(settings.IGDB_CLIENT_ID, settings.IGDB_CLIENT_SECRET)
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error("Failed to initialize IGDB API: %s", e)
-        return None
-    except requests.RequestException as e:
-        logger.error("Network error initializing IGDB API: %s", e)
-        return None
+    except:
+        return
