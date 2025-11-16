@@ -136,4 +136,6 @@ REST_FRAMEWORK = {
 }
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 
-STATIC_ROOT = BASE_DIR / 'frontend/dist/static'
+STATICFILES_DIRS = [
+    BASE_DIR / 'frontend/dist',
+]
