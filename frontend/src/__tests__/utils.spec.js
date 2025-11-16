@@ -54,5 +54,13 @@ describe('utils', () => {
             expect(globalStore.get('scrollY')).toBe(null);
             scrollSpy.mockRestore();
         });
+
+        it('does nothing when scroll position missing', () => {
+            const scrollSpy = vi.spyOn(window, 'scroll');
+            loadPreviousScrollPosition(0);
+            vi.advanceTimersByTime(0);
+            expect(scrollSpy).not.toHaveBeenCalled();
+            scrollSpy.mockRestore();
+        });
     });
 });

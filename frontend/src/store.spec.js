@@ -84,4 +84,13 @@ describe('Vuex store', () => {
         );
         expect(store.state.meta).toEqual({});
     });
+
+    it('skips loadMeta when meta already populated', async () => {
+        store.state.meta = { foo: 'bar' };
+        const fetchSpy = vi.fn();
+        global.fetch = fetchSpy;
+
+        await store.dispatch('loadMeta');
+        expect(fetchSpy).not.toHaveBeenCalled();
+    });
 });
