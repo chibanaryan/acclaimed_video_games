@@ -1,20 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import store from './store';
-import Genre from './models/Genre';
-import Platform from './models/Platform';
-
-const resetState = () => {
-    store.replaceState({
-        loading: false,
-        genres: [],
-        platforms: [],
-        meta: {},
-    });
-};
+import store from '../store';
+import Genre from '../models/Genre';
+import Platform from '../models/Platform';
+import { isEmpty } from 'lodash';
 
 describe('Vuex store', () => {
     beforeEach(() => {
-        resetState();
+        store.replaceState({
+            loading: false,
+            genres: [],
+            platforms: [],
+            meta: {},
+        });
     });
 
     afterEach(() => {
@@ -39,24 +36,23 @@ describe('Vuex store', () => {
 
         await store.dispatch('loadGenres');
         expect(global.fetch).toHaveBeenCalledTimes(1);
-        expect(store.state.genres).toHaveLength(1);
-        expect(store.state.genres[0].name).toBe('Action');
+        expect(store.state.genres[0]).toBeInstanceOf(Genre);
 
         await store.dispatch('loadGenres');
         expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it('loads platforms and caches results', async () => {
+    it('loads platforms once when empty', async () => {
         const mockResponse = {
-            results: [{ id: 1, code: 'PC', name: 'PC' }],
+            results: [{ id: 1, name: 'PC', code: 'PC' }],
         };
         global.fetch = vi.fn().mockResolvedValue({
             json: () => Promise.resolve(mockResponse),
         });
 
         await store.dispatch('loadPlatforms');
-        expect(store.state.platforms).toHaveLength(1);
-        expect(store.state.platforms[0].code).toBe('PC');
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+        expect(store.state.platforms[0]).toBeInstanceOf(Platform);
 
         await store.dispatch('loadPlatforms');
         expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -73,6 +69,14 @@ describe('Vuex store', () => {
         expect(store.state.meta).toEqual(meta);
     });
 
+    it('skips loadMeta when meta already populated', async () => {
+        store.state.meta = { foo: 'bar' };
+        global.fetch = vi.fn();
+
+        await store.dispatch('loadMeta');
+        expect(global.fetch).not.toHaveBeenCalled();
+    });
+
     it('rethrows when metadata fetch fails', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: false,
@@ -83,14 +87,5 @@ describe('Vuex store', () => {
             'Meta request failed: 500'
         );
         expect(store.state.meta).toEqual({});
-    });
-
-    it('skips loadMeta when meta already populated', async () => {
-        store.state.meta = { foo: 'bar' };
-        const fetchSpy = vi.fn();
-        global.fetch = fetchSpy;
-
-        await store.dispatch('loadMeta');
-        expect(fetchSpy).not.toHaveBeenCalled();
     });
 });
