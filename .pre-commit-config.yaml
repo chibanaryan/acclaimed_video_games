@@ -6,6 +6,11 @@ repos:
         language_version: python3
   - repo: local
     hooks:
+      - id: frontend-tests
+        name: Run frontend tests
+        entry: bash -c "cd frontend && npm run test"
+        language: system
+        pass_filenames: false
       - id: django-tests
         name: Run Django test suite
         entry: scripts/run_tests.sh

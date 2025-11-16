@@ -98,6 +98,8 @@ With that in place:
   need reformatting).
 - `scripts/run_tests.sh` executes automatically and blocks a commit if the
   Django tests fail.
+- The frontend suite (`cd frontend && npm run test`) runs automatically to catch
+  Vue regressions before commits.
 
 Make sure your virtualenv is set up and dependencies installed before running
 `pre-commit install`.
