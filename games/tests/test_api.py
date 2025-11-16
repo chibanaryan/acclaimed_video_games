@@ -150,6 +150,11 @@ class ApiSmokeTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertGreaterEqual(resp.json()["count"], 1)
 
+    def test_publication_detail_endpoint(self):
+        resp = self.client.get(f"/api/publications/{self.publication.id}/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["name"], "IGN")
+
 
 class SerializerBehaviorTests(TestCase):
 

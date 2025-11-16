@@ -41,6 +41,17 @@ python manage.py get_igdb
 python manage.py collectstatic
 ```
 
+**Run tests:**
+```bash
+python manage.py test games.tests
+```
+
+**Run tests with coverage:**
+```bash
+coverage run --source=games manage.py test games.tests
+coverage report
+```
+
 ### Frontend (Vue.js)
 
 **Install dependencies:**
@@ -64,6 +75,21 @@ npm run build
 npx eslint src/
 ```
 
+**Run tests:**
+```bash
+npm run test
+```
+
+**Run tests in watch mode:**
+```bash
+npm run test:watch
+```
+
+**Run tests with coverage:**
+```bash
+npm run test:coverage
+```
+
 ### Deployment
 
 The project is deployed to Heroku. To deploy:
@@ -72,6 +98,59 @@ The project is deployed to Heroku. To deploy:
 2. Collect static files: `python manage.py collectstatic`
 3. Add dist folder: `git add dist`
 4. Commit and push: `git commit -av -m "message" && git push heroku master`
+
+## Testing and Code Quality
+
+### Backend Testing
+
+The Django backend has comprehensive test coverage in the `games/tests/` directory:
+
+- **test_api.py** - API endpoint tests including filtering, serialization, and pagination
+- **test_models.py** - Model behavior, IGDB integration, and ranking utilities
+- **test_igdb.py** - IGDB API integration with extensive mocking
+- **test_imports.py** - Data import functionality tests
+- **test_views.py** - ImportView integration tests
+- **test_admin.py** - Django admin functionality tests
+- **test_management.py** - Custom management command tests
+- **test_utils.py** - Utility function tests
+
+**Coverage Requirements:**
+- Minimum 85% test coverage enforced by pre-commit hooks
+- Run coverage check: `coverage run --source=games manage.py test games.tests && coverage report --fail-under=85`
+
+### Frontend Testing
+
+The Vue.js frontend uses Vitest for testing with the following structure:
+
+**Unit Tests:**
+- `frontend/src/__tests__/store.spec.js` - Vuex store tests
+- `frontend/src/__tests__/models.spec.js` - Frontend model class tests
+- `frontend/src/__tests__/utils.spec.js` - Utility function tests (scroll position, slug parsing)
+- `frontend/src/__tests__/objectStore.spec.js` - PersistentObjectStore tests
+
+**Component Tests:**
+- `frontend/src/components/__tests__/NavComponent.spec.js` - Navigation component behavior
+
+**Test Configuration:**
+- Vitest configured in `vite.config.js` with jsdom environment
+- Test setup file: `frontend/src/test/setup.js` (localStorage mock)
+
+**Test Dependencies:**
+- vitest (^4.0.9) - Test runner
+- @vitest/coverage-v8 (^4.0.9) - Coverage reporting
+- @vue/test-utils (^2.4.0-alpha.2) - Vue component testing utilities
+- jsdom (^27.2.0) - DOM implementation for testing
+
+### Pre-commit Hooks
+
+The project uses pre-commit hooks (`.pre-commit-config.yaml`) to enforce code quality:
+
+1. **Black Formatter** - Automatically formats Python code
+2. **Frontend Tests** - Runs `npm run test` before commits
+3. **Django Coverage** - Enforces 85% test coverage threshold
+4. **Django Test Suite** - Runs full test suite via `scripts/run_tests.sh`
+
+**Note:** Commits will be blocked if any tests fail or coverage drops below 85%.
 
 ## Architecture
 
@@ -82,6 +161,7 @@ The project is deployed to Heroku. To deploy:
   - **models.py** - Core data models (Game, Developer, Platform, List, etc.)
   - **api/** - REST API with views, serializers, and URL routing
   - **management/commands/** - Custom Django commands (e.g., `get_igdb.py`)
+  - **tests/** - Comprehensive test suite (API, models, IGDB, imports, views, admin, utils)
   - **templates/** - Server-side templates (mostly just index.html for SPA)
   - **static/** - Static files served by Django
 
@@ -89,12 +169,15 @@ The project is deployed to Heroku. To deploy:
 
 - **frontend/src/**
   - **components/** - Vue components (GameList, GameDetail, DeveloperDetail, etc.)
+    - **__tests__/** - Component tests
   - **models/** - Frontend model classes that mirror Django models
   - **router.js** - Vue Router configuration
   - **store.js** - Vuex global state management
   - **objectStore.js** - Persistent localStorage wrapper
   - **constants.js** - Application-wide constants
   - **utils.js** - Utility functions
+  - **__tests__/** - Unit tests for models, store, utils, and objectStore
+  - **test/** - Test configuration and setup files
 
 ### Data Models
 
@@ -143,6 +226,8 @@ IGDB provides cover art, descriptions, developer information, and genres.
 
 ## Configuration
 
+### Environment Variables
+
 Environment variables are managed via django-environ (`.env` file):
 - `DEBUG` - Enable Django debug mode
 - `SECRET_KEY` - Django secret key
@@ -150,6 +235,13 @@ Environment variables are managed via django-environ (`.env` file):
 
 Frontend environment variables (`.env` in frontend/):
 - `VITE_API_URL` - API base URL (defaults to `/api/` in production)
+
+### Configuration Files
+
+- **`.python-version`** - Specifies Python 3.11 for Heroku deployment
+- **`.pre-commit-config.yaml`** - Pre-commit hook configuration for code quality enforcement
+- **`frontend/vite.config.js`** - Vite configuration including test setup with Vitest
+- **`frontend/src/test/setup.js`** - Test environment setup (localStorage mocking)
 
 ## Database
 

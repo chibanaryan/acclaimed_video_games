@@ -119,3 +119,35 @@ class ImportHelpersTests(TestCase):
         success, message = utils.import_developers(stream)
         self.assertTrue(success)
         self.assertIn("1 updated", message)
+
+    def test_import_developers_with_two_aliases(self):
+        stream = StringIO("Alias1\tCanonical\tAlias2\r\n")
+        success, message = utils.import_developers(stream)
+        self.assertTrue(success)
+        self.assertIn("1 created", message)
+        self.assertEqual(models.Developer.objects.count(), 1)
+        self.assertEqual(models.DeveloperAlias.objects.count(), 2)
+        developer = models.Developer.objects.first()
+        self.assertEqual(developer.name, "Canonical")
+        alias_names = list(models.DeveloperAlias.objects.values_list("name", flat=True))
+        self.assertIn("Alias1", alias_names)
+        self.assertIn("Alias2", alias_names)
+
+
+class FilterTests(TestCase):
+
+    def test_filter_strips_whitespace_from_parameters(self):
+        platform = models.Platform.objects.create(code="PC", name="PC")
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=1001,
+            year_of_release=2020,
+        )
+        game.platforms.add(platform)
+
+        filter = utils.Filter(param="year", fields=["year_of_release"], coerce=int)
+        qs = models.Game.objects.all()
+        filtered_qs = filter.filter_queryset(qs, " 2020 ")
+        self.assertEqual(filtered_qs.count(), 1)
+        self.assertEqual(filtered_qs.first(), game)

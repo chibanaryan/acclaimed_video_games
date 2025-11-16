@@ -5,7 +5,8 @@
 *.sqlite3
 *.xlsx
 .cache
-.coverage*
+.coverage
+.coverage.*
 .env*
 *.swp
 .pytest_cache
