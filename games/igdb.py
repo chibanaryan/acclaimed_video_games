@@ -1,5 +1,9 @@
+import logging
+
 import requests
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 game_status_map = {
     0: 'released',
@@ -56,67 +60,102 @@ class IgbdApi():
             return False
 
     def _get_themes(self):
-        results = requests.post(
-            'https://api.igdb.com/v4/themes/',
-            headers=self.headers,
-            data='limit 500; fields name;'
-        ).json()
+        try:
+            res = requests.post(
+                'https://api.igdb.com/v4/themes/',
+                headers=self.headers,
+                data='limit 500; fields name;'
+            )
+            res.raise_for_status()
+            results = res.json()
+        except Exception as exc:
+            logger.warning('Unable to load IGDB themes: %s', exc)
+            self.themes = {}
+            return
+
         self.themes = {x['id']: x['name'] for x in results}
 
     def _get_release_statuses(self):
-        results = requests.post(
-            'https://api.igdb.com/v4/release_date_statuses/',
-            headers=self.headers,
-            data='fields name;'
-        ).json()
+        try:
+            res = requests.post(
+                'https://api.igdb.com/v4/release_date_statuses/',
+                headers=self.headers,
+                data='fields name;'
+            )
+            res.raise_for_status()
+            results = res.json()
+        except Exception as exc:
+            logger.warning('Unable to load IGDB release statuses: %s', exc)
+            self.release_date_statuses = {}
+            return
 
         self.release_date_statuses = {x['name']: x['id'] for x in results}
 
     def _get_cover_by_id(self, cover_id: int):
-        results = requests.post(
-            'https://api.igdb.com/v4/covers/',
-            headers=self.headers,
-            data=f'where id={cover_id}; fields url;'
-        ).json()
-        assert len(results) == 1
+        try:
+            res = requests.post(
+                'https://api.igdb.com/v4/covers/',
+                headers=self.headers,
+                data=f'where id={cover_id}; fields url;'
+            )
+            res.raise_for_status()
+            results = res.json()
+        except Exception as exc:
+            logger.warning('Unable to load IGDB cover %s: %s', cover_id, exc)
+            return
+
+        if len(results) != 1:
+            logger.warning('Unexpected cover response for %s: %s', cover_id, results)
+            return
+
         return results[0]['url'].split('/')[-1]
 
     def _get_company_by_id(self, company_id: int, cache_results: True):
         if cache_results and company_id in self.company_cache:
             return self.company_cache[company_id]
 
-        res = requests.post(
-            'https://api.igdb.com/v4/companies/',
-            headers=self.headers,
-            data=f'where id={company_id}; fields id,name,slug,parent;'
-        )
-
         try:
+            res = requests.post(
+                'https://api.igdb.com/v4/companies/',
+                headers=self.headers,
+                data=f'where id={company_id}; fields id,name,slug,parent;'
+            )
+            res.raise_for_status()
             results = res.json()
-            assert len(results) == 1
-            self.company_cache[company_id] = results[0]
-            return results[0]
-        except:
+        except Exception as exc:
+            logger.warning('Unable to load IGDB company %s: %s', company_id, exc)
             return
+
+        if len(results) != 1:
+            logger.warning('Unexpected company response for %s: %s', company_id, results)
+            return
+
+        self.company_cache[company_id] = results[0]
+        return results[0]
 
     def _get_genre_by_id(self, genre_id: int, cache_results: True):
         if cache_results and genre_id in self.genre_cache:
             return self.genre_cache[genre_id]
 
-        res = requests.post(
-            'https://api.igdb.com/v4/genres/',
-            headers=self.headers,
-            data=f'where id={genre_id}; fields name;'
-        )
-
         try:
+            res = requests.post(
+                'https://api.igdb.com/v4/genres/',
+                headers=self.headers,
+                data=f'where id={genre_id}; fields name;'
+            )
+            res.raise_for_status()
             results = res.json()
-            assert len(results) == 1
-            genre_name = results[0]['name']
-            self.genre_cache[genre_id] = genre_name
-            return genre_name
-        except:
+        except Exception as exc:
+            logger.warning('Unable to load IGDB genre %s: %s', genre_id, exc)
             return
+
+        if len(results) != 1:
+            logger.warning('Unexpected genre response for %s: %s', genre_id, results)
+            return
+
+        genre_name = results[0]['name']
+        self.genre_cache[genre_id] = genre_name
+        return genre_name
 
     def get_game_info_by_id(self, game_id: int, cache_results: True):
 

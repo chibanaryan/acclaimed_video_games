@@ -179,8 +179,6 @@ def import_platforms(f):
             }
         )
 
-        print(platform.code, platform.name)
-
         if created:
             count += 1
         else:

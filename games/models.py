@@ -147,6 +147,10 @@ class Game(models.Model):
         if not self.igdb_id:
             return
 
+        if not api:
+            logger.warning('IGDB API unavailable; skipping update for %s', self)
+            return
+
         data = api.get_game_info_by_id(self.igdb_id, cache_results)
         self.slug = slugify(data.get('slug'))
         self.igdb_url = data.get('url')
