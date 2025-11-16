@@ -1,6 +1,10 @@
+import logging
+
 from django.core.management.base import BaseCommand
 
 from games.models import Game
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -11,6 +15,6 @@ class Command(BaseCommand):
             try:
                 game.get_igdb_data()
                 game.save()
-                print(f"{game.rank} - {game} updated")
+                logger.info(f"{game.rank} - {game} updated")
             except Exception as e:
-                print(str(e))
+                logger.error(str(e))

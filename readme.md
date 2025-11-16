@@ -86,11 +86,15 @@ suite (`games/tests.py`) runs before every commit.
 
 1. Install the tool (usually once per machine):
 
-        pip install pre-commit
+    ```bash
+    pip install pre-commit
+    ```
 
 2. From the project root, enable the hooks:
 
-        pre-commit install
+    ```bash
+    pre-commit install
+    ```
 
 With that in place:
 
@@ -103,17 +107,21 @@ With that in place:
 - Backend coverage is enforced (`coverage run --source=games manage.py test` with
   a fail-under threshold of 95%). You can run it manually via:
 
-      source venv/bin/activate
-      DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// \
-      CORS_ALLOWED_ORIGINS=http://localhost \
-          COVERAGE_FILE=.coverage.backend \
-          coverage run --source=games manage.py test games.tests
-      coverage html  # view report at htmlcov/index.html
+    ```bash
+    source venv/bin/activate
+    DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// \
+    CORS_ALLOWED_ORIGINS=http://localhost \
+        COVERAGE_FILE=.coverage.backend \
+        coverage run --source=games manage.py test games.tests
+    coverage html  # view report at htmlcov/index.html
+    ```
 
 - Frontend coverage is available with:
 
-      cd frontend
-      npm run test:coverage
+    ```bash
+    cd frontend
+    npm run test:coverage
+    ```
 
 The HTML report lives under `frontend/coverage/index.html` (ignored by Git).
 

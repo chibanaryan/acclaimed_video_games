@@ -134,3 +134,29 @@ CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
 STATICFILES_DIRS = [
     BASE_DIR / "frontend/dist",
 ]
+
+# Logging configuration
+import sys
+
+# Suppress noisy logs during test runs
+TEST_MODE = "test" in sys.argv
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "games.igdb": {
+            "handlers": ["console"],
+            "level": "ERROR" if TEST_MODE else "WARNING",
+        },
+        "games.management.commands.get_igdb": {
+            "handlers": ["console"],
+            "level": "CRITICAL" if TEST_MODE else "INFO",
+        },
+    },
+}

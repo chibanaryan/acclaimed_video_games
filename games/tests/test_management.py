@@ -32,10 +32,10 @@ class GetIgdbCommandTests(TestCase):
 
         with mock.patch.object(
             models.Game, "get_igdb_data", side_effect=ValueError("boom")
-        ), mock.patch("builtins.print") as print_mock:
+        ), mock.patch("games.management.commands.get_igdb.logger") as logger_mock:
             call_command("get_igdb")
 
-        print_mock.assert_any_call("boom")
+        logger_mock.error.assert_called_once_with("boom")
 
 
 class ImportDataRoutingTests(TestCase):
