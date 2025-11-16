@@ -11,6 +11,9 @@ from . import constants, models
 
 
 def import_data(data):
+    """
+    Route posted form data to the correct import helper based on the type code.
+    """
 
     if data.get("delete"):
         return delete_existing_data()
@@ -30,8 +33,12 @@ def import_data(data):
             constants.TYPE_DEVELOPER: import_developers,
         }
 
+        handler = functions.get(import_type)
+        if not handler:
+            return (False, f'Unknown import type "{import_type}" provided.')
+
         try:
-            return functions.get(import_type)(f)
+            return handler(f)
         except Exception as e:
             return (False, f"Could not process uploaded file: {e}")
 
@@ -71,7 +78,10 @@ def delete_existing_data():
 
 
 def import_lists(f):
-
+    """
+    Import critic lists from a TSV file with columns:
+    publisher, year, type, name, url.
+    """
     rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
     updated = 0
@@ -82,7 +92,7 @@ def import_lists(f):
             name=publisher_name,
         )
 
-        list, created = models.List.objects.get_or_create(
+        source_list, created = models.List.objects.get_or_create(
             publisher=publisher,
             year=year,
             name=name,
@@ -102,7 +112,10 @@ def import_lists(f):
 
 
 def import_listmemberships(f):
-
+    """
+    Import ranked appearances for each game from a TSV file where each row is a
+    game rank and each column contains "list_id:position".
+    """
     list_map = {x.order: x for x in models.List.objects.all()}
     memberships = []
 
@@ -120,20 +133,23 @@ def import_listmemberships(f):
                 models.ListMembership(list=source_list, game=game, rank=position)
             )
 
-    objects = models.ListMembership.objects.bulk_create(memberships)
+    created_memberships = models.ListMembership.objects.bulk_create(memberships)
 
-    return (True, f"List memberships: {len(objects)} created")
+    return (True, f"List memberships: {len(created_memberships)} created")
 
 
 def import_games(f):
-
+    """
+    Import games from a TSV file with columns:
+    rank, name, year, IGDB id, comma separated platform codes.
+    """
     rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
     updated = 0
 
     for rank, game_name, year, igdb_id, platforms in rows:
         platform_codes = platforms.split(",")
-        platforms = []
+        platform_objs = []
         for code in platform_codes:
             code = code.strip()
             platform, created = models.Platform.objects.get_or_create(
@@ -142,7 +158,7 @@ def import_games(f):
                     "name": code,
                 },
             )
-            platforms.append(platform)
+            platform_objs.append(platform)
 
         game, created = models.Game.objects.update_or_create(
             igdb_id=igdb_id,
@@ -152,7 +168,7 @@ def import_games(f):
                 "year_of_release": year,
             },
         )
-        game.platforms.set(platforms)
+        game.platforms.set(platform_objs)
 
         if created:
             count += 1
@@ -163,7 +179,9 @@ def import_games(f):
 
 
 def import_platforms(f):
-
+    """
+    Import platform code/name pairs from a TSV file.
+    """
     rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
     updated = 0
@@ -188,7 +206,10 @@ def import_platforms(f):
 
 
 def import_developers(f):
-
+    """
+    Import developers and aliases from a TSV file with columns:
+    alias1, canonical[, alias2].
+    """
     rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
     updated = 0
@@ -280,7 +301,18 @@ def _load_rankings():
 def get_ranking_for_year(game):
     _load_rankings()
 
-    ids = year_rankings[game.year_of_release]
+    ids = year_rankings.get(game.year_of_release)
+    if not ids:
+        raise ValueError(
+            f"No rankings available for year {game.year_of_release}. "
+            "Did the import complete successfully?"
+        )
+
+    if game.id not in ids:
+        raise ValueError(
+            f"Game {game.id} not found in rankings for year {game.year_of_release}."
+        )
+
     return ids.index(game.id) + 1
 
 
@@ -288,7 +320,16 @@ def get_ranking_for_decade(game):
     _load_rankings()
 
     decade = year_to_decade(game.year_of_release)
-    ids = decade_rankings[decade]
+    ids = decade_rankings.get(decade)
+    if not ids:
+        raise ValueError(
+            f"No rankings available for decade {decade}. "
+            "Did the import complete successfully?"
+        )
+
+    if game.id not in ids:
+        raise ValueError(f"Game {game.id} not found in rankings for decade {decade}.")
+
     return ids.index(game.id) + 1
 
 
