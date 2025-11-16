@@ -4,7 +4,7 @@ from datetime import datetime
 from io import TextIOWrapper
 from typing import Callable, List
 
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import Min, Q
 
 from . import constants, models
@@ -53,17 +53,18 @@ def delete_existing_data():
         models.Game,
     ]
 
-    # Delete objects
-    total = 0
-    for model in models_to_delete:
-        count, _ = model.objects.all().delete()
-        total += count
-
-    # Reset id sequences
-    with connection.cursor() as cursor:
+    with transaction.atomic():
+        # Delete objects
+        total = 0
         for model in models_to_delete:
-            cursor.execute(
-                f'ALTER SEQUENCE {model._meta.db_table}_id_seq RESTART WITH 1;')
+            count, _ = model.objects.all().delete()
+            total += count
+
+        # Reset id sequences
+        with connection.cursor() as cursor:
+            for model in models_to_delete:
+                cursor.execute(
+                    f'ALTER SEQUENCE {model._meta.db_table}_id_seq RESTART WITH 1;')
 
     return (True, f'{total} objects deleted')
 
