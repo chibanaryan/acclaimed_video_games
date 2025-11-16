@@ -14,19 +14,19 @@ def populate_slugs(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0017_developer_igdb_id'),
+        ("games", "0017_developer_igdb_id"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='publication',
-            name='slug',
+            model_name="publication",
+            name="slug",
             field=models.SlugField(null=True),
         ),
         migrations.RunPython(populate_slugs),
         migrations.AlterField(
-            model_name='publication',
-            name='slug',
+            model_name="publication",
+            name="slug",
             field=models.SlugField(),
         ),
     ]

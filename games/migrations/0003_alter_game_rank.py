@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0002_snippet'),
+        ("games", "0002_snippet"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='game',
-            name='rank',
+            model_name="game",
+            name="rank",
             field=models.IntegerField(unique=True),
         ),
     ]

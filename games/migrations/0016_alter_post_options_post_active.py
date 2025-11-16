@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0015_post_alter_genre_options'),
+        ("games", "0015_post_alter_genre_options"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='post',
-            options={'ordering': ['-date']},
+            name="post",
+            options={"ordering": ["-date"]},
         ),
         migrations.AddField(
-            model_name='post',
-            name='active',
+            model_name="post",
+            name="active",
             field=models.BooleanField(default=True),
         ),
     ]

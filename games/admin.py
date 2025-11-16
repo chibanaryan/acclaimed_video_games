@@ -10,53 +10,53 @@ class DeveloperAliasInlineAdmin(admin.TabularInline):
 
 @admin.register(models.Platform)
 class PlatformAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code']
+    list_display = ["name", "code"]
 
 
 @admin.register(models.Developer)
 class DeveloperAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'slug']
-    search_fields = ['name']
+    list_display = ["__str__", "slug"]
+    search_fields = ["name"]
     inlines = [DeveloperAliasInlineAdmin]
 
 
 @admin.register(models.DeveloperAlias)
 class DeveloperAliasAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'igdb_id']
-    search_fields = ['name']
+    list_display = ["__str__", "igdb_id"]
+    search_fields = ["name"]
 
 
 @admin.register(models.Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = [
-        'name',
-        'slug',
-        'rank',
-        'year_rank',
-        'decade_rank',
-        'year_of_release',
-        'igdb_id',
-        'igdb_artwork_id',
-        'igdb_url',
-        '_genres',
+        "name",
+        "slug",
+        "rank",
+        "year_rank",
+        "decade_rank",
+        "year_of_release",
+        "igdb_id",
+        "igdb_artwork_id",
+        "igdb_url",
+        "_genres",
     ]
-    list_filter = ['year_of_release']
-    search_fields = ['name']
-    filter_horizontal = ['developers', 'platforms', 'genres']
+    list_filter = ["year_of_release"]
+    search_fields = ["name"]
+    filter_horizontal = ["developers", "platforms", "genres"]
 
     def save_model(self, request, obj: models.Game, form, change):
         obj.get_igdb_data(cache_results=False)
         obj.save()
-        
+
     def _genres(self, obj):
-        return ', '.join(obj.genres.values_list('name', flat=True))
+        return ", ".join(obj.genres.values_list("name", flat=True))
 
 
 @admin.register(models.List)
 class ListAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'order', 'publisher', 'type']
-    list_filter = ['type', 'publisher']
-    search_fields = ['name']
+    list_display = ["__str__", "order", "publisher", "type"]
+    list_filter = ["type", "publisher"]
+    search_fields = ["name"]
 
 
 @admin.register(models.ListMembership)
@@ -66,7 +66,7 @@ class ListMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(models.Publication)
 class PublicationAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'slug']
+    list_display = ["__str__", "slug"]
 
 
 @admin.register(models.Snippet)
@@ -76,4 +76,4 @@ class SnippetAdmin(admin.ModelAdmin):
 
 @admin.register(models.Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'date', 'active']
+    list_display = ["__str__", "date", "active"]

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0020_game_decade_rank_game_year_rank_alter_list_type'),
+        ("games", "0020_game_decade_rank_game_year_rank_alter_list_type"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='game',
-            name='igdb_url',
+            model_name="game",
+            name="igdb_url",
             field=models.URLField(blank=True, null=True),
         ),
     ]

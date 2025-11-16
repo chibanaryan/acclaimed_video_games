@@ -8,97 +8,191 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Developer',
+            name="Developer",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
             ],
             options={
-                'ordering': ['name'],
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='DeveloperAlias',
+            name="DeveloperAlias",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('developer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='aliases', to='games.developer')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, unique=True)),
+                (
+                    "developer",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="aliases",
+                        to="games.developer",
+                    ),
+                ),
             ],
             options={
-                'verbose_name_plural': 'Developer aliases',
-                'ordering': ['name'],
+                "verbose_name_plural": "Developer aliases",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='Game',
+            name="Game",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('rank', models.IntegerField()),
-                ('year_of_release', models.PositiveSmallIntegerField()),
-                ('developers', models.ManyToManyField(blank=True, related_name='games', to='games.developeralias')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("rank", models.IntegerField()),
+                ("year_of_release", models.PositiveSmallIntegerField()),
+                (
+                    "developers",
+                    models.ManyToManyField(
+                        blank=True, related_name="games", to="games.developeralias"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['rank'],
+                "ordering": ["rank"],
             },
         ),
         migrations.CreateModel(
-            name='List',
+            name="List",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('url', models.URLField(blank=True, null=True)),
-                ('year', models.PositiveSmallIntegerField()),
-                ('type', models.CharField(choices=[('M', 'Main'), ('E', 'End of year')], default='M', max_length=1)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("url", models.URLField(blank=True, null=True)),
+                ("year", models.PositiveSmallIntegerField()),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[("M", "Main"), ("E", "End of year")],
+                        default="M",
+                        max_length=1,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['type', 'name'],
+                "ordering": ["type", "name"],
             },
         ),
         migrations.CreateModel(
-            name='Platform',
+            name="Platform",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(max_length=10, unique=True)),
-                ('name', models.CharField(max_length=100, unique=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("code", models.CharField(max_length=10, unique=True)),
+                ("name", models.CharField(max_length=100, unique=True)),
             ],
             options={
-                'ordering': ['name'],
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='Publication',
+            name="Publication",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, unique=True)),
             ],
         ),
         migrations.CreateModel(
-            name='ListMembership',
+            name="ListMembership",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('rank', models.PositiveSmallIntegerField(blank=True, null=True)),
-                ('game', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='lists', to='games.game')),
-                ('list', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='games.list')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("rank", models.PositiveSmallIntegerField(blank=True, null=True)),
+                (
+                    "game",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="lists",
+                        to="games.game",
+                    ),
+                ),
+                (
+                    "list",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="games.list"
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='list',
-            name='publisher',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='lists', to='games.publication'),
+            model_name="list",
+            name="publisher",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="lists",
+                to="games.publication",
+            ),
         ),
         migrations.AddField(
-            model_name='game',
-            name='platforms',
-            field=models.ManyToManyField(blank=True, related_name='games', to='games.platform'),
+            model_name="game",
+            name="platforms",
+            field=models.ManyToManyField(
+                blank=True, related_name="games", to="games.platform"
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='list',
-            unique_together={('publisher', 'name', 'year')},
+            name="list",
+            unique_together={("publisher", "name", "year")},
         ),
     ]

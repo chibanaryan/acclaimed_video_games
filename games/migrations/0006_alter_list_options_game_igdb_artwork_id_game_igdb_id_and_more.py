@@ -6,27 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0005_list_order'),
+        ("games", "0005_list_order"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='list',
-            options={'ordering': ['order', 'type', 'name']},
+            name="list",
+            options={"ordering": ["order", "type", "name"]},
         ),
         migrations.AddField(
-            model_name='game',
-            name='igdb_artwork_id',
+            model_name="game",
+            name="igdb_artwork_id",
             field=models.CharField(blank=True, max_length=100, null=True, unique=True),
         ),
         migrations.AddField(
-            model_name='game',
-            name='igdb_id',
+            model_name="game",
+            name="igdb_id",
             field=models.IntegerField(blank=True, null=True, unique=True),
         ),
         migrations.AlterField(
-            model_name='list',
-            name='type',
-            field=models.CharField(choices=[('A', 'All time'), ('O', 'Other'), ('E', 'End of year')], default='E', max_length=1),
+            model_name="list",
+            name="type",
+            field=models.CharField(
+                choices=[("A", "All time"), ("O", "Other"), ("E", "End of year")],
+                default="E",
+                max_length=1,
+            ),
         ),
     ]

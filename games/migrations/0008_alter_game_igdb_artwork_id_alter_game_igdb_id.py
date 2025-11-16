@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0007_alter_game_rank'),
+        ("games", "0007_alter_game_rank"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='game',
-            name='igdb_artwork_id',
+            model_name="game",
+            name="igdb_artwork_id",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='game',
-            name='igdb_id',
+            model_name="game",
+            name="igdb_id",
             field=models.IntegerField(blank=True, null=True),
         ),
     ]

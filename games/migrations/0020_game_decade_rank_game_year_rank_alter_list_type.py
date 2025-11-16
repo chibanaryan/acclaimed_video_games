@@ -6,23 +6,32 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0019_game_name_normalized'),
+        ("games", "0019_game_name_normalized"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='game',
-            name='decade_rank',
+            model_name="game",
+            name="decade_rank",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='game',
-            name='year_rank',
+            model_name="game",
+            name="year_rank",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='list',
-            name='type',
-            field=models.CharField(choices=[('A', 'All time'), ('E', 'End of year'), ('M', 'Miscellaneous'), ('D', 'Decade')], default='E', max_length=1),
+            model_name="list",
+            name="type",
+            field=models.CharField(
+                choices=[
+                    ("A", "All time"),
+                    ("E", "End of year"),
+                    ("M", "Miscellaneous"),
+                    ("D", "Decade"),
+                ],
+                default="E",
+                max_length=1,
+            ),
         ),
     ]

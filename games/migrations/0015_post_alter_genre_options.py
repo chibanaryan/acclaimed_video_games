@@ -6,21 +6,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0014_alter_genre_name'),
+        ("games", "0014_alter_genre_name"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Post',
+            name="Post",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(blank=True, max_length=100, null=True)),
-                ('text', models.TextField()),
-                ('date', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(blank=True, max_length=100, null=True)),
+                ("text", models.TextField()),
+                ("date", models.DateTimeField(auto_now_add=True)),
             ],
         ),
         migrations.AlterModelOptions(
-            name='genre',
-            options={'ordering': ['name']},
+            name="genre",
+            options={"ordering": ["name"]},
         ),
     ]

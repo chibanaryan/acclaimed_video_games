@@ -12,15 +12,15 @@ from . import constants, models
 
 def import_data(data):
 
-    if data.get('delete'):
+    if data.get("delete"):
         return delete_existing_data()
 
-    if data.get('igdb'):
+    if data.get("igdb"):
         return import_igdb()
 
-    if data.get('file'):
-        f = TextIOWrapper(data['file'], encoding='utf-8')
-        import_type = data['type']
+    if data.get("file"):
+        f = TextIOWrapper(data["file"], encoding="utf-8")
+        import_type = data["type"]
 
         functions = {
             constants.TYPE_GAME: import_games,
@@ -64,14 +64,15 @@ def delete_existing_data():
         with connection.cursor() as cursor:
             for model in models_to_delete:
                 cursor.execute(
-                    f'ALTER SEQUENCE {model._meta.db_table}_id_seq RESTART WITH 1;')
+                    f"ALTER SEQUENCE {model._meta.db_table}_id_seq RESTART WITH 1;"
+                )
 
-    return (True, f'{total} objects deleted')
+    return (True, f"{total} objects deleted")
 
 
 def import_lists(f):
 
-    rows = csv.reader(f, delimiter='\t', lineterminator='\r\n')
+    rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
     updated = 0
 
@@ -87,9 +88,9 @@ def import_lists(f):
             name=name,
             order=line_number + 1,
             defaults={
-                'url': url,
-                'type': type[0],
-            }
+                "url": url,
+                "type": type[0],
+            },
         )
 
         if created:
@@ -97,7 +98,7 @@ def import_lists(f):
         else:
             updated += 1
 
-    return (True, f'Lists: {count} created, {updated} updated')
+    return (True, f"Lists: {count} created, {updated} updated")
 
 
 def import_listmemberships(f):
@@ -106,51 +107,50 @@ def import_listmemberships(f):
     memberships = []
 
     for line_number, line in enumerate(f):
-        bits = line.strip().split('\t')
+        bits = line.strip().split("\t")
         game = models.Game.objects.get(rank=line_number + 1)
         for bit in bits:
-            list_id, position = [int(x) for x in bit.split(':')]
+            list_id, position = [int(x) for x in bit.split(":")]
 
             source_list = list_map.get(list_id + 1)
             if not source_list:
                 continue
 
             memberships.append(
-                models.ListMembership(
-                    list=source_list, game=game, rank=position)
+                models.ListMembership(list=source_list, game=game, rank=position)
             )
 
     objects = models.ListMembership.objects.bulk_create(memberships)
 
-    return (True, f'List memberships: {len(objects)} created')
+    return (True, f"List memberships: {len(objects)} created")
 
 
 def import_games(f):
 
-    rows = csv.reader(f, delimiter='\t', lineterminator='\r\n')
+    rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
     updated = 0
 
     for rank, game_name, year, igdb_id, platforms in rows:
-        platform_codes = platforms.split(',')
+        platform_codes = platforms.split(",")
         platforms = []
         for code in platform_codes:
             code = code.strip()
             platform, created = models.Platform.objects.get_or_create(
                 code=code,
                 defaults={
-                    'name': code,
-                }
+                    "name": code,
+                },
             )
             platforms.append(platform)
 
         game, created = models.Game.objects.update_or_create(
             igdb_id=igdb_id,
             defaults={
-                'rank': int(rank),
-                'name': game_name,
-                'year_of_release': year,
-            }
+                "rank": int(rank),
+                "name": game_name,
+                "year_of_release": year,
+            },
         )
         game.platforms.set(platforms)
 
@@ -159,12 +159,12 @@ def import_games(f):
         else:
             updated += 1
 
-    return (True, f'Games: {count} created, {updated} updated')
+    return (True, f"Games: {count} created, {updated} updated")
 
 
 def import_platforms(f):
 
-    rows = csv.reader(f, delimiter='\t', lineterminator='\r\n')
+    rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
     updated = 0
 
@@ -175,8 +175,8 @@ def import_platforms(f):
         platform, created = models.Platform.objects.update_or_create(
             code=code,
             defaults={
-                'name': name,
-            }
+                "name": name,
+            },
         )
 
         if created:
@@ -184,12 +184,12 @@ def import_platforms(f):
         else:
             updated += 1
 
-    return (True, f'Platforms: {count} created, {updated} updated')
+    return (True, f"Platforms: {count} created, {updated} updated")
 
 
 def import_developers(f):
 
-    rows = csv.reader(f, delimiter='\t', lineterminator='\r\n')
+    rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
     updated = 0
 
@@ -211,8 +211,8 @@ def import_developers(f):
             models.DeveloperAlias.objects.get_or_create(
                 name=alias,
                 defaults={
-                    'developer': developer,
-                }
+                    "developer": developer,
+                },
             )
 
         if created:
@@ -220,7 +220,7 @@ def import_developers(f):
         else:
             updated += 1
 
-    return (True, f'Developers: {count} created, {updated} updated')
+    return (True, f"Developers: {count} created, {updated} updated")
 
 
 def year_to_decade(year):
@@ -236,35 +236,43 @@ def _load_rankings():
     if year_rankings and decade_rankings:
         return
 
-    min_year = models.Game.objects.aggregate(min_year=Min('year_of_release'))[
-        'min_year'] or 1970
+    min_year = (
+        models.Game.objects.aggregate(min_year=Min("year_of_release"))["min_year"]
+        or 1970
+    )
     max_year = datetime.today().year
     all_years = range(min_year, max_year)
     decades = sorted(list(set(year_to_decade(x) for x in all_years)))
 
     for year in all_years:
-        ids = list(models.Game.objects.filter(
-            year_of_release=year,
-        ).order_by(
-            'rank',
-        ).values_list(
-            'id',
-            flat=True,
-        ))
+        ids = list(
+            models.Game.objects.filter(
+                year_of_release=year,
+            )
+            .order_by(
+                "rank",
+            )
+            .values_list(
+                "id",
+                flat=True,
+            )
+        )
         year_rankings[year] = ids
 
     for decade in decades:
         end = decade + 9
 
-        ids = list(models.Game.objects.filter(
-            year_of_release__gte=decade,
-            year_of_release__lte=end,
-        ).order_by(
-            'rank'
-        ).values_list(
-            'id',
-            flat=True,
-        ))
+        ids = list(
+            models.Game.objects.filter(
+                year_of_release__gte=decade,
+                year_of_release__lte=end,
+            )
+            .order_by("rank")
+            .values_list(
+                "id",
+                flat=True,
+            )
+        )
 
         decade_rankings[decade] = ids
 

@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0021_game_igdb_url'),
+        ("games", "0021_game_igdb_url"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='game',
-            name='slug',
+            model_name="game",
+            name="slug",
             field=models.SlugField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='game',
-            name='genres',
-            field=models.ManyToManyField(blank=True, to='games.genre'),
+            model_name="game",
+            name="genres",
+            field=models.ManyToManyField(blank=True, to="games.genre"),
         ),
     ]
