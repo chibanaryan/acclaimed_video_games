@@ -20,7 +20,7 @@ class ImportViewIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
     @mock.patch("games.views.utils.import_data", return_value=(True, "Done"))
-    def test_success_message_on_successful_import(self, mock_import):
+    def test_successful_data_import(self, mock_import):
         self.client.login(username="tester", password="pass")
         fake_file = SimpleUploadedFile("data.txt", b"payload")
         response = self.client.post(
@@ -30,25 +30,35 @@ class ImportViewIntegrationTests(TestCase):
                 "file": fake_file,
             },
         )
-
         self.assertEqual(response.status_code, 302)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(messages[0].message, "Done")
         mock_import.assert_called_once()
 
-    @mock.patch("games.views.utils.import_data", return_value=(False, "Error"))
-    def test_error_message_when_import_fails(self, mock_import):
+    @mock.patch("games.views.utils.import_data", return_value=(True, "Deleted"))
+    def test_delete_existing_data_triggers_import(self, mock_import):
         self.client.login(username="tester", password="pass")
-        fake_file = SimpleUploadedFile("data.txt", b"payload")
         response = self.client.post(
             reverse("import"),
             {
-                "type": constants.TYPE_PLATFORM,
-                "file": fake_file,
+                "delete": True,
             },
         )
-
         self.assertEqual(response.status_code, 302)
         messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(messages[0].message, "Error")
+        self.assertEqual(messages[0].message, "Deleted")
+        mock_import.assert_called_once()
+
+    @mock.patch("games.views.utils.import_data", return_value=(True, "IGDB"))
+    def test_igdb_import_triggers_command(self, mock_import):
+        self.client.login(username="tester", password="pass")
+        response = self.client.post(
+            reverse("import"),
+            {
+                "igdb": True,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, "IGDB")
         mock_import.assert_called_once()
