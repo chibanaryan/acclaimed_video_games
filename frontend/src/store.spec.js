@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import store from './store';
+import Genre from './models/Genre';
+import Platform from './models/Platform';
 
 const resetState = () => {
     store.replaceState({
@@ -41,6 +43,22 @@ describe('Vuex store', () => {
         expect(store.state.genres[0].name).toBe('Action');
 
         await store.dispatch('loadGenres');
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('loads platforms and caches results', async () => {
+        const mockResponse = {
+            results: [{ id: 1, code: 'PC', name: 'PC' }],
+        };
+        global.fetch = vi.fn().mockResolvedValue({
+            json: () => Promise.resolve(mockResponse),
+        });
+
+        await store.dispatch('loadPlatforms');
+        expect(store.state.platforms).toHaveLength(1);
+        expect(store.state.platforms[0].code).toBe('PC');
+
+        await store.dispatch('loadPlatforms');
         expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 

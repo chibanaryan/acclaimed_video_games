@@ -79,3 +79,19 @@ class IgbdApiTests(SimpleTestCase):
         self.assertEqual(result["slug"], "sample")
         self.assertEqual(result["developers"][0]["name"], "Foo")
         self.assertIn("Action", result["genres"])
+
+    def test_company_lookup_caches_result(self):
+        response = DummyResponse(
+            200, [{"id": 5, "name": "Foo", "slug": "foo", "parent": None}]
+        )
+        with mock.patch("games.igdb.requests.post", return_value=response) as post:
+            company = self.api._get_company_by_id(5, cache_results=True)
+            self.assertEqual(company["name"], "Foo")
+            self.api._get_company_by_id(5, cache_results=True)
+        self.assertEqual(post.call_count, 1)
+
+    def test_cover_helper_returns_filename(self):
+        response = DummyResponse(200, [{"url": "//images/cover.jpg"}])
+        with mock.patch("games.igdb.requests.post", return_value=response):
+            name = self.api._get_cover_by_id(1)
+        self.assertEqual(name, "cover.jpg")
