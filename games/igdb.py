@@ -174,7 +174,7 @@ class IgbdApi:
 
         if res.status_code == 401:
             if self._get_auth_token():
-                return self.game_info_by_id(game_id, cache_results)
+                return self.get_game_info_by_id(game_id, cache_results)
             else:
                 return
 

@@ -95,3 +95,48 @@ class IgbdApiTests(SimpleTestCase):
         with mock.patch("games.igdb.requests.post", return_value=response):
             name = self.api._get_cover_by_id(1)
         self.assertEqual(name, "cover.jpg")
+
+    def test_genre_lookup_handles_errors(self):
+        with mock.patch(
+            "games.igdb.requests.post", return_value=DummyResponse(500, [])
+        ):
+            result = self.api._get_genre_by_id(1, cache_results=False)
+        self.assertIsNone(result)
+
+    def test_get_game_info_handles_401_and_refreshes_token(self):
+        call_state = {"attempts": 0}
+
+        def fake_post(url, headers=None, data=None):
+            if "games" in url:
+                call_state["attempts"] += 1
+                if call_state["attempts"] == 1:
+                    return DummyResponse(401, [])
+                return DummyResponse(
+                    200,
+                    [
+                        {
+                            "slug": "sample",
+                            "url": "https://example.com",
+                            "cover": 10,
+                            "themes": [],
+                            "genres": [],
+                            "summary": "",
+                            "storyline": "",
+                            "involved_companies": [],
+                        }
+                    ],
+                )
+            if "oauth2" in url:
+                return DummyResponse(200, {"access_token": "token"})
+            if "covers" in url:
+                return DummyResponse(200, [{"url": "//images/cover.jpg"}])
+            return DummyResponse(200, [])
+
+        with mock.patch("games.igdb.requests.post", side_effect=fake_post):
+            with mock.patch.object(
+                self.api, "_get_auth_token", return_value=True
+            ) as auth:
+                result = self.api.get_game_info_by_id(1, cache_results=False)
+
+        self.assertEqual(result["slug"], "sample")
+        auth.assert_called_once()
