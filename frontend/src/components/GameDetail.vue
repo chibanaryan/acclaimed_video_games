@@ -1,5 +1,9 @@
 <template>
-    <div v-if="game">
+    <div v-if="error" class="notification is-danger">
+        <p><strong>Error:</strong> {{ error }}</p>
+        <p>The game you're looking for could not be found or there was a problem loading it.</p>
+    </div>
+    <div v-else-if="game">
         <h1 class="title">{{ game.name }}</h1>
         <div class="columns">
             <div class="column">
@@ -18,6 +22,9 @@
             </list-results-component>
         </div>
     </div>
+    <div v-else class="has-text-centered">
+        <p>Loading...</p>
+    </div>
 </template>
 
 <script>
@@ -35,13 +42,29 @@ export default {
     data() {
         return {
             game: null,
+            error: null,
         }
     },
     async created() {
-        let data = await fetch(`${import.meta.env.VITE_API_URL}games/${this.$route.params.slug}/`)
-            .then(resp => resp.json());
-        this.game = new Game(data);
-        this.emitter.emit('title', this.game.name);
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}games/${this.$route.params.slug}/`);
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    this.error = 'Game not found';
+                } else {
+                    this.error = `Failed to load game (${response.status})`;
+                }
+                return;
+            }
+
+            const data = await response.json();
+            this.game = new Game(data);
+            this.emitter.emit('title', this.game.name);
+        } catch (err) {
+            console.error('Error fetching game:', err);
+            this.error = 'Network error - please check your connection and try again';
+        }
     },
     computed: {
         groupedLists() {

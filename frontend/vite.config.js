@@ -2,8 +2,8 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
 
-export default defineConfig({
-    base: '/static/',
+export default defineConfig(({ command }) => ({
+    base: command === 'build' ? '/static/' : '/',
     plugins: [vue()],
     resolve: {
         extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
@@ -26,4 +26,4 @@ export default defineConfig({
             },
         },
     }
-})
+}));

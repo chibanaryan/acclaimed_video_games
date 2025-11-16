@@ -192,7 +192,7 @@ class ModelHelpersTests(TestCase):
 
     def test_developer_str_and_other_aliases(self):
         developer = models.Developer.objects.create(name="Studio")
-        alias = models.DeveloperAlias.objects.create(developer=developer, name="Studio")
+        models.DeveloperAlias.objects.create(developer=developer, name="Studio")
         other = models.DeveloperAlias.objects.create(
             developer=developer, name="Alt Studio"
         )
@@ -230,7 +230,7 @@ class ModelHelpersTests(TestCase):
     def test_game_save_logs_errors_when_ranking_fails(
         self, year_mock, decade_mock, logger_mock
     ):
-        game = models.Game.objects.create(
+        models.Game.objects.create(
             name="Sample", rank=1, igdb_id=1, year_of_release=2000
         )
         logger_mock.assert_called()
