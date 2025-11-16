@@ -115,8 +115,9 @@ The Django backend has comprehensive test coverage in the `games/tests/` directo
 - **test_utils.py** - Utility function tests
 
 **Coverage Requirements:**
-- Minimum 85% test coverage enforced by pre-commit hooks
-- Run coverage check: `coverage run --source=games manage.py test games.tests && coverage report --fail-under=85`
+- 100% test coverage enforced by pre-commit hooks (excludes migrations and database vendor-specific code)
+- Run coverage check: `coverage run --source=games manage.py test games.tests && coverage report --fail-under=100`
+- Configuration: `.coveragerc` excludes migrations and PostgreSQL-specific optimizations
 
 ### Frontend Testing
 
@@ -141,16 +142,20 @@ The Vue.js frontend uses Vitest for testing with the following structure:
 - @vue/test-utils (^2.4.0-alpha.2) - Vue component testing utilities
 - jsdom (^27.2.0) - DOM implementation for testing
 
+**Coverage Requirements:**
+- 100% test coverage enforced by pre-commit hooks and Vitest configuration
+- Thresholds configured in `vite.config.js` for statements, branches, functions, and lines
+
 ### Pre-commit Hooks
 
 The project uses pre-commit hooks (`.pre-commit-config.yaml`) to enforce code quality:
 
 1. **Black Formatter** - Automatically formats Python code
-2. **Frontend Tests** - Runs `npm run test` before commits
-3. **Django Coverage** - Enforces 85% test coverage threshold
+2. **Frontend Tests with Coverage** - Runs `npm run test:coverage` and enforces 100% coverage
+3. **Django Coverage** - Enforces 100% test coverage threshold (excluding migrations)
 4. **Django Test Suite** - Runs full test suite via `scripts/run_tests.sh`
 
-**Note:** Commits will be blocked if any tests fail or coverage drops below 85%.
+**Note:** Commits will be blocked if any tests fail or coverage drops below 100%.
 
 ## Architecture
 
@@ -240,7 +245,8 @@ Frontend environment variables (`.env` in frontend/):
 
 - **`.python-version`** - Specifies Python 3.11 for Heroku deployment
 - **`.pre-commit-config.yaml`** - Pre-commit hook configuration for code quality enforcement
-- **`frontend/vite.config.js`** - Vite configuration including test setup with Vitest
+- **`.coveragerc`** - Coverage configuration excluding migrations and database vendor-specific code
+- **`frontend/vite.config.js`** - Vite configuration including test setup with Vitest and 100% coverage thresholds
 - **`frontend/src/test/setup.js`** - Test environment setup (localStorage mocking)
 
 ## Database

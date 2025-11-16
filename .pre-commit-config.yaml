@@ -7,13 +7,13 @@ repos:
   - repo: local
     hooks:
       - id: frontend-tests
-        name: Run frontend tests
-        entry: bash -c "cd frontend && npm run test"
+        name: Run frontend tests with coverage
+        entry: bash -c "cd frontend && npm run test:coverage"
         language: system
         pass_filenames: false
       - id: django-coverage
         name: Run Django coverage
-        entry: bash -c "source venv/bin/activate && DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// CORS_ALLOWED_ORIGINS=http://localhost COVERAGE_FILE=.coverage.backend coverage run --source=games manage.py test games.tests && COVERAGE_FILE=.coverage.backend coverage report --fail-under=85"
+        entry: bash -c "source venv/bin/activate && DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// CORS_ALLOWED_ORIGINS=http://localhost COVERAGE_FILE=.coverage.backend coverage run --source=games manage.py test games.tests && COVERAGE_FILE=.coverage.backend coverage report --fail-under=100"
         language: system
         pass_filenames: false
       - id: django-tests
