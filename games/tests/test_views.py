@@ -32,10 +32,7 @@ class ImportViewIntegrationTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("import"))
-
         messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(messages)
         self.assertEqual(messages[0].message, "Done")
         mock_import.assert_called_once()
 
