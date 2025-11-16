@@ -80,7 +80,8 @@ To deploy to Heroku, push your local Git repo to the Heroku remote
 
 ## Pre-commit Hooks
 
-This repo uses [pre-commit](https://pre-commit.com/) to ensure the Django test
+This repo uses [pre-commit](https://pre-commit.com/) to ensure consistent
+styling (via [Black](https://black.readthedocs.io/)) and that the Django test
 suite (`games/tests.py`) runs before every commit.
 
 1. Install the tool (usually once per machine):
@@ -91,9 +92,15 @@ suite (`games/tests.py`) runs before every commit.
 
         pre-commit install
 
-With that in place, `scripts/run_tests.sh` executes automatically and blocks a
-commit if the tests fail. Make sure your virtualenv is set up and dependencies
-installed before running `pre-commit install`.
+With that in place:
+
+- Black runs automatically and formats Python code (commits will fail if files
+  need reformatting).
+- `scripts/run_tests.sh` executes automatically and blocks a commit if the
+  Django tests fail.
+
+Make sure your virtualenv is set up and dependencies installed before running
+`pre-commit install`.
 
 ## Import New Data
 
