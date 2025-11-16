@@ -100,6 +100,22 @@ With that in place:
   Django tests fail.
 - The frontend suite (`cd frontend && npm run test`) runs automatically to catch
   Vue regressions before commits.
+- Backend coverage is enforced (`coverage run --source=games manage.py test` with
+  a fail-under threshold of 70%). You can run it manually via:
+
+      source venv/bin/activate
+      DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// \
+      CORS_ALLOWED_ORIGINS=http://localhost \
+          COVERAGE_FILE=.coverage.backend \
+          coverage run --source=games manage.py test games.tests
+      coverage html  # view report at htmlcov/index.html
+
+- Frontend coverage is available with:
+
+      cd frontend
+      npm run test:coverage
+
+The HTML report lives under `frontend/coverage/index.html` (ignored by Git).
 
 Make sure your virtualenv is set up and dependencies installed before running
 `pre-commit install`.

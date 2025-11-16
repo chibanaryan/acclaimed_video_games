@@ -76,6 +76,7 @@ class ApiSmokeTests(TestCase):
         self.developer = models.Developer.objects.create(name="Studio", slug="studio")
         self.post = models.Post.objects.create(title="News", text="Hello", active=True)
         models.Snippet.objects.create(slug="about", text="About text")
+        models.Snippet.objects.create(slug="donate", text="Donate info")
         self.game = models.Game.objects.create(
             name="Alpha Quest",
             rank=1,
@@ -97,3 +98,27 @@ class ApiSmokeTests(TestCase):
         resp = self.client.get("/api/meta/")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("games", resp.json())
+
+    def test_posts_endpoint(self):
+        resp = self.client.get("/api/posts/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertGreaterEqual(len(resp.json()["results"]), 1)
+
+    def test_snippet_endpoint(self):
+        resp = self.client.get("/api/snippets/about/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("snippet", resp.json())
+
+    def test_page_endpoint_returns_404_for_missing(self):
+        resp = self.client.get("/api/pages/missing/")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_platforms_endpoint(self):
+        resp = self.client.get("/api/platforms/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("results", resp.json())
+
+    def test_genres_endpoint(self):
+        resp = self.client.get("/api/genres/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("results", resp.json())

@@ -7,7 +7,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@babel/core": "^7.12.16",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vitest/coverage-v8": "^4.0.9",
     "@vue/test-utils": "^2.4.0-alpha.2",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
