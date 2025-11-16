@@ -101,7 +101,7 @@ With that in place:
 - The frontend suite (`cd frontend && npm run test`) runs automatically to catch
   Vue regressions before commits.
 - Backend coverage is enforced (`coverage run --source=games manage.py test` with
-  a fail-under threshold of 70%). You can run it manually via:
+  a fail-under threshold of 85%). You can run it manually via:
 
       source venv/bin/activate
       DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// \
