@@ -15,6 +15,7 @@
 - Enhanced frontend resilience for API failures (store, game list, developer/game detail components)
 - Fixed `VITE_API_URL` configuration issues
 - Wrapped database delete operations in transactions
+- Fixed Google Analytics integration (changed from `import.meta.env.NODE_ENV` to `import.meta.env.PROD` for Vite compatibility)
 
 ### Configuration & Documentation
 - Created comprehensive `CLAUDE.md` project documentation
