@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Optional
 
 import markdown
 from django.db import IntegrityError, models
@@ -18,10 +19,11 @@ class Snippet(models.Model):
     slug = models.SlugField(unique=True)
     text = models.TextField()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.slug
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the snippet, ensuring slug is properly slugified."""
         slugified_slug = slugify(self.slug)
         if self.slug != slugified_slug:
             self.slug = slugified_slug
@@ -126,7 +128,10 @@ class Game(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Save the game, calculating normalized name and year/decade rankings.
+        """
         # Save the normalized version of the name
         normalized = unidecode(self.name)
         if self.name != normalized:
@@ -142,7 +147,16 @@ class Game(models.Model):
 
         super().save(*args, **kwargs)
 
-    def get_igdb_data(self, cache_results=True):
+    def get_igdb_data(self, cache_results: bool = True) -> None:
+        """
+        Fetch and populate game data from IGDB API.
+
+        Args:
+            cache_results: Whether to cache the API results
+
+        Returns:
+            None. Updates the model instance fields in-place.
+        """
         if not self.igdb_id:
             return
 
@@ -205,20 +219,24 @@ class Game(models.Model):
         self.genres.set(genres)
 
     @property
-    def thumbnail(self):
+    def thumbnail(self) -> Optional[str]:
+        """Get the thumbnail URL for the game's cover art."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_small/"
                 f"{self.igdb_artwork_id}"
             )
+        return None
 
     @property
-    def image(self):
+    def image(self) -> Optional[str]:
+        """Get the full-size image URL for the game's cover art."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_big/"
                 f"{self.igdb_artwork_id}"
             )
+        return None
 
 
 class Publication(models.Model):
@@ -232,10 +250,11 @@ class Publication(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the publication, ensuring slug is populated."""
         if not self.slug:
             self.slug = slugify(self.name)
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class List(models.Model):
@@ -296,5 +315,6 @@ class Post(models.Model):
         return self.title or Truncator(self.text).words(10)
 
     @property
-    def text_rendered(self):
+    def text_rendered(self) -> str:
+        """Render the markdown text as HTML."""
         return markdown.markdown(self.text)

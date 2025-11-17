@@ -29,6 +29,7 @@
 
 <script>
 import { LIST_TYPE_LABELS } from "@/constants";
+import { apiGet } from "@/api";
 import { groupBy } from "lodash";
 import Game from '../models/Game';
 import GameProperties from './GameProperties';
@@ -47,23 +48,18 @@ export default {
     },
     async created() {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}games/${this.$route.params.slug}/`);
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    this.error = 'Game not found';
-                } else {
-                    this.error = `Failed to load game (${response.status})`;
-                }
-                return;
-            }
-
-            const data = await response.json();
+            const data = await apiGet(`${import.meta.env.VITE_API_URL}games/${this.$route.params.slug}/`);
             this.game = new Game(data);
             this.emitter.emit('title', this.game.name);
         } catch (err) {
+            if (err.status === 404) {
+                this.error = 'Game not found';
+            } else if (err.status > 0) {
+                this.error = `Failed to load game (${err.status})`;
+            } else {
+                this.error = 'Network error - please check your connection and try again';
+            }
             console.error('Error fetching game:', err);
-            this.error = 'Network error - please check your connection and try again';
         }
     },
     computed: {

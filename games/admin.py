@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.forms import ModelForm
+from django.http import HttpRequest
+
 from . import models
 
 
@@ -43,11 +46,15 @@ class GameAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     filter_horizontal = ["developers", "platforms", "genres"]
 
-    def save_model(self, request, obj: models.Game, form, change):
+    def save_model(
+        self, request: HttpRequest, obj: models.Game, form: ModelForm, change: bool
+    ) -> None:
+        """Save the game model, fetching fresh IGDB data."""
         obj.get_igdb_data(cache_results=False)
         obj.save()
 
-    def _genres(self, obj):
+    def _genres(self, obj: models.Game) -> str:
+        """Display comma-separated list of genres for the game."""
         return ", ".join(obj.genres.values_list("name", flat=True))
 
 

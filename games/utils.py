@@ -2,15 +2,15 @@ import csv
 from dataclasses import dataclass
 from datetime import datetime
 from io import TextIOWrapper
-from typing import Callable, List
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from django.db import connection, transaction
-from django.db.models import Min, Q
+from django.db.models import Min, Q, QuerySet
 
 from . import constants, models
 
 
-def import_data(data):
+def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
     """
     Route posted form data to the correct import helper based on the type code.
     """
@@ -43,12 +43,16 @@ def import_data(data):
             return (False, f"Could not process uploaded file: {e}")
 
 
-def import_igdb():
+def import_igdb() -> Optional[Tuple[bool, str]]:
+    """
+    Fetch IGDB data for all games in the database.
+    """
     for game in models.Game.objects.all():
         game.get_igdb_data()
+    return None
 
 
-def delete_existing_data():
+def delete_existing_data() -> Tuple[bool, str]:
 
     models_to_delete = [
         models.Platform,
@@ -71,14 +75,15 @@ def delete_existing_data():
         if connection.vendor == "postgresql":
             with connection.cursor() as cursor:
                 for model in models_to_delete:
-                    cursor.execute(
-                        f"ALTER SEQUENCE {model._meta.db_table}_id_seq RESTART WITH 1;"
+                    table_name = connection.ops.quote_name(
+                        f"{model._meta.db_table}_id_seq"
                     )
+                    cursor.execute(f"ALTER SEQUENCE {table_name} RESTART WITH 1;")
 
     return (True, f"{total} objects deleted")
 
 
-def import_lists(f):
+def import_lists(f: TextIOWrapper) -> Tuple[bool, str]:
     """
     Import critic lists from a TSV file with columns:
     publisher, year, type, name, url.
@@ -112,7 +117,7 @@ def import_lists(f):
     return (True, f"Lists: {count} created, {updated} updated")
 
 
-def import_listmemberships(f):
+def import_listmemberships(f: TextIOWrapper) -> Tuple[bool, str]:
     """
     Import ranked appearances for each game from a TSV file where each row is a
     game rank and each column contains "list_id:position".
@@ -139,7 +144,7 @@ def import_listmemberships(f):
     return (True, f"List memberships: {len(created_memberships)} created")
 
 
-def import_games(f):
+def import_games(f: TextIOWrapper) -> Tuple[bool, str]:
     """
     Import games from a TSV file with columns:
     rank, name, year, IGDB id, comma separated platform codes.
@@ -179,7 +184,7 @@ def import_games(f):
     return (True, f"Games: {count} created, {updated} updated")
 
 
-def import_platforms(f):
+def import_platforms(f: TextIOWrapper) -> Tuple[bool, str]:
     """
     Import platform code/name pairs from a TSV file.
     """
@@ -206,7 +211,7 @@ def import_platforms(f):
     return (True, f"Platforms: {count} created, {updated} updated")
 
 
-def import_developers(f):
+def import_developers(f: TextIOWrapper) -> Tuple[bool, str]:
     """
     Import developers and aliases from a TSV file with columns:
     alias1, canonical[, alias2].
@@ -245,15 +250,16 @@ def import_developers(f):
     return (True, f"Developers: {count} created, {updated} updated")
 
 
-def year_to_decade(year):
+def year_to_decade(year: int) -> int:
+    """Convert a year to its decade (e.g., 1985 -> 1980)."""
     return int(year / 10) * 10
 
 
-year_rankings = {}
-decade_rankings = {}
+year_rankings: Dict[int, List[int]] = {}
+decade_rankings: Dict[int, List[int]] = {}
 
 
-def _load_rankings():
+def _load_rankings() -> None:
 
     if year_rankings and decade_rankings:
         return
@@ -299,7 +305,19 @@ def _load_rankings():
         decade_rankings[decade] = ids
 
 
-def get_ranking_for_year(game):
+def get_ranking_for_year(game: "models.Game") -> int:
+    """
+    Get the ranking position for a game within its release year.
+
+    Args:
+        game: The Game instance to get ranking for
+
+    Returns:
+        The 1-indexed ranking position within the year
+
+    Raises:
+        ValueError: If rankings are not available or game not found
+    """
     _load_rankings()
 
     ids = year_rankings.get(game.year_of_release)
@@ -317,7 +335,19 @@ def get_ranking_for_year(game):
     return ids.index(game.id) + 1
 
 
-def get_ranking_for_decade(game):
+def get_ranking_for_decade(game: "models.Game") -> int:
+    """
+    Get the ranking position for a game within its release decade.
+
+    Args:
+        game: The Game instance to get ranking for
+
+    Returns:
+        The 1-indexed ranking position within the decade
+
+    Raises:
+        ValueError: If rankings are not available or game not found
+    """
     _load_rankings()
 
     decade = year_to_decade(game.year_of_release)
@@ -341,7 +371,17 @@ class Filter:
     coerce: type = str
     label: Callable[[str], str] = lambda x: x
 
-    def filter_queryset(self, qs, param_val):
+    def filter_queryset(self, qs: QuerySet, param_val: Optional[str]) -> QuerySet:
+        """
+        Filter a queryset based on parameter value.
+
+        Args:
+            qs: The Django queryset to filter
+            param_val: The parameter value to filter by
+
+        Returns:
+            The filtered queryset
+        """
         if not param_val:
             return qs
 
