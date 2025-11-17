@@ -18,7 +18,9 @@ export const createApp = ViteSSG(
         // Sync Vuex state between server and client
         if (import.meta.env.SSR) {
             // During SSG, save state to be sent to client
-            initialState.store = store.state;
+            // Always ensure loading is false in serialized state
+            const stateToSerialize = { ...store.state, loading: false };
+            initialState.store = stateToSerialize;
         } else if (initialState.store) {
             // On client, restore state from server
             store.replaceState(initialState.store);
