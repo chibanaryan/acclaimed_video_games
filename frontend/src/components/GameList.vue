@@ -115,6 +115,7 @@ export default {
             this.updateFilters(this.$route.query);
             delete this.$route.meta.ssrData; // Clean up to avoid memory leaks
             console.log('[SSG] Using pre-fetched game data');
+            this.loading = false; // SSR already supplied data, stop spinner
         } else {
             // Client-side navigation or no SSR data - fetch normally
             this.updateFilters(this.$route.query);
