@@ -105,8 +105,22 @@ export default {
         }
     },
     async created() {
-        this.updateFilters(this.$route.query);
-        await this.loadItems();
+        // Check if we have SSR pre-fetched data (from beforeEnter guard)
+        const ssrData = this.$route.meta?.ssrData;
+
+        if (ssrData) {
+            // Use pre-fetched data during SSG/initial hydration
+            this.items = ssrData.results.map((x) => new Game(x));
+            this.resultsCount = ssrData.count;
+            this.updateFilters(this.$route.query);
+            delete this.$route.meta.ssrData; // Clean up to avoid memory leaks
+            console.log('[SSG] Using pre-fetched game data');
+        } else {
+            // Client-side navigation or no SSR data - fetch normally
+            this.updateFilters(this.$route.query);
+            await this.loadItems();
+        }
+
         loadPreviousScrollPosition();
     },
     computed: {

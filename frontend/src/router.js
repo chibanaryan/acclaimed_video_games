@@ -47,6 +47,31 @@ export const routes = [
         name: 'games-list',
         meta: {
             title: 'All time',
+        },
+        async beforeEnter(to) {
+            // Pre-fetch game data during SSG for Wayback Machine compatibility
+            if (import.meta.env.SSR) {
+                const apiUrl = process.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+                const params = new URLSearchParams({
+                    limit: to.query.limit || 100,
+                    offset: to.query.offset || 0,
+                });
+
+                // Add year/decade filters if present
+                if (to.query.start && to.query.end) {
+                    params.append('start', to.query.start);
+                    params.append('end', to.query.end);
+                }
+
+                try {
+                    const response = await fetch(`${apiUrl}games/?${params}`);
+                    const data = await response.json();
+                    to.meta.ssrData = data;
+                    console.log(`[SSG] Pre-fetched ${data.results.length} games for /games/`);
+                } catch (err) {
+                    console.error('[SSG] Failed to fetch games for pre-rendering:', err);
+                }
+            }
         }
     },
     {
