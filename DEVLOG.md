@@ -40,6 +40,16 @@
 **Modified files:** ~20 source files + configuration + documentation
 **Key additions:** New SSR guards, API URL abstraction, SSG build configuration
 
+### SSG Data Pre-rendering for Wayback Machine (In Progress)
+- **Problem:** Initial SSG implementation produced HTML with empty initial state, causing Wayback Machine to capture loading spinners instead of content
+- **Root cause:** Components fetched data in `created()` hooks without using Vue's SSR-specific data fetching patterns
+- Added `serverPrefetch()` hook to HomePage component for SSR-aware data loading
+- Implemented automatic Vuex store pre-loading (genres, platforms, meta) during SSG builds in `main.js`
+- Added route-level `beforeEnter` guards for game and developer detail pages to pre-fetch data during SSG
+- Updated GameDetail and DeveloperDetail components to check for and use pre-fetched SSR data
+- Verified build produces pages with full content (home: 37KB, game details: 80-115KB vs previous ~3KB empty templates)
+- **Status:** Significant improvement - data now pre-rendered in HTML, but Wayback Machine capture still has some issues. Work ongoing.
+
 ## 2025-11-16
 
 ### Performance & API Work
