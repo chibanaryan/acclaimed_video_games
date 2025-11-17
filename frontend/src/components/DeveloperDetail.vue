@@ -1,5 +1,9 @@
 <template>
-    <div v-if="developer">
+    <div v-if="error" class="notification is-danger">
+        <p><strong>Error:</strong> {{ error }}</p>
+        <p>The developer you're looking for could not be found or there was a problem loading it.</p>
+    </div>
+    <div v-else-if="developer">
         <h1 class="title">{{ developer.name }}</h1>
         <h2>Including:</h2>
         <ul v-if="developer.aliases.length > 1">
@@ -23,6 +27,9 @@
                 :show-rank-in-details="true"></game-row>
         </div>
     </div>
+    <div v-else class="has-text-centered">
+        <p>Loading...</p>
+    </div>
 </template>
 
 <script>
@@ -36,19 +43,43 @@ export default {
         return {
             developer: null,
             games: [],
+            error: null,
         }
     },
     async created() {
-        let data = await fetch(`${import.meta.env.VITE_API_URL}developers/${this.$route.params.slug}/`)
-            .then(resp => resp.json());
-        this.developer = new Developer(data);
-        this.developer.aliases.forEach(x => x.selected = true);
+        try {
+            // Fetch developer details
+            const developerResponse = await fetch(`${import.meta.env.VITE_API_URL}developers/${this.$route.params.slug}/`);
 
-        data = await fetch(`${import.meta.env.VITE_API_URL}games/?developer=${this.developer.id}&order_by=year_of_release`)
-            .then(resp => resp.json());
-        this.games = data.results.map(x => new Game(x));
+            if (!developerResponse.ok) {
+                if (developerResponse.status === 404) {
+                    this.error = 'Developer not found';
+                } else {
+                    this.error = `Failed to load developer (${developerResponse.status})`;
+                }
+                return;
+            }
 
-        this.emitter.emit('title', this.developer.name);
+            const developerData = await developerResponse.json();
+            this.developer = new Developer(developerData);
+            this.developer.aliases.forEach(x => x.selected = true);
+
+            // Fetch games for this developer
+            const gamesResponse = await fetch(`${import.meta.env.VITE_API_URL}games/?developer=${this.developer.id}&order_by=year_of_release`);
+
+            if (!gamesResponse.ok) {
+                this.error = `Failed to load games for developer (${gamesResponse.status})`;
+                return;
+            }
+
+            const gamesData = await gamesResponse.json();
+            this.games = gamesData.results.map(x => new Game(x));
+
+            this.emitter.emit('title', this.developer.name);
+        } catch (err) {
+            console.error('Error fetching developer or games:', err);
+            this.error = 'Network error - please check your connection and try again';
+        }
     },
     computed: {
         selectedAliases() {

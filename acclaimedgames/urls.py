@@ -12,10 +12,17 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("import/", views.ImportView.as_view(), name="import"),
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
-    # path('__debug__/', include('debug_toolbar.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns = [
+        path("__debug__/", include(debug_toolbar.urls)),
+        *urlpatterns,
+    ]
 
 # All other urls should get directed to the SPA (must be last!)
 urlpatterns += [

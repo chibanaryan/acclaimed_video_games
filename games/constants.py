@@ -9,7 +9,6 @@ TYPES = [
     (TYPE_LIST_MEMBERSHIP, "Game positions"),
     (TYPE_LIST, "Source lists"),
     (TYPE_PLATFORM, "Platforms"),
-    # (TYPE_DEVELOPER, 'Developers'),
 ]
 
 LIST_EOY = "E"

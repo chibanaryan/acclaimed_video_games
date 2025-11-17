@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 import environ
 import sentry_sdk
@@ -8,20 +9,22 @@ root = environ.Path(__file__) - 2
 env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env()
 
-sentry_sdk.init(
-    dsn="https://464839bc01a7d54f332ce808c6b6868b@o72598.ingest.sentry.io/4505695966789632",
-    integrations=[DjangoIntegration()],
-    send_default_pii=True,
-    traces_sample_rate=1.0,
-    profiles_sample_rate=1.0,
-)
+SENTRY_DSN = env("SENTRY_DSN", default=None)
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        send_default_pii=True,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = env("DEBUG", default=False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LANGUAGE_CODE = "en-us"
 ROOT_URLCONF = "acclaimedgames.urls"
-SECRET_KEY = env("SECRET_KEY", default="XXX")
+SECRET_KEY = env("SECRET_KEY")  # Required - no default for security
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = "/static/"
 TIME_ZONE = "UTC"
@@ -51,10 +54,8 @@ MIDDLEWARE = [
     "django.middleware.cache.UpdateCacheMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.cache.UpdateCacheMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.cache.FetchFromCacheMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -91,7 +92,10 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -136,8 +140,6 @@ STATICFILES_DIRS = [
 ]
 
 # Logging configuration
-import sys
-
 # Suppress noisy logs during test runs
 TEST_MODE = "test" in sys.argv
 
