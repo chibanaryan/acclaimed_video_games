@@ -1,7 +1,9 @@
 import { createStore } from 'vuex'
 import Genre from "./models/Genre";
 import Platform from "./models/Platform";
-import { isEmpty } from 'lodash';
+import { getApiUrl } from './config';
+import _ from 'lodash';
+const { isEmpty } = _;
 
 const store = createStore({
     state() {
@@ -18,7 +20,7 @@ const store = createStore({
                 return;
 
             let data = await fetch(
-                `${import.meta.env.VITE_API_URL}genres/?limit=999`
+                `${getApiUrl()}genres/?limit=999`
             ).then((resp) => resp.json());
 
             commit('setGenres', data.results.map((x) => new Genre(x)));
@@ -28,7 +30,7 @@ const store = createStore({
                 return;
 
             let data = await fetch(
-                `${import.meta.env.VITE_API_URL}platforms/?limit=999`
+                `${getApiUrl()}platforms/?limit=999`
             ).then((resp) => resp.json());
 
             commit('setPlatforms', data.results.map((x) => new Platform(x)));
@@ -39,7 +41,7 @@ const store = createStore({
 
             try {
                 let data = await fetch(
-                    `${import.meta.env.VITE_API_URL}meta/`
+                    `${getApiUrl()}meta/`
                 ).then((resp) => {
                     if (!resp.ok)
                         throw new Error(`Meta request failed: ${resp.status}`);

@@ -69,8 +69,10 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 import { loadPreviousScrollPosition } from "@/utils";
-import { isEmpty, isString } from "lodash";
+import _ from "lodash";
+const { isEmpty, isString } = _;
 import Game from "../models/Game";
 import AdvancedFilters from './AdvancedFilters.vue';
 import GameRow from "./GameRow";
@@ -255,7 +257,7 @@ export default {
 
             controller = new AbortController();
 
-            let url = `${import.meta.env.VITE_API_URL}games/?${new URLSearchParams(this.getUrlArgs())}`;
+            let url = `${getApiUrl()}games/?${new URLSearchParams(this.getUrlArgs())}`;
 
             try {
                 let data = await fetch(url, { signal: controller.signal })

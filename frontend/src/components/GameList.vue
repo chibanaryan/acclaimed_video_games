@@ -72,6 +72,7 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 import { loadPreviousScrollPosition, parseSlug } from "@/utils";
 import Game from "../models/Game";
 import GameRow from "./GameRow";
@@ -198,7 +199,7 @@ export default {
                 controller.abort();
 
             controller = new AbortController();
-            let url = `${import.meta.env.VITE_API_URL}games/?${new URLSearchParams(this.getArgs)}`;
+            let url = `${getApiUrl()}games/?${new URLSearchParams(this.getArgs)}`;
 
             try {
                 const response = await fetch(url, { signal: controller.signal });

@@ -63,6 +63,7 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 import { LIST_TYPE_LABELS } from '../constants';
 import List from '../models/List';
 import BaseListComponent from './BaseListComponent';
@@ -88,7 +89,7 @@ export default {
         }
     },
     async created() {
-        let data = await fetch(`${import.meta.env.VITE_API_URL}publications/?limit=999`)
+        let data = await fetch(`${getApiUrl()}publications/?limit=999`)
             .then(resp => resp.json());
         this.publishers = data.results;
     },
@@ -99,7 +100,7 @@ export default {
     },
     methods: {
         async loadItems() {
-            let data = await fetch(`${import.meta.env.VITE_API_URL}lists/?${new URLSearchParams(this.getArgs)}`)
+            let data = await fetch(`${getApiUrl()}lists/?${new URLSearchParams(this.getArgs)}`)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new List(x));
             this.resultsCount = data.count;

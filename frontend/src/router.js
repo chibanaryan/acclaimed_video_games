@@ -1,4 +1,3 @@
-import { createRouter, createWebHistory } from 'vue-router';
 import DeveloperAliasRedirect from './components/DeveloperAliasRedirect';
 import DeveloperDetail from './components/DeveloperDetail';
 import DeveloperList from './components/DeveloperList';
@@ -13,7 +12,7 @@ import PostList from './components/PostList';
 import { DEFAULT_TITLE } from './constants';
 import { globalStore } from './objectStore';
 
-const routes = [
+export const routes = [
     {
         path: '/',
         component: HomePage,
@@ -94,19 +93,21 @@ const routes = [
 
 ]
 
-const router = createRouter({
-    history: createWebHistory(),
-    routes,
-})
+/**
+ * Setup router navigation guards
+ * This function should be called from main.js after the router is created by ViteSSG
+ * @param {Router} router - The Vue Router instance
+ */
+export function setupRouter(router) {
+    router.beforeEach((to, from) => {
+        // Guard against SSR - window is only available in browser
+        if (typeof window === 'undefined') return;
 
-
-router.beforeEach((to, from) => {
-    // Remember scroll position for game list pages on the next page only
-    const gameListRoutes = ['games-search', 'games-list'];
-    if (gameListRoutes.includes(from.name))
-        globalStore.set('scrollY', window.scrollY);
-    else if (!gameListRoutes.includes(to.name))
-        globalStore.set('scrollY', null);
-})
-
-export default router;
+        // Remember scroll position for game list pages on the next page only
+        const gameListRoutes = ['games-search', 'games-list'];
+        if (gameListRoutes.includes(from.name))
+            globalStore.set('scrollY', window.scrollY);
+        else if (!gameListRoutes.includes(to.name))
+            globalStore.set('scrollY', null);
+    })
+}

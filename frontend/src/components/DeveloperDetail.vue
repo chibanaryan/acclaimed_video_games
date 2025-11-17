@@ -33,6 +33,7 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 import Developer from '../models/Developer';
 import Game from '../models/Game';
 import GameRow from './GameRow';
@@ -49,7 +50,7 @@ export default {
     async created() {
         try {
             // Fetch developer details
-            const developerResponse = await fetch(`${import.meta.env.VITE_API_URL}developers/${this.$route.params.slug}/`);
+            const developerResponse = await fetch(`${getApiUrl()}developers/${this.$route.params.slug}/`);
 
             if (!developerResponse.ok) {
                 if (developerResponse.status === 404) {
@@ -65,7 +66,7 @@ export default {
             this.developer.aliases.forEach(x => x.selected = true);
 
             // Fetch games for this developer
-            const gamesResponse = await fetch(`${import.meta.env.VITE_API_URL}games/?developer=${this.developer.id}&order_by=year_of_release`);
+            const gamesResponse = await fetch(`${getApiUrl()}games/?developer=${this.developer.id}&order_by=year_of_release`);
 
             if (!gamesResponse.ok) {
                 this.error = `Failed to load games for developer (${gamesResponse.status})`;

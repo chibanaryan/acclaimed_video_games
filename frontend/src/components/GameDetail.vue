@@ -28,9 +28,11 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 import { LIST_TYPE_LABELS } from "@/constants";
 import { apiGet } from "@/api";
-import { groupBy } from "lodash";
+import _ from "lodash";
+const { groupBy } = _;
 import Game from '../models/Game';
 import GameProperties from './GameProperties';
 import ListResultsComponent from './ListResultsComponent';
@@ -48,7 +50,7 @@ export default {
     },
     async created() {
         try {
-            const data = await apiGet(`${import.meta.env.VITE_API_URL}games/${this.$route.params.slug}/`);
+            const data = await apiGet(`${getApiUrl()}games/${this.$route.params.slug}/`);
             this.game = new Game(data);
             this.emitter.emit('title', this.game.name);
         } catch (err) {

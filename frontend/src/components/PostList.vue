@@ -47,6 +47,7 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 import BaseListComponent from './BaseListComponent';
 import Post from '../models/Post';
 import PostItem from './PostItem';
@@ -56,7 +57,7 @@ export default {
     components: { PostItem },
     methods: {
         async loadItems() {
-            let data = await fetch(`${import.meta.env.VITE_API_URL}posts/?${new URLSearchParams(this.getArgs)}`)
+            let data = await fetch(`${getApiUrl()}posts/?${new URLSearchParams(this.getArgs)}`)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new Post(x));
             this.resultsCount = data.count;

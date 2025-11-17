@@ -1,5 +1,6 @@
 import { globalStore } from "@/objectStore";
-import { cloneDeep, isEmpty, isObject } from "lodash";
+import _ from "lodash";
+const { cloneDeep, isEmpty, isObject } = _;
 
 /**
  * Remove null, undefined, NaN, and empty object values from an object
@@ -91,6 +92,9 @@ const parseSlug = (slug) => {
  * @param {number} [delay=500] - Delay in milliseconds before scrolling
  */
 const loadPreviousScrollPosition = (delay = 500) => {
+    // Guard against SSR - window is only available in browser
+    if (typeof window === 'undefined') return;
+
     const scrollY = globalStore.get('scrollY');
     if (scrollY)
         setTimeout(() => {

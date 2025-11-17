@@ -49,6 +49,7 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 import BaseListComponent from './BaseListComponent';
 import PaginationComponent from './PaginationComponent';
 import DeveloperAlias from '../models/DeveloperAlias';
@@ -59,7 +60,7 @@ export default {
     components: { PaginationComponent },
     methods: {
         loadItems: _.debounce(async function () {
-            let url = `${import.meta.env.VITE_API_URL}developer-aliases/?${new URLSearchParams(this.getArgs)}`;
+            let url = `${getApiUrl()}developer-aliases/?${new URLSearchParams(this.getArgs)}`;
             let data = await fetch(url)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new DeveloperAlias(x));

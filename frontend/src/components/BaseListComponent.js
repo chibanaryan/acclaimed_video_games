@@ -1,5 +1,6 @@
 import { cleanData } from "@/utils.js";
-import { cloneDeep, isEmpty, isEqual } from "lodash";
+import _ from "lodash";
+const { cloneDeep, isEmpty, isEqual } = _;
 
 export default {
     async created() {

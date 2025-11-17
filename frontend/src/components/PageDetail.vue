@@ -6,6 +6,7 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 
 export default {
     data() {
@@ -14,7 +15,7 @@ export default {
         }
     },
     async created() {
-        this.page = await fetch(`${import.meta.env.VITE_API_URL}pages/${this.$route.params.slug}/`)
+        this.page = await fetch(`${getApiUrl()}pages/${this.$route.params.slug}/`)
             .then(resp => resp.json());
 
         this.emitter.emit('title', this.page.title);

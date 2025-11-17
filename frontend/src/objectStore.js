@@ -12,6 +12,12 @@ class PersistentObjectStore {
     constructor(storeKey) {
         this.storeKey = storeKey;
 
+        // Guard against SSR - localStorage is only available in browser
+        if (typeof window === 'undefined') {
+            this.data = {};
+            return;
+        }
+
         if (!localStorage[this.storeKey])
             localStorage[this.storeKey] = "{}";
 
@@ -25,7 +31,10 @@ class PersistentObjectStore {
      */
     set(key, val) {
         this.data[key] = val;
-        localStorage[this.storeKey] = JSON.stringify(this.data);
+        // Guard against SSR - only persist to localStorage in browser
+        if (typeof window !== 'undefined') {
+            localStorage[this.storeKey] = JSON.stringify(this.data);
+        }
     }
 
     /**
@@ -42,7 +51,10 @@ class PersistentObjectStore {
      */
     clear() {
         this.data = {};
-        localStorage[this.storeKey] = "{}";
+        // Guard against SSR - only persist to localStorage in browser
+        if (typeof window !== 'undefined') {
+            localStorage[this.storeKey] = "{}";
+        }
     }
 }
 

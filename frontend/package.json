@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite-ssg build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -32,6 +32,7 @@
     "eslint-plugin-vue": "^8.0.3",
     "jsdom": "^27.2.0",
     "vite": "^7.1.3",
+    "vite-ssg": "^28.2.2",
     "vitest": "^4.0.9"
   },
   "eslintConfig": {

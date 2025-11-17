@@ -1,5 +1,45 @@
 # Developer Log
 
+## 2025-11-17
+
+### Server-Side Static Generation (SSG) Integration
+- Integrated vite-ssg (v28.2.2) for server-side static generation to make the site compatible with web crawlers and the Wayback Machine
+- Restructured Vue.js app initialization to use ViteSSG instead of createApp
+- Refactored router to export routes array instead of router instance
+- Created `frontend/src/config.js` with `getApiUrl()` helper for SSR-safe API calls
+
+### SSR Compatibility Improvements
+- Added SSR guards (`typeof window !== 'undefined'`) to all browser-specific code:
+  - localStorage access in `objectStore.js`
+  - window API usage in `utils.js` and `router.js`
+  - Client-only plugins (Google Analytics, mitt emitter, fetch-intercept) in `main.js`
+- Fixed lodash imports for ESM compatibility (changed from named imports to default import pattern)
+- Updated all Vue components to use `getApiUrl()` for SSR-safe API URL resolution
+
+### Build Configuration
+- Updated build script in `package.json` to use `vite-ssg build`
+- Added SSG configuration to `vite.config.js`:
+  - `includedRoutes()` function fetches game/developer slugs from Django API during build
+  - Currently limited to 10 games and 5 developers for testing (configurable)
+  - Supports environment variable `VITE_SSG_API_URL` for custom API URL during builds
+- Added `.vite-ssg-temp/` to `.gitignore` for temporary build files
+- Updated `index.html` with SSG placeholder comment (`<!--app-html-->`)
+
+### Verification
+- Successfully tested SSG build with Django dev server running
+- Verified pre-rendered HTML contains server-rendered content and initial state
+- All existing tests passing (21/21) with 100% coverage maintained
+- Static HTML files now visible to web crawlers without JavaScript
+
+### Documentation
+- Updated `CLAUDE.md` with SSG build instructions and SSR-safe architecture notes
+- Updated `readme.md` with SSG deployment requirements
+- Added this DEVLOG entry
+
+### Statistics
+**Modified files:** ~20 source files + configuration + documentation
+**Key additions:** New SSR guards, API URL abstraction, SSG build configuration
+
 ## 2025-11-16
 
 ### Performance & API Work

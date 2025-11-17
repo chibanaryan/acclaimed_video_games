@@ -3,6 +3,7 @@
 </template>
 
 <script>
+import { getApiUrl } from "@/config";
 export default {
     props: ['slug'],
     data() {
@@ -11,7 +12,7 @@ export default {
         }
     },
     async created() {
-        this.snippet = await fetch(`${import.meta.env.VITE_API_URL}snippets/${this.slug}/`)
+        this.snippet = await fetch(`${getApiUrl()}snippets/${this.slug}/`)
             .then(resp => resp.json());
     }
 }

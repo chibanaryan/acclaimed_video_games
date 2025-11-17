@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
 
+# vite-ssg temporary build files
+.vite-ssg-temp/
 
 # local env files
 .env.local

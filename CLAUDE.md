@@ -65,10 +65,12 @@ npm install
 npm run dev
 ```
 
-**Build for production:**
+**Build for production (SSG):**
 ```bash
 npm run build
 ```
+
+**Note:** The build process uses vite-ssg for server-side static generation. The Django development server must be running during the build so that vite-ssg can fetch data from the API to pre-render routes. The number of routes pre-rendered is controlled in `vite.config.js` (currently limited to 10 games and 5 developers for testing; increase to 9999 for full production builds).
 
 **Lint code:**
 ```bash
@@ -178,11 +180,12 @@ The project uses pre-commit hooks (`.pre-commit-config.yaml`) to enforce code qu
   - **components/** - Vue components (GameList, GameDetail, DeveloperDetail, etc.)
     - **__tests__/** - Component tests
   - **models/** - Frontend model classes that mirror Django models
-  - **router.js** - Vue Router configuration
+  - **router.js** - Vue Router configuration (exports routes array for vite-ssg)
   - **store.js** - Vuex global state management
-  - **objectStore.js** - Persistent localStorage wrapper
+  - **objectStore.js** - Persistent localStorage wrapper (SSR-safe)
+  - **config.js** - API URL configuration (handles SSR vs client-side differences)
   - **constants.js** - Application-wide constants
-  - **utils.js** - Utility functions
+  - **utils.js** - Utility functions (SSR-safe with window guards)
   - **__tests__/** - Unit tests for models, store, utils, and objectStore
   - **test/** - Test configuration and setup files
 
@@ -217,11 +220,13 @@ All non-API routes are handled by the Vue.js SPA.
 
 **BaseModel Pattern**: All frontend models extend `BaseData` which automatically converts snake_case API responses to camelCase properties and parses datetime strings to moment objects.
 
-**PersistentObjectStore**: A localStorage wrapper used for persisting state (e.g., scroll position for game list navigation).
+**PersistentObjectStore**: A localStorage wrapper used for persisting state (e.g., scroll position for game list navigation). SSR-safe with guards for `window` and `localStorage` access.
 
 **Vuex Store**: Manages global state for genres, platforms, and metadata. Data is lazy-loaded and cached in the store.
 
 **Router Scroll Behavior**: Custom scroll position preservation for game list pages - when navigating from a game list to game detail and back, the scroll position is restored.
+
+**SSR-Safe Architecture**: The application uses vite-ssg for server-side static generation (SSG), making it compatible with web crawlers and the Wayback Machine. All browser-specific APIs (localStorage, window, document) are guarded with `typeof window !== 'undefined'` checks. The `getApiUrl()` helper in `config.js` provides absolute URLs during SSG builds and relative URLs in the browser.
 
 ## IGDB Integration
 
@@ -241,15 +246,20 @@ Environment variables are managed via django-environ (`.env` file):
 - IGDB API credentials (check `games/igdb.py` for specific variable names)
 
 Frontend environment variables (`.env` in frontend/):
-- `VITE_API_URL` - API base URL (defaults to `/api/` in production)
+- `VITE_API_URL` - API base URL for client-side (defaults to `/api/` in production)
+- `VITE_SSG_API_URL` - API base URL for SSG builds (defaults to `http://127.0.0.1:8000/api/`)
 
 ### Configuration Files
 
 - **`.python-version`** - Specifies Python 3.11 for Heroku deployment
 - **`.pre-commit-config.yaml`** - Pre-commit hook configuration for code quality enforcement
 - **`.coveragerc`** - Coverage configuration excluding migrations and database vendor-specific code
-- **`frontend/vite.config.js`** - Vite configuration including test setup with Vitest and 95% coverage thresholds
+- **`frontend/vite.config.js`** - Vite configuration including:
+  - SSG configuration with `includedRoutes()` function for pre-rendering
+  - Test setup with Vitest and 95% coverage thresholds
+  - Route limits for SSG builds (currently 10 games/5 developers for testing)
 - **`frontend/src/test/setup.js`** - Test environment setup (localStorage mocking)
+- **`frontend/.gitignore`** - Includes `.vite-ssg-temp/` to ignore temporary SSG build files
 
 ## Database
 
