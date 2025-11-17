@@ -2,6 +2,11 @@
 
 ## 2025-11-16
 
+### Performance & API Work
+- Added targeted indexes (including new composite ones) plus migration 0026 to speed up developer/game/list/list membership/post filters without touching data.
+- Prefetched developer/list relations in key API views and cached Meta/genre/platform endpoints to eliminate N+1s and reduce load.
+- Softened noisy IGDB init logging in DEBUG/tests and documented the backend test command.
+
 ### Testing & Code Quality
 - Reorganized Django tests into modular structure (`games/tests/`) with 8 test modules (1,299 lines total)
 - Added Vue.js test suite using Vitest (5 test files, 263 lines)

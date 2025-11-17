@@ -2,9 +2,11 @@ from datetime import datetime
 
 from django.contrib.flatpages.models import FlatPage
 from django.db import connection
-from django.db.models import Count, Min, Q
+from django.db.models import Count, Min, Q, Prefetch, Max
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.views import APIView, Response
 
@@ -35,6 +37,7 @@ class GameListView(ListAPIView):
     def get_queryset(self):
         qs = models.Game.objects.prefetch_related(
             "developers",
+            "developers__developer",
             "platforms",
             "genres",
         )
@@ -72,13 +75,20 @@ class GameListView(ListAPIView):
 class GameDetailView(RetrieveAPIView):
     lookup_field = "slug"
     serializer_class = serializers.GameDetailSerializer
-    queryset = models.Game.objects.prefetch_related("lists")
+    queryset = models.Game.objects.prefetch_related(
+        Prefetch(
+            "lists",
+            queryset=models.ListMembership.objects.select_related(
+                "list__publisher",
+            ),
+        )
+    )
 
 
 class DeveloperDetailView(RetrieveAPIView):
     lookup_field = "slug"
     serializer_class = serializers.DeveloperSerializer
-    queryset = models.Developer.objects.all()
+    queryset = models.Developer.objects.prefetch_related("aliases")
 
 
 class DeveloperAliasListView(ListAPIView):
@@ -155,6 +165,7 @@ class PostListView(ListAPIView):
     queryset = models.Post.objects.all()
 
 
+@method_decorator(cache_page(60 * 60), name="dispatch")
 class MetaView(APIView):
 
     def get(self, *args, **kwargs):
@@ -180,19 +191,19 @@ class MetaView(APIView):
         }
 
         # Games
-        min_year = (
-            models.Game.objects.aggregate(
-                min_year=Min("year_of_release"),
-            )["min_year"]
-            or 1970
+        game_stats = models.Game.objects.aggregate(
+            min_year=Min("year_of_release"),
+            last_update=Max("modified"),
         )
+        min_year = game_stats["min_year"] or 1970
         max_year = datetime.today().year
         all_years = range(min_year, max_year)
-        year_count_map = dict(
-            models.Game.objects.values_list("year_of_release")
+        year_count_map = {
+            entry["year_of_release"]: entry["count"]
+            for entry in models.Game.objects.values("year_of_release")
             .annotate(count=Count("id"))
             .order_by("year_of_release")
-        )
+        }
 
         all_years_with_counts = [
             {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
@@ -203,7 +214,7 @@ class MetaView(APIView):
         data["games"] = {
             "years": all_years_with_counts,
             "decades": decades,
-            "last_update": models.Game.objects.latest("modified").modified,
+            "last_update": game_stats["last_update"],
         }
 
         return Response(data)
@@ -227,11 +238,13 @@ class PageDetailView(RetrieveAPIView):
         return page
 
 
+@method_decorator(cache_page(60 * 60 * 24), name="dispatch")
 class GenreListView(ListAPIView):
     serializer_class = serializers.GenreSerializer
     queryset = models.Genre.objects.all()
 
 
+@method_decorator(cache_page(60 * 60 * 24), name="dispatch")
 class PlatformListView(ListAPIView):
     serializer_class = serializers.PlatformSerializer
     queryset = models.Platform.objects.all()

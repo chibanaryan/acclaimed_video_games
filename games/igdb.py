@@ -358,8 +358,10 @@ def get_api() -> Optional[IgbdApi]:
     try:
         return IgbdApi(settings.IGDB_CLIENT_ID, settings.IGDB_CLIENT_SECRET)
     except (ValueError, KeyError, AttributeError) as e:
-        logger.error("Failed to initialize IGDB API: %s", e)
+        log = logger.debug if getattr(settings, "DEBUG", False) else logger.error
+        log("Failed to initialize IGDB API: %s", e)
         return None
     except requests.RequestException as e:
-        logger.error("Network error initializing IGDB API: %s", e)
+        log = logger.info if getattr(settings, "DEBUG", False) else logger.error
+        log("Network error initializing IGDB API: %s", e)
         return None

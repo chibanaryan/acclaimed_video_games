@@ -51,8 +51,8 @@ class Developer(models.Model):
     """
 
     name = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100, null=True, blank=True)
-    igdb_id = models.IntegerField(null=True, blank=True)
+    slug = models.SlugField(max_length=100, null=True, blank=True, db_index=True)
+    igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
 
     class Meta:
         ordering = ["name"]
@@ -74,7 +74,7 @@ class DeveloperAlias(models.Model):
         "Developer", on_delete=models.CASCADE, related_name="aliases"
     )
     name = models.CharField(max_length=100, unique=True)
-    igdb_id = models.IntegerField(null=True, blank=True)
+    igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
 
     class Meta:
         ordering = ["name"]
@@ -105,18 +105,22 @@ class Game(models.Model):
     """
 
     name = models.CharField(max_length=100)
-    name_normalized = models.CharField(max_length=100, null=True, blank=True)
-    slug = models.SlugField(max_length=100, null=True, blank=True)
+    name_normalized = models.CharField(
+        max_length=100, null=True, blank=True, db_index=True
+    )
+    slug = models.SlugField(max_length=100, null=True, blank=True, db_index=True)
     genres = models.ManyToManyField("Genre", blank=True)
     description = models.TextField(null=True, blank=True)
-    rank = models.IntegerField()
-    year_of_release = models.PositiveSmallIntegerField(null=True, blank=True)
+    rank = models.IntegerField(db_index=True)
+    year_of_release = models.PositiveSmallIntegerField(
+        null=True, blank=True, db_index=True
+    )
     developers = models.ManyToManyField(
         "DeveloperAlias", blank=True, related_name="games"
     )
     platforms = models.ManyToManyField("Platform", blank=True, related_name="games")
-    modified = models.DateTimeField(auto_now=True)
-    igdb_id = models.IntegerField(null=True, blank=True)
+    modified = models.DateTimeField(auto_now=True, db_index=True)
+    igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
     igdb_artwork_id = models.CharField(max_length=100, null=True, blank=True)
     igdb_url = models.URLField(null=True, blank=True)
     year_rank = models.IntegerField(null=True, blank=True)
@@ -124,6 +128,9 @@ class Game(models.Model):
 
     class Meta:
         ordering = ["rank"]
+        indexes = [
+            models.Index(fields=["year_of_release", "rank"]),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -271,15 +278,21 @@ class List(models.Model):
     )
     name = models.CharField(max_length=100)
     url = models.URLField(null=True, blank=True)
-    year = models.PositiveSmallIntegerField()
+    year = models.PositiveSmallIntegerField(db_index=True)
     type = models.CharField(
-        max_length=1, choices=constants.LIST_TYPES, default=constants.LIST_EOY
+        max_length=1,
+        choices=constants.LIST_TYPES,
+        default=constants.LIST_EOY,
+        db_index=True,
     )
     order = models.PositiveIntegerField(unique=True, null=True)
 
     class Meta:
         ordering = ["order", "type", "publisher", "year", "name"]
         unique_together = ["publisher", "name", "year"]
+        indexes = [
+            models.Index(fields=["type", "year"]),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -294,6 +307,12 @@ class ListMembership(models.Model):
     game = models.ForeignKey("Game", on_delete=models.CASCADE, related_name="lists")
     rank = models.PositiveSmallIntegerField(null=True, blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["list", "rank"]),
+            models.Index(fields=["game", "list"]),
+        ]
+
     def __str__(self) -> str:
         return f"{self.list} - {self.game} - {self.rank}"
 
@@ -305,8 +324,8 @@ class Post(models.Model):
 
     title = models.CharField(max_length=100, null=True, blank=True)
     text = models.TextField()
-    date = models.DateTimeField(auto_now_add=True)
-    active = models.BooleanField(default=True)
+    date = models.DateTimeField(auto_now_add=True, db_index=True)
+    active = models.BooleanField(default=True, db_index=True)
 
     class Meta:
         ordering = ["-date"]

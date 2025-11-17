@@ -408,4 +408,6 @@ class IgbdApiTests(SimpleTestCase):
             self.assertIs(igdb.get_api(), fake_instance)
 
         with mock.patch("games.igdb.IgbdApi", side_effect=ValueError("boom")):
-            self.assertIsNone(igdb.get_api())
+            with self.assertLogs("games.igdb", level="ERROR") as cm:
+                self.assertIsNone(igdb.get_api())
+            self.assertIn("Failed to initialize IGDB API: boom", cm.output[0])
