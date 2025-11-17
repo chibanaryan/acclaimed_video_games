@@ -49,10 +49,23 @@ export default {
         }
     },
     async created() {
+        // Check if data was pre-fetched during SSR
+        if (this.$route.meta.ssrData) {
+            this.game = new Game(this.$route.meta.ssrData);
+            // Emitter may not be available during SSR
+            if (this.emitter) {
+                this.emitter.emit('title', this.game.name);
+            }
+            return;
+        }
+
+        // Otherwise fetch data client-side
         try {
             const data = await apiGet(`${getApiUrl()}games/${this.$route.params.slug}/`);
             this.game = new Game(data);
-            this.emitter.emit('title', this.game.name);
+            if (this.emitter) {
+                this.emitter.emit('title', this.game.name);
+            }
         } catch (err) {
             if (err.status === 404) {
                 this.error = 'Game not found';

@@ -39,7 +39,40 @@ export const routes = [
         path: '/developers/:slug/',
         component: DeveloperDetail,
         name: 'developer-detail',
-        meta: {}
+        meta: {},
+        async beforeEnter(to) {
+            // Pre-fetch developer data during SSG for Wayback Machine compatibility
+            if (import.meta.env.SSR) {
+                const apiUrl = process.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+                try {
+                    // Fetch developer details
+                    const developerResponse = await fetch(`${apiUrl}developers/${to.params.slug}/`);
+                    if (!developerResponse.ok) {
+                        console.error(`[SSG] Failed to fetch developer ${to.params.slug}: ${developerResponse.status}`);
+                        return;
+                    }
+                    const developerData = await developerResponse.json();
+
+                    // Fetch games for this developer
+                    const gamesResponse = await fetch(`${apiUrl}games/?developer=${developerData.id}&order_by=year_of_release`);
+                    if (!gamesResponse.ok) {
+                        console.error(`[SSG] Failed to fetch games for developer ${to.params.slug}: ${gamesResponse.status}`);
+                        // Still save developer data even if games fail
+                        to.meta.ssrData = { developer: developerData, games: [] };
+                        return;
+                    }
+                    const gamesData = await gamesResponse.json();
+
+                    to.meta.ssrData = {
+                        developer: developerData,
+                        games: gamesData.results
+                    };
+                    console.log(`[SSG] Pre-fetched developer: ${developerData.name} with ${gamesData.results.length} games`);
+                } catch (err) {
+                    console.error(`[SSG] Failed to fetch developer ${to.params.slug}:`, err);
+                }
+            }
+        }
     },
     {
         path: '/games/',
@@ -86,7 +119,25 @@ export const routes = [
         path: '/game/:slug/',
         component: GameDetail,
         name: 'game-detail',
-        meta: {}
+        meta: {},
+        async beforeEnter(to) {
+            // Pre-fetch game data during SSG for Wayback Machine compatibility
+            if (import.meta.env.SSR) {
+                const apiUrl = process.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+                try {
+                    const response = await fetch(`${apiUrl}games/${to.params.slug}/`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        to.meta.ssrData = data;
+                        console.log(`[SSG] Pre-fetched game: ${data.name}`);
+                    } else {
+                        console.error(`[SSG] Failed to fetch game ${to.params.slug}: ${response.status}`);
+                    }
+                } catch (err) {
+                    console.error(`[SSG] Failed to fetch game ${to.params.slug}:`, err);
+                }
+            }
+        }
     },
     {
         path: '/lists/',

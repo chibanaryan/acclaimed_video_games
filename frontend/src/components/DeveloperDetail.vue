@@ -48,6 +48,20 @@ export default {
         }
     },
     async created() {
+        // Check if data was pre-fetched during SSR
+        if (this.$route.meta.ssrData) {
+            const { developer: developerData, games: gamesData } = this.$route.meta.ssrData;
+            this.developer = new Developer(developerData);
+            this.developer.aliases.forEach(x => x.selected = true);
+            this.games = gamesData.map(x => new Game(x));
+            // Emitter may not be available during SSR
+            if (this.emitter) {
+                this.emitter.emit('title', this.developer.name);
+            }
+            return;
+        }
+
+        // Otherwise fetch data client-side
         try {
             // Fetch developer details
             const developerResponse = await fetch(`${getApiUrl()}developers/${this.$route.params.slug}/`);
@@ -76,7 +90,9 @@ export default {
             const gamesData = await gamesResponse.json();
             this.games = gamesData.results.map(x => new Game(x));
 
-            this.emitter.emit('title', this.developer.name);
+            if (this.emitter) {
+                this.emitter.emit('title', this.developer.name);
+            }
         } catch (err) {
             console.error('Error fetching developer or games:', err);
             this.error = 'Network error - please check your connection and try again';

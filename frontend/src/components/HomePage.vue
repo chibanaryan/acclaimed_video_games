@@ -62,17 +62,32 @@ export default {
             lastUpdate: null,
         }
     },
+    // serverPrefetch is called during SSR to fetch data before rendering
+    async serverPrefetch() {
+        await this.fetchData();
+    },
     async created() {
-        let data = await fetch(`${getApiUrl()}posts/?limit=5`)
-            .then(resp => resp.json());
-        this.posts = data.results.map(x => new Post(x));
+        // Only fetch data if not already loaded during SSR
+        if (this.games.length === 0 || this.posts.length === 0) {
+            await this.fetchData();
+        }
+    },
+    methods: {
+        async fetchData() {
+            // Fetch posts
+            let data = await fetch(`${getApiUrl()}posts/?limit=5`)
+                .then(resp => resp.json());
+            this.posts = data.results.map(x => new Post(x));
 
-        data = await fetch(`${getApiUrl()}games/?limit=10`)
-            .then(resp => resp.json());
-        this.games = data.results.map(x => new Game(x));
+            // Fetch games
+            data = await fetch(`${getApiUrl()}games/?limit=10`)
+                .then(resp => resp.json());
+            this.games = data.results.map(x => new Game(x));
 
-        await this.$store.dispatch('loadMeta');
-        this.lastUpdate = moment(this.$store.state.meta?.games?.last_update);
+            // Load meta data from store
+            await this.$store.dispatch('loadMeta');
+            this.lastUpdate = moment(this.$store.state.meta?.games?.last_update);
+        }
     },
     computed: {
         logoLarge() {

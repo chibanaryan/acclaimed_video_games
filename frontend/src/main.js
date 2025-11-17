@@ -11,9 +11,24 @@ import vueGTag from 'vue-gtag';
 export const createApp = ViteSSG(
     App,
     { routes },
-    ({ app, router, initialState, isClient }) => {
+    async ({ app, router, initialState, isClient }) => {
         // Setup Vuex store
         app.use(store);
+
+        // Pre-load store data during SSR for Wayback Machine compatibility
+        if (import.meta.env.SSR) {
+            try {
+                // Load all store data before rendering
+                await Promise.all([
+                    store.dispatch('loadGenres'),
+                    store.dispatch('loadPlatforms'),
+                    store.dispatch('loadMeta'),
+                ]);
+                console.log('[SSG] Pre-loaded store data (genres, platforms, meta)');
+            } catch (err) {
+                console.error('[SSG] Failed to pre-load store data:', err);
+            }
+        }
 
         // Sync Vuex state between server and client
         if (import.meta.env.SSR) {
