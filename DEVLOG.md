@@ -40,15 +40,23 @@
 **Modified files:** ~20 source files + configuration + documentation
 **Key additions:** New SSR guards, API URL abstraction, SSG build configuration
 
-### SSG Data Pre-rendering for Wayback Machine (In Progress)
+### SSG Data Pre-rendering for Wayback Machine (Completed)
 - **Problem:** Initial SSG implementation produced HTML with empty initial state, causing Wayback Machine to capture loading spinners instead of content
 - **Root cause:** Components fetched data in `created()` hooks without using Vue's SSR-specific data fetching patterns
 - Added `serverPrefetch()` hook to HomePage component for SSR-aware data loading
 - Implemented automatic Vuex store pre-loading (genres, platforms, meta) during SSG builds in `main.js`
 - Added route-level `beforeEnter` guards for game and developer detail pages to pre-fetch data during SSG
 - Updated GameDetail and DeveloperDetail components to check for and use pre-fetched SSR data
-- Verified build produces pages with full content (home: 37KB, game details: 80-115KB vs previous ~3KB empty templates)
-- **Status:** Significant improvement - data now pre-rendered in HTML, but Wayback Machine capture still has some issues. Work ongoing.
+- Fixed Genre/Platform model class serialization by re-instantiating instances during state restoration in `main.js`
+- Fixed production API URL usage during builds:
+  - Updated `vite.config.js` to use `loadEnv()` for proper environment variable access
+  - Changed `router.js` and `config.js` to use `import.meta.env.VITE_SSG_API_URL` instead of `process.env`
+  - Build now correctly fetches from production API (`https://www.acclaimedvideogames.com/api/`) instead of localhost
+- Verified build produces pages with full content:
+  - Home page: 37.21 KiB (includes pre-loaded store data)
+  - Games list: 404.85 KiB (100 games with genre/platform filters)
+  - Game detail pages: 79-115 KiB with complete game data
+- **Status:** Complete. All pages successfully pre-render with production data. Deployed to Heroku v271.
 
 ## 2025-11-16
 
