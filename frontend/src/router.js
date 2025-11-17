@@ -43,7 +43,7 @@ export const routes = [
         async beforeEnter(to) {
             // Pre-fetch developer data during SSG for Wayback Machine compatibility
             if (import.meta.env.SSR) {
-                const apiUrl = process.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+                const apiUrl = import.meta.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
                 try {
                     // Fetch developer details
                     const developerResponse = await fetch(`${apiUrl}developers/${to.params.slug}/`);
@@ -84,7 +84,7 @@ export const routes = [
         async beforeEnter(to) {
             // Pre-fetch game data during SSG for Wayback Machine compatibility
             if (import.meta.env.SSR) {
-                const apiUrl = process.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+                const apiUrl = import.meta.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
                 const params = new URLSearchParams({
                     limit: to.query.limit || 100,
                     offset: to.query.offset || 0,
@@ -123,7 +123,7 @@ export const routes = [
         async beforeEnter(to) {
             // Pre-fetch game data during SSG for Wayback Machine compatibility
             if (import.meta.env.SSR) {
-                const apiUrl = process.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+                const apiUrl = import.meta.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
                 try {
                     const response = await fetch(`${apiUrl}games/${to.params.slug}/`);
                     if (response.ok) {

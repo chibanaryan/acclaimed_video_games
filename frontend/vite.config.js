@@ -1,23 +1,28 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
 
-export default defineConfig(({ command }) => ({
-    base: command === 'build' ? '/static/' : '/',
-    plugins: [vue()],
-    resolve: {
-        extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
-        }
-    },
-    ssgOptions: {
-        formatting: 'minify',
-        format: 'cjs',
-        // Define which routes to pre-render during build
-        async includedRoutes(paths, routes) {
-            const dynamicRoutes = [];
-            const apiUrl = process.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+export default defineConfig(({ command, mode }) => {
+    // Load env file based on `mode` in the current working directory.
+    // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
+    const env = loadEnv(mode, process.cwd(), '');
+
+    return {
+        base: command === 'build' ? '/static/' : '/',
+        plugins: [vue()],
+        resolve: {
+            extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+            alias: {
+                '@': fileURLToPath(new URL('./src', import.meta.url))
+            }
+        },
+        ssgOptions: {
+            formatting: 'minify',
+            format: 'cjs',
+            // Define which routes to pre-render during build
+            async includedRoutes(paths, routes) {
+                const dynamicRoutes = [];
+                const apiUrl = env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
 
             try {
                 console.log('Fetching dynamic routes from:', apiUrl);
@@ -70,4 +75,4 @@ export default defineConfig(({ command }) => ({
             },
         },
     }
-}));
+}});

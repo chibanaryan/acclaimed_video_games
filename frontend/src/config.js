@@ -9,7 +9,7 @@
 export function getApiUrl() {
     // During SSG build, use absolute URL to Django server
     if (import.meta.env.SSR) {
-        return process.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+        return import.meta.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
     }
 
     // In browser, use configured URL or default to relative path

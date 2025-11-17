@@ -7,6 +7,8 @@ import mitt from 'mitt';
 import { routes, setupRouter } from './router';
 import store from './store';
 import vueGTag from 'vue-gtag';
+import Genre from './models/Genre';
+import Platform from './models/Platform';
 
 export const createApp = ViteSSG(
     App,
@@ -38,7 +40,13 @@ export const createApp = ViteSSG(
             initialState.store = stateToSerialize;
         } else if (initialState.store) {
             // On client, restore state from server
-            store.replaceState(initialState.store);
+            // Re-instantiate model classes that were serialized as plain objects
+            const restoredState = {
+                ...initialState.store,
+                genres: initialState.store.genres.map(g => new Genre(g)),
+                platforms: initialState.store.platforms.map(p => new Platform(p)),
+            };
+            store.replaceState(restoredState);
         }
 
         // Setup router navigation guards
