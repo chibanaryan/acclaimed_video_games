@@ -17,9 +17,9 @@
             </a>
         </div>
         <div class="control">
-            <div class="select"
-                @change="onSelectChange">
-                <select v-model="filters.decade">
+            <div class="select">
+                <select v-model="filters.decade"
+                    @change="onSelectChange">
                     <option :value="null">Decades</option>
                     <option v-for="decade in meta.games.decades"
                         :key="decade"
@@ -30,9 +30,9 @@
             </div>
         </div>
         <div class="control">
-            <div class="select"
-                @change="onSelectChange">
-                <select v-model="filters.year">
+            <div class="select">
+                <select v-model="filters.year"
+                    @change="onSelectChange">
                     <option :value="null">Years</option>
                     <option v-for="year in meta.games.years"
                         :key="year.year"

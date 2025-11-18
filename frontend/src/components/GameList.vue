@@ -102,6 +102,7 @@ export default {
             items: [],
             loading: false,
             error: null,
+            allGames: null, // Store the complete unfiltered list for client-side pagination
         }
     },
     async created() {
@@ -113,11 +114,26 @@ export default {
             this.items = ssrData.results.map((x) => new Game(x));
             this.resultsCount = ssrData.count;
             this.updateFilters(this.$route.query);
+
+            // Cache the SSR data in the store for later reuse
+            // For unfiltered views, cache it under 'all' key so client-side pagination reuses it
+            const isFiltered = this.filters.decade || this.filters.year;
+            const queryKey = isFiltered ? new URLSearchParams(this.getArgs).toString() : 'all';
+            this.$store.commit('setGamesList', {
+                queryKey,
+                result: { results: this.items, count: this.resultsCount }
+            });
+
+            // For unfiltered views, set allGames so client-side pagination works
+            if (!isFiltered) {
+                this.allGames = this.items;
+            }
+
             delete this.$route.meta.ssrData; // Clean up to avoid memory leaks
-            console.log('[SSG] Using pre-fetched game data');
+            console.log('[SSG] Using pre-fetched game data and caching in store');
             this.loading = false; // SSR already supplied data, stop spinner
         } else {
-            // Client-side navigation or no SSR data - fetch normally
+            // Client-side navigation - use store (with cache check)
             this.updateFilters(this.$route.query);
             await this.loadItems();
         }
@@ -173,6 +189,8 @@ export default {
     },
     methods: {
         async clearFilters() {
+            this.filters.year = null;
+            this.filters.decade = null;
             this.$router.push({
                 name: 'games-list',
             });
@@ -206,37 +224,71 @@ export default {
             this.emitter.emit('title', this.shortPageTitle);
         },
         async loadItems() {
-
-            this.loading = true;
             this.error = null;
 
             if (controller)
                 controller.abort();
 
             controller = new AbortController();
-            let url = `${getApiUrl()}games/?${new URLSearchParams(this.getArgs)}`;
 
             try {
-                const response = await fetch(url, { signal: controller.signal });
+                // Check if this is the default unfiltered view
+                if (!this.isFiltered) {
+                    // For the default view, fetch all games once and use client-side pagination
+                    if (!this.allGames) {
+                        // Check if we already have the complete list cached
+                        const cachedAll = this.$store.state.gamesLists['all'];
 
-                if (!response.ok) {
-                    this.error = `Failed to load games (${response.status})`;
-                    return;
+                        if (!cachedAll) {
+                            this.loading = true;
+                        }
+
+                        const data = await this.$store.dispatch('fetchAllGamesList');
+                        this.allGames = data.results;
+                        this.resultsCount = data.count;
+                    }
+
+                    // Client-side pagination: slice the complete list
+                    const start = parseInt(this.pagination.offset) || 0;
+                    const end = start + parseInt(this.pagination.limit);
+                    this.items = this.allGames.slice(start, end);
+                    this.loading = false;
+                } else {
+                    // For filtered views (year/decade), use API pagination
+                    const queryKey = new URLSearchParams(this.getArgs).toString();
+                    const cachedData = this.$store.state.gamesLists[queryKey];
+
+                    if (!cachedData) {
+                        // Only show loading if we need to fetch
+                        this.loading = true;
+                    }
+
+                    // Use store action which checks cache first
+                    const data = await this.$store.dispatch('fetchGamesList', {
+                        queryParams: this.getArgs,
+                        force: false // Use cache if available
+                    });
+
+                    this.items = data.results;
+                    this.resultsCount = data.count;
+                    this.loading = false;
                 }
-
-                const data = await response.json();
-                this.items = data.results.map((x) => new Game(x));
-                this.resultsCount = data.count;
             } catch (err) {
                 // Ignore abort errors (user navigated away or initiated new search)
                 if (err.name === 'AbortError') {
                     return;
                 }
                 console.error('Error loading games:', err);
-                this.error = 'Network error - please check your connection and try again';
+                if (err.status === 404) {
+                    this.error = 'No games found';
+                } else if (err.status > 0) {
+                    this.error = `Failed to load games (${err.status})`;
+                } else {
+                    this.error = 'Network error - please check your connection and try again';
+                }
+                this.loading = false;
             } finally {
                 controller = null;
-                this.loading = false;
 
                 if (this.highlight && !this.error)
                     setTimeout(() => {
@@ -251,12 +303,35 @@ export default {
                     }, 1000)
             }
         },
-        async onPageChange(e) {
+        onPageChange(e) {
             Object.assign(this.pagination, e);
-            this.updateUrl();
+
+            // For client-side pagination (unfiltered view), update data immediately without router navigation
+            if (!this.isFiltered) {
+                const start = parseInt(this.pagination.offset) || 0;
+                const end = start + parseInt(this.pagination.limit);
+                this.items = this.allGames.slice(start, end);
+
+                // Instant scroll to top
+                window.scrollTo(0, 0);
+
+                // Update URL asynchronously (non-blocking)
+                this.$nextTick(() => {
+                    const newQuery = this.getArgs;
+                    this.$router.replace({ name: 'games-list', query: newQuery });
+                });
+            } else {
+                // For filtered views, use the existing updateUrl flow
+                this.updateUrl();
+            }
         },
         onFormChange() {
             this.pagination.offset = 0;
+            // When switching between filtered/unfiltered, ensure we use the right data source
+            if (this.isFiltered) {
+                // Switching to a filtered view - clear allGames to force API fetch
+                this.allGames = null;
+            }
             this.updateUrl();
         }
     },

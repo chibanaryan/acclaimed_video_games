@@ -49,9 +49,16 @@ export default {
         }
     },
     async created() {
+        const slug = this.$route.params.slug;
+
         // Check if data was pre-fetched during SSR
         if (this.$route.meta.ssrData) {
             this.game = new Game(this.$route.meta.ssrData);
+
+            // Cache the SSR data in the store for later reuse
+            this.$store.commit('setGame', { slug, game: this.game });
+            console.log('[SSG] Using pre-fetched game data and caching in store');
+
             // Emitter may not be available during SSR
             if (this.emitter) {
                 this.emitter.emit('title', this.game.name);
@@ -59,10 +66,9 @@ export default {
             return;
         }
 
-        // Otherwise fetch data client-side
+        // Otherwise fetch via store (which checks cache first)
         try {
-            const data = await apiGet(`${getApiUrl()}games/${this.$route.params.slug}/`);
-            this.game = new Game(data);
+            this.game = await this.$store.dispatch('fetchGame', { slug });
             if (this.emitter) {
                 this.emitter.emit('title', this.game.name);
             }

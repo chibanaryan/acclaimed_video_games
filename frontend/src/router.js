@@ -85,15 +85,24 @@ export const routes = [
             // Pre-fetch game data during SSG for Wayback Machine compatibility
             if (import.meta.env.SSR) {
                 const apiUrl = import.meta.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
-                const params = new URLSearchParams({
-                    limit: to.query.limit || 100,
-                    offset: to.query.offset || 0,
-                });
 
-                // Add year/decade filters if present
-                if (to.query.start && to.query.end) {
-                    params.append('start', to.query.start);
-                    params.append('end', to.query.end);
+                // Check if this is a filtered view (has year/decade filters)
+                const isFiltered = to.query.start && to.query.end;
+
+                let params;
+                if (isFiltered) {
+                    // For filtered views, fetch with filters and pagination
+                    params = new URLSearchParams({
+                        limit: to.query.limit || 100,
+                        offset: to.query.offset || 0,
+                        start: to.query.start,
+                        end: to.query.end,
+                    });
+                } else {
+                    // For unfiltered view, fetch ALL games (used for client-side pagination)
+                    params = new URLSearchParams({
+                        limit: 9999,
+                    });
                 }
 
                 try {

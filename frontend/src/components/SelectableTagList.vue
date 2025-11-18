@@ -14,10 +14,11 @@
 <script>
 export default {
     props: ['modelValue'],
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'change'],
     methods: {
         deselect(item) {
             this.$emit('update:modelValue', this.modelValue.filter(x => x != item));
+            this.$emit('change');
         }
     }
 }

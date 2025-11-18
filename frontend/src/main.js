@@ -9,10 +9,22 @@ import store from './store';
 import vueGTag from 'vue-gtag';
 import Genre from './models/Genre';
 import Platform from './models/Platform';
+import Game from './models/Game';
+import Developer from './models/Developer';
 
 export const createApp = ViteSSG(
     App,
-    { routes },
+    {
+        routes,
+        scrollBehavior: (to, from, savedPosition) => {
+            // If user clicked browser back button and savedPosition exists, use it
+            if (savedPosition) {
+                return savedPosition;
+            }
+            // Otherwise, scroll to top of page for all navigation
+            return { top: 0 };
+        }
+    },
     async ({ app, router, initialState, isClient }) => {
         // Setup Vuex store
         app.use(store);
@@ -45,8 +57,40 @@ export const createApp = ViteSSG(
                 ...initialState.store,
                 genres: initialState.store.genres.map(g => new Genre(g)),
                 platforms: initialState.store.platforms.map(p => new Platform(p)),
+                // Restore cached games (from game detail pages)
+                games: Object.fromEntries(
+                    Object.entries(initialState.store.games).map(([slug, game]) => [
+                        slug,
+                        new Game(game)
+                    ])
+                ),
+                // Restore cached developers and their games
+                developers: Object.fromEntries(
+                    Object.entries(initialState.store.developers).map(([slug, data]) => [
+                        slug,
+                        {
+                            developer: new Developer(data.developer),
+                            games: data.games.map(g => new Game(g))
+                        }
+                    ])
+                ),
+                // Restore cached games lists
+                gamesLists: Object.fromEntries(
+                    Object.entries(initialState.store.gamesLists).map(([queryKey, data]) => [
+                        queryKey,
+                        {
+                            results: data.results.map(g => new Game(g)),
+                            count: data.count
+                        }
+                    ])
+                ),
             };
             store.replaceState(restoredState);
+            console.log('[Client] Restored cached data from SSR:', {
+                games: Object.keys(restoredState.games).length,
+                developers: Object.keys(restoredState.developers).length,
+                gamesLists: Object.keys(restoredState.gamesLists).length,
+            });
         }
 
         // Setup router navigation guards

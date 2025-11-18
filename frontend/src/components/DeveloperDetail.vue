@@ -48,12 +48,22 @@ export default {
         }
     },
     async created() {
+        const slug = this.$route.params.slug;
+
         // Check if data was pre-fetched during SSR
         if (this.$route.meta.ssrData) {
             const { developer: developerData, games: gamesData } = this.$route.meta.ssrData;
             this.developer = new Developer(developerData);
             this.developer.aliases.forEach(x => x.selected = true);
             this.games = gamesData.map(x => new Game(x));
+
+            // Cache the SSR data in the store for later reuse
+            this.$store.commit('setDeveloper', {
+                slug,
+                result: { developer: this.developer, games: this.games }
+            });
+            console.log('[SSG] Using pre-fetched developer data and caching in store');
+
             // Emitter may not be available during SSR
             if (this.emitter) {
                 this.emitter.emit('title', this.developer.name);
@@ -61,41 +71,25 @@ export default {
             return;
         }
 
-        // Otherwise fetch data client-side
+        // Otherwise fetch via store (which checks cache first)
         try {
-            // Fetch developer details
-            const developerResponse = await fetch(`${getApiUrl()}developers/${this.$route.params.slug}/`);
-
-            if (!developerResponse.ok) {
-                if (developerResponse.status === 404) {
-                    this.error = 'Developer not found';
-                } else {
-                    this.error = `Failed to load developer (${developerResponse.status})`;
-                }
-                return;
-            }
-
-            const developerData = await developerResponse.json();
-            this.developer = new Developer(developerData);
+            const { developer, games } = await this.$store.dispatch('fetchDeveloper', { slug });
+            this.developer = developer;
             this.developer.aliases.forEach(x => x.selected = true);
-
-            // Fetch games for this developer
-            const gamesResponse = await fetch(`${getApiUrl()}games/?developer=${this.developer.id}&order_by=year_of_release`);
-
-            if (!gamesResponse.ok) {
-                this.error = `Failed to load games for developer (${gamesResponse.status})`;
-                return;
-            }
-
-            const gamesData = await gamesResponse.json();
-            this.games = gamesData.results.map(x => new Game(x));
+            this.games = games;
 
             if (this.emitter) {
                 this.emitter.emit('title', this.developer.name);
             }
         } catch (err) {
             console.error('Error fetching developer or games:', err);
-            this.error = 'Network error - please check your connection and try again';
+            if (err.status === 404) {
+                this.error = 'Developer not found';
+            } else if (err.status > 0) {
+                this.error = `Failed to load developer (${err.status})`;
+            } else {
+                this.error = 'Network error - please check your connection and try again';
+            }
         }
     },
     computed: {
