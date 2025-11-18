@@ -2,19 +2,23 @@
 
 ## 2025-11-17
 
-### Client-Side Pagination & Performance
-- Implemented client-side pagination for games list using cached data (no API calls between pages)
-- Fixed filter removal bugs: year/decade dropdowns and platform/genre tag removal now properly trigger updates
-- Optimized page navigation by removing async overhead and using instant `window.scrollTo(0, 0)` instead of smooth scroll
+### Post-SSG Optimization & Fixes
+**Caching & Data Reuse**
+- Implemented client-side pagination for `/games/` list using in-memory cached data (eliminates API calls between pages)
+- Added Vuex store caching system for games lists, games, and developers to enable instant re-navigation between pages
+- Updated router `beforeEnter` to fetch 9999 games for unfiltered views (matches client-side pagination limit)
+
+**UX & Performance**
+- Fixed filter removal bugs: year/decade dropdowns and platform/genre tags now properly trigger filter updates
+- Optimized page navigation by removing async overhead; instant `window.scrollTo(0, 0)` instead of smooth scroll
 - Added scroll-to-top behavior when navigating between pages
 
-### Pre-rendered HTML Routing (In Progress)
-- **Context:** vite-ssg pre-renders Vue pages to static HTML during build, making pages crawlable without JavaScript. Each route becomes a directory with an `index.html` file (e.g., `/games/` → `dist/games/index.html`)
-- **Problem:** Django was serving `index.html` for ALL routes via a catch-all pattern, preventing Wayback Machine from archiving the correct pre-rendered pages
-- **Solution:** Created `SPAWithPrerenderedView` to serve pre-rendered HTML files if they exist, otherwise fallback to SPA
-- Updated Django URL routing in `acclaimedgames/urls.py` to use the new view
-- **Note:** Wayback Machine fix is partial - Django routing now supports serving pre-rendered files, but full compatibility still needs testing
-- Rebuilt frontend with updated routing configuration
+**Pre-rendered HTML Routing (In Progress)**
+- **Context:** vite-ssg pre-renders Vue pages to static HTML during build, making pages crawlable without JavaScript
+- **Problem:** Django's catch-all route was serving `index.html` for ALL paths, preventing Wayback Machine from capturing correct pre-rendered pages
+- **Solution:** Created `SPAWithPrerenderedView` that checks for pre-rendered files first, then falls back to SPA
+- Updated Django URL routing in `acclaimedgames/urls.py` to intelligently serve pre-rendered HTML
+- **Status:** Wayback Machine archival partially fixed; Django routing now in place but needs real-world testing
 
 ## 2025-11-16
 
