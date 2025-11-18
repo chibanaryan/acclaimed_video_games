@@ -9,8 +9,10 @@
 - Added scroll-to-top behavior when navigating between pages
 
 ### Pre-rendered HTML Routing (In Progress)
-- Created `SPAWithPrerenderedView` to serve pre-rendered HTML files from `dist/` folder
-- Updated Django URL routing to check for pre-rendered files first before falling back to SPA
+- **Context:** vite-ssg pre-renders Vue pages to static HTML during build, making pages crawlable without JavaScript. Each route becomes a directory with an `index.html` file (e.g., `/games/` → `dist/games/index.html`)
+- **Problem:** Django was serving `index.html` for ALL routes via a catch-all pattern, preventing Wayback Machine from archiving the correct pre-rendered pages
+- **Solution:** Created `SPAWithPrerenderedView` to serve pre-rendered HTML files if they exist, otherwise fallback to SPA
+- Updated Django URL routing in `acclaimedgames/urls.py` to use the new view
 - **Note:** Wayback Machine fix is partial - Django routing now supports serving pre-rendered files, but full compatibility still needs testing
 - Rebuilt frontend with updated routing configuration
 
