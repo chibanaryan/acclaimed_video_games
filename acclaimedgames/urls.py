@@ -3,7 +3,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path, re_path
-from django.views.generic import TemplateView
 
 from games import views
 
@@ -25,6 +24,8 @@ if settings.DEBUG:
     ]
 
 # All other urls should get directed to the SPA (must be last!)
+# SPAWithPrerenderedView serves pre-rendered HTML files if they exist,
+# otherwise falls back to index.html for client-side routing
 urlpatterns += [
-    re_path(".*", TemplateView.as_view(template_name="index.html")),
+    re_path(".*", views.SPAWithPrerenderedView.as_view()),
 ]
