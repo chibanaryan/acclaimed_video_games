@@ -2,61 +2,17 @@
 
 ## 2025-11-17
 
-### Server-Side Static Generation (SSG) Integration
-- Integrated vite-ssg (v28.2.2) for server-side static generation to make the site compatible with web crawlers and the Wayback Machine
-- Restructured Vue.js app initialization to use ViteSSG instead of createApp
-- Refactored router to export routes array instead of router instance
-- Created `frontend/src/config.js` with `getApiUrl()` helper for SSR-safe API calls
+### Client-Side Pagination & Performance
+- Implemented client-side pagination for games list using cached data (no API calls between pages)
+- Fixed filter removal bugs: year/decade dropdowns and platform/genre tag removal now properly trigger updates
+- Optimized page navigation by removing async overhead and using instant `window.scrollTo(0, 0)` instead of smooth scroll
+- Added scroll-to-top behavior when navigating between pages
 
-### SSR Compatibility Improvements
-- Added SSR guards (`typeof window !== 'undefined'`) to all browser-specific code:
-  - localStorage access in `objectStore.js`
-  - window API usage in `utils.js` and `router.js`
-  - Client-only plugins (Google Analytics, mitt emitter, fetch-intercept) in `main.js`
-- Fixed lodash imports for ESM compatibility (changed from named imports to default import pattern)
-- Updated all Vue components to use `getApiUrl()` for SSR-safe API URL resolution
-
-### Build Configuration
-- Updated build script in `package.json` to use `vite-ssg build`
-- Added SSG configuration to `vite.config.js`:
-  - `includedRoutes()` function fetches game/developer slugs from Django API during build
-  - Currently limited to 10 games and 5 developers for testing (configurable)
-  - Supports environment variable `VITE_SSG_API_URL` for custom API URL during builds
-- Added `.vite-ssg-temp/` to `.gitignore` for temporary build files
-- Updated `index.html` with SSG placeholder comment (`<!--app-html-->`)
-
-### Verification
-- Successfully tested SSG build with Django dev server running
-- Verified pre-rendered HTML contains server-rendered content and initial state
-- All existing tests passing (21/21) with 100% coverage maintained
-- Static HTML files now visible to web crawlers without JavaScript
-
-### Documentation
-- Updated `CLAUDE.md` with SSG build instructions and SSR-safe architecture notes
-- Updated `readme.md` with SSG deployment requirements
-- Added this DEVLOG entry
-
-### Statistics
-**Modified files:** ~20 source files + configuration + documentation
-**Key additions:** New SSR guards, API URL abstraction, SSG build configuration
-
-### SSG Data Pre-rendering for Wayback Machine (Completed)
-- **Problem:** Initial SSG implementation produced HTML with empty initial state, causing Wayback Machine to capture loading spinners instead of content
-- **Root cause:** Components fetched data in `created()` hooks without using Vue's SSR-specific data fetching patterns
-- Added `serverPrefetch()` hook to HomePage component for SSR-aware data loading
-- Implemented automatic Vuex store pre-loading (genres, platforms, meta) during SSG builds in `main.js`
-- Added route-level `beforeEnter` guards for game and developer detail pages to pre-fetch data during SSG
-- Updated GameDetail and DeveloperDetail components to check for and use pre-fetched SSR data
-- Fixed Genre/Platform model class serialization by re-instantiating instances during state restoration in `main.js`
-- Fixed production API URL usage during builds:
-  - Updated `vite.config.js` to use `loadEnv()` for proper environment variable access
-  - Changed `router.js` and `config.js` to use `import.meta.env.VITE_SSG_API_URL` instead of `process.env`
-  - Build now correctly fetches from production API (`https://www.acclaimedvideogames.com/api/`) instead of localhost
-- Verified build produces pages with full content:
-  - Home page: 37.21 KiB (includes pre-loaded store data)
-  - Games list: 404.85 KiB (100 games with genre/platform filters)
-  - Game detail pages: 79-115 KiB with complete game data
-- **Status:** Complete. All pages successfully pre-render with production data. Deployed to Heroku v271.
+### Pre-rendered HTML Routing (In Progress)
+- Created `SPAWithPrerenderedView` to serve pre-rendered HTML files from `dist/` folder
+- Updated Django URL routing to check for pre-rendered files first before falling back to SPA
+- **Note:** Wayback Machine fix is partial - Django routing now supports serving pre-rendered files, but full compatibility still needs testing
+- Rebuilt frontend with updated routing configuration
 
 ## 2025-11-16
 
