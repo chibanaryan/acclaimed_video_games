@@ -33,6 +33,7 @@ export default {
                 }
             },
             _cache: {},
+            isNavigatingProgrammatically: false, // Track if we initiated the navigation
         }
     },
     computed: {
@@ -103,28 +104,40 @@ export default {
         },
         async onPageChange(e) {
             Object.assign(this.pagination, e);
+
+            // Scroll to top
+            if (typeof window !== 'undefined') {
+                window.scrollTo(0, 0);
+            }
+
             await this.loadItems();
             this.updateUrl();
         },
-        updateUrl(args) {            
-            history.pushState(
-                {
-                    filters: args,
-                },
-                document.title,
-                `?${new URLSearchParams(args)}`);
+        updateUrl() {
+            // Use Vue Router to create proper history entries
+            this.isNavigatingProgrammatically = true;
+            this.$router.push({
+                query: this.getArgs
+            });
         },
     },
     watch: {
         filters: {
             async handler() {
                 await this.loadItems();
-                this.updateUrl(this.$route.query);
+                this.updateUrl();
             },
             deep: true
         },
         '$route.query': {
             handler() {
+                // Skip if we initiated the navigation ourselves
+                if (this.isNavigatingProgrammatically) {
+                    this.isNavigatingProgrammatically = false;
+                    return;
+                }
+
+                // Browser back/forward navigation - reload items
                 this.init();
             },
         },

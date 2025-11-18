@@ -73,7 +73,7 @@
 
 <script>
 import { getApiUrl } from "@/config";
-import { loadPreviousScrollPosition, parseSlug } from "@/utils";
+import { parseSlug } from "@/utils";
 import Game from "../models/Game";
 import GameRow from "./GameRow";
 import PaginationComponent from "./PaginationComponent";
@@ -103,6 +103,7 @@ export default {
             loading: false,
             error: null,
             allGames: null, // Store the complete unfiltered list for client-side pagination
+            isNavigatingProgrammatically: false, // Track if we initiated the navigation
         }
     },
     async created() {
@@ -137,8 +138,6 @@ export default {
             this.updateFilters(this.$route.query);
             await this.loadItems();
         }
-
-        loadPreviousScrollPosition();
     },
     computed: {
         isFiltered() {
@@ -187,10 +186,44 @@ export default {
             return args;
         },
     },
+    watch: {
+        // Watch for route changes (e.g., browser back/forward navigation)
+        // This ensures pagination state syncs with URL query parameters
+        '$route.query': {
+            handler(newQuery, oldQuery) {
+                // Skip if we initiated the navigation ourselves
+                if (this.isNavigatingProgrammatically) {
+                    this.isNavigatingProgrammatically = false;
+                    return;
+                }
+
+                // Only react to pagination-related query changes
+                const offsetChanged = newQuery.offset !== oldQuery.offset;
+                const limitChanged = newQuery.limit !== oldQuery.limit;
+
+                if (offsetChanged || limitChanged) {
+                    // Update filters and pagination from URL
+                    this.updateFilters(newQuery);
+
+                    // For client-side pagination (unfiltered view), update displayed items
+                    if (!this.isFiltered && this.allGames) {
+                        const start = parseInt(this.pagination.offset) || 0;
+                        const end = start + parseInt(this.pagination.limit);
+                        this.items = this.allGames.slice(start, end);
+                    } else {
+                        // For filtered views, fetch new data
+                        this.loadItems();
+                    }
+                }
+            },
+            deep: true
+        }
+    },
     methods: {
         async clearFilters() {
             this.filters.year = null;
             this.filters.decade = null;
+            this.isNavigatingProgrammatically = true;
             this.$router.push({
                 name: 'games-list',
             });
@@ -219,6 +252,7 @@ export default {
                 name: 'games-list',
                 query: this.getArgs,
             };
+            this.isNavigatingProgrammatically = true;
             this.$router.push(newRoute);
             await this.loadItems();
             this.emitter.emit('title', this.shortPageTitle);
@@ -315,10 +349,11 @@ export default {
                 // Instant scroll to top
                 window.scrollTo(0, 0);
 
-                // Update URL asynchronously (non-blocking)
+                // Update URL and create history entry
                 this.$nextTick(() => {
                     const newQuery = this.getArgs;
-                    this.$router.replace({ name: 'games-list', query: newQuery });
+                    this.isNavigatingProgrammatically = true;
+                    this.$router.push({ name: 'games-list', query: newQuery });
                 });
             } else {
                 // For filtered views, use the existing updateUrl flow

@@ -17,11 +17,7 @@ export const createApp = ViteSSG(
     {
         routes,
         scrollBehavior: (to, from, savedPosition) => {
-            // If user clicked browser back button and savedPosition exists, use it
-            if (savedPosition) {
-                return savedPosition;
-            }
-            // Otherwise, scroll to top of page for all navigation
+            // Always scroll to top for all navigation (including back button)
             return { top: 0 };
         }
     },

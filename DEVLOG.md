@@ -1,5 +1,14 @@
 # Developer Log
 
+## 2025-11-18
+
+### Pagination Back Button Navigation Fix
+- Fixed browser back button navigation from detail pages to return to correct paginated page instead of page 1
+- Changed `router.replace()` to `router.push()` for proper browser history entries
+- Added route query watchers to sync pagination state with URL on back/forward navigation
+- Simplified scroll behavior to always scroll to top (removed scroll position restoration)
+- Applied fix to GameList and BaseListComponent (used by DeveloperList, ListList, PostList)
+
 ## 2025-11-17
 
 ### Post-SSG Optimization & Fixes
@@ -13,12 +22,12 @@
 - Optimized page navigation by removing async overhead; instant `window.scrollTo(0, 0)` instead of smooth scroll
 - Added scroll-to-top behavior when navigating between pages
 
-**Pre-rendered HTML Routing (In Progress)**
+**Pre-rendered HTML Routing**
 - **Context:** vite-ssg pre-renders Vue pages to static HTML during build, making pages crawlable without JavaScript
 - **Problem:** Django's catch-all route was serving `index.html` for ALL paths, preventing Wayback Machine from capturing correct pre-rendered pages
 - **Solution:** Created `SPAWithPrerenderedView` that checks for pre-rendered files first, then falls back to SPA
 - Updated Django URL routing in `acclaimedgames/urls.py` to intelligently serve pre-rendered HTML
-- **Status:** Wayback Machine archival partially fixed; Django routing now in place but needs real-world testing
+- Wayback Machine archival now working correctly with pre-rendered static HTML
 
 ## 2025-11-16
 
