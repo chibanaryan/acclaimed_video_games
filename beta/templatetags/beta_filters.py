@@ -13,30 +13,31 @@ def from_now(value):
     """
     if not value:
         return ""
-    
+
     try:
         # Get current time (will be naive if USE_TZ=False, aware if USE_TZ=True)
         now = timezone.now()
-        
+
         # Handle different input types
         if isinstance(value, str):
             # If it's a string, try to parse it
             from django.utils.dateparse import parse_datetime
+
             parsed = parse_datetime(value)
             if parsed:
                 value = parsed
             else:
                 return ""
-        
+
         # Check if value is a datetime-like object
         if not isinstance(value, datetime):
             return ""
-        
+
         # When USE_TZ=False, both now and value are naive
         # When USE_TZ=True, both should be aware
         # Calculate delta directly - Python handles naive vs aware correctly
         delta = now - value
-        
+
         # If in the future, return "in X"
         if delta.total_seconds() < 0:
             delta = -delta
@@ -44,9 +45,9 @@ def from_now(value):
         else:
             prefix = ""
             suffix = " ago"
-        
+
         total_seconds = delta.total_seconds()
-        
+
         # Calculate different time units
         # Use rounding for days to match moment.js behavior (rounds to nearest day)
         # For other units, use floor division to match moment.js thresholds

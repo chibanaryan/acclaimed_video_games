@@ -26,7 +26,7 @@ LANGUAGE_CODE = "en-us"
 ROOT_URLCONF = "acclaimedgames.urls"
 SECRET_KEY = env(
     "SECRET_KEY",
-    default="django-insecure-dev-key-change-in-production" if DEBUG else None
+    default="django-insecure-dev-key-change-in-production" if DEBUG else None,
 )  # Required - no default for security in production
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = "/static/"
@@ -96,24 +96,29 @@ TEMPLATES = [
             ],
             # In development, don't use cached template loader
             # This ensures template changes are picked up immediately
-            "loaders": [
-                "django.template.loaders.filesystem.Loader",
-                "django.template.loaders.app_directories.Loader",
-            ] if DEBUG else [
-                ("django.template.loaders.cached.Loader", [
+            "loaders": (
+                [
                     "django.template.loaders.filesystem.Loader",
                     "django.template.loaders.app_directories.Loader",
-                ]),
-            ],
+                ]
+                if DEBUG
+                else [
+                    (
+                        "django.template.loaders.cached.Loader",
+                        [
+                            "django.template.loaders.filesystem.Loader",
+                            "django.template.loaders.app_directories.Loader",
+                        ],
+                    ),
+                ]
+            ),
         },
     },
 ]
 
 
 DATABASES = {
-    "default": env.db(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-    ),
+    "default": env.db(default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
 
 AUTH_PASSWORD_VALIDATORS = [
