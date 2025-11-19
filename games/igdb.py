@@ -56,20 +56,40 @@ class IgbdApi:
         Returns:
             bool: True if authentication was successful, False otherwise
         """
+        # Check if credentials are set (not default "XXX")
+        if self.client_id == "XXX" or self.client_secret == "XXX":
+            logger.warning(
+                "IGDB credentials not configured. "
+                "Set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET environment variables."
+            )
+            return False
+
         token_url = (
             "https://id.twitch.tv/oauth2/token?"
             f"client_id={self.client_id}&client_secret={self.client_secret}"
             "&grant_type=client_credentials"
         )
-        data = requests.post(token_url).json()
+
+        try:
+            response = requests.post(token_url)
+            response.raise_for_status()
+            data = response.json()
+        except requests.RequestException as exc:
+            logger.warning("Failed to authenticate with IGDB API: %s", exc)
+            return False
+        except ValueError as exc:
+            logger.warning("Invalid JSON response from IGDB auth: %s", exc)
+            return False
 
         if data.get("access_token"):
             self.headers = {
-                "Client-Id": settings.IGDB_CLIENT_ID,
+                "Client-Id": self.client_id,
                 "Authorization": f'Bearer {data["access_token"]}',
             }
             return True
         else:
+            error_msg = data.get("message", "Unknown error")
+            logger.warning("IGDB authentication failed: %s", error_msg)
             return False
 
     def _get_themes(self) -> None:
@@ -78,6 +98,12 @@ class IgbdApi:
 
         Themes are stored in self.themes as a dict mapping theme IDs to names.
         """
+        # Check if headers are properly set (not just empty dict)
+        if not self.headers or "Authorization" not in self.headers:
+            logger.debug("Skipping IGDB themes fetch: authentication not available")
+            self.themes = {}
+            return
+
         try:
             res = requests.post(
                 "https://api.igdb.com/v4/themes/",
@@ -100,6 +126,14 @@ class IgbdApi:
         Release statuses are stored in self.release_date_statuses as a dict
         mapping status names to their IDs.
         """
+        # Check if headers are properly set (not just empty dict)
+        if not self.headers or "Authorization" not in self.headers:
+            logger.debug(
+                "Skipping IGDB release statuses fetch: " "authentication not available"
+            )
+            self.release_date_statuses = {}
+            return
+
         try:
             res = requests.post(
                 "https://api.igdb.com/v4/release_date_statuses/",

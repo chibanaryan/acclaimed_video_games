@@ -382,29 +382,49 @@ class DeveloperDetailView(DetailView):
             .order_by("rank")
         )
 
-        # Get all alias IDs for initial selection
-        alias_ids = list(developer.aliases.values_list("id", flat=True))
+        # Create aliases data for Alpine.js (all selected by default)
+        # Note: API uses igdb_id for alias IDs, matching Vue component
+        aliases_data = []
+        for alias in developer.aliases.all():
+            # Use igdb_id to match API serializer
+            alias_id = alias.igdb_id if alias.igdb_id else alias.id
+            aliases_data.append(
+                {
+                    "id": alias_id,
+                    "name": alias.name,
+                    "selected": True,  # All aliases start selected
+                }
+            )
 
-        # Serialize games for Alpine.js filtering
+        # Serialize games for Alpine.js filtering (matching Vue structure)
+        # Each game's developers array contains developer alias objects
         games_data = []
         for game in games:
+            game_developers = []
+            for da in game.developers.all():
+                # Use igdb_id to match API serializer
+                dev_id = da.igdb_id if da.igdb_id else da.id
+                game_developers.append(
+                    {
+                        "id": dev_id,
+                        "name": da.name,
+                    }
+                )
             games_data.append(
                 {
-                    "id": game.id,
+                    "id": game.igdb_id if game.igdb_id else game.id,
                     "name": game.name,
                     "slug": game.slug,
                     "year_of_release": game.year_of_release,
                     "rank": game.rank,
                     "thumbnail": game.thumbnail,
-                    "developers": [
-                        {"id": da.id, "name": da.name} for da in game.developers.all()
-                    ],
+                    "developers": game_developers,
                 }
             )
 
         context["games"] = games
         context["games_data"] = games_data
-        context["alias_ids"] = alias_ids
+        context["aliases_data"] = aliases_data
         return context
 
 

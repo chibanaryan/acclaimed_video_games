@@ -5,9 +5,9 @@ import environ
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
-root = environ.Path(__file__) - 2
+BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env()
+env.read_env(BASE_DIR / ".env")
 
 SENTRY_DSN = env("SENTRY_DSN", default=None)
 if SENTRY_DSN:
@@ -19,7 +19,6 @@ if SENTRY_DSN:
         profiles_sample_rate=1.0,
     )
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = env("DEBUG", default=False)  # Default to True for development
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LANGUAGE_CODE = "en-us"

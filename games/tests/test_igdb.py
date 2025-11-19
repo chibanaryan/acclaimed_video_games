@@ -166,6 +166,8 @@ class IgbdApiTests(SimpleTestCase):
 
     def test_release_status_fetch_populates_cache_on_success(self):
         payload = [{"id": 7, "name": "rumored"}]
+        # Set headers so the method doesn't skip
+        self.api.headers = {"Authorization": "Bearer test"}
         with mock.patch(
             "games.igdb.requests.post", return_value=DummyResponse(200, payload)
         ):
@@ -181,6 +183,8 @@ class IgbdApiTests(SimpleTestCase):
 
     def test_theme_fetch_populates_cache_on_success(self):
         payload = [{"id": 1, "name": "Action"}]
+        # Set headers so the method doesn't skip
+        self.api.headers = {"Authorization": "Bearer test"}
         with mock.patch(
             "games.igdb.requests.post", return_value=DummyResponse(200, payload)
         ):
