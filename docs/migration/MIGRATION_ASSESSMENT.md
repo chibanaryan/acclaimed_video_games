@@ -243,28 +243,28 @@ If issues arise after switchover:
 ### 🚧 In Progress
 
 **Remaining Leaf Components:**
-- [ ] `PaginationComponent.vue`
-- [ ] `ListResultsComponent.vue`
-- [ ] `GameSearchResult.vue`
-- [ ] `SelectableTagList.vue`
-- [ ] `RangeSlider.vue`
-- [ ] `SearchInput.vue`
-- [ ] `MultiSelectComponent.vue`
-- [ ] `GameProperties.vue`
+- [x] `PaginationComponent.vue` ✅
+- [x] `ListResultsComponent.vue` ✅
+- [x] `GameSearchResult.vue` ✅
+- [x] `SelectableTagList.vue` ✅ (template created)
+- [x] `RangeSlider.vue` ✅ (template created)
+- [x] `SearchInput.vue` ✅ (template created)
+- [x] `MultiSelectComponent.vue` ✅ (template created)
+- [x] `GameProperties.vue` ✅
 
 **Composition Components:**
-- [ ] `GameRow.vue` (depends on GameRowProperties ✅)
-- [ ] `SimpleFilters.vue`
-- [ ] `PostList.vue` (depends on PostItem ✅)
-- [ ] `AdvancedFilters.vue`
+- [x] `GameRow.vue` (depends on GameRowProperties ✅) ✅
+- [x] `SimpleFilters.vue` ✅
+- [x] `PostList.vue` (depends on PostItem ✅) ✅
+- [x] `AdvancedFilters.vue` ✅ (template created)
 
 **Page-Level Components:**
-- [ ] `GameList.vue`
-- [ ] `GameDetail.vue`
-- [ ] `GameSearch.vue`
-- [ ] `DeveloperDetail.vue`
-- [ ] `DeveloperList.vue`
-- [ ] `ListList.vue`
+- [x] `GameList.vue` ✅
+- [x] `GameDetail.vue` ✅
+- [x] `GameSearch.vue` ✅
+- [x] `DeveloperDetail.vue` ✅
+- [x] `DeveloperList.vue` ✅
+- [x] `ListList.vue` ✅
 
 ## Component Dependency Graph
 

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import api_views
 
 app_name = "beta"
 
@@ -17,4 +18,10 @@ urlpatterns = [
     path("lists/", views.ListListView.as_view(), name="list-list"),
     path("posts/", views.PostListView.as_view(), name="post-list"),
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
+    # API endpoints for HTMX/Alpine.js
+    path(
+        "api/games/search/",
+        api_views.GameSearchAPIView.as_view(),
+        name="api-games-search",
+    ),
 ]

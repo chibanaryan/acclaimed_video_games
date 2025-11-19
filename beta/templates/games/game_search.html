@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load beta_filters %}
+
+{% block title %}Game Search - Acclaimed Games{% endblock %}
+
+{% block content %}
+<div id="content">
+    <h1 class="title">
+        {% if request.GET.q %}
+            Search results for "{{ request.GET.q }}"
+        {% else %}
+            Advanced Search
+        {% endif %}
+    </h1>
+    
+    <div class="buttons is-pulled-right">
+        {% if request.GET.q or request.GET.start or request.GET.end or request.GET.genres or request.GET.platforms %}
+        <a href="{% url 'beta:games-search' %}" class="is-hidden-mobile button">
+            <span class="icon">
+                <span class="mdi mdi-close"></span>
+            </span>
+            <span>Clear filters</span>
+        </a>
+        <a href="{% url 'beta:games-search' %}" class="is-hidden-tablet button">
+            <span class="icon">
+                <span class="mdi mdi-close"></span>
+            </span>
+        </a>
+        {% endif %}
+        <a href="{% url 'beta:games-list' %}" class="button is-link is-pulled-right">
+            <span class="icon">
+                <span class="mdi mdi-form-select"></span>
+            </span>
+            <span>Basic Search</span>
+        </a>
+    </div>
+    
+    {% include 'includes/_advanced_filters.html' with filters=filters genres=genres platforms=platforms min_year=min_year max_year=max_year %}
+    
+    {% if games %}
+    <div class="mt-5">
+        {% if page_obj %}
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+        {% endif %}
+        
+        {% for game in games %}
+            {% with index=page_obj.start_index|add:forloop.counter0 %}
+                {% include 'games/includes/_game_row.html' with game=game index=index show_rank='filtered' show_rank_in_details=True %}
+            {% endwith %}
+        {% endfor %}
+        
+        {% if page_obj %}
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

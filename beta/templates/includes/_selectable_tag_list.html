@@ -1,0 +1,24 @@
+{# SelectableTagList component - migrated from Vue #}
+{# Props: selected_tags (list of selected items), on_toggle (optional callback) #}
+{# Uses Alpine.js for interactivity #}
+{% load beta_filters %}
+<div x-data="{ 
+         selectedTags: {% if selected_tags %}{{ selected_tags|safe|tojson }}{% else %}[]{% endif %}
+     }" 
+     @update:modelValue.window="selectedTags = $event.detail"
+     x-show="selectedTags && selectedTags.length > 0"
+     class="tags m-0">
+    <template x-for="(item, index) in selectedTags" :key="index">
+        <span class="tag is-primary">
+            <span x-text="item.name || item"></span>
+            <button @click="
+                    selectedTags = selectedTags.filter((x, i) => i !== index);
+                    $dispatch('update:modelValue', selectedTags);
+                    $dispatch('change', selectedTags);
+                "
+                    title="Deselect item"
+                    class="delete is-small"></button>
+        </span>
+    </template>
+</div>
+

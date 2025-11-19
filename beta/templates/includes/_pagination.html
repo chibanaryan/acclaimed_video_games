@@ -1,0 +1,43 @@
+{# PaginationComponent - migrated from Vue #}
+{# Props: page_obj (Django Paginator page object), show_all_pages (default: False), target_id (HTMX target, default: 'content') #}
+{% load beta_filters %}
+
+{% if show_all_pages %}
+    {% pagination_pages page_obj True as pages %}
+{% else %}
+    {% pagination_pages page_obj False as pages %}
+{% endif %}
+{% if pages|length > 1 %}
+<nav class="pagination is-centered">
+    <ul class="pagination-list">
+        {% for page in pages %}
+        <li>
+            {% if page %}
+                {# Page number #}
+                {% if page == page_obj.number %}
+                    {# Current page - show as span #}
+                    <span class="pagination-link is-current">{{ page }}</span>
+                {% else %}
+                    {# Other pages - show as link with HTMX #}
+                    {# Preserve query parameters (decade, year, highlight, etc.) #}
+                    {% pagination_url page_num=page as page_url %}
+                    <a class="pagination-link"
+                       href="{{ page_url }}"
+                       hx-get="{{ page_url }}"
+                       hx-target="#{% if target_id %}{{ target_id }}{% else %}content{% endif %}"
+                       hx-push-url="true"
+                       hx-swap="innerHTML"
+                       onclick="setTimeout(function() { document.getElementById('header').scrollIntoView({ behavior: 'smooth' }); }, 100); return false;">
+                        {{ page }}
+                    </a>
+                {% endif %}
+            {% else %}
+                {# Ellipsis #}
+                <span class="pagination-ellipsis">&hellip;</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endif %}
+

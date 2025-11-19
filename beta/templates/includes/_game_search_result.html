@@ -1,0 +1,20 @@
+{# GameSearchResult component - migrated from Vue #}
+{# Props: result (game object with slug, thumbnail, name, yearOfRelease, rank) #}
+<a href="{% url 'beta:game-detail' slug=result.slug %}" class="result">
+    <div class="media">
+        <div class="media-left">
+            <figure class="image is-32x32">
+                <img src="{{ result.thumbnail }}" alt="{{ result.name }}">
+            </figure>
+        </div>
+        <div class="media-content">
+            <div class="has-text-weight-semibold">
+                {{ result.name }} ({{ result.year_of_release }})
+            </div>
+            <div class="has-text-weight-light">
+                All time rank: {{ result.rank }}
+            </div>
+        </div>
+    </div>
+</a>
+

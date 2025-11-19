@@ -59,6 +59,18 @@
     "/static/assets/materialdesignicons-webfont-PXm3-2wK.woff",
     "/static/assets/materialdesignicons-webfont-B7mPwVP_.ttf"
   ],
+  "node_modules/@unhead/vue/dist/client.mjs": [
+    "/static/assets/materialdesignicons-webfont-CSr8KVlo.eot",
+    "/static/assets/materialdesignicons-webfont-Dp5v-WZN.woff2",
+    "/static/assets/materialdesignicons-webfont-PXm3-2wK.woff",
+    "/static/assets/materialdesignicons-webfont-B7mPwVP_.ttf"
+  ],
+  "node_modules/@unhead/vue/dist/shared/vue.Bm-NbY4b.mjs": [
+    "/static/assets/materialdesignicons-webfont-CSr8KVlo.eot",
+    "/static/assets/materialdesignicons-webfont-Dp5v-WZN.woff2",
+    "/static/assets/materialdesignicons-webfont-PXm3-2wK.woff",
+    "/static/assets/materialdesignicons-webfont-B7mPwVP_.ttf"
+  ],
   "node_modules/@vue/devtools-api/lib/esm/const.js": [
     "/static/assets/materialdesignicons-webfont-CSr8KVlo.eot",
     "/static/assets/materialdesignicons-webfont-Dp5v-WZN.woff2",
@@ -281,19 +293,13 @@
     "/static/assets/materialdesignicons-webfont-PXm3-2wK.woff",
     "/static/assets/materialdesignicons-webfont-B7mPwVP_.ttf"
   ],
-  "node_modules/vite-ssg/node_modules/@unhead/vue/dist/client.mjs": [
-    "/static/assets/materialdesignicons-webfont-CSr8KVlo.eot",
-    "/static/assets/materialdesignicons-webfont-Dp5v-WZN.woff2",
-    "/static/assets/materialdesignicons-webfont-PXm3-2wK.woff",
-    "/static/assets/materialdesignicons-webfont-B7mPwVP_.ttf"
-  ],
-  "node_modules/vite-ssg/node_modules/@unhead/vue/dist/shared/vue.Bm-NbY4b.mjs": [
-    "/static/assets/materialdesignicons-webfont-CSr8KVlo.eot",
-    "/static/assets/materialdesignicons-webfont-Dp5v-WZN.woff2",
-    "/static/assets/materialdesignicons-webfont-PXm3-2wK.woff",
-    "/static/assets/materialdesignicons-webfont-B7mPwVP_.ttf"
-  ],
   "node_modules/vue-gtag/dist/vue-gtag.esm.js": [
+    "/static/assets/materialdesignicons-webfont-CSr8KVlo.eot",
+    "/static/assets/materialdesignicons-webfont-Dp5v-WZN.woff2",
+    "/static/assets/materialdesignicons-webfont-PXm3-2wK.woff",
+    "/static/assets/materialdesignicons-webfont-B7mPwVP_.ttf"
+  ],
+  "node_modules/vue-router/dist/devtools-BLCumUwL.mjs": [
     "/static/assets/materialdesignicons-webfont-CSr8KVlo.eot",
     "/static/assets/materialdesignicons-webfont-Dp5v-WZN.woff2",
     "/static/assets/materialdesignicons-webfont-PXm3-2wK.woff",

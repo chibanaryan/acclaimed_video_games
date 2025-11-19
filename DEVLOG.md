@@ -32,6 +32,37 @@
 
 **Isolation:** All beta routes under `/beta/` prefix; existing Vue.js site at root unchanged.
 
+### Beta Migration: Major Component & Page Migrations
+**Summary:** Migrated core page views and multiple components, implementing filtering, pagination, and search functionality.
+
+**New Views & Functionality:**
+- `GameListView` with decade/year filtering, pagination, and HTMX support
+- `GameDetailView` with list grouping and prefetching
+- `GameSearchView` for advanced search functionality
+- `DeveloperListView`, `DeveloperDetailView`, `ListListView`, `PostListView`, `PageDetailView` - all page views implemented
+- `GameSearchAPIView` for navbar search (JSON endpoint)
+
+**Migrated Components:**
+- `SimpleFilters` - Year/decade dropdowns with Alpine.js interactivity
+- `PaginationComponent` - HTMX-enabled pagination with ellipsis logic
+- `GameRow` - Desktop/mobile responsive game rows with rank display
+- `GameProperties` - Game detail properties display
+- `ListResultsComponent` - List grouping and display
+- `GameSearchResult` - Search result items
+- Additional includes: `_game_list_content.html`, `_advanced_filters.html`, `_multi_select.html`, `_range_slider.html`, `_search_input.html`, `_selectable_tag_list.html`
+
+**Enhanced Template Filters:**
+- `pagination_pages` - Calculate pagination with ellipsis (matching Vue logic)
+- `game_rank_url` - Generate game rank URLs with query params
+- `pagination_url` - Generate pagination URLs preserving query params
+- `tojson` - Convert Python values to JSON for JavaScript
+
+**Template Files Created:**
+- All page templates: `game_detail.html`, `game_search.html`, `developer_list.html`, `developer_detail.html`, `list_list.html`, `post_list.html`, `page_detail.html`
+- Component includes for all major UI elements
+
+**Stats:** 7 files changed, 992 insertions(+), 47 deletions(-)
+
 ## 2025-11-18
 
 ### Pagination Back Button Navigation Fix

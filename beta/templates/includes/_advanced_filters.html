@@ -1,0 +1,227 @@
+{# AdvancedFilters component - migrated from Vue #}
+{# Props: filters (dict with q, start, end, genres, platforms, genre_option, rank_display), genres (list), platforms (list) #}
+{# Uses Alpine.js for interactivity #}
+{% load beta_filters %}
+<div x-data="{ 
+        filters: {{ filters|safe|tojson }},
+        genres: {% if genres %}{{ genres|safe|tojson }}{% else %}[]{% endif %},
+        platforms: {% if platforms %}{{ platforms|safe|tojson }}{% else %}[]{% endif %},
+        initialized: false,
+        updateTimeout: null
+     }"
+     @update:modelValue.window="
+         if ($event.detail && typeof $event.detail === 'object' && !Array.isArray($event.detail)) {
+             filters = $event.detail;
+         } else if (Array.isArray($event.detail)) {
+             // Handle multi-select updates (genres/platforms)
+             // The event target will determine which filter to update
+             // This is handled by the specific change handlers in the multi-select components
+         } else if (typeof $event.detail === 'string' || $event.detail === null) {
+             // Handle search input updates
+             filters.q = $event.detail || '';
+             if (initialized) updateUrl();
+         }
+     "
+     @change.window="
+         if (Array.isArray($event.detail)) {
+             // Handle multi-select changes (genres/platforms)
+             // The event target will determine which filter to update
+             // This is handled by the specific change handlers in the multi-select components
+         } else if (typeof $event.detail === 'string' || $event.detail === null) {
+             // Handle search input changes
+             filters.q = $event.detail || '';
+             if (initialized) updateUrl();
+         }
+     "
+     x-init="
+         // Mark as initialized after a short delay to prevent initial watcher triggers
+         setTimeout(() => { initialized = true; }, 100);
+         
+         function updateUrl() {
+             if (!initialized) return;
+             
+             // Clear any pending update
+             if (updateTimeout) {
+                 clearTimeout(updateTimeout);
+             }
+             
+             // Debounce the URL update
+             updateTimeout = setTimeout(() => {
+                 const params = new URLSearchParams();
+                 if (filters.q) params.set('q', filters.q);
+                 if (filters.start) params.set('start', filters.start);
+                 if (filters.end) params.set('end', filters.end);
+                 if (filters.genres && filters.genres.length) params.set('genres', filters.genres.map(g => g.id || g).join(','));
+                 if (filters.platforms && filters.platforms.length) params.set('platforms', filters.platforms.map(p => p.id || p).join(','));
+                 if (filters.genre_option) params.set('genre_option', filters.genre_option);
+                 if (filters.rank_display) params.set('rank_display', filters.rank_display);
+                 window.location.href = '{% url 'beta:games-search' %}?' + params.toString();
+             }, 300);
+         }
+         
+         $watch('filters.start', val => {
+             if (!initialized) return;
+             if (filters.end && val && parseInt(val) > parseInt(filters.end)) {
+                 filters.end = val;
+             }
+             updateUrl();
+         });
+         $watch('filters.end', val => {
+             if (!initialized) return;
+             if (filters.start && val && parseInt(val) < parseInt(filters.start)) {
+                 filters.start = val;
+             }
+             updateUrl();
+         });
+     ">
+    <div class="columns">
+        <div class="column">
+            <div class="p-2">
+                <label class="has-text-weight-bold">Release year</label>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <table class="table plain">
+                        <tr>
+                            <td>From:</td>
+                            <td>
+                                <div x-data="{ 
+                                    val: filters.start || {{ min_year }},
+                                    min: {{ min_year }},
+                                    max: {{ max_year }},
+                                    get label() { return this.val; }
+                                }"
+                                @update:modelValue.window="filters.start = parseInt($event.detail)"
+                                @change.window="filters.start = parseInt($event.detail)">
+                                    <label class="label" x-text="label"></label>
+                                    <div class="control">
+                                        <input type="range"
+                                               :min="min"
+                                               :max="max"
+                                               x-model="val"
+                                               @input="val = $event.target.value; $dispatch('update:modelValue', val); $dispatch('change', val)">
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>To:</td>
+                            <td>
+                                <div x-data="{ 
+                                    val: filters.end || {{ max_year }},
+                                    min: {{ min_year }},
+                                    max: {{ max_year }},
+                                    get label() { return this.val; }
+                                }"
+                                @update:modelValue.window="filters.end = parseInt($event.detail)"
+                                @change.window="filters.end = parseInt($event.detail)">
+                                    <label class="label" x-text="label"></label>
+                                    <div class="control">
+                                        <input type="range"
+                                               :min="min"
+                                               :max="max"
+                                               x-model="val"
+                                               @input="val = $event.target.value; $dispatch('update:modelValue', val); $dispatch('change', val)">
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="p-2">
+                <label class="has-text-weight-bold">Displayed rank</label>
+            </div>
+            <div class="field ml-3">
+                <div class="control">
+                    <label class="radio">
+                        All time
+                        <input type="radio"
+                               x-model="filters.rank_display"
+                               value="alltime"
+                               @change="updateUrl()">
+                    </label>
+                    <label class="radio">
+                        Filtered
+                        <input type="radio"
+                               x-model="filters.rank_display"
+                               value="filtered"
+                               @change="updateUrl()">
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        {% if genres %}
+        <div class="column">
+            <div class="p-2">
+                <div class="control is-pulled-right">
+                    <label class="radio">
+                        All
+                        <input type="radio"
+                               x-model="filters.genre_option"
+                               value="L"
+                               @change="updateUrl()">
+                    </label>
+                    <label class="radio">
+                        Any
+                        <input type="radio"
+                               x-model="filters.genre_option"
+                               value="A"
+                               @change="updateUrl()">
+                    </label>
+                </div>
+                <label class="has-text-weight-bold">Genres</label>
+            </div>
+            <select x-model="filters.genres"
+                    multiple
+                    class="is-hidden-tablet"
+                    @change="updateUrl()">
+                <option value="">All genres</option>
+                <template x-for="genre in genres" :key="genre.id">
+                    <option :value="genre.id" x-text="genre.name"></option>
+                </template>
+            </select>
+            <div class="is-hidden-mobile">
+                <div @update:modelValue.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }"
+                     @change.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }">
+                    {% include 'includes/_multi_select.html' with items=genres selected=filters.genres %}
+                </div>
+                {% include 'includes/_selectable_tag_list.html' with selected_tags=filters.genres %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if platforms %}
+        <div class="column">
+            <div class="p-2">
+                <label class="has-text-weight-bold">Platforms</label>
+            </div>
+            <select x-model="filters.platforms"
+                    multiple
+                    class="is-hidden-tablet"
+                    @change="updateUrl()">
+                <option value="">All platforms</option>
+                <template x-for="platform in platforms" :key="platform.id">
+                    <option :value="platform.id" x-text="platform.name"></option>
+                </template>
+            </select>
+            <div class="is-hidden-mobile">
+                <div @update:modelValue.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }"
+                     @change.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }">
+                    {% include 'includes/_multi_select.html' with items=platforms selected=filters.platforms %}
+                </div>
+                {% include 'includes/_selectable_tag_list.html' with selected_tags=filters.platforms %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
+</div>
+
+<style>
+input[type=range] {
+    width: 15em;
+}
+</style>
+

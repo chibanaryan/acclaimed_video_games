@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load beta_filters %}
+
+{% block title %}News - Acclaimed Games{% endblock %}
+
+{% block content %}
+<h1 class="title is-size-4">News</h1>
+{% for post in posts %}
+    {% include 'posts/includes/_post_item.html' with post=post %}
+{% endfor %}
+
+<div class="level">
+    <div class="level-left">
+        <div class="level-item">
+            {% if page_obj.has_previous %}
+                {% if page_obj.number == 2 %}
+                    <a href="{% url 'beta:home' %}" class="button">
+                        <span class="icon">
+                            <span class="mdi mdi-chevron-double-left"></span>
+                        </span>
+                        <span>Return to home page</span>
+                    </a>
+                {% else %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="button">
+                        <span class="icon">
+                            <span class="mdi mdi-chevron-double-left"></span>
+                        </span>
+                        <span>Previous</span>
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    <div class="level-right">
+        <div class="level-item">
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="button">
+                    <span>Next</span>
+                    <span class="icon">
+                        <span class="mdi mdi-chevron-double-right"></span>
+                    </span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

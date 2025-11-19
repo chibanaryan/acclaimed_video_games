@@ -1,8 +1,87 @@
 from django import template
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from datetime import datetime
+import json
 
 register = template.Library()
+
+
+@register.simple_tag
+def pagination_pages(page_obj, show_all_pages=False):
+    """
+    Calculate pagination pages with ellipsis logic.
+
+    Matches Vue PaginationComponent behavior.
+
+    Args:
+        page_obj: Django Paginator page object
+        show_all_pages: If True, show all pages (no ellipsis)
+
+    Returns:
+        List of page numbers and None values (for ellipsis)
+    """
+    if not page_obj or not hasattr(page_obj, "paginator") or not page_obj.paginator:
+        return []
+
+    num_pages = page_obj.paginator.num_pages
+    if num_pages <= 1:
+        return []
+
+    current_page = page_obj.number
+    pages = list(range(1, num_pages + 1))
+
+    # Handle show_all_pages - it might come as string "True" from template
+    if isinstance(show_all_pages, str):
+        show_all_pages = show_all_pages.lower() in ("true", "1", "yes")
+
+    # If show_all_pages is True, just add ellipsis where needed
+    if show_all_pages:
+        result = []
+        last_page = 0
+        for page in pages:
+            if (page - last_page) > 1:
+                result.append(None)  # Ellipsis
+            result.append(page)
+            last_page = page
+        return result
+
+    # Filter pages based on distance from current page
+    current_page_is_first_page = current_page == 1
+    current_page_is_second_page = current_page == 2
+    current_page_is_second_last_page = current_page == num_pages - 1
+    current_page_is_last_page = current_page == num_pages
+
+    filtered_pages = []
+    for page in pages:
+        first_page = page == 1
+        last_page = page == num_pages
+        is_current = page == current_page
+
+        distance_from_current = abs(current_page - page)
+
+        # Determine minimum distance based on current page position
+        min_distance = 2
+        if current_page_is_first_page or current_page_is_last_page:
+            min_distance = 4
+        elif current_page_is_second_page or current_page_is_second_last_page:
+            min_distance = 3
+
+        is_close_to_current = distance_from_current < min_distance
+
+        if first_page or last_page or is_current or is_close_to_current:
+            filtered_pages.append(page)
+
+    # Add ellipsis where pages are skipped
+    result = []
+    last_page = 0
+    for page in filtered_pages:
+        if (page - last_page) > 1:
+            result.append(None)  # Ellipsis
+        result.append(page)
+        last_page = page
+
+    return result
 
 
 @register.filter
@@ -59,19 +138,93 @@ def from_now(value):
 
         # Return only the largest unit, matching moment.js fromNow() behavior
         # Skip weeks - use days for anything less than a month
+        year_s = "s" if years != 1 else ""
         if years > 0:
-            return f"{prefix}{years} year{'s' if years != 1 else ''}{suffix if prefix == '' else ''}"
-        elif months > 0:
-            return f"{prefix}{months} month{'s' if months != 1 else ''}{suffix if prefix == '' else ''}"
-        elif days > 0:
-            return f"{prefix}{days} day{'s' if days != 1 else ''}{suffix if prefix == '' else ''}"
-        elif hours > 0:
-            return f"{prefix}{hours} hour{'s' if hours != 1 else ''}{suffix if prefix == '' else ''}"
-        elif minutes > 0:
-            return f"{prefix}{minutes} minute{'s' if minutes != 1 else ''}{suffix if prefix == '' else ''}"
+            suf = suffix if prefix == "" else ""
+            return f"{prefix}{years} year{year_s}{suf}"
+        month_s = "s" if months != 1 else ""
+        if months > 0:
+            suf = suffix if prefix == "" else ""
+            return f"{prefix}{months} month{month_s}{suf}"
+        day_s = "s" if days != 1 else ""
+        if days > 0:
+            suf = suffix if prefix == "" else ""
+            return f"{prefix}{days} day{day_s}{suf}"
+        hour_s = "s" if hours != 1 else ""
+        if hours > 0:
+            suf = suffix if prefix == "" else ""
+            return f"{prefix}{hours} hour{hour_s}{suf}"
+        min_s = "s" if minutes != 1 else ""
+        if minutes > 0:
+            suf = suffix if prefix == "" else ""
+            return f"{prefix}{minutes} minute{min_s}{suf}"
         else:
             return "just now"
-    except Exception as e:
+    except Exception:
         # Return empty string on any error to prevent template errors
         # In development, you might want to log this
         return ""
+
+
+@register.simple_tag
+def game_rank_url(rank, game_id=None, start=None, end=None):
+    """
+    Generate URL for game rank route, matching Vue getGameRankRoute() method.
+
+    Args:
+        rank: The rank number
+        game_id: Optional game ID for highlighting
+        start: Optional start year for filtering
+        end: Optional end year for filtering
+
+    Returns:
+        URL string for games-list with appropriate query parameters
+    """
+    from django.urls import reverse
+    from urllib.parse import urlencode
+
+    # Calculate offset (same logic as Vue: parseInt(rank / 100) * 100)
+    offset = int(rank / 100) * 100
+
+    # Build query parameters
+    query_params = {
+        "limit": 100,
+        "offset": offset,
+    }
+
+    if game_id:
+        query_params["highlight"] = game_id
+
+    if start:
+        query_params["start"] = start
+
+    if end:
+        query_params["end"] = end
+
+    # Build URL with query string
+    base_url = reverse("beta:games-list")
+    query_string = urlencode(query_params)
+    return f"{base_url}?{query_string}"
+
+
+@register.filter
+def tojson(value):
+    """
+    Convert a Python value to JSON string, safe for use in JavaScript.
+    """
+    return mark_safe(json.dumps(value))
+
+
+@register.simple_tag(takes_context=True)
+def pagination_url(context, page_num):
+    """
+    Generate pagination URL preserving all query parameters except 'page'.
+    Returns full URL path for HTMX compatibility.
+
+    Usage: {% pagination_url page_num=2 %}
+    """
+    request = context["request"]
+    params = request.GET.copy()
+    params["page"] = page_num
+    # Return full URL path for HTMX (relative to current path)
+    return f"{request.path}?{params.urlencode()}"

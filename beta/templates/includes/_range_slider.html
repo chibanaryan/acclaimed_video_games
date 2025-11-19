@@ -1,0 +1,23 @@
+{# RangeSlider component - migrated from Vue #}
+{# Props: value (current value), min (default: 1970), max (default: current year), placeholder (optional) #}
+{# Uses Alpine.js for interactivity #}
+<div class="field is-grouped" 
+     x-data="{ 
+         val: '{% if value %}{{ value }}{% elif min %}{{ min }}{% else %}1970{% endif %}', 
+         min: {% if min %}{{ min }}{% else %}1970{% endif %}, 
+         max: {% if max %}{{ max }}{% else %}2024{% endif %},
+         get label() { return this.val; }
+     }"
+     x-init="
+         val = '{% if value %}{{ value }}{% elif min %}{{ min }}{% else %}1970{% endif %}';
+     ">
+    <label class="label" x-text="label"></label>
+    <div class="control">
+        <input type="range"
+               :min="min"
+               :max="max"
+               x-model="val"
+               @input="$dispatch('update:modelValue', val); $dispatch('change', val)">
+    </div>
+</div>
+

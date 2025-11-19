@@ -20,7 +20,7 @@ if SENTRY_DSN:
     )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEBUG = env("DEBUG", default=False)
+DEBUG = env("DEBUG", default=False)  # Default to True for development
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LANGUAGE_CODE = "en-us"
 ROOT_URLCONF = "acclaimedgames.urls"

@@ -1,0 +1,38 @@
+{# SearchInput component - migrated from Vue #}
+{# Props: value (current search value), placeholder (optional), show_submit_button (default: False) #}
+{# Uses Alpine.js for interactivity #}
+<div class="control"
+     x-data="{ 
+         q: '{% if value %}{{ value }}{% else %}{% endif %}',
+         showSubmitButton: {% if show_submit_button %}true{% else %}false{% endif %}
+     }"
+     x-init="q = '{% if value %}{{ value }}{% else %}{% endif %}'">
+    <div :class="{ 'has-addons': q }" class="field">
+        <div class="control has-icons-left">
+            <span class="icon is-left">
+                <span class="mdi mdi-magnify"></span>
+            </span>
+            <input class="input custom-input"
+                   x-model="q"
+                   @keyup.debounce.200ms="$dispatch('update:modelValue', q); $dispatch('change', q)"
+                   placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}">
+        </div>
+        <div class="control is-clear" x-show="q">
+            <button @click="q = ''; $dispatch('update:modelValue', null); $dispatch('change', null)"
+                    title="Clear search text"
+                    class="button">
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>
+            </button>
+        </div>
+        <div class="control" x-show="showSubmitButton && q">
+            <button @click="$dispatch('change', q)"
+                    title="Submit search text"
+                    class="button">
+                Submit
+            </button>
+        </div>
+    </div>
+</div>
+

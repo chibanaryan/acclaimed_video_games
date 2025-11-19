@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ flatpage.title }} - Acclaimed Games{% endblock %}
+
+{% block content %}
+<h1 class="title">{{ flatpage.title }}</h1>
+<div class="content">
+    {{ flatpage.rendered_content|safe }}
+</div>
+{% endblock %}
+

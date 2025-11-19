@@ -1,9 +1,6 @@
-{% extends 'base.html' %}
+{# HTMX partial response for GameListView - just the content div #}
 {% load beta_filters %}
 
-{% block title %}Games - Acclaimed Games{% endblock %}
-
-{% block content %}
 <div id="content">
     <h1 class="title">
         {% if filters.year %}
@@ -34,14 +31,12 @@
         </div>
     </div>
 
-    {# Pagination at top (desktop) - centered with more spacing #}
+    {# Pagination at top (desktop) #}
     {% if page_obj %}
-    <div class="pagination-wrapper pagination-spacing-top">
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
-    </div>
     {% endif %}
 
-    <div id="game-list" class="pagination-spacing-bottom">
+    <div id="game-list" class="mt-5">
         {% for game in games %}
             {% with index=page_obj.start_index|add:forloop.counter0 %}
                 {% include 'games/includes/_game_row.html' with game=game index=index show_rank=is_filtered|yesno:'filtered,alltime' show_rank_in_details=is_filtered highlight=highlight %}
@@ -59,20 +54,14 @@
                 setTimeout(function() {
                     element.classList.remove('highlight');
                 }, 2000);
-                setTimeout(function() {
-                    element.classList.remove('highlight');
-                }, 3000);
             }
         }, 500);
     </script>
     {% endif %}
 
-    {# Pagination at bottom - centered with more spacing #}
+    {# Pagination at bottom #}
     {% if page_obj %}
-    <div class="pagination-wrapper pagination-spacing-top">
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
-    </div>
     {% endif %}
 </div>
-{% endblock %}
 

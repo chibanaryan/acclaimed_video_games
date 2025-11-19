@@ -1,0 +1,41 @@
+{# MultiSelectComponent - migrated from Vue #}
+{# Props: items (list of items to select from), selected (list of selected item IDs), on_change (optional callback) #}
+{# Uses Alpine.js for interactivity #}
+{% load beta_filters %}
+<div class="control multiple-select"
+     x-data="{ 
+         items: {% if items %}{{ items|safe|tojson }}{% else %}[]{% endif %},
+         selected: {% if selected %}{{ selected|safe|tojson }}{% else %}[]{% endif %},
+         selectableItems: []
+     }"
+     x-init="
+         // Initialize selectableItems from items with selected state
+         const selectedIds = selected.map(sel => sel.id || sel);
+         selectableItems = items.map(item => ({
+             item: item,
+             selected: selectedIds.includes(item.id)
+         }));
+         // Watch for changes to selected (from parent component)
+         $watch('selected', () => {
+             const selectedIds = selected.map(sel => sel.id || sel);
+             selectableItems.forEach(item => {
+                 item.selected = selectedIds.includes(item.item.id);
+             });
+         });
+     ">
+    <template x-for="(item, index) in selectableItems" :key="index">
+        <div>
+            <label>
+                <input type="checkbox"
+                       x-model="item.selected"
+                       @change="
+                           const selectedItems = selectableItems.filter(x => x.selected).map(x => x.item);
+                           $dispatch('update:modelValue', selectedItems);
+                           $dispatch('change', selectedItems);
+                       ">
+                <span x-text="item.item.name || item.item"></span>
+            </label>
+        </div>
+    </template>
+</div>
+

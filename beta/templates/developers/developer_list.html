@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load beta_filters %}
+
+{% block title %}Developers - Acclaimed Games{% endblock %}
+
+{% block content %}
+<div id="content">
+    <h1 class="title is-spaced">Developers</h1>
+    <h2 id="results-count" class="subtitle">{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</h2>
+
+    <div class="field">
+        <div class="control has-icons-left">
+            <input type="text"
+                   class="input"
+                   name="q"
+                   id="developer-search"
+                   placeholder="Search by name"
+                   value="{{ request.GET.q|default:'' }}"
+                   hx-get="{% url 'beta:developers-list' %}"
+                   hx-target="#results-container"
+                   hx-trigger="input changed delay:150ms"
+                   hx-swap="innerHTML"
+                   hx-indicator="#search-indicator"
+                   hx-include="[name='q']"
+                   autocomplete="off">
+            <span class="icon is-small is-left">
+                <i class="mdi mdi-magnify"></i>
+            </span>
+            <span id="search-indicator" class="htmx-indicator" style="margin-left: 0.5em; opacity: 0;">
+                <i class="mdi mdi-loading mdi-spin"></i>
+            </span>
+        </div>
+    </div>
+
+    <div id="results-container">
+        {% if page_obj %}
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+        {% endif %}
+
+        {% if developers %}
+        <table class="table is-fullwidth">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <td># Games</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alias in developers %}
+                <tr>
+                    <td>
+                        {% if alias.developer.slug %}
+                            <a href="{% url 'beta:developer-detail' slug=alias.developer.slug %}">
+                                {{ alias.name }}
+                            </a>
+                        {% else %}
+                            <span>{{ alias.name }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ alias.games_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if page_obj %}
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Update results count when HTMX swaps content
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'results-container') {
+        // The script tag in the response will update the count
+        // Keep focus on search input for smooth typing experience
+        const searchInput = document.getElementById('developer-search');
+        if (searchInput && document.activeElement !== searchInput) {
+            searchInput.focus();
+        }
+    }
+});
+</script>
+{% endblock %}
+

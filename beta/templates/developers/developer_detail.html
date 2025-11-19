@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load beta_filters %}
+
+{% block title %}{{ developer.name }} - Acclaimed Games{% endblock %}
+
+{% block content %}
+{% if developer %}
+    <h1 class="title">{{ developer.name }}</h1>
+    <div x-data="{ 
+            selectedAliasIds: {{ alias_ids|safe|tojson }},
+            allGames: {{ games_data|safe|tojson }},
+            get filteredGames() {
+                if (!this.allGames) return [];
+                if (this.selectedAliasIds.length === 0) return [];
+                return this.allGames.filter(game => {
+                    if (!game.developers || !Array.isArray(game.developers)) return false;
+                    const gameDeveloperIds = game.developers.map(d => d.id || d);
+                    return this.selectedAliasIds.some(aliasId => gameDeveloperIds.includes(aliasId));
+                });
+            }
+         }">
+        <h2>Including:</h2>
+        {% if developer.aliases.count > 1 %}
+        <ul>
+            {% for alias in developer.aliases.all %}
+            <li>
+                <label class="checkbox">
+                    <input type="checkbox"
+                           :checked="selectedAliasIds.includes({{ alias.id }})"
+                           @change="
+                               if (selectedAliasIds.includes({{ alias.id }})) {
+                                   selectedAliasIds = selectedAliasIds.filter(id => id !== {{ alias.id }});
+                               } else {
+                                   selectedAliasIds.push({{ alias.id }});
+                               }
+                           ">
+                    {{ alias.name }}
+                </label>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <h2 class="subtitle is-4 mt-5">
+            {{ games|length }} Game{{ games|length|pluralize }}
+        </h2>
+        <div>
+            {% for game in games %}
+                <div x-show="selectedAliasIds.length === {{ alias_ids|length }} || (filteredGames && filteredGames.some(g => g.id === {{ game.id }}))"
+                     x-cloak>
+                    {% include 'games/includes/_game_row.html' with game=game show_rank=False show_rank_in_details=True %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% else %}
+    <div class="notification is-danger">
+        <p><strong>Error:</strong> Developer not found</p>
+        <p>The developer you're looking for could not be found or there was a problem loading it.</p>
+    </div>
+{% endif %}
+{% endblock %}
+

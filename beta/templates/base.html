@@ -1,9 +1,13 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Acclaimed Games{% endblock %}</title>
+    
+    {# Favicon - same as older site #}
+    <link rel="icon" type="image/x-icon" href="{% static 'games/avg_logo_small.png' %}">
     
     {# CRITICAL: These CSS dependencies must match Vue.js version exactly #}
     {# Bulma CSS Framework - Vue uses 1.0.0 from node_modules, but we'll use CDN version #}
@@ -29,6 +33,9 @@
     {# Global Styles from App.vue - MUST MATCH EXACTLY #}
     {# NOTE: These styles load AFTER Bulmaswatch to ensure they override #}
     <style>
+        /* Alpine.js x-cloak - hide elements until Alpine.js initializes */
+        [x-cloak] { display: none !important; }
+        
         html {
             background-color: #000;
         }
@@ -160,6 +167,16 @@
             color: #8b8b8b;
         }
         
+        /* Link color - dimmer blue to match original Vue.js site */
+        /* Override Bulmaswatch Cyborg's bright cyan with a dimmer blue */
+        a:not(.button):not(footer a):not(.beta-nav-link) {
+            color: #5a9eff !important;
+        }
+        
+        a:not(.button):not(footer a):not(.beta-nav-link):hover {
+            color: #6aaeff !important;
+        }
+        
         dl.detail dt {
             font-weight: bold;
             float: left;
@@ -237,6 +254,28 @@
             transform: translate(-50%, -50%);
         }
         
+        /* HTMX indicator - subtle loading spinner */
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            display: inline-block;
+        }
+        
+        /* Show indicator when request is in progress */
+        #developer-search.htmx-request ~ #search-indicator,
+        #search-indicator.htmx-request {
+            opacity: 1;
+        }
+        
+        /* Smooth transitions for HTMX swaps */
+        #results-container {
+            transition: opacity 0.15s ease;
+        }
+        
+        .htmx-swapping #results-container {
+            opacity: 0.6;
+        }
+        
         .navbar .navbar-menu {
             background-color: #131313;
         }
@@ -251,6 +290,136 @@
             margin-bottom: 0.8em;
         }
         
+        /* PaginationComponent styles - migrated from Vue */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .pagination-spacing-top {
+            margin-top: 3rem;
+            margin-bottom: 3rem;
+        }
+        
+        .pagination-spacing-bottom {
+            margin-top: 3rem;
+        }
+        
+        nav.pagination {
+            display: flex;
+            align-content: center;
+            justify-content: center;
+        }
+
+        nav.pagination .navbar-menu {
+            flex-grow: initial;
+            flex-shrink: initial;
+        }
+
+        /* ListResultsComponent styles - migrated from Vue */
+        td.publication {
+            width: 15em;
+        }
+
+        td.year {
+            width: 4em;
+        }
+
+        td.rank {
+            width: 3em;
+        }
+
+        /* GameSearchResult styles - migrated from Vue */
+        .result .image img {
+            max-height: 100px;
+        }
+
+        /* GameProperties styles - migrated from Vue */
+        table.detail th {
+            font-weight: 600;
+            min-width: 10em;
+        }
+
+        table.detail th,
+        table.detail td {
+            padding: 2px;
+        }
+
+        .igdb-link {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* MultiSelectComponent styles - migrated from Vue */
+        .multiple-select {
+            max-height: 170px;
+            overflow-y: auto;
+        }
+
+        /* GameRow styles - migrated from Vue */
+        .game-row {
+            border-bottom: 1px solid #616161;
+        }
+
+        .game-row .thumbnail img {
+            max-width: inherit;
+        }
+
+        .game-row.desktop .rank {
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-family: Handjet, sans-serif;
+            font-weight: 800;
+            text-shadow: -3px 3px 0px #5d5b5b;
+            min-width: 122px;
+            font-size: 60px;
+        }
+
+        .game-row.mobile .rank {
+            color: #fff;
+            font-family: Handjet, sans-serif;
+            font-weight: 800;
+            text-shadow: -2px 2px 0px #5d5b5b;
+            font-size: 25px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .game-row.highlight {
+            background: #393939;
+        }
+
+        /* SimpleFilters styles - migrated from Vue */
+        /* Note: is-grouped-multiline provides proper spacing, so we only need to override for is-grouped */
+        .field.is-grouped:not(.is-grouped-multiline) > .control:not(:last-child) {
+            margin-bottom: 0;
+            margin-right: 0;
+        }
+        
+        /* Select dropdown dark background - match original Vue site */
+        .select select {
+            background-color: #242424;
+            color: #fff;
+            border-color: #4a4a4a;
+        }
+        
+        .select select:hover {
+            border-color: #5a5a5a;
+        }
+        
+        .select select:focus {
+            border-color: #5a9eff;
+            box-shadow: 0 0 0 0.125em rgba(90, 158, 255, 0.25);
+        }
+        
+        .select:not(.is-multiple):not(.is-loading)::after {
+            border-color: #fff;
+        }
+
         /* HomePage top-ten styles - migrated from Vue */
         .top-ten {
             border-top: 2px solid #4a4a4a;
@@ -378,7 +547,8 @@
         
         .desktop-search .dropdown-menu {
             width: 100%;
-            min-width: 300px;
+            min-width: 400px;
+            max-width: 500px;
             position: absolute;
             top: 100%;
             left: 0;
@@ -386,14 +556,38 @@
         }
         
         .desktop-search .dropdown-content {
-            background-color: #242424;
+            background-color: #131313;
             border: 1px solid #4a4a4a;
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 1rem;
         }
         
         .desktop-search .dropdown-item {
             color: rgb(235, 236, 240);
             padding: 0.5rem 1rem;
+            white-space: normal;
+            word-wrap: break-word;
+            font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 1rem;
+        }
+        
+        .desktop-search .dropdown-item .media-content {
+            min-width: 0;
+            overflow: hidden;
+        }
+        
+        .desktop-search .dropdown-item .has-text-weight-semibold {
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-size: 1rem;
+        }
+        
+        .desktop-search .dropdown-item .has-text-weight-light {
+            font-size: 0.875rem;
         }
         
         .desktop-search .dropdown-item:hover {

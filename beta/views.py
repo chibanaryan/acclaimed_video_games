@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.views.generic import TemplateView, ListView, DetailView
+from django.db.models import Count, Min, Max, Prefetch
+from django.views.generic import ListView, DetailView, TemplateView
 from games import models
 
 
@@ -25,10 +25,8 @@ class HomePageView(TemplateView):
         except models.Snippet.DoesNotExist:
             context["snippet"] = None
 
-        # Fetch meta data for last update (matching Vue version which uses meta.games.last_update)
+        # Fetch meta data for last update
         # This is the max modified date from all games
-        from django.db.models import Max
-
         last_update = models.Game.objects.aggregate(Max("modified"))["modified__max"]
         context["last_update"] = last_update
 
@@ -48,10 +46,102 @@ class GameListView(ListView):
             "developers__developer",  # Access the Developer through DeveloperAlias
             "platforms",
             "genres",
-        ).order_by("rank")
+        )
 
-        # TODO: Add filtering logic (year, decade, etc.)
-        return qs
+        # Parse decade filter (format: "1990-99" -> start=1990, end=1999)
+        decade = self.request.GET.get("decade")
+        if decade:
+            # Parse decade format like "1990-99" or "2000-09"
+            import re
+
+            decade_pattern = re.compile(r"(\d{2})(\d{2})-(\d{2})")
+            match = decade_pattern.match(decade)
+            if match:
+                start_str = match.group(1) + match.group(2)
+                end_str = match.group(1) + match.group(3)
+                start_year = int(start_str)
+                end_year = int(end_str)
+                qs = qs.filter(
+                    year_of_release__gte=start_year, year_of_release__lte=end_year
+                )
+
+        # Year filter (single year)
+        year = self.request.GET.get("year")
+        if year and not decade:  # Year takes precedence if both are set
+            year_int = int(year)
+            qs = qs.filter(year_of_release=year_int)
+
+        # Support start/end parameters (used by game_rank_url)
+        start = self.request.GET.get("start")
+        end = self.request.GET.get("end")
+        if start:
+            qs = qs.filter(year_of_release__gte=int(start))
+        if end:
+            qs = qs.filter(year_of_release__lte=int(end))
+
+        return qs.order_by("rank")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add meta data for SimpleFilters component
+        from datetime import datetime as dt
+
+        # Get meta data (same logic as MetaView)
+        data = {}
+
+        # Games meta
+        game_stats = models.Game.objects.aggregate(
+            min_year=Min("year_of_release"),
+            last_update=Max("modified"),
+        )
+        min_year = game_stats["min_year"] or 1970
+        max_year = dt.today().year
+        all_years = range(min_year, max_year + 1)
+        year_count_map = {
+            entry["year_of_release"]: entry["count"]
+            for entry in models.Game.objects.values("year_of_release")
+            .annotate(count=Count("id"))
+            .order_by("year_of_release")
+        }
+
+        all_years_with_counts = [
+            {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
+        ]
+        decades = sorted(list(set(int(x / 10) * 10 for x in all_years)))
+        decades = [f"{x}-{str(x + 9)[2:4]}" for x in decades]
+
+        data["games"] = {
+            "years": all_years_with_counts,
+            "decades": decades,
+            "last_update": game_stats["last_update"],
+        }
+
+        context["meta"] = data
+
+        # Add filters from query params
+        start = self.request.GET.get("start")
+        end = self.request.GET.get("end")
+        context["filters"] = {
+            "decade": self.request.GET.get("decade"),
+            "year": self.request.GET.get("year"),
+        }
+
+        # Add highlight parameter for scrolling to specific game
+        context["highlight"] = self.request.GET.get("highlight")
+
+        # Determine if filtered (for show_rank logic)
+        is_filtered = bool(
+            context["filters"]["decade"] or context["filters"]["year"] or start or end
+        )
+        context["is_filtered"] = is_filtered
+
+        return context
+
+    def get_template_names(self):
+        # Support HTMX partial responses - return just the content block if HTMX request
+        if self.request.headers.get("HX-Request"):
+            return ["games/includes/_game_list_content.html"]
+        return super().get_template_names()
 
 
 class GameDetailView(DetailView):
@@ -61,6 +151,66 @@ class GameDetailView(DetailView):
     slug_field = "slug"
     slug_url_kwarg = "slug"
 
+    def get_queryset(self):
+        # Prefetch lists with publisher for ListResultsComponent
+        return models.Game.objects.prefetch_related(
+            "developers",
+            "developers__developer",
+            "platforms",
+            "genres",
+            Prefetch(
+                "lists",
+                queryset=models.ListMembership.objects.select_related(
+                    "list__publisher",
+                ).order_by("list__publisher__name", "list__year"),
+            ),
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        game = context["game"]
+
+        # Group lists by type (matching Vue GameDetail logic)
+        from collections import defaultdict
+
+        LIST_TYPE_LABELS = {
+            "A": "All time",
+            "D": "Decade",
+            "M": "Miscellaneous",
+            "E": "End of year",
+        }
+
+        grouped = defaultdict(list)
+        for membership in game.lists.all():
+            list_type = membership.list.type
+            label = LIST_TYPE_LABELS.get(list_type, list_type)
+            grouped[label].append(
+                {
+                    "id": membership.list.id,
+                    "name": membership.list.name,
+                    "publication": (
+                        membership.list.publisher.name
+                        if membership.list.publisher
+                        else ""
+                    ),
+                    "type": list_type,
+                    "type_name": label,
+                    "url": membership.list.url,
+                    "year": membership.list.year,
+                    "rank": membership.rank,
+                }
+            )
+
+        # Sort by predefined order (matching Vue)
+        sorting_arr = ["All time", "Decade", "Miscellaneous", "End of year"]
+        grouped_lists = sorted(
+            grouped.items(),
+            key=lambda x: sorting_arr.index(x[0]) if x[0] in sorting_arr else 999,
+        )
+
+        context["grouped_lists"] = grouped_lists
+        return context
+
 
 class GameSearchView(ListView):
     model = models.Game
@@ -69,8 +219,101 @@ class GameSearchView(ListView):
     paginate_by = 100
 
     def get_queryset(self):
-        # TODO: Add search/filtering logic
-        return super().get_queryset()
+        from django.db.models import Q
+
+        # Prefetch relationships for GameRowProperties component
+        qs = models.Game.objects.prefetch_related(
+            "developers",
+            "developers__developer",
+            "platforms",
+            "genres",
+        )
+
+        # Basic search by name
+        q = self.request.GET.get("q")
+        if q:
+            qs = qs.filter(name__icontains=q)
+
+        # Year range filtering
+        start = self.request.GET.get("start")
+        end = self.request.GET.get("end")
+        if start:
+            qs = qs.filter(year_of_release__gte=int(start))
+        if end:
+            qs = qs.filter(year_of_release__lte=int(end))
+
+        # Genre filtering
+        genre_option = self.request.GET.get("genre_option", "L")
+        genres = self.request.GET.get("genres")
+        if genres:
+            genre_ids = [int(x) for x in genres.split(",")]
+            if genre_option == "A":  # Any
+                q = Q()
+                for genre_id in genre_ids:
+                    q |= Q(genres=genre_id)
+                qs = qs.filter(q)
+            else:  # All
+                for genre_id in genre_ids:
+                    qs = qs.filter(genres=genre_id)
+
+        # Platform filtering
+        platforms = self.request.GET.get("platforms")
+        if platforms:
+            platform_ids = [int(x) for x in platforms.split(",")]
+            qs = qs.filter(platforms__in=platform_ids)
+
+        return qs.distinct().order_by("rank")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from datetime import datetime
+
+        # Get genres and platforms for AdvancedFilters
+        genres = list(models.Genre.objects.all().order_by("name").values("id", "name"))
+        platforms = list(
+            models.Platform.objects.all().order_by("name").values("id", "name", "code")
+        )
+
+        # Get min/max years
+        year_stats = models.Game.objects.aggregate(
+            min_year=Min("year_of_release"),
+            max_year=Max("year_of_release"),
+        )
+        min_year = year_stats["min_year"] or 1970
+        max_year = year_stats["max_year"] or datetime.today().year
+
+        # Build filters dict from query params
+        filters = {
+            "q": self.request.GET.get("q", ""),
+            "start": int(self.request.GET.get("start", min_year)),
+            "end": int(self.request.GET.get("end", max_year)),
+            "genres": [],
+            "platforms": [],
+            "genre_option": self.request.GET.get("genre_option", "L"),
+            "rank_display": self.request.GET.get("rank_display", "alltime"),
+        }
+
+        # Parse selected genres
+        genres_param = self.request.GET.get("genres")
+        if genres_param:
+            genre_ids = [int(x) for x in genres_param.split(",")]
+            filters["genres"] = [g for g in genres if g["id"] in genre_ids]
+
+        # Parse selected platforms
+        platforms_param = self.request.GET.get("platforms")
+        if platforms_param:
+            platform_ids = [int(x) for x in platforms_param.split(",")]
+            filters["platforms"] = [p for p in platforms if p["id"] in platform_ids]
+
+        context["genres"] = genres
+        context["platforms"] = platforms
+        context["filters"] = filters
+        context["min_year"] = min_year
+        context["max_year"] = max_year
+        context["highlight"] = self.request.GET.get("highlight")
+        context["is_filtered"] = True  # GameSearch is always filtered
+
+        return context
 
 
 class DeveloperListView(ListView):
@@ -78,6 +321,30 @@ class DeveloperListView(ListView):
     template_name = "developers/developer_list.html"
     context_object_name = "developers"
     paginate_by = 100
+
+    def get_queryset(self):
+        from django.db.models import Count
+
+        qs = (
+            models.DeveloperAlias.objects.annotate(
+                games_count=Count("games"),
+            )
+            .select_related("developer")
+            .order_by("name")
+        )
+
+        # Search filter
+        q = self.request.GET.get("q")
+        if q:
+            qs = qs.filter(name__icontains=q)
+
+        return qs
+
+    def get_template_names(self):
+        # Support HTMX partial responses - return just the content block if HTMX request
+        if self.request.headers.get("HX-Request"):
+            return ["developers/includes/_developer_list_content.html"]
+        return super().get_template_names()
 
 
 class DeveloperDetailView(DetailView):
@@ -87,12 +354,136 @@ class DeveloperDetailView(DetailView):
     slug_field = "slug"
     slug_url_kwarg = "slug"
 
+    def get_queryset(self):
+        # Prefetch aliases and games
+        return models.Developer.objects.prefetch_related(
+            "aliases",
+            "aliases__games",
+            "aliases__games__developers",
+            "aliases__games__developers__developer",
+            "aliases__games__platforms",
+            "aliases__games__genres",
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        developer = context["developer"]
+
+        # Get all games from all aliases
+        games = (
+            models.Game.objects.filter(developers__developer=developer)
+            .prefetch_related(
+                "developers",
+                "developers__developer",
+                "platforms",
+                "genres",
+            )
+            .distinct()
+            .order_by("rank")
+        )
+
+        # Get all alias IDs for initial selection
+        alias_ids = list(developer.aliases.values_list("id", flat=True))
+
+        # Serialize games for Alpine.js filtering
+        games_data = []
+        for game in games:
+            games_data.append(
+                {
+                    "id": game.id,
+                    "name": game.name,
+                    "slug": game.slug,
+                    "year_of_release": game.year_of_release,
+                    "rank": game.rank,
+                    "thumbnail": game.thumbnail,
+                    "developers": [
+                        {"id": da.id, "name": da.name} for da in game.developers.all()
+                    ],
+                }
+            )
+
+        context["games"] = games
+        context["games_data"] = games_data
+        context["alias_ids"] = alias_ids
+        return context
+
 
 class ListListView(ListView):
     model = models.List
     template_name = "lists/list_list.html"
     context_object_name = "lists"
     paginate_by = 100
+
+    def get_queryset(self):
+        qs = models.List.objects.select_related("publisher").order_by(
+            "publisher__name",
+            "year",
+            "name",
+        )
+
+        # Apply filters
+        publisher = self.request.GET.get("publisher")
+        if publisher:
+            qs = qs.filter(publisher_id=publisher)
+
+        year = self.request.GET.get("year")
+        if year:
+            qs = qs.filter(year=year)
+
+        list_type = self.request.GET.get("type")
+        if list_type:
+            qs = qs.filter(type=list_type)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Add meta data for filters
+        from django.db.models import Count
+
+        # Get list years with counts
+        list_year_counts = (
+            models.List.objects.order_by("year")
+            .values("year")
+            .annotate(count=Count("id"))
+            .order_by("year")
+        )
+
+        # Get publishers
+        from games.models import Publication
+
+        publishers = Publication.objects.all().order_by("name")
+
+        # Get list types
+        LIST_TYPE_LABELS = {
+            "A": "All time",
+            "D": "Decade",
+            "M": "Miscellaneous",
+            "E": "End of year",
+        }
+        list_types = [(k, v) for k, v in LIST_TYPE_LABELS.items()]
+
+        context["meta"] = {
+            "lists": {
+                "years": list(list_year_counts),
+            }
+        }
+        context["publishers"] = publishers
+        context["list_types"] = list_types
+        context["filters"] = {
+            "publisher": self.request.GET.get("publisher"),
+            "year": self.request.GET.get("year"),
+            "type": self.request.GET.get("type"),
+        }
+
+        return context
+
+    def get_template_names(self):
+        # Support HTMX partial responses - return just the content block if HTMX request
+        if self.request.headers.get("HX-Request"):
+            return ["lists/includes/_list_list_content.html"]
+        return super().get_template_names()
 
 
 class PostListView(ListView):
@@ -107,5 +498,23 @@ class PageDetailView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # TODO: Add page context
+        from django.contrib.flatpages.models import FlatPage
+        from django.shortcuts import get_object_or_404
+        import markdown
+
+        slug = kwargs.get("slug")
+        # Try /page/{slug}/ first (for consistency with URL pattern), then /{slug}/
+        try:
+            flatpage = FlatPage.objects.get(url=f"/page/{slug}/")
+        except FlatPage.DoesNotExist:
+            # Fall back to /{slug}/ format (matches existing database entries)
+            flatpage = get_object_or_404(FlatPage, url=f"/{slug}/")
+
+        # Convert markdown to HTML (matching API serializer behavior)
+        if flatpage.content:
+            flatpage.rendered_content = markdown.markdown(flatpage.content)
+        else:
+            flatpage.rendered_content = ""
+
+        context["flatpage"] = flatpage
         return context

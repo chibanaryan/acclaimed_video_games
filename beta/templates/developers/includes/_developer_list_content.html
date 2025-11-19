@@ -1,0 +1,47 @@
+{# HTMX partial response for DeveloperListView - just the results container #}
+{% load beta_filters %}
+
+{% if page_obj %}
+    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+{% endif %}
+
+{% if developers %}
+<table class="table is-fullwidth">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <td># Games</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for alias in developers %}
+        <tr>
+            <td>
+                {% if alias.developer.slug %}
+                    <a href="{% url 'beta:developer-detail' slug=alias.developer.slug %}">
+                        {{ alias.name }}
+                    </a>
+                {% else %}
+                    <span>{{ alias.name }}</span>
+                {% endif %}
+            </td>
+            <td>{{ alias.games_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="notification is-light">
+    <p>No developers found.</p>
+</div>
+{% endif %}
+
+{% if page_obj %}
+    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+{% endif %}
+
+{# Update results count subtitle #}
+<script>
+    document.getElementById('results-count').textContent = '{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}';
+</script>
+
