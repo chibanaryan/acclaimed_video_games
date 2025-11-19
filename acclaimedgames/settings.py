@@ -24,7 +24,10 @@ DEBUG = env("DEBUG", default=False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LANGUAGE_CODE = "en-us"
 ROOT_URLCONF = "acclaimedgames.urls"
-SECRET_KEY = env("SECRET_KEY")  # Required - no default for security
+SECRET_KEY = env(
+    "SECRET_KEY",
+    default="django-insecure-dev-key-change-in-production" if DEBUG else None
+)  # Required - no default for security in production
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = "/static/"
 TIME_ZONE = "UTC"
@@ -48,10 +51,13 @@ INSTALLED_APPS = [
     "django_extensions",
     "rest_framework",
     "games",
+    "beta",  # Beta version (Django + HTMX + Alpine.js)
 ]
 
 MIDDLEWARE = [
-    "django.middleware.cache.UpdateCacheMiddleware",
+    # Cache middleware - DISABLED in development to prevent template caching issues
+    # Re-enable in production for performance
+    # "django.middleware.cache.UpdateCacheMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -62,8 +68,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "django.middleware.cache.FetchFromCacheMiddleware",
+    # "django.middleware.cache.FetchFromCacheMiddleware",
 ]
+
+# Only enable cache middleware in production
+if not DEBUG:
+    MIDDLEWARE.insert(0, "django.middleware.cache.UpdateCacheMiddleware")
+    MIDDLEWARE.append("django.middleware.cache.FetchFromCacheMiddleware")
 
 if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")
@@ -73,7 +84,9 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "frontend/dist"],
-        "APP_DIRS": True,
+        # When loaders is explicitly defined, APP_DIRS must be False
+        # The app_directories loader is included in the loaders list instead
+        "APP_DIRS": False,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -81,13 +94,26 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+            # In development, don't use cached template loader
+            # This ensures template changes are picked up immediately
+            "loaders": [
+                "django.template.loaders.filesystem.Loader",
+                "django.template.loaders.app_directories.Loader",
+            ] if DEBUG else [
+                ("django.template.loaders.cached.Loader", [
+                    "django.template.loaders.filesystem.Loader",
+                    "django.template.loaders.app_directories.Loader",
+                ]),
+            ],
         },
     },
 ]
 
 
 DATABASES = {
-    "default": env.db(),
+    "default": env.db(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    ),
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -114,13 +140,23 @@ INTERNAL_IPS = [
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
+    "localhost",
     "acclaimedvideogames.com",
     "www.acclaimedvideogames.com",
 ]
 
-CACHES = {
-    "default": env.cache(),
-}
+# Cache configuration - use dummy cache for development if no CACHE_URL set
+cache_url = env("CACHE_URL", default=None)
+if cache_url:
+    CACHES = {
+        "default": env.cache(),
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        }
+    }
 
 CACHE_MIDDLEWARE_SECONDS = 60 * 60
 
@@ -133,7 +169,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
 }
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
 STATICFILES_DIRS = [
     BASE_DIR / "frontend/dist",

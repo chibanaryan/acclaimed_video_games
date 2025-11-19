@@ -1,0 +1,11 @@
+{# SnippetComponent - migrated from Vue #}
+{# Props: snippet (Snippet model instance) #}
+{# Vue version: {{ snippet?.snippet }} - just plain text, no HTML #}
+{# The is-size-4 class is applied to the parent div in home.html #}
+
+{% if snippet %}
+    {{ snippet.text }}
+{% else %}
+    {# Snippet not found or not loaded #}
+{% endif %}
+

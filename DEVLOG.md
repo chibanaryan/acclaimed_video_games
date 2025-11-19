@@ -1,5 +1,28 @@
 # Developer Log
 
+## 2025-11-19
+
+### Beta Migration: HomePage & Navigation Setup
+**Plan:** Migrate Vue.js SPA to Django + HTMX + Alpine.js, starting with leaf components and working toward root. Build in parallel under `/beta/` prefix to maintain existing site.
+
+**New Files:**
+- `beta/` Django app with views, URLs, templates
+- `beta/templates/base.html` - Base template with Bulma, Bulmaswatch, HTMX, Alpine.js
+- `beta/templates/home.html` - Home page matching Vue version
+- `beta/templates/includes/_nav.html` - Navigation with search and burger menu
+- `beta/templates/posts/includes/_post_item.html` - PostItem component
+- `beta/templates/includes/_snippet.html` - SnippetComponent
+- `beta/templatetags/beta_filters.py` - Custom `from_now` filter (matching moment.js)
+
+**Completed:**
+- HomePage migration with posts, games, snippets, and "last update" section
+- Navbar with search bar (dropdown with "Please enter two or more characters"), Palestine flag, and mobile burger menu
+- Visual parity fixes: navbar height (56px), hover effects, search bar styling, snippet text color/size
+- Custom date formatting filter (days/months/years, no weeks)
+- Mobile responsive burger menu that expands navbar (not separate dropdown)
+
+**Isolation:** All beta routes under `/beta/` prefix; existing Vue.js site at root unchanged.
+
 ## 2025-11-18
 
 ### Pagination Back Button Navigation Fix

@@ -1,4 +1,6 @@
 [run]
+# Only measure coverage for the 'games' app
+# The 'beta' app is excluded from coverage requirements during migration
 source = games
 omit =
     */migrations/*

@@ -11,6 +11,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("import/", views.ImportView.as_view(), name="import"),
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
+    
+    # Beta version routes (new Django + HTMX version)
+    path("beta/", include("beta.urls")),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

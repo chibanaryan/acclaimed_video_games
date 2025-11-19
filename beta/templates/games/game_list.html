@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Games - Acclaimed Games{% endblock %}
+
+{% block content %}
+<h1 class="title">Games List (Beta)</h1>
+<p>This is the beta version. The Vue.js version is at <a href="/games/">/games/</a></p>
+<p>TODO: Migrate GameList.vue</p>
+
+<div id="game-list">
+    {# Games will be rendered here #}
+    {% for game in games %}
+        <div>{{ game.name }} - Rank: {{ game.rank }}</div>
+    {% endfor %}
+</div>
+
+{# Test GameRowProperties component #}
+{% if games %}
+    <h2>Testing GameRowProperties Component:</h2>
+    {% include 'games/includes/_game_row_properties.html' with game=games.0 show_rank=True %}
+{% endif %}
+{% endblock %}
+
