@@ -104,6 +104,8 @@ export default {
             error: null,
             allGames: null, // Store the complete unfiltered list for client-side pagination
             isNavigatingProgrammatically: false, // Track if we initiated the navigation
+            unwatchRoute: null, // Store unwatch function for route watcher
+            highlightTimeout: null, // Store timeout IDs for cleanup
         }
     },
     async created() {
@@ -186,11 +188,11 @@ export default {
             return args;
         },
     },
-    watch: {
-        // Watch for route changes (e.g., browser back/forward navigation)
-        // This ensures pagination state syncs with URL query parameters
-        '$route.query': {
-            handler(newQuery, oldQuery) {
+    mounted() {
+        // Set up route watcher with explicit cleanup
+        this.unwatchRoute = this.$watch(
+            () => this.$route.query,
+            (newQuery, oldQuery) => {
                 // Skip if we initiated the navigation ourselves
                 if (this.isNavigatingProgrammatically) {
                     this.isNavigatingProgrammatically = false;
@@ -216,7 +218,26 @@ export default {
                     }
                 }
             },
-            deep: true
+            { deep: true }
+        );
+    },
+    beforeUnmount() {
+        // Clean up route watcher
+        if (this.unwatchRoute) {
+            this.unwatchRoute();
+            this.unwatchRoute = null;
+        }
+
+        // Abort any pending API requests
+        if (controller) {
+            controller.abort();
+            controller = null;
+        }
+
+        // Clear any pending timeouts
+        if (this.highlightTimeout) {
+            clearTimeout(this.highlightTimeout);
+            this.highlightTimeout = null;
         }
     },
     methods: {
@@ -325,12 +346,12 @@ export default {
                 controller = null;
 
                 if (this.highlight && !this.error)
-                    setTimeout(() => {
+                    this.highlightTimeout = setTimeout(() => {
                         let highlightElement = document.getElementById(`game-${this.highlight}`);
                         if (highlightElement) {
                             highlightElement.scrollIntoView({ behavior: "smooth" });
 
-                            setTimeout(() => {
+                            this.highlightTimeout = setTimeout(() => {
                                 this.highlight = null;
                             }, 2000);
                         }

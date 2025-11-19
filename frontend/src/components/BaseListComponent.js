@@ -34,6 +34,8 @@ export default {
             },
             _cache: {},
             isNavigatingProgrammatically: false, // Track if we initiated the navigation
+            unwatchFilters: null, // Store unwatch function for filters watcher
+            unwatchRoute: null, // Store unwatch function for route watcher
         }
     },
     computed: {
@@ -121,16 +123,21 @@ export default {
             });
         },
     },
-    watch: {
-        filters: {
-            async handler() {
+    mounted() {
+        // Set up filters watcher with explicit cleanup
+        this.unwatchFilters = this.$watch(
+            () => this.filters,
+            async () => {
                 await this.loadItems();
                 this.updateUrl();
             },
-            deep: true
-        },
-        '$route.query': {
-            handler() {
+            { deep: true }
+        );
+
+        // Set up route watcher with explicit cleanup
+        this.unwatchRoute = this.$watch(
+            () => this.$route.query,
+            () => {
                 // Skip if we initiated the navigation ourselves
                 if (this.isNavigatingProgrammatically) {
                     this.isNavigatingProgrammatically = false;
@@ -139,7 +146,19 @@ export default {
 
                 // Browser back/forward navigation - reload items
                 this.init();
-            },
-        },
+            }
+        );
+    },
+    beforeUnmount() {
+        // Clean up all watchers
+        if (this.unwatchFilters) {
+            this.unwatchFilters();
+            this.unwatchFilters = null;
+        }
+
+        if (this.unwatchRoute) {
+            this.unwatchRoute();
+            this.unwatchRoute = null;
+        }
     },
 };

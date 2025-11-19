@@ -2,6 +2,15 @@
 
 ## 2025-11-19
 
+### Memory Leak Fix: Route Watchers Cleanup
+**Problem:** Introduced 2 days ago (commit 3e853e2b), deep watchers on `$route.query` were not being cleaned up when components unmounted, retaining references to routes, methods, and large arrays like `allGames` (entire game database).
+
+**Solution:** Converted declarative watchers to explicit `this.$watch()` in `mounted()` lifecycle, storing unwatch functions and calling them in `beforeUnmount()`. Applied to:
+- GameList.vue: route query watcher + timeout cleanup
+- BaseListComponent.js (DeveloperList, ListList, PostList): filters + route query watchers
+
+**Result:** Proper garbage collection when components destroy; memory no longer accumulates with pagination navigation. All tests pass (100% coverage).
+
 ### Beta Migration: HomePage & Navigation Setup
 **Plan:** Migrate Vue.js SPA to Django + HTMX + Alpine.js, starting with leaf components and working toward root. Build in parallel under `/beta/` prefix to maintain existing site.
 
