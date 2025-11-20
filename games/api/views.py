@@ -17,15 +17,18 @@ from . import serializers
 class GameListView(ListAPIView):
 
     serializer_class = serializers.GameSummarySerializer
+    # Build search fields based on database vendor
+    # PostgreSQL supports full-text search, SQLite does not
+    search_fields = ["name_normalized__icontains", "name__icontains"]
+    if connection.vendor == "postgresql":
+        search_fields = [
+            "name_normalized__search",
+            "name__search",
+        ] + search_fields
     filters = [
         utils.Filter(
             param="q",
-            fields=[
-                "name_normalized__search",
-                "name_normalized__icontains",
-                "name__search",
-                "name__icontains",
-            ],
+            fields=search_fields,
         ),
         utils.Filter(
             param="developer", fields=["developers__developer__igdb_id"], coerce=int

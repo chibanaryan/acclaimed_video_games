@@ -8,7 +8,7 @@
     <h1 class="title is-spaced">Developers</h1>
     <h2 id="results-count" class="subtitle">{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</h2>
 
-    <div class="field">
+    <div class="field" style="margin-bottom: 0;">
         <div class="control has-icons-left">
             <input type="text"
                    class="input"
@@ -34,7 +34,9 @@
 
     <div id="results-container">
         {% if page_obj %}
+        <div class="pagination-wrapper pagination-spacing-top">
             {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+        </div>
         {% endif %}
 
         {% if developers %}
@@ -65,7 +67,9 @@
         {% endif %}
 
         {% if page_obj %}
+        <div class="pagination-wrapper pagination-spacing-top">
             {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+        </div>
         {% endif %}
     </div>
 </div>

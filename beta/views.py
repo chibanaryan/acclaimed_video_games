@@ -38,6 +38,39 @@ class GameListView(ListView):
     template_name = "games/game_list.html"
     context_object_name = "games"
     paginate_by = 100
+    paginate_orphans = 0
+
+    def paginate_queryset(self, queryset, page_size):
+        """
+        Paginate the queryset, and handle invalid page numbers gracefully.
+        Instead of raising 404, return the last valid page.
+        """
+        from django.core.paginator import Paginator, EmptyPage
+
+        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
+        page = self.request.GET.get("page")
+
+        try:
+            page_number = int(page) if page else 1
+        except (TypeError, ValueError):
+            page_number = 1
+
+        try:
+            page_obj = paginator.page(page_number)
+        except EmptyPage:
+            # If page is out of range, return the last valid page (or first if no pages)
+            if paginator.num_pages > 0:
+                page_obj = paginator.page(paginator.num_pages)
+            else:
+                # No results at all - create an empty page object
+                # This shouldn't happen often, but handle it gracefully
+                try:
+                    page_obj = paginator.page(1)
+                except EmptyPage:
+                    # Even page 1 is empty - return None and let Django handle it
+                    return (paginator, None, [], False)
+
+        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
 
     def get_queryset(self):
         # Prefetch relationships for GameRowProperties component
@@ -139,7 +172,8 @@ class GameListView(ListView):
 
     def get_template_names(self):
         # Support HTMX partial responses - return just the content block if HTMX request
-        if self.request.headers.get("HX-Request"):
+        # Check META for HTMX header (HTTP_HX_REQUEST in META)
+        if self.request.META.get("HTTP_HX_REQUEST") == "true":
             return ["games/includes/_game_list_content.html"]
         return super().get_template_names()
 
@@ -217,6 +251,44 @@ class GameSearchView(ListView):
     template_name = "games/game_search.html"
     context_object_name = "games"
     paginate_by = 100
+    paginate_orphans = 0
+
+    def paginate_queryset(self, queryset, page_size):
+        """
+        Paginate the queryset, and handle invalid page numbers gracefully.
+        Instead of raising 404, return the last valid page.
+        """
+        from django.core.paginator import Paginator, EmptyPage
+
+        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
+        page = self.request.GET.get("page")
+
+        try:
+            page_number = int(page) if page else 1
+        except (TypeError, ValueError):
+            page_number = 1
+
+        try:
+            page_obj = paginator.page(page_number)
+        except EmptyPage:
+            # If page is out of range, return the last valid page (or first if no pages)
+            if paginator.num_pages > 0:
+                page_obj = paginator.page(paginator.num_pages)
+            else:
+                # No results at all - create an empty page object
+                try:
+                    page_obj = paginator.page(1)
+                except EmptyPage:
+                    # Even page 1 is empty - return None and let Django handle it
+                    return (paginator, None, [], False)
+
+        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
+
+    def get_template_names(self):
+        # Support HTMX partial responses - return just the content block if HTMX request
+        if self.request.META.get("HTTP_HX_REQUEST") == "true":
+            return ["games/includes/_game_search_content.html"]
+        return super().get_template_names()
 
     def get_queryset(self):
         from django.db.models import Q
@@ -321,6 +393,38 @@ class DeveloperListView(ListView):
     template_name = "developers/developer_list.html"
     context_object_name = "developers"
     paginate_by = 100
+    paginate_orphans = 0
+
+    def paginate_queryset(self, queryset, page_size):
+        """
+        Paginate the queryset, and handle invalid page numbers gracefully.
+        Instead of raising 404, return the last valid page.
+        """
+        from django.core.paginator import Paginator, EmptyPage
+
+        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
+        page = self.request.GET.get("page")
+
+        try:
+            page_number = int(page) if page else 1
+        except (TypeError, ValueError):
+            page_number = 1
+
+        try:
+            page_obj = paginator.page(page_number)
+        except EmptyPage:
+            # If page is out of range, return the last valid page (or first if no pages)
+            if paginator.num_pages > 0:
+                page_obj = paginator.page(paginator.num_pages)
+            else:
+                # No results at all - create an empty page object
+                try:
+                    page_obj = paginator.page(1)
+                except EmptyPage:
+                    # Even page 1 is empty - return None and let Django handle it
+                    return (paginator, None, [], False)
+
+        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
 
     def get_queryset(self):
         from django.db.models import Count
@@ -433,6 +537,38 @@ class ListListView(ListView):
     template_name = "lists/list_list.html"
     context_object_name = "lists"
     paginate_by = 100
+    paginate_orphans = 0
+
+    def paginate_queryset(self, queryset, page_size):
+        """
+        Paginate the queryset, and handle invalid page numbers gracefully.
+        Instead of raising 404, return the last valid page.
+        """
+        from django.core.paginator import Paginator, EmptyPage
+
+        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
+        page = self.request.GET.get("page")
+
+        try:
+            page_number = int(page) if page else 1
+        except (TypeError, ValueError):
+            page_number = 1
+
+        try:
+            page_obj = paginator.page(page_number)
+        except EmptyPage:
+            # If page is out of range, return the last valid page (or first if no pages)
+            if paginator.num_pages > 0:
+                page_obj = paginator.page(paginator.num_pages)
+            else:
+                # No results at all - create an empty page object
+                try:
+                    page_obj = paginator.page(1)
+                except EmptyPage:
+                    # Even page 1 is empty - return None and let Django handle it
+                    return (paginator, None, [], False)
+
+        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
 
     def get_queryset(self):
         qs = models.List.objects.select_related("publisher").order_by(
@@ -444,11 +580,17 @@ class ListListView(ListView):
         # Apply filters
         publisher = self.request.GET.get("publisher")
         if publisher:
-            qs = qs.filter(publisher_id=publisher)
+            try:
+                qs = qs.filter(publisher_id=int(publisher))
+            except (ValueError, TypeError):
+                pass  # Invalid publisher ID, skip filter
 
         year = self.request.GET.get("year")
         if year:
-            qs = qs.filter(year=year)
+            try:
+                qs = qs.filter(year=int(year))
+            except (ValueError, TypeError):
+                pass  # Invalid year, skip filter
 
         list_type = self.request.GET.get("type")
         if list_type:
@@ -511,6 +653,38 @@ class PostListView(ListView):
     template_name = "posts/post_list.html"
     context_object_name = "posts"
     paginate_by = 5
+    paginate_orphans = 0
+
+    def paginate_queryset(self, queryset, page_size):
+        """
+        Paginate the queryset, and handle invalid page numbers gracefully.
+        Instead of raising 404, return the last valid page.
+        """
+        from django.core.paginator import Paginator, EmptyPage
+
+        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
+        page = self.request.GET.get("page")
+
+        try:
+            page_number = int(page) if page else 1
+        except (TypeError, ValueError):
+            page_number = 1
+
+        try:
+            page_obj = paginator.page(page_number)
+        except EmptyPage:
+            # If page is out of range, return the last valid page (or first if no pages)
+            if paginator.num_pages > 0:
+                page_obj = paginator.page(paginator.num_pages)
+            else:
+                # No results at all - create an empty page object
+                try:
+                    page_obj = paginator.page(1)
+                except EmptyPage:
+                    # Even page 1 is empty - return None and let Django handle it
+                    return (paginator, None, [], False)
+
+        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
 
 
 class PageDetailView(TemplateView):

@@ -245,6 +245,15 @@ class Game(models.Model):
             )
         return None
 
+    @property
+    def decade(self) -> Optional[int]:
+        """Get the decade the game was released (e.g., 1990, 2000, 2010)."""
+        if self.year_of_release:
+            from . import utils
+
+            return utils.year_to_decade(self.year_of_release)
+        return None
+
 
 class Publication(models.Model):
     """

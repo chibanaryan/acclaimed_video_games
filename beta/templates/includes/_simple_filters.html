@@ -30,6 +30,7 @@
                             params.delete('decade');
                         }
                         params.delete('year'); // Clear year when decade is selected
+                        params.delete('page'); // Reset to page 1 when filter changes
                         window.location.href = baseUrl + '?' + params.toString();
                     "
                     x-model="decade">
@@ -53,6 +54,7 @@
                             params.delete('year');
                         }
                         params.delete('decade'); // Clear decade when year is selected
+                        params.delete('page'); // Reset to page 1 when filter changes
                         window.location.href = baseUrl + '?' + params.toString();
                     "
                     x-model="year">

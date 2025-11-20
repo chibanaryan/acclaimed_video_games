@@ -67,6 +67,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "beta.middleware.HTMXPushURLMiddleware",  # Add HX-Push-URL header for HTMX requests
     # "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 

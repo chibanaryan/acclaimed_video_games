@@ -8,7 +8,9 @@
 <script type="application/json" id="ms-selected-{{ ms_id }}">{% if selected %}{{ selected|tojson }}{% else %}[]{% endif %}</script>
 <div class="control multiple-select"
      data-ms-id="{{ ms_id }}"
+     data-filter-type="{{ type|default:'default' }}"
      x-data="{ 
+         filterType: '{{ type|default:"default" }}',
          itemsList: [],
          selectedList: [],
          selectableItems: [],
@@ -78,9 +80,31 @@
                        x-model="item.selected"
                        @change="
                            const selectedItems = selectableItems.filter(x => x.selected).map(x => x.item);
-                           console.log('Checkbox changed, emitting:', selectedItems);
-                           $dispatch('update:modelValue', selectedItems);
-                           $dispatch('change', selectedItems);
+                           
+                           // Use Alpine's $dispatch to send event to parent scope
+                           $dispatch('filter-changed', { type: filterType, items: selectedItems });
+                           
+                           // Also try direct update as fallback
+                           // Find the Alpine scope (the outer div with x-data)
+                           let alpineElement = $el;
+                           while (alpineElement && !alpineElement.hasAttribute('x-data')) {
+                               alpineElement = alpineElement.parentElement;
+                               if (!alpineElement || alpineElement === document.body) break;
+                           }
+                           
+                           if (alpineElement && filterType) {
+                               try {
+                                   const parentAlpine = Alpine.$data(alpineElement);
+                                   if (parentAlpine && parentAlpine.filters) {
+                                       parentAlpine.filters[filterType] = selectedItems;
+                                       if (parentAlpine.initialized && typeof parentAlpine.updateUrl === 'function') {
+                                           parentAlpine.updateUrl();
+                                       }
+                                   }
+                               } catch(e) {
+                                   console.error('Error updating Alpine scope:', e);
+                               }
+                           }
                        ">
                 <span x-text="item.item.name || item.item"></span>
             </label>

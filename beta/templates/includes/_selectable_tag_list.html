@@ -3,7 +3,7 @@
 {# Uses Alpine.js for interactivity #}
 {% load beta_filters %}
 <div x-data="{ 
-         selectedTags: {% if selected_tags %}{{ selected_tags|safe|tojson }}{% else %}[]{% endif %}
+         selectedTags: {% if selected_tags %}{{ selected_tags|tojson }}{% else %}[]{% endif %}
      }" 
      @update:modelValue.window="selectedTags = $event.detail"
      x-show="selectedTags && selectedTags.length > 0"

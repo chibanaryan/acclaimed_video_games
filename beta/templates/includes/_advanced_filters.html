@@ -2,24 +2,121 @@
 {# Props: filters (dict with q, start, end, genres, platforms, genre_option, rank_display), genres (list), platforms (list) #}
 {# Uses Alpine.js for interactivity #}
 {% load beta_filters %}
-<div x-data="{ 
-        filters: {{ filters|safe|tojson }},
-        genres: {% if genres %}{{ genres|safe|tojson }}{% else %}[]{% endif %},
-        platforms: {% if platforms %}{{ platforms|safe|tojson }}{% else %}[]{% endif %},
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "genre_option": "L", "rank_display": "alltime"}</script>{% endif %}
+{% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
+{% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
+<div x-data="{
+        filters: JSON.parse(document.getElementById('filters-data').textContent),
+        genres: JSON.parse(document.getElementById('genres-data').textContent),
+        platforms: JSON.parse(document.getElementById('platforms-data').textContent),
         initialized: false,
-        updateTimeout: null
+        updateTimeout: null,
+        init() {
+            // Ensure genre_option has a default value
+            if (!this.filters.genre_option || this.filters.genre_option === '') {
+                this.filters.genre_option = 'L';
+            }
+            // Mark as initialized after a short delay to prevent initial watcher triggers
+            setTimeout(() => { this.initialized = true; }, 100);
+            
+            this.$watch('filters.start', val => {
+                if (!this.initialized) return;
+                if (this.filters.end && val && parseInt(val) > parseInt(this.filters.end)) {
+                    this.filters.end = val;
+                }
+                this.updateUrl();
+            });
+            this.$watch('filters.end', val => {
+                if (!this.initialized) return;
+                if (this.filters.start && val && parseInt(val) < parseInt(this.filters.start)) {
+                    this.filters.start = val;
+                }
+                this.updateUrl();
+            });
+        },
+        handleFilterChange(type, items) {
+            if (type === 'genres') {
+                this.filters.genres = items;
+            } else if (type === 'platforms') {
+                this.filters.platforms = items;
+            }
+            if (this.initialized) {
+                this.updateUrl();
+            }
+        },
+        updateUrl() {
+            if (!this.initialized) return;
+            
+            // Clear any pending update
+            if (this.updateTimeout) {
+                clearTimeout(this.updateTimeout);
+            }
+            
+            // Debounce the URL update
+            this.updateTimeout = setTimeout(() => {
+                const params = new URLSearchParams();
+                // Reset to page 1 when filters change
+                params.delete('page');
+                if (this.filters.q) params.set('q', this.filters.q);
+                if (this.filters.start) params.set('start', this.filters.start);
+                if (this.filters.end) params.set('end', this.filters.end);
+                if (this.filters.genres && this.filters.genres.length) {
+                    const genreIds = this.filters.genres.map(g => {
+                        // Handle both object format {id: X, name: Y} and plain ID
+                        return (typeof g === 'object' && g !== null && g.id !== undefined) ? g.id : g;
+                    }).filter(id => id !== null && id !== undefined);
+                    if (genreIds.length > 0) {
+                        params.set('genres', genreIds.join(','));
+                    }
+                }
+                if (this.filters.platforms && this.filters.platforms.length) {
+                    const platformIds = this.filters.platforms.map(p => {
+                        // Handle both object format {id: X, name: Y} and plain ID
+                        return (typeof p === 'object' && p !== null && p.id !== undefined) ? p.id : p;
+                    }).filter(id => id !== null && id !== undefined);
+                    if (platformIds.length > 0) {
+                        params.set('platforms', platformIds.join(','));
+                    }
+                }
+                if (this.filters.genre_option) params.set('genre_option', this.filters.genre_option);
+                if (this.filters.rank_display) params.set('rank_display', this.filters.rank_display);
+                
+                // Use HTMX to update the content without full page reload
+                const url = '{% url 'beta:games-search' %}?' + params.toString();
+                // Use fetch with HTMX headers to get partial response
+                fetch(url, {
+                    headers: {
+                        'HX-Request': 'true'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const contentEl = document.getElementById('content');
+                    if (contentEl) {
+                        contentEl.innerHTML = html;
+                        // Update URL without reload
+                        window.history.pushState({}, '', url);
+                        // Re-initialize Alpine.js on new content
+                        if (typeof Alpine !== 'undefined') {
+                            Alpine.initTree(contentEl);
+                        }
+                    }
+                })
+                .catch(err => console.error('Error fetching content:', err));
+            }, 300);
+        }
      }"
      @update:modelValue.window="
          if ($event.detail && typeof $event.detail === 'object' && !Array.isArray($event.detail)) {
-             filters = $event.detail;
+             this.filters = $event.detail;
          } else if (Array.isArray($event.detail)) {
              // Handle multi-select updates (genres/platforms)
              // The event target will determine which filter to update
              // This is handled by the specific change handlers in the multi-select components
          } else if (typeof $event.detail === 'string' || $event.detail === null) {
              // Handle search input updates
-             filters.q = $event.detail || '';
-             if (initialized) updateUrl();
+             this.filters.q = $event.detail || '';
+             if (this.initialized) this.updateUrl();
          }
      "
      @change.window="
@@ -29,50 +126,9 @@
              // This is handled by the specific change handlers in the multi-select components
          } else if (typeof $event.detail === 'string' || $event.detail === null) {
              // Handle search input changes
-             filters.q = $event.detail || '';
-             if (initialized) updateUrl();
+             this.filters.q = $event.detail || '';
+             if (this.initialized) this.updateUrl();
          }
-     "
-     x-init="
-         // Mark as initialized after a short delay to prevent initial watcher triggers
-         setTimeout(() => { initialized = true; }, 100);
-         
-         function updateUrl() {
-             if (!initialized) return;
-             
-             // Clear any pending update
-             if (updateTimeout) {
-                 clearTimeout(updateTimeout);
-             }
-             
-             // Debounce the URL update
-             updateTimeout = setTimeout(() => {
-                 const params = new URLSearchParams();
-                 if (filters.q) params.set('q', filters.q);
-                 if (filters.start) params.set('start', filters.start);
-                 if (filters.end) params.set('end', filters.end);
-                 if (filters.genres && filters.genres.length) params.set('genres', filters.genres.map(g => g.id || g).join(','));
-                 if (filters.platforms && filters.platforms.length) params.set('platforms', filters.platforms.map(p => p.id || p).join(','));
-                 if (filters.genre_option) params.set('genre_option', filters.genre_option);
-                 if (filters.rank_display) params.set('rank_display', filters.rank_display);
-                 window.location.href = '{% url 'beta:games-search' %}?' + params.toString();
-             }, 300);
-         }
-         
-         $watch('filters.start', val => {
-             if (!initialized) return;
-             if (filters.end && val && parseInt(val) > parseInt(filters.end)) {
-                 filters.end = val;
-             }
-             updateUrl();
-         });
-         $watch('filters.end', val => {
-             if (!initialized) return;
-             if (filters.start && val && parseInt(val) < parseInt(filters.start)) {
-                 filters.start = val;
-             }
-             updateUrl();
-         });
      ">
     <div class="columns">
         <div class="column">
@@ -85,21 +141,14 @@
                         <tr>
                             <td>From:</td>
                             <td>
-                                <div x-data="{ 
-                                    val: filters.start || {{ min_year }},
-                                    min: {{ min_year }},
-                                    max: {{ max_year }},
-                                    get label() { return this.val; }
-                                }"
-                                @update:modelValue.window="filters.start = parseInt($event.detail)"
-                                @change.window="filters.start = parseInt($event.detail)">
-                                    <label class="label" x-text="label"></label>
+                                <div>
+                                    <label class="label" x-text="filters.start || {{ min_year }}"></label>
                                     <div class="control">
                                         <input type="range"
-                                               :min="min"
-                                               :max="max"
-                                               x-model="val"
-                                               @input="val = $event.target.value; $dispatch('update:modelValue', val); $dispatch('change', val)">
+                                               min="{{ min_year }}"
+                                               max="{{ max_year }}"
+                                               :value="filters.start || {{ min_year }}"
+                                               @input="filters.start = parseInt($event.target.value); if (initialized) updateUrl()">
                                     </div>
                                 </div>
                             </td>
@@ -107,21 +156,14 @@
                         <tr>
                             <td>To:</td>
                             <td>
-                                <div x-data="{ 
-                                    val: filters.end || {{ max_year }},
-                                    min: {{ min_year }},
-                                    max: {{ max_year }},
-                                    get label() { return this.val; }
-                                }"
-                                @update:modelValue.window="filters.end = parseInt($event.detail)"
-                                @change.window="filters.end = parseInt($event.detail)">
-                                    <label class="label" x-text="label"></label>
+                                <div>
+                                    <label class="label" x-text="filters.end || {{ max_year }}"></label>
                                     <div class="control">
                                         <input type="range"
-                                               :min="min"
-                                               :max="max"
-                                               x-model="val"
-                                               @input="val = $event.target.value; $dispatch('update:modelValue', val); $dispatch('change', val)">
+                                               min="{{ min_year }}"
+                                               max="{{ max_year }}"
+                                               :value="filters.end || {{ max_year }}"
+                                               @input="filters.end = parseInt($event.target.value); if (initialized) updateUrl()">
                                     </div>
                                 </div>
                             </td>
@@ -183,7 +225,10 @@
                 </template>
             </select>
             <div class="is-hidden-mobile">
-                <div @update:modelValue.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }"
+                <div data-filter-type="genres"
+                     @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
+                     @filter-update="handleFilterChange($event.detail.type, $event.detail.items)"
+                     @update:modelValue.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }"
                      @change.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }">
                     {% include 'includes/_multi_select.html' with items=genres selected=filters.genres type="genres" %}
                 </div>
@@ -207,7 +252,10 @@
                 </template>
             </select>
             <div class="is-hidden-mobile">
-                <div @update:modelValue.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }"
+                <div data-filter-type="platforms"
+                     @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
+                     @filter-update="handleFilterChange($event.detail.type, $event.detail.items)"
+                     @update:modelValue.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }"
                      @change.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }">
                     {% include 'includes/_multi_select.html' with items=platforms selected=filters.platforms type="platforms" %}
                 </div>

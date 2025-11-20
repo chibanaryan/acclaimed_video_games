@@ -1,9 +1,6 @@
-{% extends 'base.html' %}
+{# HTMX partial response for GameSearchView - just the content div #}
 {% load beta_filters %}
 
-{% block title %}Game Search - Acclaimed Games{% endblock %}
-
-{% block content %}
 <div id="content">
     <h1 class="title">
         {% if request.GET.q %}
@@ -59,5 +56,4 @@
     </div>
     {% endif %}
 </div>
-{% endblock %}
 

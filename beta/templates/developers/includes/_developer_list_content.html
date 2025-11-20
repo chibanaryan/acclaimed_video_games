@@ -2,7 +2,9 @@
 {% load beta_filters %}
 
 {% if page_obj %}
+<div class="pagination-wrapper pagination-spacing-top">
     {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+</div>
 {% endif %}
 
 {% if developers %}
@@ -37,7 +39,9 @@
 {% endif %}
 
 {% if page_obj %}
+<div class="pagination-wrapper pagination-spacing-top">
     {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+</div>
 {% endif %}
 
 {# Update results count subtitle #}
