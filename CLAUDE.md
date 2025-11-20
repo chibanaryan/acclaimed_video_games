@@ -11,6 +11,13 @@ Acclaimed Games is a video game ranking and aggregation website that combines da
 ### Backend (Django)
 
 **Activate virtual environment:**
+
+On macOS/Linux:
+```bash
+source venv/bin/activate
+```
+
+On Windows (Git Bash/PowerShell):
 ```bash
 source venv/Scripts/activate
 ```
@@ -131,6 +138,7 @@ The Vue.js frontend uses Vitest for testing with the following structure:
 - `frontend/src/__tests__/models.spec.js` - Frontend model class tests
 - `frontend/src/__tests__/utils.spec.js` - Utility function tests (scroll position, slug parsing)
 - `frontend/src/__tests__/objectStore.spec.js` - PersistentObjectStore tests
+- `frontend/src/__tests__/config.spec.js` - API URL configuration tests (SSR vs client-side)
 
 **Component Tests:**
 - `frontend/src/components/__tests__/NavComponent.spec.js` - Navigation component behavior
@@ -155,11 +163,12 @@ The Vue.js frontend uses Vitest for testing with the following structure:
 The project uses pre-commit hooks (`.pre-commit-config.yaml`) to enforce code quality:
 
 1. **Black Formatter** - Automatically formats Python code
-2. **Frontend Tests with Coverage** - Runs `npm run test:coverage` and enforces 95% coverage minimum
-3. **Django Coverage** - Enforces 95% test coverage threshold (excluding migrations)
-4. **Django Test Suite** - Runs full test suite via `scripts/run_tests.sh`
+2. **Flake8 Linter** - Lints Python code (configuration in `.flake8` - max line length 88)
+3. **Frontend Tests with Coverage** - Runs `npm run test:coverage` and enforces 95% coverage minimum
+4. **Django Coverage** - Enforces 95% test coverage threshold (excluding migrations)
+5. **Django Test Suite** - Runs full test suite via `scripts/run_tests.sh`
 
-**Note:** Commits will be blocked if any tests fail or coverage drops below 95%.
+**Note:** Commits will be blocked if any tests fail, coverage drops below 95%, or linting fails.
 
 ## Architecture
 
@@ -173,6 +182,35 @@ The project uses pre-commit hooks (`.pre-commit-config.yaml`) to enforce code qu
   - **tests/** - Comprehensive test suite (API, models, IGDB, imports, views, admin, utils)
   - **templates/** - Server-side templates (mostly just index.html for SPA)
   - **static/** - Static files served by Django
+- **beta/** - Alternative Django + HTMX + Alpine.js implementation (see Beta App section)
+
+**Installed Apps:**
+- `django.contrib.admin` - Admin interface
+- `django.contrib.auth` - Authentication
+- `django.contrib.contenttypes` - Content type framework
+- `django.contrib.sessions` - Session management
+- `django.contrib.messages` - Messaging framework
+- `django.contrib.staticfiles` - Static file management
+- `django.contrib.flatpages` - Flat pages framework for CMS content
+- `django.contrib.sites` - Sites framework (used for multi-site support)
+- `django.contrib.postgres` - PostgreSQL-specific features
+- `rest_framework` - Django REST Framework
+- `corsheaders` - CORS support
+- `games` - Main game aggregation app
+- `beta` - Beta implementation with HTMX and Alpine.js
+
+**Middleware:**
+- `django.middleware.security.SecurityMiddleware` - Security headers
+- `whitenoise.middleware.WhiteNoiseMiddleware` - Static file serving in production
+- `django.contrib.sessions.middleware.SessionMiddleware` - Session management
+- `corsheaders.middleware.CorsMiddleware` - CORS headers
+- `django.middleware.common.CommonMiddleware` - Common utilities
+- `django.middleware.csrf.CsrfViewMiddleware` - CSRF protection
+- `django.contrib.auth.middleware.AuthenticationMiddleware` - Authentication
+- `django.contrib.messages.middleware.MessageMiddleware` - Messages
+- `django.middleware.clickjacking.XFrameOptionsMiddleware` - Click-jacking protection
+- `beta.middleware.HTMXPushURLMiddleware` - HTMX history/URL push support for beta app
+- `django.contrib.flatpages.middleware.FlatpageFallbackMiddleware` - Flat pages routing
 
 ### Frontend Structure
 
@@ -228,6 +266,91 @@ All non-API routes are handled by the Vue.js SPA.
 
 **SSR-Safe Architecture**: The application uses vite-ssg for server-side static generation (SSG), making it compatible with web crawlers and the Wayback Machine. All browser-specific APIs (localStorage, window, document) are guarded with `typeof window !== 'undefined'` checks. The `getApiUrl()` helper in `config.js` provides absolute URLs during SSG builds and relative URLs in the browser.
 
+**SPAWithPrerenderedView**: A custom Django view that intelligently serves pre-rendered HTML files from vite-ssg builds. It:
+- Serves pre-rendered HTML files for SSG routes when they exist
+- Falls back to `index.html` for client-side Vue Router handling
+- Makes the SPA compatible with web crawlers and archive.org (Wayback Machine)
+- Is used as the catch-all view after API routes
+
+**Template System**: Templates are configured with intelligent caching:
+- **Production**: Uses Django's cached template loader for optimal performance
+- **Development**: Uses non-cached loaders for hot-reloading during development
+- Frontend `dist/` folder is served as a Django template directory
+- Template caching settings are in `settings.py` based on `DEBUG` mode
+
+## Beta App (Django + HTMX + Alpine.js)
+
+The project includes a parallel implementation of the game ranking site using traditional server-side rendering with Django templates, HTMX for dynamic interactions, and Alpine.js for client-side reactivity. This serves as an alternative to the Vue.js SPA.
+
+### Beta App Structure
+
+- **beta/** - Django app containing:
+  - **views.py** - View functions for all beta routes
+  - **urls.py** - URL routing for `/beta/` routes
+  - **templates/** - Jinja2 templates organized by feature:
+    - **base.html** - Main template layout with navigation
+    - **games/** - Game list, detail, and search templates
+    - **developers/** - Developer list and detail templates
+    - **lists/** - Lists and results templates
+    - **posts/** - Post/news templates
+    - **pages/** - Static page templates
+  - **template_tags/** - Custom template filters (beta_filters.py)
+  - **middleware.py** - HTMXPushURLMiddleware for HTMX history support
+
+### Beta App Features
+
+**Styling:**
+- Uses Bulma CSS framework with Bulmaswatch Cyborg theme for modern dark UI
+- Responsive design compatible with all screen sizes
+
+**Template Filters:**
+- `from_now` - Converts datetime to relative time (e.g., "2 hours ago")
+- Custom utilities for formatting and string manipulation
+
+**Routes:**
+- `/beta/` - Home page
+- `/beta/games/` - Game list with filtering and search
+- `/beta/games/<slug>/` - Game detail view
+- `/beta/games/search/` - Game search endpoint (HTMX)
+- `/beta/developers/` - Developer list
+- `/beta/developers/<slug>/` - Developer detail view
+- `/beta/lists/` - Published rankings list
+- `/beta/posts/` - News and blog posts
+- `/beta/pages/<slug>/` - Static pages
+
+**HTMX Integration:**
+- Dynamic filtering without full page reloads
+- Infinite scroll or pagination for lists
+- Real-time search results
+- Smooth form submissions
+
+**Alpine.js Interactivity:**
+- Client-side state management for UI components
+- Dropdown menus, modals, and toggles
+- Form validation and user interactions
+
+### Middleware
+
+**HTMXPushURLMiddleware**: Provides HTMX support for browser history:
+- Pushes URLs to browser history when HTMX requests complete
+- Maintains browser back/forward functionality with HTMX
+- Uses `HX-Push-Url` header for selective history updates
+
+### Migration Status
+
+The beta app is an ongoing migration from the Vue SPA to a Django + HTMX approach. Migration documentation is available in `docs/migration/` directory with guides on:
+- What has been migrated to beta
+- What still needs work
+- Testing procedures
+- Known limitations
+
+### Development Notes
+
+- Both the Vue SPA (at `/`) and beta app (at `/beta/`) run in parallel
+- The beta app uses the same Django backend and database as the SPA
+- Template reloading works in development via Django's non-cached template loaders
+- In production, template caching is enabled for performance
+
 ## IGDB Integration
 
 The `games/igdb.py` module handles IGDB API integration. Games can be enriched with IGDB data using:
@@ -247,19 +370,26 @@ Environment variables are managed via django-environ (`.env` file):
 
 Frontend environment variables (`.env` in frontend/):
 - `VITE_API_URL` - API base URL for client-side (defaults to `/api/` in production)
-- `VITE_SSG_API_URL` - API base URL for SSG builds (defaults to `http://127.0.0.1:8000/api/`)
+- `VITE_SSG_API_URL` - API base URL for SSG builds (defaults to `http://127.0.0.1:8000/api/` for local development, production URL for builds)
+- `VITE_GOOGLE_ANALYTICS_PROPERTY_ID` - Google Analytics property ID for tracking (optional, only if using GA)
 
 ### Configuration Files
 
-- **`.python-version`** - Specifies Python 3.11 for Heroku deployment
-- **`.pre-commit-config.yaml`** - Pre-commit hook configuration for code quality enforcement
+Backend:
+- **`.python-version`** - Specifies Python 3.11 for Heroku deployment (can use different versions locally)
+- **`.pre-commit-config.yaml`** - Pre-commit hook configuration for code quality enforcement (Black, Flake8, tests)
 - **`.coveragerc`** - Coverage configuration excluding migrations and database vendor-specific code
+- **`.flake8`** - Flake8 linter configuration (max line length 88, excludes venv and node_modules)
+- **`scripts/run_tests.sh`** - Test execution script used by pre-commit hooks
+
+Frontend:
 - **`frontend/vite.config.js`** - Vite configuration including:
   - SSG configuration with `includedRoutes()` function for pre-rendering
   - Test setup with Vitest and 95% coverage thresholds
   - Route limits for SSG builds (currently 10 games/5 developers for testing)
 - **`frontend/src/test/setup.js`** - Test environment setup (localStorage mocking)
 - **`frontend/.gitignore`** - Includes `.vite-ssg-temp/` to ignore temporary SSG build files
+- **`frontend/jsconfig.json`** - JavaScript path configuration
 
 ## Database
 
@@ -267,6 +397,32 @@ Frontend environment variables (`.env` in frontend/):
 - **Production**: PostgreSQL on Heroku
 - The `rank` field on Game determines primary ordering (lower is better)
 - `year_rank` and `decade_rank` are calculated automatically on save
+
+## Dependencies
+
+### Backend Dependencies
+
+The backend dependencies are listed in `requirements.txt` and include:
+- **coverage** - Test coverage reporting tool (required for pre-commit hooks)
+- **Django** and related packages - Web framework and extensions
+- **djangorestframework** - REST API framework
+- **psycopg2** - PostgreSQL database adapter
+- And other supporting packages
+
+Install all backend dependencies with:
+```bash
+pip install -r requirements.txt
+```
+
+### Frontend Dependencies
+
+**Key Tools:**
+- **sass-embedded** - SASS preprocessor for Vite (handles SCSS compilation to CSS)
+- **vitest** - Vue component and unit testing framework
+- **@vue/test-utils** - Vue component testing utilities
+- **jsdom** - DOM implementation for testing
+
+These dependencies are defined in `frontend/package.json` and installed via `npm install`.
 
 ## Static Files
 
