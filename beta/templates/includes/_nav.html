@@ -49,7 +49,7 @@
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }">
                     </div>
-                    <div class="control" x-show="q">
+                    <div class="control" x-show="q && q.trim()" x-cloak>
                         <a @click="q = ''; results = []; showMenu = false" class="button">
                             <span class="icon">
                                 <span class="mdi mdi-close"></span>
@@ -171,7 +171,7 @@
                            placeholder="Search games"
                            class="input">
                 </div>
-                <div class="control" x-show="q">
+                <div class="control" x-show="q && q.trim()" x-cloak>
                     <a @click="q = ''; results = []; showMenu = false" class="button">
                         <span class="icon">
                             <span class="mdi mdi-close"></span>

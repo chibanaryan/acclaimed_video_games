@@ -46,9 +46,9 @@
                 return this.filteredGames.some(g => (g.id || g.igdb_id) === gameId);
             }
          }">
-        <h2>Including:</h2>
         {% if developer.aliases.count > 1 %}
-        <ul>
+        <h2>Including:</h2>
+        <ul class="mb-5">
             <template x-for="alias in aliases" :key="alias.id">
                 <li>
                     <label class="checkbox">
@@ -59,7 +59,7 @@
             </template>
         </ul>
         {% endif %}
-        <h2 class="subtitle is-4 mt-5">
+        <h2 class="subtitle is-4 {% if developer.aliases.count > 1 %}mt-6 pt-6 pb-4{% else %}mt-5 pt-6 pb-4{% endif %}" style="margin: 15px 0px 12px;">
             {{ games|length }} Game{{ games|length|pluralize }}
         </h2>
         <div>

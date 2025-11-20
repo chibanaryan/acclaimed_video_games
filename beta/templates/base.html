@@ -536,8 +536,20 @@
             font-size: 1rem;
         }
         
-        .desktop-search .icon {
-            color: rgba(255, 255, 255, 0.7);
+        .desktop-search .icon,
+        .desktop-search .control.has-icons-left .icon,
+        .desktop-search .control .icon,
+        .desktop-search .icon .mdi,
+        .desktop-search .icon span.mdi {
+            color: #fff !important;
+        }
+        
+        .mobile-search .icon,
+        .mobile-search .control.has-icons-left .icon,
+        .mobile-search .control .icon,
+        .mobile-search .icon .mdi,
+        .mobile-search .icon span.mdi {
+            color: #fff !important;
         }
         
         /* Dropdown menu styling to match Vue version */

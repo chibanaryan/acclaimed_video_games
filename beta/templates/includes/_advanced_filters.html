@@ -185,7 +185,7 @@
             <div class="is-hidden-mobile">
                 <div @update:modelValue.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }"
                      @change.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }">
-                    {% include 'includes/_multi_select.html' with items=genres selected=filters.genres %}
+                    {% include 'includes/_multi_select.html' with items=genres selected=filters.genres type="genres" %}
                 </div>
                 {% include 'includes/_selectable_tag_list.html' with selected_tags=filters.genres %}
             </div>
@@ -209,7 +209,7 @@
             <div class="is-hidden-mobile">
                 <div @update:modelValue.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }"
                      @change.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }">
-                    {% include 'includes/_multi_select.html' with items=platforms selected=filters.platforms %}
+                    {% include 'includes/_multi_select.html' with items=platforms selected=filters.platforms type="platforms" %}
                 </div>
                 {% include 'includes/_selectable_tag_list.html' with selected_tags=filters.platforms %}
             </div>
