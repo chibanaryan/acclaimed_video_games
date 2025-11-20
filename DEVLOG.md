@@ -2,66 +2,20 @@
 
 ## 2025-11-19
 
-### Memory Leak Fix: Route Watchers Cleanup
-**Problem:** Introduced 2 days ago (commit 3e853e2b), deep watchers on `$route.query` were not being cleaned up when components unmounted, retaining references to routes, methods, and large arrays like `allGames` (entire game database).
+- **Memory leak fix**: Fixed Vue.js route watchers not being cleaned up on component unmount, causing memory accumulation during pagination. Converted to explicit `$watch()` calls with proper cleanup in `beforeUnmount()`.
 
-**Solution:** Converted declarative watchers to explicit `this.$watch()` in `mounted()` lifecycle, storing unwatch functions and calling them in `beforeUnmount()`. Applied to:
-- GameList.vue: route query watcher + timeout cleanup
-- BaseListComponent.js (DeveloperList, ListList, PostList): filters + route query watchers
+- **Beta migration progress**: Major components and pages migrated to Django + HTMX + Alpine.js:
+  - Game list, search, and detail pages with filtering, pagination, and HTMX support
+  - Developer list and detail pages
+  - Advanced search with genre/platform filtering and "Any"/"All" options
+  - All page views implemented with graceful pagination error handling
+  - Added `HTMXPushURLMiddleware` for HTMX history support
 
-**Result:** Proper garbage collection when components destroy; memory no longer accumulates with pagination navigation. All tests pass (100% coverage).
+- **Frontend updates**: Rebuilt dist with memory leak fix, added `sass-embedded` dependency for Vite SASS preprocessing.
 
-### Beta Migration: HomePage & Navigation Setup
-**Plan:** Migrate Vue.js SPA to Django + HTMX + Alpine.js, starting with leaf components and working toward root. Build in parallel under `/beta/` prefix to maintain existing site.
+- **IGDB integration**: Improved credential loading with better error handling and graceful degradation when credentials are missing.
 
-**New Files:**
-- `beta/` Django app with views, URLs, templates
-- `beta/templates/base.html` - Base template with Bulma, Bulmaswatch, HTMX, Alpine.js
-- `beta/templates/home.html` - Home page matching Vue version
-- `beta/templates/includes/_nav.html` - Navigation with search and burger menu
-- `beta/templates/posts/includes/_post_item.html` - PostItem component
-- `beta/templates/includes/_snippet.html` - SnippetComponent
-- `beta/templatetags/beta_filters.py` - Custom `from_now` filter (matching moment.js)
-
-**Completed:**
-- HomePage migration with posts, games, snippets, and "last update" section
-- Navbar with search bar (dropdown with "Please enter two or more characters"), Palestine flag, and mobile burger menu
-- Visual parity fixes: navbar height (56px), hover effects, search bar styling, snippet text color/size
-- Custom date formatting filter (days/months/years, no weeks)
-- Mobile responsive burger menu that expands navbar (not separate dropdown)
-
-**Isolation:** All beta routes under `/beta/` prefix; existing Vue.js site at root unchanged.
-
-### Beta Migration: Major Component & Page Migrations
-**Summary:** Migrated core page views and multiple components, implementing filtering, pagination, and search functionality.
-
-**New Views & Functionality:**
-- `GameListView` with decade/year filtering, pagination, and HTMX support
-- `GameDetailView` with list grouping and prefetching
-- `GameSearchView` for advanced search functionality
-- `DeveloperListView`, `DeveloperDetailView`, `ListListView`, `PostListView`, `PageDetailView` - all page views implemented
-- `GameSearchAPIView` for navbar search (JSON endpoint)
-
-**Migrated Components:**
-- `SimpleFilters` - Year/decade dropdowns with Alpine.js interactivity
-- `PaginationComponent` - HTMX-enabled pagination with ellipsis logic
-- `GameRow` - Desktop/mobile responsive game rows with rank display
-- `GameProperties` - Game detail properties display
-- `ListResultsComponent` - List grouping and display
-- `GameSearchResult` - Search result items
-- Additional includes: `_game_list_content.html`, `_advanced_filters.html`, `_multi_select.html`, `_range_slider.html`, `_search_input.html`, `_selectable_tag_list.html`
-
-**Enhanced Template Filters:**
-- `pagination_pages` - Calculate pagination with ellipsis (matching Vue logic)
-- `game_rank_url` - Generate game rank URLs with query params
-- `pagination_url` - Generate pagination URLs preserving query params
-- `tojson` - Convert Python values to JSON for JavaScript
-
-**Template Files Created:**
-- All page templates: `game_detail.html`, `game_search.html`, `developer_list.html`, `developer_detail.html`, `list_list.html`, `post_list.html`, `page_detail.html`
-- Component includes for all major UI elements
-
-**Stats:** 7 files changed, 992 insertions(+), 47 deletions(-)
+- **Documentation**: Updated migration docs with new patterns (HTMX middleware, pagination handling, partial responses, advanced filtering).
 
 ## 2025-11-18
 
