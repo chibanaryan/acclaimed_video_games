@@ -179,3 +179,71 @@ class RefreshIgdbDevelopersCommandTests(TestCase):
 
         # Should pass cache_results=False to force fresh fetch
         mock_get.assert_called_once_with(cache_results=False)
+
+
+class CreateDeveloperAliasCommandTests(TestCase):
+
+    def setUp(self):
+        """Set up test developer"""
+        self.developer = models.Developer.objects.create(
+            name="Test Developer", slug="test-developer"
+        )
+
+    def test_creates_new_alias_for_existing_developer(self):
+        """Test creating a new developer alias"""
+        from io import StringIO
+
+        out = StringIO()
+        call_command(
+            "create_developer_alias",
+            "Test Alias",
+            "test-developer",
+            stdout=out,
+        )
+        output = out.getvalue()
+
+        # Verify alias was created
+        self.assertTrue(
+            models.DeveloperAlias.objects.filter(name="Test Alias").exists()
+        )
+        alias = models.DeveloperAlias.objects.get(name="Test Alias")
+        self.assertEqual(alias.developer_id, self.developer.id)
+        # Verify output message
+        self.assertIn("Created alias", output)
+
+    def test_warns_when_alias_already_exists(self):
+        """Test that command warns when alias already exists"""
+        # Create an existing alias
+        models.DeveloperAlias.objects.create(
+            name="Existing Alias", developer=self.developer
+        )
+
+        from io import StringIO
+
+        out = StringIO()
+        call_command(
+            "create_developer_alias",
+            "Existing Alias",
+            "test-developer",
+            stdout=out,
+        )
+        output = out.getvalue()
+
+        # Verify output contains warning
+        self.assertIn("already exists", output)
+
+    def test_returns_error_for_nonexistent_developer(self):
+        """Test that command returns error for nonexistent developer"""
+        from io import StringIO
+
+        out = StringIO()
+        call_command(
+            "create_developer_alias",
+            "New Alias",
+            "nonexistent-developer",
+            stdout=out,
+        )
+        output = out.getvalue()
+
+        # Verify error message
+        self.assertIn("not found", output)
