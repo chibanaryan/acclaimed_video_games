@@ -2,6 +2,14 @@
 
 ## 2025-11-22
 
+- **IGDB developer data fix**: Fixed missing developer IGDB data for games
+  - Root cause: `get_igdb` management command only processes games without artwork, so games with missing developer data were never updated
+  - Created new `refresh_igdb_developers` command to find and refresh games with IGDB IDs but missing developer IGDB data
+  - Supports refreshing by game slug, game ID, or all games with `--all` flag
+  - Added 9 comprehensive unit tests with full coverage of command functionality
+  - Fixed Super Mario Odyssey and all affected games with missing developer data
+  - All 109 tests passing (100 existing + 9 new tests)
+
 - **Repository migration**: Moved repository from BitBucket to GitHub (chibanaryan/acclaimedgames)
 
 - **Heroku stack upgrade**: Upgraded from heroku-22 to heroku-24
