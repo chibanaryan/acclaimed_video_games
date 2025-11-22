@@ -10,7 +10,7 @@ gunicorn
 ipython
 markdown
 pip
-psycopg2
+psycopg2-binary==2.9.11
 requests
 sentry-sdk
 sentry-sdk[django]
