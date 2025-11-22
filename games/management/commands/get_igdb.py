@@ -29,7 +29,9 @@ class Command(BaseCommand):
         """
         try:
             game.get_igdb_data()
-            game.save()
+            game.save(
+                update_fields=["slug", "igdb_url", "igdb_artwork_id", "description"]
+            )
             with self.processed_lock:
                 self.processed_count += 1
             return (True, game, None)
@@ -153,7 +155,14 @@ class Command(BaseCommand):
                             genres.append(genre)
                         game.genres.set(genres)
 
-                        game.save()
+                        game.save(
+                            update_fields=[
+                                "slug",
+                                "igdb_url",
+                                "igdb_artwork_id",
+                                "description",
+                            ]
+                        )
 
                         with self.processed_lock:
                             self.processed_count += 1
@@ -299,7 +308,9 @@ class Command(BaseCommand):
                     return
 
                 game.get_igdb_data()
-                game.save()
+                game.save(
+                    update_fields=["slug", "igdb_url", "igdb_artwork_id", "description"]
+                )
                 self.stdout.write(
                     self.style.SUCCESS(f"Successfully updated '{game.name}'")
                 )
