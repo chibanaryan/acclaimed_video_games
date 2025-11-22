@@ -31,10 +31,15 @@ class GetIgdbCommandTests(TestCase):
 
         with mock.patch.object(
             models.Game, "get_igdb_data", side_effect=ValueError("boom")
-        ), mock.patch("games.management.commands.get_igdb.logger") as logger_mock:
-            call_command("get_igdb")
+        ):
+            # Capture stdout to verify error output
+            from io import StringIO
 
-        logger_mock.error.assert_called_once_with("boom")
+            out = StringIO()
+            call_command("get_igdb", stdout=out)
+            output = out.getvalue()
+            # Verify error message is in output
+            self.assertIn("boom", output)
 
 
 class ImportDataRoutingTests(TestCase):

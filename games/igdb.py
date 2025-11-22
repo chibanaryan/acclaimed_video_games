@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Optional, Dict, Any
 
 import requests
@@ -45,9 +46,78 @@ class IgbdApi:
         self.release_dates: Dict[int, Any] = {}
         self.themes: Dict[int, str] = {}
 
+        # Rate limiting: 4 requests/second (Twitch limit) = 250ms between requests
+        # Using 3.5 req/sec to stay safely below the limit
+        self.min_request_interval: float = 1.0 / 3.5  # ~286ms
+        self.last_request_time: float = 0.0
+
         self._get_auth_token()
         self._get_release_statuses()
         self._get_themes()
+
+    def _wait_for_rate_limit(self) -> None:
+        """
+        Enforce rate limiting by sleeping if necessary.
+
+        Ensures that requests are spaced at least min_request_interval apart,
+        respecting the IGDB API's 4 requests/second limit (using 3.5 for safety).
+        """
+        elapsed = time.time() - self.last_request_time
+        if elapsed < self.min_request_interval:
+            sleep_time = self.min_request_interval - elapsed
+            time.sleep(sleep_time)
+        self.last_request_time = time.time()
+
+    def _make_request_with_retry(
+        self, url: str, data: str, max_retries: int = 3
+    ) -> Optional[requests.Response]:
+        """
+        Make an API request with rate limiting and exponential backoff for retries.
+
+        Args:
+            url: The API endpoint URL
+            data: The request body/data
+            max_retries: Maximum number of retries on 429 errors (default: 3)
+
+        Returns:
+            The response object if successful, None if all retries fail
+        """
+        retry_count = 0
+        while retry_count <= max_retries:
+            self._wait_for_rate_limit()
+            try:
+                response = requests.post(url, headers=self.headers, data=data)
+
+                # Handle rate limiting (429 Too Many Requests)
+                if response.status_code == 429:
+                    if retry_count < max_retries:
+                        wait_time = (
+                            2**retry_count
+                        )  # Exponential backoff: 1s, 2s, 4s, etc.
+                        logger.warning(
+                            "Rate limited by IGDB API. Retrying in %d seconds... "
+                            "(attempt %d/%d)",
+                            wait_time,
+                            retry_count + 1,
+                            max_retries + 1,
+                        )
+                        time.sleep(wait_time)
+                        retry_count += 1
+                        continue
+                    else:
+                        logger.error(
+                            "Rate limited by IGDB API. Max retries (%d) exceeded.",
+                            max_retries,
+                        )
+                        return None
+
+                return response
+
+            except requests.RequestException as exc:
+                logger.warning("Request failed: %s", exc)
+                return None
+
+        return None
 
     def _get_auth_token(self) -> bool:
         """
@@ -105,11 +175,13 @@ class IgbdApi:
             return
 
         try:
-            res = requests.post(
+            res = self._make_request_with_retry(
                 "https://api.igdb.com/v4/themes/",
-                headers=self.headers,
                 data="limit 500; fields name;",
             )
+            if res is None:
+                self.themes = {}
+                return
             res.raise_for_status()
             results = res.json()
         except Exception as exc:
@@ -135,11 +207,13 @@ class IgbdApi:
             return
 
         try:
-            res = requests.post(
+            res = self._make_request_with_retry(
                 "https://api.igdb.com/v4/release_date_statuses/",
-                headers=self.headers,
                 data="fields name;",
             )
+            if res is None:
+                self.release_date_statuses = {}
+                return
             res.raise_for_status()
             results = res.json()
         except Exception as exc:
@@ -160,11 +234,12 @@ class IgbdApi:
             Cover filename if successful, None otherwise
         """
         try:
-            res = requests.post(
+            res = self._make_request_with_retry(
                 "https://api.igdb.com/v4/covers/",
-                headers=self.headers,
                 data=f"where id={cover_id}; fields url;",
             )
+            if res is None:
+                return None
             res.raise_for_status()
             results = res.json()
         except Exception as exc:
@@ -195,11 +270,12 @@ class IgbdApi:
             return self.company_cache[company_id]
 
         try:
-            res = requests.post(
+            res = self._make_request_with_retry(
                 "https://api.igdb.com/v4/companies/",
-                headers=self.headers,
                 data=f"where id={company_id}; fields id,name,slug,parent;",
             )
+            if res is None:
+                return None
             res.raise_for_status()
             results = res.json()
         except Exception as exc:
@@ -232,11 +308,12 @@ class IgbdApi:
             return self.genre_cache[genre_id]
 
         try:
-            res = requests.post(
+            res = self._make_request_with_retry(
                 "https://api.igdb.com/v4/genres/",
-                headers=self.headers,
                 data=f"where id={genre_id}; fields name;",
             )
+            if res is None:
+                return None
             res.raise_for_status()
             results = res.json()
         except Exception as exc:
@@ -282,9 +359,8 @@ class IgbdApi:
             return self.game_cache[game_id]
 
         # Get game data from API
-        res = requests.post(
+        res = self._make_request_with_retry(
             "https://api.igdb.com/v4/games/",
-            headers=self.headers,
             data=(
                 "where id="
                 f"{game_id}; fields slug,cover,genres,first_release_date,"
@@ -292,11 +368,17 @@ class IgbdApi:
             ),
         )
 
+        if res is None:
+            logger.warning(
+                "Failed to fetch game data for game ID %s after retries", game_id
+            )
+            return None
+
         if res.status_code == 401:
             if self._get_auth_token():
                 return self.get_game_info_by_id(game_id, cache_results)
             else:
-                return
+                return None
 
         results = res.json()
         assert len(results) == 1

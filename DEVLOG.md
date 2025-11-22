@@ -2,6 +2,20 @@
 
 ## 2025-11-22
 
+- **IGDB API rate limiting implementation**: Prevent rate limit errors from IGDB API
+  - Implemented 3.5 requests/second rate limiter (safely under IGDB's 4 req/sec limit)
+  - Added `_wait_for_rate_limit()` to enforce minimum delays between API requests
+  - Added `_make_request_with_retry()` with exponential backoff for 429 (Too Many Requests) errors
+  - Max 3 automatic retries with exponential backoff (1s, 2s, 4s)
+  - Updated all API methods to use rate limiting (games, covers, companies, genres, themes, release statuses)
+  - Enhanced `get_igdb` and `refresh_igdb_developers` commands with:
+    - `--delay` argument (default 0.5s) to space out batch processing
+    - `--batch-size` argument (default 50) for progress checkpoints
+    - Real-time progress reporting with ETA calculations
+    - Improved error handling and logging
+  - Added 5 comprehensive unit tests for rate limiting (total: 114 tests passing)
+  - Prevents hitting rate limits during bulk IGDB imports and refreshes
+
 - **IGDB developer data fix**: Fixed missing developer IGDB data for games
   - Root cause: `get_igdb` management command only processes games without artwork, so games with missing developer data were never updated
   - Created new `refresh_igdb_developers` command to find and refresh games with IGDB IDs but missing developer IGDB data

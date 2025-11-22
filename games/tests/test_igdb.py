@@ -30,6 +30,9 @@ class IgbdApiTests(SimpleTestCase):
         self.api.release_date_statuses = {}
         self.api.release_dates = {}
         self.api.themes = {1: "Action"}
+        # Rate limiting attributes
+        self.api.min_request_interval = 1.0 / 3.5
+        self.api.last_request_time = 0.0
 
     @mock.patch.object(igdb.IgbdApi, "_get_themes")
     @mock.patch.object(igdb.IgbdApi, "_get_release_statuses")
@@ -405,6 +408,84 @@ class IgbdApiTests(SimpleTestCase):
         response = DummyResponse(200, [])
         with mock.patch("games.igdb.requests.post", return_value=response):
             self.assertIsNone(self.api._get_company_by_id(1, cache_results=False))
+
+    def test_wait_for_rate_limit_enforces_delay(self):
+        """Test that _wait_for_rate_limit() enforces minimum delay."""
+        self.api.last_request_time = 0
+        self.api.min_request_interval = 0.1  # 100ms minimum
+
+        self.api._wait_for_rate_limit()
+        first_call_time = self.api.last_request_time
+
+        # Make immediate second call - should be delayed
+        self.api._wait_for_rate_limit()
+        second_call_time = self.api.last_request_time
+
+        # Verify delay was applied (~100ms)
+        self.assertGreaterEqual(second_call_time - first_call_time, 0.09)
+
+    def test_make_request_with_retry_success(self):
+        """Test that _make_request_with_retry() returns successful response."""
+        response = DummyResponse(200, [{"id": 1, "name": "Test"}])
+        with mock.patch("games.igdb.requests.post", return_value=response):
+            result = self.api._make_request_with_retry("http://test.com", "data")
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result.status_code, 200)
+
+    def test_make_request_with_retry_handles_429_with_backoff(self):
+        """Test retry with exponential backoff on 429 rate limit errors."""
+        # First two calls return 429 (rate limited), third succeeds
+        responses = [
+            DummyResponse(429, []),
+            DummyResponse(429, []),
+            DummyResponse(200, [{"id": 1}]),
+        ]
+        response_iter = iter(responses)
+
+        def mock_post(*args, **kwargs):
+            return next(response_iter)
+
+        with mock.patch("games.igdb.requests.post", side_effect=mock_post):
+            with mock.patch("time.sleep") as sleep_mock:
+                result = self.api._make_request_with_retry(
+                    "http://test.com", "data", max_retries=3
+                )
+
+        # Should have succeeded on third attempt
+        self.assertIsNotNone(result)
+        self.assertEqual(result.status_code, 200)
+
+        # Verify exponential backoff was applied
+        self.assertGreaterEqual(sleep_mock.call_count, 2)
+        # Check that exponential backoff values (1 and 2) are called
+        sleep_calls = [call[0][0] for call in sleep_mock.call_args_list]
+        self.assertIn(1, sleep_calls)  # 2^0
+        self.assertIn(2, sleep_calls)  # 2^1
+
+    def test_make_request_with_retry_exhausts_retries(self):
+        """Test retry exhaustion returns None when max retries exceeded."""
+        response = DummyResponse(429, [])
+        with mock.patch("games.igdb.requests.post", return_value=response):
+            with mock.patch("time.sleep"):
+                result = self.api._make_request_with_retry(
+                    "http://test.com", "data", max_retries=2
+                )
+
+        # Should return None after exhausting retries
+        self.assertIsNone(result)
+
+    def test_make_request_with_retry_handles_request_exception(self):
+        """Test request exception handling returns None gracefully."""
+        import requests
+
+        with mock.patch(
+            "games.igdb.requests.post",
+            side_effect=requests.RequestException("Connection error"),
+        ):
+            result = self.api._make_request_with_retry("http://test.com", "data")
+
+        self.assertIsNone(result)
 
     def test_get_api_handles_failures(self):
         fake_instance = object()
