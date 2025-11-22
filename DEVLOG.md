@@ -2,6 +2,13 @@
 
 ## 2025-11-22
 
+- **Real-time search without page refreshes**: Improved developer search UX
+  - Changed `router.push()` to `router.replace()` in BaseListComponent to eliminate page refresh sensation
+  - Removed automatic URL updates from filters watcher
+  - Added Enter key handler to DeveloperList search input to commit searches to URL only on explicit action
+  - Data filters in real-time (200ms debounce) while URL updates only on Enter key press
+  - Provides smooth, responsive search experience without browser history pollution
+
 - **IGDB API rate limiting implementation**: Prevent rate limit errors from IGDB API
   - Implemented 3.5 requests/second rate limiter (safely under IGDB's 4 req/sec limit)
   - Added `_wait_for_rate_limit()` to enforce minimum delays between API requests

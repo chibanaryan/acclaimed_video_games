@@ -6,7 +6,6 @@ import fetchIntercept from "fetch-intercept";
 import mitt from 'mitt';
 import { routes, setupRouter } from './router';
 import store from './store';
-import vueGTag from 'vue-gtag';
 import Genre from './models/Genre';
 import Platform from './models/Platform';
 import Game from './models/Game';
@@ -94,13 +93,15 @@ export const createApp = ViteSSG(
 
         // Client-only plugins and features
         if (isClient) {
-            // Google Analytics (production only)
+            // Google Analytics (production only) - dynamic import to avoid SSR issues
             if (import.meta.env.PROD) {
-                app.use(vueGTag, {
-                    config: {
-                        id: import.meta.env.VITE_GOOGLE_ANALYTICS_PROPERTY_ID
-                    },
-                    router,
+                import('vue-gtag').then((module) => {
+                    const VueGtag = module.default;
+                    app.use(VueGtag, {
+                        config: {
+                            id: import.meta.env.VITE_GOOGLE_ANALYTICS_PROPERTY_ID
+                        }
+                    }, router);
                 });
             }
 

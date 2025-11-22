@@ -5,7 +5,8 @@
         <div class="control has-icons-left">
             <input v-model="filters.q"
                 class="input"
-                placeholder="Search by name">
+                placeholder="Search by name"
+                @keydown.enter="updateUrl">
             <span class="icon is-small is-left">
                 <i class="mdi mdi-magnify"></i>
             </span>

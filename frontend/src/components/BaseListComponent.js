@@ -116,9 +116,10 @@ export default {
             this.updateUrl();
         },
         updateUrl() {
-            // Use Vue Router to create proper history entries
+            // Use replace instead of push to avoid creating new history entries
+            // This makes URL updates invisible and prevents the "page refresh" sensation
             this.isNavigatingProgrammatically = true;
-            this.$router.push({
+            this.$router.replace({
                 query: this.getArgs
             });
         },
@@ -129,7 +130,8 @@ export default {
             () => this.filters,
             async () => {
                 await this.loadItems();
-                this.updateUrl();
+                // Note: URL is NOT updated automatically anymore
+                // Only updated on specific user actions (e.g., pressing Enter in search, clicking pagination)
             },
             { deep: true }
         );
