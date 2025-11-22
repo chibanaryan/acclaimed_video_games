@@ -9,12 +9,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DEBUG=(bool, False))
 env.read_env(BASE_DIR / ".env")
 
+# Define TEST_MODE early for Sentry configuration
+TEST_MODE = "test" in sys.argv
+
 SENTRY_DSN = env("SENTRY_DSN", default=None)
-if SENTRY_DSN:
+# Don't initialize Sentry during test runs to avoid capturing test errors
+if SENTRY_DSN and not TEST_MODE:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
         send_default_pii=True,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
     )
 
 # Core Django settings
@@ -177,8 +183,6 @@ IGDB_CLIENT_SECRET = env("IGDB_CLIENT_SECRET", default="XXX")
 
 # Logging configuration
 # Suppress noisy logs during test runs
-TEST_MODE = "test" in sys.argv
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
