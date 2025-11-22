@@ -2,6 +2,8 @@
 
 ## 2025-11-22
 
+- **Enhanced get_igdb command**: Added flags for individual game updates (`--game`, `--slug`, `--id`, `--force`) to update specific games without batch processing. Fixed 13 games on production missing IGDB artwork (Age of Empires II, Halo 2, etc.).
+
 - **Real-time search without page refreshes**: Developer page search now filters in real-time (200ms) with URL updates only on Enter key press. Used `router.replace()` instead of `push()` to eliminate page refresh sensation.
 
 - **Fixed vue-gtag SSR build issue**: Changed to dynamic import to prevent vite-ssg build failures.
