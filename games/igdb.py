@@ -55,15 +55,17 @@ class IgbdApi:
         self.rate_limit_lock: threading.Lock = threading.Lock()
         self.cache_lock: threading.Lock = threading.Lock()
 
-        # Rate limiting based on tier
+        # Rate limiting and batch size based on tier
         if use_pro_tier:
             # Pro tier: 3000 requests/second
             # Using 2500 req/sec to stay safely below the limit
             self.min_request_interval: float = 1.0 / 2500  # ~0.4ms
+            self.max_batch_size: int = 500  # Pro tier batch limit
         else:
             # Free tier: 4 requests/second
             # Using 3.8 req/sec to stay safely below the limit
             self.min_request_interval: float = 1.0 / 3.8  # ~263ms
+            self.max_batch_size: int = 50  # Free tier batch limit
         self.last_request_time: float = 0.0
 
         self._get_auth_token()

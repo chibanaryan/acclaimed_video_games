@@ -114,6 +114,7 @@ class DeveloperAliasListView(ListAPIView):
             )
             .filter(games_count__gt=0)  # Only show aliases with games
             .order_by(Lower("name"))
+            .distinct()  # Ensure correct count for pagination
         )
 
         for filter in self.filters:

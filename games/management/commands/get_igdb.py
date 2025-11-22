@@ -218,17 +218,19 @@ class Command(BaseCommand):
         parser.add_argument(
             "--concurrency",
             type=int,
-            default=4,
-            help="Number of concurrent requests to make (default: 4, max: 8). "
+            default=8,
+            help="Number of concurrent requests to make (default: 8, max: 8). "
             "IGDB allows up to 8 concurrent requests. Set to 1 to disable.",
         )
         parser.add_argument(
             "--batch-games",
             type=int,
-            default=10,
-            help="Batch size for multi-query mode (default: 10). "
-            "Fetches multiple games per API request (max 50 for free, 500 for Pro). "
-            "Set to 0 to disable batching.",
+            default=None,
+            help=(
+                "Batch size for multi-query mode (default: auto - 50 for free "
+                "tier, 500 for Pro). Fetches multiple games per API request. "
+                "Set to 0 to disable batching."
+            ),
         )
         parser.add_argument(
             "--pro",
@@ -247,9 +249,25 @@ class Command(BaseCommand):
         game_slug = options.get("slug")
         game_id = options.get("id")
         force = options.get("force", False)
-        concurrency = max(1, min(8, options.get("concurrency", 4)))
-        batch_games = max(0, min(500, options.get("batch_games", 10)))
+        concurrency = max(1, min(8, options.get("concurrency", 8)))
         use_pro_tier = options.get("pro", False)
+
+        # Initialize API client early to determine tier and batch size
+        api_client = get_api(use_pro_tier=use_pro_tier)
+        if not api_client:
+            self.stdout.write(
+                self.style.ERROR("Failed to initialize IGDB API client")
+            )
+            return
+
+        # Auto-detect batch_games from tier if not explicitly set
+        batch_games_option = options.get("batch_games")
+        if batch_games_option is None:
+            # Use tier's maximum batch size for optimal performance
+            batch_games = api_client.max_batch_size
+        else:
+            # User explicitly set it, respect their choice but cap at tier limit
+            batch_games = max(0, min(api_client.max_batch_size, batch_games_option))
 
         # Handle single game update
         if game_name or game_slug or game_id:
@@ -325,6 +343,10 @@ class Command(BaseCommand):
             )
             return
 
+        # Show tier being used
+        tier_name = "Pro" if api_client.use_pro_tier else "Free"
+        self.stdout.write(f"Using IGDB {tier_name} tier")
+
         mode_desc = []
         if batch_games > 0:
             mode_desc.append(f"batch_games={batch_games}")
@@ -343,16 +365,6 @@ class Command(BaseCommand):
 
         # Batch games mode - fetch multiple games per API request
         if batch_games > 0:
-            api_client = get_api(use_pro_tier=use_pro_tier)
-            if not api_client:
-                self.stdout.write(
-                    self.style.ERROR("Failed to initialize IGDB API client")
-                )
-                return
-
-            tier_name = "Pro" if api_client.use_pro_tier else "Free"
-            self.stdout.write(f"Using IGDB {tier_name} tier")
-
             games_list = list(games)
             total_batches = (len(games_list) + batch_games - 1) // batch_games
 
