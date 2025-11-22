@@ -1,5 +1,17 @@
 # Developer Log
 
+## 2025-11-22
+
+- **Heroku stack upgrade**: Upgraded from heroku-22 to heroku-24
+  - Added Node.js 24.x engine specification to `frontend/package.json`
+  - Updated `psycopg2` to `psycopg2-binary==2.9.11` for better Heroku compatibility
+  - Python 3.11 confirmed compatible with heroku-24
+  - All tests passing (100% coverage maintained)
+  - Deployment successful with zero downtime
+  - Application verified and running on heroku-24 stack
+
+- **Documentation updates**: Fixed deployment instructions to reference 'main' branch instead of deprecated 'master'
+
 ## 2025-11-19
 
 - **Memory leak fix**: Fixed Vue.js route watchers not being cleaned up on component unmount, causing memory accumulation during pagination. Converted to explicit `$watch()` calls with proper cleanup in `beforeUnmount()`.
