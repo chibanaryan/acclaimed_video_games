@@ -84,7 +84,7 @@ export default {
                 .then(resp => resp.json());
             this.items = data.results.map(x => new DeveloperAlias(x));
             this.resultsCount = data.count;
-        }, 200, { leading: true }),
+        }, 200, { leading: true, trailing: false }),
     },
 }
 </script>
