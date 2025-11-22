@@ -2,6 +2,8 @@
 
 ## 2025-11-22
 
+- **Repository migration**: Moved repository from BitBucket to GitHub (chibanaryan/acclaimedgames)
+
 - **Heroku stack upgrade**: Upgraded from heroku-22 to heroku-24
   - Added Node.js 24.x engine specification to `frontend/package.json`
   - Updated `psycopg2` to `psycopg2-binary==2.9.11` for better Heroku compatibility
