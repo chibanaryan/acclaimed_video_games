@@ -83,7 +83,7 @@ Add the `dist` folder to the repo
 To deploy to Heroku, push your local Git repo to the Heroku remote
 
     git commit -av -m "Some changes"
-    git push heroku master
+    git push heroku main
 
 ## Pre-commit Hooks
 

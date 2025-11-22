@@ -106,7 +106,7 @@ The project is deployed to Heroku. To deploy:
 1. Build frontend: `cd frontend && npm run build`
 2. Collect static files: `python manage.py collectstatic`
 3. Add dist folder: `git add dist`
-4. Commit and push: `git commit -av -m "message" && git push heroku master`
+4. Commit and push: `git commit -av -m "message" && git push heroku main`
 
 ## Testing and Code Quality
 
