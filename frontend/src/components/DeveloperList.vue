@@ -78,13 +78,13 @@ export default {
         }
     },
     methods: {
-        loadItems: _.debounce(async function () {
+        async loadItems() {
             let url = `${getApiUrl()}developer-aliases/?${new URLSearchParams(this.getArgs)}`;
             let data = await fetch(url)
                 .then(resp => resp.json());
             this.items = data.results.map(x => new DeveloperAlias(x));
             this.resultsCount = data.count;
-        }, 200, { leading: true, trailing: false }),
+        },
     },
 }
 </script>
