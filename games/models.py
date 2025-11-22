@@ -119,6 +119,9 @@ class Game(models.Model):
         "DeveloperAlias", blank=True, related_name="games"
     )
     platforms = models.ManyToManyField("Platform", blank=True, related_name="games")
+    created = models.DateTimeField(
+        auto_now_add=True, db_index=True, null=True, blank=True
+    )
     modified = models.DateTimeField(auto_now=True, db_index=True)
     igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
     igdb_artwork_id = models.CharField(max_length=100, null=True, blank=True)
