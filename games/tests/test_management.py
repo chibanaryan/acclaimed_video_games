@@ -41,6 +41,152 @@ class GetIgdbCommandTests(TestCase):
             # Verify error message is in output
             self.assertIn("boom", output)
 
+    def test_update_game_by_name(self):
+        """Test updating a game by name using --game flag"""
+        models.Game.objects.create(
+            name="Halo 2",
+            rank=1,
+            igdb_id=1,
+            year_of_release=2004,
+        )
+
+        with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
+            call_command("get_igdb", game="Halo 2")
+
+        mock_get.assert_called_once_with()
+
+    def test_update_game_by_slug(self):
+        """Test updating a game by slug using --slug flag"""
+        models.Game.objects.create(
+            name="Halo 2",
+            slug="halo-2",
+            rank=1,
+            igdb_id=1,
+            year_of_release=2004,
+        )
+
+        with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
+            call_command("get_igdb", slug="halo-2")
+
+        mock_get.assert_called_once_with()
+
+    def test_update_game_by_id(self):
+        """Test updating a game by database ID using --id flag"""
+        game = models.Game.objects.create(
+            name="Halo 2",
+            rank=1,
+            igdb_id=1,
+            year_of_release=2004,
+        )
+
+        with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
+            call_command("get_igdb", id=game.id)
+
+        mock_get.assert_called_once_with()
+
+    def test_force_update_game_with_existing_artwork(self):
+        """Test using --force flag to update game that already has artwork"""
+        game = models.Game.objects.create(
+            name="Halo 2",
+            rank=1,
+            igdb_id=1,
+            igdb_artwork_id="co1x77.jpg",
+            year_of_release=2004,
+        )
+
+        with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
+            call_command("get_igdb", id=game.id, force=True)
+
+        mock_get.assert_called_once_with()
+
+    def test_warns_when_game_has_artwork_without_force(self):
+        """Test that command warns when game already has artwork without --force"""
+        models.Game.objects.create(
+            name="Halo 2",
+            rank=1,
+            igdb_id=1,
+            igdb_artwork_id="co1x77.jpg",
+            year_of_release=2004,
+        )
+
+        from io import StringIO
+
+        out = StringIO()
+        call_command("get_igdb", id=1, stdout=out)
+        output = out.getvalue()
+
+        self.assertIn("already has IGDB data", output)
+        self.assertIn("Use --force", output)
+
+    def test_error_when_game_not_found_by_name(self):
+        """Test error when game not found by name"""
+        from io import StringIO
+
+        out = StringIO()
+        call_command("get_igdb", game="Nonexistent Game", stdout=out)
+        output = out.getvalue()
+
+        self.assertIn("Game not found", output)
+
+    def test_error_when_game_has_no_igdb_id(self):
+        """Test error when game has no IGDB ID"""
+        models.Game.objects.create(
+            name="No IGDB",
+            rank=1,
+            year_of_release=2004,
+        )
+
+        from io import StringIO
+
+        out = StringIO()
+        call_command("get_igdb", game="No IGDB", stdout=out)
+        output = out.getvalue()
+
+        self.assertIn("has no IGDB ID", output)
+
+    def test_batch_update_with_force_flag(self):
+        """Test batch update with --force flag updates all games with IGDB IDs"""
+        models.Game.objects.create(
+            name="Game 1",
+            rank=1,
+            igdb_id=1,
+            igdb_artwork_id="co1.jpg",
+            year_of_release=2000,
+        )
+        models.Game.objects.create(
+            name="Game 2",
+            rank=2,
+            igdb_id=2,
+            igdb_artwork_id="co2.jpg",
+            year_of_release=2001,
+        )
+
+        with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
+            call_command("get_igdb", force=True)
+
+        # Should update both games since they have IGDB IDs
+        self.assertEqual(mock_get.call_count, 2)
+
+    def test_error_handling_in_single_game_update(self):
+        """Test that errors in single game update are handled gracefully"""
+        models.Game.objects.create(
+            name="Error Game",
+            rank=1,
+            igdb_id=1,
+            year_of_release=2000,
+        )
+
+        from io import StringIO
+
+        with mock.patch.object(
+            models.Game, "get_igdb_data", side_effect=ValueError("API Error")
+        ):
+            out = StringIO()
+            call_command("get_igdb", game="Error Game", stdout=out)
+            output = out.getvalue()
+
+            self.assertIn("Error updating game", output)
+
 
 class ImportDataRoutingTests(TestCase):
 
