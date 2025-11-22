@@ -2,12 +2,9 @@
 
 ## 2025-11-22
 
-- **Real-time search without page refreshes**: Improved developer search UX
-  - Changed `router.push()` to `router.replace()` in BaseListComponent to eliminate page refresh sensation
-  - Removed automatic URL updates from filters watcher
-  - Added Enter key handler to DeveloperList search input to commit searches to URL only on explicit action
-  - Data filters in real-time (200ms debounce) while URL updates only on Enter key press
-  - Provides smooth, responsive search experience without browser history pollution
+- **Real-time search without page refreshes**: Developer page search now filters in real-time (200ms) with URL updates only on Enter key press. Used `router.replace()` instead of `push()` to eliminate page refresh sensation.
+
+- **Fixed vue-gtag SSR build issue**: Changed to dynamic import to prevent vite-ssg build failures.
 
 - **IGDB API rate limiting implementation**: Prevent rate limit errors from IGDB API
   - Implemented 3.5 requests/second rate limiter (safely under IGDB's 4 req/sec limit)
