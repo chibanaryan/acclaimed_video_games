@@ -108,9 +108,13 @@ class DeveloperAliasListView(ListAPIView):
     ]
 
     def get_queryset(self):
-        qs = models.DeveloperAlias.objects.annotate(
-            games_count=Count("games"),
-        ).order_by(Lower("name"))
+        qs = (
+            models.DeveloperAlias.objects.annotate(
+                games_count=Count("games"),
+            )
+            .filter(games_count__gt=0)  # Only show aliases with games
+            .order_by(Lower("name"))
+        )
 
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)

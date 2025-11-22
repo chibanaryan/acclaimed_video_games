@@ -204,6 +204,19 @@ class Game(models.Model):
                         },
                     )
 
+                    # Ensure parent has an alias too (prevents orphaned developers)
+                    try:
+                        DeveloperAlias.objects.update_or_create(
+                            developer=developer,
+                            name=parent_obj["name"],
+                            defaults={
+                                "igdb_id": parent_obj["id"],
+                            },
+                        )
+                    except IntegrityError:
+                        # Parent alias already exists linked to another developer
+                        pass
+
             try:
                 developer_alias, created = DeveloperAlias.objects.update_or_create(
                     developer=developer,

@@ -179,6 +179,234 @@ class GameIgdbTests(TestCase):
             game.get_igdb_data()
         self.assertIn(alias, game.developers.all())
 
+    def test_get_igdb_data_creates_alias_for_standalone_developer(self):
+        """Test that standalone developers (no parent) get a matching DeveloperAlias"""
+        game = models.Game.objects.create(
+            name="Indie Game", rank=1, igdb_id=100, year_of_release=2020
+        )
+
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": "indie-game",
+            "url": "https://example.com/indie",
+            "cover": "cover_hash",
+            "storyline": "",
+            "summary": "",
+            "genres": [],
+            "developers": [
+                {
+                    "id": 123,
+                    "name": "Indie Studio",
+                    "slug": "indie-studio",
+                    "parent": None,
+                }
+            ],
+        }
+
+        with mock.patch("games.models.api", fake_api):
+            game.get_igdb_data()
+            game.save()
+
+        # Verify Developer was created
+        developer = models.Developer.objects.get(name="Indie Studio")
+        self.assertEqual(developer.igdb_id, 123)
+
+        # Verify matching DeveloperAlias was created
+        alias = models.DeveloperAlias.objects.get(name="Indie Studio")
+        self.assertEqual(alias.developer, developer)
+        self.assertEqual(alias.igdb_id, 123)
+
+        # Verify game is linked to the alias
+        self.assertIn(alias, game.developers.all())
+
+        # Verify no orphaned developers
+        orphaned_devs = models.Developer.objects.filter(aliases__isnull=True)
+        self.assertEqual(orphaned_devs.count(), 0)
+
+    def test_get_igdb_data_creates_alias_for_parent_company(self):
+        """Test that parent companies get their own DeveloperAlias (prevents orphans)"""
+        game = models.Game.objects.create(
+            name="Nintendo Game", rank=1, igdb_id=200, year_of_release=2017
+        )
+
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": "nintendo-game",
+            "url": "https://example.com/nintendo",
+            "cover": "cover_hash",
+            "storyline": "",
+            "summary": "",
+            "genres": [],
+            "developers": [
+                {
+                    "id": 456,
+                    "name": "Nintendo EPD",
+                    "slug": "nintendo-epd",
+                    "parent": {
+                        "id": 789,
+                        "name": "Nintendo",
+                        "slug": "nintendo",
+                    },
+                }
+            ],
+        }
+
+        with mock.patch("games.models.api", fake_api):
+            game.get_igdb_data()
+            game.save()
+
+        # Verify parent Developer was created
+        parent_dev = models.Developer.objects.get(name="Nintendo")
+        self.assertEqual(parent_dev.igdb_id, 789)
+
+        # Verify parent has its own DeveloperAlias (this prevents orphans!)
+        parent_alias = models.DeveloperAlias.objects.get(
+            developer=parent_dev, name="Nintendo"
+        )
+        self.assertEqual(parent_alias.igdb_id, 789)
+
+        # Verify child alias exists and is linked to parent Developer
+        child_alias = models.DeveloperAlias.objects.get(name="Nintendo EPD")
+        self.assertEqual(child_alias.developer, parent_dev)
+        self.assertEqual(child_alias.igdb_id, 456)
+
+        # Verify game is linked to the child alias
+        self.assertIn(child_alias, game.developers.all())
+
+        # Verify no orphaned developers
+        orphaned_devs = models.Developer.objects.filter(aliases__isnull=True)
+        self.assertEqual(orphaned_devs.count(), 0)
+
+    def test_get_igdb_data_multiple_imports_idempotent(self):
+        """Test that importing the same game multiple times doesn't create duplicates"""
+        game = models.Game.objects.create(
+            name="Re-import Test", rank=1, igdb_id=300, year_of_release=2019
+        )
+
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": "reimport-test",
+            "url": "https://example.com/reimport",
+            "cover": "cover_hash",
+            "storyline": "",
+            "summary": "",
+            "genres": [],
+            "developers": [
+                {
+                    "id": 111,
+                    "name": "Studio One",
+                    "slug": "studio-one",
+                    "parent": None,
+                }
+            ],
+        }
+
+        with mock.patch("games.models.api", fake_api):
+            # Import once
+            game.get_igdb_data()
+            game.save()
+
+            initial_dev_count = models.Developer.objects.count()
+            initial_alias_count = models.DeveloperAlias.objects.count()
+
+            # Import again
+            game.get_igdb_data()
+            game.save()
+
+            # Should not create duplicates
+            self.assertEqual(models.Developer.objects.count(), initial_dev_count)
+            self.assertEqual(models.DeveloperAlias.objects.count(), initial_alias_count)
+
+            # Verify no orphaned developers
+            orphaned_devs = models.Developer.objects.filter(aliases__isnull=True)
+            self.assertEqual(orphaned_devs.count(), 0)
+
+    def test_get_igdb_data_multiple_games_same_parent(self):
+        """Test multiple games from subsidiaries of same parent"""
+        game1 = models.Game.objects.create(
+            name="Game One", rank=1, igdb_id=401, year_of_release=2018
+        )
+        game2 = models.Game.objects.create(
+            name="Game Two", rank=2, igdb_id=402, year_of_release=2019
+        )
+
+        fake_api = mock.Mock()
+
+        def fake_get_game_info(game_id, cache_results=True):
+            if game_id == 401:
+                return {
+                    "slug": "game-one",
+                    "url": "https://example.com/one",
+                    "cover": "cover1",
+                    "storyline": "",
+                    "summary": "",
+                    "genres": [],
+                    "developers": [
+                        {
+                            "id": 501,
+                            "name": "Sony Studio A",
+                            "slug": "sony-studio-a",
+                            "parent": {
+                                "id": 600,
+                                "name": "Sony Interactive Entertainment",
+                                "slug": "sony-ie",
+                            },
+                        }
+                    ],
+                }
+            else:
+                return {
+                    "slug": "game-two",
+                    "url": "https://example.com/two",
+                    "cover": "cover2",
+                    "storyline": "",
+                    "summary": "",
+                    "genres": [],
+                    "developers": [
+                        {
+                            "id": 502,
+                            "name": "Sony Studio B",
+                            "slug": "sony-studio-b",
+                            "parent": {
+                                "id": 600,
+                                "name": "Sony Interactive Entertainment",
+                                "slug": "sony-ie",
+                            },
+                        }
+                    ],
+                }
+
+        fake_api.get_game_info_by_id.side_effect = fake_get_game_info
+
+        with mock.patch("games.models.api", fake_api):
+            game1.get_igdb_data()
+            game1.save()
+            game2.get_igdb_data()
+            game2.save()
+
+        # Verify only ONE parent Developer was created (shared)
+        parent_devs = models.Developer.objects.filter(
+            name="Sony Interactive Entertainment"
+        )
+        self.assertEqual(parent_devs.count(), 1)
+        parent_dev = parent_devs.first()
+
+        # Verify parent has its own alias
+        parent_alias = models.DeveloperAlias.objects.get(
+            developer=parent_dev, name="Sony Interactive Entertainment"
+        )
+        self.assertEqual(parent_alias.igdb_id, 600)
+
+        # Verify both child studios have aliases linked to the same parent
+        studio_a_alias = models.DeveloperAlias.objects.get(name="Sony Studio A")
+        studio_b_alias = models.DeveloperAlias.objects.get(name="Sony Studio B")
+        self.assertEqual(studio_a_alias.developer, parent_dev)
+        self.assertEqual(studio_b_alias.developer, parent_dev)
+
+        # Verify no orphaned developers
+        orphaned_devs = models.Developer.objects.filter(aliases__isnull=True)
+        self.assertEqual(orphaned_devs.count(), 0)
+
 
 class ModelHelpersTests(TestCase):
 

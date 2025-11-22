@@ -97,6 +97,7 @@ class ApiSmokeTests(TestCase):
         self.alias = models.DeveloperAlias.objects.create(
             developer=self.developer, name="Studio Alias", igdb_id=200
         )
+        self.game.developers.add(self.alias)
         self.flatpage = FlatPage.objects.create(
             url="/faq/", title="FAQ", content="**Docs**"
         )
