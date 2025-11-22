@@ -180,6 +180,7 @@ REST_FRAMEWORK = {
 
 IGDB_CLIENT_ID = env("IGDB_CLIENT_ID", default="XXX")
 IGDB_CLIENT_SECRET = env("IGDB_CLIENT_SECRET", default="XXX")
+IGDB_USE_PRO_TIER = env.bool("IGDB_USE_PRO_TIER", default=False)
 
 # Logging configuration
 # Suppress noisy logs during test runs

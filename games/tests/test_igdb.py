@@ -1,3 +1,4 @@
+import threading
 from unittest import mock
 
 from django.test import SimpleTestCase, override_settings
@@ -30,8 +31,12 @@ class IgbdApiTests(SimpleTestCase):
         self.api.release_date_statuses = {}
         self.api.release_dates = {}
         self.api.themes = {1: "Action"}
+        # Thread safety locks
+        self.api.rate_limit_lock = threading.Lock()
+        self.api.cache_lock = threading.Lock()
         # Rate limiting attributes
-        self.api.min_request_interval = 1.0 / 3.5
+        self.api.use_pro_tier = False
+        self.api.min_request_interval = 1.0 / 3.8
         self.api.last_request_time = 0.0
 
     @mock.patch.object(igdb.IgbdApi, "_get_themes")
@@ -77,11 +82,12 @@ class IgbdApiTests(SimpleTestCase):
                     200,
                     [
                         {
+                            "id": 1,
                             "slug": "sample",
                             "url": "https://example.com",
-                            "cover": 10,
+                            "cover": {"url": "//images/cover.jpg"},
                             "themes": [1],
-                            "genres": [2],
+                            "genres": [{"id": 2, "name": "Adventure"}],
                             "summary": "Summary",
                             "storyline": "Story",
                             "involved_companies": [
@@ -100,10 +106,6 @@ class IgbdApiTests(SimpleTestCase):
                 return DummyResponse(
                     200, [{"id": 5, "name": "Foo", "slug": "foo", "parent": None}]
                 )
-            if "covers" in url:
-                return DummyResponse(200, [{"url": "//images/cover.jpg"}])
-            if "genres" in url:
-                return DummyResponse(200, [{"name": "Adventure"}])
             if "release_date_statuses" in url:
                 return DummyResponse(200, [{"name": "released", "id": 1}])
             if "themes" in url:
@@ -116,8 +118,10 @@ class IgbdApiTests(SimpleTestCase):
             result = self.api.get_game_info_by_id(1, cache_results=False)
 
         self.assertEqual(result["slug"], "sample")
+        self.assertEqual(result["cover"], "cover.jpg")
         self.assertEqual(result["developers"][0]["name"], "Foo")
         self.assertIn("Action", result["genres"])
+        self.assertIn("Adventure", result["genres"])
 
     def test_company_lookup_caches_result(self):
         response = DummyResponse(
@@ -206,9 +210,10 @@ class IgbdApiTests(SimpleTestCase):
                     200,
                     [
                         {
+                            "id": 1,
                             "slug": "sample",
                             "url": "https://example.com",
-                            "cover": 10,
+                            "cover": {"url": "//images/cover.jpg"},
                             "themes": [],
                             "genres": [],
                             "summary": "",
@@ -219,8 +224,6 @@ class IgbdApiTests(SimpleTestCase):
                 )
             if "oauth2" in url:
                 return DummyResponse(200, {"access_token": "token"})
-            if "covers" in url:
-                return DummyResponse(200, [{"url": "//images/cover.jpg"}])
             return DummyResponse(200, [])
 
         with mock.patch("games.igdb.requests.post", side_effect=fake_post):
@@ -246,11 +249,12 @@ class IgbdApiTests(SimpleTestCase):
     def test_get_game_info_falls_back_to_supporters(self):
         game_payload = [
             {
+                "id": 2,
                 "slug": "support-game",
                 "url": "https://example.com/support-game",
-                "cover": 3,
+                "cover": {"url": "//images/cover.jpg"},
                 "themes": [],
-                "genres": [1],
+                "genres": [{"id": 1, "name": "Adventure"}],
                 "summary": "",
                 "storyline": "",
                 "involved_companies": [
@@ -268,13 +272,7 @@ class IgbdApiTests(SimpleTestCase):
         with mock.patch(
             "games.igdb.requests.post", return_value=DummyResponse(200, game_payload)
         ):
-            with mock.patch.object(
-                self.api, "_get_company_by_id"
-            ) as company_lookup, mock.patch.object(
-                self.api, "_get_cover_by_id", return_value="cover.jpg"
-            ), mock.patch.object(
-                self.api, "_get_genre_by_id", return_value="Adventure"
-            ):
+            with mock.patch.object(self.api, "_get_company_by_id") as company_lookup:
                 company_lookup.side_effect = [
                     {"name": "Support Co", "slug": "support", "parent": 5},
                     {"name": "Parent Co", "slug": "parent", "parent": None},
@@ -288,9 +286,10 @@ class IgbdApiTests(SimpleTestCase):
     def test_get_game_info_falls_back_to_publishers_then_porters(self):
         game_payload = [
             {
+                "id": 3,
                 "slug": "publisher-game",
                 "url": "https://example.com/publisher-game",
-                "cover": 5,
+                "cover": {"url": "//images/cover.jpg"},
                 "themes": [],
                 "genres": [],
                 "summary": "",
@@ -309,9 +308,10 @@ class IgbdApiTests(SimpleTestCase):
 
         porter_payload = [
             {
+                "id": 4,
                 "slug": "porter-game",
                 "url": "https://example.com/porter-game",
-                "cover": 6,
+                "cover": {"url": "//images/cover.jpg"},
                 "themes": [],
                 "genres": [],
                 "summary": "",
@@ -334,10 +334,6 @@ class IgbdApiTests(SimpleTestCase):
             self.api,
             "_get_company_by_id",
             return_value={"name": "Pub Co", "slug": "pub", "parent": None},
-        ), mock.patch.object(
-            self.api, "_get_cover_by_id", return_value="cover.jpg"
-        ), mock.patch.object(
-            self.api, "_get_genre_by_id", return_value=None
         ):
             publisher_result = self.api.get_game_info_by_id(3, cache_results=False)
 
@@ -349,10 +345,6 @@ class IgbdApiTests(SimpleTestCase):
             self.api,
             "_get_company_by_id",
             return_value={"name": "Port Co", "slug": "port", "parent": None},
-        ), mock.patch.object(
-            self.api, "_get_cover_by_id", return_value="cover.jpg"
-        ), mock.patch.object(
-            self.api, "_get_genre_by_id", return_value=None
         ):
             porter_result = self.api.get_game_info_by_id(4, cache_results=False)
 
@@ -361,9 +353,10 @@ class IgbdApiTests(SimpleTestCase):
     def test_get_game_info_skips_missing_company_records(self):
         game_payload = [
             {
+                "id": 5,
                 "slug": "missing-dev",
                 "url": "https://example.com/missing",
-                "cover": 10,
+                "cover": {"url": "//images/cover.jpg"},
                 "themes": [],
                 "genres": [],
                 "summary": "",
@@ -381,13 +374,7 @@ class IgbdApiTests(SimpleTestCase):
         ]
         with mock.patch(
             "games.igdb.requests.post", return_value=DummyResponse(200, game_payload)
-        ), mock.patch.object(
-            self.api, "_get_company_by_id", return_value=None
-        ), mock.patch.object(
-            self.api, "_get_cover_by_id", return_value="cover.jpg"
-        ), mock.patch.object(
-            self.api, "_get_genre_by_id", return_value=None
-        ):
+        ), mock.patch.object(self.api, "_get_company_by_id", return_value=None):
             result = self.api.get_game_info_by_id(5, cache_results=False)
 
         self.assertEqual(result["developers"], [])
@@ -496,3 +483,111 @@ class IgbdApiTests(SimpleTestCase):
             with self.assertLogs("games.igdb", level="ERROR") as cm:
                 self.assertIsNone(igdb.get_api())
             self.assertIn("Failed to initialize IGDB API: boom", cm.output[0])
+
+    @mock.patch.object(igdb.IgbdApi, "_get_themes")
+    @mock.patch.object(igdb.IgbdApi, "_get_release_statuses")
+    @mock.patch.object(igdb.IgbdApi, "_get_auth_token")
+    def test_init_with_pro_tier_sets_faster_rate_limit(
+        self, auth_mock, status_mock, theme_mock
+    ):
+        """Test that Pro tier initialization sets higher rate limit."""
+        auth_mock.return_value = True
+        api = igdb.IgbdApi("cid", "secret", use_pro_tier=True)
+        self.assertTrue(api.use_pro_tier)
+        # Pro tier should have much smaller interval (~0.4ms vs ~263ms)
+        self.assertLess(api.min_request_interval, 0.001)
+
+    @mock.patch.object(igdb.IgbdApi, "_get_themes")
+    @mock.patch.object(igdb.IgbdApi, "_get_release_statuses")
+    @mock.patch.object(igdb.IgbdApi, "_get_auth_token")
+    def test_init_without_pro_tier_uses_standard_rate_limit(
+        self, auth_mock, status_mock, theme_mock
+    ):
+        """Test that free tier initialization uses standard rate limit."""
+        auth_mock.return_value = True
+        api = igdb.IgbdApi("cid", "secret", use_pro_tier=False)
+        self.assertFalse(api.use_pro_tier)
+        # Free tier should be around 263ms between requests
+        self.assertGreater(api.min_request_interval, 0.2)
+
+    def test_get_endpoint_url_uses_pro_path_when_enabled(self):
+        """Test that _get_endpoint_url returns Pro tier path when enabled."""
+        self.api.use_pro_tier = True
+        url = self.api._get_endpoint_url("games")
+        self.assertEqual(url, "https://api.igdb.com/pro/v4/games/")
+
+    def test_get_endpoint_url_uses_standard_path_when_disabled(self):
+        """Test that _get_endpoint_url returns standard path for free tier."""
+        self.api.use_pro_tier = False
+        url = self.api._get_endpoint_url("games")
+        self.assertEqual(url, "https://api.igdb.com/v4/games/")
+
+    def test_get_companies_by_ids_batches_requests(self):
+        """Test that get_companies_by_ids fetches multiple companies at once."""
+        company_data = [
+            {"id": 1, "name": "Company1", "slug": "company1", "parent": None},
+            {"id": 2, "name": "Company2", "slug": "company2", "parent": None},
+        ]
+        response = DummyResponse(200, company_data)
+
+        with mock.patch("games.igdb.requests.post", return_value=response):
+            result = self.api.get_companies_by_ids([1, 2], cache_results=False)
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[1]["name"], "Company1")
+        self.assertEqual(result[2]["name"], "Company2")
+
+    def test_get_companies_by_ids_uses_cache(self):
+        """Test that get_companies_by_ids uses cached data when available."""
+        self.api.company_cache = {1: {"id": 1, "name": "Cached", "slug": "cached"}}
+
+        result = self.api.get_companies_by_ids([1], cache_results=True)
+
+        self.assertEqual(result[1]["name"], "Cached")
+
+    def test_get_games_info_by_ids_batches_requests(self):
+        """Test that get_games_info_by_ids fetches multiple games at once."""
+        game_data = [
+            {
+                "id": 1,
+                "slug": "game1",
+                "url": "http://example.com/game1",
+                "cover": {"url": "//images/cover1.jpg"},
+                "genres": [{"id": 1, "name": "Action"}],
+                "themes": [],
+                "summary": "Summary 1",
+                "storyline": "Story 1",
+                "involved_companies": [],
+            },
+            {
+                "id": 2,
+                "slug": "game2",
+                "url": "http://example.com/game2",
+                "cover": {"url": "//images/cover2.jpg"},
+                "genres": [{"id": 2, "name": "Adventure"}],
+                "themes": [],
+                "summary": "Summary 2",
+                "storyline": "Story 2",
+                "involved_companies": [],
+            },
+        ]
+
+        with mock.patch(
+            "games.igdb.requests.post", return_value=DummyResponse(200, game_data)
+        ):
+            result = self.api.get_games_info_by_ids([1, 2], cache_results=False)
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[1]["slug"], "game1")
+        self.assertEqual(result[2]["slug"], "game2")
+        self.assertEqual(result[1]["cover"], "cover1.jpg")
+        self.assertEqual(result[2]["cover"], "cover2.jpg")
+
+    def test_get_games_info_by_ids_uses_cache(self):
+        """Test that get_games_info_by_ids uses cached data when available."""
+        cached_data = {"slug": "cached", "cover": "cached.jpg"}
+        self.api.game_cache = {1: cached_data}
+
+        result = self.api.get_games_info_by_ids([1], cache_results=True)
+
+        self.assertEqual(result[1]["slug"], "cached")

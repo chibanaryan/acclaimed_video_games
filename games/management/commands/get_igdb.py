@@ -1,9 +1,12 @@
 import logging
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from django.core.management.base import BaseCommand
 
 from games.models import Game
+from games.igdb import get_api
 
 logger = logging.getLogger(__name__)
 
@@ -11,13 +14,179 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Fetch game data from IGDB"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.processed_lock = threading.Lock()
+        self.processed_count = 0
+        self.error_count = 0
+
+    def _process_game(self, game):
+        """
+        Process a single game by fetching IGDB data.
+
+        Returns:
+            tuple: (success: bool, game: Game, error_msg: str or None)
+        """
+        try:
+            game.get_igdb_data()
+            game.save()
+            with self.processed_lock:
+                self.processed_count += 1
+            return (True, game, None)
+        except Exception as e:
+            with self.processed_lock:
+                self.error_count += 1
+            return (False, game, str(e))
+
+    def _process_game_batch(self, games_batch, api_client):
+        """
+        Process a batch of games using multi-query.
+
+        Args:
+            games_batch: List of Game objects to process
+            api_client: IGDB API client instance
+
+        Returns:
+            list: List of (success, game, error_msg) tuples
+        """
+        from games.models import Developer, DeveloperAlias, Genre
+        from django.utils.text import slugify
+        from django.db import IntegrityError
+
+        results = []
+
+        # Get IGDB IDs for games that have them
+        game_id_map = {}
+        for game in games_batch:
+            if game.igdb_id:
+                game_id_map[game.igdb_id] = game
+
+        if not game_id_map:
+            # No games with IGDB IDs in this batch
+            for game in games_batch:
+                results.append((False, game, "No IGDB ID"))
+            return results
+
+        # Batch fetch game data
+        try:
+            games_data = api_client.get_games_info_by_ids(list(game_id_map.keys()))
+
+            # Apply data to each game
+            for igdb_id, game in game_id_map.items():
+                if igdb_id in games_data:
+                    try:
+                        # Apply IGDB data to game (same logic as Game.get_igdb_data())
+                        data = games_data[igdb_id]
+                        game.slug = slugify(data.get("slug"))
+                        game.igdb_url = data.get("url")
+                        game.igdb_artwork_id = data.get("cover")
+                        game.description = "\n\n".join(
+                            [
+                                x
+                                for x in [data.get("storyline"), data.get("summary")]
+                                if x
+                            ]
+                        )
+
+                        # Process developers
+                        developer_aliases = []
+                        for d in data.get("developers", []):
+                            # This developer is a parent
+                            if not d.get("parent"):
+                                developer, created = Developer.objects.update_or_create(
+                                    name=d["name"],
+                                    defaults={
+                                        "slug": d["slug"],
+                                        "igdb_id": d["id"],
+                                    },
+                                )
+                            # This developer has a parent
+                            else:
+                                parent_obj = d.get("parent")
+                                if parent_obj:
+                                    developer, created = (
+                                        Developer.objects.update_or_create(
+                                            name=parent_obj["name"],
+                                            defaults={
+                                                "slug": parent_obj["slug"],
+                                                "igdb_id": parent_obj["id"],
+                                            },
+                                        )
+                                    )
+                                    # Ensure parent has an alias too
+                                    try:
+                                        DeveloperAlias.objects.update_or_create(
+                                            developer=developer,
+                                            name=parent_obj["name"],
+                                            defaults={
+                                                "igdb_id": parent_obj["id"],
+                                            },
+                                        )
+                                    except IntegrityError:
+                                        pass
+
+                            try:
+                                developer_alias, created = (
+                                    DeveloperAlias.objects.update_or_create(
+                                        developer=developer,
+                                        name=d["name"],
+                                        defaults={
+                                            "igdb_id": d["id"],
+                                        },
+                                    )
+                                )
+                            except IntegrityError:
+                                developer_alias = DeveloperAlias.objects.get(
+                                    name=d["name"]
+                                )
+
+                            developer_aliases.append(developer_alias)
+
+                        game.developers.set(developer_aliases)
+
+                        # Process genres
+                        genres = []
+                        for genre_name in data.get("genres", []):
+                            genre, created = Genre.objects.get_or_create(
+                                name=genre_name
+                            )
+                            genres.append(genre)
+                        game.genres.set(genres)
+
+                        game.save()
+
+                        with self.processed_lock:
+                            self.processed_count += 1
+                        results.append((True, game, None))
+                    except Exception as e:
+                        with self.processed_lock:
+                            self.error_count += 1
+                        results.append((False, game, str(e)))
+                else:
+                    with self.processed_lock:
+                        self.error_count += 1
+                    results.append((False, game, "Not found in IGDB response"))
+
+        except Exception as e:
+            # Batch fetch failed, mark all as errors
+            for game in games_batch:
+                with self.processed_lock:
+                    self.error_count += 1
+                results.append((False, game, f"Batch fetch failed: {str(e)}"))
+
+        return results
+
     def add_arguments(self, parser):
         parser.add_argument(
             "--delay",
             type=float,
-            default=0.5,
-            help="Delay in seconds between processing games (default: 0.5s). "
-            "Helps avoid rate limiting. Set to 0 to disable.",
+            default=0.0,
+            help=(
+                "Additional delay in seconds between processing games "
+                "(default: 0.0s). Rate limiting is automatically handled "
+                "by the API client. Only increase this if you need extra "
+                "throttling."
+            ),
         )
         parser.add_argument(
             "--batch-size",
@@ -46,14 +215,41 @@ class Command(BaseCommand):
             action="store_true",
             help="Force refresh even if game already has IGDB artwork data",
         )
+        parser.add_argument(
+            "--concurrency",
+            type=int,
+            default=4,
+            help="Number of concurrent requests to make (default: 4, max: 8). "
+            "IGDB allows up to 8 concurrent requests. Set to 1 to disable.",
+        )
+        parser.add_argument(
+            "--batch-games",
+            type=int,
+            default=10,
+            help="Batch size for multi-query mode (default: 10). "
+            "Fetches multiple games per API request (max 50 for free, 500 for Pro). "
+            "Set to 0 to disable batching.",
+        )
+        parser.add_argument(
+            "--pro",
+            action="store_true",
+            help=(
+                "Use IGDB Pro tier (3000 req/sec vs 4 req/sec). "
+                "Requires Pro tier subscription. Can also set "
+                "IGDB_USE_PRO_TIER=True in .env"
+            ),
+        )
 
     def handle(self, *args, **options):
-        delay = options.get("delay", 0.5)
+        delay = options.get("delay", 0.0)
         batch_size = options.get("batch_size", 50)
         game_name = options.get("game")
         game_slug = options.get("slug")
         game_id = options.get("id")
         force = options.get("force", False)
+        concurrency = max(1, min(8, options.get("concurrency", 4)))
+        batch_games = max(0, min(500, options.get("batch_games", 10)))
+        use_pro_tier = options.get("pro", False)
 
         # Handle single game update
         if game_name or game_slug or game_id:
@@ -129,53 +325,167 @@ class Command(BaseCommand):
             )
             return
 
-        self.stdout.write(
-            f"Processing {total_games} games (delay={delay}s, batch_size={batch_size})"
-        )
+        mode_desc = []
+        if batch_games > 0:
+            mode_desc.append(f"batch_games={batch_games}")
+        if concurrency > 1:
+            mode_desc.append(f"concurrency={concurrency}")
+        if delay > 0:
+            mode_desc.append(f"delay={delay}s")
+        mode_desc.append(f"checkpoint_size={batch_size}")
 
-        processed = 0
+        self.stdout.write(f"Processing {total_games} games ({', '.join(mode_desc)})")
+
+        self.processed_count = 0
+        self.error_count = 0
         batch_processed = 0
         start_time = time.time()
 
-        for idx, game in enumerate(games, 1):
-            try:
-                game.get_igdb_data()
-                game.save()
-                processed += 1
-                batch_processed += 1
+        # Batch games mode - fetch multiple games per API request
+        if batch_games > 0:
+            api_client = get_api(use_pro_tier=use_pro_tier)
+            if not api_client:
+                self.stdout.write(
+                    self.style.ERROR("Failed to initialize IGDB API client")
+                )
+                return
 
-                # Progress output
-                self.stdout.write(f"[{idx}/{total_games}] {game.rank} - {game} updated")
+            tier_name = "Pro" if api_client.use_pro_tier else "Free"
+            self.stdout.write(f"Using IGDB {tier_name} tier")
+
+            games_list = list(games)
+            total_batches = (len(games_list) + batch_games - 1) // batch_games
+
+            for batch_idx in range(0, len(games_list), batch_games):
+                batch = games_list[batch_idx : batch_idx + batch_games]
+                current_batch_num = (batch_idx // batch_games) + 1
+
+                self.stdout.write(
+                    f"\nProcessing batch {current_batch_num}/{total_batches} "
+                    f"({len(batch)} games)..."
+                )
+
+                batch_results = self._process_game_batch(batch, api_client)
+
+                for success, game, error_msg in batch_results:
+                    completed = self.processed_count + self.error_count
+                    if success:
+                        self.stdout.write(
+                            f"[{completed}/{total_games}] {game.rank} - {game} updated"
+                        )
+                    else:
+                        self.stdout.write(
+                            self.style.ERROR(
+                                f"[{completed}/{total_games}] "
+                                f"{game.rank} - {game}: {error_msg}"
+                            )
+                        )
+
+                    batch_processed += 1
+
+                    # Checkpoint
+                    if batch_processed >= batch_size:
+                        elapsed = time.time() - start_time
+                        completed = self.processed_count + self.error_count
+                        rate = completed / elapsed if elapsed > 0 else 0
+                        remaining = total_games - completed
+                        eta = remaining / rate if rate > 0 else 0
+                        self.stdout.write(
+                            self.style.SUCCESS(
+                                f"Checkpoint: {self.processed_count}/{total_games} "
+                                f"processed ({self.error_count} errors, "
+                                f"{rate:.2f} games/sec, ~{eta:.0f}s remaining)"
+                            )
+                        )
+                        batch_processed = 0
+
+        elif concurrency > 1:
+            # Concurrent processing with ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=concurrency) as executor:
+                # Submit all games as futures
+                future_to_game = {
+                    executor.submit(self._process_game, game): (idx, game)
+                    for idx, game in enumerate(games, 1)
+                }
+
+                # Process completed futures as they finish
+                for future in as_completed(future_to_game):
+                    idx, original_game = future_to_game[future]
+                    success, game, error_msg = future.result()
+
+                    if success:
+                        self.stdout.write(
+                            f"[{self.processed_count}/{total_games}] "
+                            f"{game.rank} - {game} updated"
+                        )
+                    else:
+                        self.stdout.write(
+                            self.style.ERROR(
+                                f"[{self.processed_count + self.error_count}/"
+                                f"{total_games}] {game.rank} - {game}: {error_msg}"
+                            )
+                        )
+
+                    batch_processed += 1
+
+                    # Batch checkpoint
+                    if batch_processed >= batch_size:
+                        elapsed = time.time() - start_time
+                        completed = self.processed_count + self.error_count
+                        rate = completed / elapsed if elapsed > 0 else 0
+                        remaining = total_games - completed
+                        eta = remaining / rate if rate > 0 else 0
+                        self.stdout.write(
+                            self.style.SUCCESS(
+                                f"Checkpoint: {self.processed_count}/{total_games} "
+                                f"processed ({self.error_count} errors, "
+                                f"{rate:.2f} games/sec, ~{eta:.0f}s remaining)"
+                            )
+                        )
+                        batch_processed = 0
+
+        else:
+            # Sequential processing (original behavior)
+            for idx, game in enumerate(games, 1):
+                success, game, error_msg = self._process_game(game)
+
+                if success:
+                    self.stdout.write(
+                        f"[{idx}/{total_games}] {game.rank} - {game} updated"
+                    )
+                else:
+                    self.stdout.write(
+                        self.style.ERROR(
+                            f"[{idx}/{total_games}] {game.rank} - {game}: {error_msg}"
+                        )
+                    )
+
+                batch_processed += 1
 
                 # Batch checkpoint
                 if batch_processed >= batch_size:
                     elapsed = time.time() - start_time
-                    rate = processed / elapsed if elapsed > 0 else 0
+                    rate = self.processed_count / elapsed if elapsed > 0 else 0
                     remaining = total_games - idx
                     eta = remaining / rate if rate > 0 else 0
                     self.stdout.write(
                         self.style.SUCCESS(
-                            f"Batch complete: {processed}/{total_games} processed "
-                            f"({rate:.2f} games/sec, ~{eta:.0f}s remaining)"
+                            f"Batch complete: {self.processed_count}/{total_games} "
+                            f"processed ({self.error_count} errors, "
+                            f"{rate:.2f} games/sec, ~{eta:.0f}s remaining)"
                         )
                     )
                     batch_processed = 0
 
-                # Delay between games to respect rate limiting
+                # Delay between games (only for sequential mode)
                 if delay > 0:
                     time.sleep(delay)
-
-            except Exception as e:
-                self.stdout.write(
-                    self.style.ERROR(
-                        f"[{idx}/{total_games}] {game.rank} - {game}: {str(e)}"
-                    )
-                )
 
         elapsed = time.time() - start_time
         self.stdout.write(
             self.style.SUCCESS(
-                f"\nCompleted: {processed}/{total_games} games "
-                f"processed in {elapsed:.1f}s"
+                f"\nCompleted: {self.processed_count}/{total_games} games "
+                f"processed successfully ({self.error_count} errors) "
+                f"in {elapsed:.1f}s ({self.processed_count/elapsed:.2f} games/sec)"
             )
         )

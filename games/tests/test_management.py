@@ -17,7 +17,8 @@ class GetIgdbCommandTests(TestCase):
         )
 
         with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
-            call_command("get_igdb")
+            # Disable batch mode to use sequential processing
+            call_command("get_igdb", batch_games=0, concurrency=1)
 
         mock_get.assert_called_once_with()
 
@@ -36,7 +37,8 @@ class GetIgdbCommandTests(TestCase):
             from io import StringIO
 
             out = StringIO()
-            call_command("get_igdb", stdout=out)
+            # Disable batch mode to use sequential processing
+            call_command("get_igdb", batch_games=0, concurrency=1, stdout=out)
             output = out.getvalue()
             # Verify error message is in output
             self.assertIn("boom", output)
@@ -162,7 +164,8 @@ class GetIgdbCommandTests(TestCase):
         )
 
         with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
-            call_command("get_igdb", force=True)
+            # Disable batch mode to use sequential processing
+            call_command("get_igdb", force=True, batch_games=0, concurrency=1)
 
         # Should update both games since they have IGDB IDs
         self.assertEqual(mock_get.call_count, 2)

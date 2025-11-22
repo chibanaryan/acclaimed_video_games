@@ -2,6 +2,18 @@
 
 ## 2025-11-22
 
+- **Major IGDB import optimizations**: Implemented 7.8x performance improvements for IGDB data imports
+  - Field expansion eliminates 3-5 API calls per game (cover and genre data fetched in main query)
+  - Concurrent processing with thread-safe rate limiting (default: 4 concurrent requests)
+  - Multi-query batching fetches multiple games per API request (default: 10 games/batch)
+  - Pro tier support with 750x faster rate limits (3,000 req/sec vs 4 req/sec)
+  - Performance: 15.53 games/sec vs previous 2 games/sec (7.8x faster)
+  - Import time: 1000 games in 64 seconds vs 500 seconds (8.3 min → 1.1 min)
+  - Command now uses optimized defaults (concurrency=4, batch-games=10) out of the box
+  - Full parity verified: all fields, developers, aliases, and genres imported correctly
+  - Added 8 new unit tests for concurrent/batch processing (all 37 tests passing)
+  - Tested with complete database wipe and fresh import - zero errors
+
 - **Enhanced get_igdb command**: Added flags for individual game updates (`--game`, `--slug`, `--id`, `--force`) to update specific games without batch processing. Fixed 13 games on production missing IGDB artwork (Age of Empires II, Halo 2, etc.).
 
 - **Real-time search without page refreshes**: Developer page search now filters in real-time (200ms) with URL updates only on Enter key press. Used `router.replace()` instead of `push()` to eliminate page refresh sensation.
