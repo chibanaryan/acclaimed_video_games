@@ -247,3 +247,120 @@ class CreateDeveloperAliasCommandTests(TestCase):
 
         # Verify error message
         self.assertIn("not found", output)
+
+
+class SyncDeveloperCommandTests(TestCase):
+
+    def test_creates_developer_with_alias_and_game_association(self):
+        """Test that sync_developer creates developer, alias, and associates games"""
+        # Create a test game
+        game = models.Game.objects.create(
+            name="The Binding of Isaac",
+            slug="the-binding-of-isaac",
+            rank=1,
+            year_of_release=2011,
+        )
+
+        from io import StringIO
+
+        out = StringIO()
+        call_command("sync_developer", "florian-himsl", stdout=out)
+        output = out.getvalue()
+
+        # Verify developer was created
+        developer = models.Developer.objects.filter(slug="florian-himsl").first()
+        self.assertIsNotNone(developer)
+        self.assertEqual(developer.name, "Florian Himsl")
+        self.assertEqual(developer.igdb_id, 40025)
+
+        # Verify alias was created
+        alias = models.DeveloperAlias.objects.filter(
+            name="Florian Himsl", developer=developer
+        ).first()
+        self.assertIsNotNone(alias)
+
+        # Verify game association
+        self.assertTrue(game.developers.filter(developer=developer).exists())
+
+        # Verify output
+        self.assertIn("Created developer", output)
+        self.assertIn("The Binding of Isaac", output)
+
+    def test_warns_when_developer_already_exists(self):
+        """Test that command warns when developer already exists"""
+        # Create developer first
+        models.Developer.objects.create(
+            name="Florian Himsl",
+            slug="florian-himsl",
+            igdb_id=40025,
+        )
+
+        from io import StringIO
+
+        out = StringIO()
+        call_command("sync_developer", "florian-himsl", stdout=out)
+        output = out.getvalue()
+
+        # Verify warning message
+        self.assertIn("already exists", output)
+
+    def test_returns_error_for_unknown_developer_slug(self):
+        """Test that command returns error for unknown developer"""
+        from io import StringIO
+
+        out = StringIO()
+        call_command("sync_developer", "unknown-developer", stdout=out)
+        output = out.getvalue()
+
+        # Verify error message
+        self.assertIn("Unknown developer slug", output)
+
+    def test_force_flag_updates_existing_developer(self):
+        """Test that --force flag updates existing developer"""
+        # Create developer first
+        dev = models.Developer.objects.create(
+            name="Florian Himsl",
+            slug="florian-himsl",
+            igdb_id=12345,  # Wrong IGDB ID
+        )
+
+        from io import StringIO
+
+        out = StringIO()
+        call_command("sync_developer", "florian-himsl", "--force", stdout=out)
+        output = out.getvalue()
+
+        # Verify output indicates update
+        self.assertIn("Updating existing developer", output)
+
+        # Verify developer record was used
+        dev.refresh_from_db()
+        self.assertEqual(dev.name, "Florian Himsl")
+
+    def test_syncs_all_three_developers(self):
+        """Test syncing each of the three developers"""
+        # Create test games
+        for game_name, game_slug in [
+            ("The Binding of Isaac", "the-binding-of-isaac"),
+            ("Streets of Rage 2 / Bare Knuckle II", "streets-of-rage-2"),
+            ("Paperboy", "paperboy"),
+        ]:
+            models.Game.objects.create(
+                name=game_name,
+                slug=game_slug,
+                rank=1,
+                year_of_release=2000,
+            )
+
+        from io import StringIO
+
+        # Sync all three
+        for dev_slug in [
+            "florian-himsl",
+            "shout-designworks",
+            "vivid-games",
+        ]:
+            out = StringIO()
+            call_command("sync_developer", dev_slug, stdout=out)
+            output = out.getvalue()
+            self.assertIn("Successfully synced developer", output)
