@@ -555,6 +555,41 @@
             color: #fff !important;
         }
         
+        /* Developer list search input - match navbar search bar exactly */
+        /* Apply same styling as .desktop-search .input to developer list search */
+        #developer-search,
+        .field:not(.desktop-search):not(.mobile-search) .control .input[name="q"] {
+            background-color: transparent;
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .field:not(.desktop-search):not(.mobile-search):hover .control .input[name="q"],
+        .field:not(.desktop-search):not(.mobile-search) .control:hover .input[name="q"] {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .field:not(.desktop-search):not(.mobile-search) .control .input[name="q"]:focus {
+            border-color: #3273dc;
+            box-shadow: none;
+        }
+        
+        .field:not(.desktop-search):not(.mobile-search) .control .input[name="q"]::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 1rem;
+        }
+        
+        .field:not(.desktop-search):not(.mobile-search) .control.has-icons-left .icon,
+        .field:not(.desktop-search):not(.mobile-search) .control.has-icons-left .icon .mdi,
+        .field:not(.desktop-search):not(.mobile-search) .control.has-icons-left .icon span.mdi,
+        .field:not(.desktop-search):not(.mobile-search) .control.has-icons-left .icon i.mdi {
+            color: #fff !important;
+        }
+        
         /* Dropdown menu styling to match Vue version */
         .desktop-search .dropdown {
             position: relative;

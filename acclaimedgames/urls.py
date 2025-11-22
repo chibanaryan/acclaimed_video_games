@@ -6,6 +6,7 @@ from django.urls import include, path, re_path
 
 from games import views
 
+
 urlpatterns = [
     path("api/", include("games.api.urls", namespace="games-api")),
     path("admin/", admin.site.urls),

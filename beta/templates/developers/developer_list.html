@@ -6,7 +6,14 @@
 {% block content %}
 <div id="content">
     <h1 class="title is-spaced">Developers</h1>
-    <h2 id="results-count" class="subtitle">{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</h2>
+    <p id="results-display" class="mb-4">
+        {% if page_obj %}
+        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}
+        {% else %}
+        Showing 0 to 0 of 0 results
+        {% endif %}
+    </p>
+    <h2 id="results-count" class="subtitle is-hidden">{% if page_obj %}{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}{% else %}0 results{% endif %}</h2>
 
     <div class="field" style="margin-bottom: 0;">
         <div class="control has-icons-left">
@@ -75,10 +82,33 @@
 </div>
 
 <script>
-// Update results count when HTMX swaps content
+// Update results display when HTMX swaps content
 document.body.addEventListener('htmx:afterSwap', function(evt) {
     if (evt.detail.target.id === 'results-container') {
-        // The script tag in the response will update the count
+        // Read pagination data from the hidden element in the swapped content
+        const paginationData = evt.detail.target.querySelector('#pagination-data');
+        if (paginationData) {
+            const startIndex = paginationData.getAttribute('data-start-index');
+            const endIndex = paginationData.getAttribute('data-end-index');
+            const totalCount = paginationData.getAttribute('data-total-count');
+            
+            if (startIndex !== null && endIndex !== null && totalCount !== null) {
+                const resultsDisplay = document.getElementById('results-display');
+                if (resultsDisplay) {
+                    const count = parseInt(totalCount);
+                    const plural = count === 1 ? 'result' : 'results';
+                    resultsDisplay.textContent = `Showing ${startIndex} to ${endIndex} of ${totalCount} ${plural}`;
+                }
+                
+                const resultsCount = document.getElementById('results-count');
+                if (resultsCount) {
+                    const count = parseInt(totalCount);
+                    const plural = count === 1 ? 'result' : 'results';
+                    resultsCount.textContent = `${totalCount} ${plural}`;
+                }
+            }
+        }
+        
         // Keep focus on search input for smooth typing experience
         const searchInput = document.getElementById('developer-search');
         if (searchInput && document.activeElement !== searchInput) {

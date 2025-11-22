@@ -9,6 +9,7 @@
     {% include 'posts/includes/_post_item.html' with post=post %}
 {% endfor %}
 
+{% if page_obj %}
 <div class="level">
     <div class="level-left">
         <div class="level-item">
@@ -44,5 +45,19 @@
         </div>
     </div>
 </div>
+{% elif request.GET.offset %}
+<div class="level">
+    <div class="level-left">
+        <div class="level-item">
+            <a href="{% url 'beta:home' %}" class="button">
+                <span class="icon">
+                    <span class="mdi mdi-chevron-double-left"></span>
+                </span>
+                <span>Return to home page</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 

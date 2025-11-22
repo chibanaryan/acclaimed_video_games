@@ -446,7 +446,7 @@ class DeveloperListView(ListView):
 
     def get_template_names(self):
         # Support HTMX partial responses - return just the content block if HTMX request
-        if self.request.headers.get("HX-Request"):
+        if self.request.META.get("HTTP_HX_REQUEST") == "true":
             return ["developers/includes/_developer_list_content.html"]
         return super().get_template_names()
 
@@ -655,11 +655,37 @@ class PostListView(ListView):
     paginate_by = 5
     paginate_orphans = 0
 
+    def get_queryset(self):
+        qs = models.Post.objects.filter(active=True).order_by("-date")
+
+        # Check for offset parameter (from "older posts" link on home page)
+        offset = self.request.GET.get("offset")
+        if offset:
+            try:
+                offset = int(offset)
+                # Apply offset and limit to 100
+                qs = qs[offset : offset + 100]
+                # Return as list to bypass pagination
+                return list(qs)
+            except (TypeError, ValueError):
+                pass
+
+        return qs
+
     def paginate_queryset(self, queryset, page_size):
         """
         Paginate the queryset, and handle invalid page numbers gracefully.
-        Instead of raising 404, return the last valid page.
+        If queryset is already a list (from offset), skip pagination.
         """
+        # If queryset is a list (from offset parameter),
+        # return it directly without pagination
+        if isinstance(queryset, list):
+            from django.core.paginator import Paginator
+
+            # Create a dummy paginator for compatibility, but return the list as-is
+            paginator = Paginator(queryset, len(queryset))
+            return (paginator, None, queryset, False)
+
         from django.core.paginator import Paginator, EmptyPage
 
         paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)

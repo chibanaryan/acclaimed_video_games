@@ -15,25 +15,28 @@ if SENTRY_DSN:
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
         send_default_pii=True,
-        traces_sample_rate=1.0,
-        profiles_sample_rate=1.0,
     )
 
+# Core Django settings
 DEBUG = env("DEBUG", default=False)  # Default to True for development
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LANGUAGE_CODE = "en-us"
-ROOT_URLCONF = "acclaimedgames.urls"
 SECRET_KEY = env(
     "SECRET_KEY",
     default="django-insecure-dev-key-change-in-production" if DEBUG else None,
 )  # Required - no default for security in production
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_URL = "/static/"
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "acclaimedvideogames.com",
+    "www.acclaimedvideogames.com",
+]
+SITE_ID = 1
+LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = False
 USE_TZ = False
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+ROOT_URLCONF = "acclaimedgames.urls"
 WSGI_APPLICATION = "acclaimedgames.wsgi.application"
-SITE_ID = 1
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -54,9 +57,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    # Cache middleware - DISABLED in development to prevent template caching issues
-    # Re-enable in production for performance
-    # "django.middleware.cache.UpdateCacheMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -68,7 +68,6 @@ MIDDLEWARE = [
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "beta.middleware.HTMXPushURLMiddleware",  # Add HX-Push-URL header for HTMX requests
-    # "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 # Only enable cache middleware in production
@@ -76,6 +75,7 @@ if not DEBUG:
     MIDDLEWARE.insert(0, "django.middleware.cache.UpdateCacheMiddleware")
     MIDDLEWARE.append("django.middleware.cache.FetchFromCacheMiddleware")
 
+# Enable debug toolbar only in development
 if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
@@ -116,7 +116,6 @@ TEMPLATES = [
     },
 ]
 
-
 DATABASES = {
     "default": env.db(default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
@@ -143,13 +142,6 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "acclaimedvideogames.com",
-    "www.acclaimedvideogames.com",
-]
-
 # Cache configuration - use dummy cache for development if no CACHE_URL set
 cache_url = env("CACHE_URL", default=None)
 if cache_url:
@@ -165,8 +157,13 @@ else:
 
 CACHE_MIDDLEWARE_SECONDS = 60 * 60
 
-IGDB_CLIENT_ID = env("IGDB_CLIENT_ID", default="XXX")
-IGDB_CLIENT_SECRET = env("IGDB_CLIENT_SECRET", default="XXX")
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "frontend/dist",
+]
+
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [],
@@ -174,11 +171,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
 }
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
-STATICFILES_DIRS = [
-    BASE_DIR / "frontend/dist",
-]
+IGDB_CLIENT_ID = env("IGDB_CLIENT_ID", default="XXX")
+IGDB_CLIENT_SECRET = env("IGDB_CLIENT_SECRET", default="XXX")
 
 # Logging configuration
 # Suppress noisy logs during test runs
