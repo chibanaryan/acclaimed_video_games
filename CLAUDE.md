@@ -170,6 +170,37 @@ The project uses pre-commit hooks (`.pre-commit-config.yaml`) to enforce code qu
 
 **Note:** Commits will be blocked if any tests fail, coverage drops below 95%, or linting fails.
 
+## Development Log (DEVLOG)
+
+The `DEVLOG.md` file tracks significant changes and improvements to the project. Agents should update it when making changes worthy of documentation.
+
+**When to Update:**
+- Bug fixes that resolve user-reported issues or known problems
+- Performance improvements or optimizations
+- New features or functionality additions
+- Significant refactoring or architectural changes
+- API or database schema modifications
+- Deployment issues or critical fixes
+
+**When NOT to Update:**
+- Minor style or formatting changes
+- Documentation-only updates (unless substantive)
+- Test-only commits with no production changes
+- Dependency version bumps without notable behavior changes
+
+**Format Guidelines:**
+- Keep entries very concise - just 2-4 bullet points per day maximum
+- Use brief, imperative language (e.g., "Fix double-load on first search character")
+- Group changes by date (one date header per day of work)
+- Include affected components/features for context
+- Link to related files if relevant (e.g., `frontend/src/components/DeveloperList.vue`)
+- Example:
+  ```
+  ## 2025-11-22
+  - Fixed double-load on first search character in developer list (debounce trailing edge)
+  - Added SSR pre-fetching for developer list (fixed page flash on navigation)
+  ```
+
 ## Architecture
 
 ### Backend Structure
