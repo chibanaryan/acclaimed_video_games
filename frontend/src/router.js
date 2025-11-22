@@ -33,6 +33,24 @@ export const routes = [
         name: 'developers-list',
         meta: {
             title: 'Developers',
+        },
+        async beforeEnter(to) {
+            // Pre-fetch developer list data during SSG for Wayback Machine compatibility
+            if (import.meta.env.SSR) {
+                const apiUrl = import.meta.env.VITE_SSG_API_URL || 'http://127.0.0.1:8000/api/';
+                try {
+                    const response = await fetch(`${apiUrl}developer-aliases/?limit=9999&order_by=name`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        to.meta.ssrData = data;
+                        console.log(`[SSG] Pre-fetched ${data.results.length} developers`);
+                    } else {
+                        console.error(`[SSG] Failed to fetch developer list: ${response.status}`);
+                    }
+                } catch (err) {
+                    console.error('[SSG] Failed to fetch developers for pre-rendering:', err);
+                }
+            }
         }
     },
     {

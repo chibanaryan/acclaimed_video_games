@@ -59,6 +59,24 @@ import _ from "lodash";
 export default {
     mixins: [BaseListComponent],
     components: { PaginationComponent },
+    async created() {
+        // Check if we have SSR pre-fetched data (from beforeEnter guard)
+        const ssrData = this.$route.meta?.ssrData;
+
+        if (ssrData) {
+            // Use pre-fetched data during SSG/initial hydration
+            this.items = ssrData.results.map((x) => new DeveloperAlias(x));
+            this.resultsCount = ssrData.count;
+            this.updateFilters(this.$route.query);
+
+            delete this.$route.meta.ssrData; // Clean up to avoid memory leaks
+            console.log('[SSG] Using pre-fetched developer data');
+            // Note: loading is not set to false here - let BaseListComponent handle it
+        } else {
+            // Client-side navigation - call base created()
+            await this.$options.mixins[0].created.call(this);
+        }
+    },
     methods: {
         loadItems: _.debounce(async function () {
             let url = `${getApiUrl()}developer-aliases/?${new URLSearchParams(this.getArgs)}`;
