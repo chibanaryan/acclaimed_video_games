@@ -25,8 +25,13 @@
     {# Handjet Font (for rank numbers) - MUST INCLUDE #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=swap" rel="stylesheet">
-    
+    <link rel="preload" href="https://fonts.gstatic.com/s/handjet/v9/Adfb1WNww3sO-LwxW_G4l4RyBb-9y9PNDG0Xp8Nwqg.woff2" as="font" type="font/woff2" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=block" rel="stylesheet">
+
+    {# Prefetch critical images that appear on every page #}
+    <link rel="prefetch" href="{% static 'games/avg_logo_small.png' %}" as="image">
+    <link rel="prefetch" href="{% static 'games/palestine-flag-xs.png' %}" as="image">
+
     {# HTMX #}
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     

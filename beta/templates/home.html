@@ -4,6 +4,11 @@
 
 {% block title %}Acclaimed Games{% endblock %}
 
+{% block extra_head %}
+{# Prefetch home page hero image #}
+<link rel="prefetch" href="{% static 'avg_logo.png' %}" as="image">
+{% endblock %}
+
 {% block content %}
 <div class="columns">
     <div class="column">
