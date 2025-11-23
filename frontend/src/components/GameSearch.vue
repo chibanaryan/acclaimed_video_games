@@ -106,6 +106,8 @@ export default {
             },
             resultsCount: 0,
             meta: {},
+            scrollTimeout: null,
+            highlightClearTimeout: null,
         };
     },
     async created() {
@@ -271,12 +273,12 @@ export default {
                 controller = null;
 
                 if (this.highlight)
-                    setTimeout(() => {
+                    this.scrollTimeout = setTimeout(() => {
                         let highlightElement = document.getElementById(`game-${this.highlight}`);
                         if (highlightElement) {
                             highlightElement.scrollIntoView({ behavior: "smooth" });
 
-                            setTimeout(() => {
+                            this.highlightClearTimeout = setTimeout(() => {
                                 this.highlight = null;
                             }, 2000);
                         }
@@ -291,6 +293,10 @@ export default {
             Object.assign(this.pagination, e);
             this.updateUrl();
         },
+    },
+    beforeUnmount() {
+        if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
+        if (this.highlightClearTimeout) clearTimeout(this.highlightClearTimeout);
     },
 }
 </script>

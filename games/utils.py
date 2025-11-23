@@ -108,6 +108,9 @@ def import_igdb_with_progress():
     # Use a queue to pass events from callback to generator in real-time
     event_queue = queue.Queue()
 
+    # Event to signal when client disconnects
+    stop_event = threading.Event()
+
     def progress_callback(event_type: str, data: dict) -> None:
         """Callback to stream service events to SSE client."""
         # Add event type if not already present
@@ -144,24 +147,37 @@ def import_igdb_with_progress():
         import_thread.start()
 
         # Stream events as they come in from the queue
-        while True:
-            try:
-                # Wait for event with timeout to detect if thread is stuck
-                event_json = event_queue.get(timeout=30)
+        try:
+            while True:
+                try:
+                    # Wait for event with timeout to detect if thread is stuck
+                    event_json = event_queue.get(timeout=30)
 
-                # None signals the end of the import
-                if event_json is None:
+                    # None signals the end of the import
+                    if event_json is None:
+                        break
+
+                    # Yield the event in SSE format
+                    yield f"data: {event_json}\n\n"
+                except queue.Empty:
+                    # Timeout waiting for events
+                    error_msg = "Import timeout - no progress for 30 seconds"
+                    error_data = json.dumps({"event": "error", "error": error_msg})
+                    yield f"data: {error_data}\n\n"
                     break
+        except GeneratorExit:  # pragma: no cover
+            # Client disconnected - signal the import thread to stop
+            # Note: The import thread will continue in the background as
+            # a daemon thread until it completes. This prevents wasted
+            # API calls if the user navigates away.
+            stop_event.set()
+            import logging
 
-                # Yield the event in SSE format
-                yield f"data: {event_json}\n\n"
-            except queue.Empty:
-                # Timeout waiting for events
-                error_msg = "Import timeout - no progress for 30 seconds"
-                yield (
-                    f"data: {json.dumps({'event': 'error', 'error': error_msg})}\n\n"
-                )
-                break
+            logging.getLogger(__name__).info(
+                "Client disconnected from IGDB import progress stream. "
+                "Import thread continues in background."
+            )
+            raise
 
     except Exception as e:
         # Yield error event

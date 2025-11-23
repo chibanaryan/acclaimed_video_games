@@ -788,6 +788,9 @@
         })
     })
 
+    // Track active EventSource for cleanup
+    let activeEventSource = null
+
     // Handle Fetch IGDB Data button click
     document.getElementById('fetch-igdb-btn').addEventListener('click', (e) => {
         e.preventDefault()
@@ -802,6 +805,12 @@
         const errorList = document.getElementById('error-list')
         const progressErrors = document.getElementById('progress-errors')
 
+        // Close existing EventSource if any
+        if (activeEventSource) {
+            activeEventSource.close()
+            activeEventSource = null
+        }
+
         // Show progress container
         progressContainer.classList.add('active')
         progressFill.style.width = '0%'
@@ -814,9 +823,9 @@
         progressErrors.style.display = 'none'
 
         // Connect to SSE endpoint
-        const eventSource = new EventSource('/import/igdb-progress/')
+        activeEventSource = new EventSource('/import/igdb-progress/')
 
-        eventSource.onmessage = (event) => {
+        activeEventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data)
 
@@ -851,7 +860,8 @@
                     remainingTime.textContent = '0s'
 
                     // Close event source and show success message
-                    eventSource.close()
+                    activeEventSource.close()
+                    activeEventSource = null
                     setTimeout(() => {
                         // Show success message
                         const notification = document.createElement('div')
@@ -861,11 +871,7 @@
                             IGDB data fetch completed successfully! Fetched data for ${data.total} games.
                         `
                         document.body.insertBefore(notification, document.body.firstChild)
-
-                        // Close notification on close button click
-                        notification.querySelector('.delete').addEventListener('click', () => {
-                            notification.remove()
-                        })
+                        attachNotificationDeleteListener(notification)
 
                         // Reload the page to update the status
                         setTimeout(() => {
@@ -874,7 +880,8 @@
                     }, 500)
                 } else if (data.error) {
                     // Error message
-                    eventSource.close()
+                    activeEventSource.close()
+                    activeEventSource = null
                     const notification = document.createElement('div')
                     notification.className = 'notification is-danger'
                     notification.innerHTML = `
@@ -882,10 +889,7 @@
                         Error: ${data.error}
                     `
                     document.body.insertBefore(notification, document.body.firstChild)
-
-                    notification.querySelector('.delete').addEventListener('click', () => {
-                        notification.remove()
-                    })
+                    attachNotificationDeleteListener(notification)
 
                     progressContainer.classList.remove('active')
                 }
@@ -894,9 +898,10 @@
             }
         }
 
-        eventSource.onerror = (error) => {
+        activeEventSource.onerror = (error) => {
             console.error('SSE connection error:', error)
-            eventSource.close()
+            activeEventSource.close()
+            activeEventSource = null
 
             const notification = document.createElement('div')
             notification.className = 'notification is-danger'
@@ -905,14 +910,29 @@
                 IGDB Import Error: Connection lost or server error. Check that games exist in the database and try again.
             `
             document.body.insertBefore(notification, document.body.firstChild)
-
-            notification.querySelector('.delete').addEventListener('click', () => {
-                notification.remove()
-            })
+            attachNotificationDeleteListener(notification)
 
             progressContainer.classList.remove('active')
         }
     })
+
+    // Cleanup EventSource when user navigates away or closes the page
+    window.addEventListener('beforeunload', () => {
+        if (activeEventSource) {
+            activeEventSource.close()
+            activeEventSource = null
+        }
+    })
+
+    // Helper function to attach delete button listener to notification
+    function attachNotificationDeleteListener(notification) {
+        const deleteBtn = notification.querySelector('.delete')
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                notification.remove()
+            })
+        }
+    }
 
     // Helper function to format seconds as human-readable time
     function formatTime(seconds) {

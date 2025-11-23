@@ -2,6 +2,12 @@
 
 ## 2025-11-23
 
+- **Fixed memory leaks across frontend and backend**: Eliminated 7 memory leaks that caused resource accumulation
+  - Fixed 5 `setTimeout` leaks in Vue components (`GameSearchComponent.vue`, `GameSearch.vue`) - added `beforeUnmount()` cleanup
+  - Fixed critical EventSource leak in import page - added `beforeunload` handler to close connection on navigation
+  - Added backend client disconnect detection in `utils.py` - logs when SSE clients disconnect during IGDB import
+  - Centralized notification delete button listeners to prevent duplicate event listener accumulation
+
 - **Fixed "Last Updated" display on home page**: Changed to show date only (not relative time) and only update when Games file is imported
   - Created `SiteMetadata` model to track last full update date (manually editable in admin)
   - Updated `import_batch()` and `import_data()` to set `last_full_update` when games file is imported

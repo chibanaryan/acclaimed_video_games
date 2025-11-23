@@ -122,6 +122,9 @@ export default {
             results: [],
             active: false,
             showMenu: false,
+            focusTimeoutDesktop: null,
+            focusTimeoutMobile: null,
+            blurTimeout: null,
         }
     },
     methods: {
@@ -134,19 +137,19 @@ export default {
         toggleInputDesktop() {
             this.active = !this.active;
             if (this.active)
-                setTimeout(() => {
+                this.focusTimeoutDesktop = setTimeout(() => {
                     this.$refs.searchInputDesktop.focus()
                 }, 100)
         },
         toggleInputMobile() {
             this.active = !this.active;
             if (this.active)
-                setTimeout(() => {
+                this.focusTimeoutMobile = setTimeout(() => {
                     this.$refs.searchInputMobile.focus()
                 }, 100)
         },
         onBlur() {
-            setTimeout(() => {
+            this.blurTimeout = setTimeout(() => {
                 this.q = null;
                 this.results = [];
                 this.active = false;
@@ -156,6 +159,11 @@ export default {
         onFocus() {
             this.showMenu = true;
         },
+    },
+    beforeUnmount() {
+        if (this.focusTimeoutDesktop) clearTimeout(this.focusTimeoutDesktop);
+        if (this.focusTimeoutMobile) clearTimeout(this.focusTimeoutMobile);
+        if (this.blurTimeout) clearTimeout(this.blurTimeout);
     },
     computed: {
         message() {
