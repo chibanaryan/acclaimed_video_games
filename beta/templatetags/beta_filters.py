@@ -169,7 +169,7 @@ def from_now(value):
 @register.simple_tag
 def game_rank_url(rank, game_id=None, start=None, end=None):
     """
-    Generate URL for game rank route, matching Vue getGameRankRoute() method.
+    Generate URL for game rank route with page-based pagination.
 
     Args:
         rank: The rank number
@@ -183,22 +183,34 @@ def game_rank_url(rank, game_id=None, start=None, end=None):
     from django.urls import reverse
     from urllib.parse import urlencode
 
-    # Calculate offset (same logic as Vue: parseInt(rank / 100) * 100)
-    offset = int(rank / 100) * 100
+    # Calculate page number from rank
+    # Page 1: ranks 1-100, Page 2: ranks 101-200, etc.
+    page = (rank - 1) // 100 + 1
 
     # Build query parameters
     query_params = {
-        "limit": 100,
-        "offset": offset,
+        "page": page,
     }
 
     if game_id:
         query_params["highlight"] = game_id
 
-    if start:
+    # Convert start/end to decade or year parameter
+    if start and end:
+        if start == end:
+            # Same year - use year parameter
+            query_params["year"] = start
+        elif end - start == 9:
+            # Decade range - use decade parameter (format: "1990-99")
+            decade_str = f"{start}-{str(end)[2:4]}"
+            query_params["decade"] = decade_str
+        else:
+            # Custom range - use start/end
+            query_params["start"] = start
+            query_params["end"] = end
+    elif start:
         query_params["start"] = start
-
-    if end:
+    elif end:
         query_params["end"] = end
 
     # Build URL with query string

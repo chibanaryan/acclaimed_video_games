@@ -1,6 +1,6 @@
 {# GameRow component - migrated from Vue #}
 {# Props: game, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional game ID) #}
-<div class="columns is-hidden-mobile game-row desktop {% if game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}">
+<div class="columns is-hidden-mobile game-row desktop {% if highlight and game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}">
     <div class="column is-narrow">
         <div class="columns">
             {% if show_rank == 'alltime' %}
@@ -41,7 +41,7 @@
         {% endif %}
     </div>
 </div>
-<div class="is-hidden-desktop is-hidden-tablet game-row mobile pb-4 {% if game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}-mobile">
+<div class="is-hidden-desktop is-hidden-tablet game-row mobile pb-4 {% if highlight and game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}-mobile">
     <div class="py-3">
         <a href="{% url 'beta:game-detail' slug=game.slug %}"
             class="game-name has-text-weight-bold is-size-6">

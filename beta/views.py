@@ -172,7 +172,8 @@ class GameListView(ListView):
         }
 
         # Add highlight parameter for scrolling to specific game
-        context["highlight"] = self.request.GET.get("highlight")
+        highlight = self.request.GET.get("highlight")
+        context["highlight"] = int(highlight) if highlight else None
 
         # Determine if filtered (for show_rank logic)
         is_filtered = bool(

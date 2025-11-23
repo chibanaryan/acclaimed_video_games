@@ -2,6 +2,8 @@
 
 ## 2025-11-23
 
+- Fixed beta site "all-time rank" links to use page-based URLs instead of offset/limit
+- Fixed beta site highlight and scroll-to-game functionality (type mismatch prevented highlighting)
 - Fixed memory leaks in Vue components and import page (7 leaks total)
 - Fixed "Last Updated" to show date only and update only on Games file import
 - Optimized server-side memory usage (50-90% reduction for large datasets)
