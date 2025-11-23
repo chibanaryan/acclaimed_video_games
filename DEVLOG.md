@@ -11,7 +11,7 @@
 - Fixed decade rank calculation bug (SQLite was ordering by year then rank instead of global rank)
 - Enhanced "Delete All Data" to include Genres and reset ID sequences on both PostgreSQL and SQLite
 - Removed vite-ssg and server-side prerendering (reverted to standard client-side Vue.js SPA)
-- Fixed font flash on page load with font preloading and display=optional strategy
+- Fixed font loading with preloading and display=block for immediate pixelated font rendering
 
 ## 2025-11-22
 
