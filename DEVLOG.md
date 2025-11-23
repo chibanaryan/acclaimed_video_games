@@ -2,6 +2,8 @@
 
 ## 2025-11-23
 
+- Fixed beta navbar order to match original site (search before "Top 1000" on both mobile and desktop)
+- Fixed beta highlight scroll alignment (now aligns to top instead of center)
 - Fixed beta site "all-time rank" links to use page-based URLs instead of offset/limit
 - Fixed beta site highlight and scroll-to-game functionality (type mismatch prevented highlighting)
 - Fixed memory leaks in Vue components and import page (7 leaks total)

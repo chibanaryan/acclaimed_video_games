@@ -59,7 +59,7 @@
         setTimeout(function() {
             var element = document.getElementById('game-{{ highlight }}');
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.scrollIntoView({ behavior: 'smooth' });
                 setTimeout(function() {
                     element.classList.remove('highlight');
                 }, 2000);
