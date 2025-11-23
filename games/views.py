@@ -75,6 +75,7 @@ class ImportView(LoginRequiredMixin, FormView):
     3. Games (requires Platforms)
     4. Game Positions (requires Lists and Games)
     """
+
     template_name = "games/import.html"
     form_class = ImportForm
     success_url = reverse_lazy("import")
@@ -85,29 +86,37 @@ class ImportView(LoginRequiredMixin, FormView):
 
         # Get game counts
         total_games = models.Game.objects.count()
-        games_with_igdb = models.Game.objects.exclude(igdb_artwork_id__isnull=True).count()
-        games_without_igdb = models.Game.objects.filter(igdb_artwork_id__isnull=True).count()
+        games_with_igdb = models.Game.objects.exclude(
+            igdb_artwork_id__isnull=True
+        ).count()
+        games_without_igdb = models.Game.objects.filter(
+            igdb_artwork_id__isnull=True
+        ).count()
 
-        context['counts'] = {
-            'platforms': models.Platform.objects.count(),
-            'publications': models.Publication.objects.count(),
-            'lists': models.List.objects.count(),
-            'games': total_games,
-            'memberships': models.ListMembership.objects.count(),
-            'developers': models.Developer.objects.count(),
+        context["counts"] = {
+            "platforms": models.Platform.objects.count(),
+            "publications": models.Publication.objects.count(),
+            "lists": models.List.objects.count(),
+            "games": total_games,
+            "memberships": models.ListMembership.objects.count(),
+            "developers": models.Developer.objects.count(),
         }
-        context['igdb_counts'] = {
-            'total': total_games,
-            'with_igdb': games_with_igdb,
-            'without_igdb': games_without_igdb,
-            'percentage': int((games_with_igdb / total_games * 100) if total_games > 0 else 0),
+        context["igdb_counts"] = {
+            "total": total_games,
+            "with_igdb": games_with_igdb,
+            "without_igdb": games_without_igdb,
+            "percentage": int(
+                (games_with_igdb / total_games * 100) if total_games > 0 else 0
+            ),
         }
 
         # Get persistent errors from session
-        import_errors = self.request.session.pop('import_errors', None)
-        import_success_message = self.request.session.pop('import_success', None)
-        context['import_errors'] = import_errors
-        context['import_success_message'] = import_success_message
+        import_errors = self.request.session.pop("import_errors", None)
+        import_success_message = self.request.session.pop("import_success", None)
+        trigger_igdb = self.request.session.pop("trigger_igdb", False)
+        context["import_errors"] = import_errors
+        context["import_success_message"] = import_success_message
+        context["trigger_igdb"] = trigger_igdb
 
         return context
 
@@ -116,23 +125,28 @@ class ImportView(LoginRequiredMixin, FormView):
         import_data = form.cleaned_data
 
         # Check if this is a batch file import (not delete/igdb operations)
-        has_batch_files = any([
-            import_data.get('platforms_file'),
-            import_data.get('lists_file'),
-            import_data.get('games_file'),
-            import_data.get('memberships_file'),
-        ])
+        has_batch_files = any(
+            [
+                import_data.get("platforms_file"),
+                import_data.get("lists_file"),
+                import_data.get("games_file"),
+                import_data.get("memberships_file"),
+            ]
+        )
 
         # If batch files are provided, process them directly
-        if has_batch_files and not import_data.get('delete') and not import_data.get('igdb'):
-            # Process batch import immediately
-            res, message = utils.import_batch(import_data)
+        if has_batch_files and not import_data.get("delete"):
+            # Process batch import immediately (handles IGDB flag internally)
+            res, message, trigger_igdb = utils.import_batch(import_data)
             if res:
                 # Store success message in session (persist across redirect)
-                self.request.session['import_success'] = message
+                self.request.session["import_success"] = message
+                # Store IGDB trigger flag if import succeeded and checkbox was checked
+                if trigger_igdb:
+                    self.request.session["trigger_igdb"] = True
             else:
                 # Store error message in session as a list for persistent display
-                self.request.session['import_errors'] = [message]
+                self.request.session["import_errors"] = [message]
             # Explicitly save session before redirect
             self.request.session.modified = True
             return super().form_valid(form)
@@ -141,10 +155,10 @@ class ImportView(LoginRequiredMixin, FormView):
         res, message = utils.import_data(import_data)
         if res:
             # Store success message in session (persist across redirect)
-            self.request.session['import_success'] = message
+            self.request.session["import_success"] = message
         else:
             # Store error message in session as a list for persistent display
-            self.request.session['import_errors'] = [message]
+            self.request.session["import_errors"] = [message]
 
         # Explicitly save session before redirect
         self.request.session.modified = True
@@ -161,11 +175,11 @@ class IGDBProgressView(LoginRequiredMixin, View):
         """Stream IGDB fetch progress as SSE events."""
         return StreamingHttpResponse(
             utils.import_igdb_with_progress(),
-            content_type='text/event-stream',
+            content_type="text/event-stream",
             headers={
-                'Cache-Control': 'no-cache',
-                'X-Accel-Buffering': 'no',
-            }
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
         )
 
 

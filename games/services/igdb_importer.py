@@ -2,6 +2,7 @@
 Shared IGDB import service for both management commands and web views.
 Provides concurrent, batched IGDB data fetching with progress callbacks.
 """
+
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -37,7 +38,8 @@ class IGDBImportService:
 
         Args:
             concurrency: Number of concurrent workers (1-8, default: 8)
-            batch_size: Games per API batch (auto from tier if None, default: 50 free, 500 Pro)
+            batch_size: Games per API batch (auto from tier if None,
+                default: 50 free, 500 Pro)
             use_pro_tier: Use Pro tier (reads from settings if None)
             progress_callback: Optional callback for progress updates
                               Signature: callback(event_type: str, data: Dict)
@@ -84,7 +86,15 @@ class IGDBImportService:
         total_games = len(games_list)
 
         if total_games == 0:
-            self._notify_progress("error", {"message": "No games found in database"})
+            self._notify_progress(
+                "error",
+                {
+                    "error": (
+                        "No games found in database. Please import games first "
+                        "before fetching IGDB data."
+                    )
+                },
+            )
             return (0, 0, 0.0)
 
         self.processed_count = 0
@@ -117,7 +127,9 @@ class IGDBImportService:
 
         return (self.processed_count, self.error_count, elapsed)
 
-    def _import_batched(self, games_list: List[Game], total_games: int, start_time: float) -> None:
+    def _import_batched(
+        self, games_list: List[Game], total_games: int, start_time: float
+    ) -> None:
         """
         Import games using multi-query batching (fastest mode).
 
@@ -159,7 +171,9 @@ class IGDBImportService:
 
                 batch_processed += 1
 
-    def _import_concurrent(self, games_list: List[Game], total_games: int, start_time: float) -> None:
+    def _import_concurrent(
+        self, games_list: List[Game], total_games: int, start_time: float
+    ) -> None:
         """
         Import games using concurrent processing (fast mode).
 
@@ -201,7 +215,9 @@ class IGDBImportService:
                         },
                     )
 
-    def _import_sequential(self, games_list: List[Game], total_games: int, start_time: float) -> None:
+    def _import_sequential(
+        self, games_list: List[Game], total_games: int, start_time: float
+    ) -> None:
         """
         Import games sequentially (compatibility mode, slowest).
 
@@ -220,7 +236,9 @@ class IGDBImportService:
                         "game_name": game.name,
                         "percentage": int((idx / total_games) * 100),
                         "elapsed_seconds": int(elapsed),
-                        "remaining_seconds": self._estimate_remaining(idx, total_games, elapsed),
+                        "remaining_seconds": self._estimate_remaining(
+                            idx, total_games, elapsed
+                        ),
                     },
                 )
             else:
@@ -253,7 +271,9 @@ class IGDBImportService:
                 self.error_count += 1
             return (False, game, str(e))
 
-    def _process_game_batch(self, games_batch: List[Game]) -> List[Tuple[bool, Game, Optional[str]]]:
+    def _process_game_batch(
+        self, games_batch: List[Game]
+    ) -> List[Tuple[bool, Game, Optional[str]]]:
         """
         Process a batch of games using multi-query.
 

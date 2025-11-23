@@ -23,7 +23,12 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
         return import_igdb()
 
     # Check if this is a batch import (new form format)
-    if any([data.get(f) for f in ['platforms_file', 'lists_file', 'games_file', 'memberships_file']]):
+    if any(
+        [
+            data.get(f)
+            for f in ["platforms_file", "lists_file", "games_file", "memberships_file"]
+        ]
+    ):
         return import_batch(data)
 
     # Legacy single-file import
@@ -56,14 +61,20 @@ def import_igdb() -> Tuple[bool, str]:
     games = models.Game.objects.all()
 
     # Check if games exist (handle both QuerySet and list from mocks)
-    has_games = games.exists() if hasattr(games, 'exists') else bool(games)
+    has_games = games.exists() if hasattr(games, "exists") else bool(games)
     if not has_games:
-        return (False, "No games found in the database. Import games first before fetching IGDB data.")
+        return (
+            False,
+            (
+                "No games found in the database. Import games first "
+                "before fetching IGDB data."
+            ),
+        )
 
     count = 0
     for game in games:
         game.get_igdb_data()
-        game.save(update_fields=['slug', 'igdb_url', 'igdb_artwork_id', 'description'])
+        game.save(update_fields=["slug", "igdb_url", "igdb_artwork_id", "description"])
         count += 1
 
     return (True, f"IGDB data fetched for {count} game{'s' if count != 1 else ''}")
@@ -91,8 +102,8 @@ def import_igdb_with_progress():
     def progress_callback(event_type: str, data: dict) -> None:
         """Callback to stream service events to SSE client."""
         # Add event type if not already present
-        if 'event' not in data:
-            data['event'] = event_type
+        if "event" not in data:
+            data["event"] = event_type
         # Queue the event for immediate streaming
         event_queue.put(json.dumps(data))
 
@@ -106,14 +117,16 @@ def import_igdb_with_progress():
         )
 
         # Get games (only those without IGDB data)
-        games = models.Game.objects.filter(igdb_artwork_id__isnull=True).order_by('rank')
+        games = models.Game.objects.filter(igdb_artwork_id__isnull=True).order_by(
+            "rank"
+        )
 
         # Run import in a thread to avoid blocking the generator
         def run_import():
             try:
                 service.import_games(games)
             except Exception as e:
-                event_queue.put(json.dumps({'event': 'error', 'error': str(e)}))
+                event_queue.put(json.dumps({"event": "error", "error": str(e)}))
             finally:
                 # Signal that we're done
                 event_queue.put(None)
@@ -135,7 +148,10 @@ def import_igdb_with_progress():
                 yield f"data: {event_json}\n\n"
             except queue.Empty:
                 # Timeout waiting for events
-                yield f"data: {json.dumps({'event': 'error', 'error': 'Import timeout - no progress for 30 seconds'})}\n\n"
+                error_msg = "Import timeout - no progress for 30 seconds"
+                yield (
+                    f"data: {json.dumps({'event': 'error', 'error': error_msg})}\n\n"
+                )
                 break
 
     except Exception as e:
@@ -158,7 +174,10 @@ def _validate_prerequisites(import_type: str) -> Optional[Tuple[bool, str]]:
         if not models.Platform.objects.exists():
             return (
                 False,
-                "Cannot import games: No platforms found. Please import platforms first."
+                (
+                    "Cannot import games: No platforms found. "
+                    "Please import platforms first."
+                ),
             )
         return None
 
@@ -168,12 +187,15 @@ def _validate_prerequisites(import_type: str) -> Optional[Tuple[bool, str]]:
             return (
                 False,
                 "Cannot import game positions: No source lists found. "
-                "Please import source lists first."
+                "Please import source lists first.",
             )
         if not models.Game.objects.exists():
             return (
                 False,
-                "Cannot import game positions: No games found. Please import games first."
+                (
+                    "Cannot import game positions: No games found. "
+                    "Please import games first."
+                ),
             )
         return None
 
@@ -203,19 +225,20 @@ def import_batch_with_progress(data: Dict[str, Any]):
     def progress_callback(event_type: str, data: dict) -> None:
         """Callback to stream service events to SSE client."""
         # Add event type if not already present
-        if 'event' not in data:
-            data['event'] = event_type
+        if "event" not in data:
+            data["event"] = event_type
         # Queue the event for immediate streaming
         event_queue.put(json.dumps(data))
 
     import_sequence = [
-        ('platforms_file', 'Platforms', import_platforms),
-        ('lists_file', 'Source Lists', import_lists),
-        ('games_file', 'Games', import_games),
-        ('memberships_file', 'Game Positions', import_listmemberships),
+        ("platforms_file", "Platforms", import_platforms),
+        ("lists_file", "Source Lists", import_lists),
+        ("games_file", "Games", import_games),
+        ("memberships_file", "Game Positions", import_listmemberships),
     ]
 
     try:
+
         def run_import():
             try:
                 with transaction.atomic():
@@ -225,13 +248,19 @@ def import_batch_with_progress(data: Dict[str, Any]):
                             continue
 
                         # Validate prerequisites
-                        validation_error = _validate_prerequisites(display_name.upper().replace(' ', '_'))
+                        validation_error = _validate_prerequisites(
+                            display_name.upper().replace(" ", "_")
+                        )
                         if validation_error:
-                            event_queue.put(json.dumps({
-                                'event': 'error',
-                                'file': display_name,
-                                'message': validation_error[1]
-                            }))
+                            event_queue.put(
+                                json.dumps(
+                                    {
+                                        "event": "error",
+                                        "file": display_name,
+                                        "message": validation_error[1],
+                                    }
+                                )
+                            )
                             continue
 
                         # Import the file
@@ -239,14 +268,18 @@ def import_batch_with_progress(data: Dict[str, Any]):
                             f = TextIOWrapper(file_obj, encoding="utf-8")
                             handler(f, progress_callback)
                         except Exception as e:
-                            event_queue.put(json.dumps({
-                                'event': 'error',
-                                'file': display_name,
-                                'message': str(e)
-                            }))
+                            event_queue.put(
+                                json.dumps(
+                                    {
+                                        "event": "error",
+                                        "file": display_name,
+                                        "message": str(e),
+                                    }
+                                )
+                            )
 
             except Exception as e:
-                event_queue.put(json.dumps({'event': 'error', 'message': str(e)}))
+                event_queue.put(json.dumps({"event": "error", "message": str(e)}))
             finally:
                 # Signal that we're done
                 event_queue.put(None)
@@ -268,7 +301,10 @@ def import_batch_with_progress(data: Dict[str, Any]):
                 yield f"data: {event_json}\n\n"
             except queue.Empty:
                 # Timeout waiting for events
-                yield f"data: {json.dumps({'event': 'error', 'message': 'Import timeout - no progress for 30 seconds'})}\n\n"
+                error_msg = "Import timeout - no progress for 30 seconds"
+                yield (
+                    f"data: {json.dumps({'event': 'error', 'message': error_msg})}\n\n"
+                )
                 break
 
     except Exception as e:
@@ -276,7 +312,7 @@ def import_batch_with_progress(data: Dict[str, Any]):
         yield f"data: {json.dumps({'event': 'error', 'message': str(e)})}\n\n"
 
 
-def import_batch(data: Dict[str, Any]) -> Tuple[bool, str]:
+def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
     """
     Import multiple files in the correct order with transaction safety.
 
@@ -287,13 +323,22 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str]:
     4. Game Positions (depends on Lists and Games)
 
     If any import fails, the entire transaction is rolled back.
+
+    Returns:
+        Tuple of (success, message, trigger_igdb) where trigger_igdb indicates
+        whether IGDB data should be fetched after successful import.
     """
     results = []
     import_sequence = [
-        ('platforms_file', constants.TYPE_PLATFORM, 'Platforms', import_platforms),
-        ('lists_file', constants.TYPE_LIST, 'Source Lists', import_lists),
-        ('games_file', constants.TYPE_GAME, 'Games', import_games),
-        ('memberships_file', constants.TYPE_LIST_MEMBERSHIP, 'Game Positions', import_listmemberships),
+        ("platforms_file", constants.TYPE_PLATFORM, "Platforms", import_platforms),
+        ("lists_file", constants.TYPE_LIST, "Source Lists", import_lists),
+        ("games_file", constants.TYPE_GAME, "Games", import_games),
+        (
+            "memberships_file",
+            constants.TYPE_LIST_MEMBERSHIP,
+            "Game Positions",
+            import_listmemberships,
+        ),
     ]
 
     try:
@@ -306,7 +351,7 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str]:
                 # Validate prerequisites
                 validation_error = _validate_prerequisites(import_type)
                 if validation_error:
-                    return validation_error
+                    return validation_error + (False,)
 
                 # Import the file
                 try:
@@ -314,17 +359,19 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str]:
                     success, message = handler(f)
                     results.append(message)
                 except Exception as e:
-                    return (False, f"{display_name} import failed: {e}")
+                    return (False, f"{display_name} import failed: {e}", False)
 
         # If we get here, all imports succeeded
         if not results:
-            return (False, "No files were selected for import.")
+            return (False, "No files were selected for import.", False)
 
         summary = "\n".join(results)
-        return (True, summary)
+        # Return IGDB trigger flag if checkbox was checked
+        trigger_igdb = data.get("igdb", False)
+        return (True, summary, trigger_igdb)
 
     except Exception as e:
-        return (False, f"Import transaction failed: {e}")
+        return (False, f"Import transaction failed: {e}", False)
 
 
 def delete_existing_data() -> Tuple[bool, str]:
@@ -358,7 +405,9 @@ def delete_existing_data() -> Tuple[bool, str]:
     return (True, f"{total} objects deleted")
 
 
-def import_lists(f: TextIOWrapper, progress_callback: Optional[Callable[[str, Dict], None]] = None) -> Tuple[bool, str]:
+def import_lists(
+    f: TextIOWrapper, progress_callback: Optional[Callable[[str, Dict], None]] = None
+) -> Tuple[bool, str]:
     """
     Import critic lists from a TSV file with columns:
     publisher, year, type, name, url.
@@ -409,12 +458,19 @@ def import_lists(f: TextIOWrapper, progress_callback: Optional[Callable[[str, Di
 
             # Report progress
             if progress_callback and row_number % 5 == 0:
-                progress_callback("progress", {
-                    "current": row_number,
-                    "total": total_rows,
-                    "list_name": name,
-                    "percentage": int((row_number / total_rows) * 100) if total_rows > 0 else 0,
-                })
+                progress_callback(
+                    "progress",
+                    {
+                        "current": row_number,
+                        "total": total_rows,
+                        "list_name": name,
+                        "percentage": (
+                            int((row_number / total_rows) * 100)
+                            if total_rows > 0
+                            else 0
+                        ),
+                    },
+                )
 
         if progress_callback:
             progress_callback("complete", {"count": count, "updated": updated})
@@ -427,7 +483,9 @@ def import_lists(f: TextIOWrapper, progress_callback: Optional[Callable[[str, Di
         raise
 
 
-def import_listmemberships(f: TextIOWrapper, progress_callback: Optional[Callable[[str, Dict], None]] = None) -> Tuple[bool, str]:
+def import_listmemberships(
+    f: TextIOWrapper, progress_callback: Optional[Callable[[str, Dict], None]] = None
+) -> Tuple[bool, str]:
     """
     Import ranked appearances for each game from a TSV file where each row is a
     game rank and each column contains "list_id:position".
@@ -466,12 +524,19 @@ def import_listmemberships(f: TextIOWrapper, progress_callback: Optional[Callabl
 
             # Report progress
             if progress_callback and row_number % 50 == 0:
-                progress_callback("progress", {
-                    "current": row_number,
-                    "total": total_rows,
-                    "game_rank": line_number + 1,
-                    "percentage": int((row_number / total_rows) * 100) if total_rows > 0 else 0,
-                })
+                progress_callback(
+                    "progress",
+                    {
+                        "current": row_number,
+                        "total": total_rows,
+                        "game_rank": line_number + 1,
+                        "percentage": (
+                            int((row_number / total_rows) * 100)
+                            if total_rows > 0
+                            else 0
+                        ),
+                    },
+                )
 
         created_memberships = models.ListMembership.objects.bulk_create(memberships)
 
@@ -486,7 +551,9 @@ def import_listmemberships(f: TextIOWrapper, progress_callback: Optional[Callabl
         raise
 
 
-def import_games(f: TextIOWrapper, progress_callback: Optional[Callable[[str, Dict], None]] = None) -> Tuple[bool, str]:
+def import_games(
+    f: TextIOWrapper, progress_callback: Optional[Callable[[str, Dict], None]] = None
+) -> Tuple[bool, str]:
     """
     Import games from a TSV file with columns:
     rank, name, year, IGDB id, comma separated platform codes.
@@ -545,12 +612,19 @@ def import_games(f: TextIOWrapper, progress_callback: Optional[Callable[[str, Di
 
             # Report progress
             if progress_callback and row_number % 10 == 0:
-                progress_callback("progress", {
-                    "current": row_number,
-                    "total": total_rows,
-                    "game_name": game_name,
-                    "percentage": int((row_number / total_rows) * 100) if total_rows > 0 else 0,
-                })
+                progress_callback(
+                    "progress",
+                    {
+                        "current": row_number,
+                        "total": total_rows,
+                        "game_name": game_name,
+                        "percentage": (
+                            int((row_number / total_rows) * 100)
+                            if total_rows > 0
+                            else 0
+                        ),
+                    },
+                )
 
         if progress_callback:
             progress_callback("complete", {"count": count, "updated": updated})
@@ -563,7 +637,9 @@ def import_games(f: TextIOWrapper, progress_callback: Optional[Callable[[str, Di
         raise
 
 
-def import_platforms(f: TextIOWrapper, progress_callback: Optional[Callable[[str, Dict], None]] = None) -> Tuple[bool, str]:
+def import_platforms(
+    f: TextIOWrapper, progress_callback: Optional[Callable[[str, Dict], None]] = None
+) -> Tuple[bool, str]:
     """
     Import platform code/name pairs from a TSV file.
 
@@ -607,12 +683,19 @@ def import_platforms(f: TextIOWrapper, progress_callback: Optional[Callable[[str
 
             # Report progress
             if progress_callback and row_number % 10 == 0:
-                progress_callback("progress", {
-                    "current": row_number,
-                    "total": total_rows,
-                    "platform_name": name,
-                    "percentage": int((row_number / total_rows) * 100) if total_rows > 0 else 0,
-                })
+                progress_callback(
+                    "progress",
+                    {
+                        "current": row_number,
+                        "total": total_rows,
+                        "platform_name": name,
+                        "percentage": (
+                            int((row_number / total_rows) * 100)
+                            if total_rows > 0
+                            else 0
+                        ),
+                    },
+                )
 
         if progress_callback:
             progress_callback("complete", {"count": count, "updated": updated})

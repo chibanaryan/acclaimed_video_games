@@ -44,6 +44,23 @@
         font-size: 16px;
     }
 
+    /* Completed step styles */
+    .import-step.completed {
+        opacity: 0.6;
+        border-left-color: #48c774;
+    }
+
+    .import-step.completed::before {
+        content: '✓';
+        background-color: #48c774;
+        font-size: 18px;
+    }
+
+    .import-step.completed h3,
+    .import-step.completed p {
+        color: #a0a0a0;
+    }
+
     .file-input-wrapper {
         margin-bottom: 20px;
     }
@@ -553,7 +570,7 @@
         {% csrf_token %}
 
         <!-- Platforms File -->
-        <div class="import-step" data-step="1">
+        <div class="import-step{% if counts.platforms > 0 %} completed{% endif %}" data-step="1">
             <h3 class="subtitle is-5">Platforms (PlatformDB.txt)</h3>
             <p style="margin-bottom: 10px;">Tab-separated: <code>CODE&lt;tab&gt;Name</code></p>
             <div class="file-input-wrapper">
@@ -577,7 +594,7 @@
         </div>
 
         <!-- Source Lists File -->
-        <div class="import-step" data-step="2">
+        <div class="import-step{% if counts.lists > 0 %} completed{% endif %}" data-step="2">
             <h3 class="subtitle is-5">Source Lists (SourceLists.txt)</h3>
             <p style="margin-bottom: 10px;">Tab-separated: <code>Publisher&lt;tab&gt;Year&lt;tab&gt;Type&lt;tab&gt;Name&lt;tab&gt;URL</code></p>
             <div class="file-input-wrapper">
@@ -601,7 +618,7 @@
         </div>
 
         <!-- Games File -->
-        <div class="import-step" data-step="3">
+        <div class="import-step{% if counts.games > 0 %} completed{% endif %}" data-step="3">
             <h3 class="subtitle is-5">Games (Top1000.txt)</h3>
             <p style="margin-bottom: 10px;">Tab-separated: <code>Rank&lt;tab&gt;Name&lt;tab&gt;Year&lt;tab&gt;IGDB_ID&lt;tab&gt;Platforms</code></p>
             <div class="file-input-wrapper">
@@ -625,7 +642,7 @@
         </div>
 
         <!-- Game Positions File -->
-        <div class="import-step" data-step="4">
+        <div class="import-step{% if counts.memberships > 0 %} completed{% endif %}" data-step="4">
             <h3 class="subtitle is-5">Game Positions (GamePositions.txt)</h3>
             <p style="margin-bottom: 10px;">Tab-separated: <code>ListID:Position&lt;tab&gt;ListID:Position&lt;tab&gt;...</code></p>
             <div class="file-input-wrapper">
@@ -885,7 +902,7 @@
             notification.className = 'notification is-danger'
             notification.innerHTML = `
                 <button class="delete"></button>
-                Connection lost or error occurred during IGDB data fetch.
+                IGDB Import Error: Connection lost or server error. Check that games exist in the database and try again.
             `
             document.body.insertBefore(notification, document.body.firstChild)
 
@@ -905,6 +922,19 @@
         const secs = Math.round(seconds % 60)
         return `${minutes}m ${secs}s`
     }
+
+    // Auto-trigger IGDB fetch after successful batch import (if checkbox was checked)
+    {% if trigger_igdb %}
+    document.addEventListener('DOMContentLoaded', () => {
+        // Small delay to let success message show before starting IGDB fetch
+        setTimeout(() => {
+            const fetchButton = document.getElementById('fetch-igdb-btn')
+            if (fetchButton) {
+                fetchButton.click()
+            }
+        }, 1000)
+    })
+    {% endif %}
 
 </script>
 
