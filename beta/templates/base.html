@@ -58,7 +58,7 @@
             margin: 0;
             font-size: 1em;
             line-height: 1.5;
-            color: #fff; /* Explicit white to match Vue version */
+            color: #ABB1BF; /* Match Vue version exactly: rgb(171, 177, 191) */
         }
         
         header {
@@ -322,6 +322,11 @@
         nav.pagination .navbar-menu {
             flex-grow: initial;
             flex-shrink: initial;
+        }
+
+        /* Pagination link hover - match Cyborg theme blue */
+        .pagination-link:hover:not(.is-current) {
+            color: #2094f3;
         }
 
         /* ListResultsComponent styles - migrated from Vue */
@@ -601,34 +606,34 @@
         }
         
         .desktop-search .dropdown-content {
-            background-color: #131313;
+            background-color: #14161A; /* Match Vue version: rgb(20, 22, 26) */
             border: 1px solid #4a4a4a;
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
             max-height: 400px;
             overflow-y: auto;
-            font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-family: Inter, "SF Pro", "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-size: 1rem;
         }
-        
+
         .desktop-search .dropdown-item {
             color: rgb(235, 236, 240);
             padding: 0.5rem 1rem;
             white-space: normal;
             word-wrap: break-word;
-            font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-            font-size: 1rem;
+            font-family: Inter, "SF Pro", "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 0.875rem; /* Match Vue version: 14px */
         }
-        
+
         .desktop-search .dropdown-item .media-content {
             min-width: 0;
             overflow: hidden;
         }
-        
+
         .desktop-search .dropdown-item .has-text-weight-semibold {
             white-space: normal;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            font-size: 1rem;
+            font-size: 0.875rem; /* Match Vue version: 14px */
         }
         
         .desktop-search .dropdown-item .has-text-weight-light {

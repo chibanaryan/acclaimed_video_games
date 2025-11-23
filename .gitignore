@@ -19,3 +19,4 @@ static/*
 staticfiles/*
 venv/*
 frontend/coverage/*
+.playwright-mcp/

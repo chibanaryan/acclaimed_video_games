@@ -18,14 +18,7 @@
     </label>
     <span class="is-size-6">
         {% for developer in game.developers.all %}
-            {% if developer.developer.slug %}
-                <a href="{% url 'beta:developer-detail' slug=developer.developer.slug %}" class="is-size-6">
-                    {{ developer.name }}
-                </a>
-            {% else %}
-                <span class="is-size-6">{{ developer.name }}</span>
-            {% endif %}
-            {% if not forloop.last %}, {% endif %}
+            {% if developer.developer.slug %}<a href="{% url 'beta:developer-detail' slug=developer.developer.slug %}" class="is-size-6">{{ developer.name }}</a>{% else %}<span class="is-size-6">{{ developer.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}
         {% endfor %}
     </span>
 </div>
@@ -36,9 +29,7 @@
     </label>
     <span class="is-size-6">
         {% for platform in game.platforms.all %}
-            <a href="{% url 'beta:games-search' %}?platforms={{ platform.id }}">
-                {{ platform.code }}
-            </a>{% if not forloop.last %}, {% endif %}
+            <a href="{% url 'beta:games-search' %}?platforms={{ platform.id }}">{{ platform.code }}</a>{% if not forloop.last %}, {% endif %}
         {% endfor %}
     </span>
 </div>
@@ -49,9 +40,7 @@
     </label>
     <span class="is-size-6">
         {% for genre in game.genres.all %}
-            <a href="{% url 'beta:games-search' %}?genres={{ genre.id }}">
-                {{ genre.name }}
-            </a>{% if not forloop.last %}, {% endif %}
+            <a href="{% url 'beta:games-search' %}?genres={{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}
         {% endfor %}
     </span>
 </div>
