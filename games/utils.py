@@ -29,7 +29,8 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
             for f in ["platforms_file", "lists_file", "games_file", "memberships_file"]
         ]
     ):
-        return import_batch(data)
+        success, message, _ = import_batch(data)
+        return (success, message)
 
     # Legacy single-file import
     if data.get("file"):

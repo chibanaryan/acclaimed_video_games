@@ -76,9 +76,97 @@ class ImportViewIntegrationTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 302)
-        # Check session data instead of messages
+        # Check session data instead of messages (line 161)
         self.assertEqual(response.wsgi_request.session.get("import_errors"), ["Failed"])
         mock_import.assert_called_once()
+
+    @mock.patch("games.views.utils.import_data", return_value=(False, "Error message"))
+    def test_form_valid_error_path(self, mock_import):
+        """Test form_valid error path (line 161)."""
+        self.client.login(username="tester", password="pass")
+        response = self.client.post(
+            reverse("import"),
+            {
+                "delete": True,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.wsgi_request.session.get("import_errors"), ["Error message"]
+        )
+
+    @mock.patch("games.views.utils.import_batch", return_value=(True, "Done", True))
+    def test_successful_import_with_igdb_trigger(self, mock_import):
+        """Test that successful import with IGDB checkbox sets trigger flag."""
+        self.client.login(username="tester", password="pass")
+        fake_file = SimpleUploadedFile("PlatformDB.txt", b"PC\tPersonal Computer")
+        response = self.client.post(
+            reverse("import"),
+            {
+                "platforms_file": fake_file,
+                "igdb": True,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.wsgi_request.session.get("import_success"), "Done")
+        self.assertTrue(response.wsgi_request.session.get("trigger_igdb"))
+        mock_import.assert_called_once()
+
+    def test_get_context_data_includes_counts(self):
+        """Test that get_context_data includes database counts."""
+        self.client.login(username="tester", password="pass")
+        response = self.client.get(reverse("import"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("counts", response.context)
+        self.assertIn("igdb_counts", response.context)
+        self.assertIn("platforms", response.context["counts"])
+        self.assertIn("games", response.context["counts"])
+
+    def test_get_context_data_with_session_data(self):
+        """Test that get_context_data retrieves session messages."""
+        self.client.login(username="tester", password="pass")
+        session = self.client.session
+        session["import_success"] = "Test success"
+        session["import_errors"] = ["Test error"]
+        session["trigger_igdb"] = True
+        session.save()
+
+        response = self.client.get(reverse("import"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["import_success_message"], "Test success")
+        self.assertEqual(response.context["import_errors"], ["Test error"])
+        self.assertTrue(response.context["trigger_igdb"])
+
+        # Session data should be consumed (popped)
+        self.client.session.save()
+        response2 = self.client.get(reverse("import"))
+        self.assertIsNone(response2.context.get("import_success_message"))
+        self.assertIsNone(response2.context.get("import_errors"))
+        self.assertFalse(response2.context.get("trigger_igdb", False))
+
+
+class IGDBProgressViewTests(TestCase):
+    """Tests for IGDBProgressView."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="tester", password="pass")
+        self.client = Client()
+
+    def test_igdb_progress_view_get(self):
+        """Test IGDBProgressView.get() returns streaming response."""
+        self.client.login(username="tester", password="pass")
+
+        # Mock the import_igdb_with_progress to return a simple generator
+        with mock.patch("games.views.utils.import_igdb_with_progress") as mock_progress:
+            mock_progress.return_value = iter(["data: test\n\n"])
+
+            response = self.client.get("/import/igdb-progress/")
+
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response["content-type"], "text/event-stream")
 
 
 class SPAWithPrerenderedViewTests(TestCase):
@@ -263,6 +351,33 @@ class SPAWithPrerenderedViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode(), "<html>fallback</html>")
+
+    @patch("games.views.settings")
+    @patch("games.views.Path")
+    def test_ioerror_on_fallback_returns_404(self, mock_path_class, mock_settings):
+        """Test IOError when reading fallback file returns 404 (lines 56-57)."""
+        request = self.factory.get("/test")
+
+        mock_settings.BASE_DIR = Path("/tmp/test")
+        mock_dist_path = MagicMock(spec=Path, unsafe=True)
+        mock_file = MagicMock(spec=Path, unsafe=True)
+        mock_file.exists.return_value = False  # Test file doesn't exist
+        mock_index_file = MagicMock(spec=Path, unsafe=True)
+        mock_index_file.exists.return_value = True  # Fallback exists
+        mock_dist_path.__truediv__.side_effect = lambda x: (
+            mock_file if x == "test" else mock_index_file
+        )
+        mock_file.__truediv__.return_value = mock_file
+        mock_path_class.return_value = mock_dist_path
+
+        # Fallback open raises IOError - exception handler catches it (lines 56-57)
+        def open_side_effect(path, *args, **kwargs):
+            raise IOError("Permission denied")
+
+        with patch("builtins.open", side_effect=open_side_effect):
+            # Should handle IOError gracefully and return 404
+            response = self.view.get(request)
+            self.assertEqual(response.status_code, 404)
 
 
 class PostListViewTests(TestCase):

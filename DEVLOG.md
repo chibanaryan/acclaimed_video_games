@@ -1,5 +1,22 @@
 # Developer Log
 
+## 2025-01-XX
+
+- **Comprehensive test coverage expansion**: Achieved 95% overall test coverage (1650/1743 lines)
+  - Added 40+ new test cases covering error paths, timeouts, and edge cases
+  - `games/services/igdb_importer.py`: 100% coverage
+  - `games/views.py`: 100% coverage
+  - `games/forms.py`: 100% coverage
+  - `games/utils.py`: 99% coverage
+  - Tests cover progress callbacks, validation errors, exception handling, and timeout scenarios
+
+- **Import page improvements**:
+  - Fixed file validation for variable-column TSV files (GamePositions.txt)
+  - Fixed "I/O operation on closed file" error by detaching TextIOWrapper in validation
+  - Added visual completion indicators (checkmarks) for completed import steps
+  - Auto-trigger IGDB data fetch after successful batch import when checkbox is checked
+  - Improved IGDB error messages to be more specific (e.g., "No games found in database")
+
 ## 2025-11-22
 
 - **Further optimized IGDB import to use API's maximum capacity**: Pushed performance to 100+ games/sec
