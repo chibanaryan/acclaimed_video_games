@@ -41,9 +41,14 @@
         
         html {
             background-color: #000;
+            height: 100%;
         }
-        
+
         body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
             font-size: 1em;
             line-height: 1.5;
             color: #fff; /* Explicit white to match Vue version */
@@ -154,14 +159,14 @@
         }
         
         section {
-            min-height: 800px;
+            flex: 1 0 auto;
         }
-        
+
         footer {
-            min-height: 15em;
+            flex-shrink: 0;
             background-color: #444;
             margin-top: 2em;
-            padding-top: 2em;
+            padding: 2em 0;
             text-align: center;
             color: #8b8b8b;
         }

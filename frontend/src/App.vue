@@ -80,25 +80,32 @@ export default {
 </script>
 
 <style lang="sass">
-html 
+html
     background-color: #000
+    height: 100%
 
-header 
+body
+    display: flex
+    flex-direction: column
+    min-height: 100vh
+    margin: 0
+
+header
     border-bottom: 2px solid
     margin-bottom: 1em
 
-section 
-    min-height: 800px
+section
+    flex: 1 0 auto
 
-footer 
-    min-height: 15em
+footer
+    flex-shrink: 0
     background-color: #444
     margin-top: 2em
-    padding-top: 2em
+    padding: 2em 0
     text-align: center
     color: #8b8b8b
 
-    a 
+    a
         color: #8b8b8b
 
 dl.detail 
