@@ -1,6 +1,7 @@
 import logging
 import threading
 import time
+from collections import OrderedDict
 from typing import Optional, Dict, Any
 
 import requests
@@ -44,9 +45,13 @@ class IgbdApi:
         self.use_pro_tier: bool = use_pro_tier
 
         self.headers: Dict[str, str] = {}
-        self.company_cache: Dict[int, Dict[str, Any]] = {}
-        self.game_cache: Dict[int, Dict[str, Any]] = {}
-        self.genre_cache: Dict[int, str] = {}
+        # LRU caches with size limits to prevent memory leaks
+        self.company_cache: OrderedDict[int, Dict[str, Any]] = OrderedDict()
+        self.game_cache: OrderedDict[int, Dict[str, Any]] = OrderedDict()
+        self.genre_cache: OrderedDict[int, str] = OrderedDict()
+        self.company_cache_max_size: int = 1000
+        self.game_cache_max_size: int = 1000
+        self.genre_cache_max_size: int = 500
         self.release_date_statuses: Dict[str, int] = {}
         self.release_dates: Dict[int, Any] = {}
         self.themes: Dict[int, str] = {}
@@ -71,6 +76,81 @@ class IgbdApi:
         self._get_auth_token()
         self._get_release_statuses()
         self._get_themes()
+
+    def _get_from_company_cache(self, company_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get company from cache with LRU update (moves to end).
+        Thread-safe.
+        """
+        if company_id in self.company_cache:
+            # Move to end (most recently used)
+            value = self.company_cache.pop(company_id)
+            self.company_cache[company_id] = value
+            return value
+        return None
+
+    def _set_in_company_cache(self, company_id: int, value: Dict[str, Any]) -> None:
+        """
+        Set company in cache with LRU eviction if at max size.
+        Thread-safe.
+        """
+        if company_id in self.company_cache:
+            # Update existing: move to end
+            self.company_cache.pop(company_id)
+        elif len(self.company_cache) >= self.company_cache_max_size:
+            # Evict oldest (first item)
+            self.company_cache.popitem(last=False)
+        self.company_cache[company_id] = value
+
+    def _get_from_game_cache(self, game_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get game from cache with LRU update (moves to end).
+        Thread-safe.
+        """
+        if game_id in self.game_cache:
+            # Move to end (most recently used)
+            value = self.game_cache.pop(game_id)
+            self.game_cache[game_id] = value
+            return value
+        return None
+
+    def _set_in_game_cache(self, game_id: int, value: Dict[str, Any]) -> None:
+        """
+        Set game in cache with LRU eviction if at max size.
+        Thread-safe.
+        """
+        if game_id in self.game_cache:
+            # Update existing: move to end
+            self.game_cache.pop(game_id)
+        elif len(self.game_cache) >= self.game_cache_max_size:
+            # Evict oldest (first item)
+            self.game_cache.popitem(last=False)
+        self.game_cache[game_id] = value
+
+    def _get_from_genre_cache(self, genre_id: int) -> Optional[str]:
+        """
+        Get genre from cache with LRU update (moves to end).
+        Thread-safe.
+        """
+        if genre_id in self.genre_cache:
+            # Move to end (most recently used)
+            value = self.genre_cache.pop(genre_id)
+            self.genre_cache[genre_id] = value
+            return value
+        return None
+
+    def _set_in_genre_cache(self, genre_id: int, value: str) -> None:
+        """
+        Set genre in cache with LRU eviction if at max size.
+        Thread-safe.
+        """
+        if genre_id in self.genre_cache:
+            # Update existing: move to end
+            self.genre_cache.pop(genre_id)
+        elif len(self.genre_cache) >= self.genre_cache_max_size:
+            # Evict oldest (first item)
+            self.genre_cache.popitem(last=False)
+        self.genre_cache[genre_id] = value
 
     def _get_endpoint_url(self, endpoint: str) -> str:
         """
@@ -304,8 +384,9 @@ class IgbdApi:
         """
         if cache_results:
             with self.cache_lock:
-                if company_id in self.company_cache:
-                    return self.company_cache[company_id]
+                cached = self._get_from_company_cache(company_id)
+                if cached is not None:
+                    return cached
 
         try:
             res = self._make_request_with_retry(
@@ -328,7 +409,7 @@ class IgbdApi:
 
         if cache_results:
             with self.cache_lock:
-                self.company_cache[company_id] = results[0]
+                self._set_in_company_cache(company_id, results[0])
         return results[0]
 
     def _get_genre_by_id(
@@ -348,8 +429,9 @@ class IgbdApi:
         """
         if cache_results:
             with self.cache_lock:
-                if genre_id in self.genre_cache:
-                    return self.genre_cache[genre_id]
+                cached = self._get_from_genre_cache(genre_id)
+                if cached is not None:
+                    return cached
 
         try:
             res = self._make_request_with_retry(
@@ -371,7 +453,7 @@ class IgbdApi:
         genre_name = results[0]["name"]
         if cache_results:
             with self.cache_lock:
-                self.genre_cache[genre_id] = genre_name
+                self._set_in_genre_cache(genre_id, genre_name)
         return genre_name
 
     def get_companies_by_ids(
@@ -401,8 +483,9 @@ class IgbdApi:
         for company_id in company_ids:
             if cache_results:
                 with self.cache_lock:
-                    if company_id in self.company_cache:
-                        companies_dict[company_id] = self.company_cache[company_id]
+                    cached = self._get_from_company_cache(company_id)
+                    if cached is not None:
+                        companies_dict[company_id] = cached
                         continue
             ids_to_fetch.append(company_id)
 
@@ -430,7 +513,7 @@ class IgbdApi:
             companies_dict[company_id] = company_data
             if cache_results:
                 with self.cache_lock:
-                    self.company_cache[company_id] = company_data
+                    self._set_in_company_cache(company_id, company_data)
 
         return companies_dict
 
@@ -469,8 +552,9 @@ class IgbdApi:
         for game_id in game_ids:
             if cache_results:
                 with self.cache_lock:
-                    if game_id in self.game_cache:
-                        games_dict[game_id] = self.game_cache[game_id]
+                    cached = self._get_from_game_cache(game_id)
+                    if cached is not None:
+                        games_dict[game_id] = cached
                         continue
             ids_to_fetch.append(game_id)
 
@@ -598,7 +682,7 @@ class IgbdApi:
             games_dict[game_id] = game_data
             if cache_results:
                 with self.cache_lock:
-                    self.game_cache[game_id] = game_data
+                    self._set_in_game_cache(game_id, game_data)
 
         return games_dict
 
@@ -631,8 +715,9 @@ class IgbdApi:
         # Check cache first (thread-safe)
         if cache_results:
             with self.cache_lock:
-                if game_id in self.game_cache:
-                    return self.game_cache[game_id]
+                cached = self._get_from_game_cache(game_id)
+                if cached is not None:
+                    return cached
 
         # Get game data from API with field expansion for cover and genres
         res = self._make_request_with_retry(
@@ -747,7 +832,7 @@ class IgbdApi:
 
         if cache_results:
             with self.cache_lock:
-                self.game_cache[game_id] = game_data
+                self._set_in_game_cache(game_id, game_data)
 
         return game_data
 

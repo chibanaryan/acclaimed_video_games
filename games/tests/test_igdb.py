@@ -23,11 +23,16 @@ class DummyResponse:
 class IgbdApiTests(SimpleTestCase):
 
     def setUp(self):
+        from collections import OrderedDict
+
         self.api = igdb.IgbdApi.__new__(igdb.IgbdApi)
         self.api.headers = {}
-        self.api.company_cache = {}
-        self.api.game_cache = {}
-        self.api.genre_cache = {}
+        self.api.company_cache = OrderedDict()
+        self.api.game_cache = OrderedDict()
+        self.api.genre_cache = OrderedDict()
+        self.api.company_cache_max_size = 1000
+        self.api.game_cache_max_size = 1000
+        self.api.genre_cache_max_size = 500
         self.api.release_date_statuses = {}
         self.api.release_dates = {}
         self.api.themes = {1: "Action"}
@@ -585,9 +590,77 @@ class IgbdApiTests(SimpleTestCase):
 
     def test_get_games_info_by_ids_uses_cache(self):
         """Test that get_games_info_by_ids uses cached data when available."""
+        from collections import OrderedDict
+
         cached_data = {"slug": "cached", "cover": "cached.jpg"}
-        self.api.game_cache = {1: cached_data}
+        self.api.game_cache = OrderedDict({1: cached_data})
 
         result = self.api.get_games_info_by_ids([1], cache_results=True)
 
         self.assertEqual(result[1]["slug"], "cached")
+
+    def test_company_cache_lru_eviction(self):
+        """Test that company cache evicts oldest entries when max size reached."""
+        from collections import OrderedDict
+
+        # Fill cache to max size
+        self.api.company_cache = OrderedDict(
+            {i: {"id": i, "name": f"Company {i}"} for i in range(1000)}
+        )
+
+        # Add one more - should evict the oldest (0)
+        with self.api.cache_lock:
+            self.api._set_in_company_cache(1000, {"id": 1000, "name": "Company 1000"})
+
+        self.assertEqual(len(self.api.company_cache), 1000)
+        self.assertNotIn(0, self.api.company_cache)
+        self.assertIn(1000, self.api.company_cache)
+
+    def test_game_cache_lru_eviction(self):
+        """Test that game cache evicts oldest entries when max size reached."""
+        from collections import OrderedDict
+
+        # Fill cache to max size
+        self.api.game_cache = OrderedDict(
+            {i: {"id": i, "slug": f"game-{i}"} for i in range(1000)}
+        )
+
+        # Add one more - should evict the oldest (0)
+        with self.api.cache_lock:
+            self.api._set_in_game_cache(1000, {"id": 1000, "slug": "game-1000"})
+
+        self.assertEqual(len(self.api.game_cache), 1000)
+        self.assertNotIn(0, self.api.game_cache)
+        self.assertIn(1000, self.api.game_cache)
+
+    def test_genre_cache_lru_eviction(self):
+        """Test that genre cache evicts oldest entries when max size reached."""
+        from collections import OrderedDict
+
+        # Fill cache to max size
+        self.api.genre_cache = OrderedDict({i: f"Genre {i}" for i in range(500)})
+
+        # Add one more - should evict the oldest (0)
+        with self.api.cache_lock:
+            self.api._set_in_genre_cache(500, "Genre 500")
+
+        self.assertEqual(len(self.api.genre_cache), 500)
+        self.assertNotIn(0, self.api.genre_cache)
+        self.assertIn(500, self.api.genre_cache)
+
+    def test_cache_lru_access_moves_to_end(self):
+        """Test that accessing cached items moves them to end (most recently used)."""
+        from collections import OrderedDict
+
+        # Set up cache with items
+        self.api.company_cache = OrderedDict(
+            {1: {"id": 1, "name": "Company 1"}, 2: {"id": 2, "name": "Company 2"}}
+        )
+
+        # Access first item - should move to end
+        with self.api.cache_lock:
+            result = self.api._get_from_company_cache(1)
+
+        self.assertIsNotNone(result)
+        # Check that item 1 is now at the end (last item in OrderedDict)
+        self.assertEqual(list(self.api.company_cache.keys())[-1], 1)

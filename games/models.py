@@ -10,8 +10,6 @@ from . import constants, igdb
 
 logger = logging.getLogger(__name__)
 
-api = igdb.get_api()
-
 
 class Snippet(models.Model):
     """A reusable piece of text"""
