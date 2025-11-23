@@ -3,7 +3,7 @@
         <div class="column">
             <img :src="logoLarge" />
             <div class="is-size-4">
-                <snippet-component slug="front-page"></snippet-component>
+                {{ tagline }}
             </div>
             <h3 class="title is-size-4 mt-5">Current Top {{ games.length }}</h3>
             <div class="top-ten is-clearfix">
@@ -51,10 +51,9 @@ import moment from 'moment';
 import Game from '../models/Game';
 import Post from '../models/Post';
 import PostItem from './PostItem';
-import SnippetComponent from './SnippetComponent';
 
 export default {
-    components: { SnippetComponent, PostItem },
+    components: { PostItem },
     data() {
         return {
             posts: [],
@@ -92,6 +91,11 @@ export default {
     computed: {
         logoLarge() {
             return IMAGES.LOGO_LARGE;
+        },
+        tagline() {
+            const lists = this.$store.state.meta?.lists?.total_count || 700;
+            const pubs = this.$store.state.meta?.publications?.total_count || 100;
+            return `The most critically acclaimed video games of all time, based on ${lists} critic lists from ${pubs} publications`;
         }
     }
 }

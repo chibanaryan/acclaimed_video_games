@@ -9,7 +9,7 @@
     <div class="column">
         <img src="{% static 'avg_logo.png' %}" alt="Acclaimed Games">
         <div class="is-size-4 snippet-text">
-            {% include 'includes/_snippet.html' with snippet=snippet %}
+            The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
         </div>
         <h3 class="title is-size-4 mt-5">Current Top {{ games|length }}</h3>
         <div class="top-ten is-clearfix">

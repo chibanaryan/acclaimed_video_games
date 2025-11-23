@@ -196,6 +196,7 @@ class MetaView(APIView):
 
         data["lists"] = {
             "years": list_year_counts,
+            "total_count": models.List.objects.count(),
         }
 
         # Games
@@ -235,6 +236,11 @@ class MetaView(APIView):
             "years": all_years_with_counts,
             "decades": decades_with_counts,
             "last_update": last_update,
+        }
+
+        # Publications
+        data["publications"] = {
+            "total_count": models.Publication.objects.count(),
         }
 
         return Response(data)

@@ -115,7 +115,26 @@ class ApiSmokeTests(TestCase):
     def test_meta_endpoint(self):
         resp = self.client.get("/api/meta/")
         self.assertEqual(resp.status_code, 200)
-        self.assertIn("games", resp.json())
+        data = resp.json()
+
+        # Check games data structure
+        self.assertIn("games", data)
+        self.assertIn("years", data["games"])
+        self.assertIn("decades", data["games"])
+        self.assertIn("last_update", data["games"])
+
+        # Check lists data structure with total_count
+        self.assertIn("lists", data)
+        self.assertIn("years", data["lists"])
+        self.assertIn("total_count", data["lists"])
+        self.assertIsInstance(data["lists"]["total_count"], int)
+        self.assertGreaterEqual(data["lists"]["total_count"], 1)
+
+        # Check publications data structure with total_count
+        self.assertIn("publications", data)
+        self.assertIn("total_count", data["publications"])
+        self.assertIsInstance(data["publications"]["total_count"], int)
+        self.assertGreaterEqual(data["publications"]["total_count"], 1)
 
     def test_posts_endpoint(self):
         resp = self.client.get("/api/posts/")

@@ -19,11 +19,9 @@ class HomePageView(TemplateView):
             "genres",
         ).order_by("rank")[:10]
 
-        # Fetch front-page snippet
-        try:
-            context["snippet"] = models.Snippet.objects.get(slug="front-page")
-        except models.Snippet.DoesNotExist:
-            context["snippet"] = None
+        # Fetch counts for dynamic tagline
+        context["list_count"] = models.List.objects.count()
+        context["publication_count"] = models.Publication.objects.count()
 
         # Fetch meta data for last update
         # Get last_full_update from SiteMetadata

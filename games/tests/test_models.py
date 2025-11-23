@@ -509,3 +509,22 @@ class ModelHelpersTests(TestCase):
         post = models.Post.objects.create(title="", text="**Hello**", active=True)
         self.assertIn("Hello", str(post))
         self.assertIn("<strong>Hello</strong>", post.text_rendered)
+
+    def test_game_decade_property(self):
+        # Test decade property with year_of_release
+        game = models.Game.objects.create(
+            name="Test", rank=1, igdb_id=100, year_of_release=1995
+        )
+        self.assertEqual(game.decade, 1990)
+
+        # Test with different decade
+        game2 = models.Game.objects.create(
+            name="Test2", rank=2, igdb_id=101, year_of_release=2005
+        )
+        self.assertEqual(game2.decade, 2000)
+
+        # Test decade property without year_of_release
+        game3 = models.Game.objects.create(
+            name="Test3", rank=3, igdb_id=102, year_of_release=None
+        )
+        self.assertIsNone(game3.decade)

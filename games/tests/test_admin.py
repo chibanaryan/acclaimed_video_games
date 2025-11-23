@@ -29,3 +29,31 @@ class GameAdminTests(TestCase):
         game.genres.add(genre)
         value = self.admin._genres(game)
         self.assertEqual(value, "Action")
+
+
+class SiteMetadataAdminTests(TestCase):
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.SiteMetadataAdmin(models.SiteMetadata, self.site)
+
+    def test_has_add_permission_allows_when_none_exists(self):
+        # Should allow adding when no SiteMetadata exists
+        result = self.admin.has_add_permission(request=None)
+        self.assertTrue(result)
+
+    def test_has_add_permission_blocks_when_exists(self):
+        # Create a SiteMetadata instance
+        models.SiteMetadata.get_instance()
+        # Should block adding when SiteMetadata already exists
+        result = self.admin.has_add_permission(request=None)
+        self.assertFalse(result)
+
+    def test_has_delete_permission_always_false(self):
+        # Should never allow deletion
+        result = self.admin.has_delete_permission(request=None)
+        self.assertFalse(result)
+        # Even with an object specified
+        metadata = models.SiteMetadata.get_instance()
+        result = self.admin.has_delete_permission(request=None, obj=metadata)
+        self.assertFalse(result)
