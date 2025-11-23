@@ -406,6 +406,12 @@
                     submitBtn.disabled = true
                     submitBtn.textContent = '⏳ Importing...'
                 }
+                // Handle seed data button loading state
+                let seedBtn = form.querySelector('#seed-data-btn')
+                if (seedBtn) {
+                    seedBtn.disabled = true
+                    seedBtn.textContent = '⏳ Loading Test Data...'
+                }
             })
         }
     })
@@ -497,6 +503,11 @@
             <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.developers }}</div>
         </div>
 
+        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
+            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Genres</div>
+            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.genres }}</div>
+        </div>
+
         <div class="igdb-status-card">
             <div class="label">IGDB Data Status</div>
             <div class="value">{{ igdb_counts.with_igdb }}/{{ igdb_counts.total }}</div>
@@ -520,6 +531,16 @@
                 🗑️ Delete All Data
             </button>
         </form>
+
+        {% if debug %}
+        <form method="POST" action="." style="margin: 0;" id="seed-data-form">
+            {% csrf_token %}
+            <input type="hidden" name="seed_test_data" value="true">
+            <button class="button is-success" id="seed-data-btn" title="Development only - loads bundled test files from acclaimedgames/test_input_files/">
+                📦 Load Test Data (Dev)
+            </button>
+        </form>
+        {% endif %}
 
         <button id="fetch-igdb-btn" class="button is-info">
             🔄 Fetch IGDB Data

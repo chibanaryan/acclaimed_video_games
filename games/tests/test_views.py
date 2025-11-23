@@ -146,6 +146,54 @@ class ImportViewIntegrationTests(TestCase):
         self.assertIsNone(response2.context.get("import_errors"))
         self.assertFalse(response2.context.get("trigger_igdb", False))
 
+    @mock.patch("games.views.utils.import_batch", return_value=(True, "Loaded", False))
+    @mock.patch("builtins.open", new_callable=mock_open, read_data=b"test data")
+    @mock.patch("games.views.Path")
+    def test_seed_test_data_success(self, mock_path, mock_file, mock_import):
+        """Test seed_test_data loads bundled test files successfully."""
+        self.client.login(username="tester", password="pass")
+
+        # Mock Path to return mock file objects
+        mock_path_obj = MagicMock()
+        mock_path.return_value = mock_path_obj
+        mock_path_obj.__truediv__ = lambda self, other: mock_path_obj
+
+        response = self.client.post(
+            reverse("import"),
+            {
+                "seed_test_data": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            "Loaded bundled test data",
+            response.wsgi_request.session.get("import_success"),
+        )
+        mock_import.assert_called_once()
+
+    @mock.patch("builtins.open", side_effect=FileNotFoundError)
+    @mock.patch("games.views.Path")
+    def test_seed_test_data_file_not_found(self, mock_path, mock_file):
+        """Test seed_test_data handles missing test files."""
+        self.client.login(username="tester", password="pass")
+
+        mock_path_obj = MagicMock()
+        mock_path.return_value = mock_path_obj
+        mock_path_obj.__truediv__ = lambda self, other: mock_path_obj
+
+        response = self.client.post(
+            reverse("import"),
+            {
+                "seed_test_data": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        errors = response.wsgi_request.session.get("import_errors")
+        self.assertIsNotNone(errors)
+        self.assertIn("test_input_files", errors[0])
+
 
 class IGDBProgressViewTests(TestCase):
     """Tests for IGDBProgressView."""

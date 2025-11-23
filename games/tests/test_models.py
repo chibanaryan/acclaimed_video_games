@@ -44,11 +44,11 @@ class RankingUtilsTests(TestCase):
         self.assertEqual(g3.year_rank, 1)  # Only game in 1995
         self.assertEqual(g4.year_rank, 1)  # Only game in 1992
 
-        # Check decade ranks (1990s decade, ordered by rank)
+        # Check decade ranks (1990s decade, ordered by global rank)
         self.assertEqual(g1.decade_rank, 1)  # Rank 1 overall
         self.assertEqual(g2.decade_rank, 2)  # Rank 2 overall
-        self.assertEqual(g3.decade_rank, 4)  # Rank 3 overall (but 4th in decade)
-        self.assertEqual(g4.decade_rank, 3)  # Rank 5 overall (but 3rd in decade)
+        self.assertEqual(g3.decade_rank, 3)  # Rank 3 overall (3rd in decade)
+        self.assertEqual(g4.decade_rank, 4)  # Rank 5 overall (4th in decade)
 
     def test_update_year_decade_ranks_empty_database(self):
         """Test that update_year_decade_ranks() handles empty database."""

@@ -34,6 +34,13 @@ class ImportForm(forms.Form):
         required=False,
         label="Fetch IGDB data after import (cover art, descriptions, etc.)",
     )
+    seed_test_data = forms.BooleanField(
+        required=False,
+        label=(
+            "Load bundled test data "
+            "(PlatformDB, SourceLists, Top1000, GamePositions)"
+        ),
+    )
 
     def _validate_tsv_file(self, file_obj, expected_columns):
         """
@@ -144,8 +151,12 @@ class ImportForm(forms.Form):
         """Validate that at least one file is provided for batch imports."""
         cleaned_data = super().clean()
 
-        # Special operations (delete/igdb) don't require files
-        if cleaned_data.get("delete") or cleaned_data.get("igdb"):
+        # Special operations (delete/igdb/seed_test_data) don't require files
+        if (
+            cleaned_data.get("delete")
+            or cleaned_data.get("igdb")
+            or cleaned_data.get("seed_test_data")
+        ):
             return cleaned_data
 
         files = [

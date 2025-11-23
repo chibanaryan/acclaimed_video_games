@@ -6,6 +6,10 @@
 - Fixed "Last Updated" to show date only and update only on Games file import
 - Optimized server-side memory usage (50-90% reduction for large datasets)
 - Fixed IGDB import progress bar bug (queryset filtering issue causing Zeno's paradox)
+- Added development-only "Load Test Data" button for quick database seeding
+- Fixed Game Positions duplicating on re-import (now clears before importing)
+- Fixed decade rank calculation bug (SQLite was ordering by year then rank instead of global rank)
+- Enhanced "Delete All Data" to include Genres and reset ID sequences on both PostgreSQL and SQLite
 
 ## 2025-11-22
 

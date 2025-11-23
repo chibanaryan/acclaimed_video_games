@@ -422,6 +422,7 @@ def delete_existing_data() -> Tuple[bool, str]:
         models.Developer,
         models.DeveloperAlias,
         models.Game,
+        models.Genre,
     ]
 
     with transaction.atomic():
@@ -439,6 +440,14 @@ def delete_existing_data() -> Tuple[bool, str]:
                         f"{model._meta.db_table}_id_seq"
                     )
                     cursor.execute(f"ALTER SEQUENCE {table_name} RESTART WITH 1;")
+        elif connection.vendor == "sqlite":
+            # SQLite uses sqlite_sequence table to track autoincrement values
+            with connection.cursor() as cursor:
+                for model in models_to_delete:
+                    table_name = model._meta.db_table
+                    cursor.execute(
+                        "DELETE FROM sqlite_sequence WHERE name = %s", [table_name]
+                    )
 
     return (True, f"{total} objects deleted")
 
@@ -528,10 +537,15 @@ def import_listmemberships(
     Import ranked appearances for each game from a TSV file where each row is a
     game rank and each column contains "list_id:position".
 
+    Deletes all existing ListMembership records before importing to avoid duplicates.
+
     Args:
         f: File object to read from
         progress_callback: Optional callback for progress updates
     """
+    # Delete existing memberships to avoid duplicates on re-import
+    models.ListMembership.objects.all().delete()
+
     list_map = {x.order: x for x in models.List.objects.all()}
     memberships = []
     row_number = 0
@@ -874,15 +888,21 @@ def update_year_decade_ranks() -> Tuple[int, int]:
         chunk_size = 1000
         total_games = models.Game.objects.count()
 
+        # First pass: collect games by year (for year_rank)
         for offset in range(0, total_games, chunk_size):
             chunk = models.Game.objects.order_by("year_of_release", "rank")[
                 offset : offset + chunk_size
             ]
             for game in chunk:
                 year_games[game.year_of_release].append(game.id)
+                years.add(game.year_of_release)
+
+        # Second pass: collect games by decade ordered by global rank
+        for offset in range(0, total_games, chunk_size):
+            chunk = models.Game.objects.order_by("rank")[offset : offset + chunk_size]
+            for game in chunk:
                 decade = year_to_decade(game.year_of_release)
                 decade_games[decade].append(game.id)
-                years.add(game.year_of_release)
 
         # Bulk update year ranks
         games_updated = 0

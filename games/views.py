@@ -100,6 +100,7 @@ class ImportView(LoginRequiredMixin, FormView):
             "games": total_games,
             "memberships": models.ListMembership.objects.count(),
             "developers": models.Developer.objects.count(),
+            "genres": models.Genre.objects.count(),
         }
         context["igdb_counts"] = {
             "total": total_games,
@@ -123,6 +124,49 @@ class ImportView(LoginRequiredMixin, FormView):
     def form_valid(self, form: Form) -> HttpResponse:
         """Process the import form and handle file uploads."""
         import_data = form.cleaned_data
+
+        # Quick action: load bundled test data files from the repo
+        if import_data.get("seed_test_data"):
+            seed_dir = Path(settings.BASE_DIR) / "acclaimedgames" / "test_input_files"
+            file_map = {
+                "platforms_file": "PlatformDB.txt",
+                "lists_file": "SourceLists.txt",
+                "games_file": "Top1000.txt",
+                "memberships_file": "GamePositions.txt",
+            }
+
+            opened_files = {}
+            try:
+                for field, filename in file_map.items():
+                    path = seed_dir / filename
+                    opened_files[field] = open(path, "rb")
+
+                seed_payload = {**import_data, **opened_files}
+                res, message, trigger_igdb = utils.import_batch(seed_payload)
+            except FileNotFoundError:
+                res, message, trigger_igdb = (
+                    False,
+                    (
+                        "Bundled test data files not found in "
+                        "acclaimedgames/test_input_files."
+                    ),
+                    False,
+                )
+            finally:
+                for fh in opened_files.values():
+                    fh.close()
+
+            if res:
+                self.request.session["import_success"] = (
+                    "Loaded bundled test data.\n" + message
+                )
+                if trigger_igdb:
+                    self.request.session["trigger_igdb"] = True
+            else:
+                self.request.session["import_errors"] = [message]
+
+            self.request.session.modified = True
+            return super().form_valid(form)
 
         # Check if this is a batch file import (not delete/igdb operations)
         has_batch_files = any(
