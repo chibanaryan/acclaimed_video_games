@@ -4,6 +4,8 @@
 
 - Fixed memory leaks in Vue components and import page (7 leaks total)
 - Fixed "Last Updated" to show date only and update only on Games file import
+- Optimized server-side memory usage (50-90% reduction for large datasets)
+- Fixed IGDB import progress bar bug (queryset filtering issue causing Zeno's paradox)
 
 ## 2025-11-22
 

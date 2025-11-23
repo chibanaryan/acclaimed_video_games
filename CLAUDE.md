@@ -11,11 +11,12 @@ Acclaimed Games is a video game ranking and aggregation website that combines da
 **When the user asks to deploy, commit and push, or mentions "production/heroku":**
 
 Always follow the **Complete Deployment Workflow** documented in the Deployment section below. This includes:
-1. Building the frontend
-2. Collecting static files
-3. Committing all changes
-4. Pushing to main
-5. Deploying to Heroku
+1. Updating DEVLOG.md (if changes warrant documentation - see DEVLOG guidelines below)
+2. Building the frontend
+3. Collecting static files
+4. Committing all changes
+5. Pushing to main
+6. Deploying to Heroku
 
 Do not skip any steps. The user should not have to remind you to build the frontend or collect static files.
 
@@ -142,6 +143,10 @@ The project is deployed to Heroku.
 When making changes that need to be deployed to production, follow this complete workflow:
 
 ```bash
+# 0. Update DEVLOG.md if changes warrant documentation (see DEVLOG section)
+#    Only if: bug fixes, features, optimizations, or breaking changes
+#    Keep to 2-4 bullet points max per day
+
 # 1. Build the frontend (requires Django dev server running)
 cd frontend && npm run build && cd ..
 
@@ -161,16 +166,15 @@ git push origin main
 git push heroku main
 ```
 
-**One-liner for convenience:**
-```bash
-cd frontend && npm run build && cd .. && python manage.py collectstatic --noinput && git add -A && git commit -m "Deploy: [description]" && git push origin main && git push heroku main
-```
-
 **Important Notes:**
+- Update DEVLOG.md for significant changes (see Development Log section below for guidelines)
 - The Django development server must be running during `npm run build` for SSG pre-rendering
 - The `dist` folder is committed to git for Heroku deployment
 - Pre-commit hooks will run tests and enforce code quality before allowing the commit
-- If pre-commit hooks fail, fix the issues before trying to commit again
+- **If pre-commit hooks fail**: Fix issues immediately, do NOT skip or work around them
+  - Coverage failures: Add tests or proper exclusions (not workarounds)
+  - Linting failures: Fix the code to comply with standards
+  - Test failures: Fix the failing tests or broken code
 
 ## Testing and Code Quality
 
