@@ -26,9 +26,9 @@ class HomePageView(TemplateView):
             context["snippet"] = None
 
         # Fetch meta data for last update
-        # This is the max modified date from all games
-        last_update = models.Game.objects.aggregate(Max("modified"))["modified__max"]
-        context["last_update"] = last_update
+        # Get last_full_update from SiteMetadata
+        metadata = models.SiteMetadata.get_instance()
+        context["last_update"] = metadata.last_full_update
 
         return context
 

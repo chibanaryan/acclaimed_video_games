@@ -50,7 +50,15 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
             return (False, f'Unknown import type "{import_type}" provided.')
 
         try:
-            return handler(f)
+            result = handler(f)
+            # Update last_full_update if games were imported
+            if import_type == constants.TYPE_GAME and result[0]:
+                from django.utils import timezone
+
+                metadata = models.SiteMetadata.get_instance()
+                metadata.last_full_update = timezone.now()
+                metadata.save()
+            return result
         except Exception as e:
             return (False, f"Could not process uploaded file: {e}")
 
@@ -343,6 +351,7 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
     ]
 
     try:
+        games_file_imported = False
         with transaction.atomic():
             for field_name, import_type, display_name, handler in import_sequence:
                 file_obj = data.get(field_name)
@@ -359,12 +368,23 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
                     f = TextIOWrapper(file_obj, encoding="utf-8")
                     success, message = handler(f)
                     results.append(message)
+                    # Track if games file was imported
+                    if field_name == "games_file":
+                        games_file_imported = True
                 except Exception as e:
                     return (False, f"{display_name} import failed: {e}", False)
 
         # If we get here, all imports succeeded
         if not results:
             return (False, "No files were selected for import.", False)
+
+        # Update last_full_update if games file was imported
+        if games_file_imported:
+            from django.utils import timezone
+
+            metadata = models.SiteMetadata.get_instance()
+            metadata.last_full_update = timezone.now()
+            metadata.save()
 
         summary = "\n".join(results)
         # Return IGDB trigger flag if checkbox was checked

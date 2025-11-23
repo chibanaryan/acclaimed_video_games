@@ -30,6 +30,26 @@ class Snippet(models.Model):
         super().save(*args, **kwargs)
 
 
+class SiteMetadata(models.Model):
+    """Site-wide metadata stored as a singleton"""
+
+    key = models.CharField(max_length=50, unique=True, default="default")
+    last_full_update = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Site Metadata"
+        verbose_name_plural = "Site Metadata"
+
+    def __str__(self) -> str:
+        return f"Site Metadata ({self.key})"
+
+    @classmethod
+    def get_instance(cls) -> "SiteMetadata":
+        """Get or create the singleton instance."""
+        instance, _ = cls.objects.get_or_create(key="default")
+        return instance
+
+
 class Platform(models.Model):
     """
     The platform a game available for

@@ -29,7 +29,7 @@
         </div>
         {% if last_update %}
         <div class="py-3 last-update">
-            List last updated: {{ last_update|from_now }}
+            List last updated: {{ last_update|date:"F j, Y" }}
         </div>
         {% endif %}
     </div>

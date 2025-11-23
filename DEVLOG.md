@@ -1,5 +1,15 @@
 # Developer Log
 
+## 2025-11-23
+
+- **Fixed "Last Updated" display on home page**: Changed to show date only (not relative time) and only update when Games file is imported
+  - Created `SiteMetadata` model to track last full update date (manually editable in admin)
+  - Updated `import_batch()` and `import_data()` to set `last_full_update` when games file is imported
+  - Changed Vue frontend from `fromNow()` to formatted date (`format('MMMM D, YYYY')`)
+  - Changed beta template from `from_now` filter to Django `date` filter
+  - Updated MetaView API and beta HomePageView to use `SiteMetadata.last_full_update` instead of `Max("modified")`
+  - Prevents confusion from date changing on minor edits (spelling fixes, etc.)
+
 ## 2025-01-XX
 
 - **Comprehensive test coverage expansion**: Achieved 95% overall test coverage (1650/1743 lines)

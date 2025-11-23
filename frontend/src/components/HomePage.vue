@@ -23,7 +23,7 @@
                 </div>
             </div>
             <div class="py-3">
-                List last updated: {{ lastUpdate?.fromNow() }}
+                List last updated: {{ lastUpdate ? lastUpdate.format('MMMM D, YYYY') : '' }}
             </div>
         </div>
         <div class="column">

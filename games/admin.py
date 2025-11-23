@@ -83,3 +83,17 @@ class SnippetAdmin(admin.ModelAdmin):
 @admin.register(models.Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = ["__str__", "date", "active"]
+
+
+@admin.register(models.SiteMetadata)
+class SiteMetadataAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "last_full_update"]
+    fields = ["last_full_update"]
+
+    def has_add_permission(self, request):
+        # Only allow one instance (singleton pattern)
+        return not models.SiteMetadata.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion of the singleton instance
+        return False

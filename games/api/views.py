@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.contrib.flatpages.models import FlatPage
 from django.db import connection
-from django.db.models import Count, Min, Q, Prefetch, Max
+from django.db.models import Count, Min, Q, Prefetch
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -201,7 +201,6 @@ class MetaView(APIView):
         # Games
         game_stats = models.Game.objects.aggregate(
             min_year=Min("year_of_release"),
-            last_update=Max("modified"),
         )
         min_year = game_stats["min_year"] or 1970
         max_year = datetime.today().year
@@ -228,10 +227,14 @@ class MetaView(APIView):
             decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
             decades_with_counts.append({"decade": decade_str, "count": count})
 
+        # Get last_full_update from SiteMetadata
+        metadata = models.SiteMetadata.get_instance()
+        last_update = metadata.last_full_update
+
         data["games"] = {
             "years": all_years_with_counts,
             "decades": decades_with_counts,
-            "last_update": game_stats["last_update"],
+            "last_update": last_update,
         }
 
         return Response(data)
