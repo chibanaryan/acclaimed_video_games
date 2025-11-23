@@ -13,6 +13,7 @@
 - Removed vite-ssg and server-side prerendering (reverted to standard client-side Vue.js SPA)
 - Fixed font loading with preloading and display=block for immediate pixelated font rendering
 - Added font and image prefetching to beta site for improved initial load performance
+- Implemented genre/platform filter bubbles on beta site with immediate removal and Alpine.js reactivity
 
 ## 2025-11-22
 

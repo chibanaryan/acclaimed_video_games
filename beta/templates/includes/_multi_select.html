@@ -9,25 +9,47 @@
 <div class="control multiple-select"
      data-ms-id="{{ ms_id }}"
      data-filter-type="{{ type|default:'default' }}"
-     x-data="{ 
+     x-data="{
          filterType: '{{ type|default:"default" }}',
          itemsList: [],
          selectedList: [],
          selectableItems: [],
+         error: null,
          init() {
              try {
                  const msId = this.$el.getAttribute('data-ms-id');
+                 console.log(`[MultiSelect ${this.filterType}] Initializing with ID: ${msId}`);
+
                  const itemsEl = document.getElementById('ms-items-' + msId);
                  const selectedEl = document.getElementById('ms-selected-' + msId);
+
+                 console.log(`[MultiSelect ${this.filterType}] Found elements:`, {
+                     itemsEl: !!itemsEl,
+                     selectedEl: !!selectedEl
+                 });
+
                  if (itemsEl) {
-                     this.itemsList = JSON.parse(itemsEl.textContent);
+                     const itemsText = itemsEl.textContent;
+                     console.log(`[MultiSelect ${this.filterType}] Items JSON:`, itemsText.substring(0, 100));
+                     this.itemsList = JSON.parse(itemsText);
+                     console.log(`[MultiSelect ${this.filterType}] Parsed ${this.itemsList.length} items`);
+                 } else {
+                     console.warn(`[MultiSelect ${this.filterType}] No items element found`);
+                     this.error = 'Items data not found';
                  }
+
                  if (selectedEl) {
                      this.selectedList = JSON.parse(selectedEl.textContent);
+                     console.log(`[MultiSelect ${this.filterType}] Parsed ${this.selectedList.length} selected items`);
+                 } else {
+                     console.warn(`[MultiSelect ${this.filterType}] No selected element found`);
                  }
+
                  this.initializeSelectableItems();
+                 console.log(`[MultiSelect ${this.filterType}] Initialized with ${this.selectableItems.length} selectable items`);
              } catch(e) {
-                 console.error('Error loading multi-select data:', e, { msId, itemsEl: !!itemsEl, selectedEl: !!selectedEl });
+                 console.error(`[MultiSelect ${this.filterType}] Error loading multi-select data:`, e);
+                 this.error = `Error: ${e.message}`;
              }
          },
          initializeSelectableItems() {

@@ -17,7 +17,9 @@
     {# Note: Vue imports bulma/css/bulma.css from node_modules, but Bulmaswatch includes Bulma #}
     {# So we only need Bulmaswatch which includes Bulma #}
     {# Bulmaswatch Cyborg Theme (Dark Theme) - MUST INCLUDE - matches Vue version exactly #}
-    <link rel="stylesheet" href="https://unpkg.com/bulmaswatch/cyborg/bulmaswatch.min.css">
+    {# Pin to Bulma 1.0.0 compatible version #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/bulmaswatch@1.0.0/cyborg/bulmaswatch.min.css">
     
     {# Material Design Icons #}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
