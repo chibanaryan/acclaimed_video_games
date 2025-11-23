@@ -216,12 +216,21 @@ class MetaView(APIView):
         all_years_with_counts = [
             {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
         ]
-        decades = sorted(list(set(int(x / 10) * 10 for x in all_years)))
-        decades = [f"{x}-{str(x + 9)[2:4]}" for x in decades]
+        decade_starts = sorted(list(set(int(x / 10) * 10 for x in all_years)))
+
+        # Calculate counts for each decade
+        decades_with_counts = []
+        for decade_start in decade_starts:
+            decade_end = decade_start + 9
+            count = models.Game.objects.filter(
+                year_of_release__gte=decade_start, year_of_release__lte=decade_end
+            ).count()
+            decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
+            decades_with_counts.append({"decade": decade_str, "count": count})
 
         data["games"] = {
             "years": all_years_with_counts,
-            "decades": decades,
+            "decades": decades_with_counts,
             "last_update": game_stats["last_update"],
         }
 

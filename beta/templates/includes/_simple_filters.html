@@ -36,8 +36,8 @@
                     x-model="decade">
                 <option value="">Decades</option>
                 {% if meta.games.decades %}
-                    {% for decade in meta.games.decades %}
-                        <option value="{{ decade }}" {% if filters.decade == decade %}selected{% endif %}>{{ decade }}</option>
+                    {% for decade_data in meta.games.decades %}
+                        <option value="{{ decade_data.decade }}" {% if filters.decade == decade_data.decade %}selected{% endif %}>{{ decade_data.decade }} ({{ decade_data.count }})</option>
                     {% endfor %}
                 {% endif %}
             </select>

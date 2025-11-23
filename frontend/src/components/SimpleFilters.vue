@@ -22,9 +22,9 @@
                     @change="onSelectChange">
                     <option :value="null">Decades</option>
                     <option v-for="decade in meta.games.decades"
-                        :key="decade"
-                        :value="decade">
-                        {{ decade }}
+                        :key="decade.decade"
+                        :value="decade.decade">
+                        {{ decade.decade }} ({{ decade.count }})
                     </option>
                 </select>
             </div>
