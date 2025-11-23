@@ -43,7 +43,7 @@
     <tr>
         <th>Year of release:</th>
         <td>
-            <a href="{% url 'beta:games-list' %}?start={{ game.year_of_release }}&end={{ game.year_of_release }}">
+            <a href="{% url 'beta:games-list' %}?year={{ game.year_of_release }}">
                 {{ game.year_of_release }}
             </a>
         </td>

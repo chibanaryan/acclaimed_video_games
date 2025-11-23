@@ -497,7 +497,7 @@ class DeveloperDetailView(DetailView):
                 "genres",
             )
             .distinct()
-            .order_by("rank")
+            .order_by("year_of_release")
         )
 
         # Create aliases data for Alpine.js (all selected by default)
