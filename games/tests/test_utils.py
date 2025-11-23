@@ -151,3 +151,84 @@ class FilterTests(TestCase):
         filtered_qs = filter.filter_queryset(qs, " 2020 ")
         self.assertEqual(filtered_qs.count(), 1)
         self.assertEqual(filtered_qs.first(), game)
+
+
+class RankingCacheTests(TestCase):
+    """Tests for ranking cache TTL and memory leak prevention."""
+
+    def setUp(self):
+        """Clear caches before each test."""
+        utils.clear_ranking_caches()
+
+    def tearDown(self):
+        """Clear caches after each test."""
+        utils.clear_ranking_caches()
+
+    def test_clear_ranking_caches_clears_dictionaries(self):
+        """Test that clear_ranking_caches() empties the cache dictionaries."""
+        # Create some test games
+        models.Game.objects.create(
+            name="Game 1", rank=1, igdb_id=1, year_of_release=2020
+        )
+        models.Game.objects.create(
+            name="Game 2", rank=2, igdb_id=2, year_of_release=2020
+        )
+
+        # Load rankings (populates caches)
+        utils._load_rankings()
+        self.assertTrue(len(utils.year_rankings) > 0)
+        self.assertTrue(len(utils.decade_rankings) > 0)
+
+        # Clear caches
+        utils.clear_ranking_caches()
+        self.assertEqual(len(utils.year_rankings), 0)
+        self.assertEqual(len(utils.decade_rankings), 0)
+        self.assertIsNone(utils._rankings_cache_timestamp)
+
+    def test_ranking_cache_expires_after_ttl(self):
+        """Test that ranking caches expire after TTL."""
+        # Create test games
+        models.Game.objects.create(
+            name="Game 1", rank=1, igdb_id=1, year_of_release=2020
+        )
+
+        # Load rankings
+        utils._load_rankings()
+        self.assertTrue(len(utils.year_rankings) > 0)
+        initial_timestamp = utils._rankings_cache_timestamp
+
+        # Mock time to simulate cache expiration
+        with mock.patch("time.time") as mock_time:
+            # Set current time to be past the TTL (5 minutes + 1 second)
+            mock_time.return_value = initial_timestamp + utils._RANKINGS_CACHE_TTL + 1
+
+            # Trigger cache reload by calling _load_rankings again
+            utils._load_rankings()
+
+            # Cache should have been cleared and reloaded
+            # The timestamp should be updated to the new time
+            self.assertEqual(utils._rankings_cache_timestamp, mock_time.return_value)
+
+    def test_ranking_cache_persists_within_ttl(self):
+        """Test that ranking caches persist when accessed within TTL."""
+        # Create test games
+        models.Game.objects.create(
+            name="Game 1", rank=1, igdb_id=1, year_of_release=2020
+        )
+
+        # Load rankings
+        utils._load_rankings()
+        initial_timestamp = utils._rankings_cache_timestamp
+        initial_year_rankings = utils.year_rankings.copy()
+
+        # Mock time to be within TTL (2 minutes later)
+        with mock.patch("time.time") as mock_time:
+            mock_time.return_value = initial_timestamp + 120  # 2 minutes
+
+            # Call _load_rankings again
+            utils._load_rankings()
+
+            # Cache should NOT have been cleared (timestamp unchanged)
+            self.assertEqual(utils._rankings_cache_timestamp, initial_timestamp)
+            # Rankings should be the same
+            self.assertEqual(utils.year_rankings, initial_year_rankings)

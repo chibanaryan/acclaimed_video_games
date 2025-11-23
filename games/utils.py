@@ -58,6 +58,9 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
                 metadata = models.SiteMetadata.get_instance()
                 metadata.last_full_update = timezone.now()
                 metadata.save()
+
+                # Clear ranking caches after game imports to ensure fresh rankings
+                clear_ranking_caches()
             return result
         except Exception as e:
             return (False, f"Could not process uploaded file: {e}")
@@ -401,6 +404,9 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
             metadata = models.SiteMetadata.get_instance()
             metadata.last_full_update = timezone.now()
             metadata.save()
+
+            # Clear ranking caches after game imports to ensure fresh rankings
+            clear_ranking_caches()
 
         summary = "\n".join(results)
         # Return IGDB trigger flag if checkbox was checked
@@ -789,14 +795,38 @@ def year_to_decade(year: int) -> int:
     return int(year / 10) * 10
 
 
+# Ranking caches with TTL to prevent memory leaks
 year_rankings: Dict[int, List[int]] = {}
 decade_rankings: Dict[int, List[int]] = {}
+_rankings_cache_timestamp: Optional[float] = None
+_RANKINGS_CACHE_TTL = 300  # 5 minutes in seconds
+
+
+def clear_ranking_caches() -> None:
+    """Clear the ranking caches. Useful after bulk imports/updates."""
+    global year_rankings, decade_rankings, _rankings_cache_timestamp
+    year_rankings.clear()
+    decade_rankings.clear()
+    _rankings_cache_timestamp = None
 
 
 def _load_rankings() -> None:
+    """Load rankings into cache with TTL-based invalidation."""
+    global _rankings_cache_timestamp
 
+    # Check if cache is valid (exists and not expired)
+    if year_rankings and decade_rankings and _rankings_cache_timestamp:
+        import time
+
+        cache_age = time.time() - _rankings_cache_timestamp
+        if cache_age < _RANKINGS_CACHE_TTL:
+            return  # Cache is still valid
+        # Cache expired, clear it
+        clear_ranking_caches()
+
+    # Cache is empty or expired, reload it
     if year_rankings and decade_rankings:
-        return
+        return  # Already loaded by another thread
 
     min_year = (
         models.Game.objects.aggregate(min_year=Min("year_of_release"))["min_year"]
@@ -837,6 +867,11 @@ def _load_rankings() -> None:
         )
 
         decade_rankings[decade] = ids
+
+    # Update timestamp to mark cache as fresh
+    import time
+
+    _rankings_cache_timestamp = time.time()
 
 
 def get_ranking_for_year(game: "models.Game") -> int:

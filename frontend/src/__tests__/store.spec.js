@@ -345,4 +345,112 @@ describe('Vuex store', () => {
             store.dispatch('fetchAllGamesList')
         ).rejects.toThrow('Failed to fetch all games: 500');
     });
+
+    describe('LRU cache eviction', () => {
+        it('evicts oldest game when cache exceeds 100 entries', () => {
+            // Add 101 games to the cache
+            for (let i = 1; i <= 101; i++) {
+                const game = new Game({ id: i, name: `Game ${i}`, slug: `game-${i}`, rank: i });
+                store.commit('setGame', { slug: `game-${i}`, game });
+            }
+
+            // Cache should have exactly 100 entries
+            expect(Object.keys(store.state.games).length).toBe(100);
+
+            // First game (game-1) should have been evicted
+            expect(store.state.games['game-1']).toBeUndefined();
+
+            // Last 100 games should still be in cache
+            expect(store.state.games['game-2']).toBeInstanceOf(Game);
+            expect(store.state.games['game-101']).toBeInstanceOf(Game);
+        });
+
+        it('evicts oldest developer when cache exceeds 50 entries', () => {
+            // Add 51 developers to the cache
+            for (let i = 1; i <= 51; i++) {
+                const developer = new Developer({ id: i, name: `Studio ${i}`, slug: `studio-${i}` });
+                store.commit('setDeveloper', {
+                    slug: `studio-${i}`,
+                    result: { developer, games: [] }
+                });
+            }
+
+            // Cache should have exactly 50 entries
+            expect(Object.keys(store.state.developers).length).toBe(50);
+
+            // First developer should have been evicted
+            expect(store.state.developers['studio-1']).toBeUndefined();
+
+            // Last 50 developers should still be in cache
+            expect(store.state.developers['studio-2']).toBeDefined();
+            expect(store.state.developers['studio-51']).toBeDefined();
+        });
+
+        it('evicts oldest games list when cache exceeds 50 entries', () => {
+            // Add 51 games lists to the cache
+            for (let i = 0; i < 51; i++) {
+                const queryKey = `limit=100&offset=${i * 100}`;
+                const result = {
+                    count: 1000,
+                    results: [new Game({ id: i, name: `Game ${i}`, slug: `game-${i}`, rank: i })],
+                };
+                store.commit('setGamesList', { queryKey, result });
+            }
+
+            // Cache should have exactly 50 entries
+            expect(Object.keys(store.state.gamesLists).length).toBe(50);
+
+            // First query should have been evicted
+            expect(store.state.gamesLists['limit=100&offset=0']).toBeUndefined();
+
+            // Last 50 queries should still be in cache
+            expect(store.state.gamesLists['limit=100&offset=100']).toBeDefined();
+            expect(store.state.gamesLists['limit=100&offset=5000']).toBeDefined();
+        });
+
+        it('updates position when re-adding existing game (LRU behavior)', () => {
+            // Fill cache to capacity
+            for (let i = 1; i <= 100; i++) {
+                const game = new Game({ id: i, name: `Game ${i}`, slug: `game-${i}`, rank: i });
+                store.commit('setGame', { slug: `game-${i}`, game });
+            }
+
+            // Re-add an existing game (e.g., game-2)
+            const game2Updated = new Game({ id: 2, name: 'Game 2 Updated', slug: 'game-2', rank: 2 });
+            store.commit('setGame', { slug: 'game-2', game: game2Updated });
+
+            // Cache should still have 100 entries
+            expect(Object.keys(store.state.games).length).toBe(100);
+
+            // game-2 should still be in cache with updated data
+            expect(store.state.games['game-2']).toBeInstanceOf(Game);
+            expect(store.state.games['game-2'].name).toBe('Game 2 Updated');
+
+            // Add one more game
+            const game101 = new Game({ id: 101, name: 'Game 101', slug: 'game-101', rank: 101 });
+            store.commit('setGame', { slug: 'game-101', game: game101 });
+
+            // Now game-1 should be evicted (it's the oldest), but game-2 should remain
+            expect(store.state.games['game-1']).toBeUndefined();
+            expect(store.state.games['game-2']).toBeInstanceOf(Game);
+            expect(store.state.games['game-101']).toBeInstanceOf(Game);
+        });
+
+        it('logs eviction messages to console', () => {
+            const consoleSpy = vi.spyOn(console, 'log');
+
+            // Add games until eviction occurs
+            for (let i = 1; i <= 101; i++) {
+                const game = new Game({ id: i, name: `Game ${i}`, slug: `game-${i}`, rank: i });
+                store.commit('setGame', { slug: `game-${i}`, game });
+            }
+
+            // Should have logged eviction message
+            expect(consoleSpy).toHaveBeenCalledWith(
+                expect.stringContaining('[Cache] Evicted oldest game from cache: game-1')
+            );
+
+            consoleSpy.mockRestore();
+        });
+    });
 });

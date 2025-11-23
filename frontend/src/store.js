@@ -7,6 +7,11 @@ import { getApiUrl } from './config';
 import _ from 'lodash';
 const { isEmpty } = _;
 
+// LRU cache size limits to prevent memory leaks
+const GAMES_CACHE_MAX_SIZE = 100;
+const DEVELOPERS_CACHE_MAX_SIZE = 50;
+const GAMES_LISTS_CACHE_MAX_SIZE = 50;
+
 const store = createStore({
     state() {
         return {
@@ -208,12 +213,42 @@ const store = createStore({
             state.meta = val;
         },
         setGame(state, { slug, game }) {
+            // If this slug already exists, delete it first to update its position
+            if (slug in state.games) {
+                delete state.games[slug];
+            }
+            // If at max capacity, evict the oldest entry (first key)
+            else if (Object.keys(state.games).length >= GAMES_CACHE_MAX_SIZE) {
+                const oldestKey = Object.keys(state.games)[0];
+                delete state.games[oldestKey];
+                console.log(`[Cache] Evicted oldest game from cache: ${oldestKey}`);
+            }
             state.games[slug] = game;
         },
         setGamesList(state, { queryKey, result }) {
+            // If this queryKey already exists, delete it first to update its position
+            if (queryKey in state.gamesLists) {
+                delete state.gamesLists[queryKey];
+            }
+            // If at max capacity, evict the oldest entry (first key)
+            else if (Object.keys(state.gamesLists).length >= GAMES_LISTS_CACHE_MAX_SIZE) {
+                const oldestKey = Object.keys(state.gamesLists)[0];
+                delete state.gamesLists[oldestKey];
+                console.log(`[Cache] Evicted oldest games list from cache: ${oldestKey}`);
+            }
             state.gamesLists[queryKey] = result;
         },
         setDeveloper(state, { slug, result }) {
+            // If this slug already exists, delete it first to update its position
+            if (slug in state.developers) {
+                delete state.developers[slug];
+            }
+            // If at max capacity, evict the oldest entry (first key)
+            else if (Object.keys(state.developers).length >= DEVELOPERS_CACHE_MAX_SIZE) {
+                const oldestKey = Object.keys(state.developers)[0];
+                delete state.developers[oldestKey];
+                console.log(`[Cache] Evicted oldest developer from cache: ${oldestKey}`);
+            }
             state.developers[slug] = result;
         },
     },

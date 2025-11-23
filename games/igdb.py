@@ -52,8 +52,8 @@ class IgbdApi:
         self.company_cache_max_size: int = 1000
         self.game_cache_max_size: int = 1000
         self.genre_cache_max_size: int = 500
+        # Bounded dictionaries (populated once from IGDB API, finite size)
         self.release_date_statuses: Dict[str, int] = {}
-        self.release_dates: Dict[int, Any] = {}
         self.themes: Dict[int, str] = {}
 
         # Thread safety locks

@@ -239,6 +239,10 @@ export default {
             clearTimeout(this.highlightTimeout);
             this.highlightTimeout = null;
         }
+
+        // Free memory from large data arrays to prevent memory leaks
+        this.allGames = null;
+        this.items = [];
     },
     methods: {
         async clearFilters() {
