@@ -2,15 +2,13 @@
 {% load beta_filters %}
 
 {# Store pagination data in a hidden element for JavaScript access #}
-<div id="pagination-data" 
+<div id="pagination-data"
      data-start-index="{% if page_obj %}{{ page_obj.start_index }}{% else %}0{% endif %}"
      data-end-index="{% if page_obj %}{{ page_obj.end_index }}{% else %}0{% endif %}"
      data-total-count="{% if page_obj %}{{ page_obj.paginator.count }}{% else %}0{% endif %}"
      style="display: none;"></div>
 {% if page_obj %}
-<div class="pagination-wrapper pagination-spacing-top">
-    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
-</div>
+{% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
 {% endif %}
 
 {% if developers %}
@@ -27,10 +25,10 @@
             <td>
                 {% if alias.developer.slug %}
                     <a href="{% url 'beta:developer-detail' slug=alias.developer.slug %}">
-                        {{ alias.name }}
+                        {{ alias.name }} ({{ alias.developer.name }})
                     </a>
                 {% else %}
-                    <span>{{ alias.name }}</span>
+                    <span>{{ alias.name }} ({{ alias.developer.name }})</span>
                 {% endif %}
             </td>
             <td>{{ alias.games_count }}</td>
@@ -45,8 +43,6 @@
 {% endif %}
 
 {% if page_obj %}
-<div class="pagination-wrapper pagination-spacing-top">
-    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
-</div>
+{% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
 {% endif %}
 

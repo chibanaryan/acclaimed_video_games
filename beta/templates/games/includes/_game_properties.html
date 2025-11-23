@@ -31,25 +31,13 @@
     <tr>
         <th>Developers:</th>
         <td>
-            {% for developer in game.developers.all %}
-                {% if developer.developer.slug %}
-                    <a href="{% url 'beta:developer-detail' slug=developer.developer.slug %}">
-                        {{ developer.name }}
-                    </a>{% if not forloop.last %}, {% endif %}
-                {% else %}
-                    <span>{{ developer.name }}</span>{% if not forloop.last %}, {% endif %}
-                {% endif %}
-            {% endfor %}
+            {% for developer in game.developers.all %}{% if developer.developer.slug %}<a href="{% url 'beta:developer-detail' slug=developer.developer.slug %}">{{ developer.name }}</a>{% else %}<span>{{ developer.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
         </td>
     </tr>
     <tr>
         <th>Platforms:</th>
         <td>
-            {% for platform in game.platforms.all %}
-                <a href="{% url 'beta:games-search' %}?platforms={{ platform.id }}">
-                    {{ platform.code }}
-                </a>{% if not forloop.last %}, {% endif %}
-            {% endfor %}
+            {% for platform in game.platforms.all %}<a href="{% url 'beta:games-search' %}?platforms={{ platform.id }}">{{ platform.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
         </td>
     </tr>
     <tr>
@@ -63,11 +51,7 @@
     <tr>
         <th>Genres:</th>
         <td>
-            {% for genre in game.genres.all %}
-                <a href="{% url 'beta:games-search' %}?genres={{ genre.id }}">
-                    {{ genre.name }}
-                </a>{% if not forloop.last %}, {% endif %}
-            {% endfor %}
+            {% for genre in game.genres.all %}<a href="{% url 'beta:games-search' %}?genres={{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
         </td>
     </tr>
     {% if game.igdb_url %}

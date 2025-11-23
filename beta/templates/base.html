@@ -537,21 +537,21 @@
     <style>
         /* Navbar text colors - using a specific class to override everything */
         /* Must override Vue.js compiled CSS from frontend/dist */
-        /* Navbar text colors - dimmed white default, bright white on hover */
+        /* Navbar text colors - match Vue.js site exactly */
         .beta-nav-link {
-            color: rgba(255, 255, 255, 0.7) !important;
+            color: rgb(171, 177, 191) !important;
             transition: color 0.2s ease !important;
         }
-        
+
         .beta-nav-link:hover {
-            color: #fff !important;
+            color: rgb(255, 255, 255) !important;
         }
         
         /* Search bar styling to match Vue version */
         .desktop-search .input {
-            background-color: transparent;
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #fff;
+            background-color: rgb(20, 22, 26);
+            border-color: rgb(53, 58, 70);
+            color: rgb(235, 236, 240);
             font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-size: 1rem;
             transition: border-color 0.2s ease;
@@ -589,14 +589,14 @@
         /* Apply same styling as .desktop-search .input to developer list search */
         #developer-search,
         .field:not(.desktop-search):not(.mobile-search) .control .input[name="q"] {
-            background-color: transparent;
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #fff;
+            background-color: rgb(20, 22, 26);
+            border-color: rgb(53, 58, 70);
+            color: rgb(235, 236, 240);
             font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-size: 1rem;
             transition: border-color 0.2s ease;
         }
-        
+
         .field:not(.desktop-search):not(.mobile-search):hover .control .input[name="q"],
         .field:not(.desktop-search):not(.mobile-search) .control:hover .input[name="q"] {
             border-color: rgba(255, 255, 255, 0.4);
@@ -730,14 +730,14 @@
             const links = document.querySelectorAll('.beta-nav-link');
             console.log('Found', links.length, 'navbar links');
             links.forEach(link => {
-                // Apply dimmed white default
-                link.style.setProperty('color', 'rgba(255, 255, 255, 0.7)', 'important');
+                // Apply grey default to match Vue.js site
+                link.style.setProperty('color', 'rgb(171, 177, 191)', 'important');
                 link.style.setProperty('transition', 'color 0.2s ease', 'important');
                 link.addEventListener('mouseenter', function() {
-                    this.style.setProperty('color', '#fff', 'important');
+                    this.style.setProperty('color', 'rgb(255, 255, 255)', 'important');
                 });
                 link.addEventListener('mouseleave', function() {
-                    this.style.setProperty('color', 'rgba(255, 255, 255, 0.7)', 'important');
+                    this.style.setProperty('color', 'rgb(171, 177, 191)', 'important');
                 });
             });
         }

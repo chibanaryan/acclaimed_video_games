@@ -4,118 +4,70 @@
 {% block title %}Developers - Acclaimed Games{% endblock %}
 
 {% block content %}
-<div id="content">
-    <h1 class="title is-spaced">Developers</h1>
-    <p id="results-display" class="mb-4">
-        {% if page_obj %}
-        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}
-        {% else %}
-        Showing 0 to 0 of 0 results
-        {% endif %}
-    </p>
-    <h2 id="results-count" class="subtitle is-hidden">{% if page_obj %}{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}{% else %}0 results{% endif %}</h2>
+<h1 class="title is-spaced">Developers</h1>
+<h2 id="results-count" class="subtitle">
+    {% if page_obj %}
+    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}
+    {% else %}
+    Showing 0
+    {% endif %}
+</h2>
 
-    <div class="field" style="margin-bottom: 0;">
-        <div class="control has-icons-left">
-            <input type="text"
-                   class="input"
-                   name="q"
-                   id="developer-search"
-                   placeholder="Search by name"
-                   value="{{ request.GET.q|default:'' }}"
-                   hx-get="{% url 'beta:developers-list' %}"
-                   hx-target="#results-container"
-                   hx-trigger="input changed delay:150ms"
-                   hx-swap="innerHTML"
-                   hx-indicator="#search-indicator"
-                   hx-include="[name='q']"
-                   autocomplete="off">
-            <span class="icon is-small is-left">
-                <i class="mdi mdi-magnify"></i>
-            </span>
-            <span id="search-indicator" class="htmx-indicator" style="margin-left: 0.5em; opacity: 0;">
-                <i class="mdi mdi-loading mdi-spin"></i>
-            </span>
-        </div>
-    </div>
-
-    <div id="results-container">
-        {% if page_obj %}
-        <div class="pagination-wrapper pagination-spacing-top">
-            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
-        </div>
-        {% endif %}
-
-        {% if developers %}
-        <table class="table is-fullwidth">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <td># Games</td>
-                </tr>
-            </thead>
-            <tbody>
-                {% for alias in developers %}
-                <tr>
-                    <td>
-                        {% if alias.developer.slug %}
-                            <a href="{% url 'beta:developer-detail' slug=alias.developer.slug %}">
-                                {{ alias.name }}
-                            </a>
-                        {% else %}
-                            <span>{{ alias.name }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ alias.games_count }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-
-        {% if page_obj %}
-        <div class="pagination-wrapper pagination-spacing-top">
-            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
-        </div>
-        {% endif %}
+<div class="field">
+    <div class="control has-icons-left">
+        <input type="text"
+               class="input"
+               name="q"
+               id="developer-search"
+               placeholder="Search by name"
+               value="{{ request.GET.q|default:'' }}"
+               hx-get="{% url 'beta:developers-list' %}"
+               hx-target="#results-container"
+               hx-trigger="input changed delay:150ms"
+               hx-swap="innerHTML"
+               hx-include="[name='q']"
+               autocomplete="off">
+        <span class="icon is-small is-left">
+            <i class="mdi mdi-magnify"></i>
+        </span>
     </div>
 </div>
 
-<script>
-// Update results display when HTMX swaps content
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    if (evt.detail.target.id === 'results-container') {
-        // Read pagination data from the hidden element in the swapped content
-        const paginationData = evt.detail.target.querySelector('#pagination-data');
-        if (paginationData) {
-            const startIndex = paginationData.getAttribute('data-start-index');
-            const endIndex = paginationData.getAttribute('data-end-index');
-            const totalCount = paginationData.getAttribute('data-total-count');
-            
-            if (startIndex !== null && endIndex !== null && totalCount !== null) {
-                const resultsDisplay = document.getElementById('results-display');
-                if (resultsDisplay) {
-                    const count = parseInt(totalCount);
-                    const plural = count === 1 ? 'result' : 'results';
-                    resultsDisplay.textContent = `Showing ${startIndex} to ${endIndex} of ${totalCount} ${plural}`;
-                }
-                
-                const resultsCount = document.getElementById('results-count');
-                if (resultsCount) {
-                    const count = parseInt(totalCount);
-                    const plural = count === 1 ? 'result' : 'results';
-                    resultsCount.textContent = `${totalCount} ${plural}`;
-                }
-            }
-        }
-        
-        // Keep focus on search input for smooth typing experience
-        const searchInput = document.getElementById('developer-search');
-        if (searchInput && document.activeElement !== searchInput) {
-            searchInput.focus();
-        }
-    }
-});
-</script>
+<div id="results-container">
+    {% if page_obj %}
+    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+    {% endif %}
+
+    {% if developers %}
+    <table class="table is-fullwidth">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <td># Games</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alias in developers %}
+            <tr>
+                <td>
+                    {% if alias.developer.slug %}
+                        <a href="{% url 'beta:developer-detail' slug=alias.developer.slug %}">
+                            {{ alias.name }} ({{ alias.developer.name }})
+                        </a>
+                    {% else %}
+                        <span>{{ alias.name }} ({{ alias.developer.name }})</span>
+                    {% endif %}
+                </td>
+                <td>{{ alias.games_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if page_obj %}
+    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+    {% endif %}
+</div>
 {% endblock %}
 
