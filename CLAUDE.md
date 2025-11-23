@@ -105,12 +105,10 @@ npm install
 npm run dev
 ```
 
-**Build for production (SSG):**
+**Build for production:**
 ```bash
 npm run build
 ```
-
-**Note:** The build process uses vite-ssg for server-side static generation. The Django development server must be running during the build so that vite-ssg can fetch data from the API to pre-render routes. The number of routes pre-rendered is controlled in `vite.config.js` (currently limited to 10 games and 5 developers for testing; increase to 9999 for full production builds).
 
 **Lint code:**
 ```bash
@@ -147,7 +145,7 @@ When making changes that need to be deployed to production, follow this complete
 #    Only if: bug fixes, features, optimizations, or breaking changes
 #    Keep to 2-4 bullet points max per day
 
-# 1. Build the frontend (requires Django dev server running)
+# 1. Build the frontend
 cd frontend && npm run build && cd ..
 
 # 2. Collect static files
@@ -168,7 +166,6 @@ git push heroku main
 
 **Important Notes:**
 - Update DEVLOG.md for significant changes (see Development Log section below for guidelines)
-- The Django development server must be running during `npm run build` for SSG pre-rendering
 - The `dist` folder is committed to git for Heroku deployment
 - Pre-commit hooks will run tests and enforce code quality before allowing the commit
 - **If pre-commit hooks fail**: Fix issues immediately, do NOT skip or work around them
@@ -206,7 +203,7 @@ The Vue.js frontend uses Vitest for testing with the following structure:
 - `frontend/src/__tests__/models.spec.js` - Frontend model class tests
 - `frontend/src/__tests__/utils.spec.js` - Utility function tests (scroll position, slug parsing)
 - `frontend/src/__tests__/objectStore.spec.js` - PersistentObjectStore tests
-- `frontend/src/__tests__/config.spec.js` - API URL configuration tests (SSR vs client-side)
+- `frontend/src/__tests__/config.spec.js` - API URL configuration tests
 
 **Component Tests:**
 - `frontend/src/components/__tests__/NavComponent.spec.js` - Navigation component behavior
@@ -266,7 +263,6 @@ The `DEVLOG.md` file tracks significant changes and improvements to the project.
   ```
   ## 2025-11-22
   - Fixed double-load on first search character in developer list (debounce trailing edge)
-  - Added SSR pre-fetching for developer list (fixed page flash on navigation)
   ```
 
 ## Architecture
@@ -317,12 +313,12 @@ The `DEVLOG.md` file tracks significant changes and improvements to the project.
   - **components/** - Vue components (GameList, GameDetail, DeveloperDetail, etc.)
     - **__tests__/** - Component tests
   - **models/** - Frontend model classes that mirror Django models
-  - **router.js** - Vue Router configuration (exports routes array for vite-ssg)
+  - **router.js** - Vue Router configuration
   - **store.js** - Vuex global state management
-  - **objectStore.js** - Persistent localStorage wrapper (SSR-safe)
-  - **config.js** - API URL configuration (handles SSR vs client-side differences)
+  - **objectStore.js** - Persistent localStorage wrapper
+  - **config.js** - API URL configuration
   - **constants.js** - Application-wide constants
-  - **utils.js** - Utility functions (SSR-safe with window guards)
+  - **utils.js** - Utility functions
   - **__tests__/** - Unit tests for models, store, utils, and objectStore
   - **test/** - Test configuration and setup files
 
@@ -357,19 +353,13 @@ All non-API routes are handled by the Vue.js SPA.
 
 **BaseModel Pattern**: All frontend models extend `BaseData` which automatically converts snake_case API responses to camelCase properties and parses datetime strings to moment objects.
 
-**PersistentObjectStore**: A localStorage wrapper used for persisting state (e.g., scroll position for game list navigation). SSR-safe with guards for `window` and `localStorage` access.
+**PersistentObjectStore**: A localStorage wrapper used for persisting state (e.g., scroll position for game list navigation).
 
 **Vuex Store**: Manages global state for genres, platforms, and metadata. Data is lazy-loaded and cached in the store.
 
 **Router Scroll Behavior**: Custom scroll position preservation for game list pages - when navigating from a game list to game detail and back, the scroll position is restored.
 
-**SSR-Safe Architecture**: The application uses vite-ssg for server-side static generation (SSG), making it compatible with web crawlers and the Wayback Machine. All browser-specific APIs (localStorage, window, document) are guarded with `typeof window !== 'undefined'` checks. The `getApiUrl()` helper in `config.js` provides absolute URLs during SSG builds and relative URLs in the browser.
-
-**SPAWithPrerenderedView**: A custom Django view that intelligently serves pre-rendered HTML files from vite-ssg builds. It:
-- Serves pre-rendered HTML files for SSG routes when they exist
-- Falls back to `index.html` for client-side Vue Router handling
-- Makes the SPA compatible with web crawlers and archive.org (Wayback Machine)
-- Is used as the catch-all view after API routes
+**SPAView**: A Django TemplateView that serves the Vue.js SPA's `index.html` for all non-API routes, allowing Vue Router to handle client-side routing.
 
 **Template System**: Templates are configured with intelligent caching:
 - **Production**: Uses Django's cached template loader for optimal performance
@@ -507,8 +497,7 @@ Environment variables are managed via django-environ (`.env` file):
 - `IGDB_USE_PRO_TIER` - Enable IGDB Pro tier (default: False)
 
 Frontend environment variables (`.env` in frontend/):
-- `VITE_API_URL` - API base URL for client-side (defaults to `/api/` in production)
-- `VITE_SSG_API_URL` - API base URL for SSG builds (defaults to `http://127.0.0.1:8000/api/` for local development, production URL for builds)
+- `VITE_API_URL` - API base URL (defaults to `/api/`)
 - `VITE_GOOGLE_ANALYTICS_PROPERTY_ID` - Google Analytics property ID for tracking (optional, only if using GA)
 
 ### Configuration Files
@@ -521,12 +510,9 @@ Backend:
 - **`scripts/run_tests.sh`** - Test execution script used by pre-commit hooks
 
 Frontend:
-- **`frontend/vite.config.js`** - Vite configuration including:
-  - SSG configuration with `includedRoutes()` function for pre-rendering
-  - Test setup with Vitest and 95% coverage thresholds
-  - Route limits for SSG builds (currently 10 games/5 developers for testing)
+- **`frontend/vite.config.js`** - Vite configuration including test setup with Vitest and 95% coverage thresholds
 - **`frontend/src/test/setup.js`** - Test environment setup (localStorage mocking)
-- **`frontend/.gitignore`** - Includes `.vite-ssg-temp/` to ignore temporary SSG build files
+- **`frontend/.gitignore`** - Frontend-specific gitignore rules
 - **`frontend/jsconfig.json`** - JavaScript path configuration
 
 ## Database

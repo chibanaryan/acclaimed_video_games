@@ -10,6 +10,8 @@
 - Fixed Game Positions duplicating on re-import (now clears before importing)
 - Fixed decade rank calculation bug (SQLite was ordering by year then rank instead of global rank)
 - Enhanced "Delete All Data" to include Genres and reset ID sequences on both PostgreSQL and SQLite
+- Removed vite-ssg and server-side prerendering (reverted to standard client-side Vue.js SPA)
+- Fixed font flash on page load with font preloading and display=optional strategy
 
 ## 2025-11-22
 

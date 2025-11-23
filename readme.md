@@ -58,16 +58,9 @@ Run Vue.js development server
 
     npm run dev
 
-**Note on SSG (Server-Side Static Generation):**
-The frontend uses vite-ssg to pre-render pages for better SEO and Wayback Machine compatibility. When running `npm run build`, the Django development server must be running so vite-ssg can fetch data from the API.
-
 ## Deploy New Version of Website
 
-**Important:** Make sure the Django development server is running before building (required for SSG):
-
-    python manage.py runserver
-
-Then build the frontend JavaScript app (in a separate terminal):
+Build the frontend JavaScript app:
 
     cd frontend
     npm run build

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { getApiUrl } from '../config';
 
 describe('getApiUrl', () => {
@@ -16,36 +16,14 @@ describe('getApiUrl', () => {
         });
     });
 
-    it('returns absolute URL during SSR', () => {
-        // Mock SSR environment
-        import.meta.env.SSR = true;
-        delete process.env.VITE_SSG_API_URL;
-
-        const url = getApiUrl();
-        expect(url).toBe('http://127.0.0.1:8000/api/');
-    });
-
-    it('returns custom SSR URL when VITE_SSG_API_URL is set', () => {
-        // Mock SSR environment with custom URL
-        import.meta.env.SSR = true;
-        process.env.VITE_SSG_API_URL = 'http://localhost:9000/api/';
-
-        const url = getApiUrl();
-        expect(url).toBe('http://localhost:9000/api/');
-    });
-
-    it('returns relative URL in browser', () => {
-        // Mock browser environment
-        import.meta.env.SSR = false;
+    it('returns default relative URL when VITE_API_URL is not set', () => {
         delete import.meta.env.VITE_API_URL;
 
         const url = getApiUrl();
         expect(url).toBe('/api/');
     });
 
-    it('returns custom client URL when VITE_API_URL is set', () => {
-        // Mock browser environment with custom URL
-        import.meta.env.SSR = false;
+    it('returns custom URL when VITE_API_URL is set', () => {
         import.meta.env.VITE_API_URL = 'https://api.example.com/api/';
 
         const url = getApiUrl();

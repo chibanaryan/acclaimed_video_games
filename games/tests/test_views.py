@@ -1,6 +1,5 @@
-from pathlib import Path
 from unittest import mock
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -217,215 +216,24 @@ class IGDBProgressViewTests(TestCase):
             self.assertEqual(response["content-type"], "text/event-stream")
 
 
-class SPAWithPrerenderedViewTests(TestCase):
-    """Tests for SPAWithPrerenderedView that serves pre-rendered HTML files."""
+class SPAViewTests(TestCase):
+    """Tests for SPAView that serves the Vue.js SPA."""
 
     def setUp(self):
         self.factory = RequestFactory()
-        self.view = views.SPAWithPrerenderedView()
+        self.view = views.SPAView.as_view()
 
-    @patch("games.views.settings")
-    @patch("games.views.Path")
-    def test_root_path_serves_index_html(self, mock_path_class, mock_settings):
-        """Test that root path serves index.html."""
+    def test_spa_view_serves_template(self):
+        """Test that SPAView serves index.html template."""
         request = self.factory.get("/")
+        response = self.view(request)
 
-        # Setup mocks
-        mock_settings.BASE_DIR = Path("/tmp/test")
-        mock_dist_path = MagicMock(spec=Path, unsafe=True)
-        mock_index_file = MagicMock(spec=Path, unsafe=True)
-        mock_index_file.exists.return_value = True
-        mock_index_file.__truediv__.return_value = mock_index_file
-        mock_dist_path.__truediv__.return_value = mock_index_file
-        mock_path_class.return_value = mock_dist_path
-
-        with patch("builtins.open", mock_open(read_data="<html>index</html>")):
-            response = self.view.get(request)
+        # TemplateView returns a TemplateResponse which needs to be rendered
+        response.render()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode(), "<html>index</html>")
-        self.assertEqual(response["content-type"], "text/html")
-
-    @patch("games.views.settings")
-    @patch("games.views.Path")
-    def test_empty_path_serves_index_html(self, mock_path_class, mock_settings):
-        """Test that empty path serves index.html."""
-        request = self.factory.get("")
-
-        mock_settings.BASE_DIR = Path("/tmp/test")
-        mock_dist_path = MagicMock(spec=Path, unsafe=True)
-        mock_index_file = MagicMock(spec=Path, unsafe=True)
-        mock_index_file.exists.return_value = True
-        mock_index_file.__truediv__.return_value = mock_index_file
-        mock_dist_path.__truediv__.return_value = mock_index_file
-        mock_path_class.return_value = mock_dist_path
-
-        with patch("builtins.open", mock_open(read_data="<html>index</html>")):
-            response = self.view.get(request)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode(), "<html>index</html>")
-
-    @patch("games.views.settings")
-    @patch("games.views.Path")
-    def test_path_with_directory_index_serves_file(
-        self, mock_path_class, mock_settings
-    ):
-        """Test that /games/ serves frontend/dist/games/index.html."""
-        request = self.factory.get("/games/")
-
-        mock_settings.BASE_DIR = Path("/tmp/test")
-        mock_dist_path = MagicMock(spec=Path, unsafe=True)
-        mock_games_dir = MagicMock(spec=Path, unsafe=True)
-        mock_index_file = MagicMock(spec=Path, unsafe=True)
-        mock_index_file.exists.return_value = True
-        mock_games_dir.__truediv__.return_value = mock_index_file
-        mock_dist_path.__truediv__.return_value = mock_games_dir
-        mock_path_class.return_value = mock_dist_path
-
-        with patch("builtins.open", mock_open(read_data="<html>games page</html>")):
-            response = self.view.get(request)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode(), "<html>games page</html>")
-
-    @patch("games.views.settings")
-    @patch("games.views.Path")
-    def test_path_with_html_file_serves_file(self, mock_path_class, mock_settings):
-        """Test that /about serves frontend/dist/about.html."""
-        request = self.factory.get("/about")
-
-        mock_settings.BASE_DIR = Path("/tmp/test")
-        mock_dist_path = MagicMock(spec=Path, unsafe=True)
-        mock_about_dir = MagicMock(spec=Path, unsafe=True)
-        mock_about_dir.exists.return_value = False  # /about/index.html doesn't exist
-        mock_about_html = MagicMock(spec=Path, unsafe=True)
-        mock_about_html.exists.return_value = True  # /about.html exists
-        mock_dist_path.__truediv__.side_effect = lambda x: (
-            mock_about_dir if x == "about" else mock_about_html
-        )
-        mock_about_dir.__truediv__.return_value = mock_about_dir
-        mock_path_class.return_value = mock_dist_path
-
-        with patch("builtins.open", mock_open(read_data="<html>about page</html>")):
-            response = self.view.get(request)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode(), "<html>about page</html>")
-
-    @patch("games.views.settings")
-    @patch("games.views.Path")
-    def test_missing_path_falls_back_to_index_html(
-        self, mock_path_class, mock_settings
-    ):
-        """Test that missing path falls back to index.html."""
-        request = self.factory.get("/nonexistent")
-
-        mock_settings.BASE_DIR = Path("/tmp/test")
-        mock_dist_path = MagicMock(spec=Path, unsafe=True)
-        mock_nonexistent_dir = MagicMock(spec=Path, unsafe=True)
-        mock_nonexistent_dir.exists.return_value = False
-        mock_nonexistent_html = MagicMock(spec=Path, unsafe=True)
-        mock_nonexistent_html.exists.return_value = False
-        mock_index_file = MagicMock(spec=Path, unsafe=True)
-        mock_index_file.exists.return_value = True
-        mock_dist_path.__truediv__.side_effect = lambda x: (
-            mock_nonexistent_dir
-            if x == "nonexistent"
-            else (
-                mock_nonexistent_html
-                if "nonexistent.html" in str(x)
-                else mock_index_file
-            )
-        )
-        mock_nonexistent_dir.__truediv__.return_value = mock_nonexistent_dir
-        mock_path_class.return_value = mock_dist_path
-
-        with patch("builtins.open", mock_open(read_data="<html>fallback</html>")):
-            response = self.view.get(request)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode(), "<html>fallback</html>")
-
-    @patch("games.views.settings")
-    @patch("games.views.Path")
-    def test_missing_path_and_index_returns_404(self, mock_path_class, mock_settings):
-        """Test that missing path and index.html returns 404."""
-        request = self.factory.get("/nonexistent")
-
-        mock_settings.BASE_DIR = Path("/tmp/test")
-        mock_dist_path = MagicMock(spec=Path, unsafe=True)
-        mock_file = MagicMock(spec=Path, unsafe=True)
-        mock_file.exists.return_value = False
-        mock_dist_path.__truediv__.return_value = mock_file
-        mock_file.__truediv__.return_value = mock_file
-        mock_path_class.return_value = mock_dist_path
-
-        response = self.view.get(request)
-
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.content.decode(), "Not found")
-
-    @patch("games.views.settings")
-    @patch("games.views.Path")
-    def test_ioerror_reading_file_falls_back(self, mock_path_class, mock_settings):
-        """Test that IOError when reading file falls back to index.html."""
-        request = self.factory.get("/games/")
-
-        mock_settings.BASE_DIR = Path("/tmp/test")
-        mock_dist_path = MagicMock(spec=Path, unsafe=True)
-        mock_games_dir = MagicMock(spec=Path, unsafe=True)
-        mock_games_index = MagicMock(spec=Path, unsafe=True)
-        mock_games_index.exists.return_value = True
-        mock_index_file = MagicMock(spec=Path, unsafe=True)
-        mock_index_file.exists.return_value = True
-        mock_games_dir.__truediv__.return_value = mock_games_index
-        mock_dist_path.__truediv__.side_effect = lambda x: (
-            mock_games_dir if x == "games" else mock_index_file
-        )
-        mock_path_class.return_value = mock_dist_path
-
-        # First open raises IOError, second succeeds
-        call_count = [0]
-
-        def open_side_effect(path, *args, **kwargs):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                raise IOError("Permission denied")
-            return mock_open(read_data="<html>fallback</html>")(path, *args, **kwargs)
-
-        with patch("builtins.open", side_effect=open_side_effect):
-            response = self.view.get(request)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode(), "<html>fallback</html>")
-
-    @patch("games.views.settings")
-    @patch("games.views.Path")
-    def test_ioerror_on_fallback_returns_404(self, mock_path_class, mock_settings):
-        """Test IOError when reading fallback file returns 404 (lines 56-57)."""
-        request = self.factory.get("/test")
-
-        mock_settings.BASE_DIR = Path("/tmp/test")
-        mock_dist_path = MagicMock(spec=Path, unsafe=True)
-        mock_file = MagicMock(spec=Path, unsafe=True)
-        mock_file.exists.return_value = False  # Test file doesn't exist
-        mock_index_file = MagicMock(spec=Path, unsafe=True)
-        mock_index_file.exists.return_value = True  # Fallback exists
-        mock_dist_path.__truediv__.side_effect = lambda x: (
-            mock_file if x == "test" else mock_index_file
-        )
-        mock_file.__truediv__.return_value = mock_file
-        mock_path_class.return_value = mock_dist_path
-
-        # Fallback open raises IOError - exception handler catches it (lines 56-57)
-        def open_side_effect(path, *args, **kwargs):
-            raise IOError("Permission denied")
-
-        with patch("builtins.open", side_effect=open_side_effect):
-            # Should handle IOError gracefully and return 404
-            response = self.view.get(request)
-            self.assertEqual(response.status_code, 404)
+        # Template name should be set correctly
+        self.assertEqual(response.template_name[0], "index.html")
 
 
 class PostListViewTests(TestCase):
