@@ -21,3 +21,6 @@ exclude_lines =
     # Don't complain about database vendor-specific code
     if connection.vendor == "postgresql"
     if connection.vendor == "sqlite"
+    if is_postgres:
+    else:
+        # SQLite:

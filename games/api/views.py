@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.contrib.flatpages.models import FlatPage
 from django.db import connection
-from django.db.models import Count, Min, Q, Prefetch
+from django.db.models import Count, F, Min, Q, Prefetch
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -216,17 +216,28 @@ class MetaView(APIView):
         all_years_with_counts = [
             {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
         ]
-        decade_starts = sorted(list(set(int(x / 10) * 10 for x in all_years)))
 
-        # Calculate counts for each decade
-        decades_with_counts = []
-        for decade_start in decade_starts:
-            decade_end = decade_start + 9
-            count = models.Game.objects.filter(
-                year_of_release__gte=decade_start, year_of_release__lte=decade_end
-            ).count()
-            decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
-            decades_with_counts.append({"decade": decade_str, "count": count})
+        # Calculate counts for each decade using database aggregation
+        from django.db.models.functions import Floor
+
+        decades_data = (
+            models.Game.objects.annotate(
+                decade_start=Floor(F("year_of_release") / 10) * 10
+            )
+            .values("decade_start")
+            .annotate(count=Count("id"))
+            .order_by("decade_start")
+        )
+
+        decades_with_counts = [
+            {
+                "decade": (
+                    f"{item['decade_start']}-{str(item['decade_start'] + 9)[2:4]}"
+                ),
+                "count": item["count"],
+            }
+            for item in decades_data
+        ]
 
         # Get last_full_update from SiteMetadata
         metadata = models.SiteMetadata.get_instance()

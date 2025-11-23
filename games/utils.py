@@ -151,7 +151,8 @@ def import_igdb_with_progress():
             while True:
                 try:
                     # Wait for event with timeout to detect if thread is stuck
-                    event_json = event_queue.get(timeout=30)
+                    # Increased to 120s to handle large batches and API rate limiting
+                    event_json = event_queue.get(timeout=120)
 
                     # None signals the end of the import
                     if event_json is None:
@@ -161,7 +162,7 @@ def import_igdb_with_progress():
                     yield f"data: {event_json}\n\n"
                 except queue.Empty:
                     # Timeout waiting for events
-                    error_msg = "Import timeout - no progress for 30 seconds"
+                    error_msg = "Import timeout - no progress for 120 seconds"
                     error_data = json.dumps({"event": "error", "error": error_msg})
                     yield f"data: {error_data}\n\n"
                     break
@@ -534,6 +535,8 @@ def import_listmemberships(
     list_map = {x.order: x for x in models.List.objects.all()}
     memberships = []
     row_number = 0
+    total_created = 0
+    batch_size = 1000  # Flush to database every 1000 memberships
 
     # Count total lines first
     current_pos = f.tell()
@@ -559,6 +562,12 @@ def import_listmemberships(
                     models.ListMembership(list=source_list, game=game, rank=position)
                 )
 
+            # Flush batch to database when it reaches batch_size
+            if len(memberships) >= batch_size:
+                created = models.ListMembership.objects.bulk_create(memberships)
+                total_created += len(created)
+                memberships.clear()
+
             # Report progress
             if progress_callback and row_number % 50 == 0:
                 progress_callback(
@@ -575,12 +584,16 @@ def import_listmemberships(
                     },
                 )
 
-        created_memberships = models.ListMembership.objects.bulk_create(memberships)
+        # Flush any remaining memberships
+        if memberships:
+            created = models.ListMembership.objects.bulk_create(memberships)
+            total_created += len(created)
+            memberships.clear()
 
         if progress_callback:
-            progress_callback("complete", {"count": len(created_memberships)})
+            progress_callback("complete", {"count": total_created})
 
-        return (True, f"List memberships: {len(created_memberships)} created")
+        return (True, f"List memberships: {total_created} created")
 
     except Exception as e:
         if progress_callback:
@@ -811,36 +824,84 @@ def update_year_decade_ranks() -> Tuple[int, int]:
     Uses efficient database queries to calculate ranking positions
     within each year and decade based on the global rank field.
 
+    On PostgreSQL: Uses window functions for optimal performance (single query).
+    On SQLite: Falls back to chunked processing to avoid memory issues.
+
     Returns:
         Tuple of (games_updated, years_processed)
     """
-    from collections import defaultdict
+    from django.db import connection
+    from django.db.models import F, Window
+    from django.db.models.functions import RowNumber, Floor
 
-    year_games = defaultdict(list)
-    decade_games = defaultdict(list)
-    years = set()
+    # Check database backend
+    is_postgres = connection.vendor == "postgresql"
 
-    # Group games by year and decade, ordered by rank
-    for game in models.Game.objects.order_by("year_of_release", "rank"):
-        year_games[game.year_of_release].append(game.id)
-        decade = year_to_decade(game.year_of_release)
-        decade_games[decade].append(game.id)
-        years.add(game.year_of_release)
+    if is_postgres:
+        # PostgreSQL: Use window functions for optimal performance
+        with transaction.atomic():
+            # Update year_rank using window function
+            models.Game.objects.update(
+                year_rank=Window(
+                    expression=RowNumber(),
+                    partition_by=[F("year_of_release")],
+                    order_by=[F("rank").asc()],
+                )
+            )
 
-    # Bulk update year ranks
-    games_updated = 0
-    with transaction.atomic():
-        for year, game_ids in year_games.items():
-            for rank_position, game_id in enumerate(game_ids, 1):
-                models.Game.objects.filter(id=game_id).update(year_rank=rank_position)
-                games_updated += 1
+            # Update decade_rank using window function
+            # Calculate decade as floor(year / 10) * 10
+            models.Game.objects.update(
+                decade_rank=Window(
+                    expression=RowNumber(),
+                    partition_by=[Floor(F("year_of_release") / 10) * 10],
+                    order_by=[F("rank").asc()],
+                )
+            )
 
-        # Bulk update decade ranks
-        for decade, game_ids in decade_games.items():
-            for rank_position, game_id in enumerate(game_ids, 1):
-                models.Game.objects.filter(id=game_id).update(decade_rank=rank_position)
+        games_updated = models.Game.objects.count()
+        years_count = models.Game.objects.values("year_of_release").distinct().count()
+        return (games_updated, years_count)
+    else:
+        # SQLite: Use chunked processing to avoid loading all games into memory
+        from collections import defaultdict
 
-    return (games_updated, len(years))
+        year_games = defaultdict(list)
+        decade_games = defaultdict(list)
+        years = set()
+
+        # Process in chunks to avoid memory issues
+        chunk_size = 1000
+        total_games = models.Game.objects.count()
+
+        for offset in range(0, total_games, chunk_size):
+            chunk = models.Game.objects.order_by("year_of_release", "rank")[
+                offset : offset + chunk_size
+            ]
+            for game in chunk:
+                year_games[game.year_of_release].append(game.id)
+                decade = year_to_decade(game.year_of_release)
+                decade_games[decade].append(game.id)
+                years.add(game.year_of_release)
+
+        # Bulk update year ranks
+        games_updated = 0
+        with transaction.atomic():
+            for _, game_ids in year_games.items():
+                for rank_position, game_id in enumerate(game_ids, 1):
+                    models.Game.objects.filter(id=game_id).update(
+                        year_rank=rank_position
+                    )
+                    games_updated += 1
+
+            # Bulk update decade ranks
+            for _, game_ids in decade_games.items():
+                for rank_position, game_id in enumerate(game_ids, 1):
+                    models.Game.objects.filter(id=game_id).update(
+                        decade_rank=rank_position
+                    )
+
+        return (games_updated, len(years))
 
 
 @dataclass

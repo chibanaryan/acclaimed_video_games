@@ -82,8 +82,10 @@ class IGDBImportService:
         Returns:
             Tuple of (processed_count, error_count, elapsed_seconds)
         """
-        games_list = list(games_queryset)
-        total_games = len(games_list)
+        # Capture game PKs upfront to avoid queryset changes during processing
+        # (games drop out of filtered querysets as they get IGDB data)
+        game_pks = list(games_queryset.values_list("pk", flat=True))
+        total_games = len(game_pks)
 
         if total_games == 0:
             self._notify_progress(
@@ -104,13 +106,13 @@ class IGDBImportService:
         # Notify start
         self._notify_progress("start", {"total": total_games})
 
-        # Choose execution mode
+        # Choose execution mode - pass PKs instead of queryset
         if self.batch_size > 0:
-            self._import_batched(games_list, total_games, start_time)
+            self._import_batched(game_pks, total_games, start_time)
         elif self.concurrency > 1:
-            self._import_concurrent(games_list, total_games, start_time)
+            self._import_concurrent(game_pks, total_games, start_time)
         else:
-            self._import_sequential(games_list, total_games, start_time)
+            self._import_sequential(game_pks, total_games, start_time)
 
         elapsed = time.time() - start_time
 
@@ -128,17 +130,21 @@ class IGDBImportService:
         return (self.processed_count, self.error_count, elapsed)
 
     def _import_batched(
-        self, games_list: List[Game], total_games: int, start_time: float
+        self, game_pks: List[int], total_games: int, start_time: float
     ) -> None:
         """
         Import games using multi-query batching (fastest mode).
 
-        Fetches multiple games per API request.
+        Fetches multiple games per API request. Processes games by PK in chunks
+        to avoid loading all games into memory.
         """
         batch_processed = 0
 
-        for batch_idx in range(0, len(games_list), self.batch_size):
-            batch = games_list[batch_idx : batch_idx + self.batch_size]
+        # Process in chunks by fetching games by PK
+        for batch_idx in range(0, total_games, self.batch_size):
+            # Fetch only the current chunk from database by PK
+            chunk_pks = game_pks[batch_idx : batch_idx + self.batch_size]
+            batch = list(Game.objects.filter(pk__in=chunk_pks))
             batch_results = self._process_game_batch(batch)
 
             for success, game, error_msg in batch_results:
@@ -172,36 +178,87 @@ class IGDBImportService:
                 batch_processed += 1
 
     def _import_concurrent(
-        self, games_list: List[Game], total_games: int, start_time: float
+        self, game_pks: List[int], total_games: int, start_time: float
     ) -> None:
         """
         Import games using concurrent processing (fast mode).
 
         Uses ThreadPoolExecutor to process multiple games simultaneously.
+        Processes games by PK in chunks to avoid loading all games into memory.
         """
-        with ThreadPoolExecutor(max_workers=self.concurrency) as executor:
-            future_to_game = {
-                executor.submit(self._process_game, game): (idx, game)
-                for idx, game in enumerate(games_list, 1)
-            }
+        # Process in chunks to avoid loading all games into memory
+        # Use a chunk size that balances memory vs concurrency efficiency
+        chunk_size = max(100, self.concurrency * 10)
 
-            for future in as_completed(future_to_game):
-                idx, original_game = future_to_game[future]
-                success, game, error_msg = future.result()
-                current = self.processed_count + self.error_count
+        with ThreadPoolExecutor(max_workers=self.concurrency) as executor:
+            for chunk_start in range(0, total_games, chunk_size):
+                # Fetch only the current chunk from database by PK
+                chunk_pks = game_pks[chunk_start : chunk_start + chunk_size]
+                chunk = list(Game.objects.filter(pk__in=chunk_pks))
+
+                future_to_game = {
+                    executor.submit(self._process_game, game): game for game in chunk
+                }
+
+                for future in as_completed(future_to_game):
+                    success, game, error_msg = future.result()
+                    current = self.processed_count + self.error_count
+                    elapsed = time.time() - start_time
+
+                    if success:
+                        self._notify_progress(
+                            "progress",
+                            {
+                                "current": current,
+                                "total": total_games,
+                                "game_name": game.name,
+                                "percentage": int((current / total_games) * 100),
+                                "elapsed_seconds": int(elapsed),
+                                "remaining_seconds": self._estimate_remaining(
+                                    current, total_games, elapsed
+                                ),
+                            },
+                        )
+                    else:
+                        self._notify_progress(
+                            "error",
+                            {
+                                "current": current,
+                                "game_name": game.name,
+                                "message": error_msg,
+                            },
+                        )
+
+    def _import_sequential(
+        self, game_pks: List[int], total_games: int, start_time: float
+    ) -> None:
+        """
+        Import games sequentially (compatibility mode, slowest).
+
+        Processes one game at a time. Used when concurrency=1 and batch_size=0.
+        Fetches games by PK in chunks to avoid loading all games into memory.
+        """
+        # Fetch games in small chunks to minimize memory usage
+        chunk_size = 100
+        for chunk_start in range(0, total_games, chunk_size):
+            chunk_pks = game_pks[chunk_start : chunk_start + chunk_size]
+            chunk_games = Game.objects.filter(pk__in=chunk_pks)
+
+            for idx, game in enumerate(chunk_games, start=chunk_start + 1):
+                success, game, error_msg = self._process_game(game)
                 elapsed = time.time() - start_time
 
                 if success:
                     self._notify_progress(
                         "progress",
                         {
-                            "current": current,
+                            "current": idx,
                             "total": total_games,
                             "game_name": game.name,
-                            "percentage": int((current / total_games) * 100),
+                            "percentage": int((idx / total_games) * 100),
                             "elapsed_seconds": int(elapsed),
                             "remaining_seconds": self._estimate_remaining(
-                                current, total_games, elapsed
+                                idx, total_games, elapsed
                             ),
                         },
                     )
@@ -209,47 +266,11 @@ class IGDBImportService:
                     self._notify_progress(
                         "error",
                         {
-                            "current": current,
+                            "current": idx,
                             "game_name": game.name,
                             "message": error_msg,
                         },
                     )
-
-    def _import_sequential(
-        self, games_list: List[Game], total_games: int, start_time: float
-    ) -> None:
-        """
-        Import games sequentially (compatibility mode, slowest).
-
-        Processes one game at a time. Used when concurrency=1 and batch_size=0.
-        """
-        for idx, game in enumerate(games_list, 1):
-            success, game, error_msg = self._process_game(game)
-            elapsed = time.time() - start_time
-
-            if success:
-                self._notify_progress(
-                    "progress",
-                    {
-                        "current": idx,
-                        "total": total_games,
-                        "game_name": game.name,
-                        "percentage": int((idx / total_games) * 100),
-                        "elapsed_seconds": int(elapsed),
-                        "remaining_seconds": self._estimate_remaining(
-                            idx, total_games, elapsed
-                        ),
-                    },
-                )
-            else:
-                self._notify_progress(
-                    "error",
-                    {
-                        "current": idx,
-                        "game_name": game.name,
-                        "message": error_msg,
-                    },
-                )
 
     def _process_game(self, game: Game) -> Tuple[bool, Game, Optional[str]]:
         """

@@ -6,6 +6,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Acclaimed Games is a video game ranking and aggregation website that combines data from multiple sources to create comprehensive rankings. The application uses Django backend with a Vue.js 3 frontend and integrates with the IGDB (Internet Game Database) API.
 
+## Instructions for Claude
+
+**When the user asks to deploy, commit and push, or mentions "production/heroku":**
+
+Always follow the **Complete Deployment Workflow** documented in the Deployment section below. This includes:
+1. Building the frontend
+2. Collecting static files
+3. Committing all changes
+4. Pushing to main
+5. Deploying to Heroku
+
+Do not skip any steps. The user should not have to remind you to build the frontend or collect static files.
+
 ## Development Commands
 
 ### Backend (Django)
@@ -122,12 +135,42 @@ npm run test:coverage
 
 **Production URL:** https://www.acclaimedvideogames.com/
 
-The project is deployed to Heroku. To deploy:
+The project is deployed to Heroku.
 
-1. Build frontend: `cd frontend && npm run build`
-2. Collect static files: `python manage.py collectstatic`
-3. Add dist folder: `git add dist`
-4. Commit and push: `git commit -av -m "message" && git push heroku main`
+**Complete Deployment Workflow:**
+
+When making changes that need to be deployed to production, follow this complete workflow:
+
+```bash
+# 1. Build the frontend (requires Django dev server running)
+cd frontend && npm run build && cd ..
+
+# 2. Collect static files
+python manage.py collectstatic --noinput
+
+# 3. Stage all changes including dist folder
+git add -A
+
+# 4. Commit with descriptive message
+git commit -m "Your commit message here"
+
+# 5. Push to main branch
+git push origin main
+
+# 6. Deploy to Heroku
+git push heroku main
+```
+
+**One-liner for convenience:**
+```bash
+cd frontend && npm run build && cd .. && python manage.py collectstatic --noinput && git add -A && git commit -m "Deploy: [description]" && git push origin main && git push heroku main
+```
+
+**Important Notes:**
+- The Django development server must be running during `npm run build` for SSG pre-rendering
+- The `dist` folder is committed to git for Heroku deployment
+- Pre-commit hooks will run tests and enforce code quality before allowing the commit
+- If pre-commit hooks fail, fix the issues before trying to commit again
 
 ## Testing and Code Quality
 
