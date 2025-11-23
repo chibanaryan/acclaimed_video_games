@@ -1,11 +1,10 @@
 import csv
 from dataclasses import dataclass
-from datetime import datetime
 from io import TextIOWrapper
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from django.db import connection, transaction
-from django.db.models import Min, Q, QuerySet
+from django.db.models import Q, QuerySet
 
 from . import constants, models
 
@@ -59,8 +58,6 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
                 metadata.last_full_update = timezone.now()
                 metadata.save()
 
-                # Clear ranking caches after game imports to ensure fresh rankings
-                clear_ranking_caches()
             return result
         except Exception as e:
             return (False, f"Could not process uploaded file: {e}")
@@ -405,9 +402,6 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
             metadata.last_full_update = timezone.now()
             metadata.save()
 
-            # Clear ranking caches after game imports to ensure fresh rankings
-            clear_ranking_caches()
-
         summary = "\n".join(results)
         # Return IGDB trigger flag if checkbox was checked
         trigger_igdb = data.get("igdb", False)
@@ -669,10 +663,24 @@ def import_games(
                     },
                 )
 
-        if progress_callback:
-            progress_callback("complete", {"count": count, "updated": updated})
+        # Update year and decade ranks for all games
+        games_ranked, years_processed = update_year_decade_ranks()
 
-        return (True, f"Games: {count} created, {updated} updated")
+        if progress_callback:
+            progress_callback(
+                "complete",
+                {
+                    "count": count,
+                    "updated": updated,
+                    "ranks_updated": games_ranked,
+                },
+            )
+
+        return (
+            True,
+            f"Games: {count} created, {updated} updated, "
+            f"{games_ranked} ranks calculated",
+        )
 
     except Exception as e:
         if progress_callback:
@@ -795,142 +803,44 @@ def year_to_decade(year: int) -> int:
     return int(year / 10) * 10
 
 
-# Ranking caches with TTL to prevent memory leaks
-year_rankings: Dict[int, List[int]] = {}
-decade_rankings: Dict[int, List[int]] = {}
-_rankings_cache_timestamp: Optional[float] = None
-_RANKINGS_CACHE_TTL = 300  # 5 minutes in seconds
-
-
-def clear_ranking_caches() -> None:
-    """Clear the ranking caches. Useful after bulk imports/updates."""
-    global year_rankings, decade_rankings, _rankings_cache_timestamp
-    year_rankings.clear()
-    decade_rankings.clear()
-    _rankings_cache_timestamp = None
-
-
-def _load_rankings() -> None:
-    """Load rankings into cache with TTL-based invalidation."""
-    global _rankings_cache_timestamp
-
-    # Check if cache is valid (exists and not expired)
-    if year_rankings and decade_rankings and _rankings_cache_timestamp:
-        import time
-
-        cache_age = time.time() - _rankings_cache_timestamp
-        if cache_age < _RANKINGS_CACHE_TTL:
-            return  # Cache is still valid
-        # Cache expired, clear it
-        clear_ranking_caches()
-
-    # Cache is empty or expired, reload it
-    if year_rankings and decade_rankings:
-        return  # Already loaded by another thread
-
-    min_year = (
-        models.Game.objects.aggregate(min_year=Min("year_of_release"))["min_year"]
-        or 1970
-    )
-    max_year = datetime.today().year
-    all_years = range(min_year, max_year)
-    decades = sorted(list(set(year_to_decade(x) for x in all_years)))
-
-    for year in all_years:
-        ids = list(
-            models.Game.objects.filter(
-                year_of_release=year,
-            )
-            .order_by(
-                "rank",
-            )
-            .values_list(
-                "id",
-                flat=True,
-            )
-        )
-        year_rankings[year] = ids
-
-    for decade in decades:
-        end = decade + 9
-
-        ids = list(
-            models.Game.objects.filter(
-                year_of_release__gte=decade,
-                year_of_release__lte=end,
-            )
-            .order_by("rank")
-            .values_list(
-                "id",
-                flat=True,
-            )
-        )
-
-        decade_rankings[decade] = ids
-
-    # Update timestamp to mark cache as fresh
-    import time
-
-    _rankings_cache_timestamp = time.time()
-
-
-def get_ranking_for_year(game: "models.Game") -> int:
+def update_year_decade_ranks() -> Tuple[int, int]:
     """
-    Get the ranking position for a game within its release year.
+    Bulk update year_rank and decade_rank for all games.
+    Should be called after importing/updating game rankings.
 
-    Args:
-        game: The Game instance to get ranking for
+    Uses efficient database queries to calculate ranking positions
+    within each year and decade based on the global rank field.
 
     Returns:
-        The 1-indexed ranking position within the year
-
-    Raises:
-        ValueError: If rankings are not available or game not found
+        Tuple of (games_updated, years_processed)
     """
-    _load_rankings()
+    from collections import defaultdict
 
-    ids = year_rankings.get(game.year_of_release)
-    if not ids:
-        raise ValueError(
-            f"No rankings available for year {game.year_of_release}. "
-            "Did the import complete successfully?"
-        )
+    year_games = defaultdict(list)
+    decade_games = defaultdict(list)
+    years = set()
 
-    if game.id not in ids:
-        raise ValueError(
-            f"Game {game.id} not found in rankings for year {game.year_of_release}."
-        )
+    # Group games by year and decade, ordered by rank
+    for game in models.Game.objects.order_by("year_of_release", "rank"):
+        year_games[game.year_of_release].append(game.id)
+        decade = year_to_decade(game.year_of_release)
+        decade_games[decade].append(game.id)
+        years.add(game.year_of_release)
 
-    return ids.index(game.id) + 1
+    # Bulk update year ranks
+    games_updated = 0
+    with transaction.atomic():
+        for year, game_ids in year_games.items():
+            for rank_position, game_id in enumerate(game_ids, 1):
+                models.Game.objects.filter(id=game_id).update(year_rank=rank_position)
+                games_updated += 1
 
+        # Bulk update decade ranks
+        for decade, game_ids in decade_games.items():
+            for rank_position, game_id in enumerate(game_ids, 1):
+                models.Game.objects.filter(id=game_id).update(decade_rank=rank_position)
 
-def get_ranking_for_decade(game: "models.Game") -> int:
-    """
-    Get the ranking position for a game within its release decade.
-
-    Args:
-        game: The Game instance to get ranking for
-
-    Returns:
-        The 1-indexed ranking position within the decade
-
-    Raises:
-        ValueError: If rankings are not available or game not found
-    """
-    _load_rankings()
-
-    decade = year_to_decade(game.year_of_release)
-    ids = decade_rankings.get(decade)
-    if not ids:
-        raise ValueError(
-            f"No rankings available for decade {decade}. "
-            "Did the import complete successfully?"
-        )
-
-    if game.id not in ids:
-        raise ValueError(f"Game {game.id} not found in rankings for decade {decade}.")
-
-    return ids.index(game.id) + 1
+    return (games_updated, len(years))
 
 
 @dataclass

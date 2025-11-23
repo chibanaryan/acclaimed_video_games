@@ -158,20 +158,12 @@ class Game(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
-        Save the game, calculating normalized name and year/decade rankings.
+        Save the game, calculating normalized name.
         """
         # Save the normalized version of the name
         normalized = unidecode(self.name)
         if self.name != normalized:
             self.name_normalized = normalized
-
-        from . import utils
-
-        try:
-            self.year_rank = utils.get_ranking_for_year(self)
-            self.decade_rank = utils.get_ranking_for_decade(self)
-        except Exception as e:
-            logger.error(str(e))
 
         super().save(*args, **kwargs)
 

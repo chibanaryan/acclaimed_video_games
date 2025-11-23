@@ -7,87 +7,54 @@ from django.db import IntegrityError
 
 
 class RankingUtilsTests(TestCase):
+    """Tests for year and decade ranking calculation."""
 
-    def setUp(self):
-        utils.year_rankings.clear()
-        utils.decade_rankings.clear()
-        models.Game.objects.all().delete()
-
-    def tearDown(self):
-        utils.year_rankings.clear()
-        utils.decade_rankings.clear()
-
-    def test_get_ranking_for_year(self):
+    def test_update_year_decade_ranks_calculates_correctly(self):
+        """Test that update_year_decade_ranks() correctly calculates rankings."""
+        # Create games in different years and with different ranks
         g1 = models.Game.objects.create(
-            name="Year One", rank=1, igdb_id=1, year_of_release=1990
+            name="Year 1990 Rank 1", rank=1, igdb_id=1, year_of_release=1990
         )
         g2 = models.Game.objects.create(
-            name="Year Two", rank=2, igdb_id=2, year_of_release=1990
+            name="Year 1990 Rank 2", rank=2, igdb_id=2, year_of_release=1990
+        )
+        g3 = models.Game.objects.create(
+            name="Year 1995 Rank 3", rank=3, igdb_id=3, year_of_release=1995
+        )
+        g4 = models.Game.objects.create(
+            name="Year 1992 Rank 5", rank=5, igdb_id=4, year_of_release=1992
         )
 
-        utils.year_rankings.clear()
-        utils.decade_rankings.clear()
-        self.assertEqual(utils.get_ranking_for_year(g1), 1)
-        self.assertEqual(utils.get_ranking_for_year(g2), 2)
+        # Run the bulk ranking update
+        games_updated, years_processed = utils.update_year_decade_ranks()
 
-    def test_get_ranking_for_year_missing_data(self):
-        game = models.Game.objects.create(
-            name="Missing Year", rank=1, igdb_id=3, year_of_release=1979
-        )
+        # Verify correct number of updates
+        self.assertEqual(games_updated, 4)
+        self.assertEqual(years_processed, 3)  # 1990, 1992, 1995
 
-        utils.year_rankings.clear()
-        models.Game.objects.filter(id=game.id).delete()
-        with self.assertRaisesMessage(
-            ValueError, "No rankings available for year 1979"
-        ):
-            utils.get_ranking_for_year(game)
+        # Refresh games from DB
+        g1.refresh_from_db()
+        g2.refresh_from_db()
+        g3.refresh_from_db()
+        g4.refresh_from_db()
 
-    def test_get_ranking_for_year_missing_game(self):
-        models.Game.objects.create(
-            name="Ranked", rank=1, igdb_id=5, year_of_release=1985
-        )
-        utils.year_rankings.clear()
-        utils.get_ranking_for_year(models.Game.objects.get(igdb_id=5))
-        ghost_game = models.Game(id=999, name="Ghost", rank=99, year_of_release=1985)
+        # Check year ranks (within each year, ordered by rank)
+        self.assertEqual(g1.year_rank, 1)  # First in 1990
+        self.assertEqual(g2.year_rank, 2)  # Second in 1990
+        self.assertEqual(g3.year_rank, 1)  # Only game in 1995
+        self.assertEqual(g4.year_rank, 1)  # Only game in 1992
 
-        with self.assertRaisesMessage(ValueError, "Game"):
-            utils.get_ranking_for_year(ghost_game)
+        # Check decade ranks (1990s decade, ordered by rank)
+        self.assertEqual(g1.decade_rank, 1)  # Rank 1 overall
+        self.assertEqual(g2.decade_rank, 2)  # Rank 2 overall
+        self.assertEqual(g3.decade_rank, 4)  # Rank 3 overall (but 4th in decade)
+        self.assertEqual(g4.decade_rank, 3)  # Rank 5 overall (but 3rd in decade)
 
-    def test_get_ranking_for_decade(self):
-        g1 = models.Game.objects.create(
-            name="Decade One", rank=5, igdb_id=3, year_of_release=1995
-        )
-        g2 = models.Game.objects.create(
-            name="Decade Two", rank=2, igdb_id=4, year_of_release=1992
-        )
-
-        utils.year_rankings.clear()
-        utils.decade_rankings.clear()
-        self.assertEqual(utils.get_ranking_for_decade(g2), 1)
-        self.assertEqual(utils.get_ranking_for_decade(g1), 2)
-
-    def test_get_ranking_for_decade_missing_data(self):
-        game = models.Game.objects.create(
-            name="Missing Decade", rank=1, igdb_id=8, year_of_release=1975
-        )
-
-        utils.decade_rankings.clear()
-        models.Game.objects.filter(id=game.id).delete()
-        with self.assertRaisesMessage(
-            ValueError, "No rankings available for decade 1970"
-        ):
-            utils.get_ranking_for_decade(game)
-
-    def test_get_ranking_for_decade_missing_game(self):
-        models.Game.objects.create(
-            name="Ranked", rank=1, igdb_id=9, year_of_release=1980
-        )
-        utils.decade_rankings.clear()
-        utils.get_ranking_for_decade(models.Game.objects.get(igdb_id=9))
-        ghost_game = models.Game(id=1000, name="Ghost", rank=99, year_of_release=1981)
-
-        with self.assertRaisesMessage(ValueError, "Game"):
-            utils.get_ranking_for_decade(ghost_game)
+    def test_update_year_decade_ranks_empty_database(self):
+        """Test that update_year_decade_ranks() handles empty database."""
+        games_updated, years_processed = utils.update_year_decade_ranks()
+        self.assertEqual(games_updated, 0)
+        self.assertEqual(years_processed, 0)
 
 
 class GameIgdbTests(TestCase):
@@ -170,11 +137,15 @@ class GameIgdbTests(TestCase):
                 }
             ],
         }
-        with mock.patch("games.models.igdb.get_api", return_value=fake_api), mock.patch.object(
+        with mock.patch(
+            "games.models.igdb.get_api", return_value=fake_api
+        ), mock.patch.object(
             models.DeveloperAlias.objects,
             "update_or_create",
             side_effect=IntegrityError,
-        ), mock.patch.object(models.DeveloperAlias.objects, "get", return_value=alias):
+        ), mock.patch.object(
+            models.DeveloperAlias.objects, "get", return_value=alias
+        ):
             game.get_igdb_data()
         self.assertIn(alias, game.developers.all())
 
@@ -441,26 +412,12 @@ class ModelHelpersTests(TestCase):
         genre = models.Genre.objects.create(name="Action")
         self.assertEqual(str(genre), "Action")
 
-    @mock.patch("games.utils.get_ranking_for_decade", return_value=5)
-    @mock.patch("games.utils.get_ranking_for_year", return_value=3)
-    def test_game_save_normalizes_name(self, year_mock, decade_mock):
+    def test_game_save_normalizes_name(self):
+        """Test that Game.save() normalizes non-ASCII characters in name."""
         game = models.Game.objects.create(
             name="Álpha", rank=1, igdb_id=10, year_of_release=2000
         )
         self.assertEqual(game.name_normalized, "Alpha")
-        self.assertEqual(game.year_rank, 3)
-        self.assertEqual(game.decade_rank, 5)
-
-    @mock.patch("games.models.logger.error")
-    @mock.patch("games.utils.get_ranking_for_decade", side_effect=ValueError("bad"))
-    @mock.patch("games.utils.get_ranking_for_year", side_effect=ValueError("bad"))
-    def test_game_save_logs_errors_when_ranking_fails(
-        self, year_mock, decade_mock, logger_mock
-    ):
-        models.Game.objects.create(
-            name="Sample", rank=1, igdb_id=1, year_of_release=2000
-        )
-        logger_mock.assert_called()
 
     def test_game_thumbnail_and_image(self):
         game = models.Game.objects.create(

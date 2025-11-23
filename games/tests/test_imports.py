@@ -14,7 +14,7 @@ class ImportGamesTests(TestCase):
         success, message = utils.import_games(StringIO(data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Games: 1 created, 0 updated")
+        self.assertEqual(message, "Games: 1 created, 0 updated, 1 ranks calculated")
         game = models.Game.objects.get()
         self.assertEqual(game.name, "First Game")
         self.assertEqual(game.year_of_release, 1990)
@@ -24,7 +24,7 @@ class ImportGamesTests(TestCase):
         success, message = utils.import_games(StringIO(updated_data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Games: 0 created, 1 updated")
+        self.assertEqual(message, "Games: 0 created, 1 updated, 1 ranks calculated")
         game.refresh_from_db()
         self.assertEqual(game.name, "First Game Deluxe")
         self.assertEqual(game.year_of_release, 1991)
