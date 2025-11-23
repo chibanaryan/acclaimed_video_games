@@ -107,9 +107,6 @@
                 </div>
             </div>
         </div>
-        <a href="{% url 'beta:games-list' %}" class="navbar-item beta-nav-link" x-show="!mobileSearchActive">
-            Top 1000
-        </a>
         {# Desktop search with dropdown - full search functionality #}
         <div class="navbar-item is-hidden-mobile desktop-search"
              x-data="{
@@ -200,6 +197,9 @@
                 </div>
             </div>
         </div>
+        <a href="{% url 'beta:games-list' %}" class="navbar-item beta-nav-link" x-show="!mobileSearchActive">
+            Top 1000
+        </a>
     </div>
     <div class="navbar-menu" :class="{ 'is-active': expanded }" @click="expanded = false">
         <div class="navbar-start">
