@@ -15,6 +15,7 @@
 - Added font and image prefetching to beta site for improved initial load performance
 - Implemented genre/platform filter bubbles on beta site with immediate removal and Alpine.js reactivity
 - Fixed Advanced Search to always show Clear Filters button and reset to defaults instead of clearing entirely
+- Fixed beta site link colors to match original Vue.js site (removed dimmer blue overrides, now uses default Bulmaswatch Cyborg theme)
 
 ## 2025-11-22
 

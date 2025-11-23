@@ -181,16 +181,8 @@
         footer a {
             color: #8b8b8b;
         }
-        
-        /* Link color - dimmer blue to match original Vue.js site */
-        /* Override Bulmaswatch Cyborg's bright cyan with a dimmer blue */
-        a:not(.button):not(footer a):not(.beta-nav-link) {
-            color: #5a9eff !important;
-        }
-        
-        a:not(.button):not(footer a):not(.beta-nav-link):hover {
-            color: #6aaeff !important;
-        }
+
+        /* Link colors use default Bulmaswatch Cyborg theme to match original Vue.js site */
         
         dl.detail dt {
             font-weight: bold;
@@ -426,10 +418,7 @@
             border-color: #5a5a5a;
         }
         
-        .select select:focus {
-            border-color: #5a9eff;
-            box-shadow: 0 0 0 0.125em rgba(90, 158, 255, 0.25);
-        }
+        /* select focus uses default Bulmaswatch Cyborg theme colors */
         
         .select:not(.is-multiple):not(.is-loading)::after {
             border-color: #fff;
@@ -540,10 +529,7 @@
             border-color: rgba(255, 255, 255, 0.4);
         }
         
-        .desktop-search .input:focus {
-            border-color: #3273dc;
-            box-shadow: none;
-        }
+        /* desktop search input focus uses default Bulmaswatch Cyborg theme colors */
         
         .desktop-search .input::placeholder {
             color: rgba(255, 255, 255, 0.4);
@@ -584,10 +570,7 @@
             border-color: rgba(255, 255, 255, 0.4);
         }
         
-        .field:not(.desktop-search):not(.mobile-search) .control .input[name="q"]:focus {
-            border-color: #3273dc;
-            box-shadow: none;
-        }
+        /* developer search input focus uses default Bulmaswatch Cyborg theme colors */
         
         .field:not(.desktop-search):not(.mobile-search) .control .input[name="q"]::placeholder {
             color: rgba(255, 255, 255, 0.4);
@@ -699,6 +682,11 @@
                 padding-left: 0.75rem;
                 padding-right: 0.75rem;
             }
+        }
+
+        /* Disable background hover effect on logo */
+        .navbar-brand > .navbar-item:hover {
+            background-color: transparent !important;
         }
     </style>
     
