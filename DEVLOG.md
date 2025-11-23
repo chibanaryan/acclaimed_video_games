@@ -14,6 +14,7 @@
 - Fixed font loading with preloading and display=block for immediate pixelated font rendering
 - Added font and image prefetching to beta site for improved initial load performance
 - Implemented genre/platform filter bubbles on beta site with immediate removal and Alpine.js reactivity
+- Fixed Advanced Search to always show Clear Filters button and reset to defaults instead of clearing entirely
 
 ## 2025-11-22
 

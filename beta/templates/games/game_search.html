@@ -14,7 +14,6 @@
     </h1>
     
     <div class="buttons is-pulled-right">
-        {% if request.GET.q or request.GET.start or request.GET.end or request.GET.genres or request.GET.platforms %}
         <a href="{% url 'beta:games-search' %}" class="is-hidden-mobile button">
             <span class="icon">
                 <span class="mdi mdi-close"></span>
@@ -26,7 +25,6 @@
                 <span class="mdi mdi-close"></span>
             </span>
         </a>
-        {% endif %}
         <a href="{% url 'beta:games-list' %}" class="button is-link is-pulled-right">
             <span class="icon">
                 <span class="mdi mdi-form-select"></span>
