@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "django.contrib.flatpages",
     "django.contrib.sites",
     "django.contrib.postgres",
+    "django.contrib.humanize",
     "django.forms",
     "corsheaders",
     "django_extensions",

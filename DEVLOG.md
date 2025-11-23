@@ -18,6 +18,8 @@
 - Fixed beta site link colors to match original Vue.js site (removed dimmer blue overrides, now uses default Bulmaswatch Cyborg theme)
 - Added pagination hover effect to beta site (numbers turn blue on hover to match original site)
 - Fixed beta site filter badge spacing and colors to exactly match Vue original
+- Updated beta Advanced Search title to show result counts with commas ("Showing X to Y of Z Results")
+- Fixed beta year slider layout (labels now to left, adjusted width to match original)
 
 ## 2025-11-22
 

@@ -1,10 +1,11 @@
 {# HTMX partial response for GameSearchView - just the content div #}
 {% load beta_filters %}
+{% load humanize %}
 
 <div id="content">
     <h1 class="title">
-        {% if request.GET.q %}
-            Search results for "{{ request.GET.q }}"
+        {% if page_obj %}
+            Showing {{ page_obj.start_index|intcomma }} to {{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }} Results
         {% else %}
             Advanced Search
         {% endif %}

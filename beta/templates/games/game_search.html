@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
 {% load beta_filters %}
+{% load humanize %}
 
 {% block title %}Game Search - Acclaimed Games{% endblock %}
 
 {% block content %}
 <div id="content">
     <h1 class="title">
-        {% if request.GET.q %}
-            Search results for "{{ request.GET.q }}"
+        {% if page_obj %}
+            Showing {{ page_obj.start_index|intcomma }} to {{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }} Results
         {% else %}
             Advanced Search
         {% endif %}
