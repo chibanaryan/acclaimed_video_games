@@ -40,7 +40,14 @@
     <div>
         {% if page_obj %}
         <div class="pagination-wrapper pagination-spacing-top">
-            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+            {# Desktop pagination - show all pages #}
+            <div class="is-hidden-mobile">
+                {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+            </div>
+            {# Mobile pagination - use smart filtering #}
+            <div class="is-hidden-tablet">
+                {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
+            </div>
         </div>
         {% endif %}
 
@@ -52,7 +59,14 @@
 
         {% if page_obj %}
         <div class="pagination-wrapper pagination-spacing-top">
-            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+            {# Desktop pagination - show all pages #}
+            <div class="is-hidden-mobile">
+                {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+            </div>
+            {# Mobile pagination - use smart filtering #}
+            <div class="is-hidden-tablet">
+                {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
+            </div>
         </div>
         {% endif %}
     </div>
