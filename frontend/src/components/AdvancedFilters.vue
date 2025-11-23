@@ -8,22 +8,24 @@
                 <div class="field">
                     <div class="control">
                         <table class="table plain">
-                            <tr>
-                                <td>From:</td>
-                                <td>
-                                    <range-slider v-model.number="filters.start"
-                                        @change="onSelectChange"
-                                        placeholder="Start year"></range-slider>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>To:</td>
-                                <td>
-                                    <range-slider v-model.number="filters.end"
-                                        @change="onSelectChange"
-                                        placeholder="End year"></range-slider>
-                                </td>
-                            </tr>
+                            <tbody>
+                                <tr>
+                                    <td>From:</td>
+                                    <td>
+                                        <range-slider v-model.number="filters.start"
+                                            @change="onSelectChange"
+                                            placeholder="Start year"></range-slider>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>To:</td>
+                                    <td>
+                                        <range-slider v-model.number="filters.end"
+                                            @change="onSelectChange"
+                                            placeholder="End year"></range-slider>
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>

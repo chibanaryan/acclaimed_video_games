@@ -1,83 +1,85 @@
 <template>
     <table class="detail">
-        <tr>
-            <th>All time rank:</th>
-            <td>
-                <router-link :to="getGameRankRoute(game.rank)">
-                    {{ game.rank }}
-                </router-link>
-            </td>
-        </tr>
-        <tr>
-            <th>{{ game.decade }}s rank:</th>
-            <td>
-                <router-link :to="getGameRankRoute(game.decadeRank, game.decade, game.decade + 9)">
-                    {{ game.decadeRank }}
-                </router-link>
-            </td>
-        </tr>
-        <tr>
-            <th>{{ game.yearOfRelease }} rank:</th>
-            <td>
-                <router-link :to="getGameRankRoute(game.yearRank, game.yearOfRelease, game.yearOfRelease)">
-                    {{ game.yearRank }}
-                </router-link>
-            </td>
-        </tr>
-        <tr>
-            <th>Developers:</th>
-            <td>
-                <router-link :to="{ name: 'developer-alias-redirect', params: { id: developer.id }, }"
-                    v-for="(developer, i) in game.developers"
-                    :key="developer.id">
-                    {{ developer.name }}<template v-if="i < game.developers.length - 1">, </template>
-                </router-link>
-            </td>
-        </tr>
-        <tr>
-            <th>Platforms:</th>
-            <td>
-                <router-link :to="{ name: 'games-search', query: { platforms: platform.id }, }"
-                    v-for="(platform, i) in game.platforms"
-                    :key="platform.id">
-                    {{ platform.name }}<template v-if="i < game.platforms.length - 1">, </template>
-                </router-link>
-            </td>
-        </tr>
-        <tr>
-            <th>Year of release:</th>
-            <td>
-                <router-link
-                    :to="{ name: 'games-list', query: { start: game.yearOfRelease, end: game.yearOfRelease } }">
-                    {{ game.yearOfRelease }}
-                </router-link>
-            </td>
-        </tr>
-        <tr>
-            <th>Genres:</th>
-            <td>
-                <router-link :to="{ name: 'games-search', query: { genres: genre.id } }"
-                    v-for="(genre, i) in game.genres"
-                    :key="genre.id">
-                    {{ genre.name }}
-                    <template v-if="i < game.genres.length - 1">, </template>
-                </router-link>
-            </td>
-        </tr>
-        <tr>
-            <th>
-                IGDB Link:
-            </th>
-            <td>
-                <a :href="game.igdbUrl"
-                    target="_blank"
-                    class="igdb-link">
-                    <span class="icon">
-                        <span class="mdi mdi-open-in-new"></span>
-                    </span>
-                </a>
-            </td>
-        </tr>
+        <tbody>
+            <tr>
+                <th>All time rank:</th>
+                <td>
+                    <router-link :to="getGameRankRoute(game.rank)">
+                        {{ game.rank }}
+                    </router-link>
+                </td>
+            </tr>
+            <tr>
+                <th>{{ game.decade }}s rank:</th>
+                <td>
+                    <router-link :to="getGameRankRoute(game.decadeRank, game.decade, game.decade + 9)">
+                        {{ game.decadeRank }}
+                    </router-link>
+                </td>
+            </tr>
+            <tr>
+                <th>{{ game.yearOfRelease }} rank:</th>
+                <td>
+                    <router-link :to="getGameRankRoute(game.yearRank, game.yearOfRelease, game.yearOfRelease)">
+                        {{ game.yearRank }}
+                    </router-link>
+                </td>
+            </tr>
+            <tr>
+                <th>Developers:</th>
+                <td>
+                    <router-link :to="{ name: 'developer-alias-redirect', params: { id: developer.id }, }"
+                        v-for="(developer, i) in game.developers"
+                        :key="developer.id">
+                        {{ developer.name }}<template v-if="i < game.developers.length - 1">, </template>
+                    </router-link>
+                </td>
+            </tr>
+            <tr>
+                <th>Platforms:</th>
+                <td>
+                    <router-link :to="{ name: 'games-search', query: { platforms: platform.id }, }"
+                        v-for="(platform, i) in game.platforms"
+                        :key="platform.id">
+                        {{ platform.name }}<template v-if="i < game.platforms.length - 1">, </template>
+                    </router-link>
+                </td>
+            </tr>
+            <tr>
+                <th>Year of release:</th>
+                <td>
+                    <router-link
+                        :to="{ name: 'games-list', query: { start: game.yearOfRelease, end: game.yearOfRelease } }">
+                        {{ game.yearOfRelease }}
+                    </router-link>
+                </td>
+            </tr>
+            <tr>
+                <th>Genres:</th>
+                <td>
+                    <router-link :to="{ name: 'games-search', query: { genres: genre.id } }"
+                        v-for="(genre, i) in game.genres"
+                        :key="genre.id">
+                        {{ genre.name }}
+                        <template v-if="i < game.genres.length - 1">, </template>
+                    </router-link>
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    IGDB Link:
+                </th>
+                <td>
+                    <a :href="game.igdbUrl"
+                        target="_blank"
+                        class="igdb-link">
+                        <span class="icon">
+                            <span class="mdi mdi-open-in-new"></span>
+                        </span>
+                    </a>
+                </td>
+            </tr>
+        </tbody>
     </table>
 </template>
 

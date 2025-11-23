@@ -22,6 +22,7 @@
 - Added game counts to decade filters (matching year filter format) - decade dropdowns now show counts in brackets (e.g., "1990-99 (150)")
 - Updated MetaView API and beta GameListView to calculate and return decade counts as objects
 - Updated SimpleFilters Vue component and beta template to display decade counts
+- Fixed HTML validation warnings by adding `<tbody>` tags to tables in AdvancedFilters and GameProperties components
 
 - **Further optimized IGDB import to use API's maximum capacity**: Pushed performance to 100+ games/sec
   - Increased default concurrency from 4 to 8 (IGDB's maximum allowed)
