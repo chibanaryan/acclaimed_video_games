@@ -1,8 +1,8 @@
 {# SearchInput component - migrated from Vue #}
 {# Props: value (current search value), placeholder (optional), show_submit_button (default: False) #}
 {# Uses Alpine.js for interactivity #}
-<div class="control"
-     x-data="{ 
+<div class="control is-flex"
+     x-data="{
          q: '{% if value %}{{ value }}{% else %}{% endif %}',
          showSubmitButton: {% if show_submit_button %}true{% else %}false{% endif %}
      }"

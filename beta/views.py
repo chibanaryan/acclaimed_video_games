@@ -1,4 +1,5 @@
 from django.db.models import Count, Min, Max, Prefetch
+from django.db.models.functions import Lower
 from django.views.generic import ListView, DetailView, TemplateView
 from games import models
 
@@ -440,8 +441,10 @@ class DeveloperListView(ListView):
             models.DeveloperAlias.objects.annotate(
                 games_count=Count("games"),
             )
+            .filter(games_count__gt=0)  # Only show aliases with games
             .select_related("developer")
-            .order_by("name")
+            .order_by(Lower("name"))
+            .distinct()
         )
 
         # Search filter

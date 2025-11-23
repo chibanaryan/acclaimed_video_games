@@ -17,6 +17,7 @@
 - Fixed Advanced Search to always show Clear Filters button and reset to defaults instead of clearing entirely
 - Fixed beta site link colors to match original Vue.js site (removed dimmer blue overrides, now uses default Bulmaswatch Cyborg theme)
 - Added pagination hover effect to beta site (numbers turn blue on hover to match original site)
+- Fixed beta site filter badge spacing and colors to exactly match Vue original
 
 ## 2025-11-22
 

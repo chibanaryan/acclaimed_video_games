@@ -378,6 +378,17 @@
             max-width: inherit;
         }
 
+        /* Ensure column spacing matches Vue.js SPA exactly */
+        .game-row .column {
+            padding: 0.75rem;
+        }
+
+        .game-row .columns {
+            margin-inline-start: -0.75rem;
+            margin-inline-end: -0.75rem;
+            margin-top: -0.75rem;
+        }
+
         .game-row.desktop .rank {
             text-align: center;
             display: flex;
@@ -478,7 +489,23 @@
             color: rgb(181, 181, 181) !important; /* Match Bulmaswatch Cyborg theme body text color */
             margin-bottom: 1.5rem; /* Add space between snippet and "Current Top 10" */
         }
-        
+
+        /* Fix filter badge colors to match Vue site exactly */
+        /* Override any conflicts between base Bulma and Bulmaswatch */
+        .tag.is-primary {
+            background-color: #209cee !important; /* Bulmaswatch Cyborg primary color */
+            color: #fff !important;
+        }
+
+        .tag.is-primary .delete {
+            background-color: rgba(10, 10, 10, 0.2) !important;
+        }
+
+        .tag.is-primary .delete:hover,
+        .tag.is-primary .delete:focus {
+            background-color: rgba(10, 10, 10, 0.3) !important;
+        }
+
     </style>
     
     {% block extra_head %}{% endblock %}

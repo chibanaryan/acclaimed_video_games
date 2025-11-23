@@ -34,9 +34,9 @@
         </div>
     </div>
 
-    {# Pagination at top (desktop) - centered with more spacing #}
+    {# Pagination at top (desktop) - centered #}
     {% if page_obj %}
-    <div class="pagination-wrapper pagination-spacing-top">
+    <div class="pagination-wrapper mt-5">
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
     </div>
     {% endif %}
@@ -67,9 +67,9 @@
     </script>
     {% endif %}
 
-    {# Pagination at bottom - centered with more spacing #}
+    {# Pagination at bottom - centered #}
     {% if page_obj %}
-    <div class="pagination-wrapper pagination-spacing-top">
+    <div class="pagination-wrapper mt-5">
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
     </div>
     {% endif %}
