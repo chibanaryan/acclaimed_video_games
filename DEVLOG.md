@@ -29,6 +29,11 @@
 
 ## 2025-11-22
 
+- **Implemented dynamic tagline with real-time database counts**: Homepage tagline now displays exact counts from database (827 critic lists, 134 publications)
+  - Extended `/api/meta/` endpoint to include total list and publication counts
+  - Updated both Vue.js SPA and Beta HTMX homepages to use dynamic data
+  - Expanded test coverage to 95% (added meta API tests, admin permission tests, model property tests)
+
 - Added game counts to decade filters (matching year filter format) - decade dropdowns now show counts in brackets (e.g., "1990-99 (150)")
 - Updated MetaView API and beta GameListView to calculate and return decade counts as objects
 - Updated SimpleFilters Vue component and beta template to display decade counts
