@@ -374,6 +374,21 @@
                 for (let name of names) {
                     name.innerText = 'No file selected'
                 }
+                // Re-enable submit button on reset
+                let submitBtn = form.querySelector('#import-submit')
+                if (submitBtn) {
+                    submitBtn.disabled = false
+                    submitBtn.textContent = '📤 Import Files'
+                }
+            })
+
+            // Disable submit button on form submission to prevent double-clicks
+            form.addEventListener('submit', () => {
+                let submitBtn = form.querySelector('#import-submit')
+                if (submitBtn) {
+                    submitBtn.disabled = true
+                    submitBtn.textContent = '⏳ Importing...'
+                }
             })
         }
     })
@@ -648,7 +663,7 @@
 
             <div class="field is-grouped">
                 <div class="control">
-                    <button class="button is-primary" type="submit">📤 Import Files</button>
+                    <button class="button is-primary" type="submit" id="import-submit">📤 Import Files</button>
                 </div>
                 <div class="control">
                     <button class="button" type="reset">↩️ Clear</button>

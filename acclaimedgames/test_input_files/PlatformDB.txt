@@ -1,0 +1,73 @@
+3DS	Nintendo 3DS
+ARC	Arcade
+E60	Electronika 60
+BR	Browser
+DC	Sega Dreamcast
+DOS	DOS
+DS	Nintendo DS
+GB	Game Boy
+GBC	Game Boy Color
+GBA	Game Boy Advance
+GC	Nintendo GameCube
+GEN	Sega Mega Drive / Genesis
+JAG	Atari Jaguar
+LMD	Legacy Mobile Device
+N64	Nintendo 64
+NES	Nintendo Entertainment System
+PS	PlayStation
+PS2	PlayStation 2
+PS3	PlayStation 3
+PS4	PlayStation 4
+PS5	PlayStation 5
+PSP	PlayStation Portable
+PSV	PlayStation Vita
+SAT	Sega Saturn
+SMS	Sega Master System
+SNES	Super Nintendo Entertainment System
+SW	Nintendo Switch
+TG16	TurboGrafx-16 / PC Engine
+VR	Virtual Reality
+Wii	Nintendo Wii
+WiiU	Nintendo Wii U
+X360	Xbox 360
+XB1	Xbox One
+Xbox	Xbox
+XBXS	Xbox Series X/S
+3DO	3DO Interactive Multiplayer
+INTV	Intellivision
+NG	SNK Neo Geo
+LIN	Linux
+MAC	Apple Macintosh
+WIN	Windows PC
+iOS	iPhone
+AND	Android
+ZXS	ZX Spectrum
+C64	Commodore 64/128
+CPC	Amstrad CPC
+AST	Atari ST/STE
+A2	Apple II
+AMI	Amiga
+PSVR	PlayStation VR
+A26	Atari 2600
+A52	Atari 5200
+PC98	PC-9800
+FMT	FM Towns
+A8	Atari 8-bit
+PC88	PC-8800
+SX1	Sharp X1
+MSX	MSX
+FM7	Fujitsu Micro 7
+CV	ColecoVision
+FDS	Famicom Disk System
+VC20	VIC-20
+BBCM	BBC Micro
+PDP	DEC PDP
+A78	Atari 7800
+GG	Sega Game Gear
+SCD	Sega CD
+T80	TRS-80 Micro Computer System
+CD32	Amiga CD32
+LYNX	Atari Lynx
+ARCH	Acorn Archimedes
+HP21	HP 2100
+TCC	TRS-80 / Tandy Color Computer

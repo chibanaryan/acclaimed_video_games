@@ -22,20 +22,20 @@ class ImportViewIntegrationTests(TestCase):
         response = self.client.get(reverse("import"))
         self.assertEqual(response.status_code, 302)
 
-    @mock.patch("games.views.utils.import_data", return_value=(True, "Done"))
+    @mock.patch("games.views.utils.import_batch", return_value=(True, "Done"))
     def test_successful_data_import(self, mock_import):
+        """Test batch import with a single file."""
         self.client.login(username="tester", password="pass")
-        fake_file = SimpleUploadedFile("data.txt", b"payload")
+        fake_file = SimpleUploadedFile("PlatformDB.txt", b"PC\tPersonal Computer")
         response = self.client.post(
             reverse("import"),
             {
-                "type": constants.TYPE_PLATFORM,
-                "file": fake_file,
+                "platforms_file": fake_file,
             },
         )
         self.assertEqual(response.status_code, 302)
-        messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(messages[0].message, "Done")
+        # Check session data instead of messages
+        self.assertEqual(response.wsgi_request.session.get('import_success'), "Done")
         mock_import.assert_called_once()
 
     @mock.patch("games.views.utils.import_data", return_value=(True, "Deleted"))
@@ -48,8 +48,8 @@ class ImportViewIntegrationTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 302)
-        messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(messages[0].message, "Deleted")
+        # Check session data instead of messages
+        self.assertEqual(response.wsgi_request.session.get('import_success'), "Deleted")
         mock_import.assert_called_once()
 
     @mock.patch("games.views.utils.import_data", return_value=(True, "IGDB"))
@@ -62,27 +62,24 @@ class ImportViewIntegrationTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 302)
-        messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(messages[0].message, "IGDB")
+        # Check session data instead of messages
+        self.assertEqual(response.wsgi_request.session.get('import_success'), "IGDB")
         mock_import.assert_called_once()
 
-    @mock.patch("games.views.utils.import_data", return_value=(False, "Failed"))
+    @mock.patch("games.views.utils.import_batch", return_value=(False, "Failed"))
     def test_failed_data_import_sets_error_message(self, mock_import):
         self.client.login(username="tester", password="pass")
-        response = self.client.post(reverse("import"), {"igdb": True})
+        fake_file = SimpleUploadedFile("PlatformDB.txt", b"PC\tPersonal Computer")
+        response = self.client.post(
+            reverse("import"),
+            {
+                "platforms_file": fake_file,
+            },
+        )
         self.assertEqual(response.status_code, 302)
-        messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(messages[0].message, "Failed")
+        # Check session data instead of messages
+        self.assertEqual(response.wsgi_request.session.get('import_errors'), ["Failed"])
         mock_import.assert_called_once()
-
-    def test_context_contains_import_types(self):
-        factory = RequestFactory()
-        request = factory.get(reverse("import"))
-        view = views.ImportView()
-        view.request = request
-        context = view.get_context_data()
-        self.assertIn("import_types", context)
-        self.assertEqual(context["import_types"], constants.TYPES)
 
 
 class SPAWithPrerenderedViewTests(TestCase):

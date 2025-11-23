@@ -5,10 +5,10 @@ TYPE_LIST_MEMBERSHIP = "M"
 TYPE_DEVELOPER = "D"
 
 TYPES = [
+    (TYPE_PLATFORM, "Platforms"),
+    (TYPE_LIST, "Source lists"),
     (TYPE_GAME, "Games"),
     (TYPE_LIST_MEMBERSHIP, "Game positions"),
-    (TYPE_LIST, "Source lists"),
-    (TYPE_PLATFORM, "Platforms"),
 ]
 
 LIST_EOY = "E"

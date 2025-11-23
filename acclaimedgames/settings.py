@@ -126,6 +126,12 @@ DATABASES = {
     "default": env.db(default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
 
+# Add SQLite timeout to prevent "database is locked" errors during concurrent writes
+if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    DATABASES["default"]["OPTIONS"] = {
+        "timeout": 20,  # Increase timeout from default 5 seconds to 20 seconds
+    }
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": (

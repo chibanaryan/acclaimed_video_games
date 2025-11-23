@@ -1,17 +1,15 @@
-from typing import Any, Dict
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import Form
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.urls import reverse_lazy
 from django.views.generic import FormView, ListView, View
 
 from games.forms import ImportForm
 
-from . import constants, models, utils
+from . import models, utils
 
 
 class SPAWithPrerenderedView(View):
@@ -62,25 +60,113 @@ class SPAWithPrerenderedView(View):
 
 
 class ImportView(LoginRequiredMixin, FormView):
+    """
+    Handles batch importing of game data files with validation and transaction safety.
+
+    Supports:
+    - Batch upload of multiple TSV files (platforms, lists, games, memberships)
+    - Single-file uploads (legacy support)
+    - Delete existing data
+    - IGDB data fetching
+
+    Files are imported in dependency order:
+    1. Platforms (no dependencies)
+    2. Source Lists (Publications auto-created)
+    3. Games (requires Platforms)
+    4. Game Positions (requires Lists and Games)
+    """
     template_name = "games/import.html"
     form_class = ImportForm
     success_url = reverse_lazy("import")
 
-    def get_context_data(self, **kwargs) -> Dict[str, Any]:
+    def get_context_data(self, **kwargs) -> dict:
+        """Add database object counts and persistent errors to context."""
         context = super().get_context_data(**kwargs)
-        context["import_types"] = constants.TYPES
+
+        # Get game counts
+        total_games = models.Game.objects.count()
+        games_with_igdb = models.Game.objects.exclude(igdb_artwork_id__isnull=True).count()
+        games_without_igdb = models.Game.objects.filter(igdb_artwork_id__isnull=True).count()
+
+        context['counts'] = {
+            'platforms': models.Platform.objects.count(),
+            'publications': models.Publication.objects.count(),
+            'lists': models.List.objects.count(),
+            'games': total_games,
+            'memberships': models.ListMembership.objects.count(),
+            'developers': models.Developer.objects.count(),
+        }
+        context['igdb_counts'] = {
+            'total': total_games,
+            'with_igdb': games_with_igdb,
+            'without_igdb': games_without_igdb,
+            'percentage': int((games_with_igdb / total_games * 100) if total_games > 0 else 0),
+        }
+
+        # Get persistent errors from session
+        import_errors = self.request.session.pop('import_errors', None)
+        import_success_message = self.request.session.pop('import_success', None)
+        context['import_errors'] = import_errors
+        context['import_success_message'] = import_success_message
+
         return context
 
     def form_valid(self, form: Form) -> HttpResponse:
+        """Process the import form and handle file uploads."""
         import_data = form.cleaned_data
 
+        # Check if this is a batch file import (not delete/igdb operations)
+        has_batch_files = any([
+            import_data.get('platforms_file'),
+            import_data.get('lists_file'),
+            import_data.get('games_file'),
+            import_data.get('memberships_file'),
+        ])
+
+        # If batch files are provided, process them directly
+        if has_batch_files and not import_data.get('delete') and not import_data.get('igdb'):
+            # Process batch import immediately
+            res, message = utils.import_batch(import_data)
+            if res:
+                # Store success message in session (persist across redirect)
+                self.request.session['import_success'] = message
+            else:
+                # Store error message in session as a list for persistent display
+                self.request.session['import_errors'] = [message]
+            # Explicitly save session before redirect
+            self.request.session.modified = True
+            return super().form_valid(form)
+
+        # For delete/igdb operations, use the standard import flow
         res, message = utils.import_data(import_data)
         if res:
-            messages.info(self.request, message)
+            # Store success message in session (persist across redirect)
+            self.request.session['import_success'] = message
         else:
-            messages.error(self.request, message)
+            # Store error message in session as a list for persistent display
+            self.request.session['import_errors'] = [message]
 
+        # Explicitly save session before redirect
+        self.request.session.modified = True
         return super().form_valid(form)
+
+
+class IGDBProgressView(LoginRequiredMixin, View):
+    """
+    Streams IGDB data fetching progress via Server-Sent Events (SSE).
+    Allows real-time progress bar updates in the browser.
+    """
+
+    def get(self, request, *args, **kwargs):
+        """Stream IGDB fetch progress as SSE events."""
+        return StreamingHttpResponse(
+            utils.import_igdb_with_progress(),
+            content_type='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no',
+            }
+        )
 
 
 class PostListView(ListView):

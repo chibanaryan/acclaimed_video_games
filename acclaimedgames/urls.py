@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/", include("games.api.urls", namespace="games-api")),
     path("admin/", admin.site.urls),
     path("import/", views.ImportView.as_view(), name="import"),
+    path("import/igdb-progress/", views.IGDBProgressView.as_view(), name="igdb-progress"),
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
     # Beta version routes (new Django + HTMX version)
     path("beta/", include("beta.urls")),

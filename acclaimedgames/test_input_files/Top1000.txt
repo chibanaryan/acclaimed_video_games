@@ -1,0 +1,1000 @@
+1	The Legend of Zelda: Breath of the Wild	2017	7346	SW, WiiU
+2	Tetris	1985	130749	A2, AMI, AST, BBCM, C64, DOS, E60, GB, MSX, NES, ZXS
+3	The Last of Us	2013	1009	PS3, PS4
+4	The Legend of Zelda: Ocarina of Time	1998	1029	N64
+5	Half-Life 2	2004	233	PS3, WIN, X360, Xbox
+6	The Witcher III: Wild Hunt	2015	1942	PS4, WIN, XB1
+7	Super Mario 64	1996	1074	N64
+8	The Legend of Zelda: A Link to the Past	1991	1026	SNES
+9	Resident Evil 4	2005	974	GC, PS2, Wii, WIN
+10	Super Mario World	1990	1070	SNES
+11	Shadow of the Colossus	2005	2207	PS2
+12	Mass Effect 2	2010	74	PS3, WIN, X360
+13	BioShock	2007	20	PS3, WIN, X360
+14	Portal 2	2011	72	MAC, PS3, WIN, X360
+15	Elden Ring	2022	119133	PS4, PS5, WIN, XB1, XBXS
+16	Doom	1993	673	DOS
+17	World of Warcraft	2004	123	MAC, WIN
+18	Final Fantasy VII	1997	427	PS, WIN
+19	The Elder Scrolls V: Skyrim	2011	472	PS3, WIN, X360
+20	Grand Theft Auto V	2013	1020	PS3, PS4, WIN, X360, XB1
+21	Super Metroid	1994	1103	SNES
+22	Red Dead Redemption	2010	434	PS3, X360
+23	Street Fighter II	1991	3186	AMI, ARC, AST, C64, CPC, DOS, SNES, ZXS
+24	Portal	2007	71	PS3, WIN, X360
+25	Metal Gear Solid	1998	375	PS, WIN
+26	Halo: Combat Evolved	2001	740	MAC, WIN, Xbox
+27	Call of Duty 4: Modern Warfare	2007	623	MAC, PS3, WIN, X360
+28	Super Mario Bros. 3	1988	1068	NES
+29	God of War	2018	19560	PS4, WIN
+30	Dark Souls	2011	2155	PS3, WIN, X360
+31	Chrono Trigger	1995	1802	SNES
+32	Castlevania: Symphony of the Night	1997	1128	PS, SAT
+33	Bloodborne	2015	7334	PS4
+34	GoldenEye 007	1997	1638	N64
+35	Red Dead Redemption 2	2018	25076	PS4, WIN, XB1
+36	Half-Life	1998	231	WIN
+37	Deus Ex	2000	41	MAC, WIN
+38	Uncharted 2: Among Thieves	2009	565	PS3
+39	Minecraft	2011	121	LIN, MAC, PS3, WIN, X360
+40	Metroid Prime	2002	1105	GC
+41	Journey	2012	1352	PS3
+42	Metal Gear Solid 3: Snake Eater	2004	379	PS2
+43	StarCraft	1998	230	MAC, WIN
+44	Hades	2020	113112	MAC, PS4, PS5, SW, WIN, XB1, XBXS
+45	Diablo II	2000	126	MAC, WIN
+46	Final Fantasy VI	1994	426	SNES
+47	Star Wars: Knights of the Old Republic	2003	116	MAC, WIN, Xbox
+48	Super Mario Kart	1992	2332	SNES
+49	Silent Hill 2	2001	481	PS2, WIN, Xbox
+50	Super Mario Odyssey	2017	26758	SW
+51	Baldur's Gate 3	2023	119171	MAC, PS5, WIN, XBXS
+52	Fallout 3	2008	15	PS3, WIN, X360
+53	Super Mario Galaxy	2007	1077	Wii
+54	The Last of Us Part II	2020	26192	PS4
+55	Super Mario Bros.	1985	358	ARC, NES
+56	Ico	2001	7170	PS2
+57	Grand Theft Auto III	2001	730	PS2, WIN
+58	Pokémon Red/Blue/Yellow	1996	1561	GB
+59	Disco Elysium	2019	26472	MAC, WIN
+60	Overwatch	2016	8173	PS4, WIN, XB1
+61	Grand Theft Auto IV	2008	731	PS3, WIN, X360
+62	Tomb Raider	1996	912	DOS, PS, SAT
+63	The Legend of Zelda: The Wind Waker	2002	1033	GC
+64	The Walking Dead	2012	1871	iOS, MAC, PS3, WIN, X360
+65	Counter-Strike / Counter-Strike 1.6	2000	241	WIN
+66	Ōkami	2006	1271	PS2, Wii
+67	Outer Wilds	2019	11737	PS4, WIN, XB1
+68	Grand Theft Auto: San Andreas	2004	732	PS2, WIN, Xbox
+69	Batman: Arkham City	2011	501	MAC, PS3, WIN, X360
+70	Super Mario Galaxy 2	2010	1078	Wii
+71	Resident Evil	1996	424	PS, SAT, WIN
+72	Inside	2016	7342	PS4, SW, WIN, XB1
+73	Nier: Automata	2017	11208	PS4, WIN, XB1
+74	SimCity 2000	1993	330	AMI, DOS, MAC
+75	System Shock 2	1999	22	WIN
+76	Undertale	2015	12517	LIN, MAC, WIN
+77	Super Smash Bros. Melee	2001	1627	GC
+78	The Secret of Monkey Island	1990	60	AMI, AST, DOS, FMT, MAC, SCD
+79	Batman: Arkham Asylum	2009	500	PS3, WIN, X360
+80	Grand Theft Auto: Vice City	2002	733	PS2, WIN, Xbox
+81	Spelunky	2012	3029	PS3, PSV, WIN, X360
+82	The Elder Scrolls III: Morrowind	2002	56	WIN, Xbox
+83	The Legend of Zelda: Majora's Mask	2000	1030	N64
+84	Halo 3	2007	987	X360
+85	The Legend of Zelda	1986	1022	FDS, NES
+86	Persona 5	2016	9927	PS3, PS4, PS5, SW, WIN, XB1, XBXS
+87	Persona 4 / Shin Megami Tensei: Persona 4	2008	9600	PS2, PSV, WIN
+88	Super Mario World 2: Yoshi's Island	1995	1073	SNES
+89	Braid	2008	2853	WIN, X360
+90	Fortnite	2017	1905	MAC, PS4, WIN, XB1
+91	Sonic the Hedgehog	1991	3192	ARC, GEN
+92	The Elder Scrolls IV: Oblivion	2006	59	PS3, WIN, X360
+93	Grim Fandango	1998	181	WIN
+94	Stardew Valley	2016	17000	LIN, MAC, PS4, SW, WIN, XB1
+95	Rocket League	2015	11198	LIN, MAC, PS4, SW, WIN, XB1
+96	The Sims	2000	223	MAC, WIN
+97	Return of the Obra Dinn	2018	9643	MAC, PS4, SW, WIN, XB1
+98	Super Smash Bros. Ultimate	2018	90101	SW
+99	Mega Man 2	1988	1715	NES
+100	Baldur's Gate II: Shadows of Amn	2000	6	MAC, WIN
+101	Uncharted 4: A Thief's End	2016	7331	PS4, PS5, WIN
+102	Prince of Persia: The Sands of Time	2003	836	GC, PS2, WIN, Xbox
+103	Sid Meier's Civilization IV	2005	293	MAC, WIN
+104	Tony Hawk's Pro Skater 2	2000	913	DC, N64, PS, WIN
+105	Maniac Mansion II: Day of the Tentacle	1993	193	DOS, MAC
+106	The Legend of Zelda: Tears of the Kingdom	2023	119388	SW
+107	EarthBound / Mother 2: Gīgu no Gyakushū	1994	2899	SNES
+108	Mario Kart 8 / Mario Kart 8 Deluxe	2014	26764	SW, WiiU
+109	Final Fantasy Tactics	1997	428	PS
+110	Assassin's Creed 2	2009	127	PS3, WIN, X360
+111	Planescape: Torment	1999	832	WIN
+112	Age of Empires II: The Age of Kings	1999	327	WIN
+113	Team Fortress 2	2007	891	PS3, WIN, X360
+114	Doom	2016	7351	PS4, WIN, XB1
+115	Mass Effect	2007	73	WIN, X360
+116	Warcraft 3: Reign of Chaos	2002	132	MAC, WIN
+117	Metal Gear Solid V: The Phantom Pain	2015	1985	PS3, PS4, WIN, X360, XB1
+118	X-COM: UFO Defense / UFO: Enemy Unknown	1994	24	AMI, DOS, PS
+119	Celeste	2018	26226	LIN, MAC, PS4, SW, WIN, XB1
+120	Shenmue	1999	1217	DC
+121	Left 4 Dead	2008	122	WIN, X360
+122	Donkey Kong	1981	1086	ARC, NES
+123	Secret of Mana / Seiken Densetsu 2	1993	3216	SNES
+124	Titanfall 2	2016	17447	PS4, WIN, XB1
+125	League of Legends	2009	115	WIN
+126	SimCity	1989	1272	AMI, C64, CPC, DOS, FMT, MAC, SNES, ZXS
+127	XCOM: Enemy Unknown	2012	1318	AND, iOS, LIN, MAC, PS3, WIN, X360
+128	Lemmings	1991	4239	AMI, AST, DOS, FMT, GEN, MAC, PC98, SMS, SNES, TG16, ZXS
+129	God of War	2005	549	PS2
+130	Sid Meier's Civilization II	1996	634	MAC, WIN
+131	Star Wars: TIE Fighter	1994	166	DOS, MAC, WIN
+132	Astro Bot	2024	303811	PS5
+133	Advance Wars	2001	1691	GBA
+134	BioShock Infinite	2013	538	MAC, PS3, WIN, X360
+135	What Remains of Edith Finch	2017	11233	PS4, SW, WIN, XB1
+136	Sonic the Hedgehog 2	1991	4438	ARC, GEN
+137	Quake III: Arena	1999	355	DC, LIN, MAC, PS2, WIN
+138	Dishonored 2	2016	11118	PS4, WIN, XB1
+139	The Witness	2016	5601	iOS, MAC, PS4, WIN, XB1
+140	Ms. Pac-Man	1982	7452	A2, A8, ARC, C64, DOS, ZXS
+141	Monkey Island 2: LeChuck's Revenge	1991	61	AMI, DOS, MAC
+142	Burnout 3: Takedown	2004	5761	PS2, Xbox
+143	Horizon Zero Dawn	2017	11156	PS4, WIN
+144	Animal Crossing: New Horizons	2020	109462	SW
+145	Rez / Rez HD / Rez Infinite	2001	11244	DC, PS2
+146	Papers, Please	2013	2935	LIN, MAC, WIN
+147	Dishonored	2012	533	PS3, WIN, X360
+148	Hitman 3 / World of Assassination	2021	134595	PS4, PS5, WIN, XB1, XBXS
+149	Left 4 Dead 2	2009	124	MAC, WIN, X360
+150	Galaga	1981	2751	ARC
+151	Battlefield 1942	2002	240	WIN
+152	Street Fighter IV	2008	884	ARC, PS3, WIN, X360
+153	Pac-Man	1980	2750	A26, A52, A8, ARC, C64, DOS, INTV, MSX, NES, PC88, ZXS
+154	Quake	1996	333	DOS, LIN, MAC, WIN
+155	Metal Gear Solid 2: Sons of Liberty	2001	376	PS2, WIN, Xbox
+156	Divinity: Original Sin II	2017	11800	PS4, WIN, XB1
+157	PUBG: Battlegrounds	2017	27789	PS4, WIN, XB1
+158	Tetris Effect	2018	103221	PS4, PSVR, VR, WIN
+159	Final Fantasy X	2001	418	PS2
+160	Warcraft 2: Tides of Darkness	1995	130	DOS, MAC
+161	Hotline Miami	2012	1384	MAC, PS3, PSV, WIN
+162	Gone Home	2013	1906	LIN, MAC, WIN
+163	Sid Meier's Civilization	1991	902	DOS, WIN
+164	Command & Conquer: Red Alert	1996	295	WIN
+165	Limbo	2010	1331	LIN, MAC, PS3, PS4, PSV, SW, WIN, X360, XB1
+166	Beyond Good & Evil	2003	1341	GC, PS2, WIN, Xbox
+167	Punch-Out!! / Mike Tyson's Punch Out!!	1987	2195	NES
+168	Half-Life: Alyx	2020	126098	VR
+169	NBA Jam	1993	8995	ARC, GEN, SCD, SNES
+170	Dead Space	2008	37	PS3, WIN, X360
+171	Space Invaders	1978	3601	A26, ARC
+172	Fallout: New Vegas	2010	16	PS3, WIN, X360
+173	Katamari Damacy	2004	6453	PS2
+174	Fallout 2	1998	14	WIN
+175	Super Meat Boy	2010	885	LIN, MAC, WIN, X360
+176	Elite	1984	2951	A2, BBCM, C64, CPC, DOS, MSX, ZXS
+177	Pokémon Go	2016	12515	AND, iOS
+178	Destiny	2014	1939	PS3, PS4, X360, XB1
+179	Marvel's Spider-Man	2018	19565	PS4, PS5, WIN
+180	Monster Hunter: World	2018	36926	PS4, WIN, XB1
+181	Fez	2012	1991	LIN, MAC, PS3, PS4, PSV, SW, WIN, X360
+182	Gran Turismo	1997	1594	PS
+183	Thief II: The Metal Age	2000	1	WIN
+184	Halo 2	2004	986	Xbox
+185	Thief: The Dark Project	1998	2	WIN
+186	God of War II	2007	551	PS2
+187	Gears of War	2006	547	WIN, X360
+188	Prince of Persia	1989	2472	A2, AMI, AST, CPC, DOS, FMT, MAC, PC98, TG16
+189	Assassin's Creed IV: Black Flag	2013	1970	PS3, PS4, WiiU, WIN, X360, XB1
+190	Soulcalibur	1998	1564	ARC, DC
+191	Ikaruga	2001	3953	ARC, DC, GC
+192	Hollow Knight	2017	14593	LIN, MAC, PS4, SW, WIN, XB1
+193	Command & Conquer	1995	647	DOS, MAC, WIN
+194	Resident Evil 2	1998	880	DC, N64, PS, WIN
+195	Life Is Strange	2015	7599	LIN, MAC, PS3, PS4, WIN, X360, XB1
+196	Tekken 3	1997	1244	ARC, PS
+197	Contra	1987	4598	ARC, C64, CPC, DOS, NES, ZXS
+198	Donkey Kong Country	1994	1090	SNES
+199	Wii Sports	2006	2181	Wii
+200	The Legend of Zelda: Link's Awakening	1993	1028	GB
+201	Borderlands 2	2012	1011	MAC, PS3, WIN, X360
+202	Hearthstone	2014	1279	AND, iOS, MAC, WIN
+203	Myst	1993	236	3DO, MAC, WIN
+204	Dota 2	2013	2963	LIN, MAC, WIN
+205	Marvel's Spider-Man 2	2023	127044	PS5
+206	Dragon Age: Origins	2009	76	MAC, PS3, WIN, X360
+207	Max Payne	2001	18	MAC, PS2, WIN, Xbox
+208	Fallout	1997	13	DOS, MAC, WIN
+209	Pong	1972	1333	ARC
+210	Wipeout 2097 / Wipeout XL	1996	1538	PS, SAT, WIN
+211	Gauntlet	1985	3502	ARC
+212	Duke Nukem 3D	1996	342	DOS, PS, SAT
+213	Rome: Total War	2004	438	WIN
+214	Super Mario Maker	2015	7339	3DS, WiiU
+215	Resident Evil 2	2019	19686	PS4, WIN, XB1
+216	Ultima Online	1997	3126	LIN, WIN
+217	Final Fantasy VII Rebirth	2024	133236	PS5
+218	StarCraft II	2010	239	MAC, WIN
+219	Control	2019	103329	PS4, WIN, XB1
+220	Into the Breach	2018	27117	MAC, SW, WIN
+221	Mario Kart 64	1996	2342	N64
+222	Psychonauts	2005	1339	PS2, WIN, Xbox
+223	Firewatch	2016	9730	LIN, MAC, PS4, WIN, XB1
+224	Helldivers 2	2024	250616	PS5, WIN
+225	Rock Band	2007	2685	PS2, PS3, Wii, X360
+226	Death Stranding	2019	19564	PS4, WIN
+227	Sid Meier's Civilization V	2010	866	MAC, WIN
+228	Sekiro: Shadows Die Twice	2019	76882	PS4, WIN, XB1
+229	Hitman: Blood Money	2006	1048	PS2, WIN, X360, Xbox
+230	Pokémon Gold/Silver/Crystal	1999	1558	GBC
+231	Kentucky Route Zero	2013	5614	LIN, MAC, WIN
+232	Rock Band 2	2008	2692	PS2, PS3, Wii, X360
+233	Gears of War 2	2008	548	X360
+234	Mass Effect 3	2012	75	PS3, WiiU, WIN, X360
+235	Doom II	1994	312	DOS
+236	Ultima VII: The Black Gate	1992	6165	DOS
+237	Bayonetta	2009	2136	PS3, X360
+238	Company of Heroes	2006	654	WIN
+239	Guitar Hero	2005	1285	PS2
+240	Final Fantasy IX	2000	421	PS
+241	Metroid	1986	1101	ARC, FDS, NES
+242	Battlefield 2	2005	277	WIN
+243	Devil May Cry 3: Dante's Awakening	2005	136	PS2
+244	Tom Clancy's Splinter Cell: Chaos Theory	2005	911	GC, PS2, WIN, Xbox
+245	Resident Evil 7: Biohazard	2017	19562	PS4, WIN, XB1
+246	Another World / Out of This World	1991	4348	3DO, A2, AMI, AST, DOS, GEN, SNES
+247	Bayonetta 2	2014	2135	WiiU
+248	Soulcalibur II	2002	1565	ARC, GC, PS2, Xbox
+249	Sam & Max Hit the Road	1993	202	DOS, MAC
+250	Animal Crossing: New Leaf	2012	2687	3DS
+251	LittleBigPlanet	2008	1058	PS3
+252	Diablo	1997	125	MAC, PS, WIN
+253	Zork	1977	1944	A2, A8, C64, DOS, MAC, PDP, T80, TCC
+254	Final Fantasy IV	1991	16587	SNES
+255	Defender	1981	3873	A26, ARC
+256	Her Story	2015	11346	AND, iOS, MAC, WIN
+257	Xenoblade Chronicles	2010	2364	Wii
+258	Sid Meier's Pirates!	1987	9231	A2, AMI, AST, C64, CPC, DOS, MAC, NES, PC88
+259	Double Dragon	1987	6787	ARC, NES, SMS
+260	Animal Crossing	2001	2655	GC, N64
+261	FTL: Faster Than Light	2012	3075	LIN, MAC, WIN
+262	Far Cry 3	2012	529	PS3, WIN, X360
+263	Demon's Souls	2009	5619	PS3
+264	Gran Turismo 3: A-Spec	2001	1600	PS2
+265	Fable II	2008	522	X360
+266	God of War Ragnarök	2022	112875	PS4, PS5
+267	Asteroids	1979	7758	A26, A8, ARC
+268	Deathloop	2021	113598	PS5, WIN, XBXS
+269	Burnout Paradise	2008	620	PS3, WIN, X360
+270	Shovel Knight	2014	7444	3DS, LIN, MAC, PS3, PS4, PSV, WiiU, WIN, XB1
+271	Baldur's Gate	1998	5	MAC, WIN
+272	Alien: Isolation	2014	4754	PS3, PS4, WIN, X360, XB1
+273	Super Mario Bros. 2	1988	1067	NES
+274	Star Fox 64 / Lylat Wars	1997	2591	N64
+275	The Stanley Parable	2013	18453	LIN, MAC, WIN
+276	Mortal Kombat II	1993	1619	AMI, ARC, DOS, GEN, GG, SNES
+277	Suikoden II	1998	1454	PS
+278	Nights Into Dreams	1996	5075	SAT
+279	Homeworld	1999	749	WIN
+280	Street Fighter III	1997	6708	ARC, DC
+281	The Sims 2	2004	224	MAC, WIN
+282	Fire Emblem: Three Houses	2019	26845	SW
+283	Yakuza 0	2015	11397	PS3, PS4, WIN
+284	Robotron: 2084	1982	3592	A2, A52, A78, A8, ARC, AST, BBCM, C64, DOS, VC20
+285	Contra III: The Alien Wars / Super Probotector: Alien Rebels	1992	6351	SNES
+286	Kingdom Hearts	2002	1219	PS2
+287	Rock Band 3	2010	2691	PS3, Wii, X360
+288	Unreal Tournament	1999	272	DC, LIN, MAC, PS2, WIN
+289	The Legend of Zelda: Twilight Princess	2006	1036	GC, Wii
+290	It Takes Two	2021	135243	PS4, PS5, SW, WIN, XB1, XBXS
+291	Assassin's Creed Odyssey	2018	103054	PS4, SW, WIN, XB1
+292	Resident Evil 4	2023	132181	PS4, PS5, PSVR, WIN, XBXS
+293	The Last Guardian	2016	117	PS4
+294	Cuphead	2017	9061	WIN, XB1
+295	EverQuest	1999	282	WIN
+296	The Chronicles of Riddick: Escape From Butcher Bay	2004	250	WIN, Xbox
+297	Heavy Rain	2010	493	PS3
+298	Ultima IV: Quest of the Avatar	1985	2878	A2, A8, AMI, AST, C64, DOS, FM7, MSX, NES, PC88, PC98, SX1
+299	Kingdom Hearts II	2005	1221	PS2
+300	Splatoon	2015	7335	WiiU
+301	Syndicate	1993	49	3DO, AMI, CD32, DOS, FMT, GEN, JAG, PC98, SNES
+302	Age of Empires	1997	289	WIN
+303	Wolfenstein 3D	1992	284	DOS
+304	Final Fantasy XIV: A Realm Reborn	2013	386	PS3, PS4, WIN
+305	WarioWare, Inc.: Mega Microgames! / Minigame Mania	2003	1703	GBA
+306	Wipeout	1995	1083	PS, SAT, WIN
+307	Valkyria Chronicles	2008	7477	PS3, WIN
+308	Diablo III	2012	120	MAC, PS3, WIN, X360
+309	Pitfall!	1982	5411	A26, A52, A8, C64, CV, INTV, MSX
+310	Alan Wake II	2023	185246	PS5, WIN, XBXS
+311	Bastion	2011	1983	LIN, MAC, WIN, X360
+312	Sega Rally Championship	1994	1571	ARC, SAT
+313	Indiana Jones and the Fate of Atlantis	1992	184	AMI, DOS, FMT, MAC
+314	Max Payne 2: The Fall of Max Payne	2003	19	PS2, WIN, Xbox
+315	Tony Hawk's Pro Skater 3	2001	914	GC, N64, PS, PS2, WIN, Xbox
+316	Super Castlevania IV	1991	1124	SNES
+317	Dragon Quest VIII: Journey of the Cursed King	2004	1819	PS2
+318	Sonic CD	1993	5452	SCD
+319	Super Bomberman	1993	3450	SNES
+320	Ninja Gaiden	2004	5972	Xbox
+321	F-Zero GX	2003	3492	GC
+322	Hitman	2016	11157	LIN, MAC, PS4, WIN, XB1
+323	Super Smash Bros. Brawl	2008	1628	Wii
+324	Super Mario 3D World	2013	2180	WiiU
+325	Deus Ex: Human Revolution	2011	43	PS3, WIN, X360
+326	Fallout 4	2015	9630	PS4, WIN, XB1
+327	Destiny 2	2017	25657	PS4, WIN, XB1
+328	Panzer Dragoon Saga	1998	1671	SAT
+329	Banjo-Kazooie	1998	2148	N64
+330	Super Mario RPG: Legend of the Seven Stars	1996	5418	SNES
+331	Ratchet & Clank: Rift Apart	2021	134582	PS5
+332	Call of Duty 2	2005	622	WIN, X360
+333	Rise of the Tomb Raider	2015	7323	PS4, WIN, X360, XB1
+334	The Sims 3	2009	260	MAC, WIN
+335	Vagrant Story	2000	2216	PS
+336	Streets of Rage 2 / Bare Knuckle II	1992	1653	GEN
+337	Superhot / Superhot VR	2016	25632	LIN, MAC, PSVR, WIN, XB1
+338	Ori and the Blind Forest	2015	7344	WIN, XB1
+339	Dune II: The Building of a Dynasty / Dune II: Battle for Arrakis	1992	86	AMI, DOS, GEN
+340	Returnal	2021	134584	PS5
+341	Geometry Wars: Retro Evolved	2005	15756	X360
+342	Ghost of Tsushima	2020	75235	PS4
+343	Wave Race 64	1996	3629	N64
+344	Dead Space 2	2011	38	PS3, WIN, X360
+345	Total Annihilation	1997	918	MAC, WIN
+346	Phantasy Star IV: The End of the Millennium	1993	1230	GEN
+347	Bubble Bobble	1986	2630	A2, AMI, ARC, AST, C64, CPC, DOS, FDS, MSX, NES, ZXS
+348	Psychonauts 2	2021	14741	LIN, MAC, PS4, WIN, XB1, XBXS
+349	Star Fox / Starwing	1993	8581	SNES
+350	Heroes of Might and Magic III: The Restoration of Erathia	1999	364	LIN, MAC, WIN
+351	No Man's Sky	2016	3225	PS4, WIN
+352	Quake II	1997	286	MAC, WIN
+353	Fire Emblem: Awakening	2012	1443	3DS
+354	Mega Man X	1993	1741	SNES
+355	Tomb Raider	2013	1164	MAC, PS3, PS4, WIN, X360, XB1
+356	Mafia	2002	39	WIN
+357	Counter-Strike: Global Offensive	2012	1372	MAC, PS3, WIN, X360
+358	Jet Grind Radio / Jet Set Radio	2000	1569	DC
+359	OutRun	1986	2051	ARC, C64, CPC, ZXS
+360	Final Fantasy VIII	1999	425	PS, WIN
+361	Virtua Fighter 2	1994	1547	ARC, GEN, SAT, WIN
+362	Saturn Bomberman	1996	28393	SAT
+363	Rayman Legends	2013	193359	PS3, PS4, PSV, WiiU, WIN, X360, XB1
+364	Phoenix Wright: Ace Attorney	2001	1426	DS, GBA, WIN
+365	The Binding of Isaac	2011	2132	LIN, MAC, WIN
+366	Star Wars Jedi Knight: Dark Forces II	1997	150	WIN
+367	Gunstar Heroes	1993	6405	GEN, GG
+368	God of War III	2010	499	PS3
+369	Metroid Dread	2021	15698	SW
+370	Lode Runner	1983	4603	A2, A8, ARC, C64, NES, PC88
+371	Forza Horizon 5	2021	141503	WIN, XB1, XBXS
+372	Dance Dance Revolution	1998	3679	ARC, PS
+373	Metal Gear Solid 4: Guns of the Patriots	2008	380	PS3
+374	R-Type	1987	6840	AMI, ARC, AST, C64, CPC, MSX, PC88, SMS, TG16, ZXS
+375	Super Monkey Ball	2001	2927	GC
+376	Guitar Hero II	2006	2670	PS2, X360
+377	Slay the Spire	2019	40477	AND, iOS, LIN, MAC, PS4, SW, WIN, XB1
+378	Castlevania	1986	1114	AMI, C64, DOS, FDS, NES
+379	PaRappa the Rapper	1996	6080	PS
+380	Ninja Gaiden	1988	210484	NES
+381	Zelda II: The Adventure of Link	1987	1025	FDS, NES
+382	Ori and the Will of the Wisps	2020	37001	SW, WIN, XB1, XBXS
+383	Immortality	2022	152288	AND, iOS, MAC, WIN, XBXS
+384	Perfect Dark	2000	1463	N64
+385	Marvel vs Capcom 2: New Age of Heroes	2000	8247	ARC, DC, PS2, Xbox
+386	Metaphor: ReFantazio	2024	26602	PS4, PS5, WIN, XBXS
+387	Final Fantasy XII	2006	398	PS2
+388	Assassin's Creed: Brotherhood	2010	113	PS3, WIN, X360
+389	Flashback	1992	4275	AMI, ARCH, DOS, GEN, SNES
+390	Spec Ops: The Line	2012	1377	PS3, WIN, X360
+391	Populous	1989	248	AMI, AST, GEN, PC98, SMS, SNES
+392	TowerFall / TowerFall: Ascension	2013	9567	AND, LIN, MAC, PS4, PSV, WIN
+393	NHL '94	1993	5405	GEN, SCD, SNES
+394	Devil May Cry	2001	134	PS2
+395	OutRun 2006: Coast 2 Coast	2006	2054	PS2, PSP, WIN, Xbox
+396	Dungeon Master	1987	3798	AMI, AST
+397	Apex Legends	2019	114795	PS4, WIN, XB1
+398	Forza Horizon 4	2018	82090	WIN, XB1
+399	P.T.	2014	11654	PS4
+400	Paper Mario: The Thousand-Year Door	2004	3349	GC
+401	The Legend of Zelda: Skyward Sword	2011	534	Wii
+402	Call of Duty	2003	621	MAC, WIN
+403	Daytona USA	1994	17245	ARC, SAT, WIN
+404	Hellblade: Senua's Sacrifice	2017	7603	PS4, WIN, XB1
+405	Alone in the Dark	1992	1956	DOS
+406	Pro Evolution Soccer 6 / Winning Eleven: Pro Evolution Soccer 2007	2006	2484	PS2, WIN, X360
+407	Pac-Man Championship Edition	2007	20900	X360
+408	The Oregon Trail	1971	11325	HP21
+409	Lumines: Puzzle Fusion	2004	4689	PS2, PSP, WIN
+410	Peggle	2007	3751	iOS, MAC, WIN
+411	MechWarrior 2: 31st Century Combat	1995	784	DOS, MAC, WIN
+412	Super Mario Bros. Wonder	2023	254339	SW
+413	Skies of Arcadia	2000	19007	DC, GC
+414	Hitman 2: Silent Assassin	2002	748	GC, PS2, WIN, Xbox
+415	Sensible World of Soccer	1994	10121	AMI, DOS
+416	F-Zero	1990	3490	SNES
+417	Worms Armageddon	1999	948	DC, N64, PS, WIN
+418	Dragon Age: Inquisition	2014	1887	PS3, PS4, WIN, X360, XB1
+419	Phantasy Star Online	2000	21968	DC, GC, WIN, Xbox
+420	Herzog Zwei	1989	24073	GEN
+421	Tony Hawk's Pro Skater	1999	6692	DC, N64, PS
+422	Missile Command	1980	12313	A26, A52, A8, ARC
+423	Speedball 2: Brutal Deluxe	1990	10152	AMI, AST, C64, DOS, GEN, SMS
+424	Eternal Darkness: Sanity's Requiem	2002	3907	GC
+425	Legacy of Kain: Soul Reaver	1999	4122	DC, PS, WIN
+426	Marble Madness	1984	2246	A2, AMI, ARC, AST, C64, DOS
+427	Star Control II: The Ur-Quan Masters	1992	1046	3DO, DOS
+428	Crusader Kings III	2020	124954	LIN, MAC, WIN
+429	Batman: Arkham Knight	2015	5503	PS4, WIN, XB1
+430	The World Ends With You	2007	1343	DS
+431	Tom Clancy's Splinter Cell	2002	910	GC, PS2, WIN, Xbox
+432	XCOM 2	2016	10919	LIN, MAC, PS4, WIN, XB1
+433	Night in the Woods	2017	10148	LIN, MAC, PS4, SW, WIN, XB1
+434	Ghosts 'n Goblins	1985	6807	ARC, C64, CPC, NES, ZXS
+435	Cyberpunk 2077	2020	1877	PS4, WIN, XB1
+436	Star Wars	1983	12858	A26, A52, A8, AMI, ARC, AST, BBCM, C64, CPC, CV, DOS, MAC, ZXS
+437	Puzzle Bobble / Bust-A-Move	1994	28391	3DO, ARC, NG, SNES
+438	Tekken 2	1995	1243	ARC, PS
+439	Crash Bandicoot 3: Warped	1998	1187	PS
+440	Vampire: The Masquerade - Bloodlines	2004	11	WIN
+441	Pentiment	2022	204623	PS4, PS5, SW, WIN, XB1, XBXS
+442	Ridge Racer	1993	18696	ARC, PS
+443	Kerbal Space Program	2015	3102	LIN, MAC, WIN
+444	Star Wars: X-Wing	1993	168	DOS, MAC, WIN
+445	Sonic the Hedgehog 3 (& Knuckles)	1994	6797	GEN
+446	Dragon's Dogma	2012	3968	PS3, X360
+447	Jet Set Radio Future	2002	1570	Xbox
+448	Gran Turismo 4	2004	1601	PS2
+449	Viewtiful Joe	2003	4229	GC, PS2
+450	FreeSpace 2	1999	722	WIN
+451	Untitled Goose Game	2019	72813	MAC, PS4, SW, WIN, XB1
+452	Crysis	2007	296	WIN
+453	Killer7	2005	3966	GC, PS2
+454	Worms	1995	9331	AMI, CD32, DOS, GEN, MAC, PS, SAT, SNES
+455	Medal of Honor: Allied Assault	2002	326	MAC, WIN
+456	The Witcher 2: Assassins of Kings	2011	478	MAC, WIN, X360
+457	Ultima / Ultima I: The First Age of Darkness	1981	7414	A2, A8
+458	Tempest 2000	1994	9791	DOS, JAG, PS, SAT
+459	Tetris Attack	1995	2739	SNES
+460	The Legend of Zelda: A Link Between Worlds	2013	2909	3DS
+461	Crazy Taxi	1999	1805	ARC, DC, PS2
+462	Dark Souls 3	2016	11133	PS4, WIN, XB1
+463	Ultima Underworld: The Stygian Abyss	1992	12908	DOS, FMT, PC98
+464	Eve Online	2003	2584	WIN
+465	M.U.L.E.	1983	23895	A8, C64, DOS, PC88
+466	Ultima VI: The False Prophet	1990	12230	C64, DOS, FMT, PC98
+467	Doom Eternal	2020	103298	PS4, WIN, XB1
+468	Mortal Kombat	1992	1618	ARC, GEN, SNES
+469	Uncharted 3: Drake's Deception	2011	512	PS3
+470	Archon: The Light and the Dark	1983	5539	A2, A8, C64, CPC, DOS, PC88, SX1, ZXS
+471	Dead Cells	2018	26855	LIN, MAC, PS4, SW, WIN, XB1
+472	Wolfenstein II: The New Colossus	2017	36952	PS4, WIN, XB1
+473	Balatro	2024	251833	AND, iOS, MAC, PS4, PS5, SW, WIN, XB1, XBXS
+474	Paper Mario	2000	3340	N64
+475	Far Cry	2004	306	WIN
+476	Borderlands	2009	498	PS3, WIN, X360
+477	Silent Hill	1999	480	PS
+478	Adventure	1980	8253	A26
+479	Final Fight	1989	1655	ARC, SNES
+480	Virtua Fighter 5	2006	1555	ARC, PS3, X360
+481	Angry Birds	2009	2035	AND, iOS
+482	Geometry Wars: Retro Evolved 2	2008	4887	X360
+483	Stray	2022	110248	MAC, PS4, PS5, WIN, XB1, XBXS
+484	Hitman 2	2018	103210	PS4, WIN, XB1
+485	Chrono Cross	1999	1804	PS
+486	Virtua Fighter	1993	19734	ARC, SAT, WIN
+487	Gran Turismo 2	1999	1597	PS
+488	Dark Souls 2	2014	2368	PS3, WIN, X360
+489	Donkey Kong	1994	1089	GB
+490	Xenogears	1998	1346	PS
+491	Arkanoid	1986	4595	A2, A8, AMI, ARC, AST, BBCM, C64, CPC, DOS, MAC, MSX, NES, PC88, TCC, ZXS
+492	Conker's Bad Fur Day	2001	1286	N64
+493	Saints Row: The Third	2011	873	PS3, WIN, X360
+494	Ultima III: Exodus	1983	2867	A2, A8, AMI, AST, C64, DOS, FM7, MAC, PC88, PC98
+495	Super Smash Bros.	1999	1626	N64
+496	Elite Beat Agents	2006	9109	DS
+497	Florence	2018	87672	AND, iOS
+498	Wing Commander	1990	924	AMI, CD32, DOS, SCD, SNES
+499	Mirror's Edge	2008	1051	PS3, WIN, X360
+500	Dragon Quest / Dragon Warrior	1986	205229	NES
+501	Maniac Mansion	1987	192	A2, C64, DOS, NES
+502	Vanquish	2010	3218	PS3, X360
+503	Plants vs. Zombies	2009	1277	AND, iOS, MAC, WIN, X360
+504	Tomb Raider II	1997	1156	MAC, PS, WIN
+505	Micro Machines	1991	2703	NES
+506	Forza Horizon 3	2016	19539	WIN, XB1
+507	F.E.A.R. First Encounter Assault Recon	2005	517	PS3, WIN, X360
+508	Dead Rising	2006	4797	X360
+509	Threes!	2014	9054	AND, iOS
+510	Jagged Alliance 2	1999	9	WIN
+511	Rayman Origins	2011	981	3DS, PS3, PSV, Wii, WIN, X360
+512	Dungeon Keeper	1997	35	DOS, WIN
+513	Final Fantasy VII Remake	2020	11169	PS4
+514	Tom Clancy's Rainbow Six Siege	2015	7360	PS4, WIN, XB1
+515	ActRaiser	1990	6468	SNES
+516	Ultima V: Warriors of Destiny	1988	12229	A2, AMI, AST, C64, DOS
+517	Microsoft Flight Simulator	2020	119295	WIN, XBXS
+518	Unreal Tournament 2004	2004	927	LIN, MAC, WIN
+519	Amnesia: The Dark Descent	2010	111	LIN, MAC, WIN
+520	Middle-Earth: Shadow of Mordor	2014	3025	PS3, PS4, WIN, X360, XB1
+521	Virtua Racing	1992	8172	ARC, GEN
+522	Loop Hero	2021	141533	LIN, MAC, SW, WIN
+523	Sensible Soccer: European Champions / 92/93 / International Edition / Championship Soccer '94	1992	13257	AMI, AST, DOS, GEN, GG, JAG, SMS, SNES
+524	Flower	2009	1354	PS3
+525	Final Fantasy V	1992	419	SNES
+526	Dragon Quest XI: Echoes of an Elusive Age	2017	11667	3DS, PS4, WIN
+527	Super Mario Bros.: The Lost Levels	1986	1066	NES, SNES
+528	Final Fantasy	1987	385	MSX, NES
+529	Grand Theft Auto	1997	980	DOS, PS, WIN
+530	Halo Reach	2010	990	X360
+531	Nidhogg	2014	5551	MAC, PS4, PSV, WIN
+532	God Hand	2006	8803	PS2
+533	Tearaway	2013	6363	PSV
+534	S.T.A.L.K.E.R.: Shadow of Chernobyl	2007	320	WIN
+535	Pilotwings	1990	9619	SNES
+536	Descent	1995	1872	DOS, MAC, PS
+537	Wizardry: Proving Grounds of the Mad Overlord	1981	2863	A2, C64, FM7, MAC, MSX, NES, PC88, PC98, SX1
+538	Metal Slug	1996	1404	NG, PS, SAT
+539	Dorfromantik	2022	134799	SW, WIN
+540	Virtua Tennis / Power Smash	1999	6291	ARC, DC
+541	Super Punch-Out!!	1994	9151	SNES
+542	Mega Man 3	1990	1716	NES
+543	Counter-Strike: Source	2004	307	WIN
+544	Marvel's Spider-Man: Miles Morales	2020	134581	PS4, PS5
+545	Total War: Warhammer III	2022	143114	LIN, MAC, WIN
+546	FIFA International Soccer	1993	4345	GEN
+547	Bully	2006	2720	PS2
+548	Spelunky 2	2020	75239	PS4, SW, WIN, XB1, XBXS
+549	Virtua Fighter 4	2001	1552	ARC, PS2
+550	WarioWare: Twisted!	2004	1704	GBA
+551	Yakuza: Like a Dragon	2020	36550	PS4, PS5, WIN, XB1, XBXS
+552	Super Bomberman 2	1994	14530	SNES
+553	Super Mario Sunshine	2002	1075	GC
+554	The Curse of Monkey Island	1997	62	WIN
+555	Mother 3	2006	3683	GBA
+556	A Mind Forever Voyaging	1985	2295	AMI, AST, C64, DOS
+557	Star Wars Jedi Knight II: Jedi Outcast	2002	152	GC, MAC, WIN, Xbox
+558	Cave Story	2004	6189	Wii, WIN
+559	Mark of the Ninja	2012	2129	LIN, MAC, WIN, X360
+560	Pikmin 2	2004	2240	GC
+561	Pokémon HeartGold/SoulSilver	2009	1556	DS
+562	Wolfenstein: The New Order	2014	2031	PS3, PS4, WIN, X360, XB1
+563	Guardian Heroes	1996	21838	SAT
+564	Medieval II: Total War	2006	440	WIN
+565	Warcraft: Orcs & Humans	1994	129	DOS, MAC
+566	Monster Hunter 4	2013	65676	3DS
+567	Alan Wake	2010	1062	X360
+568	Super Hexagon	2012	3251	AND, iOS, MAC, WIN
+569	Pathfinder: Wrath of the Righteous	2021	127254	MAC, PS4, SW, WIN, XB1
+570	Return to Monkey Island	2022	195517	LIN, MAC, PS5, SW, WIN, XBXS
+571	Pokémon Ruby/Sapphire/Emerald	2002	1557	GBA
+572	Mario Kart DS	2005	2345	DS
+573	Joust	1982	3659	A2, A26, A52, A8, ARC, DOS
+574	FIFA: Road to World Cup 98	1997	705	N64, PS, WIN
+575	The Sentinel / The Sentry	1986	15363	AMI, AST, BBCM, C64, CPC, DOS, ZXS
+576	R4: Ridge Racer Type 4	1998	18699	PS
+577	UFO 50	2024	54555	WIN
+578	SSX Tricky	2001	4176	GC, PS2, Xbox
+579	Lost Odyssey	2007	7057	X360
+580	Until Dawn	2015	7609	PS4
+581	Tecmo Bowl	1987	8168	ARC, NES
+582	Unreal	1998	273	MAC, WIN
+583	Shenmue II	2001	1218	DC, Xbox
+584	TimeSplitters 2	2002	2143	GC, PS2, Xbox
+585	Manic Miner	1983	10161	BBCM, C64, CPC, MSX, ZXS
+586	Pokémon X/Y	2013	2286	3DS
+587	Samurai Shodown / Samurai Spirits	1993	4260	3DO, ARC, GEN, NG, SNES
+588	Valkyrie Profile	1999	3998	PS
+589	Uncharted: The Lost Legacy	2017	26193	PS4, PS5, WIN
+590	Guild Wars 2	2012	1183	WIN
+591	The Operative: No One Lives Forever	2000	897	MAC, PS2, WIN
+592	Wing Commander II: Vengeance of the Kilrathi	1991	940	DOS
+593	Head over Heels	1987	12138	A8, AMI, AST, C64, CPC, MSX, ZXS
+594	Super Smash Bros. for Wii U/3DS	2014	9621	3DS, WiiU
+595	Tecmo Super Bowl	1991	16595	GEN, NES, SNES
+596	No One Lives Forever 2: A Spy in H.A.R.M.'s Way	2002	820	MAC, WIN
+597	System Shock	1994	23	DOS, MAC
+598	A Plague Tale: Innocence	2019	27316	PS4, WIN, XB1
+599	Killzone 2	2009	1866	PS3
+600	Bionic Commando	1988	54535	NES
+601	The Witcher	2007	80	MAC, WIN
+602	Theme Park	1994	283	3DO, AMI, CD32, DOS, FMT, GEN, JAG, MAC, PS, SAT, SCD, SNES
+603	Guitar Hero III: Legends of Rock	2007	2671	MAC, PS2, PS3, Wii, WIN, X360
+604	SimCity 4	2003	1275	MAC, WIN
+605	Far Cry 4	2014	6801	PS3, PS4, WIN, X360, XB1
+606	Subnautica	2018	9254	MAC, PS4, WIN, XB1
+607	Subnautica: Below Zero	2021	107315	PS4, PS5, SW, WIN, XB1, XBXS
+608	The Bard's Tale	1985	3141	A2, AMI, AST, C64, CPC, DOS, ZXS
+609	Battlefield: Bad Company 2	2010	352	PS3, WIN, X360
+610	Grand Prix Legends	1998	729	WIN
+611	Gears of War 3	2011	492	X360
+612	Castlevania 3: Dracula's Curse	1989	1119	NES
+613	Bomberman	1983	3445	MSX, NES, PC88, SX1, ZXS
+614	Far Cry 2	2008	361	PS3, WIN, X360
+615	Colin McRae Rally	1998	7967	PS, WIN
+616	Shadowrun	1993	7640	SNES
+617	The Beatles: Rock Band	2009	2693	PS3, Wii, X360
+618	Danganronpa: Trigger Happy Havoc	2010	7842	AND, iOS, PSP, PSV
+619	Thumper	2016	10960	AND, iOS, PS4, PSVR, SW, VR, WIN, XB1
+620	Farming Simulator 22	2021	146112	MAC, PS4, PS5, WIN, XB1, XBXS
+621	Phantasy Star II	1989	1232	GEN
+622	Metroid Prime 3: Corruption	2007	1111	Wii
+623	Disgaea: Hour of Darkness	2003	11610	PS2
+624	Frogger	1981	6795	ARC
+625	SSX 3	2003	4174	GC, PS2, Xbox
+626	Snatcher	1988	5451	MSX, PC88, SCD, TG16
+627	Resident Evil - Code: Veronica	2000	968	DC, GC, PS2
+628	Sid Meier's Alpha Centauri	1999	863	LIN, MAC, WIN
+629	Teenage Mutant Ninja Turtles: Turtles in Time	1991	205211	ARC, SNES
+630	Titanfall	2014	2115	WIN, X360, XB1
+631	Sleeping Dogs	2012	1267	PS3, WIN, X360
+632	Lorelei and the Laser Eyes	2024	206806	PS4, PS5, SW, WIN
+633	Star Wars Jedi: Fallen Order	2019	74701	PS4, WIN, XB1
+634	Drop7	2009	29044	AND, iOS
+635	The Longest Journey	1999	895	WIN
+636	Street Fighter Alpha 3	1998	6704	ARC, DC, PS, SAT
+637	Commandos: Behind Enemy Lines	1998	879	WIN
+638	Rainbow Islands: The Story of Bubble Bobble 2	1987	4405	AMI, ARC, AST, C64, CPC, GEN, NES, SMS, TG16, ZXS
+639	NetHack	1987	2895	DOS
+640	Gorogoa	2017	9136	iOS, PS4, SW, WIN, XB1
+641	Cannon Fodder	1993	5519	3DO, AMI, AST, DOS, GEN, SNES
+642	Assassin's Creed Origins	2017	28540	PS4, WIN, XB1
+643	L.A. Noire	2011	109	PS3, WIN, X360
+644	South Park: The Stick of Truth	2014	1262	PS3, WIN, X360
+645	Metroid 2: Return of Samus	1991	1102	GB
+646	Puzzle Quest: Challenge of the Warlords	2007	2370	DS, PS2, PSP, Wii, WIN, X360
+647	The Outer Worlds	2019	113114	PS4, SW, WIN, XB1
+648	King's Quest VI: Heir Today, Gone Tomorrow	1992	7501	DOS, MAC, WIN
+649	DEFCON	2006	2592	MAC, WIN
+650	Kid Icarus	1986	3663	FDS, NES
+651	Metal Gear Solid: Peace Walker	2010	382	PSP
+652	Battlezone	1980	12916	A26, ARC, C64, VC20
+653	Baseball Stars	1989	9903	NES
+654	Centipede	1981	2235	A26, A52, A8, ARC, C64, INTV
+655	Marvel vs Capcom 3: Fate of Two Worlds / Ultimate Marvel vs. Capcom 3	2011	8248	PS3, PSV, X360
+656	Gradius / Nemesis	1985	1476	ARC, NES
+657	Fable	2004	521	WIN, Xbox
+658	Animal Crossing: Wild World	2005	2645	DS
+659	Rayman 2: The Great Escape	1999	843	DC, N64, PS, PS2, WIN
+660	Pac-Man Championship Edition DX	2010	21737	PS3, X360
+661	Pro Evolution Soccer 5 / World Soccer: Winning Eleven 9	2005	72967	PS2, WIN, Xbox
+662	Wario Land: Super Mario Land 3	1994	1072	GB
+663	LittleBigPlanet 2	2011	2140	PS3
+664	Ghouls 'n Ghosts	1988	6817	AMI, ARC, AST, C64, CPC, GEN, ZXS
+665	IL-2 Sturmovik	2001	754	WIN
+666	The Jackbox Party Pack	2014	11529	LIN, MAC, PS3, PS4, WIN, XB1
+667	BioShock 2	2010	21	PS3, WIN, X360
+668	Crusader Kings II	2012	2918	LIN, MAC, WIN
+669	Power Stone 2	2000	13106	ARC, DC
+670	Killer Instinct	1994	2907	ARC, SNES
+671	The Beast Within: A Gabriel Knight Mystery	1995	1251	DOS, MAC, WIN
+672	ESPN NFL 2K5	2004	7881	PS2, Xbox
+673	Tempest	1981	15383	ARC, AST, BBCM, CPC, ZXS
+674	Monument Valley	2014	8900	AND, iOS
+675	Mortal Kombat 11	2019	112916	PS4, SW, WIN, XB1
+676	Paradroid	1985	22518	C64
+677	Indiana Jones and the Great Circle	2024	142415	WIN, XBXS
+678	Neverwinter Nights	2002	216	LIN, MAC, WIN
+679	Oxenfree	2016	14587	MAC, PS4, SW, WIN, XB1
+680	Animal Well	2024	191435	PS5, SW, WIN, XBXS
+681	Transistor	2014	3022	LIN, MAC, PS4, WIN
+682	R-Type Final	2003	24109	PS2
+683	Star Wars: X-Wing vs. TIE Fighter	1997	170	WIN
+684	Brothers: A Tale of Two Sons	2013	1334	PS3, WIN, X360
+685	Shining Force III	1997	28396	SAT
+686	Halo 4	2012	991	X360
+687	Dwarf Fortress	2006	6341	LIN, MAC, WIN
+688	Return Fire	1995	4339	3DO, PS, WIN
+689	Castle Crashers	2008	3153	X360
+690	Call of Duty: Modern Warfare 2	2009	559	PS3, WIN, X360
+691	Shinobi	1987	6899	AMI, ARC, AST, C64, CPC, DOS, MSX, NES, SMS, TG16, ZXS
+692	To the Moon	2011	5025	WIN
+693	Super Mario Land 2: Six Golden Coins	1992	1071	GB
+694	Command & Conquer: Red Alert 2	2000	245	WIN
+695	80 Days	2014	9053	AND, iOS
+696	Samurai Shodown II / Shin Samurai Spirits: Haōmaru Jigokuhen	1994	19986	ARC, NG
+697	Starsiege: Tribes	1998	881	WIN
+698	Wing Commander IV: The Price of Freedom	1996	934	DOS, MAC, PS, WIN
+699	Manhunt	2003	1971	PS2, WIN, Xbox
+700	Battlefield 3	2011	343	PS3, WIN, X360
+701	Defender of the Crown	1986	1873	AMI, C64, CPC, ZXS
+702	Astro Bot Rescue Mission	2018	102129	PSVR
+703	Burnout Revenge	2005	2626	PS2, X360, Xbox
+704	Grand Prix 2	1996	728	DOS
+705	Factorio	2020	7046	LIN, MAC, SW, WIN
+706	1080° Snowboarding	1998	3328	N64
+707	Baba Is You	2019	76638	LIN, MAC, SW, WIN
+708	Super Mario 3D Land	2011	1079	3DS
+709	Little Big Adventure / Relentless: Twinsen's Adventure	1994	8515	DOS, FMT, PC98, PS
+710	Star Wars Knights of the Old Republic II: The Sith Lords	2004	118	WIN, Xbox
+711	Beat Saber	2019	83731	PS4, PS5, VR, WIN
+712	Bomberman '94 / Mega Bomberman	1993	3448	GEN, TG16
+713	Defense of the Ancients (DotA)	2004	2283	MAC, WIN
+714	Crimson Skies	2000	15863	WIN
+715	Mortal Kombat	2011	119	PS3, PSV, X360
+716	Shining Force II	1993	3197	GEN
+717	Golden Axe	1989	5565	ARC, GEN, SMS
+718	Mega Man	1987	1714	NES
+719	Pilotwings 64	1996	3573	N64
+720	Combat	1977	16759	A26
+721	Hyper Light Drifter	2016	9806	LIN, MAC, PS4, WIN, XB1
+722	Call of Duty: Black Ops	2010	545	PS3, Wii, WIN, X360
+723	Child of Light	2014	4756	PS3, PS4, PSV, WiiU, WIN, X360, XB1
+724	Bomberman / Dyna Blaster	1990	3446	AMI, AST, DOS, TG16
+725	Jade Empire	2005	5867	Xbox
+726	Riven: The Sequel to Myst	1997	238	MAC, PS, SAT, WIN
+727	Tekken	1994	1242	ARC, PS
+728	Wonder Boy III: The Dragon's Trap	1989	18277	SMS, TG16
+729	Desperados III	2020	107218	LIN, MAC, PS4, WIN, XB1
+730	Nier	2010	7120	PS3, X360
+731	Tales From the Borderlands	2015	6707	AND, iOS, MAC, PS3, PS4, WIN, X360, XB1
+732	Heroes of Might and Magic II: The Succession Wars	1996	363	DOS, MAC, WIN
+733	Crackdown	2007	2896	X360
+734	Impossible Mission	1984	4929	A2, BBCM, C64, CPC, ZXS
+735	Kirby's Adventure	1993	3717	NES
+736	Unpacking	2021	134276	PS4, PS5, SW, WIN, XB1
+737	DuckTales	1989	6487	GB, NES
+738	Mario Bros.	1983	3105	A26, A52, ARC, C64, CPC, FM7, NES, PC88, ZXS
+739	Earthworm Jim	1994	3480	GEN, SCD, SNES
+740	Bomberman / Atomic Punk / Dynablaster	1991	18937	ARC
+741	Battlezone	1998	613	WIN
+742	Breakout	1976	2754	A26, ARC
+743	Wing Commander III: Heart of the Tiger	1994	2588	3DO, DOS, MAC, PS
+744	Everything	2017	27910	LIN, MAC, PS4, WIN
+745	Driver / Driver: You Are the Wheelman	1999	675	PS, WIN
+746	Genshin Impact	2020	119277	AND, iOS, PS4, WIN
+747	Spy Hunter	1984	4167	A2, A26, A8, ARC, BBCM, C64, CPC, CV, DOS, NES, ZXS
+748	GTR 2: FIA GT Racing Game	2006	737	WIN
+749	Advance Wars: Dual Strike	2005	1693	DS
+750	Catherine	2011	2151	PS3, X360
+751	Dr. Mario	1990	3476	ARC, GB, NES
+752	Operation Flashpoint: Cold War Crisis	2001	288	WIN
+753	Cities: Skylines	2015	9066	LIN, MAC, WIN
+754	Battlefield 4	2013	1979	PS3, PS4, WIN, X360, XB1
+755	Madden NFL 2005	2004	778	GC, PS2, WIN, Xbox
+756	Among Us	2018	111469	AND, iOS, WIN
+757	Time Crisis	1995	11739	ARC, PS
+758	Thief: Deadly Shadows	2004	3	WIN, Xbox
+759	F-Zero X	1998	3489	N64
+760	California Games	1987	11984	A2, C64, LYNX
+761	Ape Escape	1999	3762	PS
+762	Skate 2	2009	2586	PS3, X360
+763	Myth: The Fallen Lords	1997	800	MAC, WIN
+764	Warhammer 40,000: Dawn of War	2004	257	WIN
+765	Strider / Strider Hiryū	1989	6969	AMI, ARC, AST, CPC, GEN
+766	Sins of a Solar Empire	2008	872	WIN
+767	Blade Runner	1997	322	WIN
+768	Sea of Thieves	2018	11137	WIN, XB1
+769	Oddworld: Abe's Oddysee	1997	999	DOS, PS, WIN
+770	Wii Sports Resort	2009	2182	Wii
+771	Professor Layton and the Curious Village	2007	1397	DS
+772	Ni no Kuni: Wrath of the White Witch	2011	1864	PS3
+773	NBA 2K11	2010	5056	PS2, PS3, PSP, Wii, WIN, X360
+774	Halo Infinite	2021	103281	WIN, XB1, XBXS
+775	Stunt Car Racer / Stunt Track Racer	1989	12225	AMI, AST, C64, CPC, DOS, ZXS
+776	Fatal Frame II: Crimson Butterfly	2003	5105	PS2, Xbox
+777	Championship Manager 3	1999	93149	WIN
+778	1000xResist	2024	218282	SW, WIN
+779	Pokémon Black/White	2010	1521	DS
+780	Tomb Raider III: Adventures of Lara Croft	1998	1157	MAC, PS, WIN
+781	Sid Meier's Civilization III	2001	310	MAC, WIN
+782	Dragon Force	1996	2968	SAT
+783	Donkey Kong Country 2: Diddy's Kong Quest	1995	1092	SNES
+784	Guild Wars / Guild Wars Prophecies	2005	234	WIN
+785	Overcooked	2016	18433	PS4, SW, WIN, XB1
+786	Through the Darkest of Times	2020	107172	AND, iOS, MAC, PS4, SW, WIN, XB1
+787	Monster Hunter Freedom 2 / Unite	2007	23066	PSP
+788	Jak II: Renegade	2003	1529	PS2
+789	Harvest Moon	1996	3376	SNES
+790	Jak and Daxter: The Precursor Legacy	2001	1528	PS2
+791	Forza Motorsport 3	2009	3069	X360
+792	FIFA 12	2011	2946	MAC, PS3, WIN, X360
+793	Jet Set Willy	1984	8170	A8, C64, ZXS
+794	Saints Row IV	2013	1981	PS3, PS4, WIN, X360, XB1
+795	FIFA 99	1998	699	N64, PS, WIN
+796	The Oregon Trail	1985	191526	A2, DOS, MAC, WIN
+797	RollerCoaster Tycoon	1999	254	WIN
+798	The Revenge of Shinobi / The Super Shinobi	1989	3327	GEN
+799	Street Fighter 6	2023	191692	PS4, PS5, WIN, XBXS
+800	Outcast	1999	827	WIN
+801	Shadow Complex	2009	11328	X360
+802	Forza Motorsport 4	2011	3068	X360
+803	Castlevania: Aria of Sorrow	2003	1134	GBA
+804	Warlords	1981	17251	A26, ARC
+805	Donkey Kong Country: Tropical Freeze	2014	2923	WiiU
+806	Madden NFL 2004	2003	777	GC, PS2, WIN, Xbox
+807	Resident Evil	2002	24869	GC, Wii
+808	Punch-Out!!	2009	2194	Wii
+809	Gris	2018	22917	MAC, SW, WIN
+810	Resogun	2013	6007	PS3, PS4, PSV
+811	Cart Life	2010	50179	WIN
+812	Prey	2017	19531	PS4, WIN, XB1
+813	FIFA 09	2008	3134	PS3, X360
+814	The Last Express	1997	7650	DOS, MAC, WIN
+815	Grand Theft Auto 2	1999	819	DC, PS, WIN
+816	International Superstar Soccer Deluxe	1995	9862	SNES
+817	Hi-Fi Rush	2023	233585	PS5, WIN, XBXS
+818	Wipeout 3	1999	1540	PS
+819	Meteos	2005	1165	DS
+820	The Hobbit	1982	10800	A2, BBCM, C64, CPC, DOS, MSX, ZXS
+821	International Karate +	1987	8397	AMI, AST, C64, CPC, ZXS
+822	NBA 2K24	2023	255788	PS4, PS5, SW, WIN, XB1, XBXS
+823	Blast Corps	1997	3424	N64
+824	Prey	2006	546	LIN, MAC, WIN, X360
+825	Smash TV	1990	20504	AMI, ARC, AST, C64, CPC, GEN, NES, SMS, SNES, ZXS
+826	Final Fantasy III	1990	77234	NES
+827	Broken Sword: The Shadow of the Templars	1996	616	MAC, PS, WIN
+828	Micro Machines 2: Turbo Tournament	1994	8775	DOS, GEN, GG
+829	Pro Evolution Soccer 3 / World Soccer: Winning Eleven 7 International	2003	77321	PS2, WIN
+830	Race Driver: Grid	2008	2159	PS3, WIN, X360
+831	Frequency	2001	9111	PS2
+832	Aliens Versus Predator	1999	9979	MAC, WIN
+833	Resident Evil Village	2021	55163	PS4, PS5, WIN, XB1, XBXS
+834	Tactics Ogre: Let Us Cling Together	1995	5550	PS, SAT, SNES
+835	Fire Emblem Fates	2015	10229	3DS
+836	SWAT 4	2005	316	WIN
+837	Zero Escape: Virtue's Last Reward	2012	6614	3DS, PSV
+838	A Way Out	2018	36897	PS4, WIN, XB1
+839	Silent Hill 2	2024	222341	PS5, WIN
+840	Dragon Quest Builders 2	2018	54548	PS4, SW, WIN
+841	Ninja Gaiden II: The Dark Sword of Chaos	1990	15540	ARC, NES
+842	Master of Orion	1993	67	DOS, MAC
+843	Infamous	2009	523	PS3
+844	Sid Meier's Civilization VI	2016	19130	LIN, MAC, WIN
+845	Exile	1988	12068	AMI, AST, BBCM, C64, CD32
+846	Twisted Metal 2 / Twisted Metal: World Tour / Twisted Metal EX	1996	4696	PS, WIN
+847	WWF No Mercy	2000	3644	N64
+848	Vib-Ribbon	1999	9676	PS
+849	Star Raiders	1980	2217	A26, A52, A8
+850	World of Goo	2008	942	AND, iOS, LIN, MAC, Wii, WIN
+851	Black & White	2001	308	WIN
+852	Garou: Mark of the Wolves	1999	10605	ARC, NG
+853	Empire: Total War	2009	441	WIN
+854	Crash Bandicoot	1996	1185	PS
+855	Devil's Crush	1990	6827	GEN, TG16
+856	Assassin's Creed Valhalla	2020	133004	PS4, PS5, WIN, XB1, XBXS
+857	The Legend of Zelda: Echoes of Wisdom	2024	306149	SW
+858	Pro Evolution Soccer 4 / World Soccer Winning Eleven 8 International	2004	47354	PS2, WIN, Xbox
+859	Streets of Rage	1991	1652	GEN
+860	Cocoon	2023	204627	PS4, PS5, SW, WIN, XB1, XBXS
+861	Luigi's Mansion 3	2019	109455	SW
+862	The Need for Speed	1994	90	3DO, DOS, PS, SAT, WIN
+863	Mario Kart 7	2011	2349	3DS
+864	R-Type Delta	1998	28397	PS
+865	Super Ghouls 'n Ghosts	1991	6621	SNES
+866	Forza Motorsport 2	2007	3072	X360
+867	Commandos 2: Men of Courage	2001	653	PS2, WIN, Xbox
+868	Vampire Survivors	2022	186725	AND, iOS, MAC, SW, WIN, XB1, XBXS
+869	Amplitude	2003	2141	PS2
+870	Wizball	1987	12234	AMI, AST, C64, CPC, DOS, ZXS
+871	River City Ransom / Street Gangs	1989	6558	NES
+872	Excitebike	1984	4600	ARC, NES, PC88
+873	Track & Field / Hyper Olympic	1983	6439	A26, A8, ARC, MSX
+874	Downwell	2015	13677	AND, iOS, PSV, WIN
+875	Metroid Prime 2: Echoes	2004	1108	GC
+876	Virtua Cop	1994	6289	ARC, SAT, WIN
+877	SimCity 3000	1999	237	MAC, WIN
+878	Populous II: Trials of the Olympian Gods	1991	8895	AMI, AST, DOS
+879	Tom Clancy's Rainbow Six: Vegas	2006	909	PS3, PSP, WIN, X360
+880	International Track & Field	1996	20406	ARC, PS
+881	Space Channel 5	1999	6602	DC, PS2
+882	Pokémon Diamond/Pearl	2006	1560	DS
+883	Gauntlet II	1986	3503	ARC, AST, C64, CPC, DOS
+884	Fall Guys	2020	119313	PS4, WIN
+885	FlatOut 2 / Ultimate Carnage / Head On	2006	2668	PS2, WIN, X360, Xbox
+886	Bejeweled	2001	8318	WIN
+887	Darkest Dungeon	2016	8965	LIN, MAC, PS4, PSV, WIN
+888	Dragon Quest IV: Chapters of the Chosen / Dragon Warrior IV	1990	16584	NES
+889	Dragon Quest V: Hand of the Heavenly Bride	1992	16585	NES
+890	Universal Paperclips	2017	74837	AND, BR, iOS
+891	Galaxian	1979	4614	ARC
+892	Final Fantasy XV	2016	359	PS4, XB1
+893	Metal Gear Solid: The Twin Snakes	2004	4006	GC
+894	Panzer Dragon II Zwei	1996	1669	SAT
+895	Metroid Fusion	2002	1104	GBA
+896	Frog Fractions	2012	18723	BR
+897	World in Conflict	2007	941	WIN
+898	Fire Emblem: The Blazing Blade / Fire Emblem	2003	1439	GBA
+899	Medal of Honor	1999	1307	PS
+900	Tom Clancy's Rainbow Six 3: Raven Shield	2003	908	MAC, WIN
+901	Thank Goodness You're Here!	2024	262538	MAC, PS4, PS5, SW, WIN
+902	X-COM: Terror from the Deep	1995	25	DOS, PS, WIN
+903	Ratchet & Clank 3: Up Your Arsenal	2004	1773	PS2
+904	Mario + Rabbids: Kingdom Battle	2017	28414	SW
+905	Grandia II	2000	9580	DC, PS2, WIN
+906	King's Quest I: Quest for the Crown	1984	892	A2, AMI, AST, DOS, MAC
+907	Persona 3 / Shin Megami Tensei: Persona 3	2006	9577	PS2
+908	Pokémon Sword/Shield	2019	37382	SW
+909	Virginia	2016	21599	MAC, PS4, WIN, XB1
+910	Magic Carpet	1994	4415	DOS, PS, SAT
+911	SOMA	2015	9727	LIN, MAC, PS4, WIN
+912	Formula One Grand Prix / World Circuit	1991	13074	AMI, AST, DOS
+913	Sayonara Wild Hearts	2019	113107	iOS, MAC, PS4, SW, WIN, XB1
+914	Battlefield 1	2016	18320	PS4, WIN, XB1
+915	Tekken 5	2004	1246	ARC, PS2
+916	Prince of Persia 2: The Shadow and the Flame	1993	3164	DOS, FMT, MAC
+917	Armored Core VI: Fires of Rubicon	2023	228542	PS4, PS5, WIN, XB1, XBXS
+918	Knight Lore	1984	12359	BBCM, CPC, MSX, ZXS
+919	Hitman: Codename 47	2000	1050	WIN
+920	Need for Speed: Most Wanted	2005	98	WIN, X360
+921	Uncharted: Drake's Fortune	2007	431	PS3
+922	International Superstar Soccer 64	1996	3516	N64
+923	International Superstar Soccer 98	1998	3514	N64
+924	The Lost Vikings	1993	454	AMI, CD32, DOS, GEN, SNES
+925	Frostpunk	2018	23248	WIN
+926	Microsoft Flight Simulator 1.0	1982	3353	DOS
+927	Star Wars: X-Wing Alliance	1999	169	WIN
+928	Sin and Punishment: Star Successor	2009	1468	Wii
+929	Death's Door	2021	145099	PS4, PS5, SW, WIN, XBXS
+930	ISS Pro Evolution	1999	28403	PS
+931	Microsoft Flight Simulator X	2006	301	WIN
+932	Trials Evolution	2012	2149	WIN, X360
+933	Rayman	1995	1963	DOS, JAG, PS, SAT
+934	Anno 1602: Creation of a New World / 1602 A.D.	1998	303	WIN
+935	The Talos Principle	2014	7386	AND, iOS, LIN, MAC, PS4, WIN
+936	Phantasy Star	1987	1233	SMS
+937	Tokyo Jungle	2012	7467	PS3
+938	Dragon's Dogma 2	2024	115060	PS5, WIN, XBXS
+939	Sonic Adventure	1998	7860	DC
+940	Metro Exodus	2019	37016	PS4, WIN, XB1
+941	Puyo Pop Fever	2003	4075	ARC, DC, DS, GBA, GC, MAC, PS2, PSP, WIN, Xbox
+942	Boulder Dash	1984	12942	A2, A8, ARC, C64, CPC, CV, FM7, PC88, ZXS
+943	Kirby Super Star / Kirby's Fun Pak	1996	3719	SNES
+944	Burnout 2: Point of Impact	2002	3840	GC, PS2, Xbox
+945	Donkey Kong Country 3: Dixie Kong's Double Trouble	1996	1094	SNES
+946	Bionic Commando Rearmed	2008	15856	PS3, WIN, X360
+947	Need for Speed: Underground 2	2004	97	GC, PS2, WIN, Xbox
+948	Return to Castle Wolfenstein	2001	281	LIN, MAC, WIN
+949	Fire Emblem: Path of Radiance	2005	1441	GC
+950	R-Type III: The Third Lightning	1993	6550	SNES
+951	The Typing of the Dead	1999	11605	ARC, DC, WIN
+952	Darksiders	2010	1270	PS3, WIN, X360
+953	Puzzle Bobble 2 / Bust-A-Move 2	1995	146217	ARC, DOS, PS, SAT
+954	Assassin's Creed	2007	128	PS3, WIN, X360
+955	Project Gotham Racing 2	2003	3321	Xbox
+956	Mercenary	1985	15499	A8, AST, C64, CPC, ZXS
+957	Assassin's Creed 3	2012	1266	PS3, Wii, WIN, X360
+958	Qix	1981	12266	A52, A8, ARC, C64, FM7, NES
+959	Snake	1997	28395	LMD
+960	The Legend of Zelda: Oracle of Seasons	2001	1032	GBC
+961	Pyre	2017	18822	LIN, PS4, WIN
+962	The Legend of Zelda: Oracle of Ages	2001	1041	GBC
+963	Elite Dangerous	2014	2955	MAC, WIN, XB1
+964	Anno 1800	2019	55036	WIN
+965	That Dragon, Cancer	2016	15925	iOS, MAC, WIN
+966	Turrican II: The Final Fight	1991	11845	AMI, AST, C64, CPC, GEN, ZXS
+967	Dig Dug	1982	2636	ARC
+968	NHL 09	2008	824	PS2, PS3, WIN, X360
+969	Sid Meier's Railroad Tycoon	1990	962	AMI, AST, DOS, MAC
+970	Dreamfall: The Longest Journey	2006	1961	WIN, Xbox
+971	We Love Katamari	2005	6454	PS2
+972	Danganronpa 2: Goodbye Despair	2012	9694	PSP, PSV
+973	This War of Mine	2014	7706	AND, iOS, LIN, MAC, PS4, SW, WIN, XB1
+974	Tom Clancy's Splinter Cell: Pandora Tomorrow	2004	874	GC, PS2, WIN, Xbox
+975	Metro 2033	2010	495	WIN, X360
+976	DmC: Devil May Cry	2013	1254	PS3, WIN, X360
+977	Astro's Playroom	2020	134597	PS5
+978	Deadly Premonition	2010	1276	PS3, WIN, X360
+979	Dying Light	2015	3042	LIN, PS4, WIN, XB1
+980	NBA 2K12	2011	5057	PS3, WIN, X360
+981	Madden NFL '95	1994	4506	GEN, SNES
+982	Forza Horizon	2012	3047	X360
+983	Marathon	1994	8709	MAC
+984	Invisible, Inc.	2015	6044	LIN, MAC, WIN
+985	Virtua Cop 2	1995	2470	ARC, SAT, WIN
+986	Chicory: A Colorful Tale	2021	117266	MAC, PS4, PS5, SW, WIN
+987	FIFA 11	2010	503	PS3, WIN, X360
+988	VVVVVV	2010	1990	3DS, LIN, MAC, WIN
+989	Ant Attack	1983	13954	C64, ZXS
+990	Super Puzzle Fighter II Turbo	1996	20803	ARC, PS, SAT
+991	The Incredible Machine	1993	4243	3DO, DOS, FMT, MAC, PC98, WIN
+992	FIFA 10	2009	3133	PS3, X360
+993	Paperboy	1985	11762	A2, ARC, BBCM, C64, CPC, NES, ZXS
+994	Star Wars Rogue Squadron II: Rogue Leader	2001	4181	GC
+995	Garry's Mod	2006	3278	WIN
+996	Path of Exile	2013	1911	WIN
+997	Tomb Raider: Anniversary	2007	1162	PS2, PSP, Wii, WIN, X360
+998	Steins;Gate	2009	7194	AND, iOS, PS3, PSP, PSV, WIN, X360
+999	King's Quest II: Romancing the Throne	1985	852	A2, AMI, AST, DOS
+1000	Proteus	2013	2163	LIN, MAC, PS3, PSV, WIN
