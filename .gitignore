@@ -5,6 +5,7 @@
 *.sqlite3
 *.xlsx
 .cache
+.DS_Store
 .coverage
 .coverage.*
 .env*

@@ -22,6 +22,8 @@
 - Fixed beta year slider layout (labels now to left, adjusted width to match original)
 - **Completed beta migration to 100%** - Added DeveloperAliasRedirect for legacy URLs and custom 404 page with auto-redirect (11/11 routes, 28/28 components)
 - Fixed beta navbar and search styling to match Vue original (navbar link colors, search backgrounds, developer search bar)
+- Fixed beta mobile navbar layout (search icon before "Top 1000"), full-width mobile search, and smart pagination filtering
+- Updated all dropdown backgrounds to match navbar color (#131313)
 
 ## 2025-11-22
 

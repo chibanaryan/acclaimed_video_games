@@ -34,10 +34,17 @@
         </div>
     </div>
 
-    {# Pagination at top (desktop) - centered #}
+    {# Pagination at top - desktop shows all pages, mobile uses smart filtering #}
     {% if page_obj %}
     <div class="pagination-wrapper mt-5">
-        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+        {# Desktop pagination - show all pages #}
+        <div class="is-hidden-mobile">
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+        </div>
+        {# Mobile pagination - use smart filtering #}
+        <div class="is-hidden-tablet">
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
+        </div>
     </div>
     {% endif %}
 
@@ -67,10 +74,17 @@
     </script>
     {% endif %}
 
-    {# Pagination at bottom - centered #}
+    {# Pagination at bottom - desktop shows all pages, mobile uses smart filtering #}
     {% if page_obj %}
     <div class="pagination-wrapper mt-5">
-        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+        {# Desktop pagination - show all pages #}
+        <div class="is-hidden-mobile">
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
+        </div>
+        {# Mobile pagination - use smart filtering #}
+        <div class="is-hidden-tablet">
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
+        </div>
     </div>
     {% endif %}
 </div>

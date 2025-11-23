@@ -1,14 +1,120 @@
 {% load static %}
-<nav class="navbar" role="navigation" aria-label="main navigation" x-data="{ expanded: false }">
+<nav class="navbar" role="navigation" aria-label="main navigation" x-data="{ expanded: false, mobileSearchActive: false }">
     <div class="navbar-brand">
-        <a href="{% url 'beta:home' %}" class="navbar-item has-text-weight-bold pl-0">
+        <a href="{% url 'beta:home' %}" class="navbar-item has-text-weight-bold pl-0" x-show="!mobileSearchActive">
             <img src="{% static 'avg_logo_small.png' %}" alt="Acclaimed Games">
         </a>
-        {# Search with dropdown - full search functionality #}
-        <div class="navbar-item is-hidden-mobile desktop-search" 
-             x-data="{ 
-                 showMenu: false, 
-                 q: '', 
+        {# Mobile search button - appears between logo and Top 1000 on mobile #}
+        <div class="navbar-item is-hidden-tablet mobile-search"
+             :class="{ 'is-expanded': mobileSearchActive }"
+             x-data="{
+                 showMenu: false,
+                 q: '',
+                 results: [],
+                 loading: false,
+                     loadResults: async function() {
+                         const trimmedQ = this.q.trim();
+                         if (trimmedQ.length < 2) {
+                             this.results = [];
+                             this.loading = false;
+                             return;
+                         }
+                         this.loading = true;
+                         this.results = [];
+                         try {
+                             const response = await fetch('{% url 'beta:api-games-search' %}?q=' + encodeURIComponent(trimmedQ) + '&limit=5');
+                             if (!response.ok) {
+                                 throw new Error('API request failed');
+                             }
+                             const data = await response.json();
+                             this.results = data.results || [];
+                         } catch (e) {
+                             console.error('Search error:', e);
+                             this.results = [];
+                         } finally {
+                             this.loading = false;
+                         }
+                     },
+                 toggleInput: function() {
+                     mobileSearchActive = !mobileSearchActive;
+                     if (mobileSearchActive) {
+                         setTimeout(() => {
+                             const input = this.$refs.searchInputMobile;
+                             if (input) input.focus();
+                         }, 100);
+                     }
+                 }
+             }">
+            <button @click="toggleInput()" x-show="!mobileSearchActive" class="button is-text">
+                <span class="icon">
+                    <span class="mdi mdi-magnify mdi-24px"></span>
+                </span>
+            </button>
+            <div x-show="mobileSearchActive" class="results-wrapper">
+                <div class="field has-addons">
+                    <div class="control has-icons-left is-expanded">
+                        <span class="icon">
+                            <span class="mdi mdi-magnify"></span>
+                        </span>
+                        <input type="text"
+                               x-ref="searchInputMobile"
+                               x-model="q"
+                               @focus="showMenu = true"
+                               @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
+                               placeholder="Search games"
+                               class="input">
+                    </div>
+                    <div class="control">
+                        <a @click="mobileSearchActive = false; q = ''; results = []; showMenu = false" class="button">
+                            <span class="icon">
+                                <span class="mdi mdi-close"></span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+                <div x-show="showMenu" class="results">
+                    <template x-if="!q || q.trim().length < 2">
+                        <div class="dropdown-item">
+                            Please enter two or more characters
+                        </div>
+                    </template>
+                    <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
+                        <div class="dropdown-item">
+                            No results found
+                        </div>
+                    </template>
+                    <template x-for="result in results" :key="result.id">
+                        <a :href="'/beta/game/' + result.slug + '/'" class="result dropdown-item">
+                            <div class="media">
+                                <div class="media-left">
+                                    <figure class="image is-32x32">
+                                        <img :src="result.thumbnail" :alt="result.name">
+                                    </figure>
+                                </div>
+                                <div class="media-content">
+                                    <div class="has-text-weight-semibold" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
+                                    <div class="has-text-weight-light" x-text="'All time rank: ' + result.rank"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </template>
+                    <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
+                        <a :href="'{% url 'beta:games-search' %}?q=' + encodeURIComponent(q.trim())"
+                           class="dropdown-item">
+                            See all results &hellip;
+                        </a>
+                    </template>
+                </div>
+            </div>
+        </div>
+        <a href="{% url 'beta:games-list' %}" class="navbar-item beta-nav-link" x-show="!mobileSearchActive">
+            Top 1000
+        </a>
+        {# Desktop search with dropdown - full search functionality #}
+        <div class="navbar-item is-hidden-mobile desktop-search"
+             x-data="{
+                 showMenu: false,
+                 q: '',
                  results: [],
                  loading: false,
                  loadResults: async function() {
@@ -34,7 +140,7 @@
                          this.loading = false;
                      }
                  }
-             }" 
+             }"
              @click.away="showMenu = false">
             <div class="dropdown" :class="{ 'is-active': showMenu }">
                 <div class="field has-addons m-0">
@@ -42,8 +148,8 @@
                         <span class="icon">
                             <span class="mdi mdi-magnify"></span>
                         </span>
-                        <input type="text" 
-                               placeholder="Search games" 
+                        <input type="text"
+                               placeholder="Search games"
                                class="input"
                                x-model="q"
                                @focus="showMenu = true"
@@ -85,7 +191,7 @@
                             </a>
                         </template>
                         <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
-                            <a :href="'{% url 'beta:games-search' %}?q=' + encodeURIComponent(q.trim())" 
+                            <a :href="'{% url 'beta:games-search' %}?q=' + encodeURIComponent(q.trim())"
                                class="dropdown-item">
                                 See all results &hellip;
                             </a>
@@ -94,9 +200,6 @@
                 </div>
             </div>
         </div>
-        <a href="{% url 'beta:games-list' %}" class="navbar-item beta-nav-link">
-            Top 1000
-        </a>
     </div>
     <div class="navbar-menu" :class="{ 'is-active': expanded }" @click="expanded = false">
         <div class="navbar-start">
@@ -111,112 +214,10 @@
             </a>
         </div>
     </div>
-    {# Mobile search #}
-    <div class="navbar-item is-hidden-tablet mobile-search" 
-         x-data="{ 
-             active: false,
-             showMenu: false,
-             q: '', 
-             results: [],
-             loading: false,
-                 loadResults: async function() {
-                     const trimmedQ = this.q.trim();
-                     if (trimmedQ.length < 2) {
-                         this.results = [];
-                         this.loading = false;
-                         return;
-                     }
-                     this.loading = true;
-                     this.results = [];
-                     try {
-                         const response = await fetch('{% url 'beta:api-games-search' %}?q=' + encodeURIComponent(trimmedQ) + '&limit=5');
-                         if (!response.ok) {
-                             throw new Error('API request failed');
-                         }
-                         const data = await response.json();
-                         this.results = data.results || [];
-                     } catch (e) {
-                         console.error('Search error:', e);
-                         this.results = [];
-                     } finally {
-                         this.loading = false;
-                     }
-                 },
-             toggleInput: function() {
-                 this.active = !this.active;
-                 if (this.active) {
-                     setTimeout(() => {
-                         const input = this.$refs.searchInputMobile;
-                         if (input) input.focus();
-                     }, 100);
-                 }
-             }
-         }">
-        <button @click="toggleInput()" x-show="!active" class="button is-text">
-            <span class="icon">
-                <span class="mdi mdi-magnify mdi-24px"></span>
-            </span>
-        </button>
-        <div x-show="active" class="results-wrapper">
-            <div class="field has-addons">
-                <div class="control has-icons-left is-expanded">
-                    <span class="icon">
-                        <span class="mdi mdi-magnify"></span>
-                    </span>
-                    <input type="text"
-                           x-ref="searchInputMobile"
-                           x-model="q"
-                           @focus="showMenu = true"
-                           @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
-                           placeholder="Search games"
-                           class="input">
-                </div>
-                <div class="control" x-show="q && q.trim()" x-cloak>
-                    <a @click="q = ''; results = []; showMenu = false" class="button">
-                        <span class="icon">
-                            <span class="mdi mdi-close"></span>
-                        </span>
-                    </a>
-                </div>
-            </div>
-            <div x-show="showMenu" class="results">
-                <template x-if="!q || q.trim().length < 2">
-                    <div class="dropdown-item">
-                        Please enter two or more characters
-                    </div>
-                </template>
-                <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                    <div class="dropdown-item">
-                        No results found
-                    </div>
-                </template>
-                <template x-for="result in results" :key="result.id">
-                    <a :href="'/beta/game/' + result.slug + '/'" class="result dropdown-item">
-                        <div class="media">
-                            <div class="media-left">
-                                <figure class="image is-32x32">
-                                    <img :src="result.thumbnail" :alt="result.name">
-                                </figure>
-                            </div>
-                            <div class="media-content">
-                                <div class="has-text-weight-semibold" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
-                                <div class="has-text-weight-light" x-text="'All time rank: ' + result.rank"></div>
-                            </div>
-                        </div>
-                    </a>
-                </template>
-                <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
-                    <a :href="'{% url 'beta:games-search' %}?q=' + encodeURIComponent(q.trim())" 
-                       class="dropdown-item">
-                        See all results &hellip;
-                    </a>
-                </template>
-            </div>
-        </div>
-    </div>
     <a @click="expanded = !expanded"
        class="navbar-burger is-hidden-desktop"
        :class="{ 'is-active': expanded }"
+       x-show="!mobileSearchActive"
        aria-label="menu"
        :aria-expanded="expanded"
        role="button">
