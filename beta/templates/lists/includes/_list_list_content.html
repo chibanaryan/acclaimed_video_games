@@ -10,6 +10,7 @@
                 <select x-data="{ publisher: '{{ filters.publisher|default:'' }}' }"
                         @change="
                             const params = new URLSearchParams(window.location.search);
+                            params.delete('page');
                             if (publisher) params.set('publisher', publisher);
                             else params.delete('publisher');
                             window.location.href = '{% url 'beta:list-list' %}?' + params.toString();
@@ -29,6 +30,7 @@
                 <select x-data="{ year: '{{ filters.year|default:'' }}' }"
                         @change="
                             const params = new URLSearchParams(window.location.search);
+                            params.delete('page');
                             if (year) params.set('year', year);
                             else params.delete('year');
                             window.location.href = '{% url 'beta:list-list' %}?' + params.toString();
@@ -48,6 +50,7 @@
                 <select x-data="{ type: '{{ filters.type|default:'' }}' }"
                         @change="
                             const params = new URLSearchParams(window.location.search);
+                            params.delete('page');
                             if (type) params.set('type', type);
                             else params.delete('type');
                             window.location.href = '{% url 'beta:list-list' %}?' + params.toString();
