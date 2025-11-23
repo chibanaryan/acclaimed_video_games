@@ -177,7 +177,7 @@ class Game(models.Model):
 
         super().save(*args, **kwargs)
 
-    def get_igdb_data(self, cache_results: bool = True) -> None:
+    def get_igdb_data(self, cache_results: bool = True, api_client=None) -> None:
         """
         Fetch and populate game data from IGDB API.
 
@@ -190,11 +190,15 @@ class Game(models.Model):
         if not self.igdb_id:
             return
 
-        if not api:
+        # Allow dependency injection for tests while preventing reuse of a global
+        # API client that can accumulate cached responses across requests.
+        api_client = api_client or igdb.get_api()
+
+        if not api_client:
             logger.warning("IGDB API unavailable; skipping update for %s", self)
             return
 
-        data = api.get_game_info_by_id(self.igdb_id, cache_results)
+        data = api_client.get_game_info_by_id(self.igdb_id, cache_results)
         self.slug = slugify(data.get("slug"))
         self.igdb_url = data.get("url")
         self.igdb_artwork_id = data.get("cover")

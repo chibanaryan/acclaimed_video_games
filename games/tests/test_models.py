@@ -119,8 +119,7 @@ class GameIgdbTests(TestCase):
             ],
         }
 
-        with mock.patch("games.models.api", fake_api):
-            game.get_igdb_data()
+        game.get_igdb_data(api_client=fake_api)
 
         self.assertEqual(game.slug, "sample-game")
         self.assertEqual(game.igdb_url, "https://example.com/sample")
@@ -134,7 +133,7 @@ class GameIgdbTests(TestCase):
             name="Sample", rank=1, igdb_id=999, year_of_release=1990
         )
 
-        with mock.patch("games.models.api", None):
+        with mock.patch("games.models.igdb.get_api", return_value=None):
             with self.assertLogs("games.models", level="WARNING") as cm:
                 game.get_igdb_data()
 
@@ -142,9 +141,9 @@ class GameIgdbTests(TestCase):
 
     def test_get_igdb_data_requires_igdb_id(self):
         game = models.Game.objects.create(name="Sample", rank=1, igdb_id=None)
-        with mock.patch("games.models.api") as api_mock:
+        with mock.patch("games.models.igdb.get_api") as get_api_mock:
             game.get_igdb_data()
-        api_mock.get_game_info_by_id.assert_not_called()
+        get_api_mock.assert_not_called()
 
     def test_get_igdb_data_handles_alias_integrity_error(self):
         game = models.Game.objects.create(
@@ -171,7 +170,7 @@ class GameIgdbTests(TestCase):
                 }
             ],
         }
-        with mock.patch("games.models.api", fake_api), mock.patch.object(
+        with mock.patch("games.models.igdb.get_api", return_value=fake_api), mock.patch.object(
             models.DeveloperAlias.objects,
             "update_or_create",
             side_effect=IntegrityError,
@@ -203,7 +202,7 @@ class GameIgdbTests(TestCase):
             ],
         }
 
-        with mock.patch("games.models.api", fake_api):
+        with mock.patch("games.models.igdb.get_api", return_value=fake_api):
             game.get_igdb_data()
             game.save()
 
@@ -251,7 +250,7 @@ class GameIgdbTests(TestCase):
             ],
         }
 
-        with mock.patch("games.models.api", fake_api):
+        with mock.patch("games.models.igdb.get_api", return_value=fake_api):
             game.get_igdb_data()
             game.save()
 
@@ -301,7 +300,7 @@ class GameIgdbTests(TestCase):
             ],
         }
 
-        with mock.patch("games.models.api", fake_api):
+        with mock.patch("games.models.igdb.get_api", return_value=fake_api):
             # Import once
             game.get_igdb_data()
             game.save()
@@ -378,7 +377,7 @@ class GameIgdbTests(TestCase):
 
         fake_api.get_game_info_by_id.side_effect = fake_get_game_info
 
-        with mock.patch("games.models.api", fake_api):
+        with mock.patch("games.models.igdb.get_api", return_value=fake_api):
             game1.get_igdb_data()
             game1.save()
             game2.get_igdb_data()
