@@ -21,7 +21,7 @@
                 <select v-model="filters.decade"
                     @change="onSelectChange">
                     <option :value="null">Decades</option>
-                    <option v-for="decade in meta.games.decades"
+                    <option v-for="decade in (meta.games?.decades || [])"
                         :key="decade.decade"
                         :value="decade.decade">
                         {{ decade.decade }} ({{ decade.count }})
