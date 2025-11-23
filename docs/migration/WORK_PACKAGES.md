@@ -231,6 +231,47 @@ These are ready-to-use work packages that can be assigned to different agents.
 
 ---
 
+## Package 12: DeveloperAliasRedirect Migration ✅
+
+**File**: `frontend/src/components/DeveloperAliasRedirect.vue` → `beta/views.py:DeveloperAliasRedirectView`
+
+**Purpose**: Redirect legacy `/developer-alias/:id/` URLs to developer detail page
+
+**Tasks**:
+1. ✅ Read Vue component to understand redirect logic
+2. ✅ Create `DeveloperAliasRedirectView` class in `beta/views.py`
+3. ✅ Implement redirect to `developer-detail` using alias's developer slug
+4. ✅ Add URL route to `beta/urls.py` with pattern `developer-alias/<int:id>/`
+5. ✅ Test with existing developer alias IDs
+6. ✅ Verify permanent redirect (301) is used
+
+**Dependencies**: None (simple redirect view)
+
+**Status**: ✅ COMPLETED (2025-11-23)
+
+---
+
+## Package 13: NotFound/404 Handler Migration ✅
+
+**File**: `frontend/src/components/NotFound.vue` → `beta/templates/404.html` + `beta/views.py:NotFoundView`
+
+**Purpose**: Custom 404 page with auto-redirect to games list (matches Vue behavior)
+
+**Tasks**:
+1. ✅ Read Vue component to understand 404 page behavior (shows message, redirects after 3 seconds)
+2. ✅ Create `beta/templates/404.html` template extending `base.html`
+3. ✅ Add countdown timer and JavaScript auto-redirect (3 seconds)
+4. ✅ Create `NotFoundView` class in `beta/views.py` (sets 404 status code)
+5. ✅ Add catch-all route to `beta/urls.py` (must be last!)
+6. ✅ Test by accessing invalid URL under `/beta/`
+7. ✅ Verify auto-redirect works after 3 seconds
+
+**Dependencies**: None (independent)
+
+**Status**: ✅ COMPLETED (2025-11-23)
+
+---
+
 ## Quick Start Instructions for Each Package
 
 1. **Read the Vue component** in `frontend/src/components/`

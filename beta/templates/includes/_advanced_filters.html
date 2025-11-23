@@ -18,7 +18,11 @@
             }
             // Mark as initialized after a short delay to prevent initial watcher triggers
             setTimeout(() => { this.initialized = true; }, 100);
-            
+
+            this.$watch('filters.q', val => {
+                if (!this.initialized) return;
+                this.updateUrl();
+            });
             this.$watch('filters.start', val => {
                 if (!this.initialized) return;
                 if (this.filters.end && val && parseInt(val) > parseInt(this.filters.end)) {

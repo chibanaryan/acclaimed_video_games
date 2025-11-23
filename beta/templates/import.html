@@ -1,0 +1,1004 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import | Acclaimed Video Games</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'games/avg_logo_small.png' %}">
+
+    {# Match original import page CSS dependencies exactly #}
+    <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.1.96/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/bulmaswatch/cyborg/bulmaswatch.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin-top: 5em;
+        }
+    </style>
+<style>
+    .import-step {
+        border-left: 4px solid #3273dc;
+        padding-left: 20px;
+        margin-bottom: 30px;
+        position: relative;
+        color: #e0e0e0;
+    }
+
+    .import-step h3 {
+        color: #ffffff;
+    }
+
+    .import-step p {
+        color: #d0d0d0;
+    }
+
+    .import-step code {
+        background-color: #2a2a2a;
+        color: #ff6b6b;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+
+    .import-step::before {
+        content: attr(data-step);
+        position: absolute;
+        left: -18px;
+        top: 0;
+        width: 32px;
+        height: 32px;
+        background-color: #3273dc;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    /* Completed step styles */
+    .import-step.completed {
+        opacity: 0.6;
+        border-left-color: #48c774;
+    }
+
+    .import-step.completed::before {
+        content: '✓';
+        background-color: #48c774;
+        font-size: 18px;
+    }
+
+    .import-step.completed h3,
+    .import-step.completed p {
+        color: #a0a0a0;
+    }
+
+    .file-input-wrapper {
+        margin-bottom: 20px;
+    }
+
+    .file-cta {
+        background-color: #363636;
+        color: #ffffff !important;
+    }
+
+    .file-cta .file-label {
+        color: #ffffff !important;
+    }
+
+    .file-name {
+        color: #b0b0b0 !important;
+    }
+
+    .import-info {
+        background-color: #1a3a52;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 30px;
+        border-left: 4px solid #3273dc;
+    }
+
+    .import-info h3 {
+        margin-top: 0;
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .import-info p {
+        margin: 5px 0;
+        color: #d0d0d0;
+        font-size: 14px;
+    }
+
+    .import-info ol {
+        color: #d0d0d0;
+    }
+
+    .import-info ol li {
+        color: #d0d0d0;
+    }
+
+    .import-warning {
+        color: #ff6b6b;
+        font-weight: 500;
+    }
+
+    .form-section {
+        margin-bottom: 40px;
+        padding-bottom: 40px;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+    }
+
+    .progress-container {
+        display: none;
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #1a3a52;
+        border-radius: 4px;
+        border-left: 4px solid #3273dc;
+    }
+
+    .progress-container.active {
+        display: block;
+    }
+
+    .progress-bar-wrapper {
+        width: 100%;
+        height: 30px;
+        background-color: #0f1f30;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 15px 0;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3273dc, #0099ff);
+        width: 0%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 10px;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        transition: width 0.2s ease;
+    }
+
+    .progress-info {
+        color: #d0d0d0;
+        font-size: 14px;
+        margin: 10px 0;
+    }
+
+    .progress-info strong {
+        color: #ffffff;
+    }
+
+    .progress-error {
+        color: #ff6b6b;
+        padding: 10px;
+        background-color: #2a1a1a;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+
+    .igdb-status-card {
+        background-color: #1a3a52;
+        padding: 15px;
+        border-radius: 4px;
+        border-left: 4px solid #3273dc;
+    }
+
+    .igdb-status-card .label {
+        color: #b0b0b0;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .igdb-status-card .value {
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+
+    .igdb-status-card .percentage {
+        color: #0099ff;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .error-container {
+        background-color: #2a1a1a;
+        border-left: 4px solid #ff6b6b;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 30px;
+    }
+
+    .error-container h3 {
+        color: #ff6b6b;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+
+    .error-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .error-list li {
+        color: #ff8a8a;
+        padding: 8px 0;
+        border-bottom: 1px solid #3a2a2a;
+    }
+
+    .error-list li:last-child {
+        border-bottom: none;
+    }
+
+    .error-dismiss {
+        margin-top: 15px;
+    }
+
+    .error-dismiss button {
+        background-color: #3a2a2a;
+        color: #ff6b6b;
+        border: 1px solid #ff6b6b;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .error-dismiss button:hover {
+        background-color: #ff6b6b;
+        color: #2a1a1a;
+    }
+
+    .success-container {
+        background-color: #1a2a1a;
+        border-left: 4px solid #48c774;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 30px;
+        color: #48c774;
+    }
+
+    .success-container h3 {
+        color: #48c774;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .success-container p {
+        margin: 0;
+        color: #6ae589;
+        white-space: pre-wrap;
+    }
+
+    .batch-progress-container {
+        display: none;
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #1a3a52;
+        border-radius: 4px;
+        border-left: 4px solid #3273dc;
+    }
+
+    .batch-progress-container.active {
+        display: block;
+    }
+
+    .file-progress-item {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #2a4a62;
+    }
+
+    .file-progress-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    .file-progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .file-progress-name {
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .file-progress-status {
+        color: #0099ff;
+        font-size: 12px;
+        padding: 4px 8px;
+        background-color: #0f1f30;
+        border-radius: 3px;
+    }
+
+    .file-progress-status.complete {
+        color: #48c774;
+        background-color: #1a2a1a;
+    }
+
+    .file-progress-status.error {
+        color: #ff6b6b;
+        background-color: #2a1a1a;
+    }
+
+    .file-progress-bar-wrapper {
+        width: 100%;
+        height: 24px;
+        background-color: #0f1f30;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .file-progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3273dc, #0099ff);
+        width: 0%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 8px;
+        color: white;
+        font-weight: bold;
+        font-size: 12px;
+        transition: width 0.2s ease;
+    }
+
+    .file-progress-details {
+        color: #d0d0d0;
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .file-progress-details-left {
+        flex: 1;
+    }
+
+    .file-progress-details-right {
+        text-align: right;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let fileInputs = document.querySelectorAll('.file.has-name')
+        for (let fileInput of fileInputs) {
+            let input = fileInput.querySelector('.file-input')
+            let name = fileInput.querySelector('.file-name')
+
+            input.addEventListener('change', () => {
+                let files = input.files
+                if (files.length === 0) {
+                    name.innerText = 'No file selected'
+                } else {
+                    name.innerText = files[0].name
+                }
+            })
+        }
+
+        let forms = document.getElementsByTagName('form')
+        for (let form of forms) {
+            form.addEventListener('reset', () => {
+                let names = form.querySelectorAll('.file-name')
+                for (let name of names) {
+                    name.innerText = 'No file selected'
+                }
+                // Re-enable submit button on reset
+                let submitBtn = form.querySelector('#import-submit')
+                if (submitBtn) {
+                    submitBtn.disabled = false
+                    submitBtn.textContent = '📤 Import Files'
+                }
+            })
+
+            // Disable submit button on form submission to prevent double-clicks
+            form.addEventListener('submit', () => {
+                let submitBtn = form.querySelector('#import-submit')
+                if (submitBtn) {
+                    submitBtn.disabled = true
+                    submitBtn.textContent = '⏳ Importing...'
+                }
+                // Handle seed data button loading state
+                let seedBtn = form.querySelector('#seed-data-btn')
+                if (seedBtn) {
+                    seedBtn.disabled = true
+                    seedBtn.textContent = '⏳ Loading Test Data...'
+                }
+            })
+        }
+    })
+</script>
+</head>
+
+<body>
+<section class="container">
+    <div id="content" class="mx-3">
+<h1 class="title">Import game data</h1>
+
+<!-- Success Messages -->
+{% if import_success_message %}
+<div class="success-container">
+    <h3>✅ Success</h3>
+    <p>{{ import_success_message }}</p>
+</div>
+{% endif %}
+
+<!-- Error Messages (Persistent) -->
+{% if import_errors %}
+<div class="error-container" id="error-container">
+    <h3>❌ Import Errors</h3>
+    <ul class="error-list">
+        {% for error in import_errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    <div class="error-dismiss">
+        <button type="button" onclick="dismissErrorContainer();">Dismiss</button>
+    </div>
+</div>
+<script>
+    // New errors have appeared, clear the dismissed flag
+    localStorage.removeItem('importErrorsDismissed');
+
+    function dismissErrorContainer() {
+        const container = document.getElementById('error-container');
+        if (container) {
+            // Mark as dismissed in localStorage
+            localStorage.setItem('importErrorsDismissed', 'true');
+            // Remove from DOM
+            container.remove();
+        }
+    }
+</script>
+{% else %}
+<script>
+    // No errors on this page load, check if errors were already dismissed previously
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('error-container');
+        if (container && localStorage.getItem('importErrorsDismissed') === 'true') {
+            container.remove();
+        }
+    });
+</script>
+{% endif %}
+
+<!-- Database Status Section -->
+<div class="form-section">
+    <h2 class="subtitle">Database Status</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
+            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Platforms</div>
+            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.platforms }}</div>
+        </div>
+
+        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
+            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Publications</div>
+            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.publications }}</div>
+        </div>
+
+        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
+            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Source Lists</div>
+            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.lists }}</div>
+        </div>
+
+        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
+            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Games</div>
+            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.games }}</div>
+        </div>
+
+        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
+            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Game Positions</div>
+            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.memberships }}</div>
+        </div>
+
+        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
+            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Developers</div>
+            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.developers }}</div>
+        </div>
+
+        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
+            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Genres</div>
+            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.genres }}</div>
+        </div>
+
+        <div class="igdb-status-card">
+            <div class="label">IGDB Data Status</div>
+            <div class="value">{{ igdb_counts.with_igdb }}/{{ igdb_counts.total }}</div>
+            <div class="percentage">{{ igdb_counts.percentage }}% complete</div>
+            <div style="color: #d0d0d0; font-size: 12px; margin-top: 10px;">
+                {{ igdb_counts.without_igdb }} game{{ igdb_counts.without_igdb|pluralize }} need{{ igdb_counts.without_igdb|pluralize }} data
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="form-section">
+    <h2 class="subtitle">Quick Actions</h2>
+
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <form method="POST" action="." style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="delete" value="true">
+            <button class="button is-danger" onclick="return confirm('⚠️ This will delete ALL existing data (games, lists, platforms, developers). Are you sure?');">
+                🗑️ Delete All Data
+            </button>
+        </form>
+
+        {% if debug %}
+        <form method="POST" action="." style="margin: 0;" id="seed-data-form">
+            {% csrf_token %}
+            <input type="hidden" name="seed_test_data" value="true">
+            <button class="button is-success" id="seed-data-btn" title="Development only - loads bundled test files from acclaimedgames/test_input_files/">
+                📦 Load Test Data (Dev)
+            </button>
+        </form>
+        {% endif %}
+
+        <button id="fetch-igdb-btn" class="button is-info">
+            🔄 Fetch IGDB Data
+        </button>
+    </div>
+
+    <!-- Progress bar for IGDB fetch (initially hidden) -->
+    <div id="progress-container" class="progress-container">
+        <h3 style="color: #ffffff; margin-top: 0; margin-bottom: 15px;">Fetching IGDB Data...</h3>
+
+        <div class="progress-bar-wrapper">
+            <div id="progress-fill" class="progress-bar-fill" style="width: 0%;">
+                <span id="progress-percentage">0%</span>
+            </div>
+        </div>
+
+        <div class="progress-info">
+            <div>Processing: <strong id="current-game">-</strong></div>
+            <div>Progress: <strong id="progress-text">0 / 0</strong></div>
+            <div>Elapsed: <strong id="elapsed-time">0s</strong></div>
+            <div>Remaining: <strong id="remaining-time">-</strong></div>
+        </div>
+
+        <div id="progress-errors" style="display: none;">
+            <div style="color: #ff6b6b; margin-top: 10px;"><strong>Errors encountered:</strong></div>
+            <div id="error-list" class="progress-error"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Import Section -->
+<div class="form-section">
+    <h2 class="subtitle">Batch Import Files</h2>
+
+    <div class="import-info">
+        <h3>📋 Import Order</h3>
+        <p><strong>Files are imported automatically in the correct order:</strong></p>
+        <ol style="margin: 10px 0; margin-left: 20px;">
+            <li><strong>Platforms</strong> - Gaming platforms (PC, PS5, etc.)</li>
+            <li><strong>Source Lists</strong> - Critic rankings and publications</li>
+            <li><strong>Games</strong> - Game database with rank, year, platforms</li>
+            <li><strong>Game Positions</strong> - Where each game appears in each list</li>
+        </ol>
+        <p class="import-warning" style="margin-top: 10px;">⚠️ Import may fail if prerequisites are missing (e.g., can't import games without platforms)</p>
+    </div>
+
+    <form method="POST" action="." enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Platforms File -->
+        <div class="import-step{% if counts.platforms > 0 %} completed{% endif %}" data-step="1">
+            <h3 class="subtitle is-5">Platforms (PlatformDB.txt)</h3>
+            <p style="margin-bottom: 10px;">Tab-separated: <code>CODE&lt;tab&gt;Name</code></p>
+            <div class="file-input-wrapper">
+                <div class="file has-name">
+                    <label class="file-label">
+                        <input class="file-input"
+                            type="file"
+                            name="platforms_file"
+                            id="id_platforms_file"
+                            accept=".txt">
+                        <span class="file-cta">
+                            <span class="file-label">Choose file…</span>
+                        </span>
+                        <span class="file-name">No file selected</span>
+                    </label>
+                </div>
+            </div>
+            {% if form.platforms_file.errors %}
+                <p class="help is-danger">{{ form.platforms_file.errors }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Source Lists File -->
+        <div class="import-step{% if counts.lists > 0 %} completed{% endif %}" data-step="2">
+            <h3 class="subtitle is-5">Source Lists (SourceLists.txt)</h3>
+            <p style="margin-bottom: 10px;">Tab-separated: <code>Publisher&lt;tab&gt;Year&lt;tab&gt;Type&lt;tab&gt;Name&lt;tab&gt;URL</code></p>
+            <div class="file-input-wrapper">
+                <div class="file has-name">
+                    <label class="file-label">
+                        <input class="file-input"
+                            type="file"
+                            name="lists_file"
+                            id="id_lists_file"
+                            accept=".txt">
+                        <span class="file-cta">
+                            <span class="file-label">Choose file…</span>
+                        </span>
+                        <span class="file-name">No file selected</span>
+                    </label>
+                </div>
+            </div>
+            {% if form.lists_file.errors %}
+                <p class="help is-danger">{{ form.lists_file.errors }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Games File -->
+        <div class="import-step{% if counts.games > 0 %} completed{% endif %}" data-step="3">
+            <h3 class="subtitle is-5">Games (Top1000.txt)</h3>
+            <p style="margin-bottom: 10px;">Tab-separated: <code>Rank&lt;tab&gt;Name&lt;tab&gt;Year&lt;tab&gt;IGDB_ID&lt;tab&gt;Platforms</code></p>
+            <div class="file-input-wrapper">
+                <div class="file has-name">
+                    <label class="file-label">
+                        <input class="file-input"
+                            type="file"
+                            name="games_file"
+                            id="id_games_file"
+                            accept=".txt">
+                        <span class="file-cta">
+                            <span class="file-label">Choose file…</span>
+                        </span>
+                        <span class="file-name">No file selected</span>
+                    </label>
+                </div>
+            </div>
+            {% if form.games_file.errors %}
+                <p class="help is-danger">{{ form.games_file.errors }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Game Positions File -->
+        <div class="import-step{% if counts.memberships > 0 %} completed{% endif %}" data-step="4">
+            <h3 class="subtitle is-5">Game Positions (GamePositions.txt)</h3>
+            <p style="margin-bottom: 10px;">Tab-separated: <code>ListID:Position&lt;tab&gt;ListID:Position&lt;tab&gt;...</code></p>
+            <div class="file-input-wrapper">
+                <div class="file has-name">
+                    <label class="file-label">
+                        <input class="file-input"
+                            type="file"
+                            name="memberships_file"
+                            id="id_memberships_file"
+                            accept=".txt">
+                        <span class="file-cta">
+                            <span class="file-label">Choose file…</span>
+                        </span>
+                        <span class="file-name">No file selected</span>
+                    </label>
+                </div>
+            </div>
+            {% if form.memberships_file.errors %}
+                <p class="help is-danger">{{ form.memberships_file.errors }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Options -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e5e5;">
+            <h3 class="subtitle is-5">Options</h3>
+
+            <div class="field">
+                <div class="control">
+                    <label class="checkbox">
+                        <input type="checkbox" name="igdb">
+                        Automatically fetch IGDB data after import (cover art, descriptions, genres)
+                    </label>
+                </div>
+            </div>
+
+            <div class="field is-grouped">
+                <div class="control">
+                    <button class="button is-primary" type="submit" id="import-submit">📤 Import Files</button>
+                </div>
+                <div class="control">
+                    <button class="button" type="reset">↩️ Clear</button>
+                </div>
+            </div>
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="notification is-danger">
+                <button class="delete"></button>
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+    </form>
+
+    <!-- Batch Import Progress Container -->
+    <div id="batch-progress-container" class="batch-progress-container">
+        <h3 style="color: #ffffff; margin-top: 0; margin-bottom: 20px;">📁 Importing Files...</h3>
+
+        <!-- Platforms Progress -->
+        <div id="platforms-progress-item" class="file-progress-item" style="display: none;">
+            <div class="file-progress-header">
+                <span class="file-progress-name">Platforms</span>
+                <span id="platforms-status" class="file-progress-status">Waiting…</span>
+            </div>
+            <div class="file-progress-bar-wrapper">
+                <div id="platforms-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
+                    <span id="platforms-percentage">0%</span>
+                </div>
+            </div>
+            <div class="file-progress-details">
+                <div class="file-progress-details-left">
+                    <div>Processing: <span id="platforms-current">0</span> / <span id="platforms-total">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Source Lists Progress -->
+        <div id="lists-progress-item" class="file-progress-item" style="display: none;">
+            <div class="file-progress-header">
+                <span class="file-progress-name">Source Lists</span>
+                <span id="lists-status" class="file-progress-status">Waiting…</span>
+            </div>
+            <div class="file-progress-bar-wrapper">
+                <div id="lists-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
+                    <span id="lists-percentage">0%</span>
+                </div>
+            </div>
+            <div class="file-progress-details">
+                <div class="file-progress-details-left">
+                    <div>Processing: <span id="lists-current">0</span> / <span id="lists-total">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Games Progress -->
+        <div id="games-progress-item" class="file-progress-item" style="display: none;">
+            <div class="file-progress-header">
+                <span class="file-progress-name">Games</span>
+                <span id="games-status" class="file-progress-status">Waiting…</span>
+            </div>
+            <div class="file-progress-bar-wrapper">
+                <div id="games-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
+                    <span id="games-percentage">0%</span>
+                </div>
+            </div>
+            <div class="file-progress-details">
+                <div class="file-progress-details-left">
+                    <div>Processing: <span id="games-current">0</span> / <span id="games-total">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Positions Progress -->
+        <div id="memberships-progress-item" class="file-progress-item" style="display: none;">
+            <div class="file-progress-header">
+                <span class="file-progress-name">Game Positions</span>
+                <span id="memberships-status" class="file-progress-status">Waiting…</span>
+            </div>
+            <div class="file-progress-bar-wrapper">
+                <div id="memberships-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
+                    <span id="memberships-percentage">0%</span>
+                </div>
+            </div>
+            <div class="file-progress-details">
+                <div class="file-progress-details-left">
+                    <div>Processing: <span id="memberships-current">0</span> / <span id="memberships-total">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Errors during import -->
+        <div id="batch-errors" style="display: none; margin-top: 20px;">
+            <div style="color: #ff6b6b; margin-bottom: 10px;"><strong>⚠️ Errors encountered:</strong></div>
+            <div id="batch-error-list" class="error-list"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Close notification on close button click
+    document.querySelectorAll('.notification .delete').forEach(closeBtn => {
+        closeBtn.addEventListener('click', () => {
+            closeBtn.parentElement.remove()
+        })
+    })
+
+    // Track active EventSource for cleanup
+    let activeEventSource = null
+
+    // Handle Fetch IGDB Data button click
+    document.getElementById('fetch-igdb-btn').addEventListener('click', (e) => {
+        e.preventDefault()
+
+        const progressContainer = document.getElementById('progress-container')
+        const progressFill = document.getElementById('progress-fill')
+        const progressPercentage = document.getElementById('progress-percentage')
+        const currentGame = document.getElementById('current-game')
+        const progressText = document.getElementById('progress-text')
+        const elapsedTime = document.getElementById('elapsed-time')
+        const remainingTime = document.getElementById('remaining-time')
+        const errorList = document.getElementById('error-list')
+        const progressErrors = document.getElementById('progress-errors')
+
+        // Close existing EventSource if any
+        if (activeEventSource) {
+            activeEventSource.close()
+            activeEventSource = null
+        }
+
+        // Show progress container
+        progressContainer.classList.add('active')
+        progressFill.style.width = '0%'
+        progressPercentage.textContent = '0%'
+        currentGame.textContent = '-'
+        progressText.textContent = '0 / 0'
+        elapsedTime.textContent = '0s'
+        remainingTime.textContent = '-'
+        errorList.innerHTML = ''
+        progressErrors.style.display = 'none'
+
+        // Connect to SSE endpoint - use beta URL
+        activeEventSource = new EventSource('{% url "beta:igdb-progress" %}')
+
+        activeEventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data)
+
+                if (data.event === 'start') {
+                    // Reset on start
+                    console.log(`Starting IGDB fetch for ${data.total} games`)
+                } else if (data.event === 'progress') {
+                    // Update progress bar
+                    const percentage = data.percentage
+                    progressFill.style.width = percentage + '%'
+                    progressPercentage.textContent = percentage + '%'
+
+                    // Update info
+                    currentGame.textContent = data.game_name
+                    progressText.textContent = `${data.current} / ${data.total}`
+                    elapsedTime.textContent = formatTime(data.elapsed_seconds)
+                    remainingTime.textContent = formatTime(data.remaining_seconds)
+                } else if (data.event === 'error') {
+                    // Add error to list
+                    const errorItem = document.createElement('div')
+                    errorItem.style.marginTop = '5px'
+                    errorItem.textContent = `${data.game_name}: ${data.message}`
+                    errorList.appendChild(errorItem)
+                    progressErrors.style.display = 'block'
+                } else if (data.event === 'complete') {
+                    // Completion
+                    progressFill.style.width = '100%'
+                    progressPercentage.textContent = '100%'
+                    currentGame.textContent = 'Complete!'
+                    progressText.textContent = `${data.total} / ${data.total}`
+                    elapsedTime.textContent = formatTime(data.elapsed_seconds)
+                    remainingTime.textContent = '0s'
+
+                    // Close event source and show success message
+                    activeEventSource.close()
+                    activeEventSource = null
+                    setTimeout(() => {
+                        // Show success message
+                        const notification = document.createElement('div')
+                        notification.className = 'notification is-success'
+                        notification.innerHTML = `
+                            <button class="delete"></button>
+                            IGDB data fetch completed successfully! Fetched data for ${data.total} games.
+                        `
+                        document.body.insertBefore(notification, document.body.firstChild)
+                        attachNotificationDeleteListener(notification)
+
+                        // Reload the page to update the status
+                        setTimeout(() => {
+                            window.location.reload()
+                        }, 2000)
+                    }, 500)
+                } else if (data.error) {
+                    // Error message
+                    activeEventSource.close()
+                    activeEventSource = null
+                    const notification = document.createElement('div')
+                    notification.className = 'notification is-danger'
+                    notification.innerHTML = `
+                        <button class="delete"></button>
+                        Error: ${data.error}
+                    `
+                    document.body.insertBefore(notification, document.body.firstChild)
+                    attachNotificationDeleteListener(notification)
+
+                    progressContainer.classList.remove('active')
+                }
+            } catch (e) {
+                console.error('Error parsing SSE data:', e)
+            }
+        }
+
+        activeEventSource.onerror = (error) => {
+            console.error('SSE connection error:', error)
+            activeEventSource.close()
+            activeEventSource = null
+
+            const notification = document.createElement('div')
+            notification.className = 'notification is-danger'
+            notification.innerHTML = `
+                <button class="delete"></button>
+                IGDB Import Error: Connection lost or server error. Check that games exist in the database and try again.
+            `
+            document.body.insertBefore(notification, document.body.firstChild)
+            attachNotificationDeleteListener(notification)
+
+            progressContainer.classList.remove('active')
+        }
+    })
+
+    // Cleanup EventSource when user navigates away or closes the page
+    window.addEventListener('beforeunload', () => {
+        if (activeEventSource) {
+            activeEventSource.close()
+            activeEventSource = null
+        }
+    })
+
+    // Helper function to attach delete button listener to notification
+    function attachNotificationDeleteListener(notification) {
+        const deleteBtn = notification.querySelector('.delete')
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                notification.remove()
+            })
+        }
+    }
+
+    // Helper function to format seconds as human-readable time
+    function formatTime(seconds) {
+        if (seconds === 0) return '0s'
+        if (seconds < 60) return Math.round(seconds) + 's'
+        const minutes = Math.floor(seconds / 60)
+        const secs = Math.round(seconds % 60)
+        return `${minutes}m ${secs}s`
+    }
+
+    // Auto-trigger IGDB fetch after successful batch import (if checkbox was checked)
+    {% if trigger_igdb %}
+    document.addEventListener('DOMContentLoaded', () => {
+        // Small delay to let success message show before starting IGDB fetch
+        setTimeout(() => {
+            const fetchButton = document.getElementById('fetch-igdb-btn')
+            if (fetchButton) {
+                fetchButton.click()
+            }
+        }, 1000)
+    })
+    {% endif %}
+
+</script>
+
+    </div>
+</section>
+</body>
+</html>

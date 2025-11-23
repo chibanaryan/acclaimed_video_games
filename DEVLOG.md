@@ -20,6 +20,7 @@
 - Fixed beta site filter badge spacing and colors to exactly match Vue original
 - Updated beta Advanced Search title to show result counts with commas ("Showing X to Y of Z Results")
 - Fixed beta year slider layout (labels now to left, adjusted width to match original)
+- **Completed beta migration to 100%** - Added DeveloperAliasRedirect for legacy URLs and custom 404 page with auto-redirect (11/11 routes, 28/28 components)
 
 ## 2025-11-22
 

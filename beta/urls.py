@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 from . import api_views
 
@@ -15,6 +15,11 @@ urlpatterns = [
         views.DeveloperDetailView.as_view(),
         name="developer-detail",
     ),
+    path(
+        "developer-alias/<int:id>/",
+        views.DeveloperAliasRedirectView.as_view(),
+        name="developer-alias-redirect",
+    ),
     path("lists/", views.ListListView.as_view(), name="list-list"),
     path("posts/", views.PostListView.as_view(), name="post-list"),
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
@@ -24,4 +29,14 @@ urlpatterns = [
         api_views.GameSearchAPIView.as_view(),
         name="api-games-search",
     ),
+    # Import functionality
+    path("import/", views.ImportView.as_view(), name="import"),
+    path(
+        "import/igdb-progress/",
+        views.IGDBProgressView.as_view(),
+        name="igdb-progress",
+    ),
+    # Catch-all 404 handler (must be last!)
+    # Matches any URL under /beta/ that didn't match above routes
+    re_path(r".*", views.NotFoundView.as_view(), name="not-found"),
 ]

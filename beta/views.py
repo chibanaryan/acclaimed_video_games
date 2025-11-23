@@ -1,7 +1,11 @@
 from django.db.models import Count, Min, Max, Prefetch
 from django.db.models.functions import Lower
 from django.views.generic import ListView, DetailView, TemplateView
+from django.views import View
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse_lazy
 from games import models
+from games import views as games_views
 
 
 class HomePageView(TemplateView):
@@ -542,6 +546,19 @@ class DeveloperDetailView(DetailView):
         return context
 
 
+class DeveloperAliasRedirectView(View):
+    """
+    Redirects legacy /developer-alias/:id/ URLs to the developer detail page.
+    Matches the Vue.js DeveloperAliasRedirect.vue component behavior.
+    """
+
+    def get(self, request, id):
+        alias = get_object_or_404(models.DeveloperAlias, id=id)
+        return redirect(
+            "beta:developer-detail", slug=alias.developer.slug, permanent=True
+        )
+
+
 class ListListView(ListView):
     model = models.List
     template_name = "lists/list_list.html"
@@ -748,3 +765,37 @@ class PageDetailView(TemplateView):
 
         context["flatpage"] = flatpage
         return context
+
+
+class NotFoundView(TemplateView):
+    """
+    Custom 404 page for beta site.
+    Matches the Vue.js NotFound.vue component behavior with auto-redirect.
+    """
+
+    template_name = "404.html"
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        response.status_code = 404
+        return response
+
+
+class ImportView(games_views.ImportView):
+    """
+    Beta site import view - inherits all functionality from games.views.ImportView
+    but uses the beta template.
+    """
+
+    template_name = "import.html"
+    success_url = reverse_lazy("beta:import")
+
+
+class IGDBProgressView(games_views.IGDBProgressView):
+    """
+    Beta site IGDB progress view - inherits SSE functionality from
+    games.views.IGDBProgressView.
+    No template override needed as this returns streaming HTTP response.
+    """
+
+    pass
