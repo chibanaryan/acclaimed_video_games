@@ -36,7 +36,7 @@
 
     {# Pagination at top - desktop shows all pages, mobile uses smart filtering #}
     {% if page_obj %}
-    <div class="pagination-wrapper mt-5">
+    <div class="pagination-wrapper pagination-spacing-top">
         {# Desktop pagination - show all pages #}
         <div class="is-hidden-mobile">
             {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
@@ -76,7 +76,7 @@
 
     {# Pagination at bottom - desktop shows all pages, mobile uses smart filtering #}
     {% if page_obj %}
-    <div class="pagination-wrapper mt-5">
+    <div class="pagination-wrapper pagination-spacing-top">
         {# Desktop pagination - show all pages #}
         <div class="is-hidden-mobile">
             {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
