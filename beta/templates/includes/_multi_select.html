@@ -102,31 +102,8 @@
                        x-model="item.selected"
                        @change="
                            const selectedItems = selectableItems.filter(x => x.selected).map(x => x.item);
-                           
-                           // Use Alpine's $dispatch to send event to parent scope
+                           // Dispatch event to parent scope - parent's handleFilterChange() will convert objects to string IDs
                            $dispatch('filter-changed', { type: filterType, items: selectedItems });
-                           
-                           // Also try direct update as fallback
-                           // Find the Alpine scope (the outer div with x-data)
-                           let alpineElement = $el;
-                           while (alpineElement && !alpineElement.hasAttribute('x-data')) {
-                               alpineElement = alpineElement.parentElement;
-                               if (!alpineElement || alpineElement === document.body) break;
-                           }
-                           
-                           if (alpineElement && filterType) {
-                               try {
-                                   const parentAlpine = Alpine.$data(alpineElement);
-                                   if (parentAlpine && parentAlpine.filters) {
-                                       parentAlpine.filters[filterType] = selectedItems;
-                                       if (parentAlpine.initialized && typeof parentAlpine.updateUrl === 'function') {
-                                           parentAlpine.updateUrl();
-                                       }
-                                   }
-                               } catch(e) {
-                                   console.error('Error updating Alpine scope:', e);
-                               }
-                           }
                        ">
                 <span x-text="item.item.name || item.item"></span>
             </label>

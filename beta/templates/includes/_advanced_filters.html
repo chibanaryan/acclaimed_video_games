@@ -39,10 +39,17 @@
             });
         },
         handleFilterChange(type, items) {
+            // Convert objects to string IDs if needed (desktop sends objects, we store string IDs)
+            const itemIds = items.map(item => {
+                if (typeof item === 'object' && item !== null && item.id !== undefined) {
+                    return String(item.id);
+                }
+                return String(item);
+            });
             if (type === 'genres') {
-                this.filters.genres = items;
+                this.filters.genres = itemIds;
             } else if (type === 'platforms') {
-                this.filters.platforms = items;
+                this.filters.platforms = itemIds;
             }
             if (this.initialized) {
                 this.updateUrl();
@@ -57,22 +64,12 @@
             if (this.filters.start) params.set('start', this.filters.start);
             if (this.filters.end) params.set('end', this.filters.end);
             if (this.filters.genres && this.filters.genres.length) {
-                const genreIds = this.filters.genres.map(g => {
-                    // Handle both object format {id: X, name: Y} and plain ID
-                    return (typeof g === 'object' && g !== null && g.id !== undefined) ? g.id : g;
-                }).filter(id => id !== null && id !== undefined);
-                if (genreIds.length > 0) {
-                    params.set('genres', genreIds.join(','));
-                }
+                // filters.genres contains IDs only (converted in handleFilterChange)
+                params.set('genres', this.filters.genres.join(','));
             }
             if (this.filters.platforms && this.filters.platforms.length) {
-                const platformIds = this.filters.platforms.map(p => {
-                    // Handle both object format {id: X, name: Y} and plain ID
-                    return (typeof p === 'object' && p !== null && p.id !== undefined) ? p.id : p;
-                }).filter(id => id !== null && id !== undefined);
-                if (platformIds.length > 0) {
-                    params.set('platforms', platformIds.join(','));
-                }
+                // filters.platforms contains IDs only (converted in handleFilterChange)
+                params.set('platforms', this.filters.platforms.join(','));
             }
             if (this.filters.genre_option) params.set('genre_option', this.filters.genre_option);
             if (this.filters.rank_display) params.set('rank_display', this.filters.rank_display);
@@ -90,7 +87,7 @@
             // Debounce the results update
             this.updateTimeout = setTimeout(() => {
                 const params = this.buildUrlParams();
-                const url = '{% url 'beta:games-search' %}?' + params.toString();
+                const url = '{% url 'beta:games-search' %}?' + params.toString().replace(/%2C/g, ',');
                 // Use fetch with HTMX headers to get partial response
                 fetch(url, {
                     headers: {
@@ -121,7 +118,7 @@
             // Debounce the URL update
             this.updateTimeout = setTimeout(() => {
                 const params = this.buildUrlParams();
-                const url = '{% url 'beta:games-search' %}?' + params.toString();
+                const url = '{% url 'beta:games-search' %}?' + params.toString().replace(/%2C/g, ',');
                 // Use fetch with HTMX headers to get partial response
                 fetch(url, {
                     headers: {
@@ -255,21 +252,19 @@
                 </div>
                 <label class="has-text-weight-bold">Genres</label>
             </div>
-            <select x-model="filters.genres"
-                    multiple
+            <select multiple
                     class="is-hidden-tablet"
-                    @change="updateUrl()">
-                <option value="">All genres</option>
+                    @change="filters.genres = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
                 <template x-for="genre in genres" :key="genre.id">
-                    <option :value="genre.id" x-text="genre.name"></option>
+                    <option :value="genre.id"
+                            :selected="filters.genres && filters.genres.includes(genre.id)"
+                            x-text="genre.name"></option>
                 </template>
             </select>
             <div class="is-hidden-mobile">
                 <div data-filter-type="genres"
                      @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
-                     @filter-update="handleFilterChange($event.detail.type, $event.detail.items)"
-                     @update:modelValue.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }"
-                     @change.window="if (Array.isArray($event.detail)) { filters.genres = $event.detail; if (initialized) updateUrl(); }">
+                     @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                     {% include 'includes/_multi_select.html' with items=genres selected=filters.genres type="genres" %}
                 </div>
                 {% include 'includes/_selectable_tag_list.html' with filter_type="genres" %}
@@ -282,21 +277,19 @@
             <div class="p-2">
                 <label class="has-text-weight-bold">Platforms</label>
             </div>
-            <select x-model="filters.platforms"
-                    multiple
+            <select multiple
                     class="is-hidden-tablet"
-                    @change="updateUrl()">
-                <option value="">All platforms</option>
+                    @change="filters.platforms = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
                 <template x-for="platform in platforms" :key="platform.id">
-                    <option :value="platform.id" x-text="platform.name"></option>
+                    <option :value="platform.id"
+                            :selected="filters.platforms && filters.platforms.includes(platform.id)"
+                            x-text="platform.name"></option>
                 </template>
             </select>
             <div class="is-hidden-mobile">
                 <div data-filter-type="platforms"
                      @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
-                     @filter-update="handleFilterChange($event.detail.type, $event.detail.items)"
-                     @update:modelValue.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }"
-                     @change.window="if (Array.isArray($event.detail)) { filters.platforms = $event.detail; if (initialized) updateUrl(); }">
+                     @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                     {% include 'includes/_multi_select.html' with items=platforms selected=filters.platforms type="platforms" %}
                 </div>
                 {% include 'includes/_selectable_tag_list.html' with filter_type="platforms" %}

@@ -2,6 +2,10 @@
 
 ## 2025-11-23
 
+- Fixed beta advanced search URL parameters to use clean commas instead of %2C encoding
+- Fixed beta mobile filter selects to properly show selected items on page load with URL parameters
+- Fixed beta desktop multi-select to send string IDs instead of objects in URL parameters
+- Fixed beta selectable tag list to display genre/platform names instead of IDs
 - Fixed beta advanced search results count and pagination with filters (HTMX target changed to update entire content div including title/buttons)
 - Fixed beta advanced search input focus loss and URL updates (split update logic: typing updates results only, Enter updates URL)
 - Fixed beta advanced search spacing to match original (pagination margins now 1.5rem bottom, 0.75rem between pagination and results)

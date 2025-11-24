@@ -6,7 +6,7 @@
      class="tags mt-3">
     <template x-for="(item, index) in filters.{{ filter_type }}" :key="index">
         <span class="tag is-primary">
-            <span x-text="item.name || item"></span>
+            <span x-text="('{{ filter_type }}' === 'genres' ? genres : platforms).find(x => x.id === item)?.name || item"></span>
             <button @click="
                     // Remove item from the filter array
                     filters.{{ filter_type }} = filters.{{ filter_type }}.filter((x, i) => i !== index);

@@ -358,10 +358,17 @@ class GameSearchView(ListView):
         from datetime import datetime
 
         # Get genres and platforms for AdvancedFilters
-        genres = list(models.Genre.objects.all().order_by("name").values("id", "name"))
-        platforms = list(
-            models.Platform.objects.all().order_by("name").values("id", "name", "code")
-        )
+        # Convert IDs to strings for proper Alpine.js binding
+        genres = [
+            {"id": str(g["id"]), "name": g["name"]}
+            for g in models.Genre.objects.all().order_by("name").values("id", "name")
+        ]
+        platforms = [
+            {"id": str(p["id"]), "name": p["name"], "code": p["code"]}
+            for p in models.Platform.objects.all()
+            .order_by("name")
+            .values("id", "name", "code")
+        ]
 
         # Get min/max years
         year_stats = models.Game.objects.aggregate(
@@ -382,17 +389,15 @@ class GameSearchView(ListView):
             "rank_display": self.request.GET.get("rank_display", "alltime"),
         }
 
-        # Parse selected genres
+        # Parse selected genres - send string IDs for HTML select compatibility
         genres_param = self.request.GET.get("genres")
         if genres_param:
-            genre_ids = [int(x) for x in genres_param.split(",")]
-            filters["genres"] = [g for g in genres if g["id"] in genre_ids]
+            filters["genres"] = genres_param.split(",")
 
-        # Parse selected platforms
+        # Parse selected platforms - send string IDs for HTML select compatibility
         platforms_param = self.request.GET.get("platforms")
         if platforms_param:
-            platform_ids = [int(x) for x in platforms_param.split(",")]
-            filters["platforms"] = [p for p in platforms if p["id"] in platform_ids]
+            filters["platforms"] = platforms_param.split(",")
 
         context["genres"] = genres
         context["platforms"] = platforms
