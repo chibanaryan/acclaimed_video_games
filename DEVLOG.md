@@ -2,6 +2,8 @@
 
 ## 2025-11-23
 
+- Fixed beta search bars to update URL params while typing without losing focus (developers page and advanced search)
+- Fixed beta mobile layout for Advanced Search button to wrap to right side instead of getting smushed
 - Fixed beta smooth scroll to top on all pagination and filter changes (added global HTMX event listener for HTMX 1.9 compatibility)
 - Fixed beta advanced search URL parameters to use clean commas instead of %2C encoding
 - Fixed beta mobile filter selects to properly show selected items on page load with URL parameters

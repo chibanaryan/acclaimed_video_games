@@ -15,11 +15,11 @@
         {% endif %}
     </h1>
     
-    <div class="is-clearfix">
-        <div class="is-pulled-left">
+    <div class="field is-grouped is-grouped-multiline">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
             {% include 'includes/_simple_filters.html' with meta=meta filters=filters %}
         </div>
-        <div class="is-pulled-right">
+        <div class="control" style="margin-left: auto;">
             <a href="{% url 'beta:games-search' %}" class="button is-link is-hidden-mobile">
                 <span class="icon is-small">
                     <span class="mdi mdi-tune-variant"></span>

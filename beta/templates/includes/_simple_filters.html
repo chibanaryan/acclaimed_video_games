@@ -1,71 +1,80 @@
 {# SimpleFilters component - migrated from Vue #}
 {# Props: meta (meta data with games.decades and games.years), filters (dict with decade and year) #}
 {# Uses Alpine.js for interactivity and HTMX for filter changes #}
+{# Note: Parent template must provide field wrapper #}
 {% load beta_filters %}
 {% if meta.games and filters %}
-<div class="field is-grouped is-grouped-multiline"
-     x-data="{ 
+<div class="control is-hidden-mobile"
+     x-data="{
          baseUrl: '{% url 'beta:games-list' %}'
      }">
-    <div class="control is-hidden-mobile">
-        <a href="{% url 'beta:games-list' %}" class="button is-link">
-            <span>All time</span>
-        </a>
+    <a href="{% url 'beta:games-list' %}" class="button is-link">
+        <span>All time</span>
+    </a>
+</div>
+<div class="control is-hidden-tablet"
+     x-data="{
+         baseUrl: '{% url 'beta:games-list' %}'
+     }"
+     {% if filters.decade or filters.year %}x-show="true"{% else %}x-show="false"{% endif %}>
+    <a href="{% url 'beta:games-list' %}" class="button">
+        <span class="icon">
+            <span class="mdi mdi-close"></span>
+        </span>
+    </a>
+</div>
+<div class="control"
+     x-data="{
+         baseUrl: '{% url 'beta:games-list' %}',
+         decade: '{{ filters.decade|default:'' }}'
+     }">
+    <div class="select">
+        <select @change="
+                    const params = new URLSearchParams(window.location.search);
+                    if (decade) {
+                        params.set('decade', decade);
+                    } else {
+                        params.delete('decade');
+                    }
+                    params.delete('year'); // Clear year when decade is selected
+                    params.delete('page'); // Reset to page 1 when filter changes
+                    window.location.href = baseUrl + '?' + params.toString();
+                "
+                x-model="decade">
+            <option value="">Decades</option>
+            {% if meta.games.decades %}
+                {% for decade_data in meta.games.decades %}
+                    <option value="{{ decade_data.decade }}" {% if filters.decade == decade_data.decade %}selected{% endif %}>{{ decade_data.decade }} ({{ decade_data.count }})</option>
+                {% endfor %}
+            {% endif %}
+        </select>
     </div>
-    <div class="control is-hidden-tablet" {% if filters.decade or filters.year %}x-show="true"{% else %}x-show="false"{% endif %}>
-        <a href="{% url 'beta:games-list' %}" class="button">
-            <span class="icon">
-                <span class="mdi mdi-close"></span>
-            </span>
-        </a>
-    </div>
-    <div class="control">
-        <div class="select">
-            <select x-data="{ decade: '{{ filters.decade|default:'' }}' }"
-                    @change="
-                        const params = new URLSearchParams(window.location.search);
-                        if (decade) {
-                            params.set('decade', decade);
-                        } else {
-                            params.delete('decade');
-                        }
-                        params.delete('year'); // Clear year when decade is selected
-                        params.delete('page'); // Reset to page 1 when filter changes
-                        window.location.href = baseUrl + '?' + params.toString();
-                    "
-                    x-model="decade">
-                <option value="">Decades</option>
-                {% if meta.games.decades %}
-                    {% for decade_data in meta.games.decades %}
-                        <option value="{{ decade_data.decade }}" {% if filters.decade == decade_data.decade %}selected{% endif %}>{{ decade_data.decade }} ({{ decade_data.count }})</option>
-                    {% endfor %}
-                {% endif %}
-            </select>
-        </div>
-    </div>
-    <div class="control">
-        <div class="select">
-            <select x-data="{ year: '{{ filters.year|default:'' }}' }"
-                    @change="
-                        const params = new URLSearchParams(window.location.search);
-                        if (year) {
-                            params.set('year', year);
-                        } else {
-                            params.delete('year');
-                        }
-                        params.delete('decade'); // Clear decade when year is selected
-                        params.delete('page'); // Reset to page 1 when filter changes
-                        window.location.href = baseUrl + '?' + params.toString();
-                    "
-                    x-model="year">
-                <option value="">Years</option>
-                {% if meta.games.years %}
-                    {% for year_data in meta.games.years %}
-                        <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>{{ year_data.year }} ({{ year_data.count }})</option>
-                    {% endfor %}
-                {% endif %}
-            </select>
-        </div>
+</div>
+<div class="control"
+     x-data="{
+         baseUrl: '{% url 'beta:games-list' %}',
+         year: '{{ filters.year|default:'' }}'
+     }">
+    <div class="select">
+        <select @change="
+                    const params = new URLSearchParams(window.location.search);
+                    if (year) {
+                        params.set('year', year);
+                    } else {
+                        params.delete('year');
+                    }
+                    params.delete('decade'); // Clear decade when year is selected
+                    params.delete('page'); // Reset to page 1 when filter changes
+                    window.location.href = baseUrl + '?' + params.toString();
+                "
+                x-model="year">
+            <option value="">Years</option>
+            {% if meta.games.years %}
+                {% for year_data in meta.games.years %}
+                    <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>{{ year_data.year }} ({{ year_data.count }})</option>
+                {% endfor %}
+            {% endif %}
+        </select>
     </div>
 </div>
 {% endif %}

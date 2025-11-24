@@ -21,7 +21,7 @@
 
             this.$watch('filters.q', val => {
                 if (!this.initialized) return;
-                // Only update results, not URL (URL updates on Enter key press)
+                // Update results and URL while typing (preserves focus)
                 this.updateResults();
             });
             this.$watch('filters.start', val => {
@@ -116,7 +116,8 @@
                         resultsEl.innerHTML = newResults.innerHTML;
                     }
 
-                    // Do NOT update URL or re-initialize Alpine (preserves focus)
+                    // Update URL without reload (preserves focus by not re-initializing Alpine)
+                    window.history.pushState({}, '', url);
                 })
                 .catch(err => console.error('Error fetching results:', err));
             }, 300);

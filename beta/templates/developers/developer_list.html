@@ -13,7 +13,19 @@
     {% endif %}
 </h2>
 
-<div class="field">
+<div class="field" x-data="{
+    updateUrl(event) {
+        const searchValue = event.target.value;
+        const url = new URL(window.location);
+        if (searchValue) {
+            url.searchParams.set('q', searchValue);
+        } else {
+            url.searchParams.delete('q');
+        }
+        url.searchParams.delete('page');
+        window.history.pushState({}, '', url);
+    }
+}">
     <div class="control has-icons-left">
         <input type="text"
                class="input"
@@ -26,6 +38,7 @@
                hx-trigger="input changed delay:150ms"
                hx-swap="innerHTML"
                hx-include="[name='q']"
+               x-on:htmx:after-request="updateUrl($event)"
                autocomplete="off">
         <span class="icon is-small is-left">
             <i class="mdi mdi-magnify"></i>
