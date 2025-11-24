@@ -5,7 +5,7 @@ from django.views import View
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache
+from django.views.decorators.vary import vary_on_headers
 from games import models
 from games import views as games_views
 
@@ -260,7 +260,7 @@ class GameDetailView(DetailView):
         return context
 
 
-@method_decorator(never_cache, name="dispatch")
+@method_decorator(vary_on_headers("X-Requested-With", "HX-Request"), name="dispatch")
 class GameSearchView(ListView):
     model = models.Game
     template_name = "games/game_search.html"
