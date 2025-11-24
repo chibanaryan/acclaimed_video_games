@@ -6,7 +6,7 @@
 
 {% block content %}
 <div id="content">
-    <h1 class="title">
+    <h1 class="title" id="search-title">
         {% if page_obj %}
             Showing {{ page_obj.start_index|intcomma }} to {{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }} Results
         {% else %}
@@ -36,7 +36,9 @@
 
     {% include 'includes/_advanced_filters.html' with filters=filters genres=genres platforms=platforms min_year=min_year max_year=max_year %}
 
-    {% include 'games/includes/_game_search_results.html' %}
+    <div id="game-results-container">
+        {% include 'games/includes/_game_search_results.html' %}
+    </div>
 </div>
 {% endblock %}
 

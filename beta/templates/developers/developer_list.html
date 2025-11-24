@@ -63,6 +63,10 @@
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+    <div class="notification">
+        <p>No developers found.</p>
+    </div>
     {% endif %}
 
     {% if page_obj %}

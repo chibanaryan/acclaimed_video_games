@@ -3,7 +3,7 @@
 {% load humanize %}
 
 <div id="content">
-    <h1 class="title">
+    <h1 class="title" id="search-title">
         {% if page_obj %}
             Showing {{ page_obj.start_index|intcomma }} to {{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }} Results
         {% else %}
@@ -32,41 +32,9 @@
     </div>
     
     {% include 'includes/_advanced_filters.html' with filters=filters genres=genres platforms=platforms min_year=min_year max_year=max_year %}
-    
-    {% if games %}
-    <div style="margin-top: 3rem;">
-        {% if page_obj %}
-        <div class="pagination-wrapper pagination-spacing-top">
-            {# Desktop pagination - show all pages #}
-            <div class="is-hidden-mobile">
-                {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
-            </div>
-            {# Mobile pagination - use smart filtering #}
-            <div class="is-hidden-tablet">
-                {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
-            </div>
-        </div>
-        {% endif %}
 
-        {% for game in games %}
-            {% with index=page_obj.start_index|add:forloop.counter0 %}
-                {% include 'games/includes/_game_row.html' with game=game index=index show_rank=filters.rank_display %}
-            {% endwith %}
-        {% endfor %}
-
-        {% if page_obj %}
-        <div class="pagination-wrapper pagination-spacing-top">
-            {# Desktop pagination - show all pages #}
-            <div class="is-hidden-mobile">
-                {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='content' %}
-            </div>
-            {# Mobile pagination - use smart filtering #}
-            <div class="is-hidden-tablet">
-                {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
-            </div>
-        </div>
-        {% endif %}
+    <div id="game-results-container">
+        {% include 'games/includes/_game_search_results.html' %}
     </div>
-    {% endif %}
 </div>
 

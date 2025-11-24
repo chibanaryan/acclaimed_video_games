@@ -21,6 +21,7 @@
 
             this.$watch('filters.q', val => {
                 if (!this.initialized) return;
+                // Only update results, not URL (URL updates on Enter key press)
                 this.updateResults();
             });
             this.$watch('filters.start', val => {
@@ -88,7 +89,7 @@
             this.updateTimeout = setTimeout(() => {
                 const params = this.buildUrlParams();
                 const url = '{% url 'beta:games-search' %}?' + params.toString().replace(/%2C/g, ',');
-                // Use fetch with HTMX headers to get partial response
+                // Use fetch with HTMX headers to get partial response (full content to extract title)
                 fetch(url, {
                     headers: {
                         'HX-Request': 'true',
@@ -97,11 +98,25 @@
                 })
                 .then(response => response.text())
                 .then(html => {
-                    const contentEl = document.getElementById('content');
-                    if (contentEl) {
-                        contentEl.innerHTML = html;
-                        // Do NOT update URL or re-initialize Alpine (preserves focus)
+                    // Parse the response to extract title and results
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Update title
+                    const newTitle = doc.querySelector('h1.title');
+                    const titleEl = document.getElementById('search-title');
+                    if (newTitle && titleEl) {
+                        titleEl.innerHTML = newTitle.innerHTML;
                     }
+
+                    // Update results
+                    const newResults = doc.querySelector('#game-results-container');
+                    const resultsEl = document.getElementById('game-results-container');
+                    if (newResults && resultsEl) {
+                        resultsEl.innerHTML = newResults.innerHTML;
+                    }
+
+                    // Do NOT update URL or re-initialize Alpine (preserves focus)
                 })
                 .catch(err => console.error('Error fetching results:', err));
             }, 300);
@@ -153,7 +168,7 @@
          } else if (typeof $event.detail === 'string' || $event.detail === null) {
              // Handle search input updates
              this.filters.q = $event.detail || '';
-             if (this.initialized) this.updateUrl();
+             // Don't update URL - the watcher will update results, Enter key will update URL
          }
      "
      @change.window="
@@ -164,7 +179,7 @@
          } else if (typeof $event.detail === 'string' || $event.detail === null) {
              // Handle search input changes
              this.filters.q = $event.detail || '';
-             if (this.initialized) this.updateUrl();
+             // Don't update URL - the watcher will update results, Enter key will update URL
          }
      ">
     <div class="columns">
