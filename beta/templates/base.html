@@ -55,13 +55,12 @@
             });
         });
 
-        // Reset Alpine.js search state when navigating back via browser back button
-        // This fixes the issue where the search dropdown remains open after back navigation
+        // Force reload when page is loaded from browser back-forward cache
+        // This ensures Alpine.js components reinitialize properly with all event handlers
         window.addEventListener('pageshow', function(event) {
             // event.persisted is true when page is loaded from bfcache (back-forward cache)
             if (event.persisted) {
-                // Dispatch custom event to reset all search components
-                window.dispatchEvent(new CustomEvent('reset-search-state'));
+                window.location.reload();
             }
         });
     </script>

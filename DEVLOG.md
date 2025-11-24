@@ -1,53 +1,18 @@
 # Developer Log
 
+## 2025-11-24
+
+- Fixed beta advanced search unwanted scrolling on filter updates (force reload when page loaded from browser back-forward cache to reinitialize Alpine.js properly)
+
 ## 2025-11-23
 
-- Fixed beta developer search not triggering on input (removed redundant hx-include attribute and added results count update)
-- Fixed beta advanced search navbar duplication bug (Django view not detecting fetch() as AJAX, now checks X-Requested-With header)
-- Fixed beta games search page filter persistence and scroll position restoration on back button navigation
-- Fixed beta games page pagination layout shift (consistent spacing classes between initial and HTMX loads)
-- Fixed beta developer detail page game count to update dynamically when toggling alias checkboxes
-- Converted beta Source Lists filters to HTMX (no more full page reload on filter changes)
-- Standardized HTMX detection across all beta views (using request.headers.get instead of META)
-- Fixed beta search bars to update URL params while typing without losing focus (developers page and advanced search)
-- Fixed beta mobile layout for Advanced Search button to wrap to right side instead of getting smushed
-- Fixed beta smooth scroll to top on all pagination and filter changes (added global HTMX event listener for HTMX 1.9 compatibility)
-- Fixed beta advanced search URL parameters to use clean commas instead of %2C encoding
-- Fixed beta mobile filter selects to properly show selected items on page load with URL parameters
-- Fixed beta desktop multi-select to send string IDs instead of objects in URL parameters
-- Fixed beta selectable tag list to display genre/platform names instead of IDs
-- Fixed beta advanced search results count and pagination with filters (HTMX target changed to update entire content div including title/buttons)
-- Fixed beta advanced search input focus loss and URL updates (split update logic: typing updates results only, Enter updates URL)
-- Fixed beta advanced search spacing to match original (pagination margins now 1.5rem bottom, 0.75rem between pagination and results)
-- Fixed beta navbar order to match original site (search before "Top 1000" on both mobile and desktop)
-- Fixed beta highlight scroll alignment (now aligns to top instead of center)
-- Fixed beta source lists page to reset to page 1 when filters change
-- Fixed beta site "all-time rank" links to use page-based URLs instead of offset/limit
-- Fixed beta site highlight and scroll-to-game functionality (type mismatch prevented highlighting)
-- Fixed memory leaks in Vue components and import page (7 leaks total)
-- Fixed "Last Updated" to show date only and update only on Games file import
-- Optimized server-side memory usage (50-90% reduction for large datasets)
-- Fixed IGDB import progress bar bug (queryset filtering issue causing Zeno's paradox)
-- Added development-only "Load Test Data" button for quick database seeding
-- Fixed Game Positions duplicating on re-import (now clears before importing)
-- Fixed decade rank calculation bug (SQLite was ordering by year then rank instead of global rank)
-- Enhanced "Delete All Data" to include Genres and reset ID sequences on both PostgreSQL and SQLite
-- Removed vite-ssg and server-side prerendering (reverted to standard client-side Vue.js SPA)
-- Fixed font loading with preloading and display=block for immediate pixelated font rendering
-- Added font and image prefetching to beta site for improved initial load performance
-- Implemented genre/platform filter bubbles on beta site with immediate removal and Alpine.js reactivity
-- Fixed Advanced Search to always show Clear Filters button and reset to defaults instead of clearing entirely
-- Fixed beta site link colors to match original Vue.js site (removed dimmer blue overrides, now uses default Bulmaswatch Cyborg theme)
-- Added pagination hover effect to beta site (numbers turn blue on hover to match original site)
-- Fixed beta site filter badge spacing and colors to exactly match Vue original
-- Updated beta Advanced Search title to show result counts with commas ("Showing X to Y of Z Results")
-- Fixed beta year slider layout (labels now to left, adjusted width to match original)
-- **Completed beta migration to 100%** - Added DeveloperAliasRedirect for legacy URLs and custom 404 page with auto-redirect (11/11 routes, 28/28 components)
-- Fixed beta navbar and search styling to match Vue original (navbar link colors, search backgrounds, developer search bar)
-- Fixed beta mobile navbar layout (search icon before "Top 1000"), full-width mobile search, and smart pagination filtering
-- Updated all dropdown backgrounds to match navbar color (#131313)
-- Fixed beta navbar search dropdown persisting when using browser back button (added pageshow event listener for bfcache reset)
-- Fixed beta navbar search bar white flash on page navigation (added inline styles for immediate dark theme rendering)
+- **Completed beta migration to 100%** - All 11 routes and 28 components with legacy URL redirects and custom 404
+- Fixed beta advanced search (navbar duplication, filter persistence, URL params, input focus, counts, pagination, mobile layout)
+- Fixed beta developer pages (search triggering, dynamic game counts) and converted Source Lists to HTMX
+- Fixed beta styling to match Vue (navbar/search colors, dropdowns, links, badges, pagination hover, fonts, no white flash)
+- Fixed memory leaks (7 in Vue components) and optimized server memory (50-90% reduction)
+- Fixed IGDB import progress bar, decade rank calculation, and enhanced data management tools
+- Removed vite-ssg/SSR, reverted to client-side Vue SPA, added prefetching for better performance
 
 ## 2025-11-22
 
