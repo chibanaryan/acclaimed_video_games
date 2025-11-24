@@ -36,7 +36,27 @@
 
     {# HTMX #}
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    
+
+    {# HTMX Event Listeners - scroll to top after content updates #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Listen for HTMX afterSwap event on pagination and search updates
+            document.body.addEventListener('htmx:afterSwap', function(event) {
+                // Only scroll on pagination clicks and search updates (not all HTMX requests)
+                const targetId = event.detail.target.id;
+                if (targetId === 'content' || targetId === 'results-container' || targetId === 'game-results-container') {
+                    // Scroll to top after content update with delay for DOM paint
+                    setTimeout(function() {
+                        const header = document.getElementById('header');
+                        if (header) {
+                            header.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }, 200);
+                }
+            });
+        });
+    </script>
+
     {# Alpine.js #}
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     

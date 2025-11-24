@@ -2,6 +2,7 @@
 
 ## 2025-11-23
 
+- Fixed beta smooth scroll to top on all pagination and filter changes (added global HTMX event listener for HTMX 1.9 compatibility)
 - Fixed beta advanced search URL parameters to use clean commas instead of %2C encoding
 - Fixed beta mobile filter selects to properly show selected items on page load with URL parameters
 - Fixed beta desktop multi-select to send string IDs instead of objects in URL parameters
