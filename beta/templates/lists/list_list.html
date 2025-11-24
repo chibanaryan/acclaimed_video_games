@@ -34,7 +34,8 @@
     <div class="field is-grouped is-grouped-multiline">
         <div class="control">
             <div class="select">
-                <select name="publisher"
+                <select id="filter-publisher"
+                        name="publisher"
                         hx-get="{% url 'beta:list-list' %}"
                         hx-target="#content"
                         hx-trigger="change"
@@ -52,7 +53,8 @@
         </div>
         <div class="control">
             <div class="select">
-                <select name="year"
+                <select id="filter-list-year"
+                        name="year"
                         hx-get="{% url 'beta:list-list' %}"
                         hx-target="#content"
                         hx-trigger="change"
@@ -70,7 +72,8 @@
         </div>
         <div class="control">
             <div class="select">
-                <select name="type"
+                <select id="filter-list-type"
+                        name="type"
                         hx-get="{% url 'beta:list-list' %}"
                         hx-target="#content"
                         hx-trigger="change"

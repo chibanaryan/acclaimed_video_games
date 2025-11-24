@@ -1,5 +1,5 @@
 {# RangeSlider component - migrated from Vue #}
-{# Props: value (current value), min (default: 1970), max (default: current year), placeholder (optional) #}
+{# Props: value (current value), min (default: 1970), max (default: current year), placeholder (optional), id (optional), name (optional) #}
 {# Uses Alpine.js for interactivity #}
 <div class="field is-grouped" 
      x-data="{ 
@@ -11,9 +11,11 @@
      x-init="
          val = '{% if value %}{{ value }}{% elif min %}{{ min }}{% else %}1970{% endif %}';
      ">
-    <label class="label" x-text="label"></label>
+    <div class="label" x-text="label"></div>
     <div class="control">
         <input type="range"
+               {% if id %}id="{{ id }}"{% endif %}
+               {% if name %}name="{{ name }}"{% endif %}
                :min="min"
                :max="max"
                x-model="val"

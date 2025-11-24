@@ -51,8 +51,11 @@
         <ul class="mb-5">
             <template x-for="alias in aliases" :key="alias.id">
                 <li>
-                    <label class="checkbox">
-                        <input type="checkbox" x-model="alias.selected">
+                    <label class="checkbox" :for="'alias-' + alias.id">
+                        <input type="checkbox"
+                               :id="'alias-' + alias.id"
+                               :name="'alias-' + alias.id"
+                               x-model="alias.selected">
                         <span x-text="alias.name"></span>
                     </label>
                 </li>

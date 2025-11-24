@@ -58,12 +58,15 @@
                             <span class="mdi mdi-magnify"></span>
                         </span>
                         <input type="text"
+                               id="nav-search-mobile"
+                               name="q"
                                x-ref="searchInputMobile"
                                x-model="q"
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
                                placeholder="Search games"
-                               class="input">
+                               class="input"
+                               autocomplete="off">
                     </div>
                     <div class="control">
                         <a @click="mobileSearchActive = false; q = ''; results = []; showMenu = false" class="button">
@@ -148,11 +151,14 @@
                             <span class="mdi mdi-magnify"></span>
                         </span>
                         <input type="text"
+                               id="nav-search-desktop"
+                               name="q"
                                placeholder="Search games"
                                class="input"
                                x-model="q"
                                @focus="showMenu = true"
-                               @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }">
+                               @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
+                               autocomplete="off">
                     </div>
                     <div class="control" x-show="q && q.trim()" x-cloak>
                         <a @click="q = ''; results = []; showMenu = false" class="button">

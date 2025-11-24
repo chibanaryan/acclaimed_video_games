@@ -97,8 +97,12 @@
      ">
     <template x-for="(item, index) in selectableItems" :key="index">
         <div>
-            <label>
+            <label :for="'filter-' + filterType + '-' + (item.item.id || index)">
                 <input type="checkbox"
+                       id="filter-checkbox"
+                       name="filter[]"
+                       :id="'filter-' + filterType + '-' + (item.item.id || index)"
+                       :name="filterType + '[]'"
                        x-model="item.selected"
                        @change="
                            const selectedItems = selectableItems.filter(x => x.selected).map(x => x.item);

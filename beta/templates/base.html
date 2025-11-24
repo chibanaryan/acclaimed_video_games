@@ -17,9 +17,9 @@
     {# Note: Vue imports bulma/css/bulma.css from node_modules, but Bulmaswatch includes Bulma #}
     {# So we only need Bulmaswatch which includes Bulma #}
     {# Bulmaswatch Cyborg Theme (Dark Theme) - MUST INCLUDE - matches Vue version exactly #}
-    {# Pin to Bulma 1.0.0 compatible version #}
+    {# Pin to Bulma 1.0.0 and Bulmaswatch 0.8.1 (latest available) #}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/bulmaswatch@1.0.0/cyborg/bulmaswatch.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/bulmaswatch@0.8.1/cyborg/bulmaswatch.min.css">
     
     {# Material Design Icons #}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
@@ -27,7 +27,6 @@
     {# Handjet Font (for rank numbers) - MUST INCLUDE #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://fonts.gstatic.com/s/handjet/v9/Adfb1WNww3sO-LwxW_G4l4RyBb-9y9PNDG0Xp8Nwqg.woff2" as="font" type="font/woff2" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=block" rel="stylesheet">
 
     {# Prefetch critical images that appear on every page #}
@@ -800,7 +799,6 @@
         // Use both DOMContentLoaded and immediate execution to catch all cases
         function applyNavbarStyles() {
             const links = document.querySelectorAll('.beta-nav-link');
-            console.log('Found', links.length, 'navbar links');
             links.forEach(link => {
                 // Apply grey default to match Vue.js site
                 link.style.setProperty('color', 'rgb(171, 177, 191)', 'important');

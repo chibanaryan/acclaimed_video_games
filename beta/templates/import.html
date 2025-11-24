@@ -545,7 +545,7 @@
     <div style="display: flex; gap: 10px; align-items: center;">
         <form method="POST" action="." style="margin: 0;">
             {% csrf_token %}
-            <input type="hidden" name="delete" value="true">
+            <input type="hidden" id="delete-data" name="delete" value="true">
             <button class="button is-danger" onclick="return confirm('⚠️ This will delete ALL existing data (games, lists, platforms, developers). Are you sure?');">
                 🗑️ Delete All Data
             </button>
@@ -554,7 +554,7 @@
         {% if debug %}
         <form method="POST" action="." style="margin: 0;" id="seed-data-form">
             {% csrf_token %}
-            <input type="hidden" name="seed_test_data" value="true">
+            <input type="hidden" id="seed-test-data" name="seed_test_data" value="true">
             <button class="button is-success" id="seed-data-btn" title="Development only - loads bundled test files from acclaimedgames/test_input_files/">
                 📦 Load Test Data (Dev)
             </button>
@@ -711,8 +711,8 @@
 
             <div class="field">
                 <div class="control">
-                    <label class="checkbox">
-                        <input type="checkbox" name="igdb">
+                    <label class="checkbox" for="auto-fetch-igdb">
+                        <input type="checkbox" id="auto-fetch-igdb" name="igdb">
                         Automatically fetch IGDB data after import (cover art, descriptions, genres)
                     </label>
                 </div>

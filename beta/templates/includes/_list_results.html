@@ -58,18 +58,18 @@
                 {% endif %}
             </div>
             <div>
-                <label>Year:</label>
+                <span class="has-text-weight-semibold">Year:</span>
                 {{ list.year }}
             </div>
             {% if show_rank %}
             <div>
-                <label>Rank:</label>
+                <span class="has-text-weight-semibold">Rank:</span>
                 {{ list.rank|default:'' }}
             </div>
             {% endif %}
             {% if show_type %}
             <div>
-                <label>Type:</label>
+                <span class="has-text-weight-semibold">Type:</span>
                 {% if list.get_type_display %}{{ list.get_type_display }}{% else %}{{ list.type_name|default:'' }}{% endif %}
             </div>
             {% endif %}

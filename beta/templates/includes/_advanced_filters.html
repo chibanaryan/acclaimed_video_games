@@ -186,7 +186,7 @@
     <div class="columns">
         <div class="column">
             <div class="p-2">
-                <label class="has-text-weight-bold">Release year</label>
+                <div class="has-text-weight-bold">Release year</div>
             </div>
             <div class="field">
                 <div class="control">
@@ -195,9 +195,11 @@
                             <td>From:</td>
                             <td>
                                 <div class="field is-grouped">
-                                    <label class="label" x-text="filters.start || {{ min_year }}"></label>
+                                    <div class="label" x-text="filters.start || {{ min_year }}"></div>
                                     <div class="control">
                                         <input type="range"
+                                               id="filter-start-year"
+                                               name="start"
                                                min="{{ min_year }}"
                                                max="{{ max_year }}"
                                                :value="filters.start || {{ min_year }}"
@@ -210,9 +212,11 @@
                             <td>To:</td>
                             <td>
                                 <div class="field is-grouped">
-                                    <label class="label" x-text="filters.end || {{ max_year }}"></label>
+                                    <div class="label" x-text="filters.end || {{ max_year }}"></div>
                                     <div class="control">
                                         <input type="range"
+                                               id="filter-end-year"
+                                               name="end"
                                                min="{{ min_year }}"
                                                max="{{ max_year }}"
                                                :value="filters.end || {{ max_year }}"
@@ -225,13 +229,15 @@
                 </div>
             </div>
             <div class="p-2">
-                <label class="has-text-weight-bold">Displayed rank</label>
+                <div class="has-text-weight-bold">Displayed rank</div>
             </div>
             <div class="field ml-3">
                 <div class="control">
                     <label class="radio">
                         All time
                         <input type="radio"
+                               id="rank-display-alltime"
+                               name="rank_display"
                                x-model="filters.rank_display"
                                value="alltime"
                                @change="updateUrl()">
@@ -239,6 +245,8 @@
                     <label class="radio">
                         Filtered
                         <input type="radio"
+                               id="rank-display-filtered"
+                               name="rank_display"
                                x-model="filters.rank_display"
                                value="filtered"
                                @change="updateUrl()">
@@ -254,6 +262,8 @@
                     <label class="radio">
                         All
                         <input type="radio"
+                               id="genre-option-all"
+                               name="genre_option"
                                x-model="filters.genre_option"
                                value="L"
                                @change="updateUrl()">
@@ -261,14 +271,18 @@
                     <label class="radio">
                         Any
                         <input type="radio"
+                               id="genre-option-any"
+                               name="genre_option"
                                x-model="filters.genre_option"
                                value="A"
                                @change="updateUrl()">
                     </label>
                 </div>
-                <label class="has-text-weight-bold">Genres</label>
+                <div class="has-text-weight-bold">Genres</div>
             </div>
             <select multiple
+                    id="filter-genres-mobile"
+                    name="genres"
                     class="is-hidden-tablet"
                     @change="filters.genres = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
                 <template x-for="genre in genres" :key="genre.id">
@@ -291,9 +305,11 @@
         {% if platforms %}
         <div class="column">
             <div class="p-2">
-                <label class="has-text-weight-bold">Platforms</label>
+                <div class="has-text-weight-bold">Platforms</div>
             </div>
             <select multiple
+                    id="filter-platforms-mobile"
+                    name="platforms"
                     class="is-hidden-tablet"
                     @change="filters.platforms = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
                 <template x-for="platform in platforms" :key="platform.id">

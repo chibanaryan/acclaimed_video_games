@@ -1,5 +1,5 @@
 {# SearchInput component - migrated from Vue #}
-{# Props: value (current search value), placeholder (optional), show_submit_button (default: False) #}
+{# Props: value (current search value), placeholder (optional), show_submit_button (default: False), id (optional), name (optional) #}
 {# Uses Alpine.js for interactivity - operates within parent Alpine.js scope (expects filters.q) #}
 {# Note: No x-data scope to allow proper binding to parent's filters.q #}
 <div class="control is-flex">
@@ -9,6 +9,8 @@
                 <span class="mdi mdi-magnify"></span>
             </span>
             <input class="input custom-input"
+                   {% if id %}id="{{ id }}"{% endif %}
+                   {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}
                    x-model="filters.q"
                    @keyup.enter="updateUrlAndResults()"
                    placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}">
