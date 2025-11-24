@@ -2,6 +2,7 @@
 
 ## 2025-11-23
 
+- Fixed beta developer detail page game count to update dynamically when toggling alias checkboxes
 - Converted beta Source Lists filters to HTMX (no more full page reload on filter changes)
 - Standardized HTMX detection across all beta views (using request.headers.get instead of META)
 - Fixed beta search bars to update URL params while typing without losing focus (developers page and advanced search)
