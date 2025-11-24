@@ -44,6 +44,7 @@
 - Fixed beta mobile navbar layout (search icon before "Top 1000"), full-width mobile search, and smart pagination filtering
 - Updated all dropdown backgrounds to match navbar color (#131313)
 - Fixed beta navbar search dropdown persisting when using browser back button (added pageshow event listener for bfcache reset)
+- Fixed beta navbar search bar white flash on page navigation (added inline styles for immediate dark theme rendering)
 
 ## 2025-11-22
 
