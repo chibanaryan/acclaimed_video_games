@@ -10,6 +10,7 @@
             </span>
             <input class="input custom-input"
                    x-model="filters.q"
+                   @keyup.enter="updateUrlAndResults()"
                    placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}">
         </div>
         <div class="control is-clear" x-show="filters.q">

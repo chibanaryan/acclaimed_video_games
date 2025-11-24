@@ -298,8 +298,12 @@ class GameSearchView(ListView):
         return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
 
     def get_template_names(self):
-        # Support HTMX partial responses - return just the content block if HTMX request
+        # Support HTMX partial responses
         if self.request.META.get("HTTP_HX_REQUEST") == "true":
+            # Targeted update for just the results container
+            if self.request.META.get("HTTP_HX_TARGET") == "game-results-container":
+                return ["games/includes/_game_search_results.html"]
+            # Full content partial for pagination and initial loads
             return ["games/includes/_game_search_content.html"]
         return super().get_template_names()
 

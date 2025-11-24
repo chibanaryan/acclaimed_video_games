@@ -2,6 +2,8 @@
 
 ## 2025-11-23
 
+- Fixed beta advanced search input focus loss and URL updates (split update logic: typing updates results only, Enter updates URL)
+- Fixed beta advanced search spacing to match original (pagination margins now 1.5rem bottom, 0.75rem between pagination and results)
 - Fixed beta navbar order to match original site (search before "Top 1000" on both mobile and desktop)
 - Fixed beta highlight scroll alignment (now aligns to top instead of center)
 - Fixed beta source lists page to reset to page 1 when filters change

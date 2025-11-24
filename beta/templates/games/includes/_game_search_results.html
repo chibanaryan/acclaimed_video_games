@@ -1,0 +1,36 @@
+{# Game search results partial - used for both initial render and HTMX updates #}
+{% if games %}
+<div style="margin-top: 1.5rem;">
+    {% if page_obj %}
+    <div class="pagination-wrapper" style="margin-bottom: 0.75rem;">
+        {# Desktop pagination - show all pages #}
+        <div class="is-hidden-mobile">
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='game-results-container' %}
+        </div>
+        {# Mobile pagination - use smart filtering #}
+        <div class="is-hidden-tablet">
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='game-results-container' %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% for game in games %}
+        {% with index=page_obj.start_index|add:forloop.counter0 %}
+            {% include 'games/includes/_game_row.html' with game=game index=index show_rank=filters.rank_display %}
+        {% endwith %}
+    {% endfor %}
+
+    {% if page_obj %}
+    <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+        {# Desktop pagination - show all pages #}
+        <div class="is-hidden-mobile">
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id='game-results-container' %}
+        </div>
+        {# Mobile pagination - use smart filtering #}
+        <div class="is-hidden-tablet">
+            {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='game-results-container' %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
