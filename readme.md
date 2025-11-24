@@ -1,3 +1,13 @@
+## Project Overview
+
+Acclaimed Games is a video game ranking and aggregation website built with:
+- **Django** - Backend framework with server-side rendering
+- **HTMX** - Dynamic interactions without full page reloads
+- **Alpine.js** - Client-side reactivity for UI components
+- **Bulma CSS** - Styling with Bulmaswatch Cyborg theme
+
+For detailed documentation, see [CLAUDE.md](CLAUDE.md).
+
 ## Setup Local Development Environment
 
 ### Install Dependencies
@@ -5,7 +15,6 @@
 * Python 3 (https://www.python.org/downloads/)
 * Git   (https://git-scm.com/downloads/win)
 * Heroku CLI    (https://devcenter.heroku.com/articles/heroku-cli)
-* Node (https://nodejs.org/en/download)
 
 ### Setup Git Repository
 
@@ -21,7 +30,7 @@ Add Heroku remote (first time only)
 
     heroku git:remote -a acclaimedgames
 
-### Web backend
+### Backend Setup
 
 Create a Python virtual environment (first time only)
 
@@ -47,35 +56,23 @@ Run Django development server
 
     python manage.py runserver
 
-### Web frontend
-
-Install JavaScript dependencies (first time only)
-
-    cd frontend
-    npm install
-
-Run Vue.js development server
-
-    npm run dev
-
 ## Deploy New Version of Website
 
-Build the frontend JavaScript app:
+Collect static files:
 
-    cd frontend
-    npm run build
+    python manage.py collectstatic --noinput
 
-Copy static files
+Commit your changes:
 
-    python manage.py collectstatic
+    git add -A
+    git commit -m "Your commit message"
 
-Add the `dist` folder to the repo
+Push to GitHub:
 
-    git add dist
+    git push origin main
 
-To deploy to Heroku, push your local Git repo to the Heroku remote
+Deploy to Heroku:
 
-    git commit -av -m "Some changes"
     git push heroku main
 
 ## Pre-commit Hooks
@@ -104,8 +101,6 @@ With that in place:
   vars, long lines, etc.) so issues are caught before CI.
 - `scripts/run_tests.sh` executes automatically and blocks a commit if the
   Django tests fail.
-- The frontend suite (`cd frontend && npm run test`) runs automatically to catch
-  Vue regressions before commits.
 - Backend coverage is enforced (`coverage run --source=games manage.py test` with
   a fail-under threshold of 95%). You can run it manually via:
 
@@ -118,33 +113,49 @@ With that in place:
     coverage html  # view report at htmlcov/index.html
     ```
 
-- Frontend coverage is available with:
-
-    ```bash
-    cd frontend
-    npm run test:coverage
-    ```
-
-The HTML report lives under `frontend/coverage/index.html` (ignored by Git).
+The HTML report lives under `htmlcov/index.html` (ignored by Git).
 
 Make sure your virtualenv is set up and dependencies installed before running
 `pre-commit install`.
 
 ## Import New Data
 
-1. Browse to `/import/`
-1. Log in
-2. Click on  "Delete existing data"
-3. Under "Type" select "Platforms"
-4. Click on "Upload a file..."
-5. Select the text file containing platforms (PlatformDB.txt)
-6. Click on "Submit"
-6. Repeat for "Source lists" (SourceLists.txt), "Games" (Top1000.txt) and "Game positions" (GamePositions.txt)
+The import page at `/import/` provides a modern interface for managing game data:
 
-Run the `get_igdb` command to import the data from IGDB (this will take some time to complete)
+### Quick Actions
 
-    python manage.py get_igdb
+**Load Test Data (Development only)**
+- Click the "📦 Load Test Data (Dev)" button to quickly load bundled test files
+- Only available when `DEBUG=True`
+- Automatically imports platforms, source lists, games, and game positions
 
-To run it on the remote Heroku server
+**Delete All Data**
+- Click "🗑️ Delete All Data" to wipe the database
+- Use this before importing a fresh dataset
+
+**Fetch IGDB Data**
+- Click "🔄 Fetch IGDB Data" to pull cover art, descriptions, and genres from IGDB
+- Shows real-time progress with a visual progress bar
+- Can also be run from command line: `python manage.py get_igdb`
+
+### Batch Import
+
+To import custom data files:
+
+1. Navigate to `/import/` and log in
+2. Upload all required files (they'll be processed in order):
+   - **PlatformDB.txt** - Gaming platforms (tab-separated: `CODE<tab>Name`)
+   - **SourceLists.txt** - Critic rankings (tab-separated: `Publisher<tab>Year<tab>Type<tab>Name<tab>URL`)
+   - **Top1000.txt** - Games database (tab-separated: `Rank<tab>Name<tab>Year<tab>IGDB_ID<tab>Platforms`)
+   - **GamePositions.txt** - Game positions in lists (tab-separated: `ListID:Position<tab>ListID:Position...`)
+3. Check "Automatically fetch IGDB data after import" if desired
+4. Click "📤 Import Files"
+5. Monitor real-time progress for each file
+
+The import page also displays database statistics showing counts for all data types and IGDB completion percentage.
+
+### IGDB Import on Heroku
+
+To run IGDB data fetch on production:
 
     heroku run python manage.py get_igdb

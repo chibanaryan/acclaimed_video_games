@@ -1,0 +1,123 @@
+{# MultiSelectComponent #}
+{# Props: items (list of items to select from), selected (list of selected items) #}
+{# Uses Alpine.js for interactivity #}
+{% load game_filters %}
+{% with type_hash=type|default:"default"|length|add:1000 %}
+    {% with ms_id=items|length|add:selected|length|add:type_hash|stringformat:"s" %}
+<script type="application/json" id="ms-items-{{ ms_id }}">{% if items %}{{ items|tojson }}{% else %}[]{% endif %}</script>
+<script type="application/json" id="ms-selected-{{ ms_id }}">{% if selected %}{{ selected|tojson }}{% else %}[]{% endif %}</script>
+<div class="control multiple-select"
+     data-ms-id="{{ ms_id }}"
+     data-filter-type="{{ type|default:'default' }}"
+     x-data="{
+         filterType: '{{ type|default:"default" }}',
+         itemsList: [],
+         selectedList: [],
+         selectableItems: [],
+         error: null,
+         init() {
+             try {
+                 const msId = this.$el.getAttribute('data-ms-id');
+                 console.log(`[MultiSelect ${this.filterType}] Initializing with ID: ${msId}`);
+
+                 const itemsEl = document.getElementById('ms-items-' + msId);
+                 const selectedEl = document.getElementById('ms-selected-' + msId);
+
+                 console.log(`[MultiSelect ${this.filterType}] Found elements:`, {
+                     itemsEl: !!itemsEl,
+                     selectedEl: !!selectedEl
+                 });
+
+                 if (itemsEl) {
+                     const itemsText = itemsEl.textContent;
+                     console.log(`[MultiSelect ${this.filterType}] Items JSON:`, itemsText.substring(0, 100));
+                     this.itemsList = JSON.parse(itemsText);
+                     console.log(`[MultiSelect ${this.filterType}] Parsed ${this.itemsList.length} items`);
+                 } else {
+                     console.warn(`[MultiSelect ${this.filterType}] No items element found`);
+                     this.error = 'Items data not found';
+                 }
+
+                 if (selectedEl) {
+                     this.selectedList = JSON.parse(selectedEl.textContent);
+                     console.log(`[MultiSelect ${this.filterType}] Parsed ${this.selectedList.length} selected items`);
+                 } else {
+                     console.warn(`[MultiSelect ${this.filterType}] No selected element found`);
+                 }
+
+                 this.initializeSelectableItems();
+                 console.log(`[MultiSelect ${this.filterType}] Initialized with ${this.selectableItems.length} selectable items`);
+             } catch(e) {
+                 console.error(`[MultiSelect ${this.filterType}] Error loading multi-select data:`, e);
+                 this.error = `Error: ${e.message}`;
+             }
+         },
+         initializeSelectableItems() {
+             if (!this.itemsList || !Array.isArray(this.itemsList)) {
+                 this.selectableItems = [];
+                 return;
+             }
+             if (this.itemsList.length === 0) {
+                 this.selectableItems = [];
+                 return;
+             }
+             const selectedIds = (this.selectedList || []).map(sel => {
+                 if (typeof sel === 'object' && sel !== null && sel.id !== undefined) {
+                     return sel.id;
+                 }
+                 return sel;
+             });
+             this.selectableItems = this.itemsList.map(item => {
+                 const isSelected = selectedIds.includes(item.id);
+                 return {
+                     item: item,
+                     selected: isSelected
+                 };
+             });
+         }
+     }"
+     x-init="
+         // Watch for changes to selectedList (from parent component)
+         $watch('selectedList', (newVal) => {
+             if (!this.selectableItems || this.selectableItems.length === 0) return;
+             const selectedIds = (newVal || []).map(sel => {
+                 if (typeof sel === 'object' && sel !== null && sel.id !== undefined) {
+                     return sel.id;
+                 }
+                 return sel;
+             });
+             this.selectableItems.forEach(item => {
+                 item.selected = selectedIds.includes(item.item.id);
+             });
+         });
+         // Watch for changes to itemsList (in case they're updated)
+         $watch('itemsList', () => {
+             this.initializeSelectableItems();
+         });
+     ">
+    <template x-for="(item, index) in selectableItems" :key="index">
+        <div>
+            <label :for="'filter-' + filterType + '-' + (item.item.id || index)">
+                <input type="checkbox"
+                       id="filter-checkbox"
+                       name="filter[]"
+                       :id="'filter-' + filterType + '-' + (item.item.id || index)"
+                       :name="filterType + '[]'"
+                       x-model="item.selected"
+                       @change="
+                           const selectedItems = selectableItems.filter(x => x.selected).map(x => x.item);
+                           // Dispatch event to parent scope - parent's handleFilterChange() will convert objects to string IDs
+                           $dispatch('filter-changed', { type: filterType, items: selectedItems });
+                       ">
+                <span x-text="item.item.name || item.item"></span>
+            </label>
+        </div>
+    </template>
+    <div x-show="selectableItems.length === 0" class="has-text-grey" style="padding: 0.5rem;">
+        <span x-show="!itemsList || itemsList.length === 0">No items available</span>
+        <span x-show="itemsList && itemsList.length > 0 && selectableItems.length === 0">Loading...</span>
+    </div>
+</div>
+    {% endwith %}
+{% endwith %}
+

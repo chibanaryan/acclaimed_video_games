@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     "django_extensions",
     "rest_framework",
     "games",
-    "beta",  # Beta version (Django + HTMX + Alpine.js)
 ]
 
 MIDDLEWARE = [
@@ -74,7 +73,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "beta.middleware.HTMXPushURLMiddleware",  # Add HX-Push-URL header for HTMX requests
+    "games.middleware.HTMXPushURLMiddleware",  # HTMX history support
 ]
 
 # Only enable cache middleware in production
@@ -90,7 +89,7 @@ if DEBUG:
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "frontend/dist"],
+        "DIRS": [],
         # When loaders is explicitly defined, APP_DIRS must be False
         # The app_directories loader is included in the loaders list instead
         "APP_DIRS": False,
@@ -151,6 +150,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Authentication URLs
+LOGIN_REDIRECT_URL = "/"
+LOGIN_URL = "/accounts/login/"
+
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
@@ -172,9 +175,7 @@ CACHE_MIDDLEWARE_SECONDS = 60 * 60
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [
-    BASE_DIR / "frontend/dist",
-]
+STATICFILES_DIRS = []
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 

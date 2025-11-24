@@ -1,0 +1,38 @@
+{# SearchInput component #}
+{# Props: value (current search value), placeholder (optional), show_submit_button (default: False), id (optional), name (optional) #}
+{# Uses Alpine.js for interactivity - operates within parent Alpine.js scope (expects filters.q) #}
+{# Note: No x-data scope to allow proper binding to parent's filters.q #}
+<div class="control is-flex">
+    <div :class="{ 'has-addons': filters.q }" class="field">
+        <div class="control has-icons-left">
+            <span class="icon is-left">
+                <span class="mdi mdi-magnify"></span>
+            </span>
+            <input class="input custom-input"
+                   style="background-color: rgb(20, 22, 26); border-color: rgb(53, 58, 70); color: rgb(235, 236, 240);"
+                   {% if id %}id="{{ id }}"{% endif %}
+                   {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}
+                   x-model="filters.q"
+                   @keyup.enter="updateUrlAndResults()"
+                   placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}">
+        </div>
+        <div class="control is-clear" x-show="filters.q">
+            <button @click="filters.q = ''"
+                    title="Clear search text"
+                    class="button">
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>
+            </button>
+        </div>
+        {% if show_submit_button %}
+        <div class="control" x-show="filters.q">
+            <button @click="filters.q = filters.q"
+                    title="Submit search text"
+                    class="button">
+                Submit
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>

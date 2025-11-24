@@ -216,26 +216,6 @@ class IGDBProgressViewTests(TestCase):
             self.assertEqual(response["content-type"], "text/event-stream")
 
 
-class SPAViewTests(TestCase):
-    """Tests for SPAView that serves the Vue.js SPA."""
-
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.view = views.SPAView.as_view()
-
-    def test_spa_view_serves_template(self):
-        """Test that SPAView serves index.html template."""
-        request = self.factory.get("/")
-        response = self.view(request)
-
-        # TemplateView returns a TemplateResponse which needs to be rendered
-        response.render()
-
-        self.assertEqual(response.status_code, 200)
-        # Template name should be set correctly
-        self.assertEqual(response.template_name[0], "index.html")
-
-
 class PostListViewTests(TestCase):
     """Tests for PostListView."""
 
@@ -251,8 +231,7 @@ class PostListViewTests(TestCase):
 
     def test_post_list_view_returns_posts(self):
         """Test that PostListView returns posts."""
-        # Note: PostListView is in games.views, but the URL might be in beta
-        # Let's test the view directly
+        # Test the view directly
         factory = RequestFactory()
         request = factory.get("/posts/")
         view = views.PostListView()

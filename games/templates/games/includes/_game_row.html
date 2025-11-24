@@ -1,0 +1,79 @@
+{# GameRow component #}
+{# Props: game, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional game ID) #}
+<div class="columns is-hidden-mobile game-row desktop {% if highlight and game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}">
+    <div class="column is-narrow">
+        <div class="columns">
+            {% if show_rank == 'alltime' %}
+            <div class="column is-narrow">
+                <span class="rank">
+                    {{ game.rank }}
+                </span>
+            </div>
+            {% endif %}
+            {% if show_rank == 'filtered' %}
+            <div class="column is-narrow">
+                <span class="rank">
+                    {{ index|default:game.rank }}
+                </span>
+            </div>
+            {% endif %}
+            <div class="column is-narrow">
+                <a href="{% url 'game-detail' slug=game.slug %}">
+                    <img src="{{ game.thumbnail }}" alt="{{ game.name }}">
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="column">
+        <div>
+            <a href="{% url 'game-detail' slug=game.slug %}"
+                class="game-name has-text-weight-bold is-size-6 mb-3">
+                {{ game.name }}
+            </a>
+            <a href="{% url 'games-list' %}?year={{ game.year_of_release }}">
+                ({{ game.year_of_release }})
+            </a>
+        </div>
+        {% if show_rank_in_details or show_rank == 'filtered' %}
+            {% include 'games/includes/_game_row_properties.html' with game=game show_rank=True %}
+        {% else %}
+            {% include 'games/includes/_game_row_properties.html' with game=game show_rank=False %}
+        {% endif %}
+    </div>
+</div>
+<div class="is-hidden-desktop is-hidden-tablet game-row mobile pb-4 {% if highlight and game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}-mobile">
+    <div class="py-3">
+        <a href="{% url 'game-detail' slug=game.slug %}"
+            class="game-name has-text-weight-bold is-size-6">
+            {% if show_rank == 'alltime' %}
+            <span class="rank">
+                {{ game.rank }}
+            </span>
+            {% endif %}
+            {% if show_rank == 'filtered' %}
+            <span class="rank">
+                {{ index|default:game.rank }}
+            </span>
+            {% endif %}
+            {{ game.name }}
+        </a>
+        <a href="{% url 'games-list' %}?year={{ game.year_of_release }}">
+            ({{ game.year_of_release }})
+        </a>
+    </div>
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            <a href="{% url 'game-detail' slug=game.slug %}">
+                <img src="{{ game.thumbnail }}" alt="{{ game.name }}">
+            </a>
+        </div>
+        <div class="column">
+            {% if show_rank_in_details or show_rank == 'filtered' %}
+                {% include 'games/includes/_game_row_properties.html' with game=game show_rank=True %}
+            {% else %}
+                {% include 'games/includes/_game_row_properties.html' with game=game show_rank=False %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+

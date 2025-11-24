@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load game_filters %}
+
+{% block title %}{{ game.name }} - Acclaimed Games{% endblock %}
+
+{% block content %}
+{% if game %}
+    <h1 class="title">{{ game.name }}</h1>
+    <div class="columns">
+        <div class="column">
+            {% include 'games/includes/_game_properties.html' with game=game %}
+        </div>
+        <div class="column">
+            <img src="{{ game.image }}" alt="{{ game.name }}">
+        </div>
+    </div>
+    {% for group_label, group_items in grouped_lists %}
+        <h2 class="title is-5">{{ group_label }} Lists</h2>
+        {% include 'includes/_list_results.html' with items=group_items show_type=False show_rank=True %}
+    {% endfor %}
+{% else %}
+    <div class="notification is-danger">
+        <p><strong>Error:</strong> Game not found</p>
+        <p>The game you're looking for could not be found or there was a problem loading it.</p>
+    </div>
+{% endif %}
+{% endblock %}
+

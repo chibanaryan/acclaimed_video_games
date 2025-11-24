@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Acclaimed Games is a video game ranking and aggregation website that combines data from multiple sources to create comprehensive rankings. The application uses Django backend with a Vue.js 3 frontend and integrates with the IGDB (Internet Game Database) API.
+Acclaimed Games is a video game ranking and aggregation website that combines data from multiple sources to create comprehensive rankings. The application uses Django with server-side rendering, HTMX for dynamic interactions, and Alpine.js for client-side reactivity. It integrates with the IGDB (Internet Game Database) API.
 
 ## Instructions for Claude
 
@@ -12,13 +12,12 @@ Acclaimed Games is a video game ranking and aggregation website that combines da
 
 Always follow the **Complete Deployment Workflow** documented in the Deployment section below. This includes:
 1. Updating DEVLOG.md (if changes warrant documentation - see DEVLOG guidelines below)
-2. Building the frontend
-3. Collecting static files
-4. Committing all changes
-5. Pushing to main
-6. Deploying to Heroku
+2. Collecting static files
+3. Committing all changes
+4. Pushing to main
+5. Deploying to Heroku
 
-Do not skip any steps. The user should not have to remind you to build the frontend or collect static files.
+Do not skip any steps. The user should not have to remind you to collect static files.
 
 ## Development Commands
 
@@ -92,44 +91,6 @@ coverage run --source=games manage.py test games.tests
 coverage report
 ```
 
-### Frontend (Vue.js)
-
-**Install dependencies:**
-```bash
-cd frontend
-npm install
-```
-
-**Run development server:**
-```bash
-npm run dev
-```
-
-**Build for production:**
-```bash
-npm run build
-```
-
-**Lint code:**
-```bash
-npx eslint src/
-```
-
-**Run tests:**
-```bash
-npm run test
-```
-
-**Run tests in watch mode:**
-```bash
-npm run test:watch
-```
-
-**Run tests with coverage:**
-```bash
-npm run test:coverage
-```
-
 ### Deployment
 
 **Production URL:** https://www.acclaimedvideogames.com/
@@ -145,28 +106,24 @@ When making changes that need to be deployed to production, follow this complete
 #    Only if: bug fixes, features, optimizations, or breaking changes
 #    Keep to 2-4 bullet points max per day
 
-# 1. Build the frontend
-cd frontend && npm run build && cd ..
-
-# 2. Collect static files
+# 1. Collect static files
 python manage.py collectstatic --noinput
 
-# 3. Stage all changes including dist folder
+# 2. Stage all changes
 git add -A
 
-# 4. Commit with descriptive message
+# 3. Commit with descriptive message
 git commit -m "Your commit message here"
 
-# 5. Push to main branch
+# 4. Push to main branch
 git push origin main
 
-# 6. Deploy to Heroku
+# 5. Deploy to Heroku
 git push heroku main
 ```
 
 **Important Notes:**
 - Update DEVLOG.md for significant changes (see Development Log section below for guidelines)
-- The `dist` folder is committed to git for Heroku deployment
 - Pre-commit hooks will run tests and enforce code quality before allowing the commit
 - **If pre-commit hooks fail**: Fix issues immediately, do NOT skip or work around them
   - Coverage failures: Add tests or proper exclusions (not workarounds)
@@ -182,10 +139,16 @@ The Django backend has comprehensive test coverage in the `games/tests/` directo
 - **test_api.py** - API endpoint tests including filtering, serialization, and pagination
 - **test_models.py** - Model behavior, IGDB integration, and ranking utilities
 - **test_igdb.py** - IGDB API integration with extensive mocking
-- **test_imports.py** - Data import functionality tests
-- **test_views.py** - ImportView integration tests
+- **test_igdb_importer.py** - IGDB importer logic and batch processing tests
+- **test_imports.py** - Data import functionality and file parsing tests
+- **test_views.py** - Import view integration tests
+- **test_main_views.py** - Main application views (game list, detail, search, developers, etc.)
 - **test_admin.py** - Django admin functionality tests
-- **test_management.py** - Custom management command tests
+- **test_management.py** - Custom management command tests (get_igdb, cleanup, etc.)
+- **test_cleanup_command.py** - Database cleanup command tests
+- **test_forms.py** - Form validation and processing tests
+- **test_middleware.py** - HTMXPushURLMiddleware and other middleware tests
+- **test_template_tags.py** - Custom template filter and tag tests
 - **test_utils.py** - Utility function tests
 
 **Coverage Requirements:**
@@ -194,44 +157,14 @@ The Django backend has comprehensive test coverage in the `games/tests/` directo
 - Configuration: `.coveragerc` excludes migrations and PostgreSQL-specific optimizations
 - Current coverage: 100% (exceeds minimum requirement)
 
-### Frontend Testing
-
-The Vue.js frontend uses Vitest for testing with the following structure:
-
-**Unit Tests:**
-- `frontend/src/__tests__/store.spec.js` - Vuex store tests
-- `frontend/src/__tests__/models.spec.js` - Frontend model class tests
-- `frontend/src/__tests__/utils.spec.js` - Utility function tests (scroll position, slug parsing)
-- `frontend/src/__tests__/objectStore.spec.js` - PersistentObjectStore tests
-- `frontend/src/__tests__/config.spec.js` - API URL configuration tests
-
-**Component Tests:**
-- `frontend/src/components/__tests__/NavComponent.spec.js` - Navigation component behavior
-
-**Test Configuration:**
-- Vitest configured in `vite.config.js` with jsdom environment
-- Test setup file: `frontend/src/test/setup.js` (localStorage mock)
-
-**Test Dependencies:**
-- vitest (^4.0.9) - Test runner
-- @vitest/coverage-v8 (^4.0.9) - Coverage reporting
-- @vue/test-utils (^2.4.0-alpha.2) - Vue component testing utilities
-- jsdom (^27.2.0) - DOM implementation for testing
-
-**Coverage Requirements:**
-- Minimum 95% test coverage enforced by pre-commit hooks and Vitest configuration
-- Thresholds configured in `vite.config.js` for statements, branches, functions, and lines
-- Current coverage: 100% (exceeds minimum requirement)
-
 ### Pre-commit Hooks
 
 The project uses pre-commit hooks (`.pre-commit-config.yaml`) to enforce code quality:
 
 1. **Black Formatter** - Automatically formats Python code
 2. **Flake8 Linter** - Lints Python code (configuration in `.flake8` - max line length 88)
-3. **Frontend Tests with Coverage** - Runs `npm run test:coverage` and enforces 95% coverage minimum
-4. **Django Coverage** - Enforces 95% test coverage threshold (excluding migrations)
-5. **Django Test Suite** - Runs full test suite via `scripts/run_tests.sh`
+3. **Django Coverage** - Enforces 95% test coverage threshold (excluding migrations)
+4. **Django Test Suite** - Runs full test suite via `scripts/run_tests.sh`
 
 **Note:** Commits will be blocked if any tests fail, coverage drops below 95%, or linting fails.
 
@@ -258,7 +191,7 @@ The `DEVLOG.md` file tracks significant changes and improvements to the project.
 - Use brief, imperative language (e.g., "Fix double-load on first search character")
 - Group changes by date (one date header per day of work)
 - Include affected components/features for context
-- Link to related files if relevant (e.g., `frontend/src/components/DeveloperList.vue`)
+- Link to related files if relevant (e.g., `games/templates/developers/developer_list.html`)
 - Example:
   ```
   ## 2025-11-22
@@ -273,11 +206,13 @@ The `DEVLOG.md` file tracks significant changes and improvements to the project.
 - **games/** - Main Django app containing:
   - **models.py** - Core data models (Game, Developer, Platform, List, etc.)
   - **api/** - REST API with views, serializers, and URL routing
+  - **views.py** - Django class-based views for all routes
+  - **middleware.py** - HTMXPushURLMiddleware for HTMX history support
+  - **templatetags/** - Custom template filters (game_filters.py)
   - **management/commands/** - Custom Django commands (e.g., `get_igdb.py`)
   - **tests/** - Comprehensive test suite (API, models, IGDB, imports, views, admin, utils)
-  - **templates/** - Server-side templates (mostly just index.html for SPA)
+  - **templates/** - Server-side templates with HTMX and Alpine.js
   - **static/** - Static files served by Django
-- **beta/** - Alternative Django + HTMX + Alpine.js implementation (see Beta App section)
 
 **Installed Apps:**
 - `django.contrib.admin` - Admin interface
@@ -291,8 +226,7 @@ The `DEVLOG.md` file tracks significant changes and improvements to the project.
 - `django.contrib.postgres` - PostgreSQL-specific features
 - `rest_framework` - Django REST Framework
 - `corsheaders` - CORS support
-- `games` - Main game aggregation app
-- `beta` - Beta implementation with HTMX and Alpine.js
+- `games` - Main game aggregation app with HTMX and Alpine.js
 
 **Middleware:**
 - `django.middleware.security.SecurityMiddleware` - Security headers
@@ -304,23 +238,8 @@ The `DEVLOG.md` file tracks significant changes and improvements to the project.
 - `django.contrib.auth.middleware.AuthenticationMiddleware` - Authentication
 - `django.contrib.messages.middleware.MessageMiddleware` - Messages
 - `django.middleware.clickjacking.XFrameOptionsMiddleware` - Click-jacking protection
-- `beta.middleware.HTMXPushURLMiddleware` - HTMX history/URL push support for beta app
+- `games.middleware.HTMXPushURLMiddleware` - HTMX history/URL push support
 - `django.contrib.flatpages.middleware.FlatpageFallbackMiddleware` - Flat pages routing
-
-### Frontend Structure
-
-- **frontend/src/**
-  - **components/** - Vue components (GameList, GameDetail, DeveloperDetail, etc.)
-    - **__tests__/** - Component tests
-  - **models/** - Frontend model classes that mirror Django models
-  - **router.js** - Vue Router configuration
-  - **store.js** - Vuex global state management
-  - **objectStore.js** - Persistent localStorage wrapper
-  - **config.js** - API URL configuration
-  - **constants.js** - Application-wide constants
-  - **utils.js** - Utility functions
-  - **__tests__/** - Unit tests for models, store, utils, and objectStore
-  - **test/** - Test configuration and setup files
 
 ### Data Models
 
@@ -347,46 +266,34 @@ Django REST Framework powers the API at `/api/` with endpoints:
 - `/api/posts/` - News posts
 - `/api/meta/` - Metadata about the database
 
-All non-API routes are handled by the Vue.js SPA.
+### Template Architecture
 
-### Frontend Patterns
-
-**BaseModel Pattern**: All frontend models extend `BaseData` which automatically converts snake_case API responses to camelCase properties and parses datetime strings to moment objects.
-
-**PersistentObjectStore**: A localStorage wrapper used for persisting state (e.g., scroll position for game list navigation).
-
-**Vuex Store**: Manages global state for genres, platforms, and metadata. Data is lazy-loaded and cached in the store.
-
-**Router Scroll Behavior**: Custom scroll position preservation for game list pages - when navigating from a game list to game detail and back, the scroll position is restored.
-
-**SPAView**: A Django TemplateView that serves the Vue.js SPA's `index.html` for all non-API routes, allowing Vue Router to handle client-side routing.
-
-**Template System**: Templates are configured with intelligent caching:
+The application uses Django templates with server-side rendering:
 - **Production**: Uses Django's cached template loader for optimal performance
 - **Development**: Uses non-cached loaders for hot-reloading during development
-- Frontend `dist/` folder is served as a Django template directory
-- Template caching settings are in `settings.py` based on `DEBUG` mode
+- Templates configured in `settings.py` based on `DEBUG` mode
+- All templates are in the `games/templates/` directory
 
-## Beta App (Django + HTMX + Alpine.js)
+## Application Structure (Django + HTMX + Alpine.js)
 
-The project includes a parallel implementation of the game ranking site using traditional server-side rendering with Django templates, HTMX for dynamic interactions, and Alpine.js for client-side reactivity. This serves as an alternative to the Vue.js SPA.
+The application uses Django templates with HTMX for dynamic interactions and Alpine.js for client-side reactivity.
 
-### Beta App Structure
+### Views and Templates
 
-- **beta/** - Django app containing:
-  - **views.py** - View functions for all beta routes
-  - **urls.py** - URL routing for `/beta/` routes
-  - **templates/** - Jinja2 templates organized by feature:
+- **games/** - Main Django app containing:
+  - **views.py** - View functions for all routes
+  - **urls.py** - URL routing configuration (in main acclaimedgames/urls.py)
+  - **templates/** - Django templates organized by feature:
     - **base.html** - Main template layout with navigation
     - **games/** - Game list, detail, and search templates
     - **developers/** - Developer list and detail templates
     - **lists/** - Lists and results templates
     - **posts/** - Post/news templates
     - **pages/** - Static page templates
-  - **template_tags/** - Custom template filters (beta_filters.py)
+  - **templatetags/** - Custom template filters (game_filters.py)
   - **middleware.py** - HTMXPushURLMiddleware for HTMX history support
 
-### Beta App Features
+### Application Features
 
 **Styling:**
 - Uses Bulma CSS framework with Bulmaswatch Cyborg theme for modern dark UI
@@ -397,19 +304,19 @@ The project includes a parallel implementation of the game ranking site using tr
 - Custom utilities for formatting and string manipulation
 
 **Routes:**
-- `/beta/` - Home page
-- `/beta/games/` - Game list with filtering and search
-- `/beta/games/<slug>/` - Game detail view
-- `/beta/games/search/` - Game search endpoint (HTMX)
-- `/beta/developers/` - Developer list
-- `/beta/developers/<slug>/` - Developer detail view
-- `/beta/lists/` - Published rankings list
-- `/beta/posts/` - News and blog posts
-- `/beta/pages/<slug>/` - Static pages
+- `/` - Home page
+- `/games/` - Game list with filtering and search
+- `/games/<slug>/` - Game detail view
+- `/games/search/` - Game search endpoint (HTMX)
+- `/developers/` - Developer list
+- `/developers/<slug>/` - Developer detail view
+- `/lists/` - Published rankings list
+- `/posts/` - News and blog posts
+- `/page/<slug>/` - Static pages
 
 **HTMX Integration:**
 - Dynamic filtering without full page reloads
-- Infinite scroll or pagination for lists
+- Pagination for lists with smooth navigation
 - Real-time search results
 - Smooth form submissions
 
@@ -425,18 +332,42 @@ The project includes a parallel implementation of the game ranking site using tr
 - Maintains browser back/forward functionality with HTMX
 - Uses `HX-Push-Url` header for selective history updates
 
-### Migration Status
+### Google Analytics Integration
 
-The beta app is an ongoing migration from the Vue SPA to a Django + HTMX approach. Migration documentation is available in `docs/migration/` directory with guides on:
-- What has been migrated to beta
-- What still needs work
-- Testing procedures
-- Known limitations
+The site uses Google Analytics 4 (GA4) with custom HTMX tracking for comprehensive page view analytics:
+
+**Implementation Location:** `games/templates/base.html`
+
+**Standard Page Views:**
+- gtag.js loads on every page via base template
+- Tracks initial page loads and full navigation
+- Property ID: `G-0591405Q89`
+
+**HTMX Navigation Tracking:**
+- Custom event listener on `htmx:afterSwap` tracks partial page updates as page views
+- Includes full URL path with query parameters for granular tracking
+- Captures filter changes, pagination, and search navigation
+- Provides more detailed tracking than typical SPAs (tracks query parameter changes as distinct page views)
+
+**Code Example:**
+```javascript
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    // Track HTMX navigation as page views
+    if (window.gtag) {
+        gtag('config', 'G-0591405Q89', {
+            page_path: window.location.pathname + window.location.search
+        });
+    }
+});
+```
+
+**Advantages over SPA Tracking:**
+- Automatically tracks all filter state changes (e.g., `/games/search/?q=zelda` vs `/games/search/?q=mario`)
+- No custom router configuration required
+- Simpler implementation with more granular insights
 
 ### Development Notes
 
-- Both the Vue SPA (at `/`) and beta app (at `/beta/`) run in parallel
-- The beta app uses the same Django backend and database as the SPA
 - Template reloading works in development via Django's non-cached template loaders
 - In production, template caching is enabled for performance
 
@@ -496,24 +427,13 @@ Environment variables are managed via django-environ (`.env` file):
 - `IGDB_CLIENT_SECRET` - IGDB API client secret
 - `IGDB_USE_PRO_TIER` - Enable IGDB Pro tier (default: False)
 
-Frontend environment variables (`.env` in frontend/):
-- `VITE_API_URL` - API base URL (defaults to `/api/`)
-- `VITE_GOOGLE_ANALYTICS_PROPERTY_ID` - Google Analytics property ID for tracking (optional, only if using GA)
-
 ### Configuration Files
 
-Backend:
 - **`.python-version`** - Specifies Python 3.11 for Heroku deployment (can use different versions locally)
 - **`.pre-commit-config.yaml`** - Pre-commit hook configuration for code quality enforcement (Black, Flake8, tests)
 - **`.coveragerc`** - Coverage configuration excluding migrations and database vendor-specific code
-- **`.flake8`** - Flake8 linter configuration (max line length 88, excludes venv and node_modules)
+- **`.flake8`** - Flake8 linter configuration (max line length 88, excludes venv)
 - **`scripts/run_tests.sh`** - Test execution script used by pre-commit hooks
-
-Frontend:
-- **`frontend/vite.config.js`** - Vite configuration including test setup with Vitest and 95% coverage thresholds
-- **`frontend/src/test/setup.js`** - Test environment setup (localStorage mocking)
-- **`frontend/.gitignore`** - Frontend-specific gitignore rules
-- **`frontend/jsconfig.json`** - JavaScript path configuration
 
 ## Database
 
@@ -523,8 +443,6 @@ Frontend:
 - `year_rank` and `decade_rank` are calculated automatically on save
 
 ## Dependencies
-
-### Backend Dependencies
 
 The backend dependencies are listed in `requirements.txt` and include:
 - **coverage** - Test coverage reporting tool (required for pre-commit hooks)
@@ -538,19 +456,10 @@ Install all backend dependencies with:
 pip install -r requirements.txt
 ```
 
-### Frontend Dependencies
-
-**Key Tools:**
-- **sass-embedded** - SASS preprocessor for Vite (handles SCSS compilation to CSS)
-- **vitest** - Vue component and unit testing framework
-- **@vue/test-utils** - Vue component testing utilities
-- **jsdom** - DOM implementation for testing
-
-These dependencies are defined in `frontend/package.json` and installed via `npm install`.
-
 ## Static Files
 
-- Vite builds frontend to `frontend/dist/`
-- Django collectstatic copies to `staticfiles/`
+- Django collectstatic copies static files from apps to `staticfiles/`
 - WhiteNoise serves static files in production
-- The `dist` folder is committed to git for Heroku deployment
+- Static files are located in:
+  - `games/static/` - Game app static files
+  - `games/templates/` - Template files with inline styles

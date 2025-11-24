@@ -5,9 +5,16 @@ from django.contrib.auth import views as auth_views
 from django.urls import include, path, re_path
 
 from games import views
+from games.api import views as api_views
 
 
 urlpatterns = [
+    # API search endpoint for HTMX/Alpine.js (must be before REST API include)
+    path(
+        "api/games/search/",
+        api_views.GameSearchAPIView.as_view(),
+        name="api-games-search",
+    ),
     path("api/", include("games.api.urls", namespace="games-api")),
     path("admin/", admin.site.urls),
     path("import/", views.ImportView.as_view(), name="import"),
@@ -15,8 +22,25 @@ urlpatterns = [
         "import/igdb-progress/", views.IGDBProgressView.as_view(), name="igdb-progress"
     ),
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
-    # Beta version routes (new Django + HTMX version)
-    path("beta/", include("beta.urls")),
+    # Main site routes (Django + HTMX + Alpine.js)
+    path("", views.HomePageView.as_view(), name="home"),
+    path("games/", views.GameListView.as_view(), name="games-list"),
+    path("games/search/", views.GameSearchView.as_view(), name="games-search"),
+    path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
+    path("developers/", views.DeveloperListView.as_view(), name="developers-list"),
+    path(
+        "developers/<slug:slug>/",
+        views.DeveloperDetailView.as_view(),
+        name="developer-detail",
+    ),
+    path(
+        "developer-alias/<int:id>/",
+        views.DeveloperAliasRedirectView.as_view(),
+        name="developer-alias-redirect",
+    ),
+    path("lists/", views.ListListView.as_view(), name="list-list"),
+    path("posts/", views.PostListView.as_view(), name="post-list"),
+    path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
@@ -29,8 +53,8 @@ if settings.DEBUG:
         *urlpatterns,
     ]
 
-# All other urls should get directed to the SPA (must be last!)
-# SPAView serves index.html for all non-API routes, letting Vue Router handle routing
+# Catch-all 404 handler (must be last!)
+# Matches any URL that didn't match above routes
 urlpatterns += [
-    re_path(".*", views.SPAView.as_view()),
+    re_path(r".*", views.NotFoundView.as_view(), name="not-found"),
 ]

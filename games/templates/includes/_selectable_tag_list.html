@@ -1,0 +1,54 @@
+{# SelectableTagList component #}
+{# Props: filter_type (e.g., 'genres' or 'platforms') #}
+{# Uses Alpine.js for interactivity - accesses parent scope's filters #}
+{% load game_filters %}
+<div x-show="filters.{{ filter_type }} && filters.{{ filter_type }}.length > 0"
+     class="tags mt-3">
+    <template x-for="(item, index) in filters.{{ filter_type }}" :key="index">
+        <span class="tag is-primary">
+            <span x-text="('{{ filter_type }}' === 'genres' ? genres : platforms).find(x => x.id === item)?.name || item"></span>
+            <button @click="
+                    // Remove item from the filter array
+                    filters.{{ filter_type }} = filters.{{ filter_type }}.filter((x, i) => i !== index);
+                    // Trigger immediate URL update (bypass debounce)
+                    if (initialized) {
+                        // Clear any pending debounced update
+                        if (updateTimeout) {
+                            clearTimeout(updateTimeout);
+                        }
+                        // Build params immediately
+                        const params = new URLSearchParams();
+                        params.delete('page');
+                        if (filters.q) params.set('q', filters.q);
+                        if (filters.start) params.set('start', filters.start);
+                        if (filters.end) params.set('end', filters.end);
+                        if (filters.genres && filters.genres.length) {
+                            const genreIds = filters.genres.map(g => (typeof g === 'object' && g !== null && g.id !== undefined) ? g.id : g).filter(id => id !== null && id !== undefined);
+                            if (genreIds.length > 0) params.set('genres', genreIds.join(','));
+                        }
+                        if (filters.platforms && filters.platforms.length) {
+                            const platformIds = filters.platforms.map(p => (typeof p === 'object' && p !== null && p.id !== undefined) ? p.id : p).filter(id => id !== null && id !== undefined);
+                            if (platformIds.length > 0) params.set('platforms', platformIds.join(','));
+                        }
+                        if (filters.genre_option) params.set('genre_option', filters.genre_option);
+                        if (filters.rank_display) params.set('rank_display', filters.rank_display);
+
+                        const url = '{% url 'games-search' %}?' + params.toString();
+                        fetch(url, { headers: { 'HX-Request': 'true' } })
+                            .then(response => response.text())
+                            .then(html => {
+                                const contentEl = document.getElementById('content');
+                                if (contentEl) {
+                                    contentEl.innerHTML = html;
+                                    window.history.pushState({}, '', url);
+                                    if (typeof Alpine !== 'undefined') Alpine.initTree(contentEl);
+                                }
+                            });
+                    }
+                "
+                    title="Remove filter"
+                    class="delete is-small"></button>
+        </span>
+    </template>
+</div>
+

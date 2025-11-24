@@ -1,0 +1,96 @@
+{# HTMX partial response for ListListView - just the content div #}
+{% load game_filters %}
+
+<div id="content">
+    <h1 class="title is-size-4">Source Lists</h1>
+
+    <div class="field is-grouped is-grouped-multiline">
+        <div class="control">
+            <div class="select">
+                <select x-data="{ publisher: '{{ filters.publisher|default:'' }}' }"
+                        @change="
+                            const params = new URLSearchParams(window.location.search);
+                            params.delete('page');
+                            if (publisher) params.set('publisher', publisher);
+                            else params.delete('publisher');
+                            window.location.href = '{% url 'list-list' %}?' + params.toString();
+                        "
+                        x-model="publisher">
+                    <option value="">All publishers</option>
+                    {% for publisher in publishers %}
+                    <option value="{{ publisher.id }}" {% if filters.publisher == publisher.id|stringformat:"s" %}selected{% endif %}>
+                        {{ publisher.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="control">
+            <div class="select">
+                <select x-data="{ year: '{{ filters.year|default:'' }}' }"
+                        @change="
+                            const params = new URLSearchParams(window.location.search);
+                            params.delete('page');
+                            if (year) params.set('year', year);
+                            else params.delete('year');
+                            window.location.href = '{% url 'list-list' %}?' + params.toString();
+                        "
+                        x-model="year">
+                    <option value="">All years</option>
+                    {% for year_data in meta.lists.years %}
+                    <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>
+                        {{ year_data.year }} ({{ year_data.count }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="control">
+            <div class="select">
+                <select x-data="{ type: '{{ filters.type|default:'' }}' }"
+                        @change="
+                            const params = new URLSearchParams(window.location.search);
+                            params.delete('page');
+                            if (type) params.set('type', type);
+                            else params.delete('type');
+                            window.location.href = '{% url 'list-list' %}?' + params.toString();
+                        "
+                        x-model="type">
+                    <option value="">All list types</option>
+                    {% for type_code, type_label in list_types %}
+                    <option value="{{ type_code }}" {% if filters.type == type_code %}selected{% endif %}>
+                        {{ type_label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        {% if filters.publisher or filters.year or filters.type %}
+        <div class="control">
+            <a href="{% url 'list-list' %}" class="button">
+                <span class="icon">
+                    <span class="mdi mdi-close"></span>
+                </span>
+                <span>Clear filters</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if page_obj %}
+    <div class="pagination-wrapper">
+        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
+    </div>
+    {% endif %}
+
+    {% if lists %}
+        {% include 'includes/_list_results.html' with items=lists show_type=True show_rank=False %}
+    {% endif %}
+
+    {% if page_obj %}
+    <div class="pagination-wrapper">
+        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
+    </div>
+    {% endif %}
+</div>
+

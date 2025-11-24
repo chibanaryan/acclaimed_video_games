@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load game_filters %}
+
+{% block title %}Developers - Acclaimed Games{% endblock %}
+
+{% block content %}
+<h1 class="title is-spaced">Developers</h1>
+<h2 id="results-count" class="subtitle">
+    {% if page_obj %}
+    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}
+    {% else %}
+    Showing 0
+    {% endif %}
+</h2>
+
+<div class="field" x-data="{
+    updateUrl(event) {
+        const searchValue = event.target.value;
+        const url = new URL(window.location);
+        if (searchValue) {
+            url.searchParams.set('q', searchValue);
+        } else {
+            url.searchParams.delete('q');
+        }
+        url.searchParams.delete('page');
+        window.history.pushState({}, '', url);
+
+        // Update results count from pagination data
+        const paginationData = document.querySelector('#pagination-data');
+        if (paginationData) {
+            const startIndex = paginationData.dataset.startIndex;
+            const endIndex = paginationData.dataset.endIndex;
+            const totalCount = paginationData.dataset.totalCount;
+            const resultsCount = document.querySelector('#results-count');
+            if (resultsCount) {
+                const plural = totalCount == 1 ? '' : 's';
+                resultsCount.textContent = `Showing ${startIndex} to ${endIndex} of ${totalCount} result${plural}`;
+            }
+        }
+    }
+}">
+    <div class="control has-icons-left">
+        <input type="text"
+               class="input"
+               name="q"
+               id="developer-search"
+               placeholder="Search by name"
+               value="{{ request.GET.q|default:'' }}"
+               hx-get="{% url 'developers-list' %}"
+               hx-target="#results-container"
+               hx-trigger="input changed delay:150ms"
+               hx-swap="innerHTML"
+               x-on:htmx:after-request="updateUrl($event)"
+               autocomplete="off"
+               style="background-color: rgb(20, 22, 26); border-color: rgb(53, 58, 70); color: rgb(235, 236, 240);">
+        <span class="icon is-small is-left">
+            <i class="mdi mdi-magnify"></i>
+        </span>
+    </div>
+</div>
+
+<div id="results-container">
+    {% if page_obj %}
+    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+    {% endif %}
+
+    {% if developers %}
+    <table class="table is-fullwidth">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <td># Games</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alias in developers %}
+            <tr>
+                <td>
+                    {% if alias.developer.slug %}
+                        <a href="{% url 'developer-detail' slug=alias.developer.slug %}">
+                            {{ alias.name }} ({{ alias.developer.name }})
+                        </a>
+                    {% else %}
+                        <span>{{ alias.name }} ({{ alias.developer.name }})</span>
+                    {% endif %}
+                </td>
+                <td>{{ alias.games_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="notification">
+        <p>No developers found.</p>
+    </div>
+    {% endif %}
+
+    {% if page_obj %}
+    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+    {% endif %}
+</div>
+{% endblock %}
+

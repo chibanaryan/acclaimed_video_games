@@ -199,3 +199,114 @@ class SerializerBehaviorTests(TestCase):
         page = FlatPage.objects.create(url="/terms/", title="Terms", content="**Hi**")
         serializer = serializers.PageSerializer(page)
         self.assertIn("<strong>Hi</strong>", serializer.data["content"])
+
+
+class GameSearchAPIViewTests(TestCase):
+    """Test the GameSearchAPIView (navbar search endpoint)."""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Create test games
+        developer = models.Developer.objects.create(name="Test Dev", igdb_id=10)
+        alias = models.DeveloperAlias.objects.create(
+            developer=developer, name="Test Developer", igdb_id=11
+        )
+
+        self.game1 = models.Game.objects.create(
+            name="The Legend of Zelda",
+            rank=1,
+            year_of_release=1986,
+            slug="zelda",
+        )
+        self.game1.developers.add(alias)
+
+        self.game2 = models.Game.objects.create(
+            name="Zelda II: The Adventure of Link",
+            rank=50,
+            year_of_release=1987,
+            slug="zelda-2",
+        )
+        self.game2.developers.add(alias)
+
+        self.game3 = models.Game.objects.create(
+            name="Super Mario Bros",
+            rank=2,
+            year_of_release=1985,
+            slug="mario",
+        )
+
+    def test_search_with_valid_query(self):
+        """Test searching with a valid query returns results."""
+        response = self.client.get("/api/games/search/", {"q": "zelda"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("results", data)
+        self.assertIn("count", data)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(len(data["results"]), 2)
+
+    def test_search_returns_correct_fields(self):
+        """Test that search results contain expected fields."""
+        response = self.client.get("/api/games/search/", {"q": "zelda"})
+        data = response.json()
+        result = data["results"][0]
+        self.assertIn("id", result)
+        self.assertIn("name", result)
+        self.assertIn("slug", result)
+        self.assertIn("year_of_release", result)
+        self.assertIn("rank", result)
+        self.assertIn("thumbnail", result)
+
+    def test_search_with_short_query_returns_empty(self):
+        """Test that queries less than 2 characters return empty results."""
+        response = self.client.get("/api/games/search/", {"q": "z"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 0)
+        self.assertEqual(len(data["results"]), 0)
+
+    def test_search_without_query_returns_empty(self):
+        """Test that no query parameter returns empty results."""
+        response = self.client.get("/api/games/search/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 0)
+
+    def test_search_with_empty_query_returns_empty(self):
+        """Test that empty query returns empty results."""
+        response = self.client.get("/api/games/search/", {"q": ""})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 0)
+
+    def test_search_with_limit(self):
+        """Test that limit parameter works."""
+        response = self.client.get("/api/games/search/", {"q": "zelda", "limit": 1})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(len(data["results"]), 1)
+
+    def test_search_orders_by_rank(self):
+        """Test that search results are ordered by rank."""
+        response = self.client.get("/api/games/search/", {"q": "zelda"})
+        data = response.json()
+        # Game1 has rank=1, Game2 has rank=50
+        self.assertEqual(data["results"][0]["name"], "The Legend of Zelda")
+        self.assertEqual(data["results"][1]["name"], "Zelda II: The Adventure of Link")
+
+    def test_search_case_insensitive(self):
+        """Test that search is case insensitive."""
+        response = self.client.get("/api/games/search/", {"q": "ZELDA"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 2)
+
+    def test_search_partial_match(self):
+        """Test that search matches partial names."""
+        response = self.client.get("/api/games/search/", {"q": "mario"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["results"][0]["name"], "Super Mario Bros")

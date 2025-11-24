@@ -4,6 +4,9 @@
 
 - Fixed beta advanced search unwanted scrolling on filter updates (force reload when page loaded from browser back-forward cache to reinitialize Alpine.js properly)
 - Fixed beta mobile game list highlight (scroll to item and auto-dismiss after 2s now work correctly)
+- Fixed 404 page title/subtitle spacing overlap
+- Added Google Analytics HTMX tracking for comprehensive page view monitoring (tracks filter changes, pagination, search navigation)
+- Updated documentation to reflect completed Vue.js migration (removed all frontend/Vue references from CLAUDE.md and readme.md)
 
 ## 2025-11-23
 
