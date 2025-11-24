@@ -60,15 +60,25 @@
     {% if highlight %}
     <script>
         setTimeout(function() {
-            var element = document.getElementById('game-{{ highlight }}');
+            // Get both desktop and mobile elements
+            var desktopElement = document.getElementById('game-{{ highlight }}');
+            var mobileElement = document.getElementById('game-{{ highlight }}-mobile');
+
+            // Find which one is actually visible (offsetParent is null for hidden elements)
+            var element = null;
+            if (desktopElement && desktopElement.offsetParent !== null) {
+                element = desktopElement;
+            } else if (mobileElement && mobileElement.offsetParent !== null) {
+                element = mobileElement;
+            }
+
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
                 setTimeout(function() {
-                    element.classList.remove('highlight');
+                    // Remove highlight from both elements to be safe
+                    if (desktopElement) desktopElement.classList.remove('highlight');
+                    if (mobileElement) mobileElement.classList.remove('highlight');
                 }, 2000);
-                setTimeout(function() {
-                    element.classList.remove('highlight');
-                }, 3000);
             }
         }, 500);
     </script>

@@ -3,6 +3,7 @@
 ## 2025-11-24
 
 - Fixed beta advanced search unwanted scrolling on filter updates (force reload when page loaded from browser back-forward cache to reinitialize Alpine.js properly)
+- Fixed beta mobile game list highlight (scroll to item and auto-dismiss after 2s now work correctly)
 
 ## 2025-11-23
 
