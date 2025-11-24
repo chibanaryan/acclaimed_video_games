@@ -24,6 +24,19 @@
         }
         url.searchParams.delete('page');
         window.history.pushState({}, '', url);
+
+        // Update results count from pagination data
+        const paginationData = document.querySelector('#pagination-data');
+        if (paginationData) {
+            const startIndex = paginationData.dataset.startIndex;
+            const endIndex = paginationData.dataset.endIndex;
+            const totalCount = paginationData.dataset.totalCount;
+            const resultsCount = document.querySelector('#results-count');
+            if (resultsCount) {
+                const plural = totalCount == 1 ? '' : 's';
+                resultsCount.textContent = `Showing ${startIndex} to ${endIndex} of ${totalCount} result${plural}`;
+            }
+        }
     }
 }">
     <div class="control has-icons-left">
@@ -37,7 +50,6 @@
                hx-target="#results-container"
                hx-trigger="input changed delay:150ms"
                hx-swap="innerHTML"
-               hx-include="[name='q']"
                x-on:htmx:after-request="updateUrl($event)"
                autocomplete="off">
         <span class="icon is-small is-left">

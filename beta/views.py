@@ -298,7 +298,14 @@ class GameSearchView(ListView):
 
     def get_template_names(self):
         # Support HTMX partial responses
-        if self.request.headers.get("HX-Request"):
+        # Check both HX-Request header (for real HTMX) and
+        # X-Requested-With header (for fetch)
+        is_htmx = (
+            self.request.headers.get("HX-Request")
+            or self.request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or self.request.GET.get("partial") == "true"
+        )
+        if is_htmx:
             # Targeted update for just the results container
             if self.request.headers.get("HX-Target") == "game-results-container":
                 return ["games/includes/_game_search_results.html"]

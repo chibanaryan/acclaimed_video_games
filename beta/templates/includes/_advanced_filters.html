@@ -138,6 +138,7 @@
                 // Use fetch with HTMX headers to get partial response (full content to extract title)
                 fetch(url, {
                     headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
                         'HX-Request': 'true',
                         'HX-Target': 'content'
                     }
@@ -184,6 +185,7 @@
                 // Use fetch with HTMX headers to get partial response
                 fetch(url, {
                     headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
                         'HX-Request': 'true',
                         'HX-Target': 'content'
                     }
