@@ -8,11 +8,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Dict, List, Optional, Tuple
 
-from django.db import IntegrityError
-from django.utils.text import slugify
-
 from games.igdb import get_api
-from games.models import Developer, DeveloperAlias, Game, Genre
+from games.models import Game
 
 
 class IGDBImportService:
@@ -326,88 +323,17 @@ class IGDBImportService:
         try:
             games_data = self.api_client.get_games_info_by_ids(list(game_id_map.keys()))
 
-            # Apply data to each game
+            # Apply data to each game using Game.get_igdb_data()
             for igdb_id, game in game_id_map.items():
                 if igdb_id in games_data:
                     try:
-                        # Apply IGDB data to game (same logic as Game.get_igdb_data())
-                        data = games_data[igdb_id]
-                        game.slug = slugify(data.get("slug"))
-                        game.igdb_url = data.get("url")
-                        game.igdb_artwork_id = data.get("cover")
-                        game.description = "\n\n".join(
-                            [
-                                x
-                                for x in [data.get("storyline"), data.get("summary")]
-                                if x
-                            ]
+                        # Use Game.get_igdb_data() with pre-fetched data
+                        # This eliminates code duplication and ensures consistency
+                        game.get_igdb_data(
+                            data=games_data[igdb_id], api_client=self.api_client
                         )
 
-                        # Process developers
-                        developer_aliases = []
-                        for d in data.get("developers", []):
-                            # This developer is a parent
-                            if not d.get("parent"):
-                                developer, created = Developer.objects.update_or_create(
-                                    name=d["name"],
-                                    defaults={
-                                        "slug": d["slug"],
-                                        "igdb_id": d["id"],
-                                    },
-                                )
-                            # This developer has a parent
-                            else:
-                                parent_obj = d.get("parent")
-                                if parent_obj:
-                                    developer, created = (
-                                        Developer.objects.update_or_create(
-                                            name=parent_obj["name"],
-                                            defaults={
-                                                "slug": parent_obj["slug"],
-                                                "igdb_id": parent_obj["id"],
-                                            },
-                                        )
-                                    )
-                                    # Ensure parent has an alias too
-                                    try:
-                                        DeveloperAlias.objects.update_or_create(
-                                            developer=developer,
-                                            name=parent_obj["name"],
-                                            defaults={
-                                                "igdb_id": parent_obj["id"],
-                                            },
-                                        )
-                                    except IntegrityError:
-                                        pass
-
-                            try:
-                                developer_alias, created = (
-                                    DeveloperAlias.objects.update_or_create(
-                                        developer=developer,
-                                        name=d["name"],
-                                        defaults={
-                                            "igdb_id": d["id"],
-                                        },
-                                    )
-                                )
-                            except IntegrityError:
-                                developer_alias = DeveloperAlias.objects.get(
-                                    name=d["name"]
-                                )
-
-                            developer_aliases.append(developer_alias)
-
-                        game.developers.set(developer_aliases)
-
-                        # Process genres
-                        genres = []
-                        for genre_name in data.get("genres", []):
-                            genre, created = Genre.objects.get_or_create(
-                                name=genre_name
-                            )
-                            genres.append(genre)
-                        game.genres.set(genres)
-
+                        # Save the updated game
                         game.save(
                             update_fields=[
                                 "slug",

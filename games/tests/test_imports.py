@@ -663,14 +663,6 @@ class ImportDataTests(TestCase):
         self.assertTrue(result[0])
         self.assertEqual(models.Platform.objects.count(), 1)
 
-    def test_import_igdb_no_games(self):
-        """Test import_igdb with no games (line 66)."""
-        # No games in database
-        success, message = utils.import_igdb()
-
-        self.assertFalse(success)
-        self.assertIn("No games found", message)
-
     def test_import_batch_validation_error_return(self):
         """Test import_batch validation error return (line 355)."""
         # Try to import games without platforms
@@ -751,20 +743,6 @@ class ImportDataTests(TestCase):
         # Should have deleted data
         self.assertTrue(success)
         self.assertEqual(models.Platform.objects.count(), 0)
-
-    def test_import_data_with_igdb_flag(self):
-        """Test import_data with igdb flag."""
-        # Create a game
-        platform = models.Platform.objects.create(code="PC", name="PC")
-        game = models.Game.objects.create(rank=1, name="Test", year_of_release=2024)
-        game.platforms.add(platform)
-
-        data = {"igdb": True}
-        # This will fail without IGDB credentials, but tests the routing
-        success, message = utils.import_data(data)
-
-        # May succeed or fail depending on IGDB setup
-        self.assertIsInstance(success, bool)
 
 
 class ImportIGDBWithProgressTests(TestCase):

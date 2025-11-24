@@ -18,9 +18,6 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
     if data.get("delete"):
         return delete_existing_data()
 
-    if data.get("igdb"):
-        return import_igdb()
-
     # Check if this is a batch import (new form format)
     if any(
         [
@@ -61,32 +58,6 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
             return result
         except Exception as e:
             return (False, f"Could not process uploaded file: {e}")
-
-
-def import_igdb() -> Tuple[bool, str]:
-    """
-    Fetch IGDB data for all games in the database.
-    """
-    games = models.Game.objects.all()
-
-    # Check if games exist (handle both QuerySet and list from mocks)
-    has_games = games.exists() if hasattr(games, "exists") else bool(games)
-    if not has_games:
-        return (
-            False,
-            (
-                "No games found in the database. Import games first "
-                "before fetching IGDB data."
-            ),
-        )
-
-    count = 0
-    for game in games:
-        game.get_igdb_data()
-        game.save(update_fields=["slug", "igdb_url", "igdb_artwork_id", "description"])
-        count += 1
-
-    return (True, f"IGDB data fetched for {count} game{'s' if count != 1 else ''}")
 
 
 def import_igdb_with_progress():

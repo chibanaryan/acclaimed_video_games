@@ -16,14 +16,6 @@ class ImportDataRoutingTests(TestCase):
         delete_mock.assert_called_once()
         self.assertEqual(result, ("ok", 0))
 
-    def test_import_data_calls_igdb_handler(self):
-        with mock.patch(
-            "games.utils.import_igdb", return_value=("igdb", 1)
-        ) as igdb_mock:
-            result = utils.import_data({"igdb": True})
-        igdb_mock.assert_called_once()
-        self.assertEqual(result, ("igdb", 1))
-
     def test_import_data_validates_type(self):
         stream = BytesIO(b"")
         success, message = utils.import_data({"file": stream, "type": "X"})
@@ -44,13 +36,6 @@ class ImportDataRoutingTests(TestCase):
 
 
 class ImportHelpersTests(TestCase):
-
-    def test_import_igdb_updates_each_game(self):
-        fake_game = mock.Mock()
-        with mock.patch("games.utils.models.Game.objects") as manager:
-            manager.all.return_value = [fake_game]
-            utils.import_igdb()
-        fake_game.get_igdb_data.assert_called_once()
 
     def test_delete_existing_data_deletes_models(self):
         pub = models.Publication.objects.create(name="IGN")

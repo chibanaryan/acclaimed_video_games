@@ -13,6 +13,7 @@
   - Optimized navbar search API endpoint - removed unused prefetch and added .only() for 30% faster responses
   - Added database indexes on Genre.name and Post (active, date) for faster filtered queries
   - Optimized DeveloperDetailView prefetch strategy for more efficient game loading
+- Refactored IGDB importer to eliminate 170 lines of duplicated code - single source of truth for data processing
 - Fixed beta advanced search unwanted scrolling on filter updates (force reload when page loaded from browser back-forward cache to reinitialize Alpine.js properly)
 - Fixed beta mobile game list highlight (scroll to item and auto-dismiss after 2s now work correctly)
 - Fixed 404 page title/subtitle spacing overlap

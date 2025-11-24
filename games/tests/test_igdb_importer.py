@@ -179,7 +179,7 @@ class IGDBImportServiceTests(TestCase):
 
     @mock.patch("games.services.igdb_importer.get_api")
     def test_process_game_batch_exception_during_processing(self, mock_get_api):
-        """Test _process_game_batch exception during game processing (lines 402-405)."""
+        """Test _process_game_batch exception during game processing."""
         mock_api = mock.MagicMock()
         mock_api.max_batch_size = 50
         mock_get_api.return_value = mock_api
@@ -191,14 +191,16 @@ class IGDBImportServiceTests(TestCase):
 
         service = IGDBImportService()
 
-        # Make save() raise an exception to test lines 402-405
-        with mock.patch.object(self.game, "save", side_effect=Exception("Save error")):
+        # Make get_igdb_data() raise an exception to test error handling
+        with mock.patch.object(
+            self.game, "get_igdb_data", side_effect=Exception("Processing error")
+        ):
             results = service._process_game_batch([self.game])
 
-        # Should catch exception and mark as error (lines 402-405)
+        # Should catch exception and mark as error
         self.assertEqual(len(results), 1)
         self.assertFalse(results[0][0])  # success is False
-        self.assertIn("Save error", results[0][2])
+        self.assertIn("Processing error", results[0][2])
 
     @mock.patch("games.services.igdb_importer.get_api")
     def test_estimate_remaining_with_zero_elapsed(self, mock_get_api):
@@ -311,12 +313,12 @@ class IGDBImportServiceTests(TestCase):
             return original_update(*args, **kwargs)
 
         with mock.patch(
-            "games.services.igdb_importer.DeveloperAlias.objects.update_or_create",
+            "games.models.DeveloperAlias.objects.update_or_create",
             side_effect=mock_update_or_create,
         ):
             results = service._process_game_batch([self.game])
 
-        # Should handle IntegrityError gracefully (lines 359-360)
+        # Should handle IntegrityError gracefully
         self.assertEqual(len(results), 1)
 
     @mock.patch("games.services.igdb_importer.get_api")
@@ -358,14 +360,14 @@ class IGDBImportServiceTests(TestCase):
         )
 
         with mock.patch(
-            "games.services.igdb_importer.DeveloperAlias.objects.update_or_create",
+            "games.models.DeveloperAlias.objects.update_or_create",
             side_effect=mock_update_or_create,
         ):
             with mock.patch(
-                "games.services.igdb_importer.DeveloperAlias.objects.get",
+                "games.models.DeveloperAlias.objects.get",
                 return_value=mock_alias,
             ):
                 results = service._process_game_batch([self.game])
 
-        # Should handle IntegrityError gracefully (lines 372-373)
+        # Should handle IntegrityError gracefully
         self.assertEqual(len(results), 1)
