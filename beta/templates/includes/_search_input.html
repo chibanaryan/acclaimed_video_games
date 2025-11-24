@@ -9,6 +9,7 @@
                 <span class="mdi mdi-magnify"></span>
             </span>
             <input class="input custom-input"
+                   style="background-color: rgb(20, 22, 26); border-color: rgb(53, 58, 70); color: rgb(235, 236, 240);"
                    {% if id %}id="{{ id }}"{% endif %}
                    {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}
                    x-model="filters.q"

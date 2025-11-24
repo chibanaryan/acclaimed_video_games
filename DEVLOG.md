@@ -2,6 +2,7 @@
 
 ## 2025-11-23
 
+- Fixed beta games search page filter persistence and scroll position restoration on back button navigation
 - Fixed beta games page pagination layout shift (consistent spacing classes between initial and HTMX loads)
 - Fixed beta developer detail page game count to update dynamically when toggling alias checkboxes
 - Converted beta Source Lists filters to HTMX (no more full page reload on filter changes)
