@@ -185,8 +185,7 @@ class GameListView(ListView):
 
     def get_template_names(self):
         # Support HTMX partial responses - return just the content block if HTMX request
-        # Check META for HTMX header (HTTP_HX_REQUEST in META)
-        if self.request.META.get("HTTP_HX_REQUEST") == "true":
+        if self.request.headers.get("HX-Request"):
             return ["games/includes/_game_list_content.html"]
         return super().get_template_names()
 
@@ -299,9 +298,9 @@ class GameSearchView(ListView):
 
     def get_template_names(self):
         # Support HTMX partial responses
-        if self.request.META.get("HTTP_HX_REQUEST") == "true":
+        if self.request.headers.get("HX-Request"):
             # Targeted update for just the results container
-            if self.request.META.get("HTTP_HX_TARGET") == "game-results-container":
+            if self.request.headers.get("HX-Target") == "game-results-container":
                 return ["games/includes/_game_search_results.html"]
             # Full content partial for pagination and initial loads
             return ["games/includes/_game_search_content.html"]
@@ -470,7 +469,7 @@ class DeveloperListView(ListView):
 
     def get_template_names(self):
         # Support HTMX partial responses - return just the content block if HTMX request
-        if self.request.META.get("HTTP_HX_REQUEST") == "true":
+        if self.request.headers.get("HX-Request"):
             return ["developers/includes/_developer_list_content.html"]
         return super().get_template_names()
 

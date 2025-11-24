@@ -2,6 +2,8 @@
 
 ## 2025-11-23
 
+- Converted beta Source Lists filters to HTMX (no more full page reload on filter changes)
+- Standardized HTMX detection across all beta views (using request.headers.get instead of META)
 - Fixed beta search bars to update URL params while typing without losing focus (developers page and advanced search)
 - Fixed beta mobile layout for Advanced Search button to wrap to right side instead of getting smushed
 - Fixed beta smooth scroll to top on all pagination and filter changes (added global HTMX event listener for HTMX 1.9 compatibility)

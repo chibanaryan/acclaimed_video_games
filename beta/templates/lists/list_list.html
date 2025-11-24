@@ -4,21 +4,43 @@
 {% block title %}Source Lists - Acclaimed Games{% endblock %}
 
 {% block content %}
-<div id="content">
+<div id="content" x-data="{
+    updateUrl(event) {
+        // Get all current filter values from the form
+        const publisher = document.querySelector('[name=publisher]').value;
+        const year = document.querySelector('[name=year]').value;
+        const type = document.querySelector('[name=type]').value;
+
+        const url = new URL(window.location);
+
+        // Update URL parameters based on filter values
+        if (publisher) url.searchParams.set('publisher', publisher);
+        else url.searchParams.delete('publisher');
+
+        if (year) url.searchParams.set('year', year);
+        else url.searchParams.delete('year');
+
+        if (type) url.searchParams.set('type', type);
+        else url.searchParams.delete('type');
+
+        // Reset to page 1 on filter change
+        url.searchParams.delete('page');
+
+        window.history.pushState({}, '', url);
+    }
+}">
     <h1 class="title is-size-4">Source Lists</h1>
 
     <div class="field is-grouped is-grouped-multiline">
         <div class="control">
             <div class="select">
-                <select x-data="{ publisher: '{{ filters.publisher|default:'' }}' }"
-                        @change="
-                            const params = new URLSearchParams(window.location.search);
-                            params.delete('page');
-                            if (publisher) params.set('publisher', publisher);
-                            else params.delete('publisher');
-                            window.location.href = '{% url 'beta:list-list' %}?' + params.toString();
-                        "
-                        x-model="publisher">
+                <select name="publisher"
+                        hx-get="{% url 'beta:list-list' %}"
+                        hx-target="#content"
+                        hx-trigger="change"
+                        hx-swap="innerHTML"
+                        hx-include="[name='publisher'], [name='year'], [name='type']"
+                        x-on:htmx:after-request="updateUrl($event)">
                     <option value="">All publishers</option>
                     {% for publisher in publishers %}
                     <option value="{{ publisher.id }}" {% if filters.publisher == publisher.id|stringformat:"s" %}selected{% endif %}>
@@ -30,15 +52,13 @@
         </div>
         <div class="control">
             <div class="select">
-                <select x-data="{ year: '{{ filters.year|default:'' }}' }"
-                        @change="
-                            const params = new URLSearchParams(window.location.search);
-                            params.delete('page');
-                            if (year) params.set('year', year);
-                            else params.delete('year');
-                            window.location.href = '{% url 'beta:list-list' %}?' + params.toString();
-                        "
-                        x-model="year">
+                <select name="year"
+                        hx-get="{% url 'beta:list-list' %}"
+                        hx-target="#content"
+                        hx-trigger="change"
+                        hx-swap="innerHTML"
+                        hx-include="[name='publisher'], [name='year'], [name='type']"
+                        x-on:htmx:after-request="updateUrl($event)">
                     <option value="">All years</option>
                     {% for year_data in meta.lists.years %}
                     <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>
@@ -50,15 +70,13 @@
         </div>
         <div class="control">
             <div class="select">
-                <select x-data="{ type: '{{ filters.type|default:'' }}' }"
-                        @change="
-                            const params = new URLSearchParams(window.location.search);
-                            params.delete('page');
-                            if (type) params.set('type', type);
-                            else params.delete('type');
-                            window.location.href = '{% url 'beta:list-list' %}?' + params.toString();
-                        "
-                        x-model="type">
+                <select name="type"
+                        hx-get="{% url 'beta:list-list' %}"
+                        hx-target="#content"
+                        hx-trigger="change"
+                        hx-swap="innerHTML"
+                        hx-include="[name='publisher'], [name='year'], [name='type']"
+                        x-on:htmx:after-request="updateUrl($event)">
                     <option value="">All list types</option>
                     {% for type_code, type_label in list_types %}
                     <option value="{{ type_code }}" {% if filters.type == type_code %}selected{% endif %}>
