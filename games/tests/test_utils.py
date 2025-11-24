@@ -136,3 +136,74 @@ class FilterTests(TestCase):
         filtered_qs = filter.filter_queryset(qs, " 2020 ")
         self.assertEqual(filtered_qs.count(), 1)
         self.assertEqual(filtered_qs.first(), game)
+
+
+class SendContactEmailTests(TestCase):
+    """Test send_contact_email utility function."""
+
+    def test_send_contact_email_success(self):
+        """Test sending email successfully."""
+        from django.core import mail
+
+        result = utils.send_contact_email(
+            name="Test User",
+            email="test@example.com",
+            category="general",
+            message="This is a test message.",
+        )
+
+        # In DEBUG mode, email goes to console backend, so this will succeed
+        self.assertTrue(result)
+
+        # Check that one email was sent
+        self.assertEqual(len(mail.outbox), 1)
+
+        # Check email details
+        email = mail.outbox[0]
+        self.assertIn("General", email.subject)
+        self.assertIn("Test User", email.subject)
+        self.assertIn("Test User", email.body)
+        self.assertIn("test@example.com", email.body)
+        self.assertIn("This is a test message.", email.body)
+
+    def test_send_contact_email_all_categories(self):
+        """Test sending email with all category types."""
+        from django.core import mail
+
+        categories = {
+            "feature": "Feature Request",
+            "bug": "Bug Report",
+            "data": "Data Issue",
+            "general": "General",
+            "partnership": "Partnership/Business",
+            "press": "Press Inquiry",
+        }
+
+        for category, label in categories.items():
+            mail.outbox.clear()  # Clear previous emails
+
+            result = utils.send_contact_email(
+                name="Test User",
+                email="test@example.com",
+                category=category,
+                message="Test message.",
+            )
+
+            self.assertTrue(result)
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertIn(label, mail.outbox[0].subject)
+
+    def test_send_contact_email_exception_handling(self):
+        """Test email sending with exception."""
+        with mock.patch(
+            "django.core.mail.send_mail", side_effect=Exception("SMTP error")
+        ):
+            result = utils.send_contact_email(
+                name="Test User",
+                email="test@example.com",
+                category="general",
+                message="Test message.",
+            )
+
+            # Should return False on exception
+            self.assertFalse(result)

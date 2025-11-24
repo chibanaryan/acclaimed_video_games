@@ -7,12 +7,72 @@
 {% block extra_head %}
 {# Prefetch home page hero image #}
 <link rel="prefetch" href="{% static 'games/avg_logo.png' %}" as="image">
+<style>
+/* Contact Modal Dark Theme Styling */
+#contactModal .modal-card-head,
+#contactModal .modal-card-body,
+#contactModal .modal-card-foot {
+    background-color: #14161A;
+    color: #ABB1BF;
+}
+
+#contactModal .modal-card-head {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+#contactModal .modal-card-foot {
+    border-top: 1px solid #4a4a4a;
+}
+
+#contactModal .label {
+    color: #ABB1BF;
+}
+
+#contactModal .input,
+#contactModal .textarea,
+#contactModal .select select {
+    background-color: #1e2127;
+    border-color: #4a4a4a;
+    color: #ABB1BF;
+}
+
+#contactModal .input:focus,
+#contactModal .textarea:focus,
+#contactModal .select select:focus {
+    border-color: #00d1b2;
+}
+
+#contactModal .input::placeholder,
+#contactModal .textarea::placeholder {
+    color: #7a7a7a;
+}
+
+/* Reduce spacing between form fields */
+#contactModal .field {
+    margin-bottom: 1rem;
+}
+
+#contactModal .field:last-of-type {
+    margin-bottom: 0;
+}
+
+/* Make hero logo and thumbnails responsive while preserving aspect ratio for CLS */
+.column > img[width][height] {
+    max-width: 100%;
+    height: auto;
+}
+
+.top-ten .game img[width][height] {
+    max-width: 90px;
+    height: auto;
+}
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="columns">
     <div class="column">
-        <img src="{% static 'games/avg_logo.png' %}" alt="Acclaimed Games">
+        <img src="{% static 'games/avg_logo.png' %}" alt="Acclaimed Games" width="1092" height="737">
         <div class="is-size-4 snippet-text">
             The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
         </div>
@@ -22,7 +82,7 @@
             <div class="game">
                 <a href="{% url 'game-detail' slug=game.slug %}">
                     <span class="rank">{{ game.rank }}</span>
-                    <img src="{{ game.thumbnail }}" alt="{{ game.name }}">
+                    <img src="{{ game.thumbnail }}" alt="{{ game.name }}" width="90" height="120">
                 </a>
             </div>
             {% endfor %}
@@ -39,6 +99,14 @@
         {% endif %}
     </div>
     <div class="column">
+        {# Contact Us Button - Full Width Bar #}
+        <button class="button is-link is-fullwidth mb-5" style="height: 3rem;" onclick="openContactModal()">
+            <span class="icon">
+                <span class="mdi mdi-email"></span>
+            </span>
+            <span>Contact Us</span>
+        </button>
+
         <h3 class="title is-size-4">Latest News</h3>
         {% for post in posts %}
             {% include 'posts/includes/_post_item.html' with post=post %}
@@ -53,5 +121,111 @@
         </div>
     </div>
 </div>
+
+{# Contact Form Modal #}
+<div id="contactModal" class="modal {% if form.errors %}is-active{% endif %}">
+    <div class="modal-background" onclick="closeContactModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Get In Touch</p>
+            <button class="delete" aria-label="close" onclick="closeContactModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <p class="mb-4">
+                Have a question, suggestion, or found an issue? We'd love to hear from you!
+                Fill out the form below and we'll get back to you as soon as possible.
+            </p>
+            <form method="post" action="{% url 'home' %}" id="contactForm">
+                {% csrf_token %}
+
+                {# Display non-field errors #}
+                {% if form.non_field_errors %}
+                <div class="notification is-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                {# Name field #}
+                <div class="field">
+                    <label class="label" for="{{ form.name.id_for_label }}">Name</label>
+                    <div class="control">
+                        {{ form.name }}
+                    </div>
+                    {% if form.name.errors %}
+                    <p class="help is-danger">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                {# Email field #}
+                <div class="field">
+                    <label class="label" for="{{ form.email.id_for_label }}">Email</label>
+                    <div class="control">
+                        {{ form.email }}
+                    </div>
+                    {% if form.email.errors %}
+                    <p class="help is-danger">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                {# Category field #}
+                <div class="field">
+                    <label class="label" for="{{ form.category.id_for_label }}">Category</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            {{ form.category }}
+                        </div>
+                    </div>
+                    {% if form.category.errors %}
+                    <p class="help is-danger">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                {# Message field #}
+                <div class="field">
+                    <label class="label" for="{{ form.message.id_for_label }}">Message</label>
+                    <div class="control">
+                        {{ form.message }}
+                    </div>
+                    {% if form.message.errors %}
+                    <p class="help is-danger">{{ form.message.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                {# Honeypot field (hidden) #}
+                {{ form.website }}
+            </form>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="submit" form="contactForm" class="button is-link">
+                <span class="icon">
+                    <span class="mdi mdi-send"></span>
+                </span>
+                <span>Send Message</span>
+            </button>
+            <button class="button" onclick="closeContactModal()">Cancel</button>
+        </footer>
+    </div>
+</div>
+
+<script>
+// Contact Modal Controls
+function openContactModal() {
+    document.getElementById('contactModal').classList.add('is-active');
+    document.documentElement.classList.add('is-clipped');
+}
+
+function closeContactModal() {
+    document.getElementById('contactModal').classList.remove('is-active');
+    document.documentElement.classList.remove('is-clipped');
+}
+
+// Auto-open modal if there are form errors
+{% if form.errors %}
+document.addEventListener('DOMContentLoaded', function() {
+    openContactModal();
+});
+{% endif %}
+</script>
+
 {% endblock %}
 

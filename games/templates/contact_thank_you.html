@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Thank You - Acclaimed Games{% endblock %}
+
+{% block content %}
+<div class="columns is-centered mt-6">
+    <div class="column is-half">
+        <div class="box has-text-centered" style="padding: 3rem;">
+            <div class="mb-4">
+                <span class="icon is-large has-text-success">
+                    <span class="mdi mdi-check-circle mdi-48px"></span>
+                </span>
+            </div>
+            <h1 class="title is-3 mb-4">Thank You!</h1>
+            <p class="mb-5" style="font-size: 1.125rem;">
+                We've received your message and will get back to you as soon as possible.
+            </p>
+            <p class="mb-5">
+                Your feedback helps us improve Acclaimed Video Games for everyone.
+                We appreciate you taking the time to reach out!
+            </p>
+            <a href="{% url 'home' %}" class="button is-link is-medium">
+                <span class="icon">
+                    <span class="mdi mdi-home"></span>
+                </span>
+                <span>Return to Home</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,9 +1,9 @@
-"""Tests for ImportForm validation."""
+"""Tests for ImportForm and ContactForm validation."""
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from games.forms import ImportForm
+from games.forms import ImportForm, ContactForm
 
 
 class ImportFormTests(TestCase):
@@ -261,3 +261,156 @@ class ImportFormTests(TestCase):
 
         with self.assertRaises(Exception):
             form.clean_memberships_file()
+
+
+class ContactFormTests(TestCase):
+    """Test ContactForm validation methods."""
+
+    def test_valid_form(self):
+        """Test form with all valid data."""
+        form = ContactForm(
+            data={
+                "name": "John Doe",
+                "email": "john@example.com",
+                "category": "general",
+                "message": "This is a test message.",
+                "website": "",  # Honeypot should be empty
+            }
+        )
+        self.assertTrue(form.is_valid())
+
+    def test_missing_name(self):
+        """Test form with missing name."""
+        form = ContactForm(
+            data={
+                "email": "john@example.com",
+                "category": "general",
+                "message": "This is a test message.",
+                "website": "",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("name", form.errors)
+
+    def test_missing_email(self):
+        """Test form with missing email (email is optional)."""
+        form = ContactForm(
+            data={
+                "name": "John Doe",
+                "category": "general",
+                "message": "This is a test message.",
+                "website": "",
+            }
+        )
+        # Email is optional, so form should be valid
+        self.assertTrue(form.is_valid())
+
+    def test_invalid_email(self):
+        """Test form with invalid email format."""
+        form = ContactForm(
+            data={
+                "name": "John Doe",
+                "email": "not-an-email",
+                "category": "general",
+                "message": "This is a test message.",
+                "website": "",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+
+    def test_missing_category(self):
+        """Test form with missing category."""
+        form = ContactForm(
+            data={
+                "name": "John Doe",
+                "email": "john@example.com",
+                "message": "This is a test message.",
+                "website": "",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("category", form.errors)
+
+    def test_invalid_category(self):
+        """Test form with invalid category choice."""
+        form = ContactForm(
+            data={
+                "name": "John Doe",
+                "email": "john@example.com",
+                "category": "invalid",
+                "message": "This is a test message.",
+                "website": "",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("category", form.errors)
+
+    def test_missing_message(self):
+        """Test form with missing message."""
+        form = ContactForm(
+            data={
+                "name": "John Doe",
+                "email": "john@example.com",
+                "category": "general",
+                "website": "",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("message", form.errors)
+
+    def test_honeypot_filled_spam(self):
+        """Test form with honeypot field filled (spam detection)."""
+        form = ContactForm(
+            data={
+                "name": "John Doe",
+                "email": "john@example.com",
+                "category": "general",
+                "message": "This is a test message.",
+                "website": "http://spam.com",  # Honeypot filled - spam!
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("website", form.errors)
+
+    def test_all_categories(self):
+        """Test form with all valid category choices."""
+        categories = ["feature", "bug", "data", "general", "partnership", "press"]
+        for category in categories:
+            form = ContactForm(
+                data={
+                    "name": "John Doe",
+                    "email": "john@example.com",
+                    "category": category,
+                    "message": "This is a test message.",
+                    "website": "",
+                }
+            )
+            self.assertTrue(form.is_valid(), f"Category '{category}' should be valid")
+
+    def test_long_name(self):
+        """Test form with name exceeding max length."""
+        form = ContactForm(
+            data={
+                "name": "A" * 101,  # Max length is 100
+                "email": "john@example.com",
+                "category": "general",
+                "message": "This is a test message.",
+                "website": "",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("name", form.errors)
+
+    def test_empty_string_honeypot(self):
+        """Test that empty string honeypot is valid."""
+        form = ContactForm(
+            data={
+                "name": "John Doe",
+                "email": "john@example.com",
+                "category": "general",
+                "message": "This is a test message.",
+                "website": "",  # Empty string is valid
+            }
+        )
+        self.assertTrue(form.is_valid())

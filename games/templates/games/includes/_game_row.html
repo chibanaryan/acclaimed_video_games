@@ -19,7 +19,7 @@
             {% endif %}
             <div class="column is-narrow">
                 <a href="{% url 'game-detail' slug=game.slug %}">
-                    <img src="{{ game.thumbnail }}" alt="{{ game.name }}">
+                    <img src="{{ game.thumbnail }}" alt="{{ game.name }}" width="90" height="128">
                 </a>
             </div>
         </div>
@@ -64,7 +64,7 @@
     <div class="columns is-mobile">
         <div class="column is-narrow">
             <a href="{% url 'game-detail' slug=game.slug %}">
-                <img src="{{ game.thumbnail }}" alt="{{ game.name }}">
+                <img src="{{ game.thumbnail }}" alt="{{ game.name }}" width="90" height="128">
             </a>
         </div>
         <div class="column">

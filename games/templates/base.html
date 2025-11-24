@@ -29,9 +29,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
     
     {# Handjet Font (for rank numbers) - MUST INCLUDE #}
+    {# font-display=swap prevents CLS by showing fallback font immediately #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=swap" rel="stylesheet">
 
     {# Prefetch critical images that appear on every page #}
     <link rel="prefetch" href="{% static 'games/avg_logo_small.png' %}" as="image">
@@ -107,6 +108,14 @@
         /* Navbar height set to 56px */
         .navbar {
             min-height: 56px !important;
+        }
+
+        /* Make navbar logo responsive while preserving aspect ratio for CLS prevention */
+        .navbar-brand .navbar-item img {
+            width: auto !important;
+            height: 40px !important;
+            max-height: 40px;
+            object-fit: contain;
         }
         
         @media screen and (min-width: 1024px) {
@@ -424,6 +433,13 @@
             max-width: inherit;
         }
 
+        /* Ensure game thumbnails maintain aspect ratio and prevent CLS */
+        .game-row img {
+            height: auto;
+            max-width: 100%;
+            aspect-ratio: 90 / 128;
+        }
+
         /* Column spacing for game list layout */
         .game-row .column {
             padding: 0.75rem;
@@ -444,8 +460,12 @@
             font-family: Handjet, sans-serif;
             font-weight: 800;
             text-shadow: -3px 3px 0px #5d5b5b;
+            /* Fixed dimensions to prevent CLS when font loads */
+            width: 122px;
             min-width: 122px;
+            height: 72px;
             font-size: 60px;
+            line-height: 1.2;
         }
 
         .game-row.mobile .rank {
@@ -456,6 +476,10 @@
             font-size: 25px;
             margin-right: 5px;
             vertical-align: middle;
+            /* Reserve space to prevent CLS when font loads */
+            display: inline-block;
+            min-width: 35px;
+            line-height: 1.2;
         }
 
         .game-row.highlight {

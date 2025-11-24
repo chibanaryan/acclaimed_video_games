@@ -26,6 +26,11 @@ urlpatterns = [
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
     # Main site routes (Django + HTMX + Alpine.js)
     path("", views.HomePageView.as_view(), name="home"),
+    path(
+        "contact/thank-you/",
+        views.ContactThankYouView.as_view(),
+        name="contact_thank_you",
+    ),
     path("games/", views.GameListView.as_view(), name="games-list"),
     path("games/search/", views.GameSearchView.as_view(), name="games-search"),
     path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),

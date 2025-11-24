@@ -11,7 +11,7 @@
             {% include 'games/includes/_game_properties.html' with game=game %}
         </div>
         <div class="column">
-            <img src="{{ game.image }}" alt="{{ game.name }}">
+            <img src="{{ game.image }}" alt="{{ game.name }}" width="264" height="374">
         </div>
     </div>
     {% for group_label, group_items in grouped_lists %}

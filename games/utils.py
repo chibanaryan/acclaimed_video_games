@@ -925,3 +925,77 @@ class Filter:
         qs = qs.filter(query)
 
         return qs
+
+
+def send_contact_email(name: str, email: str, category: str, message: str) -> bool:
+    """
+    Send a contact form email to the site administrators.
+
+    Args:
+        name: Name of the person sending the message
+        email: Email address of the sender
+        category: Category of the message (feature, bug, data, general, etc.)
+        message: The message content
+
+    Returns:
+        True if the email was sent successfully, False otherwise
+    """
+    from django.conf import settings
+    from django.core.mail import send_mail
+
+    category_labels = {
+        "feature": "Feature Request",
+        "bug": "Bug Report",
+        "data": "Data Issue",
+        "general": "General",
+        "partnership": "Partnership/Business",
+        "press": "Press Inquiry",
+    }
+
+    category_label = category_labels.get(category, category)
+    subject = f"[{category_label}] Contact Form Submission from {name}"
+
+    # Use category-based email alias for better filtering
+    # e.g., contact+feature@acclaimedvideogames.com
+    base_email = settings.CONTACT_EMAIL
+    if "@" in base_email:
+        local, domain = base_email.split("@", 1)
+        recipient_email = f"{local}+{category}@{domain}"
+    else:
+        recipient_email = base_email
+
+    site_url = (
+        settings.SITE_URL
+        if hasattr(settings, "SITE_URL")
+        else "acclaimedvideogames.com"
+    )
+
+    email_body = f"""
+New contact form submission:
+
+From: {name}
+Email: {email}
+Category: {category_label}
+
+Message:
+{message}
+
+---
+This message was sent via the contact form at {site_url}
+"""
+
+    try:
+        send_mail(
+            subject=subject,
+            message=email_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient_email],
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to send contact form email: {e}")
+        return False

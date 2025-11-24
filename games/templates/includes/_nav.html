@@ -2,7 +2,7 @@
 <nav class="navbar" role="navigation" aria-label="main navigation" x-data="{ expanded: false, mobileSearchActive: false }">
     <div class="navbar-brand">
         <a href="{% url 'home' %}" class="navbar-item has-text-weight-bold pl-0" x-show="!mobileSearchActive">
-            <img src="{% static 'games/avg_logo_small.png' %}" alt="Acclaimed Games">
+            <img src="{% static 'games/avg_logo_small.png' %}" alt="Acclaimed Games" width="401" height="263">
         </a>
         {# Mobile search button - appears between logo and Top 1000 on mobile #}
         <div class="navbar-item is-hidden-tablet mobile-search"
@@ -93,7 +93,7 @@
                             <div class="media">
                                 <div class="media-left">
                                     <figure class="image is-32x32">
-                                        <img :src="result.thumbnail" :alt="result.name">
+                                        <img :src="result.thumbnail" :alt="result.name" width="32" height="32">
                                     </figure>
                                 </div>
                                 <div class="media-content">
@@ -187,7 +187,7 @@
                                 <div class="media">
                                     <div class="media-left">
                                         <figure class="image is-32x32">
-                                            <img :src="result.thumbnail" :alt="result.name">
+                                            <img :src="result.thumbnail" :alt="result.name" width="32" height="32">
                                         </figure>
                                     </div>
                                     <div class="media-content">
@@ -219,7 +219,7 @@
             <a href="{% url 'page-detail' slug='donate' %}" class="navbar-item nav-link">Donate</a>
             <a href="{% url 'page-detail' slug='palestine' %}" class="navbar-item nav-link" title="Statement on Palestine">
                 <span class="icon">
-                    <img src="{% static 'games/palestine-flag-xs.png' %}" alt="Palestine" style="width: 24px; height: auto;">
+                    <img src="{% static 'games/palestine-flag-xs.png' %}" alt="Palestine" width="24" height="12">
                 </span>
             </a>
         </div>

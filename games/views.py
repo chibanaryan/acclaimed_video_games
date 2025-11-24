@@ -15,11 +15,15 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
 from games import models, utils
-from games.forms import ImportForm
+from games.forms import ImportForm, ContactForm
 
 
-class HomePageView(TemplateView):
+class HomePageView(FormView):
+    """Home page with top games, latest news, and contact form."""
+
     template_name = "home.html"
+    form_class = ContactForm
+    success_url = reverse_lazy("contact_thank_you")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -44,6 +48,34 @@ class HomePageView(TemplateView):
         context["last_update"] = metadata.last_full_update
 
         return context
+
+    def form_valid(self, form):
+        """Process valid contact form submission and send email."""
+        name = form.cleaned_data["name"]
+        email = form.cleaned_data["email"]
+        category = form.cleaned_data["category"]
+        message = form.cleaned_data["message"]
+
+        # Send the email
+        email_sent = utils.send_contact_email(name, email, category, message)
+
+        if not email_sent:
+            # If email fails, add an error message and re-render the form
+            form.add_error(
+                None,
+                "We're sorry, but there was an error sending your message. "
+                "Please try again later or email us directly at "
+                "contact@acclaimedvideogames.com",
+            )
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
+
+
+class ContactThankYouView(TemplateView):
+    """Display thank you page after successful contact form submission."""
+
+    template_name = "contact_thank_you.html"
 
 
 class GameListView(ListView):
