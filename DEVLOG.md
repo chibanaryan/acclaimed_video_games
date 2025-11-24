@@ -2,6 +2,7 @@
 
 ## 2025-11-23
 
+- Fixed beta advanced search navbar duplication bug (removed nested div wrapper in _game_search_content.html template)
 - Fixed beta games search page filter persistence and scroll position restoration on back button navigation
 - Fixed beta games page pagination layout shift (consistent spacing classes between initial and HTMX loads)
 - Fixed beta developer detail page game count to update dynamically when toggling alias checkboxes
