@@ -43,6 +43,7 @@ USE_TZ = False
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 ROOT_URLCONF = "acclaimedgames.urls"
 WSGI_APPLICATION = "acclaimedgames.wsgi.application"
+APPEND_SLASH = True  # Automatically redirect URLs without trailing slashes
 
 INSTALLED_APPS = [
     "django.contrib.admin",

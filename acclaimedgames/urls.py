@@ -2,11 +2,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import include, path, re_path
+from django.urls import include, path
 
 from games import views
 from games.api import views as api_views
 
+# Custom 404 handler
+handler404 = "games.views.custom_404_view"
 
 urlpatterns = [
     # API search endpoint for HTMX/Alpine.js (must be before REST API include)
@@ -47,14 +49,13 @@ urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:
     import debug_toolbar
+    from django.views.defaults import page_not_found
 
     urlpatterns = [
         path("__debug__/", include(debug_toolbar.urls)),
+        # Test route to preview custom 404 page
+        path(
+            "test-404/", lambda request: page_not_found(request, Exception("Test 404"))
+        ),
         *urlpatterns,
     ]
-
-# Catch-all 404 handler (must be last!)
-# Matches any URL that didn't match above routes
-urlpatterns += [
-    re_path(r".*", views.NotFoundView.as_view(), name="not-found"),
-]

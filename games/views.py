@@ -2,6 +2,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.db.models import Count, Min, Max, Prefetch
 from django.db.models.functions import Lower
 from django.forms import Form
@@ -154,13 +155,15 @@ class GameListView(ListView):
         ]
         decade_starts = sorted(list(set(int(x / 10) * 10 for x in all_years)))
 
-        # Calculate counts for each decade
+        # Calculate counts for each decade from year_count_map (no DB queries)
         decades_with_counts = []
         for decade_start in decade_starts:
             decade_end = decade_start + 9
-            count = models.Game.objects.filter(
-                year_of_release__gte=decade_start, year_of_release__lte=decade_end
-            ).count()
+            # Sum counts from year_count_map instead of querying database
+            count = sum(
+                year_count_map.get(year, 0)
+                for year in range(decade_start, decade_end + 1)
+            )
             decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
             decades_with_counts.append({"decade": decade_str, "count": count})
 
@@ -373,18 +376,27 @@ class GameSearchView(ListView):
         context = super().get_context_data(**kwargs)
         from datetime import datetime
 
-        # Get genres and platforms for AdvancedFilters
+        # Get genres and platforms for AdvancedFilters (cached for 24 hours)
         # Convert IDs to strings for proper Alpine.js binding
-        genres = [
-            {"id": str(g["id"]), "name": g["name"]}
-            for g in models.Genre.objects.all().order_by("name").values("id", "name")
-        ]
-        platforms = [
-            {"id": str(p["id"]), "name": p["name"], "code": p["code"]}
-            for p in models.Platform.objects.all()
-            .order_by("name")
-            .values("id", "name", "code")
-        ]
+        genres = cache.get("search_genres_list")
+        if genres is None:
+            genres = [
+                {"id": str(g["id"]), "name": g["name"]}
+                for g in models.Genre.objects.all()
+                .order_by("name")
+                .values("id", "name")
+            ]
+            cache.set("search_genres_list", genres, 60 * 60 * 24)  # 24 hours
+
+        platforms = cache.get("search_platforms_list")
+        if platforms is None:
+            platforms = [
+                {"id": str(p["id"]), "name": p["name"], "code": p["code"]}
+                for p in models.Platform.objects.all()
+                .order_by("name")
+                .values("id", "name", "code")
+            ]
+            cache.set("search_platforms_list", platforms, 60 * 60 * 24)  # 24 hours
 
         # Get min/max years
         year_stats = models.Game.objects.aggregate(
@@ -803,6 +815,13 @@ class NotFoundView(TemplateView):
         return response
 
 
+def custom_404_view(request, exception):
+    """
+    Function-based wrapper for NotFoundView (required for handler404).
+    """
+    return NotFoundView.as_view()(request, exception=exception)
+
+
 class ImportView(LoginRequiredMixin, FormView):
     """
     Handles batch importing of game data files with validation and transaction safety.
@@ -826,16 +845,19 @@ class ImportView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs) -> dict:
         """Add database object counts and persistent errors to context."""
+        from django.db.models import Q
+
         context = super().get_context_data(**kwargs)
 
-        # Get game counts
-        total_games = models.Game.objects.count()
-        games_with_igdb = models.Game.objects.exclude(
-            igdb_artwork_id__isnull=True
-        ).count()
-        games_without_igdb = models.Game.objects.filter(
-            igdb_artwork_id__isnull=True
-        ).count()
+        # Get all counts in a single aggregation query (optimized)
+        game_counts = models.Game.objects.aggregate(
+            total=Count("id"),
+            with_igdb=Count("id", filter=Q(igdb_artwork_id__isnull=False)),
+            without_igdb=Count("id", filter=Q(igdb_artwork_id__isnull=True)),
+        )
+        total_games = game_counts["total"]
+        games_with_igdb = game_counts["with_igdb"]
+        games_without_igdb = game_counts["without_igdb"]
 
         context["counts"] = {
             "platforms": models.Platform.objects.count(),

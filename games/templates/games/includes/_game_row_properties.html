@@ -12,36 +12,42 @@
 </div>
 {% endif %}
 
+{% with developers=game.developers.all %}
 <div class="py-0">
     <span class="has-text-weight-medium is-size-6">
-        Developer{{ game.developers.all|length|pluralize }}:
+        Developer{{ developers|length|pluralize }}:
     </span>
     <span class="is-size-6">
-        {% for developer in game.developers.all %}
+        {% for developer in developers %}
             {% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}" class="is-size-6">{{ developer.name }}</a>{% else %}<span class="is-size-6">{{ developer.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}
         {% endfor %}
     </span>
 </div>
+{% endwith %}
 
+{% with platforms=game.platforms.all %}
 <div class="py-0">
     <span class="has-text-weight-medium is-size-6">
-        Platform{{ game.platforms.all|length|pluralize }}:
+        Platform{{ platforms|length|pluralize }}:
     </span>
     <span class="is-size-6">
-        {% for platform in game.platforms.all %}
+        {% for platform in platforms %}
             <a href="{% url 'games-search' %}?platforms={{ platform.id }}">{{ platform.code }}</a>{% if not forloop.last %}, {% endif %}
         {% endfor %}
     </span>
 </div>
+{% endwith %}
 
+{% with genres=game.genres.all %}
 <div class="py-0">
     <span class="has-text-weight-medium is-size-6">
-        Genre{{ game.genres.all|length|pluralize }}:
+        Genre{{ genres|length|pluralize }}:
     </span>
     <span class="is-size-6">
-        {% for genre in game.genres.all %}
+        {% for genre in genres %}
             <a href="{% url 'games-search' %}?genres={{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}
         {% endfor %}
     </span>
 </div>
+{% endwith %}
 

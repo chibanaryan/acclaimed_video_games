@@ -46,21 +46,21 @@ Install Python packages (first time only)
 
 Create the sqlite database (first time only)
 
-    python manage.py migrate
+    python3 manage.py migrate
 
 Create a local user account (first time only)
 
-    python manage.py createsuperuser
+    python3 manage.py createsuperuser
 
 Run Django development server
 
-    python manage.py runserver
+    python3 manage.py runserver
 
 ## Deploy New Version of Website
 
 Collect static files:
 
-    python manage.py collectstatic --noinput
+    python3 manage.py collectstatic --noinput
 
 Commit your changes:
 
@@ -136,7 +136,7 @@ The import page at `/import/` provides a modern interface for managing game data
 **Fetch IGDB Data**
 - Click "🔄 Fetch IGDB Data" to pull cover art, descriptions, and genres from IGDB
 - Shows real-time progress with a visual progress bar
-- Can also be run from command line: `python manage.py get_igdb`
+- Can also be run from command line: `python3 manage.py get_igdb`
 
 ### Batch Import
 
@@ -158,4 +158,4 @@ The import page also displays database statistics showing counts for all data ty
 
 To run IGDB data fetch on production:
 
-    heroku run python manage.py get_igdb
+    heroku run python3 manage.py get_igdb

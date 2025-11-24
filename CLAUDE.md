@@ -37,37 +37,37 @@ source venv/Scripts/activate
 
 **Run development server:**
 ```bash
-python manage.py runserver
+python3 manage.py runserver
 ```
 
 **Database migrations:**
 ```bash
-python manage.py migrate
-python manage.py makemigrations
+python3 manage.py migrate
+python3 manage.py makemigrations
 ```
 
 **Create superuser:**
 ```bash
-python manage.py createsuperuser
+python3 manage.py createsuperuser
 ```
 
 **Import IGDB data:**
 ```bash
 # Default command uses maximum throughput (concurrency=8, tier-aware batching)
 # Free tier: batch=50, Pro tier: batch=500
-python manage.py get_igdb
+python3 manage.py get_igdb
 ```
 
 **Import IGDB data with custom settings:**
 ```bash
 # Conservative mode (slower but safer)
-python manage.py get_igdb --concurrency 4 --batch-games 20
+python3 manage.py get_igdb --concurrency 4 --batch-games 20
 
 # Sequential mode (disable optimizations)
-python manage.py get_igdb --concurrency 1 --batch-games 0
+python3 manage.py get_igdb --concurrency 1 --batch-games 0
 
 # Pro tier (requires subscription - 750x faster rate limit + 10x batch size)
-python manage.py get_igdb --pro
+python3 manage.py get_igdb --pro
 ```
 
 **Performance Metrics:**
@@ -77,12 +77,12 @@ python manage.py get_igdb --pro
 
 **Collect static files (before deployment):**
 ```bash
-python manage.py collectstatic
+python3 manage.py collectstatic
 ```
 
 **Run tests:**
 ```bash
-python manage.py test games.tests
+python3 manage.py test games.tests
 ```
 
 **Run tests with coverage:**
@@ -107,7 +107,7 @@ When making changes that need to be deployed to production, follow this complete
 #    Keep to 2-4 bullet points max per day
 
 # 1. Collect static files
-python manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
 
 # 2. Stage all changes
 git add -A
@@ -390,10 +390,10 @@ The `games/igdb.py` module handles IGDB API integration with multiple optimizati
 ### Usage
 
 - `Game.get_igdb_data()` - Fetches and saves IGDB data for a single game
-- `python manage.py get_igdb` - Batch import IGDB data for all games
-- `python manage.py get_igdb --concurrency 4` - Use concurrent processing
-- `python manage.py get_igdb --batch-games 20` - Use multi-query batching
-- `python manage.py get_igdb --pro` - Enable Pro tier (requires subscription)
+- `python3 manage.py get_igdb` - Batch import IGDB data for all games
+- `python3 manage.py get_igdb --concurrency 4` - Use concurrent processing
+- `python3 manage.py get_igdb --batch-games 20` - Use multi-query batching
+- `python3 manage.py get_igdb --pro` - Enable Pro tier (requires subscription)
 
 ### Command Options
 

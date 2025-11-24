@@ -68,7 +68,7 @@ class Developer(models.Model):
     A company or organization that produces video games
     """
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, db_index=True)
     slug = models.SlugField(max_length=100, null=True, blank=True, db_index=True)
     igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
 
@@ -122,7 +122,7 @@ class Game(models.Model):
     A video game
     """
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, db_index=True)
     name_normalized = models.CharField(
         max_length=100, null=True, blank=True, db_index=True
     )
