@@ -27,7 +27,7 @@
                        hx-target="#{% if target_id %}{{ target_id }}{% else %}content{% endif %}"
                        hx-push-url="true"
                        hx-swap="innerHTML"
-                       onclick="setTimeout(function() { document.getElementById('header').scrollIntoView({ behavior: 'smooth' }); }, 100); return false;">
+                       hx-on::after-swap="setTimeout(function() { const header = document.getElementById('header'); if (header) header.scrollIntoView({ behavior: 'smooth' }); }, 100);">
                         {{ page }}
                     </a>
                 {% endif %}

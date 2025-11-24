@@ -95,14 +95,14 @@
                 fetch(url, {
                     headers: {
                         'HX-Request': 'true',
-                        'HX-Target': 'game-results-container'
+                        'HX-Target': 'content'
                     }
                 })
                 .then(response => response.text())
                 .then(html => {
-                    const resultsEl = document.getElementById('game-results-container');
-                    if (resultsEl) {
-                        resultsEl.innerHTML = html;
+                    const contentEl = document.getElementById('content');
+                    if (contentEl) {
+                        contentEl.innerHTML = html;
                         // Do NOT update URL or re-initialize Alpine (preserves focus)
                     }
                 })
@@ -126,14 +126,14 @@
                 fetch(url, {
                     headers: {
                         'HX-Request': 'true',
-                        'HX-Target': 'game-results-container'
+                        'HX-Target': 'content'
                     }
                 })
                 .then(response => response.text())
                 .then(html => {
-                    const resultsEl = document.getElementById('game-results-container');
-                    if (resultsEl) {
-                        resultsEl.innerHTML = html;
+                    const contentEl = document.getElementById('content');
+                    if (contentEl) {
+                        contentEl.innerHTML = html;
                         // Update URL without reload
                         window.history.pushState({}, '', url);
                     }

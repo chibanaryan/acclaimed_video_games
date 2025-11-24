@@ -2,6 +2,7 @@
 
 ## 2025-11-23
 
+- Fixed beta advanced search results count and pagination with filters (HTMX target changed to update entire content div including title/buttons)
 - Fixed beta advanced search input focus loss and URL updates (split update logic: typing updates results only, Enter updates URL)
 - Fixed beta advanced search spacing to match original (pagination margins now 1.5rem bottom, 0.75rem between pagination and results)
 - Fixed beta navbar order to match original site (search before "Top 1000" on both mobile and desktop)
