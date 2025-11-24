@@ -132,46 +132,50 @@ class GameListView(ListView):
         # Add meta data for SimpleFilters component
         from datetime import datetime as dt
 
-        # Get meta data (same logic as MetaView)
-        data = {}
+        # Get meta data (cached for 1 hour to improve performance)
+        data = cache.get("game_list_meta")
+        if data is None:
+            data = {}
 
-        # Games meta
-        game_stats = models.Game.objects.aggregate(
-            min_year=Min("year_of_release"),
-            last_update=Max("modified"),
-        )
-        min_year = game_stats["min_year"] or 1970
-        max_year = dt.today().year
-        all_years = range(min_year, max_year + 1)
-        year_count_map = {
-            entry["year_of_release"]: entry["count"]
-            for entry in models.Game.objects.values("year_of_release")
-            .annotate(count=Count("id"))
-            .order_by("year_of_release")
-        }
-
-        all_years_with_counts = [
-            {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
-        ]
-        decade_starts = sorted(list(set(int(x / 10) * 10 for x in all_years)))
-
-        # Calculate counts for each decade from year_count_map (no DB queries)
-        decades_with_counts = []
-        for decade_start in decade_starts:
-            decade_end = decade_start + 9
-            # Sum counts from year_count_map instead of querying database
-            count = sum(
-                year_count_map.get(year, 0)
-                for year in range(decade_start, decade_end + 1)
+            # Games meta
+            game_stats = models.Game.objects.aggregate(
+                min_year=Min("year_of_release"),
+                last_update=Max("modified"),
             )
-            decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
-            decades_with_counts.append({"decade": decade_str, "count": count})
+            min_year = game_stats["min_year"] or 1970
+            max_year = dt.today().year
+            all_years = range(min_year, max_year + 1)
+            year_count_map = {
+                entry["year_of_release"]: entry["count"]
+                for entry in models.Game.objects.values("year_of_release")
+                .annotate(count=Count("id"))
+                .order_by("year_of_release")
+            }
 
-        data["games"] = {
-            "years": all_years_with_counts,
-            "decades": decades_with_counts,
-            "last_update": game_stats["last_update"],
-        }
+            all_years_with_counts = [
+                {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
+            ]
+            decade_starts = sorted(list(set(int(x / 10) * 10 for x in all_years)))
+
+            # Calculate counts for each decade from year_count_map (no DB queries)
+            decades_with_counts = []
+            for decade_start in decade_starts:
+                decade_end = decade_start + 9
+                # Sum counts from year_count_map instead of querying database
+                count = sum(
+                    year_count_map.get(year, 0)
+                    for year in range(decade_start, decade_end + 1)
+                )
+                decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
+                decades_with_counts.append({"decade": decade_str, "count": count})
+
+            data["games"] = {
+                "years": all_years_with_counts,
+                "decades": decades_with_counts,
+                "last_update": game_stats["last_update"],
+            }
+
+            cache.set("game_list_meta", data, 60 * 60)  # Cache for 1 hour
 
         context["meta"] = data
 
@@ -398,11 +402,14 @@ class GameSearchView(ListView):
             ]
             cache.set("search_platforms_list", platforms, 60 * 60 * 24)  # 24 hours
 
-        # Get min/max years
-        year_stats = models.Game.objects.aggregate(
-            min_year=Min("year_of_release"),
-            max_year=Max("year_of_release"),
-        )
+        # Get min/max years (cached for 24 hours)
+        year_stats = cache.get("game_year_stats")
+        if year_stats is None:
+            year_stats = models.Game.objects.aggregate(
+                min_year=Min("year_of_release"),
+                max_year=Max("year_of_release"),
+            )
+            cache.set("game_year_stats", year_stats, 60 * 60 * 24)  # 24 hours
         min_year = year_stats["min_year"] or 1970
         max_year = year_stats["max_year"] or datetime.today().year
 
@@ -511,14 +518,17 @@ class DeveloperDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        # Prefetch aliases and games
+        # Prefetch aliases and games with optimized queryset
+        games_queryset = models.Game.objects.prefetch_related(
+            "developers",
+            "developers__developer",
+            "platforms",
+            "genres",
+        ).order_by("year_of_release")
+
         return models.Developer.objects.prefetch_related(
             "aliases",
-            "aliases__games",
-            "aliases__games__developers",
-            "aliases__games__developers__developer",
-            "aliases__games__platforms",
-            "aliases__games__genres",
+            Prefetch("aliases__games", queryset=games_queryset),
         )
 
     def get_context_data(self, **kwargs):

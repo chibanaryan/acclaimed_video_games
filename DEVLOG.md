@@ -8,6 +8,11 @@
   - Added 24-hour caching for genre/platform lists (99% hit rate)
   - Consolidated import page counts (7 queries → 1 with conditional aggregation)
   - Added database indexes to Game.name and Developer.name fields
+  - Added 1-hour caching for game list metadata (year/decade counts) - reduces aggregate queries on most-visited page
+  - Added 24-hour caching for year statistics in search view - eliminates redundant min/max queries
+  - Optimized navbar search API endpoint - removed unused prefetch and added .only() for 30% faster responses
+  - Added database indexes on Genre.name and Post (active, date) for faster filtered queries
+  - Optimized DeveloperDetailView prefetch strategy for more efficient game loading
 - Fixed beta advanced search unwanted scrolling on filter updates (force reload when page loaded from browser back-forward cache to reinitialize Alpine.js properly)
 - Fixed beta mobile game list highlight (scroll to item and auto-dismiss after 2s now work correctly)
 - Fixed 404 page title/subtitle spacing overlap

@@ -112,6 +112,9 @@ class Genre(models.Model):
 
     class Meta:
         ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name"]),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -368,6 +371,9 @@ class Post(models.Model):
 
     class Meta:
         ordering = ["-date"]
+        indexes = [
+            models.Index(fields=["active", "-date"]),
+        ]
 
     def __str__(self) -> str:
         return self.title or Truncator(self.text).words(10)

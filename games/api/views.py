@@ -302,13 +302,10 @@ class GameSearchAPIView(APIView):
         if len(q) < 2:
             return JsonResponse({"results": [], "count": 0})
 
-        # Search games by name
+        # Search games by name (only fetch required fields for performance)
         games = (
             models.Game.objects.filter(name__icontains=q)
-            .prefetch_related(
-                "developers",
-                "developers__developer",
-            )
+            .only("id", "name", "slug", "year_of_release", "rank", "igdb_artwork_id")
             .order_by("rank")[:limit]
         )
 
