@@ -3,6 +3,7 @@ from functools import cached_property
 from typing import Any, Dict, Optional
 
 import markdown
+from django.contrib.auth import get_user_model
 from django.db import IntegrityError, models
 from django.utils.text import Truncator, slugify
 from unidecode import unidecode
@@ -432,6 +433,13 @@ class Post(models.Model):
     text = models.TextField()
     date = models.DateTimeField(auto_now_add=True, db_index=True)
     active = models.BooleanField(default=True, db_index=True)
+    author = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="posts",
+    )
 
     class Meta:
         ordering = ["-date"]

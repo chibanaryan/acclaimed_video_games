@@ -2,6 +2,7 @@
 
 ## 2025-11-25
 
+- Added optional author field to Posts (ForeignKey to User, displays as "Author · 2 hours ago")
 - Added contact form with Navi theme, Brevo SMTP email integration (console in dev, SMTP in prod)
 - Redesigned thank you page with Portal theme (animated envelope flying into glowing portal)
 - Backend refactoring: split utils.py (~1150 lines) into focused service modules (import_handler, ranking_service, query_filters, game_filter_service)
@@ -9,7 +10,6 @@
 - UI fixes: download CSV button shows text label, disabled browser autocomplete on search input
 - JavaScript refactoring: created utils.js with shared utilities, consolidated duplicate fetch functions (~430 lines removed)
 - CSS refactoring: extracted ~1000 lines from base.html to external stylesheets (main.css, import.css)
-- Implemented faceted filtering on Source Lists with dynamic counts and zero-count hiding
 
 ## 2025-11-24
 

@@ -466,6 +466,25 @@ class ModelHelpersTests(TestCase):
         self.assertIn("Hello", str(post))
         self.assertIn("<strong>Hello</strong>", post.text_rendered)
 
+    def test_post_with_author(self):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="testauthor", first_name="John", last_name="Doe"
+        )
+        post = models.Post.objects.create(
+            title="Authored Post", text="Content", active=True, author=user
+        )
+        self.assertEqual(post.author, user)
+        self.assertEqual(post.author.get_full_name(), "John Doe")
+
+    def test_post_without_author(self):
+        post = models.Post.objects.create(
+            title="No Author", text="Content", active=True
+        )
+        self.assertIsNone(post.author)
+
     def test_game_decade_property(self):
         # Test decade property with year_of_release
         game = models.Game.objects.create(

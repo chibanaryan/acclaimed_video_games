@@ -5,6 +5,6 @@
 <div class="is-clearfix my-5 box">
     <h4 class="title is-size-5">{{ post.title }}</h4>
     <div class="content">{{ post.text_rendered|safe }}</div>
-    <div class="has-text-grey-dark is-pulled-right">{{ post.date|from_now }}</div>
+    <div class="has-text-grey-dark is-pulled-right">{% if post.author %}{{ post.author.get_full_name|default:post.author.username }} · {% endif %}{{ post.date|from_now }}</div>
 </div>
 

@@ -87,7 +87,8 @@ class SnippetAdmin(admin.ModelAdmin):
 
 @admin.register(models.Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "date", "active"]
+    list_display = ["__str__", "author", "date", "active"]
+    list_filter = ["author", "active"]
 
 
 @admin.register(models.SiteMetadata)

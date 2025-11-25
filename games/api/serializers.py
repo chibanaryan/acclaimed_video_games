@@ -133,6 +133,7 @@ class PublicationSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
 
     text = serializers.CharField(source="text_rendered")
+    author = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Post
@@ -142,7 +143,13 @@ class PostSerializer(serializers.ModelSerializer):
             "text",
             "date",
             "active",
+            "author",
         ]
+
+    def get_author(self, obj):
+        if obj.author:
+            return obj.author.get_full_name() or obj.author.username
+        return None
 
 
 class PageSerializer(serializers.ModelSerializer):
