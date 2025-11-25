@@ -8,34 +8,8 @@
         <div class="navbar-item is-hidden-tablet mobile-search"
              :class="{ 'is-expanded': mobileSearchActive }"
              x-data="{
-                 showMenu: false,
-                 q: '',
-                 results: [],
-                 loading: false,
-                     loadResults: async function() {
-                         const trimmedQ = this.q.trim();
-                         if (trimmedQ.length < 2) {
-                             this.results = [];
-                             this.loading = false;
-                             return;
-                         }
-                         this.loading = true;
-                         this.results = [];
-                         try {
-                             const response = await fetch('{% url 'api-games-search' %}?q=' + encodeURIComponent(trimmedQ) + '&limit=5');
-                             if (!response.ok) {
-                                 throw new Error('API request failed');
-                             }
-                             const data = await response.json();
-                             this.results = data.results || [];
-                         } catch (e) {
-                             console.error('Search error:', e);
-                             this.results = [];
-                         } finally {
-                             this.loading = false;
-                         }
-                     },
-                 toggleInput: function() {
+                 ...createSearchData('{% url 'api-games-search' %}', 5),
+                 toggleInput() {
                      mobileSearchActive = !mobileSearchActive;
                      if (mobileSearchActive) {
                          setTimeout(() => {
@@ -45,7 +19,7 @@
                      }
                  }
              }"
-             x-init="window.addEventListener('reset-search-state', () => { showMenu = false; q = ''; results = []; loading = false; mobileSearchActive = false; })">
+             x-init="window.addEventListener('reset-search-state', () => { reset(); mobileSearchActive = false; })">
             <button @click="toggleInput()" x-show="!mobileSearchActive" class="button is-text">
                 <span class="icon">
                     <span class="mdi mdi-magnify mdi-24px"></span>
@@ -113,36 +87,8 @@
         </div>
         {# Desktop search with dropdown - full search functionality #}
         <div class="navbar-item is-hidden-mobile desktop-search"
-             x-data="{
-                 showMenu: false,
-                 q: '',
-                 results: [],
-                 loading: false,
-                 loadResults: async function() {
-                     const trimmedQ = this.q.trim();
-                     if (trimmedQ.length < 2) {
-                         this.results = [];
-                         this.loading = false;
-                         return;
-                     }
-                     this.loading = true;
-                     this.results = [];
-                     try {
-                         const response = await fetch('{% url 'api-games-search' %}?q=' + encodeURIComponent(trimmedQ) + '&limit=5');
-                         if (!response.ok) {
-                             throw new Error('API request failed');
-                         }
-                         const data = await response.json();
-                         this.results = data.results || [];
-                     } catch (e) {
-                         console.error('Search error:', e);
-                         this.results = [];
-                     } finally {
-                         this.loading = false;
-                     }
-                 }
-             }"
-             x-init="window.addEventListener('reset-search-state', () => { showMenu = false; q = ''; results = []; loading = false; })"
+             x-data="createSearchData('{% url 'api-games-search' %}', 5)"
+             x-init="window.addEventListener('reset-search-state', () => reset())"
              @click.away="showMenu = false">
             <div class="dropdown" :class="{ 'is-active': showMenu }">
                 <div class="field has-addons m-0">

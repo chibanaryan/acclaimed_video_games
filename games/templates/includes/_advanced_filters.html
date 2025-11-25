@@ -10,11 +10,12 @@
         genres: JSON.parse(document.getElementById('genres-data').textContent),
         platforms: JSON.parse(document.getElementById('platforms-data').textContent),
         initialized: false,
-        updateTimeout: null,
-        abortController: null,
         isLoading: false,
-        lastSliderUpdate: 0,
-        filterTimeout: null,
+        fetchManager: new FetchManager(),
+        _debouncedUpdate: null,
+        _throttledSlider: null,
+        _debouncedFilter: null,
+        _debouncedDisplay: null,
         init() {
             // Ensure genre_option has a default value
             if (!this.filters.genre_option || this.filters.genre_option === '') {
@@ -22,6 +23,23 @@
             }
             // Mark as initialized after a short delay to prevent initial watcher triggers
             setTimeout(() => { this.initialized = true; }, 100);
+
+            // Create timing-controlled handlers using utils.js
+            this._debouncedUpdate = debounce(() => this.performUpdate({
+                partial: true, historyMethod: 'pushState'
+            }), 300);
+
+            this._throttledSlider = throttleWithForce(() => this.performUpdate({
+                partial: true, historyMethod: 'replaceState'
+            }), 150);
+
+            this._debouncedFilter = debounce(() => this.performUpdate({
+                partial: true, historyMethod: 'pushState'
+            }), 150);
+
+            this._debouncedDisplay = debounce(() => this.performUpdate({
+                partial: true, historyMethod: 'pushState', preservePage: true
+            }), 150);
 
             // Restore scroll position if returning from another page
             const savedScrollPos = sessionStorage.getItem('gameListScrollPos');
@@ -39,7 +57,6 @@
 
             // Listen for clicks on game links to save scroll position
             document.addEventListener('click', (e) => {
-                // Check if clicked element or its parent is a game link
                 const link = e.target.closest(`a[href*='/game/']`);
                 if (link) {
                     saveScrollPosition();
@@ -48,36 +65,25 @@
 
             // Handle browser back/forward button to sync state from URL
             window.addEventListener('popstate', (event) => {
-                // Parse URL parameters and sync with Alpine.js state
                 const params = new URLSearchParams(window.location.search);
-
-                // Update filters from URL parameters
                 this.filters.q = params.get('q') || '';
                 this.filters.start = params.get('start') ? parseInt(params.get('start')) : {{ min_year }};
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
                 this.filters.genre_option = params.get('genre_option') || 'L';
                 this.filters.rank_display = params.get('rank_display') || 'alltime';
-
-                // Parse genres and platforms (comma-separated IDs)
                 const genresParam = params.get('genres');
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
-
                 const platformsParam = params.get('platforms');
                 this.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
-
-                // Reload the page to reflect the new filters
                 window.location.reload();
             });
 
             this.$watch('filters.q', val => {
                 if (!this.initialized) return;
-                // Update results and URL while typing (preserves focus)
                 this.updateResults();
             });
-            // Note: Slider uses throttled @input (performance) + @pointerup reads final value (accuracy)
         },
         handleFilterChange(type, items) {
-            // Convert objects to string IDs if needed (desktop sends objects, we store string IDs)
             const itemIds = items.map(item => {
                 if (typeof item === 'object' && item !== null && item.id !== undefined) {
                     return String(item.id);
@@ -93,373 +99,66 @@
                 this.debouncedFilterUpdate();
             }
         },
-        buildUrlParams() {
-            // Build URL parameters from current filters
-            const params = new URLSearchParams();
-            // Reset to page 1 when filters change
-            params.delete('page');
-            if (this.filters.q) params.set('q', this.filters.q);
-            if (this.filters.start) params.set('start', this.filters.start);
-            if (this.filters.end) params.set('end', this.filters.end);
-            if (this.filters.genres && this.filters.genres.length) {
-                // filters.genres contains IDs only (converted in handleFilterChange)
-                params.set('genres', this.filters.genres.join(','));
-            }
-            if (this.filters.platforms && this.filters.platforms.length) {
-                // filters.platforms contains IDs only (converted in handleFilterChange)
-                params.set('platforms', this.filters.platforms.join(','));
-            }
-            if (this.filters.genre_option) params.set('genre_option', this.filters.genre_option);
-            if (this.filters.rank_display) params.set('rank_display', this.filters.rank_display);
-            return params;
-        },
-        buildUrlParamsPreservePage() {
-            // Build URL parameters preserving current page (for display-only changes)
-            const params = new URLSearchParams(window.location.search);
-            // Keep the page parameter if it exists
-            const currentPage = params.get('page');
-            // Clear all params to rebuild cleanly
-            for (const key of [...params.keys()]) {
-                params.delete(key);
-            }
+        async performUpdate(options = {}) {
+            const { partial = false, historyMethod = 'pushState', preservePage = false } = options;
 
-            if (this.filters.q) params.set('q', this.filters.q);
-            if (this.filters.start) params.set('start', this.filters.start);
-            if (this.filters.end) params.set('end', this.filters.end);
-            if (this.filters.genres && this.filters.genres.length) {
-                params.set('genres', this.filters.genres.join(','));
-            }
-            if (this.filters.platforms && this.filters.platforms.length) {
-                params.set('platforms', this.filters.platforms.join(','));
-            }
-            if (this.filters.genre_option) params.set('genre_option', this.filters.genre_option);
-            if (this.filters.rank_display) params.set('rank_display', this.filters.rank_display);
-
-            // Restore page parameter
-            if (currentPage) params.set('page', currentPage);
-            return params;
-        },
-        updateResults() {
-            // Update only the results without changing the URL
-            if (!this.initialized) return;
-
-            // Clear any pending update
-            if (this.updateTimeout) {
-                clearTimeout(this.updateTimeout);
-            }
-
-            // Cancel any in-flight request
-            if (this.abortController) {
-                this.abortController.abort();
-            }
-
-            // Debounce the results update
-            this.updateTimeout = setTimeout(() => {
-                // Create new AbortController for this request
-                this.abortController = new AbortController();
-                this.isLoading = true;
-
-                const resultsContainer = document.getElementById('game-results-container');
-                if (resultsContainer) resultsContainer.classList.add('is-loading');
-
-                const params = this.buildUrlParams();
-                const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
-                // Use fetch with HTMX headers to get partial response (full content to extract title)
-                fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'HX-Request': 'true',
-                        'HX-Target': 'content'
-                    },
-                    signal: this.abortController.signal
-                })
-                .then(response => response.text())
-                .then(html => {
-                    // Parse the response to extract title and results
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    // Update title
-                    const newTitle = doc.querySelector('h1.title');
-                    const titleEl = document.getElementById('search-title');
-                    if (newTitle && titleEl) {
-                        titleEl.innerHTML = newTitle.innerHTML;
-                    }
-
-                    // Update results
-                    const newResults = doc.querySelector('#game-results-container');
-                    const resultsEl = document.getElementById('game-results-container');
-                    if (newResults && resultsEl) {
-                        resultsEl.innerHTML = newResults.innerHTML;
-                    }
-
-                    // Update URL without reload (preserves focus by not re-initializing Alpine)
-                    window.history.pushState({}, '', url);
-                })
-                .catch(err => {
-                    // Only log errors that aren't from aborting
-                    if (err.name !== 'AbortError') {
-                        console.error('Error fetching results:', err);
-                    }
-                })
-                .finally(() => {
-                    this.isLoading = false;
-                    const resultsContainer = document.getElementById('game-results-container');
-                    if (resultsContainer) resultsContainer.classList.remove('is-loading');
-                });
-            }, 300);
-        },
-        updateUrlAndResults() {
-            // Update results AND push URL state (for Enter key and other filter changes)
-            if (!this.initialized) return;
-
-            // Clear any pending update
-            if (this.updateTimeout) {
-                clearTimeout(this.updateTimeout);
-            }
-
-            // Cancel any in-flight request
-            if (this.abortController) {
-                this.abortController.abort();
-            }
-
-            // Create new AbortController for this request
-            this.abortController = new AbortController();
+            const signal = this.fetchManager.newRequest();
             this.isLoading = true;
+            setLoading('game-results-container');
 
-            const resultsContainer = document.getElementById('game-results-container');
-            if (resultsContainer) resultsContainer.classList.add('is-loading');
+            const params = buildFilterParams(this.filters, { preservePage });
+            const url = '{% url 'games-search' %}?' + normalizeUrl(params.toString());
 
-            const params = this.buildUrlParams();
-            const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
-            // Use fetch with HTMX headers to get partial response
-            fetch(url, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'HX-Request': 'true',
-                    'HX-Target': 'content'
-                },
-                signal: this.abortController.signal
-            })
-            .then(response => response.text())
-            .then(html => {
-                const contentEl = document.getElementById('content');
-                if (contentEl) {
-                    contentEl.innerHTML = html;
-                    // Update URL without reload
-                    window.history.pushState({}, '', url);
-                }
-            })
-            .catch(err => {
-                // Only log errors that aren't from aborting
-                if (err.name !== 'AbortError') {
-                    console.error('Error fetching content:', err);
-                }
-            })
-            .finally(() => {
-                this.isLoading = false;
-                const resultsContainer = document.getElementById('game-results-container');
-                if (resultsContainer) resultsContainer.classList.remove('is-loading');
-            });
-        },
-        throttledSliderUpdate() {
-            // Throttle slider updates to ~6-7 updates/sec while dragging
-            // Uses partial update to preserve slider focus (doesn't replace filters)
-            const now = Date.now();
-            if (now - this.lastSliderUpdate < 150) return;
-            this.lastSliderUpdate = now;
+            try {
+                const html = await fetchHtml(url, signal);
 
-            // Cancel any in-flight request
-            if (this.abortController) {
-                this.abortController.abort();
-            }
-
-            this.abortController = new AbortController();
-            this.isLoading = true;
-
-            const resultsContainer = document.getElementById('game-results-container');
-            if (resultsContainer) resultsContainer.classList.add('is-loading');
-
-            const params = this.buildUrlParams();
-            const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
-
-            fetch(url, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'HX-Request': 'true',
-                    'HX-Target': 'content'
-                },
-                signal: this.abortController.signal
-            })
-            .then(response => response.text())
-            .then(html => {
-                // Parse and do PARTIAL update (preserves slider focus)
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                // Update title
-                const newTitle = doc.querySelector('h1.title');
-                const titleEl = document.getElementById('search-title');
-                if (newTitle && titleEl) {
-                    titleEl.innerHTML = newTitle.innerHTML;
+                if (partial) {
+                    const content = parseAndExtract(html, [
+                        { selector: 'h1.title', targetId: 'search-title' },
+                        { selector: '#game-results-container', targetId: 'game-results-container' }
+                    ]);
+                    updateDomElements(content);
+                } else {
+                    const contentEl = document.getElementById('content');
+                    if (contentEl) {
+                        contentEl.innerHTML = html;
+                    }
                 }
 
-                // Update only results (not filters)
-                const newResults = doc.querySelector('#game-results-container');
-                const resultsEl = document.getElementById('game-results-container');
-                if (newResults && resultsEl) {
-                    resultsEl.innerHTML = newResults.innerHTML;
-                }
-
-                // Update URL without reload
-                window.history.replaceState({}, '', url);
-            })
-            .catch(err => {
+                window.history[historyMethod]({}, '', url);
+            } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Error fetching results:', err);
                 }
-            })
-            .finally(() => {
+            } finally {
                 this.isLoading = false;
-                const resultsContainer = document.getElementById('game-results-container');
-                if (resultsContainer) resultsContainer.classList.remove('is-loading');
-            });
+                clearLoading('game-results-container');
+            }
+        },
+        updateResults() {
+            if (!this.initialized) return;
+            this._debouncedUpdate();
+        },
+        updateUrlAndResults() {
+            if (!this.initialized) return;
+            if (this._debouncedUpdate) this._debouncedUpdate.cancel();
+            this.performUpdate({ partial: false, historyMethod: 'pushState' });
+        },
+        throttledSliderUpdate() {
+            this._throttledSlider.call();
         },
         forceSliderUpdate() {
-            // Force an update on slider release (bypasses throttle for accuracy)
-            this.lastSliderUpdate = 0;
-            this.throttledSliderUpdate();
+            this._throttledSlider.force();
         },
         debouncedFilterUpdate() {
-            // Debounce checkbox/radio updates to batch rapid clicks
-            // Uses partial update to preserve filter state (doesn't replace filters)
-            if (this.filterTimeout) {
-                clearTimeout(this.filterTimeout);
-            }
-            this.filterTimeout = setTimeout(() => {
-                // Cancel any in-flight request
-                if (this.abortController) {
-                    this.abortController.abort();
-                }
-
-                this.abortController = new AbortController();
-                this.isLoading = true;
-
-                const resultsContainer = document.getElementById('game-results-container');
-                if (resultsContainer) resultsContainer.classList.add('is-loading');
-
-                const params = this.buildUrlParams();
-                const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
-
-                fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'HX-Request': 'true',
-                        'HX-Target': 'content'
-                    },
-                    signal: this.abortController.signal
-                })
-                .then(response => response.text())
-                .then(html => {
-                    // Parse and do PARTIAL update (preserves checkbox state)
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    // Update title
-                    const newTitle = doc.querySelector('h1.title');
-                    const titleEl = document.getElementById('search-title');
-                    if (newTitle && titleEl) {
-                        titleEl.innerHTML = newTitle.innerHTML;
-                    }
-
-                    // Update only results (not filters)
-                    const newResults = doc.querySelector('#game-results-container');
-                    const resultsEl = document.getElementById('game-results-container');
-                    if (newResults && resultsEl) {
-                        resultsEl.innerHTML = newResults.innerHTML;
-                    }
-
-                    // Update URL
-                    window.history.pushState({}, '', url);
-                })
-                .catch(err => {
-                    if (err.name !== 'AbortError') {
-                        console.error('Error fetching results:', err);
-                    }
-                })
-                .finally(() => {
-                    this.isLoading = false;
-                    const resultsContainer = document.getElementById('game-results-container');
-                    if (resultsContainer) resultsContainer.classList.remove('is-loading');
-                });
-            }, 150);
+            this._debouncedFilter();
         },
         updateUrl() {
-            // Alias for backwards compatibility with other filter changes
             this.debouncedFilterUpdate();
         },
         updateDisplayOnly() {
-            // Update display settings without resetting pagination
             if (!this.initialized) return;
-
-            if (this.filterTimeout) {
-                clearTimeout(this.filterTimeout);
-            }
-            this.filterTimeout = setTimeout(() => {
-                if (this.abortController) {
-                    this.abortController.abort();
-                }
-
-                this.abortController = new AbortController();
-                this.isLoading = true;
-
-                const resultsContainer = document.getElementById('game-results-container');
-                if (resultsContainer) resultsContainer.classList.add('is-loading');
-
-                const params = this.buildUrlParamsPreservePage();
-                const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
-
-                fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'HX-Request': 'true',
-                        'HX-Target': 'content'
-                    },
-                    signal: this.abortController.signal
-                })
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    // Update title
-                    const newTitle = doc.querySelector('h1.title');
-                    const titleEl = document.getElementById('search-title');
-                    if (newTitle && titleEl) {
-                        titleEl.innerHTML = newTitle.innerHTML;
-                    }
-
-                    // Update only results (not filters)
-                    const newResults = doc.querySelector('#game-results-container');
-                    const resultsEl = document.getElementById('game-results-container');
-                    if (newResults && resultsEl) {
-                        resultsEl.innerHTML = newResults.innerHTML;
-                    }
-
-                    // Update URL
-                    window.history.pushState({}, '', url);
-                })
-                .catch(err => {
-                    if (err.name !== 'AbortError') {
-                        console.error('Error fetching results:', err);
-                    }
-                })
-                .finally(() => {
-                    this.isLoading = false;
-                    const resultsContainer = document.getElementById('game-results-container');
-                    if (resultsContainer) resultsContainer.classList.remove('is-loading');
-                });
-            }, 150);
+            this._debouncedDisplay();
         }
      }"
      @update:modelValue.window="

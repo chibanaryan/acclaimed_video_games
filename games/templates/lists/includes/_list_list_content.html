@@ -8,13 +8,7 @@
         <div class="control">
             <div class="select">
                 <select x-data="{ publisher: '{{ filters.publisher|default:'' }}' }"
-                        @change="
-                            const params = new URLSearchParams(window.location.search);
-                            params.delete('page');
-                            if (publisher) params.set('publisher', publisher);
-                            else params.delete('publisher');
-                            window.location.href = '{% url 'list-list' %}?' + params.toString();
-                        "
+                        @change="updateFilterAndNavigate('publisher', publisher, '{% url 'list-list' %}')"
                         x-model="publisher">
                     <option value="">All publishers</option>
                     {% for publisher in publishers %}
@@ -28,13 +22,7 @@
         <div class="control">
             <div class="select">
                 <select x-data="{ year: '{{ filters.year|default:'' }}' }"
-                        @change="
-                            const params = new URLSearchParams(window.location.search);
-                            params.delete('page');
-                            if (year) params.set('year', year);
-                            else params.delete('year');
-                            window.location.href = '{% url 'list-list' %}?' + params.toString();
-                        "
+                        @change="updateFilterAndNavigate('year', year, '{% url 'list-list' %}')"
                         x-model="year">
                     <option value="">All years</option>
                     {% for year_data in meta.lists.years %}
@@ -48,13 +36,7 @@
         <div class="control">
             <div class="select">
                 <select x-data="{ type: '{{ filters.type|default:'' }}' }"
-                        @change="
-                            const params = new URLSearchParams(window.location.search);
-                            params.delete('page');
-                            if (type) params.set('type', type);
-                            else params.delete('type');
-                            window.location.href = '{% url 'list-list' %}?' + params.toString();
-                        "
+                        @change="updateFilterAndNavigate('type', type, '{% url 'list-list' %}')"
                         x-model="type">
                     <option value="">All list types</option>
                     {% for type_data in type_counts %}

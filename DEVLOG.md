@@ -2,6 +2,7 @@
 
 ## 2025-11-25
 
+- JavaScript refactoring: created utils.js with shared utilities (FetchManager, debounce, throttle, buildFilterParams, createSearchData), consolidated 5 duplicate fetch functions in _advanced_filters.html, unified mobile/desktop nav search, converted global onclick handlers to Alpine components (~430 lines removed)
 - CSS refactoring: extracted ~1000 lines from base.html to external stylesheets (main.css, import.css)
 - Removed navbar JavaScript injection hack, replaced inline styles with utility classes (.input-dark, .filter-row, .status-card)
 - Implemented faceted filtering on Source Lists (filter counts update dynamically, hide zero-count options)

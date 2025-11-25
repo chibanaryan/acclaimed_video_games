@@ -84,11 +84,29 @@
 </div>
 
 {# Contact Form Modal #}
-<div id="contactModal" class="modal {% if form.errors %}is-active{% endif %}">
-    <div class="modal-background" onclick="closeContactModal()"></div>
+<div x-data="{
+        modalOpen: {% if form.errors %}true{% else %}false{% endif %},
+        openContact() {
+            this.modalOpen = true;
+            openModal('contactModal');
+            const sound = document.getElementById('naviSound');
+            if (sound) {
+                sound.volume = 0.3;
+                sound.currentTime = 0;
+                sound.play();
+            }
+        },
+        closeContact() {
+            this.modalOpen = false;
+            closeModal('contactModal');
+        }
+     }"
+     x-init="{% if form.errors %}openContact(){% endif %}">
+<div id="contactModal" class="modal" :class="{ 'is-active': modalOpen }">
+    <div class="modal-background" @click="closeContact()"></div>
     <div class="modal-card" style="border-radius: 6px; overflow: hidden;">
         <section class="modal-card-body" style="background: #1a1a1a; padding-top: 1.5rem;">
-            <button class="delete is-pulled-right" aria-label="close" onclick="closeContactModal()" style="position: absolute; right: 1rem; top: 1rem;"></button>
+            <button class="delete is-pulled-right" aria-label="close" @click="closeContact()" style="position: absolute; right: 1rem; top: 1rem;"></button>
             <p class="is-size-5 has-text-weight-bold mb-4" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <img src="https://static.wikia.nocookie.net/zelda_gamepedia_en/images/0/08/OoT3D_Navi_Artwork.png" alt="Navi" style="width: 28px; height: auto; filter: drop-shadow(0 0 4px #00d4ff);">
                 <em>"Hey! Listen!"</em>
@@ -167,43 +185,17 @@
                         </button>
                     </div>
                     <div class="control">
-                        <button type="button" class="button" onclick="closeContactModal()">Cancel</button>
+                        <button type="button" class="button" @click="closeContact()">Cancel</button>
                     </div>
                 </div>
             </form>
         </section>
     </div>
 </div>
+</div>
 
 <audio id="naviSound" preload="auto">
     <source src="{% static 'audio/navi_fly.mp3' %}" type="audio/mpeg">
 </audio>
-
-<script>
-// Contact Modal Controls
-function openContactModal() {
-    document.getElementById('contactModal').classList.add('is-active');
-    document.documentElement.classList.add('is-clipped');
-    // Play Navi sound when opening the form (subtle volume)
-    var naviSound = document.getElementById('naviSound');
-    if (naviSound) {
-        naviSound.volume = 0.3;
-        naviSound.currentTime = 0;
-        naviSound.play();
-    }
-}
-
-function closeContactModal() {
-    document.getElementById('contactModal').classList.remove('is-active');
-    document.documentElement.classList.remove('is-clipped');
-}
-
-// Auto-open modal if there are form errors
-{% if form.errors %}
-document.addEventListener('DOMContentLoaded', function() {
-    openContactModal();
-});
-{% endif %}
-</script>
 
 {% endblock %}
