@@ -191,17 +191,17 @@ IGDB_CLIENT_SECRET = env("IGDB_CLIENT_SECRET", default="XXX")
 IGDB_USE_PRO_TIER = env.bool("IGDB_USE_PRO_TIER", default=False)
 
 # Email configuration (Brevo SMTP)
-# In development, emails are printed to console
-# In production, emails are sent via Brevo
+# In dev: print to console. In prod: send via Brevo SMTP.
+# Brevo requires verified sender - contact@acclaimedvideogames.com is verified
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = "smtp-relay.brevo.com"
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = "9c6ed8001@smtp-brevo.com"
-    EMAIL_HOST_PASSWORD = env("BREVO_SMTP_KEY", default="")
+EMAIL_HOST = "smtp-relay.brevo.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "9c6ed8001@smtp-brevo.com"
+EMAIL_HOST_PASSWORD = env("BREVO_SMTP_KEY", default="")
 
 DEFAULT_FROM_EMAIL = "contact@acclaimedvideogames.com"
 CONTACT_EMAIL = "contact@acclaimedvideogames.com"

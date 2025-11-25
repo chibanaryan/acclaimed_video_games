@@ -2,27 +2,114 @@
 
 {% block title %}Thank You - Acclaimed Games{% endblock %}
 
+{% block extra_head %}
+<style>
+    .portal-scene {
+        position: relative;
+        display: inline-block;
+        width: 160px;
+        height: 100px;
+        perspective: 300px;
+    }
+    .portal-oval {
+        position: absolute;
+        top: 50%;
+        right: 20px;
+        width: 55px;
+        height: 85px;
+        transform: translateY(-50%) rotateY(-25deg);
+        border: 5px solid #00A2E8;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center,
+            rgba(0, 162, 232, 0.7) 0%,
+            rgba(0, 162, 232, 0.4) 40%,
+            rgba(0, 162, 232, 0.2) 100%);
+        box-shadow:
+            0 0 20px #00A2E8,
+            0 0 40px rgba(0, 162, 232, 0.6),
+            0 0 60px rgba(0, 162, 232, 0.4),
+            inset 0 0 25px rgba(0, 162, 232, 0.6);
+        z-index: 1;
+    }
+    .envelope-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /* Clip at the inner right edge of the portal (the opening) */
+        /* Portal outer edge at 140px, minus 5px border = 135px inner edge */
+        clip-path: inset(0 25px 0 0);
+        z-index: 2;
+    }
+    .portal-envelope {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2.2rem;
+        color: white;
+        text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+        animation: fly-into-portal 0.9s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes fly-into-portal {
+        0% {
+            left: 0px;
+            opacity: 0;
+            transform: translateY(-50%) scale(0.7) rotate(-15deg);
+        }
+        25% {
+            left: 30px;
+            opacity: 1;
+            transform: translateY(-55%) scale(1) rotate(-12deg);
+        }
+        50% {
+            transform: translateY(-70%) scale(1) rotate(-5deg);
+        }
+        100% {
+            left: 140px;
+            opacity: 1;
+            transform: translateY(-50%) scale(0.85) rotate(5deg);
+        }
+    }
+    .portal-blue {
+        color: #00A2E8;
+    }
+    .button.is-portal {
+        background-color: #00A2E8;
+        border-color: transparent;
+        color: white;
+        transition: background-color 0.2s ease;
+    }
+    .button.is-portal:hover {
+        background-color: #F68A25;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="columns is-centered mt-6">
     <div class="column is-half">
         <div class="box has-text-centered" style="padding: 3rem;">
-            <div class="mb-4">
-                <span class="icon is-large has-text-success">
-                    <span class="mdi mdi-check-circle mdi-48px"></span>
-                </span>
+            <div class="mb-5">
+                <div class="portal-scene">
+                    <div class="portal-oval"></div>
+                    <div class="envelope-container">
+                        <span class="portal-envelope mdi mdi-email"></span>
+                    </div>
+                </div>
             </div>
-            <h1 class="title is-3 mb-2"><em>"This was a triumph. I'm making a note here: HUGE SUCCESS."</em></h1>
+            <h1 class="title is-4 mb-2">
+                <em>"This was a triumph. I'm making a note here: <span class="portal-blue">HUGE SUCCESS</span>."</em>
+            </h1>
             <p class="has-text-grey-light is-size-7 mb-5">
                 ~GLaDOS, <a href="{% url 'game-detail' slug='portal' %}" class="has-text-info">Portal</a>
             </p>
-            <p class="mb-5" style="font-size: 1.125rem;">
-                We've received your message and will get back to you as soon as possible.
+            <p class="has-text-grey-light mb-5">
+                The Enrichment Center acknowledges receipt of your data. A testing associate will review your file shortly.
             </p>
-            <a href="{% url 'home' %}" class="button is-link is-medium">
-                <span class="icon">
-                    <span class="mdi mdi-home"></span>
-                </span>
-                <span>Return to Home</span>
+            <a href="{% url 'home' %}" class="button is-portal is-medium">
+                <span>Resume Testing</span>
             </a>
         </div>
     </div>
