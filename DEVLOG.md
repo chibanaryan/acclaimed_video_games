@@ -7,6 +7,7 @@
 - Removed unused developer management commands (cleanup, sync, refresh)
 - Fixed pagination spacing on Advanced Search page (missing spacing class)
 - Replaced dual year sliders with single dual-range slider (visual track indicator, floating labels)
+- Fixed year slider filter mismatch on fast drag release (use @pointerup for reliable final value capture)
 
 ## 2025-11-24
 

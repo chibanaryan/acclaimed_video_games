@@ -74,7 +74,7 @@
                 // Update results and URL while typing (preserves focus)
                 this.updateResults();
             });
-            // Note: Slider watchers removed - updates handled directly in @input handlers with throttling
+            // Note: Slider uses throttled @input (performance) + @pointerup reads final value (accuracy)
         },
         handleFilterChange(type, items) {
             // Convert objects to string IDs if needed (desktop sends objects, we store string IDs)
@@ -300,7 +300,7 @@
             });
         },
         forceSliderUpdate() {
-            // Force an update on slider release (bypasses throttle)
+            // Force an update on slider release (bypasses throttle for accuracy)
             this.lastSliderUpdate = 0;
             this.throttledSliderUpdate();
         },
@@ -422,7 +422,9 @@
                                @input="filters.start = parseInt($event.target.value);
                                        if (filters.end && filters.start > parseInt(filters.end)) { filters.end = filters.start; }
                                        if (initialized) throttledSliderUpdate()"
-                               @change="if (initialized) forceSliderUpdate()">
+                               @pointerup="filters.start = parseInt($event.target.value);
+                                       if (filters.end && filters.start > parseInt(filters.end)) { filters.end = filters.start; }
+                                       if (initialized) forceSliderUpdate()">
                         <input type="range"
                                class="dual-range"
                                id="filter-end-year"
@@ -433,7 +435,9 @@
                                @input="filters.end = parseInt($event.target.value);
                                        if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
                                        if (initialized) throttledSliderUpdate()"
-                               @change="if (initialized) forceSliderUpdate()">
+                               @pointerup="filters.end = parseInt($event.target.value);
+                                       if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
+                                       if (initialized) forceSliderUpdate()">
                     </div>
                 </div>
             </div>
