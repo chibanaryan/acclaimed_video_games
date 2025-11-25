@@ -20,7 +20,7 @@
             {% include 'includes/_simple_filters.html' with meta=meta filters=filters %}
         </div>
         <div class="control" style="margin-left: auto; display: flex; gap: 0.5rem;">
-            <a href="{% url 'games-download' %}{% if filters.decade %}?decade={{ filters.decade }}{% elif filters.year %}?year={{ filters.year }}{% endif %}" class="button is-dark" title="Download CSV">
+            <a href="{% url 'games-download' %}{% if filters.decade %}?decade={{ filters.decade }}{% elif filters.year %}?year={{ filters.year }}{% endif %}" class="button is-dark is-hidden-mobile" title="Download CSV">
                 <span class="icon is-small">
                     <span class="mdi mdi-download"></span>
                 </span>
