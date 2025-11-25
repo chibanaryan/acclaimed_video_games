@@ -80,6 +80,12 @@ python3 manage.py get_igdb --pro
 python3 manage.py collectstatic
 ```
 
+**Sync production database to local SQLite:**
+```bash
+python3 manage.py sync_from_prod
+```
+Downloads all game data from production Heroku and loads it into local SQLite. Auth users are excluded - create a local superuser after syncing with `python3 manage.py createsuperuser`.
+
 **Run tests:**
 ```bash
 python3 manage.py test games.tests

@@ -2,6 +2,7 @@
 
 ## 2025-11-25
 
+- Added `sync_from_prod` management command for syncing production PostgreSQL to local SQLite
 - Added Enter key navigation to nav search bar (goes to full search results page)
 - Added optional author field to Posts (ForeignKey to User, displays as "Author · 2 hours ago")
 - Added contact form with Navi theme, Brevo SMTP email integration (console in dev, SMTP in prod)

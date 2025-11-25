@@ -10,152 +10,105 @@ For detailed documentation, see [CLAUDE.md](CLAUDE.md).
 
 ## Setup Local Development Environment
 
+### Prerequisites
+
+- Python 3
+- Git
+- Heroku CLI
+
+### Clone Repository
+
+```bash
+git clone https://github.com/chibanaryan/acclaimedgames.git
+cd acclaimedgames
+heroku login
+heroku git:remote -a acclaimedgames
+```
+
 ### Install Dependencies
 
-* Python 3 (https://www.python.org/downloads/)
-* Git   (https://git-scm.com/downloads/win)
-* Heroku CLI    (https://devcenter.heroku.com/articles/heroku-cli)
+```bash
+python3 -m venv venv
 
-### Setup Git Repository
+# macOS/Linux:
+source venv/bin/activate
 
-Clone Git repo locally
+# Windows:
+venv\Scripts\activate
 
-    git clone git@bitbucket.org:sean2000/acclaimedgames.git
+pip install -r requirements.txt
+pre-commit install
+```
 
-Login with Heroku CLI (should open a browser to authenticate)
+### Get Data
 
-    heroku login
+**Option A: Sync from Production (Recommended)**
 
-Add Heroku remote (first time only)
+```bash
+python3 manage.py sync_from_prod
+python3 manage.py createsuperuser
+```
 
-    heroku git:remote -a acclaimedgames
+**Option B: Start Fresh**
 
-### Backend Setup
+```bash
+python3 manage.py migrate
+python3 manage.py createsuperuser
+```
 
-Create a Python virtual environment (first time only)
+Then import data via `/import/` (see [Import New Data](#import-new-data) below).
 
-    py -m venv venv
+### Run Development Server
 
-Activate the virtual environment
+```bash
+python3 manage.py runserver
+```
 
-    source venv\Scripts\activate
+## Deploy to Production
 
-Install Python packages (first time only)
-
-    pip install -r requirements.txt
-
-Create the sqlite database (first time only)
-
-    python3 manage.py migrate
-
-Create a local user account (first time only)
-
-    python3 manage.py createsuperuser
-
-Run Django development server
-
-    python3 manage.py runserver
-
-## Deploy New Version of Website
-
-Collect static files:
-
-    python3 manage.py collectstatic --noinput
-
-Commit your changes:
-
-    git add -A
-    git commit -m "Your commit message"
-
-Push to GitHub:
-
-    git push origin main
-
-Deploy to Heroku:
-
-    git push heroku main
+```bash
+python3 manage.py collectstatic --noinput
+git add -A
+git commit -m "Your commit message"
+git push origin main
+git push heroku main
+```
 
 ## Pre-commit Hooks
 
-This repo uses [pre-commit](https://pre-commit.com/) to ensure consistent
-styling (via [Black](https://black.readthedocs.io/)) and that the Django test
-suite (`games/tests.py`) runs before every commit.
+This repo uses [pre-commit](https://pre-commit.com/) to enforce code quality:
 
-1. Install the tool (usually once per machine):
+- **Black** - Auto-formats Python code
+- **Flake8** - Lints for style violations
+- **Tests** - Runs full test suite
+- **Coverage** - Enforces 95% minimum coverage
 
-    ```bash
-    pip install pre-commit
-    ```
+Commits are blocked if any check fails. Run tests manually:
 
-2. From the project root, enable the hooks:
-
-    ```bash
-    pre-commit install
-    ```
-
-With that in place:
-
-- Black runs automatically and formats Python code (commits will fail if files
-  need reformatting).
-- Flake8 runs immediately afterward to flag lint violations (imports, unused
-  vars, long lines, etc.) so issues are caught before CI.
-- `scripts/run_tests.sh` executes automatically and blocks a commit if the
-  Django tests fail.
-- Backend coverage is enforced (`coverage run --source=games manage.py test` with
-  a fail-under threshold of 95%). You can run it manually via:
-
-    ```bash
-    source venv/bin/activate
-    DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// \
-    CORS_ALLOWED_ORIGINS=http://localhost \
-        COVERAGE_FILE=.coverage.backend \
-        coverage run --source=games manage.py test games.tests
-    coverage html  # view report at htmlcov/index.html
-    ```
-
-The HTML report lives under `htmlcov/index.html` (ignored by Git).
-
-Make sure your virtualenv is set up and dependencies installed before running
-`pre-commit install`.
+```bash
+python3 manage.py test games.tests
+```
 
 ## Import New Data
 
-The import page at `/import/` provides a modern interface for managing game data:
+The `/import/` page is for adding **new source lists** to the database (not for initial setup - use `sync_from_prod` for that).
 
 ### Quick Actions
 
-**Load Test Data (Development only)**
-- Click the "📦 Load Test Data (Dev)" button to quickly load bundled test files
-- Only available when `DEBUG=True`
-- Automatically imports platforms, source lists, games, and game positions
-
-**Delete All Data**
-- Click "🗑️ Delete All Data" to wipe the database
-- Use this before importing a fresh dataset
-
-**Fetch IGDB Data**
-- Click "🔄 Fetch IGDB Data" to pull cover art, descriptions, and genres from IGDB
-- Shows real-time progress with a visual progress bar
-- Can also be run from command line: `python3 manage.py get_igdb`
+- **Load Test Data** - Load bundled test files (development only)
+- **Delete All Data** - Wipe the database before fresh import
+- **Fetch IGDB Data** - Pull cover art, descriptions, and genres
 
 ### Batch Import
 
-To import custom data files:
-
-1. Navigate to `/import/` and log in
-2. Upload all required files (they'll be processed in order):
-   - **PlatformDB.txt** - Gaming platforms (tab-separated: `CODE<tab>Name`)
-   - **SourceLists.txt** - Critic rankings (tab-separated: `Publisher<tab>Year<tab>Type<tab>Name<tab>URL`)
-   - **Top1000.txt** - Games database (tab-separated: `Rank<tab>Name<tab>Year<tab>IGDB_ID<tab>Platforms`)
-   - **GamePositions.txt** - Game positions in lists (tab-separated: `ListID:Position<tab>ListID:Position...`)
-3. Check "Automatically fetch IGDB data after import" if desired
-4. Click "📤 Import Files"
-5. Monitor real-time progress for each file
-
-The import page also displays database statistics showing counts for all data types and IGDB completion percentage.
+Upload tab-separated files in order:
+1. **PlatformDB.txt** - `CODE<tab>Name`
+2. **SourceLists.txt** - `Publisher<tab>Year<tab>Type<tab>Name<tab>URL`
+3. **Top1000.txt** - `Rank<tab>Name<tab>Year<tab>IGDB_ID<tab>Platforms`
+4. **GamePositions.txt** - `ListID:Position<tab>ListID:Position...`
 
 ### IGDB Import on Heroku
 
-To run IGDB data fetch on production:
-
-    heroku run python3 manage.py get_igdb
+```bash
+heroku run python3 manage.py get_igdb
+```
