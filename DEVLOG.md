@@ -18,6 +18,7 @@
 - Replaced dual year sliders with single dual-range slider (visual track indicator, floating labels)
 - Fixed year slider filter mismatch on fast drag release (use @pointerup for reliable final value capture)
 - Fixed "Filtered Rank" checkbox resetting to page 1 (display-only changes now preserve pagination)
+- Fixed CSV download button disappearing on HTMX page changes (missing from partial template)
 
 ## 2025-11-24
 
