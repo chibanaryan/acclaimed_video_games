@@ -77,18 +77,18 @@
         // Disable button to prevent multiple clicks
         this.classList.add('is-loading');
 
-        audio.volume = 1;
+        audio.volume = 0.7;
         audio.play();
 
-        // Fade out over 5 seconds
+        // Fade out over 4 seconds
         const fadeInterval = setInterval(() => {
-            if (audio.volume > 0.05) {
-                audio.volume -= 0.05;
+            if (audio.volume > 0.035) {
+                audio.volume -= 0.035;
             } else {
                 clearInterval(fadeInterval);
                 window.location.href = destination;
             }
-        }, 250); // 20 steps over 5 seconds
+        }, 200); // 20 steps over 4 seconds
     });
 </script>
 {% endblock %}
