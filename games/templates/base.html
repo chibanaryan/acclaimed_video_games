@@ -29,7 +29,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
     
     {# Handjet Font (for rank numbers) - MUST INCLUDE #}
-    {# font-display=swap prevents CLS by showing fallback font immediately #}
+    {# Preload font to prevent FOUT (flash of unstyled text) #}
+    <link rel="preload" href="https://fonts.gstatic.com/s/handjet/v19/oY1n8eXHq7n1OnbQrOY_2FrEwYEMLlcdP1mF.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=swap" rel="stylesheet">
@@ -113,8 +114,8 @@
         /* Make navbar logo responsive while preserving aspect ratio for CLS prevention */
         .navbar-brand .navbar-item img {
             width: auto !important;
-            height: 40px !important;
-            max-height: 40px;
+            height: 30px !important;
+            max-height: 30px;
             object-fit: contain;
         }
         
