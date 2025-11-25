@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "django.forms",
     "corsheaders",
-    "django_extensions",
     "rest_framework",
     "games",
 ]

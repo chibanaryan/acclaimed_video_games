@@ -19,6 +19,7 @@
 - Fixed year slider filter mismatch on fast drag release (use @pointerup for reliable final value capture)
 - Fixed "Filtered Rank" checkbox resetting to page 1 (display-only changes now preserve pagination)
 - Fixed CSV download button disappearing on HTMX page changes (missing from partial template)
+- Removed unused code: TYPES/SEARCH_* constants, dead serializer_class, django_extensions
 
 ## 2025-11-24
 

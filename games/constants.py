@@ -4,13 +4,6 @@ TYPE_LIST = "L"
 TYPE_LIST_MEMBERSHIP = "M"
 TYPE_DEVELOPER = "D"
 
-TYPES = [
-    (TYPE_PLATFORM, "Platforms"),
-    (TYPE_LIST, "Source lists"),
-    (TYPE_GAME, "Games"),
-    (TYPE_LIST_MEMBERSHIP, "Game positions"),
-]
-
 LIST_EOY = "E"
 LIST_MISC = "M"
 LIST_ALLTIME = "A"
@@ -33,11 +26,6 @@ LIST_TYPE_SLUGS = {
 
 # Reverse mapping: slug -> code
 LIST_TYPE_CODES = {slug: code for code, slug in LIST_TYPE_SLUGS.items()}
-
-SEARCH_ALL = "ALL"
-SEARCH_ANY = "ANY"
-SEARCH_EXACTLY = "EXACTLY"
-SEARCH_NONE = "NONE"
 
 # Contact form categories
 CONTACT_CATEGORIES = [

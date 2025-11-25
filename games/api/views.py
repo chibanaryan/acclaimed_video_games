@@ -248,8 +248,6 @@ class MetaView(APIView):
 
 
 class SnippetDetailView(APIView):
-    serializer_class = serializers.PublicationSerializer
-
     def get(self, *args, **kwargs):
         snippet = get_object_or_404(models.Snippet, **kwargs)
         return Response({"snippet": snippet.text})
