@@ -49,7 +49,7 @@ document.body.addEventListener('htmx:afterSwap', function(e) {
 }">
     <div class="control has-icons-left">
         <input type="text"
-               class="input"
+               class="input input-dark"
                name="q"
                id="developer-search"
                placeholder="Search by name"
@@ -59,8 +59,7 @@ document.body.addEventListener('htmx:afterSwap', function(e) {
                hx-trigger="input changed delay:150ms"
                hx-swap="innerHTML"
                x-on:htmx:after-request="updateUrl($event)"
-               autocomplete="off"
-               style="background-color: rgb(20, 22, 26); border-color: rgb(53, 58, 70); color: rgb(235, 236, 240);">
+               autocomplete="off">
         <span class="icon is-small is-left">
             <i class="mdi mdi-magnify"></i>
         </span>
@@ -74,7 +73,7 @@ document.body.addEventListener('htmx:afterSwap', function(e) {
          data-end-index="{{ page_obj.end_index }}"
          data-total-count="{{ page_obj.paginator.count }}"></div>
     {% endif %}
-    <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+    <div class="pagination-wrapper pagination-spacing-top">
         {% if page_obj %}
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
         {% endif %}
@@ -111,7 +110,7 @@ document.body.addEventListener('htmx:afterSwap', function(e) {
     </div>
     {% endif %}
 
-    <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+    <div class="pagination-wrapper pagination-spacing-top">
         {% if page_obj %}
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
         {% endif %}

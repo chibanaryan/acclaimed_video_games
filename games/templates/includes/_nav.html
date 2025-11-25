@@ -65,8 +65,7 @@
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
                                placeholder="Search games"
-                               class="input"
-                               style="background-color: rgb(20, 22, 26); border-color: rgb(53, 58, 70); color: rgb(235, 236, 240);"
+                               class="input input-dark"
                                autocomplete="off">
                     </div>
                     <div class="control">
@@ -155,8 +154,7 @@
                                id="nav-search-desktop"
                                name="q"
                                placeholder="Search games"
-                               class="input"
-                               style="background-color: rgb(20, 22, 26); border-color: rgb(53, 58, 70); color: rgb(235, 236, 240);"
+                               class="input input-dark"
                                x-model="q"
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"

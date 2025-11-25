@@ -16,10 +16,10 @@
     </h1>
     
     <div class="field is-grouped is-grouped-multiline">
-        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+        <div class="filter-row">
             {% include 'includes/_simple_filters.html' with meta=meta filters=filters %}
         </div>
-        <div class="control" style="margin-left: auto; display: flex; gap: 0.5rem;">
+        <div class="control filter-row" style="margin-left: auto;">
             <a href="{% url 'games-download' %}{% if filters.decade %}?decade={{ filters.decade }}{% elif filters.year %}?year={{ filters.year }}{% endif %}" class="button is-dark is-hidden-mobile" title="Download CSV">
                 <span class="icon is-small">
                     <span class="mdi mdi-download"></span>

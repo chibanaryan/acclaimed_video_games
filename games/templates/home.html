@@ -7,66 +7,6 @@
 {% block extra_head %}
 {# Prefetch home page hero image #}
 <link rel="prefetch" href="{% static 'games/avg_logo.png' %}" as="image">
-<style>
-/* Contact Modal Dark Theme Styling */
-#contactModal .modal-card-head,
-#contactModal .modal-card-body,
-#contactModal .modal-card-foot {
-    background-color: #14161A;
-    color: #ABB1BF;
-}
-
-#contactModal .modal-card-head {
-    border-bottom: 1px solid #4a4a4a;
-}
-
-#contactModal .modal-card-foot {
-    border-top: 1px solid #4a4a4a;
-}
-
-#contactModal .label {
-    color: #ABB1BF;
-}
-
-#contactModal .input,
-#contactModal .textarea,
-#contactModal .select select {
-    background-color: #1e2127;
-    border-color: #4a4a4a;
-    color: #ABB1BF;
-}
-
-#contactModal .input:focus,
-#contactModal .textarea:focus,
-#contactModal .select select:focus {
-    border-color: #00d1b2;
-}
-
-#contactModal .input::placeholder,
-#contactModal .textarea::placeholder {
-    color: #7a7a7a;
-}
-
-/* Reduce spacing between form fields */
-#contactModal .field {
-    margin-bottom: 1rem;
-}
-
-#contactModal .field:last-of-type {
-    margin-bottom: 0;
-}
-
-/* Make hero logo and thumbnails responsive while preserving aspect ratio for CLS */
-.column > img[width][height] {
-    max-width: 100%;
-    height: auto;
-}
-
-.top-ten .game img[width][height] {
-    max-width: 90px;
-    height: auto;
-}
-</style>
 {% endblock %}
 
 {% block content %}

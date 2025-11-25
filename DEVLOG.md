@@ -2,6 +2,8 @@
 
 ## 2025-11-25
 
+- CSS refactoring: extracted ~1000 lines from base.html to external stylesheets (main.css, import.css)
+- Removed navbar JavaScript injection hack, replaced inline styles with utility classes (.input-dark, .filter-row, .status-card)
 - Implemented faceted filtering on Source Lists (filter counts update dynamically, hide zero-count options)
 - Changed list type URL params from codes to readable slugs (`?type=all-time` instead of `?type=A`)
 - Fixed pagination layout stability (centralized min-height in CSS, nav only renders when needed)

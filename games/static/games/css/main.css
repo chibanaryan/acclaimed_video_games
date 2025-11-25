@@ -1,0 +1,1074 @@
+/**
+ * Acclaimed Games - Main Stylesheet
+ *
+ * Framework: Bulma 1.0.0 + Bulmaswatch Cyborg theme
+ * This file contains custom styles that extend/override the framework.
+ */
+
+/* ==========================================================================
+   Custom Fonts
+   ========================================================================== */
+
+@font-face {
+    font-family: 'Handjet';
+    src: url("../fonts/Handjet-ExtraBold.woff2") format('woff2');
+    font-weight: 800;
+    font-style: normal;
+    font-display: block;
+}
+
+/* ==========================================================================
+   Alpine.js Support
+   ========================================================================== */
+
+[x-cloak] { display: none !important; }
+
+/* ==========================================================================
+   Base Layout
+   ========================================================================== */
+
+html {
+    background-color: #000;
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    font-size: 1em;
+    line-height: 1.5;
+    color: #ABB1BF; /* rgb(171, 177, 191) */
+}
+
+header {
+    border-bottom: 2px solid;
+    margin-bottom: 1em;
+}
+
+section {
+    flex: 1 0 auto;
+}
+
+footer {
+    flex-shrink: 0;
+    background-color: #444;
+    margin-top: 2em;
+    padding: 2em 0;
+    text-align: center;
+    color: #8b8b8b;
+}
+
+footer a {
+    color: #8b8b8b;
+}
+
+header,
+.container {
+    padding: 0 1em;
+}
+
+#content {
+    min-height: 1024px;
+}
+
+/* ==========================================================================
+   Dark Theme Overrides (extends Bulmaswatch Cyborg)
+   ========================================================================== */
+
+header,
+footer {
+    background-color: #131313;
+}
+
+header {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+footer {
+    border-top: 1px solid #4a4a4a;
+}
+
+.navbar {
+    border: None;
+    background-color: transparent;
+}
+
+.navbar .navbar-menu {
+    background-color: #131313;
+}
+
+.table {
+    background-color: transparent;
+}
+
+.table.plain th,
+.table.plain td {
+    border: none;
+}
+
+.box {
+    background-color: #242424;
+    color: rgb(235, 236, 240);
+    box-shadow: none;
+}
+
+.title {
+    font-weight: 600;
+}
+
+.game-header {
+    border-bottom: 1px solid #4a4a4a;
+    color: #fff;
+}
+
+/* ==========================================================================
+   Navbar Layout
+   ========================================================================== */
+
+/* Navbar height set to 56px */
+.navbar {
+    min-height: 56px !important;
+    display: flex;
+    align-items: stretch;
+}
+
+@media screen and (min-width: 1024px) {
+    .navbar {
+        height: 56px !important;
+    }
+}
+
+/* Make navbar logo responsive while preserving aspect ratio for CLS prevention */
+.navbar-brand .navbar-item img {
+    width: auto !important;
+    height: 30px !important;
+    max-height: 30px;
+    object-fit: contain;
+}
+
+.navbar-brand {
+    align-items: stretch;
+    display: flex;
+}
+
+.navbar-menu {
+    align-items: stretch;
+    flex-grow: 1;
+}
+
+.navbar-burger {
+    margin-left: auto;
+}
+
+.navbar-brand .navbar-item,
+.navbar-menu .navbar-item {
+    align-items: center;
+    display: flex;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+/* Ensure search box aligns properly with other navbar items */
+.desktop-search.navbar-item {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.desktop-search .field {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.desktop-search .control {
+    display: flex;
+    align-items: center;
+}
+
+.desktop-search .input {
+    vertical-align: middle;
+}
+
+/* Burger menu styling - two thin slices */
+.navbar-burger {
+    height: 3.25rem;
+    width: 3.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.navbar-burger span {
+    display: block;
+    position: absolute;
+    height: 1px;
+    width: 18px;
+    background-color: currentColor;
+    border-radius: 0.5px;
+    transition: all 0.3s ease;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.navbar-burger span:nth-child(1) {
+    top: calc(50% - 4px);
+}
+
+.navbar-burger span:nth-child(2) {
+    top: calc(50% + 4px);
+}
+
+.navbar-burger.is-active span:nth-child(1) {
+    transform: translateX(-50%) translateY(4px) rotate(45deg);
+}
+
+.navbar-burger.is-active span:nth-child(2) {
+    transform: translateX(-50%) translateY(-4px) rotate(-45deg);
+}
+
+/* Disable background hover effect on logo */
+.navbar-brand > .navbar-item:hover {
+    background-color: transparent !important;
+}
+
+/* ==========================================================================
+   Navbar Link Colors
+   Using specific selectors to override Bulmaswatch Cyborg theme
+   ========================================================================== */
+
+.navbar .nav-link,
+.navbar-brand .nav-link,
+.navbar-menu .nav-link {
+    color: rgb(171, 177, 191);
+    transition: color 0.2s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar-brand .nav-link:hover,
+.navbar-menu .nav-link:hover {
+    color: rgb(255, 255, 255);
+}
+
+a.dropdown-item:hover {
+    color: #fff;
+}
+
+/* ==========================================================================
+   Search Bar Styling
+   ========================================================================== */
+
+/* Utility class for dark-themed inputs */
+.input-dark,
+.desktop-search .input,
+#developer-search,
+.field:not(.desktop-search):not(.mobile-search) .control .input[name="q"] {
+    background-color: rgb(20, 22, 26);
+    border-color: rgb(53, 58, 70);
+    color: rgb(235, 236, 240);
+    font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.desktop-search:hover .input,
+.field:not(.desktop-search):not(.mobile-search):hover .control .input[name="q"],
+.field:not(.desktop-search):not(.mobile-search) .control:hover .input[name="q"] {
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.desktop-search .input::placeholder,
+.field:not(.desktop-search):not(.mobile-search) .control .input[name="q"]::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1rem;
+}
+
+/* Search icon colors */
+.desktop-search .icon,
+.desktop-search .control.has-icons-left .icon,
+.desktop-search .control .icon,
+.desktop-search .icon .mdi,
+.desktop-search .icon span.mdi,
+.mobile-search .icon,
+.mobile-search .control.has-icons-left .icon,
+.mobile-search .control .icon,
+.mobile-search .icon .mdi,
+.mobile-search .icon span.mdi,
+.field:not(.desktop-search):not(.mobile-search) .control.has-icons-left .icon,
+.field:not(.desktop-search):not(.mobile-search) .control.has-icons-left .icon .mdi,
+.field:not(.desktop-search):not(.mobile-search) .control.has-icons-left .icon span.mdi,
+.field:not(.desktop-search):not(.mobile-search) .control.has-icons-left .icon i.mdi {
+    color: #fff !important;
+}
+
+/* ==========================================================================
+   Search Dropdown
+   ========================================================================== */
+
+.desktop-search .dropdown {
+    position: relative;
+}
+
+.desktop-search .dropdown-menu {
+    width: 100%;
+    min-width: 400px;
+    max-width: 500px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 20;
+}
+
+.desktop-search .dropdown-content {
+    background-color: #14161A; /* rgb(20, 22, 26) */
+    border: 1px solid #4a4a4a;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: Inter, "SF Pro", "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1rem;
+}
+
+.desktop-search .dropdown-item {
+    color: rgb(235, 236, 240);
+    padding: 0.5rem 1rem;
+    white-space: normal;
+    word-wrap: break-word;
+    font-family: Inter, "SF Pro", "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 0.875rem; /* 14px */
+}
+
+.desktop-search .dropdown-item .media-content {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.desktop-search .dropdown-item .has-text-weight-semibold {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 0.875rem; /* 14px */
+}
+
+.desktop-search .dropdown-item .has-text-weight-light {
+    font-size: 0.875rem;
+}
+
+.desktop-search .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* ==========================================================================
+   Mobile Menu & Search
+   ========================================================================== */
+
+@media screen and (max-width: 1023px) {
+    .navbar {
+        flex-wrap: wrap;
+    }
+
+    .navbar-menu {
+        display: none;
+        width: 100%;
+        order: 2;
+    }
+
+    .navbar-menu.is-active {
+        display: block;
+    }
+
+    .navbar-menu .navbar-start {
+        width: 100%;
+        display: block;
+    }
+
+    .navbar-menu .navbar-item {
+        display: block;
+        width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        border: none;
+    }
+
+    .navbar-menu .navbar-item .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Mobile search expansion - takes full width when active */
+    .mobile-search .results-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background-color: #131313;
+    }
+
+    .mobile-search .results-wrapper .field {
+        padding: 1rem;
+    }
+
+    .mobile-search .results-wrapper .results {
+        padding: 0;
+        padding-bottom: 0.375rem;
+    }
+
+    .mobile-search .results-wrapper .results .dropdown-item {
+        display: block;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        padding: 0.375rem 1rem;
+        text-align: inherit;
+        white-space: nowrap;
+        width: 100%;
+    }
+
+    .mobile-search .results-wrapper .results .dropdown-item:first-child {
+        padding-top: 0;
+    }
+}
+
+/* Desktop menu - align Palestine flag with text items */
+@media screen and (min-width: 1024px) {
+    .navbar-menu .navbar-item {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+}
+
+/* ==========================================================================
+   HTMX Integration
+   ========================================================================== */
+
+/* HTMX indicator - subtle loading spinner */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    display: inline-block;
+}
+
+/* Show indicator when request is in progress */
+#developer-search.htmx-request ~ #search-indicator,
+#search-indicator.htmx-request {
+    opacity: 1;
+}
+
+/* Smooth transitions for HTMX swaps */
+#results-container {
+    transition: opacity 0.15s ease;
+}
+
+.htmx-swapping #results-container {
+    opacity: 0.6;
+}
+
+/* Loading state for game results (used by advanced filters) */
+#game-results-container.is-loading {
+    opacity: 0.6;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+}
+
+.loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ==========================================================================
+   Messages
+   ========================================================================== */
+
+.messages {
+    position: fixed;
+    top: 20px;
+    left: 43%;
+    right: 43%;
+    z-index: 100;
+}
+
+/* ==========================================================================
+   Detail Layout
+   ========================================================================== */
+
+dl.detail dt {
+    font-weight: bold;
+    float: left;
+    width: 10em;
+}
+
+/* ==========================================================================
+   PostItem Component
+   ========================================================================== */
+
+h4.title {
+    font-size: 1.25em;
+    margin-bottom: 0.8em;
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    min-height: 2.5rem; /* Reserve space to prevent layout shift */
+}
+
+.pagination-spacing-top {
+    margin-top: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.pagination-spacing-bottom {
+    /* No top margin - spacing handled by pagination-spacing-top */
+}
+
+nav.pagination {
+    display: flex;
+    align-content: center;
+    justify-content: center;
+}
+
+nav.pagination .navbar-menu {
+    flex-grow: initial;
+    flex-shrink: initial;
+}
+
+/* Pagination link hover - match Cyborg theme blue */
+.pagination-link:hover:not(.is-current) {
+    color: #2094f3;
+}
+
+/* ==========================================================================
+   List Results
+   ========================================================================== */
+
+td.publication {
+    width: 15em;
+}
+
+td.year {
+    width: 4em;
+}
+
+td.rank {
+    width: 3em;
+}
+
+.list-item {
+    padding: 1em 0.5em;
+    border-bottom: 1px solid silver;
+}
+
+.list-item:last-child {
+    border: none;
+}
+
+/* ==========================================================================
+   Game Search Results
+   ========================================================================== */
+
+.result .image img {
+    max-height: 100px;
+}
+
+/* ==========================================================================
+   Game Properties (Detail Page)
+   ========================================================================== */
+
+table.detail th {
+    font-weight: 600;
+    min-width: 10em;
+}
+
+table.detail th,
+table.detail td {
+    padding: 2px;
+}
+
+.igdb-link {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   Multi-Select Component
+   ========================================================================== */
+
+.multiple-select {
+    max-height: 170px;
+    overflow-y: auto;
+}
+
+/* ==========================================================================
+   Game Row Component
+   ========================================================================== */
+
+.game-row {
+    border-left: 3px solid transparent;
+    border-bottom: 1px solid #2a2a2a;
+    transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    position: relative;
+}
+
+
+.game-row.desktop:hover {
+    background: linear-gradient(to right, #363636 0%, #363636 70%, transparent 100%);
+    transform: translateY(-1px);
+    border-left-color: #3273dc;
+}
+
+/* Desktop: Circular game cover thumbnails - expand on hover */
+.game-row.desktop a:has(img) {
+    display: block;
+    overflow: hidden;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    transition: border-radius 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+.game-row.desktop:hover a:has(img) {
+    border-radius: 4px;
+    width: 56px;
+    height: 80px;
+}
+
+.game-row.desktop img {
+    width: 56px;
+    height: 80px;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.2s ease;
+}
+
+.game-row.desktop:hover img {
+    transform: scale(1.02);
+}
+
+/* Mobile: Inline row layout */
+.game-row.mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+/* Mobile: Circular thumbnails (no hover) */
+.game-row.mobile a:has(img) {
+    display: block;
+    overflow: hidden;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.game-row.mobile img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    object-position: center;
+}
+
+.game-row.mobile .rank {
+    flex-shrink: 0;
+}
+
+.game-row.mobile > a:last-child {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Column spacing for game list layout */
+.game-row .column {
+    padding: 0.5rem;
+}
+
+.game-row .columns {
+    margin-inline-start: -0.5rem;
+    margin-inline-end: -0.5rem;
+    margin-top: -0.5rem;
+}
+
+/* Desktop rank styling with Handjet font */
+.game-row.desktop .rank {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: Handjet, sans-serif;
+    font-weight: 800;
+    text-shadow: -3px 3px 0px #5d5b5b;
+    /* Fixed dimensions to prevent CLS when font loads */
+    width: 95px;
+    min-width: 95px;
+    height: 56px;
+    font-size: 47px;
+    line-height: 1.2;
+    margin-right: 0.75rem;
+    transition: font-size 0.25s ease, height 0.25s ease;
+}
+
+.game-row.desktop:hover .rank {
+    font-size: 67px;
+    height: 80px;
+}
+
+/* Mobile rank styling */
+.game-row.mobile .rank {
+    color: #fff;
+    font-family: Handjet, sans-serif;
+    font-weight: 800;
+    text-shadow: -2px 2px 0px #5d5b5b;
+    font-size: 25px;
+    margin-right: 5px;
+    vertical-align: middle;
+    /* Reserve space to prevent CLS when font loads */
+    display: inline-block;
+    min-width: 35px;
+    line-height: 1.2;
+}
+
+.game-row.highlight {
+    background: #393939;
+}
+
+/* Game content column - vertically centered by default, top-aligned on hover */
+.game-row.desktop > .column:last-child {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: justify-content 0.25s ease;
+}
+
+.game-row.desktop:hover > .column:last-child {
+    justify-content: flex-start;
+}
+
+/* Game title */
+.game-row .game-name {
+    font-size: 1.35rem;
+}
+
+.game-row.mobile .game-name {
+    font-size: 1rem;
+    flex: 1;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+/* Mobile: Hide properties, disable hover effects */
+.game-row.mobile .game-properties {
+    display: none;
+}
+
+.game-row.mobile:hover {
+    background-color: transparent;
+    transform: none;
+    border-left-color: transparent;
+}
+
+/* ==========================================================================
+   Game Properties (List View)
+   ========================================================================== */
+
+.game-properties {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin-top: 0.35rem;
+    font-size: 0.95rem;
+    color: #aaa;
+}
+
+/* Desktop: hidden by default, show on hover */
+.game-row.desktop .game-properties {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.25s ease, margin-top 0.25s ease;
+}
+
+.game-row.desktop:hover .game-properties {
+    max-height: 3rem;
+    opacity: 1;
+}
+
+.game-properties a {
+    color: #ccc;
+}
+
+.game-properties a:hover {
+    color: #fff;
+}
+
+.game-property {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.game-property > span:first-child {
+    color: #888;
+}
+
+/* On mobile, stack properties vertically */
+.game-row.mobile .game-properties {
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+/* ==========================================================================
+   Simple Filters
+   ========================================================================== */
+
+/* Note: is-grouped-multiline provides proper spacing, so we only need to override for is-grouped */
+.field.is-grouped:not(.is-grouped-multiline) > .control:not(:last-child) {
+    margin-bottom: 0;
+    margin-right: 0;
+}
+
+/* Select dropdown dark background - match navbar */
+.select select {
+    background-color: #131313;
+    color: #fff;
+    border-color: #4a4a4a;
+}
+
+.select select:hover {
+    border-color: #5a5a5a;
+}
+
+/* select focus uses default Bulmaswatch Cyborg theme colors */
+
+.select:not(.is-multiple):not(.is-loading)::after {
+    border-color: #fff;
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+/* Flexbox filter container - replaces inline styles */
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+/* Status card for import page */
+.status-card {
+    background-color: #1a3a52;
+    padding: 15px;
+    border-radius: 4px;
+    border-left: 4px solid #3273dc;
+}
+
+.status-card-label {
+    color: #b0b0b0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.status-card-value {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* ==========================================================================
+   Home Page
+   ========================================================================== */
+
+.top-ten {
+    border-top: 2px solid #4a4a4a;
+    padding-top: 15px;
+    border-bottom: 2px solid #4a4a4a;
+    padding-bottom: 10px;
+}
+
+.top-ten .game {
+    float: left;
+    width: 155px;
+    margin-bottom: 20px;
+}
+
+.top-ten .link {
+    float: left;
+    width: 322px;
+    height: 120px;
+    padding: 40px;
+    position: relative;
+}
+
+.top-ten .game .rank {
+    vertical-align: top;
+    display: inline-block;
+    font-family: Handjet, sans-serif;
+    font-size: 60px;
+    font-weight: 800;
+    text-shadow: -3px 3px 0px #5d5b5b;
+    color: #fff;
+    width: 60px;
+    text-align: center;
+    padding-top: 15px;
+}
+
+/* Last update styling - matches snippet color */
+.last-update {
+    margin-top: 1rem;
+    color: rgb(200, 200, 200); /* Match snippet text color */
+}
+
+/* Snippet text styling */
+/* The snippet div uses is-size-4 which is 1.5rem, with light grey color */
+.snippet-text {
+    font-size: 1.5rem !important; /* Match is-size-4 exactly */
+    line-height: 1.5;
+    color: rgb(181, 181, 181) !important; /* Match Bulmaswatch Cyborg theme body text color */
+    margin-bottom: 1.5rem; /* Add space between snippet and "Current Top 10" */
+}
+
+/* ==========================================================================
+   Filter Badge Colors
+   Override any conflicts between base Bulma and Bulmaswatch
+   ========================================================================== */
+
+.tag.is-primary {
+    background-color: #209cee !important; /* Bulmaswatch Cyborg primary color */
+    color: #fff !important;
+}
+
+.tag.is-primary .delete {
+    background-color: rgba(10, 10, 10, 0.2) !important;
+}
+
+.tag.is-primary .delete:hover,
+.tag.is-primary .delete:focus {
+    background-color: rgba(10, 10, 10, 0.3) !important;
+}
+
+/* ==========================================================================
+   Contact Modal (Home Page)
+   ========================================================================== */
+
+.modal-card {
+    background: #1a1a1a;
+}
+
+.modal-card-head {
+    background: #1a1a1a;
+    border-bottom: 1px solid #4a4a4a;
+}
+
+.modal-card-body {
+    background: #1a1a1a;
+}
+
+.modal-card-foot {
+    background: #1a1a1a;
+    border-top: 1px solid #4a4a4a;
+}
+
+.modal-card-title {
+    color: #fff;
+}
+
+/* Contact Modal Dark Theme Styling */
+#contactModal .modal-card-head,
+#contactModal .modal-card-body,
+#contactModal .modal-card-foot {
+    background-color: #14161A;
+    color: #ABB1BF;
+}
+
+#contactModal .modal-card-head {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+#contactModal .modal-card-foot {
+    border-top: 1px solid #4a4a4a;
+}
+
+#contactModal .label {
+    color: #ABB1BF;
+}
+
+#contactModal .input,
+#contactModal .textarea,
+#contactModal .select select {
+    background-color: #1e2127;
+    border-color: #4a4a4a;
+    color: #ABB1BF;
+}
+
+#contactModal .input:focus,
+#contactModal .textarea:focus,
+#contactModal .select select:focus {
+    border-color: #00d1b2;
+}
+
+#contactModal .input::placeholder,
+#contactModal .textarea::placeholder {
+    color: #7a7a7a;
+}
+
+/* Reduce spacing between form fields */
+#contactModal .field {
+    margin-bottom: 1rem;
+}
+
+#contactModal .field:last-of-type {
+    margin-bottom: 0;
+}
+
+/* Make hero logo and thumbnails responsive while preserving aspect ratio for CLS */
+.column > img[width][height] {
+    max-width: 100%;
+    height: auto;
+}
+
+.top-ten .game img[width][height] {
+    max-width: 90px;
+    height: auto;
+}
+
+/* ==========================================================================
+   404 Page
+   ========================================================================== */
+
+@keyframes moon-shake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    10% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+    20% { transform: translate(1px, -1px) rotate(0.5deg); }
+    30% { transform: translate(-1px, 0) rotate(-0.3deg); }
+    40% { transform: translate(1px, 1px) rotate(0.3deg); }
+    50% { transform: translate(0, -1px) rotate(-0.5deg); }
+    60% { transform: translate(-1px, 1px) rotate(0.5deg); }
+    70% { transform: translate(1px, 0) rotate(-0.3deg); }
+    80% { transform: translate(-1px, -1px) rotate(0.3deg); }
+    90% { transform: translate(1px, 1px) rotate(-0.5deg); }
+}
+
+.moon-falling {
+    animation: moon-shake 0.5s ease-in-out infinite;
+    display: inline-block;
+}

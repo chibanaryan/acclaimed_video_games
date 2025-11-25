@@ -15,374 +15,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=swap" rel="stylesheet">
 
-    <style>
-        body {
-            margin-top: 5em;
-        }
-    </style>
-<style>
-    .import-step {
-        border-left: 4px solid #3273dc;
-        padding-left: 20px;
-        margin-bottom: 30px;
-        position: relative;
-        color: #e0e0e0;
-    }
-
-    .import-step h3 {
-        color: #ffffff;
-    }
-
-    .import-step p {
-        color: #d0d0d0;
-    }
-
-    .import-step code {
-        background-color: #2a2a2a;
-        color: #ff6b6b;
-        padding: 2px 4px;
-        border-radius: 3px;
-    }
-
-    .import-step::before {
-        content: attr(data-step);
-        position: absolute;
-        left: -18px;
-        top: 0;
-        width: 32px;
-        height: 32px;
-        background-color: #3273dc;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 16px;
-    }
-
-    /* Completed step styles */
-    .import-step.completed {
-        opacity: 0.6;
-        border-left-color: #48c774;
-    }
-
-    .import-step.completed::before {
-        content: '✓';
-        background-color: #48c774;
-        font-size: 18px;
-    }
-
-    .import-step.completed h3,
-    .import-step.completed p {
-        color: #a0a0a0;
-    }
-
-    .file-input-wrapper {
-        margin-bottom: 20px;
-    }
-
-    .file-cta {
-        background-color: #363636;
-        color: #ffffff !important;
-    }
-
-    .file-cta .file-label {
-        color: #ffffff !important;
-    }
-
-    .file-name {
-        color: #b0b0b0 !important;
-    }
-
-    .import-info {
-        background-color: #1a3a52;
-        padding: 15px;
-        border-radius: 4px;
-        margin-bottom: 30px;
-        border-left: 4px solid #3273dc;
-    }
-
-    .import-info h3 {
-        margin-top: 0;
-        color: #ffffff;
-        font-weight: 600;
-    }
-
-    .import-info p {
-        margin: 5px 0;
-        color: #d0d0d0;
-        font-size: 14px;
-    }
-
-    .import-info ol {
-        color: #d0d0d0;
-    }
-
-    .import-info ol li {
-        color: #d0d0d0;
-    }
-
-    .import-warning {
-        color: #ff6b6b;
-        font-weight: 500;
-    }
-
-    .form-section {
-        margin-bottom: 40px;
-        padding-bottom: 40px;
-        border-bottom: 1px solid #e5e5e5;
-    }
-
-    .form-section:last-child {
-        border-bottom: none;
-    }
-
-    .progress-container {
-        display: none;
-        margin-top: 30px;
-        padding: 20px;
-        background-color: #1a3a52;
-        border-radius: 4px;
-        border-left: 4px solid #3273dc;
-    }
-
-    .progress-container.active {
-        display: block;
-    }
-
-    .progress-bar-wrapper {
-        width: 100%;
-        height: 30px;
-        background-color: #0f1f30;
-        border-radius: 4px;
-        overflow: hidden;
-        margin: 15px 0;
-    }
-
-    .progress-bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #3273dc, #0099ff);
-        width: 0%;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        padding-right: 10px;
-        color: white;
-        font-weight: bold;
-        font-size: 14px;
-        transition: width 0.2s ease;
-    }
-
-    .progress-info {
-        color: #d0d0d0;
-        font-size: 14px;
-        margin: 10px 0;
-    }
-
-    .progress-info strong {
-        color: #ffffff;
-    }
-
-    .progress-error {
-        color: #ff6b6b;
-        padding: 10px;
-        background-color: #2a1a1a;
-        border-radius: 4px;
-        margin-top: 10px;
-    }
-
-    .igdb-status-card {
-        background-color: #1a3a52;
-        padding: 15px;
-        border-radius: 4px;
-        border-left: 4px solid #3273dc;
-    }
-
-    .igdb-status-card .label {
-        color: #b0b0b0;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .igdb-status-card .value {
-        color: #ffffff;
-        font-size: 28px;
-        font-weight: bold;
-        margin-top: 5px;
-    }
-
-    .igdb-status-card .percentage {
-        color: #0099ff;
-        font-size: 12px;
-        margin-top: 5px;
-    }
-
-    .error-container {
-        background-color: #2a1a1a;
-        border-left: 4px solid #ff6b6b;
-        padding: 20px;
-        border-radius: 4px;
-        margin-bottom: 30px;
-    }
-
-    .error-container h3 {
-        color: #ff6b6b;
-        margin-top: 0;
-        margin-bottom: 15px;
-    }
-
-    .error-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .error-list li {
-        color: #ff8a8a;
-        padding: 8px 0;
-        border-bottom: 1px solid #3a2a2a;
-    }
-
-    .error-list li:last-child {
-        border-bottom: none;
-    }
-
-    .error-dismiss {
-        margin-top: 15px;
-    }
-
-    .error-dismiss button {
-        background-color: #3a2a2a;
-        color: #ff6b6b;
-        border: 1px solid #ff6b6b;
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .error-dismiss button:hover {
-        background-color: #ff6b6b;
-        color: #2a1a1a;
-    }
-
-    .success-container {
-        background-color: #1a2a1a;
-        border-left: 4px solid #48c774;
-        padding: 20px;
-        border-radius: 4px;
-        margin-bottom: 30px;
-        color: #48c774;
-    }
-
-    .success-container h3 {
-        color: #48c774;
-        margin-top: 0;
-        margin-bottom: 10px;
-    }
-
-    .success-container p {
-        margin: 0;
-        color: #6ae589;
-        white-space: pre-wrap;
-    }
-
-    .batch-progress-container {
-        display: none;
-        margin-top: 30px;
-        padding: 20px;
-        background-color: #1a3a52;
-        border-radius: 4px;
-        border-left: 4px solid #3273dc;
-    }
-
-    .batch-progress-container.active {
-        display: block;
-    }
-
-    .file-progress-item {
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #2a4a62;
-    }
-
-    .file-progress-item:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-        margin-bottom: 0;
-    }
-
-    .file-progress-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .file-progress-name {
-        color: #ffffff;
-        font-weight: 600;
-        font-size: 15px;
-    }
-
-    .file-progress-status {
-        color: #0099ff;
-        font-size: 12px;
-        padding: 4px 8px;
-        background-color: #0f1f30;
-        border-radius: 3px;
-    }
-
-    .file-progress-status.complete {
-        color: #48c774;
-        background-color: #1a2a1a;
-    }
-
-    .file-progress-status.error {
-        color: #ff6b6b;
-        background-color: #2a1a1a;
-    }
-
-    .file-progress-bar-wrapper {
-        width: 100%;
-        height: 24px;
-        background-color: #0f1f30;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-bottom: 8px;
-    }
-
-    .file-progress-bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #3273dc, #0099ff);
-        width: 0%;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        padding-right: 8px;
-        color: white;
-        font-weight: bold;
-        font-size: 12px;
-        transition: width 0.2s ease;
-    }
-
-    .file-progress-details {
-        color: #d0d0d0;
-        font-size: 13px;
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .file-progress-details-left {
-        flex: 1;
-    }
-
-    .file-progress-details-right {
-        text-align: right;
-    }
-</style>
+    {# Import page custom styles #}
+    <link rel="stylesheet" href="{% static 'games/css/import.css' %}">
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -491,49 +125,47 @@
 <div class="form-section">
     <h2 class="subtitle">Database Status</h2>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
-            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Platforms</div>
-            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.platforms }}</div>
+    <div class="status-grid">
+        <div class="status-card">
+            <div class="label">Platforms</div>
+            <div class="value">{{ counts.platforms }}</div>
         </div>
 
-        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
-            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Publications</div>
-            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.publications }}</div>
+        <div class="status-card">
+            <div class="label">Publications</div>
+            <div class="value">{{ counts.publications }}</div>
         </div>
 
-        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
-            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Source Lists</div>
-            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.lists }}</div>
+        <div class="status-card">
+            <div class="label">Source Lists</div>
+            <div class="value">{{ counts.lists }}</div>
         </div>
 
-        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
-            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Games</div>
-            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.games }}</div>
+        <div class="status-card">
+            <div class="label">Games</div>
+            <div class="value">{{ counts.games }}</div>
         </div>
 
-        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
-            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Game Positions</div>
-            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.memberships }}</div>
+        <div class="status-card">
+            <div class="label">Game Positions</div>
+            <div class="value">{{ counts.memberships }}</div>
         </div>
 
-        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
-            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Developers</div>
-            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.developers }}</div>
+        <div class="status-card">
+            <div class="label">Developers</div>
+            <div class="value">{{ counts.developers }}</div>
         </div>
 
-        <div style="background-color: #1a3a52; padding: 15px; border-radius: 4px; border-left: 4px solid #3273dc;">
-            <div style="color: #b0b0b0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Genres</div>
-            <div style="color: #ffffff; font-size: 28px; font-weight: bold; margin-top: 5px;">{{ counts.genres }}</div>
+        <div class="status-card">
+            <div class="label">Genres</div>
+            <div class="value">{{ counts.genres }}</div>
         </div>
 
         <div class="igdb-status-card">
             <div class="label">IGDB Data Status</div>
             <div class="value">{{ igdb_counts.with_igdb }}/{{ igdb_counts.total }}</div>
             <div class="percentage">{{ igdb_counts.percentage }}% complete</div>
-            <div style="color: #d0d0d0; font-size: 12px; margin-top: 10px;">
-                {{ igdb_counts.without_igdb }} game{{ igdb_counts.without_igdb|pluralize }} need{{ igdb_counts.without_igdb|pluralize }} data
-            </div>
+            <div class="percentage">{{ igdb_counts.without_igdb }} game{{ igdb_counts.without_igdb|pluralize }} need{{ igdb_counts.without_igdb|pluralize }} data</div>
         </div>
     </div>
 </div>
@@ -542,7 +174,7 @@
 <div class="form-section">
     <h2 class="subtitle">Quick Actions</h2>
 
-    <div style="display: flex; gap: 10px; align-items: center;">
+    <div class="quick-actions">
         <form method="POST" action="." style="margin: 0;">
             {% csrf_token %}
             <input type="hidden" id="delete-data" name="delete" value="true">

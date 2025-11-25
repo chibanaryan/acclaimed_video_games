@@ -1,6 +1,6 @@
 {# Game search results partial - used for both initial render and HTMX updates #}
 {% if games %}
-<div style="margin-top: 1.5rem;">
+<div class="pagination-spacing-top">
     {# Pagination at top #}
     {% include 'includes/_pagination_responsive.html' with page_obj=page_obj target_id='content' spacing='top' %}
 
