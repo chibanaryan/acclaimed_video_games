@@ -7,11 +7,11 @@
      data-end-index="{% if page_obj %}{{ page_obj.end_index }}{% else %}0{% endif %}"
      data-total-count="{% if page_obj %}{{ page_obj.paginator.count }}{% else %}0{% endif %}"
      style="display: none;"></div>
-{% if page_obj %}
 <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+    {% if page_obj %}
     {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+    {% endif %}
 </div>
-{% endif %}
 
 {% if developers %}
 <table class="table is-fullwidth">
@@ -44,9 +44,9 @@
 </div>
 {% endif %}
 
-{% if page_obj %}
 <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+    {% if page_obj %}
     {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+    {% endif %}
 </div>
-{% endif %}
 

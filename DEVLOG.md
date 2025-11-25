@@ -2,8 +2,9 @@
 
 ## 2025-11-25
 
-- Fixed pagination layout jump on Developers and Source Lists pages (HTMX partials missing margin styling)
-- Added counts to Publication and Type dropdowns on Source Lists page (matching existing Year filter pattern)
+- Implemented faceted filtering on Source Lists (filter counts update dynamically, hide zero-count options)
+- Changed list type URL params from codes to readable slugs (`?type=all-time` instead of `?type=A`)
+- Fixed pagination layout stability (centralized min-height in CSS, nav only renders when needed)
 - Added CSV download button to game list (respects filters, uses filtered rank for filtered exports)
 - Redesigned game list: compact rows with circular thumbnails, hover effects (expand thumbnail, show properties, grow rank), fading hover background, minimal mobile layout
 - Redesigned 404 page with Majora's Mask theme (shaking moon, Happy Mask Salesman GIF, quote, Song of Time button with audio, responsive layout)

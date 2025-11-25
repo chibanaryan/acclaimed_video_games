@@ -23,6 +23,17 @@ LIST_TYPES = [
     (LIST_DECADE, "Decade"),
 ]
 
+# URL-friendly slugs for list types
+LIST_TYPE_SLUGS = {
+    LIST_ALLTIME: "all-time",
+    LIST_EOY: "end-of-year",
+    LIST_MISC: "miscellaneous",
+    LIST_DECADE: "decade",
+}
+
+# Reverse mapping: slug -> code
+LIST_TYPE_CODES = {slug: code for code, slug in LIST_TYPE_SLUGS.items()}
+
 SEARCH_ALL = "ALL"
 SEARCH_ANY = "ANY"
 SEARCH_EXACTLY = "EXACTLY"

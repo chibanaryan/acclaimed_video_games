@@ -58,7 +58,7 @@
                         x-model="type">
                     <option value="">All list types</option>
                     {% for type_data in type_counts %}
-                    <option value="{{ type_data.type }}" {% if filters.type == type_data.type %}selected{% endif %}>
+                    <option value="{{ type_data.slug }}" {% if filters.type == type_data.slug %}selected{% endif %}>
                         {{ type_data.type|get_list_type_label }} ({{ type_data.count }})
                     </option>
                     {% endfor %}
@@ -77,20 +77,20 @@
         {% endif %}
     </div>
 
-    {% if page_obj %}
     <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+        {% if page_obj %}
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
+        {% endif %}
     </div>
-    {% endif %}
 
     {% if lists %}
         {% include 'includes/_list_results.html' with items=lists show_type=True show_rank=False %}
     {% endif %}
 
-    {% if page_obj %}
     <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+        {% if page_obj %}
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 

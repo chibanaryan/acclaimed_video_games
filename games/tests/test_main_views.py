@@ -591,8 +591,8 @@ class ListListViewTest(TestCase):
         self.assertEqual(lists[0].year, 2020)
 
     def test_filter_by_type(self):
-        """Test filtering lists by type."""
-        response = self.client.get(reverse("list-list") + "?type=A")
+        """Test filtering lists by type using URL slug."""
+        response = self.client.get(reverse("list-list") + "?type=all-time")
         self.assertEqual(response.status_code, 200)
         lists = list(response.context["lists"])
         self.assertEqual(len(lists), 1)
@@ -656,6 +656,149 @@ class ListListViewTest(TestCase):
         """Test that out of range page returns last page."""
         response = self.client.get(reverse("list-list") + "?page=999")
         self.assertEqual(response.status_code, 200)
+
+
+class ListListFacetedFilterTest(TestCase):
+    """Test faceted filter counts on list list view."""
+
+    def setUp(self):
+        # Create publishers
+        self.pub_ign = Publication.objects.create(name="IGN")
+        self.pub_gamespot = Publication.objects.create(name="GameSpot")
+        self.pub_polygon = Publication.objects.create(name="Polygon")
+
+        # Create diverse set of lists for testing facets
+        # IGN: 2020 All-time, 2021 End-of-year
+        List.objects.create(
+            name="IGN 2020", publisher=self.pub_ign, year=2020, type="A"
+        )
+        List.objects.create(
+            name="IGN 2021", publisher=self.pub_ign, year=2021, type="E"
+        )
+
+        # GameSpot: 2020 End-of-year, 2021 End-of-year
+        List.objects.create(
+            name="GS 2020", publisher=self.pub_gamespot, year=2020, type="E"
+        )
+        List.objects.create(
+            name="GS 2021", publisher=self.pub_gamespot, year=2021, type="E"
+        )
+
+        # Polygon: 2021 All-time only
+        List.objects.create(
+            name="Polygon 2021", publisher=self.pub_polygon, year=2021, type="A"
+        )
+
+    def test_year_counts_filter_by_publisher(self):
+        """Year counts should reflect publisher filter."""
+        response = self.client.get(
+            reverse("list-list") + f"?publisher={self.pub_ign.id}"
+        )
+        years = response.context["meta"]["lists"]["years"]
+        year_dict = {y["year"]: y["count"] for y in years}
+
+        # IGN has 1 list in 2020, 1 in 2021
+        self.assertEqual(year_dict.get(2020), 1)
+        self.assertEqual(year_dict.get(2021), 1)
+
+    def test_year_counts_filter_by_type(self):
+        """Year counts should reflect type filter."""
+        response = self.client.get(reverse("list-list") + "?type=all-time")
+        years = response.context["meta"]["lists"]["years"]
+        year_dict = {y["year"]: y["count"] for y in years}
+
+        # All-time lists: 2020 has 1 (IGN), 2021 has 1 (Polygon)
+        self.assertEqual(year_dict.get(2020), 1)
+        self.assertEqual(year_dict.get(2021), 1)
+
+    def test_publisher_counts_filter_by_year(self):
+        """Publisher counts should reflect year filter."""
+        response = self.client.get(reverse("list-list") + "?year=2020")
+        publishers = response.context["publishers"]
+        pub_dict = {p.name: p.list_count for p in publishers}
+
+        # 2020: IGN has 1, GameSpot has 1, Polygon has 0 (should be hidden)
+        self.assertEqual(pub_dict.get("IGN"), 1)
+        self.assertEqual(pub_dict.get("GameSpot"), 1)
+        self.assertNotIn("Polygon", pub_dict)  # 0 count, not selected
+
+    def test_publisher_counts_filter_by_type(self):
+        """Publisher counts should reflect type filter."""
+        response = self.client.get(reverse("list-list") + "?type=end-of-year")
+        publishers = response.context["publishers"]
+        pub_dict = {p.name: p.list_count for p in publishers}
+
+        # End-of-year: IGN has 1, GameSpot has 2, Polygon has 0
+        self.assertEqual(pub_dict.get("IGN"), 1)
+        self.assertEqual(pub_dict.get("GameSpot"), 2)
+        self.assertNotIn("Polygon", pub_dict)
+
+    def test_type_counts_filter_by_publisher(self):
+        """Type counts should reflect publisher filter."""
+        response = self.client.get(
+            reverse("list-list") + f"?publisher={self.pub_ign.id}"
+        )
+        type_counts = response.context["type_counts"]
+        type_dict = {t["type"]: t["count"] for t in type_counts}
+
+        # IGN: 1 All-time, 1 End-of-year
+        self.assertEqual(type_dict.get("A"), 1)
+        self.assertEqual(type_dict.get("E"), 1)
+
+    def test_type_counts_filter_by_year(self):
+        """Type counts should reflect year filter."""
+        response = self.client.get(reverse("list-list") + "?year=2020")
+        type_counts = response.context["type_counts"]
+        type_dict = {t["type"]: t["count"] for t in type_counts}
+
+        # 2020: 1 All-time (IGN), 1 End-of-year (GameSpot)
+        self.assertEqual(type_dict.get("A"), 1)
+        self.assertEqual(type_dict.get("E"), 1)
+
+    def test_combined_filters_affect_all_counts(self):
+        """Multiple filters should combine to affect all counts."""
+        response = self.client.get(
+            reverse("list-list") + f"?publisher={self.pub_ign.id}&year=2020"
+        )
+
+        # Year counts (filtered by publisher only)
+        years = response.context["meta"]["lists"]["years"]
+        year_dict = {y["year"]: y["count"] for y in years}
+        self.assertEqual(year_dict.get(2020), 1)  # IGN 2020
+        self.assertEqual(year_dict.get(2021), 1)  # IGN 2021
+
+        # Publisher counts (filtered by year only)
+        publishers = response.context["publishers"]
+        pub_dict = {p.name: p.list_count for p in publishers}
+        self.assertEqual(pub_dict.get("IGN"), 1)
+        self.assertEqual(pub_dict.get("GameSpot"), 1)
+
+        # Type counts (filtered by publisher + year)
+        type_counts = response.context["type_counts"]
+        type_dict = {t["type"]: t["count"] for t in type_counts}
+        self.assertEqual(type_dict.get("A"), 1)  # IGN 2020 is All-time
+        self.assertNotIn("E", type_dict)  # No End-of-year for IGN 2020
+
+    def test_zero_count_options_hidden(self):
+        """Options with 0 count should be hidden (unless selected)."""
+        response = self.client.get(reverse("list-list") + "?year=2020")
+        publishers = response.context["publishers"]
+
+        # Polygon has 0 lists in 2020 and is not selected
+        pub_names = [p.name for p in publishers]
+        self.assertNotIn("Polygon", pub_names)
+
+    def test_selected_zero_count_remains_visible(self):
+        """Currently selected option should remain visible even with 0 count."""
+        response = self.client.get(
+            reverse("list-list") + f"?publisher={self.pub_polygon.id}&year=2020"
+        )
+        publishers = response.context["publishers"]
+        pub_dict = {p.name: p.list_count for p in publishers}
+
+        # Polygon should still be visible (selected) but with 0 count
+        self.assertIn("Polygon", pub_dict)
+        self.assertEqual(pub_dict["Polygon"], 0)
 
 
 class PostListViewTest(TestCase):

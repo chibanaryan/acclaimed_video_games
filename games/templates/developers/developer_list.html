@@ -73,10 +73,12 @@ document.body.addEventListener('htmx:afterSwap', function(e) {
          data-start-index="{{ page_obj.start_index }}"
          data-end-index="{{ page_obj.end_index }}"
          data-total-count="{{ page_obj.paginator.count }}"></div>
-    <div class="pagination-wrapper" style="margin-top: 1.5rem;">
-        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
-    </div>
     {% endif %}
+    <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+        {% if page_obj %}
+        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+        {% endif %}
+    </div>
 
     {% if developers %}
     <table class="table is-fullwidth">
@@ -109,11 +111,11 @@ document.body.addEventListener('htmx:afterSwap', function(e) {
     </div>
     {% endif %}
 
-    {% if page_obj %}
     <div class="pagination-wrapper" style="margin-top: 1.5rem;">
+        {% if page_obj %}
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endblock %}
 

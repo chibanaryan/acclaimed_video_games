@@ -518,52 +518,104 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             except (ValueError, TypeError):
                 pass  # Invalid year, skip filter
 
-        list_type = self.request.GET.get("type")
-        if list_type:
-            qs = qs.filter(type=list_type)
+        # Convert URL slug to type code for filtering
+        type_slug = self.request.GET.get("type")
+        if type_slug:
+            type_code = constants.LIST_TYPE_CODES.get(type_slug)
+            if type_code:
+                qs = qs.filter(type=type_code)
 
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Add meta data for filters
+        # Extract and validate filter values
+        publisher_id = self.request.GET.get("publisher")
+        year_value = self.request.GET.get("year")
+        type_slug = self.request.GET.get("type")
 
-        # Get list years with counts
-        list_year_counts = (
-            models.List.objects.order_by("year")
-            .values("year")
-            .annotate(count=Count("id"))
-            .order_by("year")
+        try:
+            publisher_id = int(publisher_id) if publisher_id else None
+        except (ValueError, TypeError):
+            publisher_id = None
+
+        try:
+            year_value = int(year_value) if year_value else None
+        except (ValueError, TypeError):
+            year_value = None
+
+        # Convert URL slug to type code for database queries
+        type_code = constants.LIST_TYPE_CODES.get(type_slug) if type_slug else None
+
+        # --- FACETED COUNTS ---
+        # Each dropdown shows counts based on OTHER filters applied
+
+        # 1. Year counts: filtered by publisher + type (NOT year)
+        year_base_qs = models.List.objects.all()
+        if publisher_id:
+            year_base_qs = year_base_qs.filter(publisher_id=publisher_id)
+        if type_code:
+            year_base_qs = year_base_qs.filter(type=type_code)
+
+        list_year_counts = list(
+            year_base_qs.values("year").annotate(count=Count("id")).order_by("year")
         )
 
-        # Get publishers with list counts
-        publishers = models.Publication.objects.annotate(
-            list_count=Count("lists")
-        ).order_by("name")
+        # Filter years: include count > 0 OR currently selected
+        year_str = str(year_value) if year_value else None
+        filtered_years = [
+            y for y in list_year_counts if y["count"] > 0 or str(y["year"]) == year_str
+        ]
 
-        # Get list types from constants
-        list_types = constants.LIST_TYPES
+        # 2. Publisher counts: filtered by year + type (NOT publisher)
+        publisher_base_qs = models.List.objects.all()
+        if year_value:
+            publisher_base_qs = publisher_base_qs.filter(year=year_value)
+        if type_code:
+            publisher_base_qs = publisher_base_qs.filter(type=type_code)
 
-        # Get type counts
-        type_counts = (
-            models.List.objects.values("type")
+        publisher_ids_with_counts = dict(
+            publisher_base_qs.values("publisher_id")
             .annotate(count=Count("id"))
-            .order_by("type")
+            .values_list("publisher_id", "count")
         )
 
-        context["meta"] = {
-            "lists": {
-                "years": list(list_year_counts),
-            }
-        }
+        # Include publishers with count > 0 OR currently selected
+        publishers = []
+        for pub in models.Publication.objects.order_by("name"):
+            count = publisher_ids_with_counts.get(pub.id, 0)
+            if count > 0 or pub.id == publisher_id:
+                pub.list_count = count
+                publishers.append(pub)
+
+        # 3. Type counts: filtered by publisher + year (NOT type)
+        type_base_qs = models.List.objects.all()
+        if publisher_id:
+            type_base_qs = type_base_qs.filter(publisher_id=publisher_id)
+        if year_value:
+            type_base_qs = type_base_qs.filter(year=year_value)
+
+        type_counts_raw = list(
+            type_base_qs.values("type").annotate(count=Count("id")).order_by("type")
+        )
+
+        # Add slug to each type and filter: include count > 0 OR currently selected
+        filtered_types = []
+        for t in type_counts_raw:
+            t["slug"] = constants.LIST_TYPE_SLUGS.get(t["type"], t["type"])
+            if t["count"] > 0 or t["type"] == type_code:
+                filtered_types.append(t)
+
+        # Build context
+        context["meta"] = {"lists": {"years": filtered_years}}
         context["publishers"] = publishers
-        context["list_types"] = list_types
-        context["type_counts"] = list(type_counts)
+        context["list_types"] = constants.LIST_TYPES
+        context["type_counts"] = filtered_types
         context["filters"] = {
-            "publisher": self.request.GET.get("publisher"),
-            "year": self.request.GET.get("year"),
-            "type": self.request.GET.get("type"),
+            "publisher": str(publisher_id) if publisher_id else None,
+            "year": str(year_value) if year_value else None,
+            "type": type_slug,  # Keep as slug for template comparison
         }
 
         return context
