@@ -28,12 +28,18 @@
     {# Material Design Icons #}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
     
-    {# Handjet Font (for rank numbers) - MUST INCLUDE #}
-    {# Preload font to prevent FOUT (flash of unstyled text) #}
-    <link rel="preload" href="https://fonts.gstatic.com/s/handjet/v19/oY1n8eXHq7n1OnbQrOY_2FrEwYEMLlcdP1mF.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@800&display=swap" rel="stylesheet">
+    {# Handjet Font (for rank numbers) - Self-hosted to prevent FOUT #}
+    {# Using font-display: block prevents visible font swap #}
+    <link rel="preload" href="{% static 'games/fonts/Handjet-ExtraBold.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <style>
+        @font-face {
+            font-family: 'Handjet';
+            src: url("{% static 'games/fonts/Handjet-ExtraBold.woff2' %}") format('woff2');
+            font-weight: 800;
+            font-style: normal;
+            font-display: block;
+        }
+    </style>
 
     {# Prefetch critical images that appear on every page #}
     <link rel="prefetch" href="{% static 'games/avg_logo_small.png' %}" as="image">
