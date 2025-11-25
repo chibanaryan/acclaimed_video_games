@@ -4,7 +4,7 @@
 {% block title %}News - Acclaimed Games{% endblock %}
 
 {% block content %}
-<h1 class="title is-size-4">News</h1>
+<h1 class="title">News</h1>
 {% for post in posts %}
     {% include 'posts/includes/_post_item.html' with post=post %}
 {% endfor %}
