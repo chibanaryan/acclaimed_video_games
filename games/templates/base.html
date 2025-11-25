@@ -275,10 +275,6 @@
             border: none;
         }
         
-        .game-row {
-            border-bottom: 1px solid #4a4a4a;
-        }
-        
         .game-header {
             border-bottom: 1px solid #4a4a4a;
             color: #fff;
@@ -440,29 +436,90 @@
 
         /* GameRow styles */
         .game-row {
-            border-bottom: 1px solid #616161;
+            border-left: 3px solid transparent;
+            border-bottom: 1px solid #2a2a2a;
+            transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            position: relative;
         }
 
-        .game-row .thumbnail img {
-            max-width: inherit;
+
+        .game-row.desktop:hover {
+            background: linear-gradient(to right, #363636 0%, #363636 70%, transparent 100%);
+            transform: translateY(-1px);
+            border-left-color: #3273dc;
         }
 
-        /* Ensure game thumbnails maintain aspect ratio and prevent CLS */
-        .game-row img {
-            height: auto;
-            max-width: 100%;
-            aspect-ratio: 90 / 128;
+        /* Desktop: Circular game cover thumbnails - expand on hover */
+        .game-row.desktop a:has(img) {
+            display: block;
+            overflow: hidden;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            transition: border-radius 0.25s ease, width 0.25s ease, height 0.25s ease;
+        }
+
+        .game-row.desktop:hover a:has(img) {
+            border-radius: 4px;
+            width: 56px;
+            height: 80px;
+        }
+
+        .game-row.desktop img {
+            width: 56px;
+            height: 80px;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.2s ease;
+        }
+
+        .game-row.desktop:hover img {
+            transform: scale(1.02);
+        }
+
+        /* Mobile: Inline row layout */
+        .game-row.mobile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        /* Mobile: Circular thumbnails (no hover) */
+        .game-row.mobile a:has(img) {
+            display: block;
+            overflow: hidden;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+        .game-row.mobile img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .game-row.mobile .rank {
+            flex-shrink: 0;
+        }
+
+        .game-row.mobile > a:last-child {
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         /* Column spacing for game list layout */
         .game-row .column {
-            padding: 0.75rem;
+            padding: 0.5rem;
         }
 
         .game-row .columns {
-            margin-inline-start: -0.75rem;
-            margin-inline-end: -0.75rem;
-            margin-top: -0.75rem;
+            margin-inline-start: -0.5rem;
+            margin-inline-end: -0.5rem;
+            margin-top: -0.5rem;
         }
 
         .game-row.desktop .rank {
@@ -475,11 +532,18 @@
             font-weight: 800;
             text-shadow: -3px 3px 0px #5d5b5b;
             /* Fixed dimensions to prevent CLS when font loads */
-            width: 122px;
-            min-width: 122px;
-            height: 72px;
-            font-size: 60px;
+            width: 95px;
+            min-width: 95px;
+            height: 56px;
+            font-size: 47px;
             line-height: 1.2;
+            margin-right: 0.75rem;
+            transition: font-size 0.25s ease, height 0.25s ease;
+        }
+
+        .game-row.desktop:hover .rank {
+            font-size: 67px;
+            height: 80px;
         }
 
         .game-row.mobile .rank {
@@ -498,6 +562,91 @@
 
         .game-row.highlight {
             background: #393939;
+        }
+
+        /* Game content column - vertically centered by default, top-aligned on hover */
+        .game-row.desktop > .column:last-child {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: justify-content 0.25s ease;
+        }
+
+        .game-row.desktop:hover > .column:last-child {
+            justify-content: flex-start;
+        }
+
+        /* Game title */
+        .game-row .game-name {
+            font-size: 1.35rem;
+        }
+
+        .game-row.mobile .game-name {
+            font-size: 1rem;
+            flex: 1;
+            min-width: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        /* Mobile: Hide properties, disable hover effects */
+        .game-row.mobile .game-properties {
+            display: none;
+        }
+
+        .game-row.mobile:hover {
+            background-color: transparent;
+            transform: none;
+            border-left-color: transparent;
+        }
+
+        /* Game properties inline layout */
+        .game-properties {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem 1.25rem;
+            margin-top: 0.35rem;
+            font-size: 0.95rem;
+            color: #aaa;
+        }
+
+        /* Desktop: hidden by default, show on hover */
+        .game-row.desktop .game-properties {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease, opacity 0.25s ease, margin-top 0.25s ease;
+        }
+
+        .game-row.desktop:hover .game-properties {
+            max-height: 3rem;
+            opacity: 1;
+        }
+
+        .game-properties a {
+            color: #ccc;
+        }
+
+        .game-properties a:hover {
+            color: #fff;
+        }
+
+        .game-property {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .game-property > span:first-child {
+            color: #888;
+        }
+
+        /* On mobile, stack properties vertically */
+        .game-row.mobile .game-properties {
+            flex-direction: column;
+            gap: 0.15rem;
         }
 
         /* SimpleFilters styles */

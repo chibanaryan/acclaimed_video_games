@@ -2,6 +2,7 @@
 
 ## 2025-11-25
 
+- Redesigned game list: compact rows with circular thumbnails, hover effects (expand thumbnail, show properties, grow rank), fading hover background, minimal mobile layout
 - Redesigned 404 page with Majora's Mask theme (shaking moon, Happy Mask Salesman GIF, quote, Song of Time button with audio, responsive layout)
 - Fixed Handjet font flash (FOUT) by self-hosting font with font-display: block instead of Google Fonts swap
 - Performance: Fixed DeveloperDetailView double query, lists_grouped_by_type prefetch bypass, Admin genres N+1

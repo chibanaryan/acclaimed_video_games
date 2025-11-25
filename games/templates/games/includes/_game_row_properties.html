@@ -1,53 +1,33 @@
 {# GameRowProperties component #}
 {# Props: game, show_rank (default: True) #}
 
-{% if show_rank %}
-<div class="py-0">
-    <span class="has-text-weight-medium is-size-6">
-        All time rank:
-    </span>
-    <span class="has-text-weight-medium is-size-6">
-        {{ game.rank }}
-    </span>
-</div>
-{% endif %}
+<div class="game-properties">
+    {% if show_rank %}
+    <div class="game-property">
+        <span>Rank:</span>
+        <span>{{ game.rank }}</span>
+    </div>
+    {% endif %}
 
-{% with developers=game.developers.all %}
-<div class="py-0">
-    <span class="has-text-weight-medium is-size-6">
-        Developer{{ developers|length|pluralize }}:
-    </span>
-    <span class="is-size-6">
-        {% for developer in developers %}
-            {% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}" class="is-size-6">{{ developer.name }}</a>{% else %}<span class="is-size-6">{{ developer.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-    </span>
-</div>
-{% endwith %}
+    {% with developers=game.developers.all %}
+    <div class="game-property">
+        <span>Dev:</span>
+        <span>{% for developer in developers %}{% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}">{{ developer.name }}</a>{% else %}{{ developer.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+    </div>
+    {% endwith %}
 
-{% with platforms=game.platforms.all %}
-<div class="py-0">
-    <span class="has-text-weight-medium is-size-6">
-        Platform{{ platforms|length|pluralize }}:
-    </span>
-    <span class="is-size-6">
-        {% for platform in platforms %}
-            <a href="{% url 'games-search' %}?platforms={{ platform.id }}">{{ platform.code }}</a>{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-    </span>
-</div>
-{% endwith %}
+    {% with platforms=game.platforms.all %}
+    <div class="game-property">
+        <span>Platforms:</span>
+        <span>{% for platform in platforms %}<a href="{% url 'games-search' %}?platforms={{ platform.id }}">{{ platform.code }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+    </div>
+    {% endwith %}
 
-{% with genres=game.genres.all %}
-<div class="py-0">
-    <span class="has-text-weight-medium is-size-6">
-        Genre{{ genres|length|pluralize }}:
-    </span>
-    <span class="is-size-6">
-        {% for genre in genres %}
-            <a href="{% url 'games-search' %}?genres={{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-    </span>
+    {% with genres=game.genres.all %}
+    <div class="game-property">
+        <span>Genres:</span>
+        <span>{% for genre in genres %}<a href="{% url 'games-search' %}?genres={{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+    </div>
+    {% endwith %}
 </div>
-{% endwith %}
 
