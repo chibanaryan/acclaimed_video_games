@@ -621,6 +621,26 @@ class ListListViewTest(TestCase):
         self.assertIn("publishers", response.context)
         self.assertIn("list_types", response.context)
 
+    def test_publishers_have_list_counts(self):
+        """Test that publishers in context have list_count attribute."""
+        response = self.client.get(reverse("list-list"))
+        publishers = response.context["publishers"]
+        # pub1 has 1 list, pub2 has 1 list
+        pub1_count = next(p.list_count for p in publishers if p.name == "IGN")
+        pub2_count = next(p.list_count for p in publishers if p.name == "GameSpot")
+        self.assertEqual(pub1_count, 1)
+        self.assertEqual(pub2_count, 1)
+
+    def test_type_counts_in_context(self):
+        """Test that type_counts is in context with correct structure."""
+        response = self.client.get(reverse("list-list"))
+        self.assertIn("type_counts", response.context)
+        type_counts = response.context["type_counts"]
+        # Should have counts for types A and E (from setUp)
+        type_dict = {t["type"]: t["count"] for t in type_counts}
+        self.assertEqual(type_dict.get("A"), 1)  # list1 is type A
+        self.assertEqual(type_dict.get("E"), 1)  # list2 is type E
+
     def test_htmx_request_returns_partial(self):
         """Test that HTMX requests return partial template."""
         response = self.client.get(reverse("list-list"), HTTP_HX_REQUEST="true")

@@ -4,7 +4,16 @@ from django.utils.safestring import mark_safe
 from datetime import datetime
 import json
 
+from games import constants
+
 register = template.Library()
+
+
+@register.filter
+def get_list_type_label(type_code):
+    """Convert list type code to human-readable label."""
+    type_dict = dict(constants.LIST_TYPES)
+    return type_dict.get(type_code, type_code)
 
 
 @register.simple_tag

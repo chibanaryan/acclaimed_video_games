@@ -537,11 +537,20 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             .order_by("year")
         )
 
-        # Get publishers
-        publishers = models.Publication.objects.all().order_by("name")
+        # Get publishers with list counts
+        publishers = models.Publication.objects.annotate(
+            list_count=Count("lists")
+        ).order_by("name")
 
         # Get list types from constants
         list_types = constants.LIST_TYPES
+
+        # Get type counts
+        type_counts = (
+            models.List.objects.values("type")
+            .annotate(count=Count("id"))
+            .order_by("type")
+        )
 
         context["meta"] = {
             "lists": {
@@ -550,6 +559,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         }
         context["publishers"] = publishers
         context["list_types"] = list_types
+        context["type_counts"] = list(type_counts)
         context["filters"] = {
             "publisher": self.request.GET.get("publisher"),
             "year": self.request.GET.get("year"),

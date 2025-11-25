@@ -19,7 +19,7 @@
                     <option value="">All publishers</option>
                     {% for publisher in publishers %}
                     <option value="{{ publisher.id }}" {% if filters.publisher == publisher.id|stringformat:"s" %}selected{% endif %}>
-                        {{ publisher.name }}
+                        {{ publisher.name }} ({{ publisher.list_count }})
                     </option>
                     {% endfor %}
                 </select>
@@ -57,9 +57,9 @@
                         "
                         x-model="type">
                     <option value="">All list types</option>
-                    {% for type_code, type_label in list_types %}
-                    <option value="{{ type_code }}" {% if filters.type == type_code %}selected{% endif %}>
-                        {{ type_label }}
+                    {% for type_data in type_counts %}
+                    <option value="{{ type_data.type }}" {% if filters.type == type_data.type %}selected{% endif %}>
+                        {{ type_data.type|get_list_type_label }} ({{ type_data.count }})
                     </option>
                     {% endfor %}
                 </select>

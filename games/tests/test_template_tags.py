@@ -8,6 +8,7 @@ from django.utils import timezone
 from games.templatetags.game_filters import (
     from_now,
     game_rank_url,
+    get_list_type_label,
     pagination_pages,
     pagination_url,
     tojson,
@@ -396,3 +397,27 @@ class PaginationUrlTest(TestCase):
         context = {"request": request}
         url = pagination_url(context, 1)
         self.assertEqual(url, "/developers/?page=1")
+
+
+class GetListTypeLabelTest(TestCase):
+    """Test the get_list_type_label template filter."""
+
+    def test_all_time_type(self):
+        """Test that 'A' returns 'All time'."""
+        self.assertEqual(get_list_type_label("A"), "All time")
+
+    def test_end_of_year_type(self):
+        """Test that 'E' returns 'End of year'."""
+        self.assertEqual(get_list_type_label("E"), "End of year")
+
+    def test_miscellaneous_type(self):
+        """Test that 'M' returns 'Miscellaneous'."""
+        self.assertEqual(get_list_type_label("M"), "Miscellaneous")
+
+    def test_decade_type(self):
+        """Test that 'D' returns 'Decade'."""
+        self.assertEqual(get_list_type_label("D"), "Decade")
+
+    def test_unknown_type_returns_code(self):
+        """Test that unknown type code returns the code itself."""
+        self.assertEqual(get_list_type_label("X"), "X")
