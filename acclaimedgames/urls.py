@@ -32,6 +32,7 @@ urlpatterns = [
         name="contact_thank_you",
     ),
     path("games/", views.GameListView.as_view(), name="games-list"),
+    path("games/download/", views.download_games_csv, name="games-download"),
     path("games/search/", views.GameSearchView.as_view(), name="games-search"),
     path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
     path("developers/", views.DeveloperListView.as_view(), name="developers-list"),

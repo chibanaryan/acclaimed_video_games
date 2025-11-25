@@ -1,3 +1,4 @@
+import csv
 from datetime import datetime
 from pathlib import Path
 
@@ -171,6 +172,49 @@ class GameListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         context["is_filtered"] = is_filtered
 
         return context
+
+
+def download_games_csv(request):
+    """Download games list as CSV, respecting current filters."""
+    # Get filtered queryset using same logic as GameListView
+    qs = models.Game.objects.with_relations()
+
+    decade = request.GET.get("decade")
+    year = request.GET.get("year")
+    start = request.GET.get("start")
+    end = request.GET.get("end")
+
+    qs = utils.apply_year_filters(qs, decade=decade, year=year, start=start, end=end)
+    qs = qs.order_by("rank")
+
+    # Determine if filtered (use filtered rank instead of alltime rank)
+    is_filtered = bool(decade or year or start or end)
+
+    # Build filename based on filters
+    filename = "acclaimed_games"
+    if decade:
+        filename += f"_{decade}"
+    elif year:
+        filename += f"_{year}"
+    filename += ".csv"
+
+    # Create CSV response
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(["Rank", "Name", "Year", "Developers", "Platforms", "Genres"])
+
+    for index, game in enumerate(qs, start=1):
+        developers = ", ".join(d.name for d in game.developers.all())
+        platforms = ", ".join(p.name for p in game.platforms.all())
+        genres = ", ".join(g.name for g in game.genres.all())
+        rank = index if is_filtered else game.rank
+        writer.writerow(
+            [rank, game.name, game.year_of_release, developers, platforms, genres]
+        )
+
+    return response
 
 
 class GameDetailView(DetailView):

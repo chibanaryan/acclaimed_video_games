@@ -739,3 +739,77 @@ class NotFoundViewTest(TestCase):
         response = self.client.get("/this-url-does-not-exist/")
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
+
+
+class GameDownloadCSVTest(TestCase):
+    """Test the CSV download functionality."""
+
+    def setUp(self):
+        # Create test games with related data
+        self.genre = Genre.objects.create(name="Action")
+        self.platform = Platform.objects.create(name="PC", code="PC")
+        dev = Developer.objects.create(name="Test Dev", slug="test-dev")
+        self.dev_alias = DeveloperAlias.objects.create(
+            name="Test Dev", developer=dev, igdb_id=1
+        )
+
+        self.game1 = Game.objects.create(name="Game 1", rank=1, year_of_release=1995)
+        self.game1.genres.add(self.genre)
+        self.game1.platforms.add(self.platform)
+        self.game1.developers.add(self.dev_alias)
+
+        self.game2 = Game.objects.create(name="Game 2", rank=2, year_of_release=2005)
+
+    def test_csv_download_works(self):
+        """Test that CSV download returns valid CSV."""
+        response = self.client.get(reverse("games-download"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("attachment", response["Content-Disposition"])
+        self.assertIn(".csv", response["Content-Disposition"])
+
+    def test_csv_contains_headers(self):
+        """Test that CSV has correct headers."""
+        response = self.client.get(reverse("games-download"))
+        content = response.content.decode("utf-8")
+        lines = content.strip().split("\n")
+        # Strip \r from line (CSV uses \r\n line endings)
+        self.assertEqual(lines[0].strip(), "Rank,Name,Year,Developers,Platforms,Genres")
+
+    def test_csv_contains_game_data(self):
+        """Test that CSV contains game data."""
+        response = self.client.get(reverse("games-download"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Game 1", content)
+        self.assertIn("Game 2", content)
+        self.assertIn("Action", content)
+        self.assertIn("PC", content)
+        self.assertIn("Test Dev", content)
+
+    def test_csv_respects_decade_filter(self):
+        """Test that CSV respects decade filter and uses filtered rank."""
+        response = self.client.get(reverse("games-download") + "?decade=1990-99")
+        content = response.content.decode("utf-8")
+        self.assertIn("Game 1", content)  # 1995 is in 1990s
+        self.assertNotIn("Game 2", content)  # 2005 is not in 1990s
+        self.assertIn("1990-99", response["Content-Disposition"])
+        # Should use filtered rank (1) not alltime rank
+        lines = content.strip().split("\n")
+        self.assertTrue(lines[1].startswith("1,"))  # First data row starts with rank 1
+
+    def test_csv_respects_year_filter(self):
+        """Test that CSV respects year filter."""
+        response = self.client.get(reverse("games-download") + "?year=1995")
+        content = response.content.decode("utf-8")
+        self.assertIn("Game 1", content)
+        self.assertNotIn("Game 2", content)
+        self.assertIn("1995", response["Content-Disposition"])
+
+    def test_csv_unfiltered_uses_alltime_rank(self):
+        """Test that unfiltered CSV uses alltime rank."""
+        # Create a game with a higher rank number
+        Game.objects.create(name="Game 3", rank=100, year_of_release=2010)
+        response = self.client.get(reverse("games-download"))
+        content = response.content.decode("utf-8")
+        # Should contain the actual rank (100), not sequential (3)
+        self.assertIn("100,Game 3", content)

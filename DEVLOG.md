@@ -2,6 +2,7 @@
 
 ## 2025-11-25
 
+- Added CSV download button to game list (respects filters, uses filtered rank for filtered exports)
 - Redesigned game list: compact rows with circular thumbnails, hover effects (expand thumbnail, show properties, grow rank), fading hover background, minimal mobile layout
 - Redesigned 404 page with Majora's Mask theme (shaking moon, Happy Mask Salesman GIF, quote, Song of Time button with audio, responsive layout)
 - Fixed Handjet font flash (FOUT) by self-hosting font with font-display: block instead of Google Fonts swap
