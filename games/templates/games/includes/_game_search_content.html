@@ -3,7 +3,9 @@
 {% load humanize %}
 
 <h1 class="title" id="search-title">
-    {% if page_obj %}
+    {% if page_obj.paginator.count == 0 %}
+        0 Results
+    {% elif page_obj %}
         Showing {{ page_obj.start_index|intcomma }} to {{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }} Results
     {% else %}
         Advanced Search

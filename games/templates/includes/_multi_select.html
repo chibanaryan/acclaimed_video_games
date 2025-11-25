@@ -15,40 +15,26 @@
          selectedList: [],
          selectableItems: [],
          error: null,
+         checkboxTimeout: null,
          init() {
              try {
                  const msId = this.$el.getAttribute('data-ms-id');
-                 console.log(`[MultiSelect ${this.filterType}] Initializing with ID: ${msId}`);
-
                  const itemsEl = document.getElementById('ms-items-' + msId);
                  const selectedEl = document.getElementById('ms-selected-' + msId);
 
-                 console.log(`[MultiSelect ${this.filterType}] Found elements:`, {
-                     itemsEl: !!itemsEl,
-                     selectedEl: !!selectedEl
-                 });
-
                  if (itemsEl) {
-                     const itemsText = itemsEl.textContent;
-                     console.log(`[MultiSelect ${this.filterType}] Items JSON:`, itemsText.substring(0, 100));
-                     this.itemsList = JSON.parse(itemsText);
-                     console.log(`[MultiSelect ${this.filterType}] Parsed ${this.itemsList.length} items`);
+                     this.itemsList = JSON.parse(itemsEl.textContent);
                  } else {
-                     console.warn(`[MultiSelect ${this.filterType}] No items element found`);
                      this.error = 'Items data not found';
                  }
 
                  if (selectedEl) {
                      this.selectedList = JSON.parse(selectedEl.textContent);
-                     console.log(`[MultiSelect ${this.filterType}] Parsed ${this.selectedList.length} selected items`);
-                 } else {
-                     console.warn(`[MultiSelect ${this.filterType}] No selected element found`);
                  }
 
                  this.initializeSelectableItems();
-                 console.log(`[MultiSelect ${this.filterType}] Initialized with ${this.selectableItems.length} selectable items`);
              } catch(e) {
-                 console.error(`[MultiSelect ${this.filterType}] Error loading multi-select data:`, e);
+                 console.error(`[MultiSelect ${this.filterType}] Error:`, e);
                  this.error = `Error: ${e.message}`;
              }
          },
@@ -106,7 +92,6 @@
                        x-model="item.selected"
                        @change="
                            const selectedItems = selectableItems.filter(x => x.selected).map(x => x.item);
-                           // Dispatch event to parent scope - parent's handleFilterChange() will convert objects to string IDs
                            $dispatch('filter-changed', { type: filterType, items: selectedItems });
                        ">
                 <span x-text="item.item.name || item.item"></span>
@@ -120,4 +105,3 @@
 </div>
     {% endwith %}
 {% endwith %}
-

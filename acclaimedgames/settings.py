@@ -191,18 +191,18 @@ IGDB_CLIENT_ID = env("IGDB_CLIENT_ID", default="XXX")
 IGDB_CLIENT_SECRET = env("IGDB_CLIENT_SECRET", default="XXX")
 IGDB_USE_PRO_TIER = env.bool("IGDB_USE_PRO_TIER", default=False)
 
-# Email configuration (SendGrid SMTP)
+# Email configuration (Brevo SMTP)
 # In development, emails are printed to console
-# In production, emails are sent via SendGrid
+# In production, emails are sent via Brevo
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = "smtp.sendgrid.net"
+    EMAIL_HOST = "smtp-relay.brevo.com"
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = "apikey"  # This is literal 'apikey', not a placeholder
-    EMAIL_HOST_PASSWORD = env("SENDGRID_API_KEY", default="")
+    EMAIL_HOST_USER = "9c6ed8001@smtp-brevo.com"
+    EMAIL_HOST_PASSWORD = env("BREVO_SMTP_KEY", default="")
 
 DEFAULT_FROM_EMAIL = "contact@acclaimedvideogames.com"
 CONTACT_EMAIL = "contact@acclaimedvideogames.com"

@@ -6,6 +6,7 @@
 - Added social media buttons (X, Bluesky) to home page
 - Removed unused developer management commands (cleanup, sync, refresh)
 - Fixed pagination spacing on Advanced Search page (missing spacing class)
+- Replaced dual year sliders with single dual-range slider (visual track indicator, floating labels)
 
 ## 2025-11-24
 

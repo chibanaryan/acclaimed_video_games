@@ -11,6 +11,10 @@
         platforms: JSON.parse(document.getElementById('platforms-data').textContent),
         initialized: false,
         updateTimeout: null,
+        abortController: null,
+        isLoading: false,
+        lastSliderUpdate: 0,
+        filterTimeout: null,
         init() {
             // Ensure genre_option has a default value
             if (!this.filters.genre_option || this.filters.genre_option === '') {
@@ -70,20 +74,7 @@
                 // Update results and URL while typing (preserves focus)
                 this.updateResults();
             });
-            this.$watch('filters.start', val => {
-                if (!this.initialized) return;
-                if (this.filters.end && val && parseInt(val) > parseInt(this.filters.end)) {
-                    this.filters.end = val;
-                }
-                this.updateUrl();
-            });
-            this.$watch('filters.end', val => {
-                if (!this.initialized) return;
-                if (this.filters.start && val && parseInt(val) < parseInt(this.filters.start)) {
-                    this.filters.start = val;
-                }
-                this.updateUrl();
-            });
+            // Note: Slider watchers removed - updates handled directly in @input handlers with throttling
         },
         handleFilterChange(type, items) {
             // Convert objects to string IDs if needed (desktop sends objects, we store string IDs)
@@ -99,7 +90,7 @@
                 this.filters.platforms = itemIds;
             }
             if (this.initialized) {
-                this.updateUrl();
+                this.debouncedFilterUpdate();
             }
         },
         buildUrlParams() {
@@ -131,8 +122,20 @@
                 clearTimeout(this.updateTimeout);
             }
 
+            // Cancel any in-flight request
+            if (this.abortController) {
+                this.abortController.abort();
+            }
+
             // Debounce the results update
             this.updateTimeout = setTimeout(() => {
+                // Create new AbortController for this request
+                this.abortController = new AbortController();
+                this.isLoading = true;
+
+                const resultsContainer = document.getElementById('game-results-container');
+                if (resultsContainer) resultsContainer.classList.add('is-loading');
+
                 const params = this.buildUrlParams();
                 const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
                 // Use fetch with HTMX headers to get partial response (full content to extract title)
@@ -141,7 +144,8 @@
                         'X-Requested-With': 'XMLHttpRequest',
                         'HX-Request': 'true',
                         'HX-Target': 'content'
-                    }
+                    },
+                    signal: this.abortController.signal
                 })
                 .then(response => response.text())
                 .then(html => {
@@ -166,7 +170,17 @@
                     // Update URL without reload (preserves focus by not re-initializing Alpine)
                     window.history.pushState({}, '', url);
                 })
-                .catch(err => console.error('Error fetching results:', err));
+                .catch(err => {
+                    // Only log errors that aren't from aborting
+                    if (err.name !== 'AbortError') {
+                        console.error('Error fetching results:', err);
+                    }
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                    const resultsContainer = document.getElementById('game-results-container');
+                    if (resultsContainer) resultsContainer.classList.remove('is-loading');
+                });
             }, 300);
         },
         updateUrlAndResults() {
@@ -178,33 +192,185 @@
                 clearTimeout(this.updateTimeout);
             }
 
-            // Debounce the URL update
-            this.updateTimeout = setTimeout(() => {
+            // Cancel any in-flight request
+            if (this.abortController) {
+                this.abortController.abort();
+            }
+
+            // Create new AbortController for this request
+            this.abortController = new AbortController();
+            this.isLoading = true;
+
+            const resultsContainer = document.getElementById('game-results-container');
+            if (resultsContainer) resultsContainer.classList.add('is-loading');
+
+            const params = this.buildUrlParams();
+            const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
+            // Use fetch with HTMX headers to get partial response
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'HX-Request': 'true',
+                    'HX-Target': 'content'
+                },
+                signal: this.abortController.signal
+            })
+            .then(response => response.text())
+            .then(html => {
+                const contentEl = document.getElementById('content');
+                if (contentEl) {
+                    contentEl.innerHTML = html;
+                    // Update URL without reload
+                    window.history.pushState({}, '', url);
+                }
+            })
+            .catch(err => {
+                // Only log errors that aren't from aborting
+                if (err.name !== 'AbortError') {
+                    console.error('Error fetching content:', err);
+                }
+            })
+            .finally(() => {
+                this.isLoading = false;
+                const resultsContainer = document.getElementById('game-results-container');
+                if (resultsContainer) resultsContainer.classList.remove('is-loading');
+            });
+        },
+        throttledSliderUpdate() {
+            // Throttle slider updates to ~6-7 updates/sec while dragging
+            // Uses partial update to preserve slider focus (doesn't replace filters)
+            const now = Date.now();
+            if (now - this.lastSliderUpdate < 150) return;
+            this.lastSliderUpdate = now;
+
+            // Cancel any in-flight request
+            if (this.abortController) {
+                this.abortController.abort();
+            }
+
+            this.abortController = new AbortController();
+            this.isLoading = true;
+
+            const resultsContainer = document.getElementById('game-results-container');
+            if (resultsContainer) resultsContainer.classList.add('is-loading');
+
+            const params = this.buildUrlParams();
+            const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'HX-Request': 'true',
+                    'HX-Target': 'content'
+                },
+                signal: this.abortController.signal
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Parse and do PARTIAL update (preserves slider focus)
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Update title
+                const newTitle = doc.querySelector('h1.title');
+                const titleEl = document.getElementById('search-title');
+                if (newTitle && titleEl) {
+                    titleEl.innerHTML = newTitle.innerHTML;
+                }
+
+                // Update only results (not filters)
+                const newResults = doc.querySelector('#game-results-container');
+                const resultsEl = document.getElementById('game-results-container');
+                if (newResults && resultsEl) {
+                    resultsEl.innerHTML = newResults.innerHTML;
+                }
+
+                // Update URL without reload
+                window.history.replaceState({}, '', url);
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('Error fetching results:', err);
+                }
+            })
+            .finally(() => {
+                this.isLoading = false;
+                const resultsContainer = document.getElementById('game-results-container');
+                if (resultsContainer) resultsContainer.classList.remove('is-loading');
+            });
+        },
+        forceSliderUpdate() {
+            // Force an update on slider release (bypasses throttle)
+            this.lastSliderUpdate = 0;
+            this.throttledSliderUpdate();
+        },
+        debouncedFilterUpdate() {
+            // Debounce checkbox/radio updates to batch rapid clicks
+            // Uses partial update to preserve filter state (doesn't replace filters)
+            if (this.filterTimeout) {
+                clearTimeout(this.filterTimeout);
+            }
+            this.filterTimeout = setTimeout(() => {
+                // Cancel any in-flight request
+                if (this.abortController) {
+                    this.abortController.abort();
+                }
+
+                this.abortController = new AbortController();
+                this.isLoading = true;
+
+                const resultsContainer = document.getElementById('game-results-container');
+                if (resultsContainer) resultsContainer.classList.add('is-loading');
+
                 const params = this.buildUrlParams();
                 const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
-                // Use fetch with HTMX headers to get partial response
+
                 fetch(url, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'HX-Request': 'true',
                         'HX-Target': 'content'
-                    }
+                    },
+                    signal: this.abortController.signal
                 })
                 .then(response => response.text())
                 .then(html => {
-                    const contentEl = document.getElementById('content');
-                    if (contentEl) {
-                        contentEl.innerHTML = html;
-                        // Update URL without reload
-                        window.history.pushState({}, '', url);
+                    // Parse and do PARTIAL update (preserves checkbox state)
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Update title
+                    const newTitle = doc.querySelector('h1.title');
+                    const titleEl = document.getElementById('search-title');
+                    if (newTitle && titleEl) {
+                        titleEl.innerHTML = newTitle.innerHTML;
+                    }
+
+                    // Update only results (not filters)
+                    const newResults = doc.querySelector('#game-results-container');
+                    const resultsEl = document.getElementById('game-results-container');
+                    if (newResults && resultsEl) {
+                        resultsEl.innerHTML = newResults.innerHTML;
+                    }
+
+                    // Update URL
+                    window.history.pushState({}, '', url);
+                })
+                .catch(err => {
+                    if (err.name !== 'AbortError') {
+                        console.error('Error fetching results:', err);
                     }
                 })
-                .catch(err => console.error('Error fetching content:', err));
-            }, 300);
+                .finally(() => {
+                    this.isLoading = false;
+                    const resultsContainer = document.getElementById('game-results-container');
+                    if (resultsContainer) resultsContainer.classList.remove('is-loading');
+                });
+            }, 150);
         },
         updateUrl() {
             // Alias for backwards compatibility with other filter changes
-            this.updateUrlAndResults();
+            this.debouncedFilterUpdate();
         }
      }"
      @update:modelValue.window="
@@ -234,73 +400,56 @@
     <div class="columns">
         <div class="column">
             <div class="p-2">
-                <div class="has-text-weight-bold">Release year</div>
+                <div class="has-text-weight-bold">Release Year Range</div>
             </div>
             <div class="field">
                 <div class="control">
-                    <table class="table plain">
-                        <tr>
-                            <td>From:</td>
-                            <td>
-                                <div class="field is-grouped">
-                                    <div class="label" x-text="filters.start || {{ min_year }}"></div>
-                                    <div class="control">
-                                        <input type="range"
-                                               id="filter-start-year"
-                                               name="start"
-                                               min="{{ min_year }}"
-                                               max="{{ max_year }}"
-                                               :value="filters.start || {{ min_year }}"
-                                               @input="filters.start = parseInt($event.target.value); if (initialized) updateUrl()">
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>To:</td>
-                            <td>
-                                <div class="field is-grouped">
-                                    <div class="label" x-text="filters.end || {{ max_year }}"></div>
-                                    <div class="control">
-                                        <input type="range"
-                                               id="filter-end-year"
-                                               name="end"
-                                               min="{{ min_year }}"
-                                               max="{{ max_year }}"
-                                               :value="filters.end || {{ max_year }}"
-                                               @input="filters.end = parseInt($event.target.value); if (initialized) updateUrl()">
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="dual-range-container"
+                         :style="'--range-start: ' + (((filters.start || {{ min_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100) + '; --range-end: ' + (((filters.end || {{ max_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100)">
+                        <span class="dual-range-label dual-range-label-start"
+                              x-text="filters.start || {{ min_year }}"></span>
+                        <span class="dual-range-label dual-range-label-end"
+                              x-text="filters.end || {{ max_year }}"></span>
+                        <div class="dual-range-track"></div>
+                        <div class="dual-range-selected"></div>
+                        <input type="range"
+                               class="dual-range"
+                               id="filter-start-year"
+                               name="start"
+                               min="{{ min_year }}"
+                               max="{{ max_year }}"
+                               :value="filters.start || {{ min_year }}"
+                               @input="filters.start = parseInt($event.target.value);
+                                       if (filters.end && filters.start > parseInt(filters.end)) { filters.end = filters.start; }
+                                       if (initialized) throttledSliderUpdate()"
+                               @change="if (initialized) forceSliderUpdate()">
+                        <input type="range"
+                               class="dual-range"
+                               id="filter-end-year"
+                               name="end"
+                               min="{{ min_year }}"
+                               max="{{ max_year }}"
+                               :value="filters.end || {{ max_year }}"
+                               @input="filters.end = parseInt($event.target.value);
+                                       if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
+                                       if (initialized) throttledSliderUpdate()"
+                               @change="if (initialized) forceSliderUpdate()">
+                    </div>
                 </div>
             </div>
-            <div class="p-2">
-                <div class="has-text-weight-bold">Displayed rank</div>
-            </div>
-            <div class="field ml-3">
+            <div class="field">
                 <div class="control">
-                    <label class="radio">
-                        All time
-                        <input type="radio"
-                               id="rank-display-alltime"
-                               name="rank_display"
-                               x-model="filters.rank_display"
-                               value="alltime"
-                               @change="updateUrl()">
-                    </label>
-                    <label class="radio">
-                        Filtered
-                        <input type="radio"
+                    <label class="checkbox">
+                        <input type="checkbox"
                                id="rank-display-filtered"
                                name="rank_display"
-                               x-model="filters.rank_display"
-                               value="filtered"
-                               @change="updateUrl()">
+                               :checked="filters.rank_display === 'filtered'"
+                               @change="filters.rank_display = $event.target.checked ? 'filtered' : 'alltime'; updateUrl()">
+                        Show Filtered Rank
                     </label>
                 </div>
             </div>
+            {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
         </div>
 
         {% if genres %}
@@ -377,12 +526,105 @@
         </div>
         {% endif %}
     </div>
-    {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
 </div>
 
 <style>
-input[type=range] {
-    width: 10em;
+/* Dual-range slider with visual track indicator */
+.dual-range-container {
+    position: relative;
+    width: 100%;
+    height: 2.5em;
+    padding-top: 1.25em;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.dual-range-label {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.dual-range-label-start {
+    left: calc(8px + var(--range-start, 0) * (100% - 16px) / 100);
+}
+
+.dual-range-label-end {
+    left: calc(8px + var(--range-end, 100) * (100% - 16px) / 100);
+}
+
+.dual-range-track {
+    position: absolute;
+    bottom: 4px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: #444;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.dual-range-selected {
+    position: absolute;
+    bottom: 4px;
+    height: 8px;
+    background: #3273dc;
+    border-radius: 4px;
+    pointer-events: none;
+    left: calc(8px + var(--range-start, 0) * (100% - 16px) / 100);
+    width: calc((var(--range-end, 100) - var(--range-start, 0)) * (100% - 16px) / 100);
+}
+
+.dual-range {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    width: calc(100% - 16px);
+    bottom: 4px;
+    pointer-events: none;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Hide the default track since we're drawing our own */
+.dual-range::-webkit-slider-runnable-track {
+    background: transparent;
+    height: 8px;
+}
+
+.dual-range::-moz-range-track {
+    background: transparent;
+    height: 8px;
+}
+
+.dual-range::-webkit-slider-thumb {
+    pointer-events: auto;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #3273dc;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: -4px;
+}
+
+.dual-range::-moz-range-thumb {
+    pointer-events: auto;
+    width: 16px;
+    height: 16px;
+    background: #3273dc;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
 }
 </style>
 
