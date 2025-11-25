@@ -2,6 +2,7 @@
 
 ## 2025-11-25
 
+- Added Enter key navigation to nav search bar (goes to full search results page)
 - Added optional author field to Posts (ForeignKey to User, displays as "Author · 2 hours ago")
 - Added contact form with Navi theme, Brevo SMTP email integration (console in dev, SMTP in prod)
 - Redesigned thank you page with Portal theme (animated envelope flying into glowing portal)

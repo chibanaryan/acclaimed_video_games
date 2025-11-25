@@ -38,6 +38,7 @@
                                x-model="q"
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
+                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-search' %}?q=' + encodeURIComponent(q.trim())"
                                placeholder="Search games"
                                class="input input-dark"
                                autocomplete="off">
@@ -104,6 +105,7 @@
                                x-model="q"
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
+                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-search' %}?q=' + encodeURIComponent(q.trim())"
                                autocomplete="off">
                     </div>
                     <div class="control" x-show="q && q.trim()" x-cloak>
