@@ -104,7 +104,7 @@ When making changes that need to be deployed to production, follow this complete
 ```bash
 # 0. Update DEVLOG.md if changes warrant documentation (see DEVLOG section)
 #    Only if: bug fixes, features, optimizations, or breaking changes
-#    Keep to 2-4 bullet points max per day
+#    Keep to 8 bullet points max per day
 
 # 1. Collect static files
 python3 manage.py collectstatic --noinput
@@ -187,7 +187,7 @@ The `DEVLOG.md` file tracks significant changes and improvements to the project.
 - Dependency version bumps without notable behavior changes
 
 **Format Guidelines:**
-- Keep entries very concise - just 2-4 bullet points per day maximum
+- Keep entries concise - 8 bullet points maximum per day
 - Use brief, imperative language (e.g., "Fix double-load on first search character")
 - Group changes by date (one date header per day of work)
 - Include affected components/features for context

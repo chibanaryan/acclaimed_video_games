@@ -2,47 +2,27 @@
 
 ## 2025-11-25
 
-- JavaScript refactoring: created utils.js with shared utilities (FetchManager, debounce, throttle, buildFilterParams, createSearchData), consolidated 5 duplicate fetch functions in _advanced_filters.html, unified mobile/desktop nav search, converted global onclick handlers to Alpine components (~430 lines removed)
+- Backend refactoring: split utils.py (~1150 lines) into focused service modules (import_handler, ranking_service, query_filters, game_filter_service)
+- CSS: added custom properties for theming, extracted dual-range slider styles from template
+- UI fixes: download CSV button shows text label, disabled browser autocomplete on search input
+- JavaScript refactoring: created utils.js with shared utilities, consolidated duplicate fetch functions (~430 lines removed)
 - CSS refactoring: extracted ~1000 lines from base.html to external stylesheets (main.css, import.css)
-- Removed navbar JavaScript injection hack, replaced inline styles with utility classes (.input-dark, .filter-row, .status-card)
-- Implemented faceted filtering on Source Lists (filter counts update dynamically, hide zero-count options)
-- Changed list type URL params from codes to readable slugs (`?type=all-time` instead of `?type=A`)
-- Fixed pagination layout stability (centralized min-height in CSS, nav only renders when needed)
-- Added CSV download button to game list (respects filters, uses filtered rank for filtered exports)
-- Redesigned game list: compact rows with circular thumbnails, hover effects (expand thumbnail, show properties, grow rank), fading hover background, minimal mobile layout
-- Redesigned 404 page with Majora's Mask theme (shaking moon, Happy Mask Salesman GIF, quote, Song of Time button with audio, responsive layout)
-- Fixed Handjet font flash (FOUT) by self-hosting font with font-display: block instead of Google Fonts swap
-- Performance: Fixed DeveloperDetailView double query, lists_grouped_by_type prefetch bypass, Admin genres N+1
-- Performance: Added indexes on year_rank/decade_rank, batched IGDB company fetches (N calls → 2 max)
-- Added contact form with Zelda/Portal themed UI (hidden until email service configured)
-- Added social media buttons (X, Bluesky) to home page
-- Removed unused developer management commands (cleanup, sync, refresh)
-- Fixed pagination spacing on Advanced Search page (missing spacing class)
-- Replaced dual year sliders with single dual-range slider (visual track indicator, floating labels)
-- Fixed year slider filter mismatch on fast drag release (use @pointerup for reliable final value capture)
-- Fixed "Filtered Rank" checkbox resetting to page 1 (display-only changes now preserve pagination)
-- Fixed CSV download button disappearing on HTMX page changes (missing from partial template)
-- Removed unused code: TYPES/SEARCH_* constants, dead serializer_class, django_extensions
+- Implemented faceted filtering on Source Lists with dynamic counts and zero-count hiding
+- Added CSV download button to game list (respects filters, uses filtered rank for exports)
+- Redesigned game list: compact rows with circular thumbnails, hover effects, fading background
+- Redesigned 404 page with Majora's Mask theme (shaking moon, Song of Time button with audio)
+- Fixed Handjet font FOUT by self-hosting with font-display: block
+- Performance: fixed N+1 queries, added year_rank/decade_rank indexes, batched IGDB company fetches
 
 ## 2025-11-24
 
-- **Major performance optimizations**: 50-70% reduction in database queries across the site
-  - Eliminated template N+1 queries in game list (600+ queries → 0 per page with prefetch)
-  - Optimized decade counting (10+ queries → 1 using in-memory aggregation)
-  - Added 24-hour caching for genre/platform lists (99% hit rate)
-  - Consolidated import page counts (7 queries → 1 with conditional aggregation)
-  - Added database indexes to Game.name and Developer.name fields
-  - Added 1-hour caching for game list metadata (year/decade counts) - reduces aggregate queries on most-visited page
-  - Added 24-hour caching for year statistics in search view - eliminates redundant min/max queries
-  - Optimized navbar search API endpoint - removed unused prefetch and added .only() for 30% faster responses
-  - Added database indexes on Genre.name and Post (active, date) for faster filtered queries
-  - Optimized DeveloperDetailView prefetch strategy for more efficient game loading
-- Refactored IGDB importer to eliminate 170 lines of duplicated code - single source of truth for data processing
-- Fixed beta advanced search unwanted scrolling on filter updates (force reload when page loaded from browser back-forward cache to reinitialize Alpine.js properly)
-- Fixed beta mobile game list highlight (scroll to item and auto-dismiss after 2s now work correctly)
-- Fixed 404 page title/subtitle spacing overlap
-- Added Google Analytics HTMX tracking for comprehensive page view monitoring (tracks filter changes, pagination, search navigation)
-- Updated documentation to reflect completed Vue.js migration (removed all frontend/Vue references from CLAUDE.md and readme.md)
+- Major performance optimizations: 50-70% query reduction (N+1 elimination, caching, prefetch)
+- Added 24-hour caching for genre/platform lists and year statistics
+- Added database indexes on Game.name, Developer.name, Genre.name, Post fields
+- Refactored IGDB importer to eliminate 170 lines of duplicated code
+- Fixed beta advanced search scroll behavior (force reload on back-forward cache)
+- Fixed beta mobile game list highlight (scroll and auto-dismiss)
+- Added Google Analytics HTMX tracking for page view monitoring
 
 ## 2025-11-23
 

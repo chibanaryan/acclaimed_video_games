@@ -18,7 +18,7 @@ from django.views import View
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
-from games import constants, models, utils
+from games import config, constants, models, utils
 from games.forms import ImportForm, ContactForm
 from games.mixins import HTMXPartialMixin, RobustPaginationMixin
 
@@ -149,7 +149,7 @@ class GameListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
                 "last_update": metadata.last_full_update,
             }
 
-            cache.set("game_list_meta", data, 60 * 60)  # Cache for 1 hour
+            cache.set("game_list_meta", data, config.CACHE_TIMEOUT_1_HOUR)
 
         context["meta"] = data
 
@@ -332,7 +332,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
                 min_year=Min("year_of_release"),
                 max_year=Max("year_of_release"),
             )
-            cache.set("game_year_stats", year_stats, 60 * 60 * 24)  # 24 hours
+            cache.set("game_year_stats", year_stats, config.CACHE_TIMEOUT_24_HOURS)
         min_year = year_stats["min_year"] or 1970
         max_year = year_stats["max_year"] or datetime.today().year
 

@@ -7,19 +7,13 @@ from typing import Optional, Dict, Any
 import requests
 from django.conf import settings
 
+from games import config
+
 logger = logging.getLogger(__name__)
 
 # Genre themes that match our curated genre list
-genre_themes = [
-    "4X (explore, expand, exploit, and exterminate)",
-    "Action",
-    "Horror",
-    "Open world",
-    "Party",
-    "Sandbox",
-    "Stealth",
-    "Survival",
-]
+# Imported from config for centralized management
+genre_themes = config.IGDB_GENRE_THEMES
 
 
 class IgbdApi:
@@ -49,9 +43,9 @@ class IgbdApi:
         self.company_cache: OrderedDict[int, Dict[str, Any]] = OrderedDict()
         self.game_cache: OrderedDict[int, Dict[str, Any]] = OrderedDict()
         self.genre_cache: OrderedDict[int, str] = OrderedDict()
-        self.company_cache_max_size: int = 1000
-        self.game_cache_max_size: int = 1000
-        self.genre_cache_max_size: int = 500
+        self.company_cache_max_size: int = config.IGDB_COMPANY_CACHE_MAX_SIZE
+        self.game_cache_max_size: int = config.IGDB_GAME_CACHE_MAX_SIZE
+        self.genre_cache_max_size: int = config.IGDB_GENRE_CACHE_MAX_SIZE
         # Bounded dictionaries (populated once from IGDB API, finite size)
         self.release_date_statuses: Dict[str, int] = {}
         self.themes: Dict[int, str] = {}
@@ -63,14 +57,14 @@ class IgbdApi:
         # Rate limiting and batch size based on tier
         if use_pro_tier:
             # Pro tier: 3000 requests/second
-            # Using 2500 req/sec to stay safely below the limit
-            self.min_request_interval: float = 1.0 / 2500  # ~0.4ms
-            self.max_batch_size: int = 500  # Pro tier batch limit
+            # Using configured rate to stay safely below the limit
+            self.min_request_interval: float = 1.0 / config.IGDB_PRO_TIER_RATE_LIMIT
+            self.max_batch_size: int = config.IGDB_PRO_TIER_BATCH_SIZE
         else:
             # Free tier: 4 requests/second
-            # Using 3.8 req/sec to stay safely below the limit
-            self.min_request_interval: float = 1.0 / 3.8  # ~263ms
-            self.max_batch_size: int = 50  # Free tier batch limit
+            # Using configured rate to stay safely below the limit
+            self.min_request_interval: float = 1.0 / config.IGDB_FREE_TIER_RATE_LIMIT
+            self.max_batch_size: int = config.IGDB_FREE_TIER_BATCH_SIZE
         self.last_request_time: float = 0.0
 
         self._get_auth_token()

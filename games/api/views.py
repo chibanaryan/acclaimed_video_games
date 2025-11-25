@@ -10,7 +10,7 @@ from django.views.decorators.cache import cache_page
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.views import APIView, Response
 
-from .. import models, utils
+from .. import config, models, utils
 from . import serializers
 
 
@@ -163,7 +163,7 @@ class PostListView(ListAPIView):
     queryset = models.Post.objects.all()
 
 
-@method_decorator(cache_page(60 * 60), name="dispatch")
+@method_decorator(cache_page(config.CACHE_TIMEOUT_1_HOUR), name="dispatch")
 class MetaView(APIView):
 
     def get(self, *args, **kwargs):
@@ -263,13 +263,13 @@ class PageDetailView(RetrieveAPIView):
         return page
 
 
-@method_decorator(cache_page(60 * 60 * 24), name="dispatch")
+@method_decorator(cache_page(config.CACHE_TIMEOUT_24_HOURS), name="dispatch")
 class GenreListView(ListAPIView):
     serializer_class = serializers.GenreSerializer
     queryset = models.Genre.objects.all()
 
 
-@method_decorator(cache_page(60 * 60 * 24), name="dispatch")
+@method_decorator(cache_page(config.CACHE_TIMEOUT_24_HOURS), name="dispatch")
 class PlatformListView(ListAPIView):
     serializer_class = serializers.PlatformSerializer
     queryset = models.Platform.objects.all()

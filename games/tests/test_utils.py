@@ -10,7 +10,7 @@ class ImportDataRoutingTests(TestCase):
 
     def test_import_data_calls_delete_handler(self):
         with mock.patch(
-            "games.utils.delete_existing_data", return_value=("ok", 0)
+            "games.services.import_handler.delete_existing_data", return_value=("ok", 0)
         ) as delete_mock:
             result = utils.import_data({"delete": True})
         delete_mock.assert_called_once()
@@ -24,7 +24,9 @@ class ImportDataRoutingTests(TestCase):
 
     def test_import_data_wraps_handler_errors(self):
         stream = BytesIO(b"")
-        with mock.patch("games.utils.import_games", side_effect=ValueError("boom")):
+        with mock.patch(
+            "games.services.import_handler.import_games", side_effect=ValueError("boom")
+        ):
             success, message = utils.import_data(
                 {
                     "file": stream,
@@ -291,7 +293,6 @@ class SendContactEmailTests(TestCase):
 
             # Should return False on exception
             self.assertFalse(result)
-
 
 
 class ApplyYearFiltersTests(TestCase):

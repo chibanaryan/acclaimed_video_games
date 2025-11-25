@@ -1,28 +1,14 @@
 {# SelectableTagList component #}
 {# Props: filter_type (e.g., 'genres' or 'platforms') #}
 {# Uses Alpine.js for interactivity - accesses parent scope's filters #}
+{# Uses removeFilterItem() from utils.js to handle filter removal #}
 {% load game_filters %}
 <div x-show="filters.{{ filter_type }} && filters.{{ filter_type }}.length > 0"
      class="tags mt-3">
     <template x-for="(item, index) in filters.{{ filter_type }}" :key="index">
         <span class="tag is-primary">
             <span x-text="('{{ filter_type }}' === 'genres' ? genres : platforms).find(x => x.id === item)?.name || item"></span>
-            <button @click="
-                    filters.{{ filter_type }} = filters.{{ filter_type }}.filter((x, i) => i !== index);
-                    if (initialized) {
-                        const params = buildFilterParams(filters);
-                        const url = '{% url 'games-search' %}?' + normalizeUrl(params.toString());
-                        fetchHtml(url, new AbortController().signal)
-                            .then(html => {
-                                const contentEl = document.getElementById('content');
-                                if (contentEl) {
-                                    contentEl.innerHTML = html;
-                                    window.history.pushState({}, '', url);
-                                    if (typeof Alpine !== 'undefined') Alpine.initTree(contentEl);
-                                }
-                            });
-                    }
-                "
+            <button @click="if (initialized) removeFilterItem(filters, '{{ filter_type }}', index, '{% url 'games-search' %}')"
                     title="Remove filter"
                     class="delete is-small"></button>
         </span>

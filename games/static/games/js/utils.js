@@ -336,6 +336,37 @@ async function searchGames(query, limit, apiUrl) {
 }
 
 /**
+ * Removes a filter item and updates the page via fetch
+ * Used by selectable tag list components
+ * @param {Object} filters - Current filter state
+ * @param {string} filterType - Type of filter ('genres' or 'platforms')
+ * @param {number} index - Index of item to remove
+ * @param {string} searchUrl - Base search URL
+ * @param {Function} onUpdate - Callback after update (optional)
+ */
+async function removeFilterItem(filters, filterType, index, searchUrl, onUpdate) {
+    filters[filterType] = filters[filterType].filter((_, i) => i !== index);
+
+    const params = buildFilterParams(filters);
+    const url = searchUrl + '?' + normalizeUrl(params.toString());
+
+    try {
+        const html = await fetchHtml(url, new AbortController().signal);
+        const contentEl = document.getElementById('content');
+        if (contentEl) {
+            contentEl.innerHTML = html;
+            window.history.pushState({}, '', url);
+            if (typeof Alpine !== 'undefined') {
+                Alpine.initTree(contentEl);
+            }
+        }
+        if (onUpdate) onUpdate();
+    } catch (err) {
+        console.error('Error removing filter:', err);
+    }
+}
+
+/**
  * Creates Alpine.js search component data
  * @param {string} apiUrl - API endpoint for search
  * @param {number} limit - Max results to return

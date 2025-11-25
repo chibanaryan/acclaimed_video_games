@@ -14,7 +14,8 @@
                    {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}
                    x-model="filters.q"
                    @keyup.enter="updateUrlAndResults()"
-                   placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}">
+                   placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}"
+                   autocomplete="off">
         </div>
         <div class="control is-clear" x-show="filters.q">
             <button @click="filters.q = ''"
