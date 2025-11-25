@@ -2,6 +2,7 @@
 
 ## 2025-11-25
 
+- Redesigned 404 page with Majora's Mask theme (shaking moon, Happy Mask Salesman GIF, quote, Song of Time button with audio)
 - Fixed Handjet font flash (FOUT) by self-hosting font with font-display: block instead of Google Fonts swap
 - Performance: Fixed DeveloperDetailView double query, lists_grouped_by_type prefetch bypass, Admin genres N+1
 - Performance: Added indexes on year_rank/decade_rank, batched IGDB company fetches (N calls → 2 max)
