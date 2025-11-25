@@ -376,18 +376,17 @@ class DeveloperDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         developer = context["developer"]
 
-        # Get all games from all aliases
-        games = (
-            models.Game.objects.filter(developers__developer=developer)
-            .prefetch_related(
-                "developers",
-                "developers__developer",
-                "platforms",
-                "genres",
-            )
-            .distinct()
-            .order_by("year_of_release")
-        )
+        # Use prefetched games from aliases instead of making a new query
+        # Collect unique games from all aliases (already prefetched in get_queryset)
+        seen_ids = set()
+        games = []
+        for alias in developer.aliases.all():
+            for game in alias.games.all():
+                if game.id not in seen_ids:
+                    seen_ids.add(game.id)
+                    games.append(game)
+        # Sort by year_of_release to match original behavior
+        games.sort(key=lambda g: (g.year_of_release or 0))
 
         # Create aliases data for Alpine.js (all selected by default)
         # Note: API uses igdb_id for alias IDs

@@ -277,11 +277,18 @@ class IgbdApiTests(SimpleTestCase):
         with mock.patch(
             "games.igdb.requests.post", return_value=DummyResponse(200, game_payload)
         ):
-            with mock.patch.object(self.api, "_get_company_by_id") as company_lookup:
-                company_lookup.side_effect = [
-                    {"name": "Support Co", "slug": "support", "parent": 5},
-                    {"name": "Parent Co", "slug": "parent", "parent": None},
-                ]
+            # Mock get_companies_by_ids to return batch data
+            # Company ID 9 from the test payload, with parent ID 10
+            def mock_get_companies(ids, cache=True):
+                data = {
+                    9: {"name": "Support Co", "slug": "support", "parent": 10},
+                    10: {"name": "Parent Co", "slug": "parent", "parent": None},
+                }
+                return {k: v for k, v in data.items() if k in ids}
+
+            with mock.patch.object(
+                self.api, "get_companies_by_ids", side_effect=mock_get_companies
+            ):
                 result = self.api.get_game_info_by_id(2, cache_results=False)
 
         self.assertEqual(result["developers"][0]["name"], "Support Co")
@@ -337,8 +344,8 @@ class IgbdApiTests(SimpleTestCase):
             "games.igdb.requests.post", return_value=DummyResponse(200, game_payload)
         ), mock.patch.object(
             self.api,
-            "_get_company_by_id",
-            return_value={"name": "Pub Co", "slug": "pub", "parent": None},
+            "get_companies_by_ids",
+            return_value={7: {"name": "Pub Co", "slug": "pub", "parent": None}},
         ):
             publisher_result = self.api.get_game_info_by_id(3, cache_results=False)
 
@@ -348,8 +355,8 @@ class IgbdApiTests(SimpleTestCase):
             "games.igdb.requests.post", return_value=DummyResponse(200, porter_payload)
         ), mock.patch.object(
             self.api,
-            "_get_company_by_id",
-            return_value={"name": "Port Co", "slug": "port", "parent": None},
+            "get_companies_by_ids",
+            return_value={8: {"name": "Port Co", "slug": "port", "parent": None}},
         ):
             porter_result = self.api.get_game_info_by_id(4, cache_results=False)
 
@@ -379,7 +386,7 @@ class IgbdApiTests(SimpleTestCase):
         ]
         with mock.patch(
             "games.igdb.requests.post", return_value=DummyResponse(200, game_payload)
-        ), mock.patch.object(self.api, "_get_company_by_id", return_value=None):
+        ), mock.patch.object(self.api, "get_companies_by_ids", return_value={}):
             result = self.api.get_game_info_by_id(5, cache_results=False)
 
         self.assertEqual(result["developers"], [])

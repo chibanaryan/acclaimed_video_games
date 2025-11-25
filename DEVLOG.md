@@ -2,6 +2,8 @@
 
 ## 2025-11-25
 
+- Performance: Fixed DeveloperDetailView double query, lists_grouped_by_type prefetch bypass, Admin genres N+1
+- Performance: Added indexes on year_rank/decade_rank, batched IGDB company fetches (N calls → 2 max)
 - Added contact form with Zelda/Portal themed UI (hidden until email service configured)
 - Added social media buttons (X, Bluesky) to home page
 - Removed unused developer management commands (cleanup, sync, refresh)

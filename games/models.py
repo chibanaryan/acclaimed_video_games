@@ -161,8 +161,8 @@ class Game(models.Model):
     igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
     igdb_artwork_id = models.CharField(max_length=100, null=True, blank=True)
     igdb_url = models.URLField(null=True, blank=True)
-    year_rank = models.IntegerField(null=True, blank=True)
-    decade_rank = models.IntegerField(null=True, blank=True)
+    year_rank = models.IntegerField(null=True, blank=True, db_index=True)
+    decade_rank = models.IntegerField(null=True, blank=True, db_index=True)
 
     objects = GameQuerySet.as_manager()
 
@@ -321,7 +321,9 @@ class Game(models.Model):
         from . import constants
 
         grouped = defaultdict(list)
-        for membership in self.lists.select_related("list__publisher").all():
+        # Use .all() to leverage prefetch_related from views when available
+        # GameDetailView prefetches with select_related("list__publisher")
+        for membership in self.lists.all():
             list_type = membership.list.type
             label = constants.get_list_type_label(list_type)
             grouped[label].append(

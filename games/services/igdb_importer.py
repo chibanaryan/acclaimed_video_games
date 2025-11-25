@@ -184,8 +184,8 @@ class IGDBImportService:
         Processes games by PK in chunks to avoid loading all games into memory.
         """
         # Process in chunks to avoid loading all games into memory
-        # Use a chunk size that balances memory vs concurrency efficiency
-        chunk_size = max(100, self.concurrency * 10)
+        # Use smaller chunks for better memory management
+        chunk_size = max(50, self.concurrency * 5)
 
         with ThreadPoolExecutor(max_workers=self.concurrency) as executor:
             for chunk_start in range(0, total_games, chunk_size):
@@ -304,6 +304,9 @@ class IGDBImportService:
             List of (success, game, error_msg) tuples
         """
         results = []
+        # Track counts locally to avoid lock contention in single-threaded batch mode
+        local_processed = 0
+        local_errors = 0
 
         # Get IGDB IDs for games that have them
         game_id_map = {}
@@ -314,9 +317,9 @@ class IGDBImportService:
         if not game_id_map:
             # No games with IGDB IDs in this batch
             for game in games_batch:
-                with self.lock:
-                    self.error_count += 1
+                local_errors += 1
                 results.append((False, game, "No IGDB ID"))
+            self.error_count += local_errors
             return results
 
         # Batch fetch game data
@@ -343,24 +346,24 @@ class IGDBImportService:
                             ]
                         )
 
-                        with self.lock:
-                            self.processed_count += 1
+                        local_processed += 1
                         results.append((True, game, None))
                     except Exception as e:
-                        with self.lock:
-                            self.error_count += 1
+                        local_errors += 1
                         results.append((False, game, str(e)))
                 else:
-                    with self.lock:
-                        self.error_count += 1
+                    local_errors += 1
                     results.append((False, game, "Not found in IGDB response"))
 
         except Exception as e:
             # Batch fetch failed, mark all as errors
             for game in games_batch:
-                with self.lock:
-                    self.error_count += 1
+                local_errors += 1
                 results.append((False, game, f"Batch fetch failed: {str(e)}"))
+
+        # Update instance counters once at the end (no lock needed - single threaded)
+        self.processed_count += local_processed
+        self.error_count += local_errors
 
         return results
 

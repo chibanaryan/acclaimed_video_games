@@ -782,17 +782,30 @@ class IgbdApi:
             elif porters:
                 company_ids += porters
 
+        # Batch fetch all companies at once instead of sequential calls
+        companies_data = self.get_companies_by_ids(company_ids, cache_results)
+
+        # Collect parent IDs that need fetching
+        parent_ids = [
+            c.get("parent")
+            for c in companies_data.values()
+            if c.get("parent") and c.get("parent") not in companies_data
+        ]
+
+        # Batch fetch parent companies
+        if parent_ids:
+            parent_data = self.get_companies_by_ids(parent_ids, cache_results)
+            companies_data.update(parent_data)
+
+        # Build developer objects using fetched data
         developer_objs = []
         for company_id in company_ids:
-            company_obj = self._get_company_by_id(company_id, cache_results)
+            company_obj = companies_data.get(company_id)
             if not company_obj:
                 continue
 
             parent_id = company_obj.get("parent")
-            if parent_id:
-                parent_obj = self._get_company_by_id(parent_id, cache_results)
-            else:
-                parent_obj = None
+            parent_obj = companies_data.get(parent_id) if parent_id else None
 
             developer_objs.append(
                 {

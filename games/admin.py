@@ -46,6 +46,10 @@ class GameAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     filter_horizontal = ["developers", "platforms", "genres"]
 
+    def get_queryset(self, request: HttpRequest):
+        """Prefetch genres to avoid N+1 queries in list display."""
+        return super().get_queryset(request).prefetch_related("genres")
+
     def save_model(
         self, request: HttpRequest, obj: models.Game, form: ModelForm, change: bool
     ) -> None:
@@ -55,7 +59,8 @@ class GameAdmin(admin.ModelAdmin):
 
     def _genres(self, obj: models.Game) -> str:
         """Display comma-separated list of genres for the game."""
-        return ", ".join(obj.genres.values_list("name", flat=True))
+        # Use prefetched genres instead of values_list to avoid extra query
+        return ", ".join(genre.name for genre in obj.genres.all())
 
 
 @admin.register(models.List)
