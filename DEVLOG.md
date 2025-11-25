@@ -2,6 +2,7 @@
 
 ## 2025-11-25
 
+- Fixed pagination layout jump on Developers and Source Lists pages (HTMX partials missing margin styling)
 - Added counts to Publication and Type dropdowns on Source Lists page (matching existing Year filter pattern)
 - Added CSV download button to game list (respects filters, uses filtered rank for filtered exports)
 - Redesigned game list: compact rows with circular thumbnails, hover effects (expand thumbnail, show properties, grow rank), fading hover background, minimal mobile layout

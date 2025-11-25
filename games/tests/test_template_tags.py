@@ -6,6 +6,7 @@ from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from games.templatetags.game_filters import (
+    format_decade,
     from_now,
     game_rank_url,
     get_list_type_label,
@@ -421,3 +422,28 @@ class GetListTypeLabelTest(TestCase):
     def test_unknown_type_returns_code(self):
         """Test that unknown type code returns the code itself."""
         self.assertEqual(get_list_type_label("X"), "X")
+
+
+class FormatDecadeFilterTest(TestCase):
+    """Test the format_decade template filter."""
+
+    def test_format_1990s(self):
+        """Test formatting 1990s decade."""
+        self.assertEqual(format_decade("1990-99"), "1990's")
+
+    def test_format_2000s(self):
+        """Test formatting 2000s decade."""
+        self.assertEqual(format_decade("2000-09"), "2000's")
+
+    def test_format_2010s(self):
+        """Test formatting 2010s decade."""
+        self.assertEqual(format_decade("2010-19"), "2010's")
+
+    def test_empty_value_returns_empty_string(self):
+        """Test that empty/None value returns empty string."""
+        self.assertEqual(format_decade(None), "")
+        self.assertEqual(format_decade(""), "")
+
+    def test_value_without_dash(self):
+        """Test that value without dash uses the whole value."""
+        self.assertEqual(format_decade("1990"), "1990's")

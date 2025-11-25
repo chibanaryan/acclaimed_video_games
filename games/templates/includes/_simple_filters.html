@@ -46,7 +46,7 @@
             <option value="">Decades</option>
             {% if meta.games.decades %}
                 {% for decade_data in meta.games.decades %}
-                    <option value="{{ decade_data.decade }}" {% if filters.decade == decade_data.decade %}selected{% endif %}>{{ decade_data.decade }} ({{ decade_data.count }})</option>
+                    <option value="{{ decade_data.decade }}" {% if filters.decade == decade_data.decade %}selected{% endif %}>{{ decade_data.decade|format_decade }} ({{ decade_data.count }})</option>
                 {% endfor %}
             {% endif %}
         </select>
@@ -75,7 +75,9 @@
             <option value="">Years</option>
             {% if meta.games.years %}
                 {% for year_data in meta.games.years %}
+                    {% if year_data.count > 0 %}
                     <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>{{ year_data.year }} ({{ year_data.count }})</option>
+                    {% endif %}
                 {% endfor %}
             {% endif %}
         </select>

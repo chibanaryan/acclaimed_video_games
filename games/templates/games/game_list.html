@@ -9,7 +9,7 @@
         {% if filters.year %}
             Most Acclaimed Games of {{ filters.year }}
         {% elif filters.decade %}
-            Most Acclaimed Games of {{ filters.decade }}
+            Most Acclaimed Games of the {{ filters.decade|format_decade }}
         {% else %}
             Most Acclaimed Games of All Time
         {% endif %}

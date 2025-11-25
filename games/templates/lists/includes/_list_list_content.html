@@ -78,7 +78,7 @@
     </div>
 
     {% if page_obj %}
-    <div class="pagination-wrapper">
+    <div class="pagination-wrapper" style="margin-top: 1.5rem;">
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
     </div>
     {% endif %}
@@ -88,7 +88,7 @@
     {% endif %}
 
     {% if page_obj %}
-    <div class="pagination-wrapper">
+    <div class="pagination-wrapper" style="margin-top: 1.5rem;">
         {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
     </div>
     {% endif %}
