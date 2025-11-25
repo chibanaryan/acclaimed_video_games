@@ -484,3 +484,8 @@ class ModelHelpersTests(TestCase):
             name="Test3", rank=3, igdb_id=102, year_of_release=None
         )
         self.assertIsNone(game3.decade)
+
+    def test_site_metadata_str(self):
+        """Test SiteMetadata.__str__ returns correct format."""
+        metadata = models.SiteMetadata.get_instance()
+        self.assertEqual(str(metadata), "Site Metadata (default)")

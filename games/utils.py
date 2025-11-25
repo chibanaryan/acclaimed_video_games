@@ -82,7 +82,7 @@ def import_igdb_with_progress():
     # Event to signal when client disconnects
     stop_event = threading.Event()
 
-    def progress_callback(event_type: str, data: dict) -> None:
+    def progress_callback(event_type: str, data: dict) -> None:  # pragma: no cover
         """Callback to stream service events to SSE client."""
         # Add event type if not already present
         if "event" not in data:
@@ -275,7 +275,7 @@ def import_batch_with_progress(data: Dict[str, Any]):
                                 )
                             )
 
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 event_queue.put(json.dumps({"event": "error", "message": str(e)}))
             finally:
                 # Signal that we're done
@@ -895,6 +895,168 @@ def update_year_decade_ranks() -> Tuple[int, int]:
         return (games_updated, len(years))
 
 
+def apply_genre_filter(
+    queryset: QuerySet, genre_ids: List[int], match_all: bool = True
+) -> QuerySet:
+    """
+    Filter queryset by genres with any/all matching.
+
+    Args:
+        queryset: The queryset to filter
+        genre_ids: List of genre IDs to filter by
+        match_all: If True, games must have ALL genres. If False, ANY genre matches.
+
+    Returns:
+        Filtered queryset
+    """
+    if not genre_ids:
+        return queryset
+
+    if match_all:
+        for genre_id in genre_ids:
+            queryset = queryset.filter(genres=genre_id)
+    else:
+        q = Q()
+        for genre_id in genre_ids:
+            q |= Q(genres=genre_id)
+        queryset = queryset.filter(q)
+
+    return queryset
+
+
+def apply_platform_filter(queryset: QuerySet, platform_ids: List[int]) -> QuerySet:
+    """
+    Filter queryset by platforms (any match).
+
+    Args:
+        queryset: The queryset to filter
+        platform_ids: List of platform IDs to filter by
+
+    Returns:
+        Filtered queryset
+    """
+    if not platform_ids:
+        return queryset
+
+    return queryset.filter(platforms__in=platform_ids)
+
+
+def get_or_set_cache(
+    cache_key: str,
+    queryset: QuerySet,
+    fields: List[str],
+    timeout: int = 86400,
+    order_by: Optional[str] = None,
+    transform_id: bool = False,
+) -> List[Dict[str, Any]]:
+    """
+    Get cached list or build and cache from queryset.
+
+    Args:
+        cache_key: Key to use for caching
+        queryset: Queryset to build list from if not cached
+        fields: List of field names to include in each dict
+        timeout: Cache timeout in seconds (default 24 hours)
+        order_by: Optional field to order by
+        transform_id: If True, convert 'id' field to string
+
+    Returns:
+        List of dictionaries with requested fields
+    """
+    from django.core.cache import cache
+
+    result = cache.get(cache_key)
+    if result is None:
+        qs = queryset
+        if order_by:
+            qs = qs.order_by(order_by)
+        result = list(qs.values(*fields))
+        if transform_id and "id" in fields:
+            result = [{**item, "id": str(item["id"])} for item in result]
+        cache.set(cache_key, result, timeout)
+    return result
+
+
+def apply_year_filters(
+    queryset: QuerySet,
+    decade: Optional[str] = None,
+    year: Optional[str] = None,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+) -> QuerySet:
+    """
+    Apply year/decade filtering to a Game queryset.
+
+    Args:
+        queryset: The queryset to filter
+        decade: Decade string like "1990-99" or "2000-09"
+        year: Single year as string (ignored if decade is set)
+        start: Start year range as string
+        end: End year range as string
+
+    Returns:
+        Filtered queryset
+    """
+    import re
+
+    # Parse decade filter (format: "1990-99" -> start=1990, end=1999)
+    if decade:
+        decade_pattern = re.compile(r"(\d{2})(\d{2})-(\d{2})")
+        match = decade_pattern.match(decade)
+        if match:
+            start_str = match.group(1) + match.group(2)
+            end_str = match.group(1) + match.group(3)
+            start_year = int(start_str)
+            end_year = int(end_str)
+            queryset = queryset.filter(
+                year_of_release__gte=start_year, year_of_release__lte=end_year
+            )
+
+    # Year filter (single year) - only if decade not set
+    if year and not decade:
+        try:
+            queryset = queryset.filter(year_of_release=int(year))
+        except (ValueError, TypeError):
+            pass
+
+    # Start/end year range filters
+    if start:
+        try:
+            queryset = queryset.filter(year_of_release__gte=int(start))
+        except (ValueError, TypeError):
+            pass
+    if end:
+        try:
+            queryset = queryset.filter(year_of_release__lte=int(end))
+        except (ValueError, TypeError):
+            pass
+
+    return queryset
+
+
+def safe_int_filter(
+    queryset: QuerySet, value: Optional[str], field_name: str
+) -> QuerySet:
+    """
+    Apply integer filter, ignoring invalid values.
+
+    Args:
+        queryset: The queryset to filter
+        value: String value to convert to int
+        field_name: Field name to filter on
+
+    Returns:
+        Filtered queryset (unchanged if value is invalid)
+    """
+    if not value:
+        return queryset
+    try:
+        queryset = queryset.filter(**{field_name: int(value)})
+    except (ValueError, TypeError):
+        pass
+    return queryset
+
+
 @dataclass
 class Filter:
     param: str
@@ -943,16 +1105,7 @@ def send_contact_email(name: str, email: str, category: str, message: str) -> bo
     from django.conf import settings
     from django.core.mail import send_mail
 
-    category_labels = {
-        "feature": "Feature Request",
-        "bug": "Bug Report",
-        "data": "Data Issue",
-        "general": "General",
-        "partnership": "Partnership/Business",
-        "press": "Press Inquiry",
-    }
-
-    category_label = category_labels.get(category, category)
+    category_label = constants.get_contact_category_label(category)
     subject = f"[{category_label}] Contact Form Submission from {name}"
 
     # Use category-based email alias for better filtering

@@ -231,7 +231,7 @@ class IgbdApi:
                 logger.warning("Request failed: %s", exc)
                 return None
 
-        return None
+        return None  # pragma: no cover - defensive return, loop exits via other paths
 
     def _get_auth_token(self) -> bool:
         """

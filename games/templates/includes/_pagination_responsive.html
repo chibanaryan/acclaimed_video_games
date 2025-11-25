@@ -1,0 +1,15 @@
+{# Responsive pagination - desktop shows all pages, mobile shows compact #}
+{# Usage: {% include 'includes/_pagination_responsive.html' with page_obj=page_obj target_id='content' spacing='top' %} #}
+{# spacing can be 'top', 'bottom', or omitted for no extra spacing #}
+{% if page_obj %}
+<div class="pagination-wrapper{% if spacing == 'top' %} pagination-spacing-top{% elif spacing == 'bottom' %} pagination-spacing-bottom{% endif %}">
+    {# Desktop pagination - show all pages #}
+    <div class="is-hidden-mobile">
+        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=True target_id=target_id %}
+    </div>
+    {# Mobile pagination - use smart filtering #}
+    <div class="is-hidden-tablet">
+        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id=target_id %}
+    </div>
+</div>
+{% endif %}

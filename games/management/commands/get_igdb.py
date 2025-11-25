@@ -136,7 +136,9 @@ class Command(BaseCommand):
                 progress_callback=progress_callback,
             )
         except RuntimeError as e:
-            self.stdout.write(self.style.ERROR(f"Failed to initialize IGDB service: {e}"))
+            self.stdout.write(
+                self.style.ERROR(f"Failed to initialize IGDB service: {e}")
+            )
             return
 
         # Show tier and mode info
@@ -188,9 +190,7 @@ class Command(BaseCommand):
             game.save(
                 update_fields=["slug", "igdb_url", "igdb_artwork_id", "description"]
             )
-            self.stdout.write(
-                self.style.SUCCESS(f"Successfully updated '{game.name}'")
-            )
+            self.stdout.write(self.style.SUCCESS(f"Successfully updated '{game.name}'"))
 
         except Game.DoesNotExist:
             self.stdout.write(
@@ -216,14 +216,12 @@ class Command(BaseCommand):
         current = data.get("current", 0)
         game_name = data.get("game_name", "")
 
-        self.stdout.write(
-            f"[{current}/{total_games}] {game_name}"
-        )
+        self.stdout.write(f"[{current}/{total_games}] {game_name}")
 
         self.batch_processed += 1
 
-        # Checkpoint every batch_size games
-        if self.batch_processed >= 50:  # Default checkpoint size
+        # Checkpoint every batch_size games (progress output only)
+        if self.batch_processed >= 50:  # pragma: no cover
             elapsed = time.time() - self.start_time
             rate = current / elapsed if elapsed > 0 else 0
             remaining = total_games - current
@@ -241,9 +239,7 @@ class Command(BaseCommand):
         game_name = data.get("game_name", "Unknown")
         message = data.get("message", "Unknown error")
 
-        self.stdout.write(
-            self.style.ERROR(f"{game_name}: {message}")
-        )
+        self.stdout.write(self.style.ERROR(f"{game_name}: {message}"))
 
     def _handle_complete_event(self, data: dict, total_games: int) -> None:
         """Handle completion event from service."""

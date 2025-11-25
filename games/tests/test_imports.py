@@ -283,6 +283,32 @@ class ImportListMembershipsTests(TestCase):
         error_events = [e for e in callback_events if e[0] == "error"]
         self.assertGreater(len(error_events), 0)
 
+    def test_import_listmemberships_batch_flush(self):
+        """Test that listmemberships are flushed in batches (lines 551-554).
+
+        When more than 1000 memberships are created, they should be flushed
+        to the database in batches to manage memory on large imports.
+        """
+        # Create 1100 games to have enough for batch test
+        for i in range(3, 1102):  # ranks 3-1101 (2 already exist from setUp)
+            models.Game.objects.create(
+                name=f"Game {i}", rank=i, igdb_id=i, year_of_release=1990
+            )
+
+        # Create data with 1100 list membership entries (exceeds batch_size=1000)
+        # Format: 0:1 means list order 0, game rank 1
+        data_lines = []
+        for i in range(1, 1101):  # 1100 entries
+            data_lines.append(f"0:{i}")
+        data = "\r\n".join(data_lines) + "\r\n"
+
+        success, message = utils.import_listmemberships(StringIO(data))
+
+        self.assertTrue(success)
+        # Should have created 1100 memberships
+        self.assertEqual(models.ListMembership.objects.count(), 1100)
+        self.assertIn("1100 created", message)
+
 
 class ImportDevelopersTests(TestCase):
 
@@ -743,6 +769,39 @@ class ImportDataTests(TestCase):
         # Should have deleted data
         self.assertTrue(success)
         self.assertEqual(models.Platform.objects.count(), 0)
+
+    def test_import_data_legacy_game_import_updates_metadata(self):
+        """Test that legacy game import updates SiteMetadata (lines 51-58)."""
+        from io import BytesIO
+
+        # Create required platform
+        models.Platform.objects.create(code="PC", name="PC")
+
+        # Create a game file in legacy format
+        game_data = b"1\tTest Game\t2024\t12345\tPC\r\n"
+        file_obj = BytesIO(game_data)
+
+        # Get metadata before import
+        metadata_before = models.SiteMetadata.get_instance()
+        last_update_before = metadata_before.last_full_update
+
+        # Use legacy import format with type=G
+        from .. import constants
+
+        data = {"file": file_obj, "type": constants.TYPE_GAME}
+        success, message = utils.import_data(data)
+
+        self.assertTrue(success)
+        self.assertEqual(models.Game.objects.count(), 1)
+
+        # Check that metadata was updated (lines 51-58)
+        metadata_after = models.SiteMetadata.get_instance()
+        self.assertIsNotNone(metadata_after.last_full_update)
+        # The timestamp should be different if it was None before, or newer
+        if last_update_before is None:
+            self.assertIsNotNone(metadata_after.last_full_update)
+        else:
+            self.assertGreaterEqual(metadata_after.last_full_update, last_update_before)
 
 
 class ImportIGDBWithProgressTests(TestCase):

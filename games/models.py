@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Optional
+from functools import cached_property
+from typing import Any, Dict, Optional
 
 import markdown
 from django.db import IntegrityError, models
@@ -120,6 +121,19 @@ class Genre(models.Model):
         return self.name
 
 
+class GameQuerySet(models.QuerySet):
+    """Custom QuerySet for Game model with common prefetch patterns."""
+
+    def with_relations(self):
+        """Prefetch common relations for game lists and search results."""
+        return self.prefetch_related(
+            "developers",
+            "developers__developer",
+            "platforms",
+            "genres",
+        )
+
+
 class Game(models.Model):
     """
     A video game
@@ -149,6 +163,8 @@ class Game(models.Model):
     igdb_url = models.URLField(null=True, blank=True)
     year_rank = models.IntegerField(null=True, blank=True)
     decade_rank = models.IntegerField(null=True, blank=True)
+
+    objects = GameQuerySet.as_manager()
 
     class Meta:
         ordering = ["rank"]
@@ -265,9 +281,9 @@ class Game(models.Model):
             genres.append(genre)
         self.genres.set(genres)
 
-    @property
+    @cached_property
     def thumbnail(self) -> Optional[str]:
-        """Get the thumbnail URL for the game's cover art."""
+        """Get the thumbnail URL for the game's cover art (cached)."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_small/"
@@ -275,9 +291,9 @@ class Game(models.Model):
             )
         return None
 
-    @property
+    @cached_property
     def image(self) -> Optional[str]:
-        """Get the full-size image URL for the game's cover art."""
+        """Get the full-size image URL for the game's cover art (cached)."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_big/"
@@ -285,14 +301,53 @@ class Game(models.Model):
             )
         return None
 
-    @property
+    @cached_property
     def decade(self) -> Optional[int]:
-        """Get the decade the game was released (e.g., 1990, 2000, 2010)."""
+        """Get the decade the game was released (cached)."""
         if self.year_of_release:
             from . import utils
 
             return utils.year_to_decade(self.year_of_release)
         return None
+
+    @property
+    def lists_grouped_by_type(self) -> Dict[str, list]:
+        """Get lists grouped by type label.
+
+        Returns:
+            Dictionary mapping type labels to lists of membership data
+        """
+        from collections import defaultdict
+        from . import constants
+
+        grouped = defaultdict(list)
+        for membership in self.lists.select_related("list__publisher").all():
+            list_type = membership.list.type
+            label = constants.get_list_type_label(list_type)
+            grouped[label].append(
+                {
+                    "id": membership.list.id,
+                    "name": membership.list.name,
+                    "publication": (
+                        membership.list.publisher.name
+                        if membership.list.publisher
+                        else ""
+                    ),
+                    "type": list_type,
+                    "type_name": label,
+                    "url": membership.list.url,
+                    "year": membership.list.year,
+                    "rank": membership.rank,
+                }
+            )
+
+        # Sort by predefined order
+        sorting_arr = ["All time", "Decade", "Miscellaneous", "End of year"]
+        result = {}
+        for key in sorting_arr:
+            if key in grouped:
+                result[key] = grouped[key]
+        return result
 
 
 class Publication(models.Model):
@@ -385,7 +440,7 @@ class Post(models.Model):
     def __str__(self) -> str:
         return self.title or Truncator(self.text).words(10)
 
-    @property
+    @cached_property
     def text_rendered(self) -> str:
-        """Render the markdown text as HTML."""
+        """Render the markdown text as HTML (cached)."""
         return markdown.markdown(self.text)

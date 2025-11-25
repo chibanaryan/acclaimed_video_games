@@ -33,16 +33,10 @@ def pagination_pages(page_obj, show_all_pages=False):
     if isinstance(show_all_pages, str):
         show_all_pages = show_all_pages.lower() in ("true", "1", "yes")
 
-    # If show_all_pages is True, just add ellipsis where needed
+    # If show_all_pages is True, return all pages (no filtering)
+    # Note: pages is always sequential from range(), so no gaps exist
     if show_all_pages:
-        result = []
-        last_page = 0
-        for page in pages:
-            if (page - last_page) > 1:
-                result.append(None)  # Ellipsis
-            result.append(page)
-            last_page = page
-        return result
+        return pages
 
     # Filter pages based on distance from current page
     current_page_is_first_page = current_page == 1

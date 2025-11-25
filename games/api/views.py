@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.contrib.flatpages.models import FlatPage
 from django.db import connection
-from django.db.models import Count, F, Min, Q, Prefetch
+from django.db.models import Count, F, Min, Prefetch
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -38,35 +38,25 @@ class GameListView(ListAPIView):
     ]
 
     def get_queryset(self):
-        qs = models.Game.objects.prefetch_related(
-            "developers",
-            "developers__developer",
-            "platforms",
-            "genres",
-        )
+        qs = models.Game.objects.with_relations()
 
         for filter in self.filters:
             param_val = self.request.GET.get(filter.param)
             qs = filter.filter_queryset(qs, param_val)
 
+        # Genre filtering
         genre_option = self.request.GET.get("genre_option")
-
         genres = self.request.GET.get("genres")
         if genres:
-            genres = [int(x) for x in genres.split(",")]
-            if genre_option == "A":  # Any
-                q = Q()
-                for genre in genres:
-                    q |= Q(genres=genre)
-                qs = qs.filter(q)
-            else:  # All
-                for genre in genres:
-                    qs = qs.filter(genres=genre)
+            genre_ids = [int(x) for x in genres.split(",")]
+            match_all = genre_option != "A"  # "A" = Any, otherwise All
+            qs = utils.apply_genre_filter(qs, genre_ids, match_all=match_all)
 
+        # Platform filtering
         platforms = self.request.GET.get("platforms")
         if platforms:
-            platforms = [int(x) for x in platforms.split(",")]
-            qs = qs.filter(platforms__in=platforms)
+            platform_ids = [int(x) for x in platforms.split(",")]
+            qs = utils.apply_platform_filter(qs, platform_ids)
 
         order_by = self.request.GET.get("order_by")
         if order_by:

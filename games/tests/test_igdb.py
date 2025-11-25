@@ -664,3 +664,346 @@ class IgbdApiTests(SimpleTestCase):
         self.assertIsNotNone(result)
         # Check that item 1 is now at the end (last item in OrderedDict)
         self.assertEqual(list(self.api.company_cache.keys())[-1], 1)
+
+    def test_genre_cache_miss_returns_none(self):
+        """Test that genre cache miss returns None (line 140)."""
+        self.api.genre_cache = {}
+        result = self.api._get_from_genre_cache(999)
+        self.assertIsNone(result)
+
+    def test_get_themes_returns_none_from_request(self):
+        """Test _get_themes when request returns None (lines 301-302)."""
+        self.api.headers = {"Authorization": "Bearer test"}
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=None):
+            self.api._get_themes()
+        self.assertEqual(self.api.themes, {})
+
+    def test_get_themes_exception_handling(self):
+        """Test _get_themes exception handling (lines 305-308)."""
+        self.api.headers = {"Authorization": "Bearer test"}
+        response = DummyResponse(200, [])
+        response.raise_for_status = mock.Mock(side_effect=Exception("Test error"))
+        with mock.patch.object(
+            self.api, "_make_request_with_retry", return_value=response
+        ):
+            self.api._get_themes()
+        self.assertEqual(self.api.themes, {})
+
+    def test_get_release_statuses_returns_none_from_request(self):
+        """Test _get_release_statuses when request returns None (lines 333-334)."""
+        self.api.headers = {"Authorization": "Bearer test"}
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=None):
+            self.api._get_release_statuses()
+        self.assertEqual(self.api.release_date_statuses, {})
+
+    def test_get_release_statuses_exception_handling(self):
+        """Test _get_release_statuses exception handling (lines 337-340)."""
+        self.api.headers = {"Authorization": "Bearer test"}
+        response = DummyResponse(200, [])
+        response.raise_for_status = mock.Mock(side_effect=Exception("Test error"))
+        with mock.patch.object(
+            self.api, "_make_request_with_retry", return_value=response
+        ):
+            self.api._get_release_statuses()
+        self.assertEqual(self.api.release_date_statuses, {})
+
+    def test_get_cover_by_id_returns_none_when_request_returns_none(self):
+        """Test _get_cover_by_id returns None when request returns None (line 360)."""
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=None):
+            result = self.api._get_cover_by_id(123)
+        self.assertIsNone(result)
+
+    def test_get_company_by_id_returns_none_when_request_returns_none(self):
+        """Test _get_company_by_id returns None when request returns None (line 401)."""
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=None):
+            result = self.api._get_company_by_id(123, cache_results=False)
+        self.assertIsNone(result)
+
+    def test_get_genre_by_id_returns_none_when_request_returns_none(self):
+        """Test _get_genre_by_id returns None when request returns None (line 446)."""
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=None):
+            result = self.api._get_genre_by_id(123, cache_results=False)
+        self.assertIsNone(result)
+
+    def test_get_genre_by_id_caches_successful_result(self):
+        """Test _get_genre_by_id caches result on success (lines 457-461)."""
+        response = DummyResponse(200, [{"id": 5, "name": "RPG"}])
+        with mock.patch("games.igdb.requests.post", return_value=response):
+            result = self.api._get_genre_by_id(5, cache_results=True)
+        self.assertEqual(result, "RPG")
+        self.assertEqual(self.api.genre_cache[5], "RPG")
+
+    def test_get_companies_by_ids_returns_when_request_returns_none(self):
+        """Test get_companies_by_ids when request returns None."""
+        # Pre-cache one company
+        self.api.company_cache = {1: {"id": 1, "name": "Cached Co"}}
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=None):
+            result = self.api.get_companies_by_ids([1, 2], cache_results=True)
+        # Should return cached result only
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[1]["name"], "Cached Co")
+
+    def test_get_companies_by_ids_exception_handling(self):
+        """Test get_companies_by_ids exception handling (lines 510-512)."""
+        response = DummyResponse(200, [])
+        response.raise_for_status = mock.Mock(side_effect=Exception("Test error"))
+        with mock.patch.object(
+            self.api, "_make_request_with_retry", return_value=response
+        ):
+            result = self.api.get_companies_by_ids([1, 2], cache_results=False)
+        self.assertEqual(result, {})
+
+    def test_get_games_info_by_ids_empty_returns_empty_dict(self):
+        """Test get_games_info_by_ids with empty list returns {} (line 550)."""
+        result = self.api.get_games_info_by_ids([], cache_results=False)
+        self.assertEqual(result, {})
+
+    def test_get_games_info_by_ids_returns_when_request_returns_none(self):
+        """Test get_games_info_by_ids when request returns None."""
+        # Pre-cache one game
+        cached_game = {"slug": "cached-game", "cover": "cached.jpg"}
+        self.api.game_cache = {1: cached_game}
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=None):
+            result = self.api.get_games_info_by_ids([1, 2], cache_results=True)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[1]["slug"], "cached-game")
+
+    def test_get_games_info_by_ids_exception_handling(self):
+        """Test get_games_info_by_ids exception handling (lines 585-587)."""
+        response = DummyResponse(200, [])
+        response.raise_for_status = mock.Mock(side_effect=Exception("Test error"))
+        with mock.patch.object(
+            self.api, "_make_request_with_retry", return_value=response
+        ):
+            result = self.api.get_games_info_by_ids([1, 2], cache_results=False)
+        self.assertEqual(result, {})
+
+    def test_get_games_info_by_ids_with_parent_company(self):
+        """Test get_games_info_by_ids handles parent company (line 598)."""
+        game_data = [
+            {
+                "id": 1,
+                "slug": "game1",
+                "url": "http://example.com/game1",
+                "cover": {"url": "//images/cover1.jpg"},
+                "genres": [],
+                "themes": [],
+                "summary": "Summary",
+                "storyline": "Story",
+                "involved_companies": [
+                    {
+                        "company": 10,
+                        "parent": 20,  # Parent company ID in involved_companies
+                        "developer": True,
+                        "supporting": False,
+                        "publisher": False,
+                        "porting": False,
+                    }
+                ],
+            }
+        ]
+        company_data = [
+            {"id": 10, "name": "Child Co", "slug": "child-co", "parent": 20},
+            {"id": 20, "name": "Parent Co", "slug": "parent-co", "parent": None},
+        ]
+
+        def fake_post(url, headers=None, data=None):
+            if "games" in url:
+                return DummyResponse(200, game_data)
+            if "companies" in url:
+                return DummyResponse(200, company_data)
+            return DummyResponse(200, [])
+
+        with mock.patch("games.igdb.requests.post", side_effect=fake_post):
+            result = self.api.get_games_info_by_ids([1], cache_results=False)
+
+        self.assertEqual(result[1]["developers"][0]["name"], "Child Co")
+        self.assertEqual(result[1]["developers"][0]["parent"]["name"], "Parent Co")
+
+    def test_get_games_info_by_ids_missing_company_id(self):
+        """Test get_games_info_by_ids skips entries without company id (line 616)."""
+        game_data = [
+            {
+                "id": 1,
+                "slug": "game1",
+                "url": "http://example.com/game1",
+                "cover": None,
+                "genres": [],
+                "themes": [],
+                "summary": "Summary",
+                "storyline": "Story",
+                "involved_companies": [
+                    {
+                        # Missing 'company' key
+                        "developer": True,
+                        "supporting": False,
+                        "publisher": False,
+                        "porting": False,
+                    }
+                ],
+            }
+        ]
+
+        with mock.patch(
+            "games.igdb.requests.post", return_value=DummyResponse(200, game_data)
+        ):
+            result = self.api.get_games_info_by_ids([1], cache_results=False)
+
+        self.assertEqual(result[1]["developers"], [])
+
+    def test_get_games_info_by_ids_supporters_fallback(self):
+        """Test get_games_info_by_ids uses supporters when no developers (line 621)."""
+        game_data = [
+            {
+                "id": 1,
+                "slug": "game1",
+                "url": "http://example.com/game1",
+                "cover": None,
+                "genres": [],
+                "themes": [],
+                "summary": "Summary",
+                "storyline": "Story",
+                "involved_companies": [
+                    {
+                        "company": 10,
+                        "developer": False,
+                        "supporting": True,
+                        "publisher": False,
+                        "porting": False,
+                    }
+                ],
+            }
+        ]
+        company_data = [
+            {"id": 10, "name": "Support Co", "slug": "support", "parent": None}
+        ]
+
+        def fake_post(url, headers=None, data=None):
+            if "games" in url:
+                return DummyResponse(200, game_data)
+            if "companies" in url:
+                return DummyResponse(200, company_data)
+            return DummyResponse(200, [])
+
+        with mock.patch("games.igdb.requests.post", side_effect=fake_post):
+            result = self.api.get_games_info_by_ids([1], cache_results=False)
+
+        self.assertEqual(result[1]["developers"][0]["name"], "Support Co")
+
+    def test_get_games_info_by_ids_porters_fallback(self):
+        """Test get_games_info_by_ids uses porters as last fallback (line 625)."""
+        game_data = [
+            {
+                "id": 1,
+                "slug": "game1",
+                "url": "http://example.com/game1",
+                "cover": None,
+                "genres": [],
+                "themes": [],
+                "summary": "Summary",
+                "storyline": "Story",
+                "involved_companies": [
+                    {
+                        "company": 10,
+                        "developer": False,
+                        "supporting": False,
+                        "publisher": False,
+                        "porting": True,
+                    }
+                ],
+            }
+        ]
+        company_data = [{"id": 10, "name": "Port Co", "slug": "port", "parent": None}]
+
+        def fake_post(url, headers=None, data=None):
+            if "games" in url:
+                return DummyResponse(200, game_data)
+            if "companies" in url:
+                return DummyResponse(200, company_data)
+            return DummyResponse(200, [])
+
+        with mock.patch("games.igdb.requests.post", side_effect=fake_post):
+            result = self.api.get_games_info_by_ids([1], cache_results=False)
+
+        self.assertEqual(result[1]["developers"][0]["name"], "Port Co")
+
+    def test_get_games_info_by_ids_missing_company_obj(self):
+        """Test get_games_info_by_ids skips missing company object (line 642)."""
+        game_data = [
+            {
+                "id": 1,
+                "slug": "game1",
+                "url": "http://example.com/game1",
+                "cover": None,
+                "genres": [],
+                "themes": [],
+                "summary": "Summary",
+                "storyline": "Story",
+                "involved_companies": [
+                    {
+                        "company": 99,  # Company ID that won't be found
+                        "developer": True,
+                        "supporting": False,
+                        "publisher": False,
+                        "porting": False,
+                    }
+                ],
+            }
+        ]
+
+        def fake_post(url, headers=None, data=None):
+            if "games" in url:
+                return DummyResponse(200, game_data)
+            if "companies" in url:
+                return DummyResponse(200, [])  # No company data returned
+            return DummyResponse(200, [])
+
+        with mock.patch("games.igdb.requests.post", side_effect=fake_post):
+            result = self.api.get_games_info_by_ids([1], cache_results=False)
+
+        self.assertEqual(result[1]["developers"], [])
+
+    def test_get_game_info_by_id_returns_none_when_request_returns_none(self):
+        """Test get_game_info_by_id returns None when request returns None."""
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=None):
+            result = self.api.get_game_info_by_id(123, cache_results=False)
+        self.assertIsNone(result)
+
+    def test_get_game_info_by_id_caches_successful_result(self):
+        """Test get_game_info_by_id caches result on success (lines 838-839)."""
+        game_payload = [
+            {
+                "id": 99,
+                "slug": "cache-test",
+                "url": "https://example.com/cache-test",
+                "cover": None,
+                "themes": [],
+                "genres": [],
+                "summary": "",
+                "storyline": "",
+                "involved_companies": [],
+            }
+        ]
+        self.api.game_cache = {}  # Clear cache
+
+        with mock.patch(
+            "games.igdb.requests.post", return_value=DummyResponse(200, game_payload)
+        ):
+            result = self.api.get_game_info_by_id(99, cache_results=True)
+
+        self.assertEqual(result["slug"], "cache-test")
+        self.assertIn(99, self.api.game_cache)
+        self.assertEqual(self.api.game_cache[99]["slug"], "cache-test")
+
+    @override_settings(DEBUG=False)
+    def test_get_api_network_error_handling(self):
+        """Test get_api handles network errors (lines 864-867)."""
+        import requests
+
+        with mock.patch(
+            "games.igdb.IgbdApi", side_effect=requests.RequestException("Network error")
+        ):
+            with self.assertLogs("games.igdb", level="ERROR") as cm:
+                result = igdb.get_api()
+        self.assertIsNone(result)
+        self.assertIn("Network error", cm.output[0])

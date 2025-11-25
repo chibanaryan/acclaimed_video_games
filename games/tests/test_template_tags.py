@@ -76,6 +76,26 @@ class PaginationPagesTest(TestCase):
         result = pagination_pages(page_obj)
         self.assertEqual(result, [])
 
+    def test_second_page_uses_min_distance_3(self):
+        """Test that second page (page 2) uses min_distance=3."""
+        page_obj = self._create_page_obj(2, 20)
+        result = pagination_pages(page_obj)
+        # At page 2 with min_distance=3, pages 1-4 should be included
+        self.assertIn(1, result)
+        self.assertIn(2, result)
+        self.assertIn(3, result)
+        self.assertIn(4, result)
+
+    def test_second_last_page_uses_min_distance_3(self):
+        """Test that second-to-last page uses min_distance=3."""
+        page_obj = self._create_page_obj(19, 20)
+        result = pagination_pages(page_obj)
+        # At page 19 with min_distance=3, pages 17-20 should be included
+        self.assertIn(17, result)
+        self.assertIn(18, result)
+        self.assertIn(19, result)
+        self.assertIn(20, result)
+
 
 class FromNowFilterTest(TestCase):
     """Test the from_now template filter."""
@@ -161,6 +181,60 @@ class FromNowFilterTest(TestCase):
         """Test that non-datetime objects return empty string."""
         result = from_now(12345)
         self.assertEqual(result, "")
+
+    def test_future_date_returns_in_x(self):
+        """Test that future dates return 'in X' format."""
+        now = timezone.now()
+        future = now + timedelta(days=5)
+        result = from_now(future)
+        self.assertIn("in ", result)
+        self.assertIn("day", result)
+        self.assertNotIn("ago", result)
+
+    def test_future_hours(self):
+        """Test future hours formatting."""
+        now = timezone.now()
+        future = now + timedelta(hours=3)
+        result = from_now(future)
+        self.assertIn("in ", result)
+        self.assertIn("hour", result)
+
+    def test_future_minutes(self):
+        """Test future minutes formatting."""
+        now = timezone.now()
+        future = now + timedelta(minutes=15)
+        result = from_now(future)
+        self.assertIn("in ", result)
+        self.assertIn("minute", result)
+
+    def test_future_months(self):
+        """Test future months formatting."""
+        now = timezone.now()
+        future = now + timedelta(days=60)
+        result = from_now(future)
+        self.assertIn("in ", result)
+        self.assertIn("month", result)
+
+    def test_future_years(self):
+        """Test future years formatting."""
+        now = timezone.now()
+        future = now + timedelta(days=400)
+        result = from_now(future)
+        self.assertIn("in ", result)
+        self.assertIn("year", result)
+
+    def test_exception_returns_empty_string(self):
+        """Test that exceptions during calculation return empty string."""
+        from unittest.mock import patch
+
+        # Pass a valid datetime but mock timezone.now to raise inside from_now
+        valid_datetime = timezone.now()
+        with patch(
+            "games.templatetags.game_filters.timezone.now",
+            side_effect=Exception("Test error"),
+        ):
+            result = from_now(valid_datetime)
+            self.assertEqual(result, "")
 
 
 class GameRankUrlTest(TestCase):

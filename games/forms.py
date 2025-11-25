@@ -3,6 +3,75 @@ from io import TextIOWrapper
 
 from django import forms
 
+from . import constants
+
+
+class ContactForm(forms.Form):
+    """Form for users to contact the site administrators."""
+
+    name = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "input",
+                "placeholder": "Your name",
+            }
+        ),
+    )
+
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(
+            attrs={
+                "class": "input",
+                "placeholder": "your.email@example.com (optional)",
+            }
+        ),
+    )
+
+    category = forms.ChoiceField(
+        choices=constants.CONTACT_CATEGORIES,
+        required=True,
+        widget=forms.Select(
+            attrs={
+                "class": "select",
+            }
+        ),
+    )
+
+    message = forms.CharField(
+        required=True,
+        widget=forms.Textarea(
+            attrs={
+                "class": "textarea",
+                "placeholder": "Tell us what's on your mind...",
+                "rows": 6,
+            }
+        ),
+    )
+
+    # Honeypot field for spam protection (should remain empty)
+    website = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "style": "display:none;",
+                "tabindex": "-1",
+                "autocomplete": "off",
+            }
+        ),
+    )
+
+    def clean_website(self):
+        """Honeypot validation - this field should always be empty."""
+        honeypot = self.cleaned_data.get("website")
+        if honeypot:
+            raise forms.ValidationError(
+                "Spam detected. Please try again or contact us directly."
+            )
+        return honeypot
+
 
 class ContactForm(forms.Form):
     """Form for users to contact the site administrators."""

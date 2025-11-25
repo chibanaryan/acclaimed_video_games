@@ -171,6 +171,28 @@ class ImportViewIntegrationTests(TestCase):
         )
         mock_import.assert_called_once()
 
+    @mock.patch("games.views.utils.import_batch", return_value=(True, "Loaded", True))
+    @mock.patch("builtins.open", new_callable=mock_open, read_data=b"test data")
+    @mock.patch("games.views.Path")
+    def test_seed_test_data_with_igdb_trigger(self, mock_path, mock_file, mock_import):
+        """Test seed_test_data sets trigger_igdb when import_batch returns True."""
+        self.client.login(username="tester", password="pass")
+
+        mock_path_obj = MagicMock()
+        mock_path.return_value = mock_path_obj
+        mock_path_obj.__truediv__ = lambda self, other: mock_path_obj
+
+        response = self.client.post(
+            reverse("import"),
+            {
+                "seed_test_data": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.wsgi_request.session.get("trigger_igdb"))
+        mock_import.assert_called_once()
+
     @mock.patch("builtins.open", side_effect=FileNotFoundError)
     @mock.patch("games.views.Path")
     def test_seed_test_data_file_not_found(self, mock_path, mock_file):

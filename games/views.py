@@ -1,9 +1,12 @@
+from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.flatpages.models import FlatPage
 from django.core.cache import cache
-from django.db.models import Count, Min, Max, Prefetch
+from django.core.paginator import Paginator
+from django.db.models import Count, Min, Max, Prefetch, Q
 from django.db.models.functions import Lower
 from django.forms import Form
 from django.http import HttpResponse, StreamingHttpResponse
@@ -14,8 +17,9 @@ from django.views import View
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
-from games import models, utils
+from games import constants, models, utils
 from games.forms import ImportForm, ContactForm
+from games.mixins import HTMXPartialMixin, RobustPaginationMixin
 
 
 class HomePageView(FormView):
@@ -31,12 +35,7 @@ class HomePageView(FormView):
         context["posts"] = models.Post.objects.filter(active=True).order_by("-date")[:5]
 
         # Fetch top 10 games
-        context["games"] = models.Game.objects.prefetch_related(
-            "developers",
-            "developers__developer",
-            "platforms",
-            "genres",
-        ).order_by("rank")[:10]
+        context["games"] = models.Game.objects.with_relations().order_by("rank")[:10]
 
         # Fetch counts for dynamic tagline
         context["list_count"] = models.List.objects.count()
@@ -78,91 +77,31 @@ class ContactThankYouView(TemplateView):
     template_name = "contact_thank_you.html"
 
 
-class GameListView(ListView):
+class GameListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.Game
     template_name = "games/game_list.html"
     context_object_name = "games"
     paginate_by = 100
     paginate_orphans = 0
-
-    def paginate_queryset(self, queryset, page_size):
-        """
-        Paginate the queryset, and handle invalid page numbers gracefully.
-        Instead of raising 404, return the last valid page.
-        """
-        from django.core.paginator import Paginator, EmptyPage
-
-        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
-        page = self.request.GET.get("page")
-
-        try:
-            page_number = int(page) if page else 1
-        except (TypeError, ValueError):
-            page_number = 1
-
-        try:
-            page_obj = paginator.page(page_number)
-        except EmptyPage:
-            # If page is out of range, return the last valid page (or first if no pages)
-            if paginator.num_pages > 0:
-                page_obj = paginator.page(paginator.num_pages)
-            else:
-                # No results at all - create an empty page object
-                # This shouldn't happen often, but handle it gracefully
-                try:
-                    page_obj = paginator.page(1)
-                except EmptyPage:
-                    # Even page 1 is empty - return None and let Django handle it
-                    return (paginator, None, [], False)
-
-        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
+    htmx_partial_template = "games/includes/_game_list_content.html"
 
     def get_queryset(self):
-        # Prefetch relationships for GameRowProperties component
-        qs = models.Game.objects.prefetch_related(
-            "developers",
-            "developers__developer",  # Access the Developer through DeveloperAlias
-            "platforms",
-            "genres",
+        qs = models.Game.objects.with_relations()
+
+        # Apply year/decade filters using utility function
+        qs = utils.apply_year_filters(
+            qs,
+            decade=self.request.GET.get("decade"),
+            year=self.request.GET.get("year"),
+            start=self.request.GET.get("start"),
+            end=self.request.GET.get("end"),
         )
-
-        # Parse decade filter (format: "1990-99" -> start=1990, end=1999)
-        decade = self.request.GET.get("decade")
-        if decade:
-            # Parse decade format like "1990-99" or "2000-09"
-            import re
-
-            decade_pattern = re.compile(r"(\d{2})(\d{2})-(\d{2})")
-            match = decade_pattern.match(decade)
-            if match:
-                start_str = match.group(1) + match.group(2)
-                end_str = match.group(1) + match.group(3)
-                start_year = int(start_str)
-                end_year = int(end_str)
-                qs = qs.filter(
-                    year_of_release__gte=start_year, year_of_release__lte=end_year
-                )
-
-        # Year filter (single year)
-        year = self.request.GET.get("year")
-        if year and not decade:  # Year takes precedence if both are set
-            year_int = int(year)
-            qs = qs.filter(year_of_release=year_int)
-
-        # Support start/end parameters (used by game_rank_url)
-        start = self.request.GET.get("start")
-        end = self.request.GET.get("end")
-        if start:
-            qs = qs.filter(year_of_release__gte=int(start))
-        if end:
-            qs = qs.filter(year_of_release__lte=int(end))
 
         return qs.order_by("rank")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Add meta data for SimpleFilters component
-        from datetime import datetime as dt
 
         # Get meta data (cached for 1 hour to improve performance)
         data = cache.get("game_list_meta")
@@ -172,10 +111,9 @@ class GameListView(ListView):
             # Games meta
             game_stats = models.Game.objects.aggregate(
                 min_year=Min("year_of_release"),
-                last_update=Max("modified"),
             )
             min_year = game_stats["min_year"] or 1970
-            max_year = dt.today().year
+            max_year = datetime.today().year
             all_years = range(min_year, max_year + 1)
             year_count_map = {
                 entry["year_of_release"]: entry["count"]
@@ -201,10 +139,13 @@ class GameListView(ListView):
                 decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
                 decades_with_counts.append({"decade": decade_str, "count": count})
 
+            # Get last_full_update from SiteMetadata
+            metadata = models.SiteMetadata.get_instance()
+
             data["games"] = {
                 "years": all_years_with_counts,
                 "decades": decades_with_counts,
-                "last_update": game_stats["last_update"],
+                "last_update": metadata.last_full_update,
             }
 
             cache.set("game_list_meta", data, 60 * 60)  # Cache for 1 hour
@@ -230,12 +171,6 @@ class GameListView(ListView):
         context["is_filtered"] = is_filtered
 
         return context
-
-    def get_template_names(self):
-        # Support HTMX partial responses - return just the content block if HTMX request
-        if self.request.headers.get("HX-Request"):
-            return ["games/includes/_game_list_content.html"]
-        return super().get_template_names()
 
 
 class GameDetailView(DetailView):
@@ -264,86 +199,18 @@ class GameDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         game = context["game"]
 
-        # Group lists by type
-        from collections import defaultdict
-
-        LIST_TYPE_LABELS = {
-            "A": "All time",
-            "D": "Decade",
-            "M": "Miscellaneous",
-            "E": "End of year",
-        }
-
-        grouped = defaultdict(list)
-        for membership in game.lists.all():
-            list_type = membership.list.type
-            label = LIST_TYPE_LABELS.get(list_type, list_type)
-            grouped[label].append(
-                {
-                    "id": membership.list.id,
-                    "name": membership.list.name,
-                    "publication": (
-                        membership.list.publisher.name
-                        if membership.list.publisher
-                        else ""
-                    ),
-                    "type": list_type,
-                    "type_name": label,
-                    "url": membership.list.url,
-                    "year": membership.list.year,
-                    "rank": membership.rank,
-                }
-            )
-
-        # Sort by predefined order
-        sorting_arr = ["All time", "Decade", "Miscellaneous", "End of year"]
-        grouped_lists = sorted(
-            grouped.items(),
-            key=lambda x: sorting_arr.index(x[0]) if x[0] in sorting_arr else 999,
-        )
-
-        context["grouped_lists"] = grouped_lists
+        # Get lists grouped by type using model property
+        context["grouped_lists"] = list(game.lists_grouped_by_type.items())
         return context
 
 
 @method_decorator(vary_on_headers("X-Requested-With", "HX-Request"), name="dispatch")
-class GameSearchView(ListView):
+class GameSearchView(RobustPaginationMixin, ListView):
     model = models.Game
     template_name = "games/game_search.html"
     context_object_name = "games"
     paginate_by = 100
     paginate_orphans = 0
-
-    def paginate_queryset(self, queryset, page_size):
-        """
-        Paginate the queryset, and handle invalid page numbers gracefully.
-        Instead of raising 404, return the last valid page.
-        """
-        from django.core.paginator import Paginator, EmptyPage
-
-        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
-        page = self.request.GET.get("page")
-
-        try:
-            page_number = int(page) if page else 1
-        except (TypeError, ValueError):
-            page_number = 1
-
-        try:
-            page_obj = paginator.page(page_number)
-        except EmptyPage:
-            # If page is out of range, return the last valid page (or first if no pages)
-            if paginator.num_pages > 0:
-                page_obj = paginator.page(paginator.num_pages)
-            else:
-                # No results at all - create an empty page object
-                try:
-                    page_obj = paginator.page(1)
-                except EmptyPage:
-                    # Even page 1 is empty - return None and let Django handle it
-                    return (paginator, None, [], False)
-
-        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
 
     def get_template_names(self):
         # Support HTMX partial responses
@@ -363,76 +230,56 @@ class GameSearchView(ListView):
         return super().get_template_names()
 
     def get_queryset(self):
-        from django.db.models import Q
-
-        # Prefetch relationships for GameRowProperties component
-        qs = models.Game.objects.prefetch_related(
-            "developers",
-            "developers__developer",
-            "platforms",
-            "genres",
-        )
+        qs = models.Game.objects.with_relations()
 
         # Basic search by name
         q = self.request.GET.get("q")
         if q:
             qs = qs.filter(name__icontains=q)
 
-        # Year range filtering
-        start = self.request.GET.get("start")
-        end = self.request.GET.get("end")
-        if start:
-            qs = qs.filter(year_of_release__gte=int(start))
-        if end:
-            qs = qs.filter(year_of_release__lte=int(end))
+        # Year range filtering using utility function
+        qs = utils.apply_year_filters(
+            qs,
+            start=self.request.GET.get("start"),
+            end=self.request.GET.get("end"),
+        )
 
         # Genre filtering
         genre_option = self.request.GET.get("genre_option", "L")
         genres = self.request.GET.get("genres")
         if genres:
             genre_ids = [int(x) for x in genres.split(",")]
-            if genre_option == "A":  # Any
-                q = Q()
-                for genre_id in genre_ids:
-                    q |= Q(genres=genre_id)
-                qs = qs.filter(q)
-            else:  # All
-                for genre_id in genre_ids:
-                    qs = qs.filter(genres=genre_id)
+            match_all = genre_option != "A"  # "A" = Any, otherwise All
+            qs = utils.apply_genre_filter(qs, genre_ids, match_all=match_all)
 
         # Platform filtering
         platforms = self.request.GET.get("platforms")
         if platforms:
             platform_ids = [int(x) for x in platforms.split(",")]
-            qs = qs.filter(platforms__in=platform_ids)
+            qs = utils.apply_platform_filter(qs, platform_ids)
 
         return qs.distinct().order_by("rank")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from datetime import datetime
 
         # Get genres and platforms for AdvancedFilters (cached for 24 hours)
         # Convert IDs to strings for proper Alpine.js binding
-        genres = cache.get("search_genres_list")
-        if genres is None:
-            genres = [
-                {"id": str(g["id"]), "name": g["name"]}
-                for g in models.Genre.objects.all()
-                .order_by("name")
-                .values("id", "name")
-            ]
-            cache.set("search_genres_list", genres, 60 * 60 * 24)  # 24 hours
+        genres = utils.get_or_set_cache(
+            "search_genres_list",
+            models.Genre.objects.all(),
+            ["id", "name"],
+            order_by="name",
+            transform_id=True,
+        )
 
-        platforms = cache.get("search_platforms_list")
-        if platforms is None:
-            platforms = [
-                {"id": str(p["id"]), "name": p["name"], "code": p["code"]}
-                for p in models.Platform.objects.all()
-                .order_by("name")
-                .values("id", "name", "code")
-            ]
-            cache.set("search_platforms_list", platforms, 60 * 60 * 24)  # 24 hours
+        platforms = utils.get_or_set_cache(
+            "search_platforms_list",
+            models.Platform.objects.all(),
+            ["id", "name", "code"],
+            order_by="name",
+            transform_id=True,
+        )
 
         # Get min/max years (cached for 24 hours)
         year_stats = cache.get("game_year_stats")
@@ -477,47 +324,15 @@ class GameSearchView(ListView):
         return context
 
 
-class DeveloperListView(ListView):
+class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.DeveloperAlias
     template_name = "developers/developer_list.html"
     context_object_name = "developers"
     paginate_by = 100
     paginate_orphans = 0
-
-    def paginate_queryset(self, queryset, page_size):
-        """
-        Paginate the queryset, and handle invalid page numbers gracefully.
-        Instead of raising 404, return the last valid page.
-        """
-        from django.core.paginator import Paginator, EmptyPage
-
-        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
-        page = self.request.GET.get("page")
-
-        try:
-            page_number = int(page) if page else 1
-        except (TypeError, ValueError):
-            page_number = 1
-
-        try:
-            page_obj = paginator.page(page_number)
-        except EmptyPage:
-            # If page is out of range, return the last valid page (or first if no pages)
-            if paginator.num_pages > 0:
-                page_obj = paginator.page(paginator.num_pages)
-            else:
-                # No results at all - create an empty page object
-                try:
-                    page_obj = paginator.page(1)
-                except EmptyPage:
-                    # Even page 1 is empty - return None and let Django handle it
-                    return (paginator, None, [], False)
-
-        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
+    htmx_partial_template = "developers/includes/_developer_list_content.html"
 
     def get_queryset(self):
-        from django.db.models import Count
-
         qs = (
             models.DeveloperAlias.objects.annotate(
                 games_count=Count("games"),
@@ -534,12 +349,6 @@ class DeveloperListView(ListView):
             qs = qs.filter(name__icontains=q)
 
         return qs
-
-    def get_template_names(self):
-        # Support HTMX partial responses - return just the content block if HTMX request
-        if self.request.headers.get("HX-Request"):
-            return ["developers/includes/_developer_list_content.html"]
-        return super().get_template_names()
 
 
 class DeveloperDetailView(DetailView):
@@ -636,43 +445,13 @@ class DeveloperAliasRedirectView(View):
         return redirect("developer-detail", slug=alias.developer.slug, permanent=True)
 
 
-class ListListView(ListView):
+class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.List
     template_name = "lists/list_list.html"
     context_object_name = "lists"
     paginate_by = 100
     paginate_orphans = 0
-
-    def paginate_queryset(self, queryset, page_size):
-        """
-        Paginate the queryset, and handle invalid page numbers gracefully.
-        Instead of raising 404, return the last valid page.
-        """
-        from django.core.paginator import Paginator, EmptyPage
-
-        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
-        page = self.request.GET.get("page")
-
-        try:
-            page_number = int(page) if page else 1
-        except (TypeError, ValueError):
-            page_number = 1
-
-        try:
-            page_obj = paginator.page(page_number)
-        except EmptyPage:
-            # If page is out of range, return the last valid page (or first if no pages)
-            if paginator.num_pages > 0:
-                page_obj = paginator.page(paginator.num_pages)
-            else:
-                # No results at all - create an empty page object
-                try:
-                    page_obj = paginator.page(1)
-                except EmptyPage:
-                    # Even page 1 is empty - return None and let Django handle it
-                    return (paginator, None, [], False)
-
-        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
+    htmx_partial_template = "lists/includes/_list_list_content.html"
 
     def get_queryset(self):
         qs = models.List.objects.select_related("publisher").order_by(
@@ -706,7 +485,6 @@ class ListListView(ListView):
         context = super().get_context_data(**kwargs)
 
         # Add meta data for filters
-        from django.db.models import Count
 
         # Get list years with counts
         list_year_counts = (
@@ -717,18 +495,10 @@ class ListListView(ListView):
         )
 
         # Get publishers
-        from games.models import Publication
+        publishers = models.Publication.objects.all().order_by("name")
 
-        publishers = Publication.objects.all().order_by("name")
-
-        # Get list types
-        LIST_TYPE_LABELS = {
-            "A": "All time",
-            "D": "Decade",
-            "M": "Miscellaneous",
-            "E": "End of year",
-        }
-        list_types = [(k, v) for k, v in LIST_TYPE_LABELS.items()]
+        # Get list types from constants
+        list_types = constants.LIST_TYPES
 
         context["meta"] = {
             "lists": {
@@ -745,14 +515,8 @@ class ListListView(ListView):
 
         return context
 
-    def get_template_names(self):
-        # Support HTMX partial responses - return just the content block if HTMX request
-        if self.request.headers.get("HX-Request"):
-            return ["lists/includes/_list_list_content.html"]
-        return super().get_template_names()
 
-
-class PostListView(ListView):
+class PostListView(RobustPaginationMixin, ListView):
     model = models.Post
     template_name = "posts/post_list.html"
     context_object_name = "posts"
@@ -777,44 +541,13 @@ class PostListView(ListView):
         return qs
 
     def paginate_queryset(self, queryset, page_size):
-        """
-        Paginate the queryset, and handle invalid page numbers gracefully.
-        If queryset is already a list (from offset), skip pagination.
-        """
-        # If queryset is a list (from offset parameter),
-        # return it directly without pagination
+        """Handle offset list case, delegate standard pagination to mixin."""
+        # If queryset is a list (from offset parameter), skip pagination
         if isinstance(queryset, list):
-            from django.core.paginator import Paginator
-
-            # Create a dummy paginator for compatibility, but return the list as-is
-            paginator = Paginator(queryset, len(queryset))
+            paginator = Paginator(queryset, len(queryset) or 1)
             return (paginator, None, queryset, False)
 
-        from django.core.paginator import Paginator, EmptyPage
-
-        paginator = Paginator(queryset, page_size, orphans=self.paginate_orphans)
-        page = self.request.GET.get("page")
-
-        try:
-            page_number = int(page) if page else 1
-        except (TypeError, ValueError):
-            page_number = 1
-
-        try:
-            page_obj = paginator.page(page_number)
-        except EmptyPage:
-            # If page is out of range, return the last valid page (or first if no pages)
-            if paginator.num_pages > 0:
-                page_obj = paginator.page(paginator.num_pages)
-            else:
-                # No results at all - create an empty page object
-                try:
-                    page_obj = paginator.page(1)
-                except EmptyPage:
-                    # Even page 1 is empty - return None and let Django handle it
-                    return (paginator, None, [], False)
-
-        return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
+        return super().paginate_queryset(queryset, page_size)
 
 
 class PageDetailView(TemplateView):
@@ -822,8 +555,6 @@ class PageDetailView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from django.contrib.flatpages.models import FlatPage
-        from django.shortcuts import get_object_or_404
         import markdown
 
         slug = kwargs.get("slug")
@@ -887,8 +618,6 @@ class ImportView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs) -> dict:
         """Add database object counts and persistent errors to context."""
-        from django.db.models import Q
-
         context = super().get_context_data(**kwargs)
 
         # Get all counts in a single aggregation query (optimized)

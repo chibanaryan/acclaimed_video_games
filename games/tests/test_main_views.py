@@ -368,6 +368,16 @@ class GameSearchViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "games/includes/_game_search_content.html")
 
+    def test_htmx_request_with_target_returns_results_template(self):
+        """Test that HTMX request with HX-Target returns results-only template."""
+        response = self.client.get(
+            reverse("games-search") + "?q=zelda",
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="game-results-container",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "games/includes/_game_search_results.html")
+
     def test_context_has_filters(self):
         """Test that context includes filter data."""
         response = self.client.get(reverse("games-search"))
@@ -587,6 +597,22 @@ class ListListViewTest(TestCase):
         lists = list(response.context["lists"])
         self.assertEqual(len(lists), 1)
         self.assertEqual(lists[0].type, "A")
+
+    def test_filter_by_invalid_publisher_is_ignored(self):
+        """Test that invalid (non-numeric) publisher ID is ignored."""
+        response = self.client.get(reverse("list-list") + "?publisher=invalid")
+        self.assertEqual(response.status_code, 200)
+        # All lists should be returned since invalid filter is ignored
+        lists = list(response.context["lists"])
+        self.assertEqual(len(lists), 2)
+
+    def test_filter_by_invalid_year_is_ignored(self):
+        """Test that invalid (non-numeric) year is ignored."""
+        response = self.client.get(reverse("list-list") + "?year=invalid")
+        self.assertEqual(response.status_code, 200)
+        # All lists should be returned since invalid filter is ignored
+        lists = list(response.context["lists"])
+        self.assertEqual(len(lists), 2)
 
     def test_context_has_meta_data(self):
         """Test that context includes metadata."""
