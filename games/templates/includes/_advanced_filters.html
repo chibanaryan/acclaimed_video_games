@@ -113,6 +113,32 @@
             if (this.filters.rank_display) params.set('rank_display', this.filters.rank_display);
             return params;
         },
+        buildUrlParamsPreservePage() {
+            // Build URL parameters preserving current page (for display-only changes)
+            const params = new URLSearchParams(window.location.search);
+            // Keep the page parameter if it exists
+            const currentPage = params.get('page');
+            // Clear all params to rebuild cleanly
+            for (const key of [...params.keys()]) {
+                params.delete(key);
+            }
+
+            if (this.filters.q) params.set('q', this.filters.q);
+            if (this.filters.start) params.set('start', this.filters.start);
+            if (this.filters.end) params.set('end', this.filters.end);
+            if (this.filters.genres && this.filters.genres.length) {
+                params.set('genres', this.filters.genres.join(','));
+            }
+            if (this.filters.platforms && this.filters.platforms.length) {
+                params.set('platforms', this.filters.platforms.join(','));
+            }
+            if (this.filters.genre_option) params.set('genre_option', this.filters.genre_option);
+            if (this.filters.rank_display) params.set('rank_display', this.filters.rank_display);
+
+            // Restore page parameter
+            if (currentPage) params.set('page', currentPage);
+            return params;
+        },
         updateResults() {
             // Update only the results without changing the URL
             if (!this.initialized) return;
@@ -371,6 +397,69 @@
         updateUrl() {
             // Alias for backwards compatibility with other filter changes
             this.debouncedFilterUpdate();
+        },
+        updateDisplayOnly() {
+            // Update display settings without resetting pagination
+            if (!this.initialized) return;
+
+            if (this.filterTimeout) {
+                clearTimeout(this.filterTimeout);
+            }
+            this.filterTimeout = setTimeout(() => {
+                if (this.abortController) {
+                    this.abortController.abort();
+                }
+
+                this.abortController = new AbortController();
+                this.isLoading = true;
+
+                const resultsContainer = document.getElementById('game-results-container');
+                if (resultsContainer) resultsContainer.classList.add('is-loading');
+
+                const params = this.buildUrlParamsPreservePage();
+                const url = '{% url 'games-search' %}?' + params.toString().replace(/%2C/g, ',');
+
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'HX-Request': 'true',
+                        'HX-Target': 'content'
+                    },
+                    signal: this.abortController.signal
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Update title
+                    const newTitle = doc.querySelector('h1.title');
+                    const titleEl = document.getElementById('search-title');
+                    if (newTitle && titleEl) {
+                        titleEl.innerHTML = newTitle.innerHTML;
+                    }
+
+                    // Update only results (not filters)
+                    const newResults = doc.querySelector('#game-results-container');
+                    const resultsEl = document.getElementById('game-results-container');
+                    if (newResults && resultsEl) {
+                        resultsEl.innerHTML = newResults.innerHTML;
+                    }
+
+                    // Update URL
+                    window.history.pushState({}, '', url);
+                })
+                .catch(err => {
+                    if (err.name !== 'AbortError') {
+                        console.error('Error fetching results:', err);
+                    }
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                    const resultsContainer = document.getElementById('game-results-container');
+                    if (resultsContainer) resultsContainer.classList.remove('is-loading');
+                });
+            }, 150);
         }
      }"
      @update:modelValue.window="
@@ -448,7 +537,7 @@
                                id="rank-display-filtered"
                                name="rank_display"
                                :checked="filters.rank_display === 'filtered'"
-                               @change="filters.rank_display = $event.target.checked ? 'filtered' : 'alltime'; updateUrl()">
+                               @change="filters.rank_display = $event.target.checked ? 'filtered' : 'alltime'; updateDisplayOnly()">
                         Show Filtered Rank
                     </label>
                 </div>
