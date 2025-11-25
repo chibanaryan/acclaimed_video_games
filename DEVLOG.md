@@ -1,5 +1,11 @@
 # Developer Log
 
+## 2025-11-25
+
+- Added contact form with Zelda/Portal themed UI (hidden until email service configured)
+- Added social media buttons (X, Bluesky) to home page
+- Removed unused developer management commands (cleanup, sync, refresh)
+
 ## 2025-11-24
 
 - **Major performance optimizations**: 50-70% reduction in database queries across the site
