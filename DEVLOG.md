@@ -5,6 +5,7 @@
 - Added contact form with Zelda/Portal themed UI (hidden until email service configured)
 - Added social media buttons (X, Bluesky) to home page
 - Removed unused developer management commands (cleanup, sync, refresh)
+- Fixed pagination spacing on Advanced Search page (missing spacing class)
 
 ## 2025-11-24
 

@@ -2,7 +2,7 @@
 {% if games %}
 <div style="margin-top: 1.5rem;">
     {# Pagination at top #}
-    {% include 'includes/_pagination_responsive.html' with page_obj=page_obj target_id='content' %}
+    {% include 'includes/_pagination_responsive.html' with page_obj=page_obj target_id='content' spacing='top' %}
 
     {% for game in games %}
         {% with index=page_obj.start_index|add:forloop.counter0 %}
