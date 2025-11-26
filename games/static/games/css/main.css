@@ -226,6 +226,7 @@ footer {
     height: 30px !important;
     max-height: 30px;
     object-fit: contain;
+    aspect-ratio: 401 / 263;  /* Reserve horizontal space before image loads */
 }
 
 .navbar-brand {
@@ -236,6 +237,18 @@ footer {
 .navbar-menu {
     align-items: stretch;
     flex-grow: 1;
+}
+
+/* Reserve space for icons before MDI font loads to prevent CLS */
+.navbar .icon,
+.navbar-item .icon {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .navbar-burger {
@@ -819,6 +832,7 @@ table.detail td {
     /* Reserve space to prevent CLS when font loads */
     display: inline-block;
     min-width: 35px;
+    min-height: 30px;  /* Reserve vertical space for Handjet font */
     line-height: 1.2;
 }
 

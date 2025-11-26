@@ -2,6 +2,7 @@
 
 ## 2025-11-26
 
+- Fixed mobile CLS (0.31→target <0.1): logo aspect-ratio, icon sizing, x-cloak on hidden elements
 - PageSpeed optimizations: deferred HTMX/Alpine.js scripts, async MDI CSS loading, preconnect hints
 - Image optimization: lazy loading, explicit dimensions, fetchpriority for hero image
 - Accessibility: skip navigation link, screen-reader labels for search, ARIA labels on buttons

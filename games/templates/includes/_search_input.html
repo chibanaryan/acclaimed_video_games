@@ -17,7 +17,7 @@
                    placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}"
                    autocomplete="off">
         </div>
-        <div class="control is-clear" x-show="filters.q">
+        <div class="control is-clear" x-show="filters.q" x-cloak>
             <button @click="filters.q = ''"
                     title="Clear search text"
                     class="button">
@@ -27,7 +27,7 @@
             </button>
         </div>
         {% if show_submit_button %}
-        <div class="control" x-show="filters.q">
+        <div class="control" x-show="filters.q" x-cloak>
             <button @click="filters.q = filters.q"
                     title="Submit search text"
                     class="button">

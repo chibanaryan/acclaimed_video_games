@@ -16,7 +16,7 @@
      x-data="{
          baseUrl: '{% url 'games-list' %}'
      }"
-     {% if filters.decade or filters.year %}x-show="true"{% else %}x-show="false"{% endif %}>
+     {% if filters.decade or filters.year %}x-show="true"{% else %}x-show="false" x-cloak{% endif %}>
     <a href="{% url 'games-list' %}" class="button">
         <span class="icon">
             <span class="mdi mdi-close"></span>
