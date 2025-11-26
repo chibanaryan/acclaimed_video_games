@@ -2,6 +2,7 @@
 
 ## 2025-11-26
 
+- MDI CSS subset: reduced 53KB CDN file to ~1KB by including only 10 used icons (98% reduction)
 - Deferred Google Analytics loading with requestIdleCallback to eliminate 39ms forced reflow on mobile
 - Self-hosted CSS: combined Bulma + Bulmaswatch + custom styles into single file (~600ms render-blocking reduction)
 - Fixed mobile CLS (0.31→target <0.1): logo aspect-ratio, icon sizing, x-cloak on hidden elements

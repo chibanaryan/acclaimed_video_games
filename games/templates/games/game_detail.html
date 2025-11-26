@@ -30,13 +30,35 @@
 {% block content %}
 {% if game %}
     <h1 class="title">{{ game.name }}</h1>
-    <div class="columns">
-        <div class="column">
+    {% block extra_head %}
+        {% if game.image %}
+            <link rel="preload"
+                  href="{{ game.image }}"
+                  as="image"
+                  {% if game.image_2x %}imagesrcset="{{ game.image }} 1x, {{ game.image_2x }} 2x"{% endif %}
+                  imagesizes="(max-width: 768px) 70vw, 320px"
+                  fetchpriority="high">
+        {% endif %}
+    {% endblock %}
+    <div class="columns game-detail-columns is-variable is-5">
+        <div class="column is-7-tablet">
             {% include 'games/includes/_game_properties.html' with game=game %}
         </div>
-        <div class="column">
-            <img src="{{ game.image }}" alt="{{ game.name }}" width="264" height="374">
+        {% if game.image %}
+        <div class="column is-narrow">
+            <figure class="game-cover-frame">
+                <img src="{{ game.image }}"
+                     {% if game.image_2x %}srcset="{{ game.image }} 1x, {{ game.image_2x }} 2x"{% endif %}
+                     sizes="(max-width: 768px) 70vw, 320px"
+                     alt="{{ game.name }}"
+                     width="264" height="374"
+                     loading="eager"
+                     fetchpriority="high"
+                     decoding="async"
+                     class="game-cover">
+            </figure>
         </div>
+        {% endif %}
     </div>
     {% for group_label, group_items in grouped_lists %}
         <h2 class="title is-5">{{ group_label }} Lists</h2>
@@ -49,4 +71,3 @@
     </div>
 {% endif %}
 {% endblock %}
-

@@ -313,6 +313,16 @@ class Game(models.Model):
         return None
 
     @cached_property
+    def image_2x(self) -> Optional[str]:
+        """Get the 2x retina URL for the game's cover art (cached)."""
+        if self.igdb_artwork_id:
+            return (
+                "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/"
+                f"{self.igdb_artwork_id}"
+            )
+        return None
+
+    @cached_property
     def decade(self) -> Optional[int]:
         """Get the decade the game was released (cached)."""
         if self.year_of_release:

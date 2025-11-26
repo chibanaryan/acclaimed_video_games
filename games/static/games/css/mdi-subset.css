@@ -1,0 +1,42 @@
+/* Material Design Icons - Subset CSS */
+/* Only includes the ~10 icons actually used in this project */
+/* Reduces 53+ KiB CDN file to ~1 KiB */
+
+/* Font face declaration - self-hosted with font-display: swap for fast FCP */
+@font-face {
+    font-family: "Material Design Icons";
+    src: url("../fonts/materialdesignicons-webfont.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Base MDI class */
+.mdi::before,
+.mdi-set {
+    display: inline-block;
+    font: normal normal normal 24px/1 "Material Design Icons";
+    font-size: inherit;
+    text-rendering: auto;
+    line-height: inherit;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Size helper classes */
+.mdi-18px::before { font-size: 18px; }
+.mdi-24px::before { font-size: 24px; }
+.mdi-36px::before { font-size: 36px; }
+.mdi-48px::before { font-size: 48px; }
+
+/* Icons used in this project - MDI 7.2.96 codepoints */
+.mdi-magnify::before { content: "\F0349"; }
+.mdi-close::before { content: "\F0156"; }
+.mdi-form-select::before { content: "\F1401"; }
+.mdi-download::before { content: "\F01DA"; }
+.mdi-tune-variant::before { content: "\F1542"; }
+.mdi-open-in-new::before { content: "\F03CC"; }
+.mdi-email::before { content: "\F01EE"; }
+.mdi-chevron-double-right::before { content: "\F013E"; }
+.mdi-chevron-double-left::before { content: "\F013D"; }
+.mdi-send::before { content: "\F048A"; }

@@ -1,9 +1,0 @@
-/* Material Design Icons - Self-hosted font with font-display: swap */
-/* This overrides the CDN @font-face to prevent FOIT and improve FCP */
-@font-face {
-    font-family: "Material Design Icons";
-    src: url("../fonts/materialdesignicons-webfont.woff2") format("woff2");
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
