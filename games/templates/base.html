@@ -8,7 +8,7 @@
     <link rel="canonical" href="{% block canonical_url %}https://www.acclaimedvideogames.com{{ request.path }}{% endblock %}">
     {# Content Security Policy - allows unsafe-eval for Alpine.js x-data expressions #}
     {# Note: unsafe-eval is required for Alpine.js to evaluate x-data expressions #}
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self';">
     <title>{% block title %}Acclaimed Games{% endblock %}</title>
 
     {# Open Graph Tags for social sharing #}
@@ -31,15 +31,6 @@
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
     <link rel="dns-prefetch" href="https://images.igdb.com">
-
-    {# Google Analytics #}
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0591405Q89"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-0591405Q89');
-    </script>
 
     {# Favicon #}
     <link rel="icon" type="image/x-icon" href="{% static 'games/avg_logo_small.png' %}">
@@ -113,6 +104,30 @@
     </footer>
     
     {% block extra_scripts %}{% endblock %}
+
+    {# Google Analytics - Deferred to prevent forced reflow on mobile #}
+    <script>
+        function loadGoogleAnalytics() {
+            var script = document.createElement('script');
+            script.src = 'https://www.googletagmanager.com/gtag/js?id=G-0591405Q89';
+            script.async = true;
+            document.head.appendChild(script);
+
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            window.gtag = gtag;
+            gtag('js', new Date());
+            gtag('config', 'G-0591405Q89');
+        }
+
+        // Load GA after page is idle to prevent forced reflow during render
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(loadGoogleAnalytics, { timeout: 2000 });
+        } else {
+            // Fallback for Safari and older browsers
+            setTimeout(loadGoogleAnalytics, 0);
+        }
+    </script>
 
     {# HTMX Event Listeners - moved to end of body to prevent render blocking #}
     <script>

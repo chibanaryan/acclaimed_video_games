@@ -2,6 +2,7 @@
 
 ## 2025-11-26
 
+- Deferred Google Analytics loading with requestIdleCallback to eliminate 39ms forced reflow on mobile
 - Self-hosted CSS: combined Bulma + Bulmaswatch + custom styles into single file (~600ms render-blocking reduction)
 - Fixed mobile CLS (0.31→target <0.1): logo aspect-ratio, icon sizing, x-cloak on hidden elements
 - PageSpeed optimizations: deferred HTMX/Alpine.js scripts, async MDI CSS loading, preconnect hints
