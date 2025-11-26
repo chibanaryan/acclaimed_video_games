@@ -3,6 +3,30 @@
 
 {% block title %}{{ game.name }} - Acclaimed Games{% endblock %}
 
+{% block meta_description %}{{ game.name }} ({{ game.year_of_release }}) - Ranked #{{ game.rank }} among the most critically acclaimed video games of all time. View critic list appearances and rankings.{% endblock %}
+
+{% block og_title %}{{ game.name }} - Acclaimed Games{% endblock %}
+{% block og_description %}{{ game.name }} ({{ game.year_of_release }}) is ranked #{{ game.rank }} among the most critically acclaimed games of all time.{% endblock %}
+{% block og_image %}{{ game.image }}{% endblock %}
+{% block twitter_title %}{{ game.name }} - Acclaimed Games{% endblock %}
+{% block twitter_description %}{{ game.name }} ({{ game.year_of_release }}) is ranked #{{ game.rank }} all-time.{% endblock %}
+
+{% block structured_data %}{
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "{{ game.name }}",
+    "datePublished": "{{ game.year_of_release }}",
+    "image": "{{ game.image }}",
+    "description": "{{ game.description|default:'One of the most critically acclaimed video games of all time.'|escapejs }}",
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "{{ game.score }}",
+        "bestRating": "100",
+        "worstRating": "0",
+        "ratingCount": "{{ game.list_memberships.count }}"
+    }
+}{% endblock %}
+
 {% block content %}
 {% if game %}
     <h1 class="title">{{ game.name }}</h1>

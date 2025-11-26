@@ -700,6 +700,18 @@ def custom_404_view(request, exception):
     return NotFoundView.as_view()(request, exception=exception)
 
 
+def robots_txt(request):
+    """
+    Serve robots.txt for search engine crawlers.
+    """
+    content = """User-agent: *
+Allow: /
+
+Sitemap: https://www.acclaimedvideogames.com/sitemap.xml
+"""
+    return HttpResponse(content, content_type="text/plain")
+
+
 class ImportView(LoginRequiredMixin, FormView):
     """
     Handles batch importing of game data files with validation and transaction safety.

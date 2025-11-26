@@ -1,5 +1,15 @@
 # Developer Log
 
+## 2025-11-26
+
+- PageSpeed optimizations: deferred HTMX/Alpine.js scripts, async MDI CSS loading, preconnect hints
+- Image optimization: lazy loading, explicit dimensions, fetchpriority for hero image
+- Accessibility: skip navigation link, screen-reader labels for search, ARIA labels on buttons
+- SEO: meta descriptions, canonical URLs, Open Graph/Twitter Cards, JSON-LD structured data
+- Added XML sitemap with games, developers, and static pages (/sitemap.xml)
+- Added robots.txt with sitemap reference (/robots.txt)
+- Security headers: HSTS, X-Frame-Options, Secure cookies (production only)
+
 ## 2025-11-25
 
 - Added `sync_from_prod` management command for syncing production PostgreSQL to local SQLite

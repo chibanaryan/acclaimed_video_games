@@ -20,15 +20,16 @@
                  }
              }"
              x-init="window.addEventListener('reset-search-state', () => { reset(); mobileSearchActive = false; })">
-            <button @click="toggleInput()" x-show="!mobileSearchActive" class="button is-text">
+            <button @click="toggleInput()" x-show="!mobileSearchActive" class="button is-text" aria-label="Open search">
                 <span class="icon">
-                    <span class="mdi mdi-magnify mdi-24px"></span>
+                    <span class="mdi mdi-magnify mdi-24px" aria-hidden="true"></span>
                 </span>
             </button>
             <div x-show="mobileSearchActive" class="results-wrapper">
                 <div class="field has-addons">
                     <div class="control has-icons-left is-expanded">
-                        <span class="icon">
+                        <label for="nav-search-mobile" class="is-sr-only">Search games</label>
+                        <span class="icon" aria-hidden="true">
                             <span class="mdi mdi-magnify"></span>
                         </span>
                         <input type="text"
@@ -44,8 +45,8 @@
                                autocomplete="off">
                     </div>
                     <div class="control">
-                        <a @click="mobileSearchActive = false; q = ''; results = []; showMenu = false" class="button">
-                            <span class="icon">
+                        <a @click="mobileSearchActive = false; q = ''; results = []; showMenu = false" class="button" role="button" aria-label="Close search">
+                            <span class="icon" aria-hidden="true">
                                 <span class="mdi mdi-close"></span>
                             </span>
                         </a>
@@ -94,7 +95,8 @@
             <div class="dropdown" :class="{ 'is-active': showMenu }">
                 <div class="field has-addons m-0">
                     <div class="control has-icons-left">
-                        <span class="icon">
+                        <label for="nav-search-desktop" class="is-sr-only">Search games</label>
+                        <span class="icon" aria-hidden="true">
                             <span class="mdi mdi-magnify"></span>
                         </span>
                         <input type="text"
@@ -109,8 +111,8 @@
                                autocomplete="off">
                     </div>
                     <div class="control" x-show="q && q.trim()" x-cloak>
-                        <a @click="q = ''; results = []; showMenu = false" class="button">
-                            <span class="icon">
+                        <a @click="q = ''; results = []; showMenu = false" class="button" role="button" aria-label="Clear search">
+                            <span class="icon" aria-hidden="true">
                                 <span class="mdi mdi-close"></span>
                             </span>
                         </a>

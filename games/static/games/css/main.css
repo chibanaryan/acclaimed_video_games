@@ -67,6 +67,43 @@
 [x-cloak] { display: none !important; }
 
 /* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+/* Skip navigation link - visible only on focus */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: #fff;
+    padding: 8px 16px;
+    z-index: 1000;
+    transition: top 0.2s ease;
+    text-decoration: none;
+    border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+    top: 0;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Screen reader only - visually hidden but accessible */
+.is-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ==========================================================================
    Base Layout
    ========================================================================== */
 
@@ -90,7 +127,7 @@ header {
     margin-bottom: 1em;
 }
 
-section {
+main {
     flex: 1 0 auto;
 }
 

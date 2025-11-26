@@ -976,3 +976,86 @@ class GameDownloadCSVTest(TestCase):
         content = response.content.decode("utf-8")
         # Should contain the actual rank (100), not sequential (3)
         self.assertIn("100,Game 3", content)
+
+
+class RobotsTxtViewTest(TestCase):
+    """Test the robots.txt view."""
+
+    def test_robots_txt_returns_200(self):
+        """Test that robots.txt returns 200 status."""
+        response = self.client.get(reverse("robots-txt"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_robots_txt_content_type(self):
+        """Test that robots.txt returns plain text content type."""
+        response = self.client.get(reverse("robots-txt"))
+        self.assertEqual(response["Content-Type"], "text/plain")
+
+    def test_robots_txt_contains_user_agent(self):
+        """Test that robots.txt contains User-agent directive."""
+        response = self.client.get(reverse("robots-txt"))
+        content = response.content.decode("utf-8")
+        self.assertIn("User-agent: *", content)
+
+    def test_robots_txt_contains_sitemap(self):
+        """Test that robots.txt contains sitemap URL."""
+        response = self.client.get(reverse("robots-txt"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Sitemap:", content)
+        self.assertIn("sitemap.xml", content)
+
+
+class SitemapViewTest(TestCase):
+    """Test the XML sitemap."""
+
+    def setUp(self):
+        # Create test games
+        self.game1 = Game.objects.create(
+            name="Test Game 1", slug="test-game-1", rank=1, year_of_release=2020
+        )
+        self.game2 = Game.objects.create(
+            name="Test Game 2", slug="test-game-2", rank=2, year_of_release=2021
+        )
+
+        # Create test developers
+        self.dev = Developer.objects.create(name="Test Dev", slug="test-dev")
+
+    def test_sitemap_returns_200(self):
+        """Test that sitemap.xml returns 200 status."""
+        response = self.client.get("/sitemap.xml")
+        self.assertEqual(response.status_code, 200)
+
+    def test_sitemap_content_type(self):
+        """Test that sitemap returns XML content type."""
+        response = self.client.get("/sitemap.xml")
+        self.assertIn("xml", response["Content-Type"])
+
+    def test_sitemap_contains_static_urls(self):
+        """Test that sitemap contains static page URLs."""
+        response = self.client.get("/sitemap.xml")
+        content = response.content.decode("utf-8")
+        # Check for static page paths
+        self.assertIn("/games/", content)
+        self.assertIn("/developers/", content)
+        self.assertIn("/lists/", content)
+        self.assertIn("/posts/", content)
+
+    def test_sitemap_contains_game_urls(self):
+        """Test that sitemap contains game detail URLs."""
+        response = self.client.get("/sitemap.xml")
+        content = response.content.decode("utf-8")
+        self.assertIn("/game/test-game-1/", content)
+        self.assertIn("/game/test-game-2/", content)
+
+    def test_sitemap_contains_developer_urls(self):
+        """Test that sitemap contains developer detail URLs."""
+        response = self.client.get("/sitemap.xml")
+        content = response.content.decode("utf-8")
+        self.assertIn("/developers/test-dev/", content)
+
+    def test_sitemap_is_valid_xml(self):
+        """Test that sitemap is valid XML with proper namespace."""
+        response = self.client.get("/sitemap.xml")
+        content = response.content.decode("utf-8")
+        self.assertIn('<?xml version="1.0"', content)
+        self.assertIn("http://www.sitemaps.org/schemas/sitemap/0.9", content)

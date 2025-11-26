@@ -4,10 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Discover the most critically acclaimed video games of all time, ranked by aggregating hundreds of critic lists from major gaming publications.{% endblock %}">
+    <link rel="canonical" href="{% block canonical_url %}https://www.acclaimedvideogames.com{{ request.path }}{% endblock %}">
     {# Content Security Policy - allows unsafe-eval for Alpine.js x-data expressions #}
     {# Note: unsafe-eval is required for Alpine.js to evaluate x-data expressions #}
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self';">
     <title>{% block title %}Acclaimed Games{% endblock %}</title>
+
+    {# Open Graph Tags for social sharing #}
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Acclaimed Games{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Discover the most critically acclaimed video games of all time, ranked by aggregating hundreds of critic lists.{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}https://www.acclaimedvideogames.com{{ request.path }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}https://www.acclaimedvideogames.com{% static 'games/avg_logo.png' %}{% endblock %}">
+    <meta property="og:site_name" content="Acclaimed Games">
+
+    {# Twitter Card Tags #}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@AVGRankings">
+    <meta name="twitter:title" content="{% block twitter_title %}Acclaimed Games{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Discover the most critically acclaimed video games of all time.{% endblock %}">
+
+    {# Preconnect to external domains for faster resource loading #}
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+    <link rel="dns-prefetch" href="https://images.igdb.com">
 
     {# Google Analytics #}
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-0591405Q89"></script>
@@ -25,8 +47,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
     <link rel="stylesheet" href="https://unpkg.com/bulmaswatch@0.8.1/cyborg/bulmaswatch.min.css">
     
-    {# Material Design Icons #}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
+    {# Material Design Icons - Load asynchronously to prevent render blocking #}
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css"></noscript>
     
     {# Handjet Font (for rank numbers) - Self-hosted to prevent FOUT #}
     {# Using font-display: block prevents visible font swap #}
@@ -39,10 +62,62 @@
     <link rel="prefetch" href="{% static 'games/avg_logo_small.png' %}" as="image">
     <link rel="prefetch" href="{% static 'games/palestine-flag-xs.png' %}" as="image">
 
-    {# HTMX #}
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    {# HTMX - defer to prevent render blocking #}
+    <script defer src="https://unpkg.com/htmx.org@1.9.10"></script>
 
-    {# HTMX Event Listeners - scroll to top after content updates #}
+    {# Shared Utilities - Must load before Alpine.js, defer maintains order #}
+    <script defer src="{% static 'games/js/utils.js' %}"></script>
+
+    {# Alpine.js #}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    {% block extra_head %}{% endblock %}
+
+    {# Structured Data (JSON-LD) #}
+    <script type="application/ld+json">
+    {% block structured_data %}{
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Acclaimed Games",
+        "url": "https://www.acclaimedvideogames.com",
+        "description": "The most critically acclaimed video games of all time",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.acclaimedvideogames.com/games/search/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }{% endblock %}
+    </script>
+</head>
+<body>
+    {# Skip navigation link for accessibility #}
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header id="header">
+        <div class="container">
+            {% include 'includes/_nav.html' %}
+        </div>
+    </header>
+    
+    <main id="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <a href="{% url 'home' %}">Home</a>
+            •
+            <a href="{% url 'post-list' %}">News</a>
+            •
+            <a href="{% url 'page-detail' slug='about' %}">About / FAQ</a>
+        </div>
+    </footer>
+    
+    {% block extra_scripts %}{% endblock %}
+
+    {# HTMX Event Listeners - moved to end of body to prevent render blocking #}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Listen for HTMX afterSwap event on pagination and search updates
@@ -77,39 +152,6 @@
             }
         });
     </script>
-
-    {# Shared Utilities - Must load before Alpine.js #}
-    <script src="{% static 'games/js/utils.js' %}"></script>
-
-    {# Alpine.js #}
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    {% block extra_head %}{% endblock %}
-</head>
-<body>
-    <header id="header">
-        <div class="container">
-            {% include 'includes/_nav.html' %}
-        </div>
-    </header>
-    
-    <section>
-        <div class="container">
-            {% block content %}{% endblock %}
-        </div>
-    </section>
-    
-    <footer>
-        <div class="container">
-            <a href="{% url 'home' %}">Home</a>
-            •
-            <a href="{% url 'post-list' %}">News</a>
-            •
-            <a href="{% url 'page-detail' slug='about' %}">About / FAQ</a>
-        </div>
-    </footer>
-    
-    {% block extra_scripts %}{% endblock %}
 </body>
 </html>
 

@@ -2,15 +2,25 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 
 from games import views
 from games.api import views as api_views
+from games.sitemaps import sitemaps
 
 # Custom 404 handler
 handler404 = "games.views.custom_404_view"
 
 urlpatterns = [
+    # Sitemap and robots.txt for SEO
+    path(
+        "sitemap.xml",
+        sitemap,
+        {"sitemaps": sitemaps},
+        name="django.contrib.sitemaps.views.sitemap",
+    ),
+    path("robots.txt", views.robots_txt, name="robots-txt"),
     # API search endpoint for HTMX/Alpine.js (must be before REST API include)
     path(
         "api/games/search/",

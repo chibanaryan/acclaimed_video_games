@@ -4,15 +4,17 @@
 
 {% block title %}Acclaimed Games{% endblock %}
 
+{% block meta_description %}The definitive ranking of the most critically acclaimed video games, based on {{ list_count }} critic lists from {{ publication_count }} publications. Explore top-rated games from every era.{% endblock %}
+
 {% block extra_head %}
-{# Prefetch home page hero image #}
-<link rel="prefetch" href="{% static 'games/avg_logo.png' %}" as="image">
+{# Preload home page hero image - LCP element #}
+<link rel="preload" href="{% static 'games/avg_logo.png' %}" as="image" fetchpriority="high">
 {% endblock %}
 
 {% block content %}
 <div class="columns">
     <div class="column">
-        <img src="{% static 'games/avg_logo.png' %}" alt="Acclaimed Games" width="1092" height="737">
+        <img src="{% static 'games/avg_logo.png' %}" alt="Acclaimed Games" width="1092" height="737" fetchpriority="high">
         <div class="is-size-4 snippet-text">
             The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
         </div>
@@ -22,7 +24,7 @@
             <div class="game">
                 <a href="{% url 'game-detail' slug=game.slug %}">
                     <span class="rank">{{ game.rank }}</span>
-                    <img src="{{ game.thumbnail }}" alt="{{ game.name }}" width="90" height="120">
+                    <img src="{{ game.thumbnail }}" alt="{{ game.name }}" width="90" height="120" loading="lazy" decoding="async">
                 </a>
             </div>
             {% endfor %}
@@ -108,7 +110,7 @@
         <section class="modal-card-body" style="background: #1a1a1a; padding-top: 1.5rem;">
             <button class="delete is-pulled-right" aria-label="close" @click="closeContact()" style="position: absolute; right: 1rem; top: 1rem;"></button>
             <p class="is-size-5 has-text-weight-bold mb-4" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                <img src="https://static.wikia.nocookie.net/zelda_gamepedia_en/images/0/08/OoT3D_Navi_Artwork.png" alt="Navi" style="width: 28px; height: auto; filter: drop-shadow(0 0 4px #00d4ff);">
+                <img src="https://static.wikia.nocookie.net/zelda_gamepedia_en/images/0/08/OoT3D_Navi_Artwork.png" alt="" role="presentation" style="width: 28px; height: auto; filter: drop-shadow(0 0 4px #00d4ff);">
                 <em>"Hey! Listen!"</em>
                 <span class="has-text-grey-light is-size-7" style="font-weight: normal;">~Navi, <a href="{% url 'game-detail' slug='the-legend-of-zelda-ocarina-of-time' %}" class="has-text-info">The Legend of Zelda: Ocarina of Time</a></span>
             </p>

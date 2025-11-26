@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.postgres",
     "django.contrib.humanize",
+    "django.contrib.sitemaps",
     "django.forms",
     "corsheaders",
     "rest_framework",
@@ -227,3 +228,17 @@ LOGGING = {
         },
     },
 }
+
+# Security settings
+# These headers help protect against common web vulnerabilities
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
+X_FRAME_OPTIONS = "DENY"  # Prevent clickjacking
+
+# Production-only security settings (require HTTPS)
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 year - enable HTTP Strict Transport Security
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True  # Only send session cookie over HTTPS
+    CSRF_COOKIE_SECURE = True  # Only send CSRF cookie over HTTPS
+    SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
