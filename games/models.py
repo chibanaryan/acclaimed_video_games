@@ -293,6 +293,16 @@ class Game(models.Model):
         return None
 
     @cached_property
+    def thumbnail_2x(self) -> Optional[str]:
+        """Get the 2x thumbnail URL for retina displays (cached)."""
+        if self.igdb_artwork_id:
+            return (
+                "https://images.igdb.com/igdb/image/upload/t_cover_small_2x/"
+                f"{self.igdb_artwork_id}"
+            )
+        return None
+
+    @cached_property
     def image(self) -> Optional[str]:
         """Get the full-size image URL for the game's cover art (cached)."""
         if self.igdb_artwork_id:

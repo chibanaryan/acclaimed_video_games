@@ -46,13 +46,12 @@
     {# CSS Framework - Bulma 1.0.0 with Bulmaswatch Cyborg theme (dark theme) #}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
     <link rel="stylesheet" href="https://unpkg.com/bulmaswatch@0.8.1/cyborg/bulmaswatch.min.css">
-    
+
     {# Material Design Icons - Load asynchronously to prevent render blocking #}
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css"></noscript>
-    
+
     {# Handjet Font (for rank numbers) - Self-hosted to prevent FOUT #}
-    {# Using font-display: block prevents visible font swap #}
     <link rel="preload" href="{% static 'games/fonts/Handjet-ExtraBold.woff2' %}" as="font" type="font/woff2" crossorigin>
 
     {# Custom Styles - Load after Bulmaswatch to ensure proper overrides #}

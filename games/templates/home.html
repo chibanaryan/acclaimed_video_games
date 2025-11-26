@@ -27,7 +27,9 @@
             <div class="game">
                 <a href="{% url 'game-detail' slug=game.slug %}">
                     <span class="rank">{{ game.rank }}</span>
-                    <img src="{{ game.thumbnail }}" alt="{{ game.name }}" width="90" height="120" loading="lazy" decoding="async">
+                    <img src="{{ game.thumbnail }}"
+                         srcset="{{ game.thumbnail }} 1x, {{ game.thumbnail_2x }} 2x"
+                         alt="{{ game.name }}" width="90" height="120" loading="lazy" decoding="async">
                 </a>
             </div>
             {% endfor %}

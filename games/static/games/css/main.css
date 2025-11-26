@@ -1275,3 +1275,38 @@ table.detail td {
     animation: moon-shake 0.5s ease-in-out infinite;
     display: inline-block;
 }
+
+/* ==========================================================================
+   Accessibility - WCAG AA Contrast Fixes
+   ========================================================================== */
+
+/* Fix button.is-link text contrast (Bulmaswatch Cyborg blue fails WCAG AA) */
+.button.is-link {
+    background-color: #2366d1;
+    color: #ffffff;
+}
+
+.button.is-link:hover {
+    background-color: #1d5ab8;
+    color: #ffffff;
+}
+
+.button.is-link:focus,
+.button.is-link:active {
+    background-color: #1a4fa3;
+    color: #ffffff;
+}
+
+/* Fix timestamp contrast on dark backgrounds */
+.has-text-grey-dark {
+    color: #9a9a9a !important;
+}
+
+/* Fix post content link contrast on dark box backgrounds */
+.box a:not(.button) {
+    color: #5dade2;
+}
+
+.box a:not(.button):hover {
+    color: #85c1e9;
+}

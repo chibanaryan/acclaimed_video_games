@@ -13,6 +13,7 @@
 - WhiteNoise optimization: Brotli/gzip compression, 1-year cache headers with hash-based cache busting
 - Accessibility contrast fixes: improved text contrast for WCAG AA compliance
 - Responsive hero logo with srcset for optimized image delivery
+- IGDB cover images: added 2x retina support with srcset for crisp thumbnails on high-DPI displays
 
 ## 2025-11-25
 

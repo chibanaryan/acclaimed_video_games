@@ -428,6 +428,7 @@ class ModelHelpersTests(TestCase):
             igdb_artwork_id="art123",
         )
         self.assertIn("t_cover_small/art123", game.thumbnail)
+        self.assertIn("t_cover_small_2x/art123", game.thumbnail_2x)
         self.assertIn("t_cover_big/art123", game.image)
 
     def test_publication_str_and_slug_default(self):
