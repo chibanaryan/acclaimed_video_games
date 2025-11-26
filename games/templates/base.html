@@ -39,11 +39,14 @@
     {# Self-hosted to eliminate CDN render-blocking latency (saves ~600ms) #}
     <link rel="stylesheet" href="{% static 'games/css/combined.css' %}">
 
-    {# Material Design Icons - Load asynchronously to prevent render blocking #}
+    {# Material Design Icons - Self-hosted font with font-display: swap #}
+    {# Load our @font-face first, then CDN for icon class definitions #}
+    <link rel="stylesheet" href="{% static 'games/css/mdi-font-face.css' %}">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css"></noscript>
 
-    {# Handjet Font (for rank numbers) - Self-hosted to prevent FOUT #}
+    {# Fonts - Self-hosted with preload for faster loading #}
+    <link rel="preload" href="{% static 'games/fonts/materialdesignicons-webfont.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{% static 'games/fonts/Handjet-ExtraBold.woff2' %}" as="font" type="font/woff2" crossorigin>
 
     {# Prefetch critical images that appear on every page #}
