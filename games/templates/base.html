@@ -8,7 +8,7 @@
     <link rel="canonical" href="{% block canonical_url %}https://www.acclaimedvideogames.com{{ request.path }}{% endblock %}">
     {# Content Security Policy - allows unsafe-eval for Alpine.js x-data expressions #}
     {# Note: unsafe-eval is required for Alpine.js to evaluate x-data expressions #}
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self';">
     <title>{% block title %}Acclaimed Games{% endblock %}</title>
 
     {# Open Graph Tags for social sharing #}
@@ -26,6 +26,7 @@
     <meta name="twitter:description" content="{% block twitter_description %}Discover the most critically acclaimed video games of all time.{% endblock %}">
 
     {# Preconnect to external domains for faster resource loading #}
+    {# Note: CSS is now self-hosted; jsdelivr still needed for fonts/icons, unpkg for HTMX #}
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
@@ -43,9 +44,9 @@
     {# Favicon #}
     <link rel="icon" type="image/x-icon" href="{% static 'games/avg_logo_small.png' %}">
 
-    {# CSS Framework - Bulma 1.0.0 with Bulmaswatch Cyborg theme (dark theme) #}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/bulmaswatch@0.8.1/cyborg/bulmaswatch.min.css">
+    {# Combined CSS - Bulma 1.0.0 + Bulmaswatch Cyborg + Custom Styles #}
+    {# Self-hosted to eliminate CDN render-blocking latency (saves ~600ms) #}
+    <link rel="stylesheet" href="{% static 'games/css/combined.css' %}">
 
     {# Material Design Icons - Load asynchronously to prevent render blocking #}
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -53,9 +54,6 @@
 
     {# Handjet Font (for rank numbers) - Self-hosted to prevent FOUT #}
     <link rel="preload" href="{% static 'games/fonts/Handjet-ExtraBold.woff2' %}" as="font" type="font/woff2" crossorigin>
-
-    {# Custom Styles - Load after Bulmaswatch to ensure proper overrides #}
-    <link rel="stylesheet" href="{% static 'games/css/main.css' %}">
 
     {# Prefetch critical images that appear on every page #}
     <link rel="prefetch" href="{% static 'games/avg_logo_small.png' %}" as="image">
