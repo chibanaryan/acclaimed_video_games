@@ -36,12 +36,13 @@
     <link rel="icon" type="image/x-icon" href="{% static 'games/avg_logo_small.png' %}">
 
     {# Combined CSS - Bulma 1.0.0 + Bulmaswatch Cyborg + Custom Styles #}
-    {# Self-hosted to eliminate CDN render-blocking latency (saves ~600ms) #}
+    {# Must be render-blocking to prevent layout shifts (CLS) #}
     <link rel="stylesheet" href="{% static 'games/css/combined.css' %}">
 
     {# Material Design Icons - Self-hosted font with font-display: swap #}
-    {# Load our @font-face first, then CDN for icon class definitions #}
-    <link rel="stylesheet" href="{% static 'games/css/mdi-font-face.css' %}">
+    {# Async loaded - font declarations don't need to block render #}
+    <link rel="preload" href="{% static 'games/css/mdi-font-face.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{% static 'games/css/mdi-font-face.css' %}"></noscript>
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css"></noscript>
 
