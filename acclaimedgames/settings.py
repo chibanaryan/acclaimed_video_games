@@ -178,6 +178,21 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = []
 
+# WhiteNoise configuration for compression and caching
+# Creates hashed filenames (e.g., main.a1b2c3d4.css) for cache busting
+# Creates gzip and brotli compressed versions automatically
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# Cache static files for 1 year (safe because filenames include content hash)
+WHITENOISE_MAX_AGE = 31536000
+
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
 REST_FRAMEWORK = {

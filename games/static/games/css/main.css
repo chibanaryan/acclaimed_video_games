@@ -60,6 +60,13 @@
     font-display: block;
 }
 
+/* Override MDI font-display to prevent invisible text during load */
+@font-face {
+    font-family: 'Material Design Icons';
+    font-display: swap;
+    src: local('Material Design Icons');
+}
+
 /* ==========================================================================
    Alpine.js Support
    ========================================================================== */
@@ -919,7 +926,7 @@ table.detail td {
 }
 
 .game-property > span:first-child {
-    color: #888;
+    color: #999;
 }
 
 /* On mobile, stack properties vertically */
@@ -1224,7 +1231,7 @@ table.detail td {
 
 #contactModal .input::placeholder,
 #contactModal .textarea::placeholder {
-    color: #7a7a7a;
+    color: #9a9a9a;
 }
 
 /* Reduce spacing between form fields */

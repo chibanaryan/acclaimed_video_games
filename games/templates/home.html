@@ -8,13 +8,16 @@
 
 {% block extra_head %}
 {# Preload home page hero image - LCP element #}
-<link rel="preload" href="{% static 'games/avg_logo.png' %}" as="image" fetchpriority="high">
+<link rel="preload" href="{% static 'games/avg_logo_web.png' %}" as="image" fetchpriority="high" imagesrcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
 {% endblock %}
 
 {% block content %}
 <div class="columns">
     <div class="column">
-        <img src="{% static 'games/avg_logo.png' %}" alt="Acclaimed Games" width="1092" height="737" fetchpriority="high">
+        <img src="{% static 'games/avg_logo.png' %}"
+             srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
+             sizes="(max-width: 600px) 100vw, 548px"
+             alt="Acclaimed Games" width="1092" height="737" fetchpriority="high">
         <div class="is-size-4 snippet-text">
             The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
         </div>

@@ -17,4 +17,5 @@ sentry-sdk[django]
 unidecode
 wheel
 whitenoise
+Brotli
 django-cors-headers

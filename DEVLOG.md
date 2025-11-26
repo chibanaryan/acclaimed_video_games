@@ -10,6 +10,9 @@
 - Added XML sitemap with games, developers, and static pages (/sitemap.xml)
 - Added robots.txt with sitemap reference (/robots.txt)
 - Security headers: HSTS, X-Frame-Options, Secure cookies (production only)
+- WhiteNoise optimization: Brotli/gzip compression, 1-year cache headers with hash-based cache busting
+- Accessibility contrast fixes: improved text contrast for WCAG AA compliance
+- Responsive hero logo with srcset for optimized image delivery
 
 ## 2025-11-25
 
