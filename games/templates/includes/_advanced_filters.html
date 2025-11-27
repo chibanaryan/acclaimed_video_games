@@ -238,39 +238,63 @@
                  :class="filtersPowerOn ? 'is-expanded' : 'is-collapsed'">
                 <div class="filters-sidebar">
                 {# Header with navigation buttons #}
-                <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
-                    <h2 class="title is-5 mb-0">Filters</h2>
-                    <div class="buttons are-small">
-                        <a :href="filtersPowerOn ? '{% url 'games-search' %}?filters=on' : '{% url 'games-search' %}?filters=off'"
-                           class="button is-small is-light nes-reset-button">
-                            <span class="icon is-small">
-                                <span class="mdi mdi-undo"></span>
-                            </span>
-                            <span>Reset</span>
-                        </a>
+                <div class="filters-header">
+                    <div class="filters-header-title">
+                        <span class="filters-header-icon">
+                            <span class="mdi mdi-tune"></span>
+                        </span>
+                        <h2>Filters</h2>
                     </div>
+                    <a :href="filtersPowerOn ? '{% url 'games-search' %}?filters=on' : '{% url 'games-search' %}?filters=off'"
+                       class="button is-small nes-reset-button">
+                        <span class="icon is-small">
+                            <span class="mdi mdi-undo"></span>
+                        </span>
+                        <span>Reset</span>
+                    </a>
                 </div>
 
                 {# Search input #}
-                <div class="mb-4">
-                    {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
+                <div class="filter-panel search-panel">
+                    <div class="filter-panel-header">
+                        <span class="filter-panel-icon">
+                            <span class="mdi mdi-magnify"></span>
+                        </span>
+                        <span class="filter-panel-title">Search</span>
+                    </div>
+                    <div class="filter-panel-content">
+                        {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
+                    </div>
                 </div>
 
                 {# Year range heatmap grid #}
-                <div class="mb-4">
-                    <div class="has-text-weight-bold mb-2">Release Year</div>
-                    <div class="is-size-7 has-text-grey mb-2 is-flex is-justify-content-space-between">
-                        <span>Click year or decade</span>
-                        <span>Drag or shift+click for ranges</span>
+                <div class="filter-panel year-panel">
+                    <div class="filter-panel-header">
+                        <span class="filter-panel-icon">
+                            <span class="mdi mdi-calendar-range"></span>
+                        </span>
+                        <span class="filter-panel-title">Release Year</span>
                     </div>
-                    {% include 'includes/_year_grid.html' %}
+                    <div class="filter-panel-content">
+                        <div class="filter-help">
+                            <span>Click year or decade</span>
+                            <span>Drag or shift+click for ranges</span>
+                        </div>
+                        {% include 'includes/_year_grid.html' %}
+                    </div>
                 </div>
 
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
-                <div class="mb-4 filter-section">
-                    <div class="has-text-weight-bold mb-2">Platforms</div>
-                    <div data-filter-type="platforms"
+                <div class="filter-panel platform-panel">
+                    <div class="filter-panel-header">
+                        <span class="filter-panel-icon">
+                            <span class="mdi mdi-controller"></span>
+                        </span>
+                        <span class="filter-panel-title">Platforms</span>
+                    </div>
+                    <div class="filter-panel-content"
+                         data-filter-type="platforms"
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                         {% include 'includes/_platform_filter.html' %}
@@ -280,9 +304,15 @@
 
                 {% if genres %}
                 {# Genres filter - Inventory Grid Style #}
-                <div class="mb-4 filter-section">
-                    <div class="has-text-weight-bold mb-2">Genres</div>
-                    <div data-filter-type="genres"
+                <div class="filter-panel genre-panel">
+                    <div class="filter-panel-header">
+                        <span class="filter-panel-icon">
+                            <span class="mdi mdi-gamepad-variant"></span>
+                        </span>
+                        <span class="filter-panel-title">Genres</span>
+                    </div>
+                    <div class="filter-panel-content"
+                         data-filter-type="genres"
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                         {% include 'includes/_genre_filter.html' %}

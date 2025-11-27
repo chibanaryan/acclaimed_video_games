@@ -43,6 +43,10 @@
 .mdi-chevron-up::before { content: "\F0143"; }
 .mdi-chevron-down::before { content: "\F0140"; }
 .mdi-send::before { content: "\F048A"; }
+.mdi-calendar-range::before { content: "\F0679"; }
+.mdi-power::before { content: "\F0425"; }
+.mdi-undo::before { content: "\F054C"; }
+.mdi-tune::before { content: "\F062E"; }
 
 /* Platform icons for filter dropdowns */
 /* Sony */

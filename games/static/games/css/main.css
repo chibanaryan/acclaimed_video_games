@@ -777,6 +777,167 @@ table.detail td {
 }
 
 /* ==========================================================================
+   Filter Panels - Distinctive Category Cards
+   ========================================================================== */
+
+/* Main filters header */
+.filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, rgba(50, 115, 220, 0.15) 0%, rgba(50, 115, 220, 0.05) 100%);
+    border: 1px solid rgba(50, 115, 220, 0.3);
+    border-radius: 8px;
+    position: relative;
+}
+
+.filters-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+    border-radius: 8px 8px 0 0;
+}
+
+.filters-header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.filters-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(50, 115, 220, 0.2);
+    border-radius: 6px;
+    color: var(--color-primary);
+    font-size: 1.1rem;
+}
+
+.filters-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.filter-panel {
+    background: linear-gradient(180deg, rgba(36, 36, 36, 0.8) 0%, rgba(24, 24, 24, 0.9) 100%);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.filter-panel:hover {
+    border-color: var(--color-border-hover);
+}
+
+/* Panel header with icon and title */
+.filter-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(74, 74, 74, 0.5);
+}
+
+.filter-panel-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* Color-coded panel icons */
+.filter-panel.search-panel .filter-panel-icon {
+    background: rgba(62, 142, 208, 0.2);
+    color: #5dade2;
+}
+
+.filter-panel.year-panel .filter-panel-icon {
+    background: rgba(255, 193, 7, 0.2);
+    color: var(--color-gold);
+}
+
+.filter-panel.platform-panel .filter-panel-icon {
+    background: rgba(72, 199, 116, 0.2);
+    color: #48c774;
+}
+
+.filter-panel.genre-panel .filter-panel-icon {
+    background: rgba(168, 112, 107, 0.2);
+    color: #c28a5c;
+}
+
+.filter-panel-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Accent line at top of panel matching icon color */
+.filter-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    border-radius: 0 0 2px 2px;
+}
+
+.filter-panel.search-panel::before {
+    background: linear-gradient(90deg, transparent, #5dade2, transparent);
+}
+
+.filter-panel.year-panel::before {
+    background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+.filter-panel.platform-panel::before {
+    background: linear-gradient(90deg, transparent, #48c774, transparent);
+}
+
+.filter-panel.genre-panel::before {
+    background: linear-gradient(90deg, transparent, #c28a5c, transparent);
+}
+
+/* Panel content area */
+.filter-panel-content {
+    /* Content inherits panel padding */
+}
+
+/* Helper text styling within panels */
+.filter-panel .filter-help {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    opacity: 0.8;
+}
+
+/* ==========================================================================
    Collapsible Filter Sections
    ========================================================================== */
 
@@ -2163,7 +2324,7 @@ table.detail td {
 
 .advanced-layout {
     --filters-width: 420px;
-    --filters-transition: 0.35s ease;
+    --filters-transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: flex-start;
     gap: 0;
@@ -2173,37 +2334,19 @@ table.detail td {
     flex: 0 0 var(--filters-width);
     width: var(--filters-width);
     max-width: none;
-    transition:
-        flex-basis var(--filters-transition),
-        width var(--filters-transition),
-        margin var(--filters-transition),
-        opacity var(--filters-transition);
-    overflow: hidden;
+    overflow: visible;
+    transition: margin-left var(--filters-transition), opacity var(--filters-transition);
 }
 
 .filters-collapsible.is-collapsed {
-    flex-basis: 0;
-    width: 0;
     margin-left: calc(-1 * var(--filters-width));
     opacity: 0;
     pointer-events: none;
 }
 
 .filters-collapsible.is-expanded {
-    flex-basis: var(--filters-width);
-    width: var(--filters-width);
     margin-left: 0;
     opacity: 1;
-}
-
-.advanced-layout .column:last-child {
-    transition:
-        flex var(--filters-transition),
-        width var(--filters-transition);
-}
-
-.advanced-layout.filters-on {
-    /* No padding needed - flexbox handles layout */
 }
 
 .advanced-layout .main-panel {
