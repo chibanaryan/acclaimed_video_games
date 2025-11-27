@@ -70,3 +70,23 @@ IMPORT_PROGRESS_INTERVAL_PLATFORMS = 10
 # =============================================================================
 
 DEFAULT_MIN_YEAR = 1970
+
+# =============================================================================
+# Wikipedia/Wikidata Configuration
+# =============================================================================
+
+# API endpoints
+WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"
+WIKIDATA_API_URL = "https://www.wikidata.org/w/api.php"
+
+# Rate limiting - Wikimedia requires minimum 1 second between requests
+WIKI_REQUEST_DELAY = 1.0  # seconds between requests
+
+# User agent (required by Wikimedia API policy)
+WIKI_USER_AGENT = (
+    "AcclaimedGamesBot/1.0 "
+    "(https://www.acclaimedvideogames.com/; contact@acclaimedvideogames.com)"
+)
+
+# Wikidata property IDs
+WIKIDATA_GENRE_PROPERTY = "P136"

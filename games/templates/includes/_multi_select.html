@@ -1,21 +1,66 @@
 {# MultiSelectComponent #}
-{# Props: items (list of items to select from), selected (list of selected items) #}
+{# Props: items (list of items to select from), selected (list of selected items), show_icons (optional) #}
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
 {% with type_hash=type|default:"default"|length|add:1000 %}
     {% with ms_id=items|length|add:selected|length|add:type_hash|stringformat:"s" %}
 <script type="application/json" id="ms-items-{{ ms_id }}">{% if items %}{{ items|tojson }}{% else %}[]{% endif %}</script>
 <script type="application/json" id="ms-selected-{{ ms_id }}">{% if selected %}{{ selected|tojson }}{% else %}[]{% endif %}</script>
-<div class="control multiple-select"
+<div class="control multiple-select{% if no_scroll %} no-scroll{% endif %}"
      data-ms-id="{{ ms_id }}"
      data-filter-type="{{ type|default:'default' }}"
+     {% if no_scroll %}style="max-height: none !important; overflow: visible !important;"{% endif %}
      x-data="{
          filterType: '{{ type|default:"default" }}',
+         showIcons: {{ show_icons|yesno:'true,false' }},
          itemsList: [],
          selectedList: [],
          selectableItems: [],
          error: null,
          checkboxTimeout: null,
+         platformIcons: {
+             // PlayStation family
+             'PS': 'mdi-sony-playstation', 'PS2': 'mdi-sony-playstation', 'PS3': 'mdi-sony-playstation',
+             'PS4': 'mdi-sony-playstation', 'PS5': 'mdi-sony-playstation', 'PSP': 'mdi-sony-playstation',
+             'PSV': 'mdi-sony-playstation', 'PSVR': 'mdi-sony-playstation',
+             // Xbox family
+             'Xbox': 'mdi-microsoft-xbox', 'X360': 'mdi-microsoft-xbox', 'XB1': 'mdi-microsoft-xbox',
+             'XBXS': 'mdi-microsoft-xbox',
+             // Nintendo family
+             'SW': 'mdi-nintendo-switch', 'NES': 'mdi-nintendo-game-boy', 'SNES': 'mdi-nintendo-game-boy',
+             'N64': 'mdi-nintendo-game-boy', 'GC': 'mdi-nintendo-game-boy', 'Wii': 'mdi-nintendo-wii',
+             'WiiU': 'mdi-nintendo-wiiu', '3DS': 'mdi-nintendo-game-boy', 'DS': 'mdi-nintendo-game-boy',
+             'GB': 'mdi-nintendo-game-boy', 'GBA': 'mdi-nintendo-game-boy', 'GBC': 'mdi-nintendo-game-boy',
+             'FDS': 'mdi-nintendo-game-boy',
+             // PC/Desktop
+             'WIN': 'mdi-microsoft-windows', 'DOS': 'mdi-floppy', 'MAC': 'mdi-apple',
+             'LIN': 'mdi-linux', 'A2': 'mdi-floppy',
+             // Mobile
+             'AND': 'mdi-android', 'iOS': 'mdi-apple-ios', 'LMD': 'mdi-cellphone',
+             // Sega family (controller-classic style)
+             'GEN': 'mdi-controller-classic', 'SMS': 'mdi-controller-classic', 'DC': 'mdi-controller-classic',
+             'SAT': 'mdi-controller-classic', 'GG': 'mdi-controller-classic', 'SCD': 'mdi-controller-classic',
+             // Atari family (gamepad-square style)
+             'A26': 'mdi-gamepad-square', 'A52': 'mdi-gamepad-square', 'A78': 'mdi-gamepad-square',
+             'A8': 'mdi-gamepad-square', 'JAG': 'mdi-gamepad-square', 'LYNX': 'mdi-gamepad-square',
+             'AST': 'mdi-gamepad-square',
+             // Other consoles (gamepad style)
+             'TG16': 'mdi-gamepad', 'NG': 'mdi-gamepad', '3DO': 'mdi-gamepad',
+             'INTV': 'mdi-gamepad', 'CV': 'mdi-gamepad',
+             // Retro computers (floppy/desktop)
+             'C64': 'mdi-floppy', 'AMI': 'mdi-floppy', 'CD32': 'mdi-floppy',
+             'MSX': 'mdi-floppy', 'CPC': 'mdi-floppy', 'ZXS': 'mdi-floppy',
+             'BBCM': 'mdi-floppy', 'PC88': 'mdi-floppy', 'PC98': 'mdi-floppy',
+             'FMT': 'mdi-floppy', 'FM7': 'mdi-floppy', 'SX1': 'mdi-floppy',
+             'T80': 'mdi-floppy', 'TCC': 'mdi-floppy', 'VC20': 'mdi-floppy',
+             // Arcade
+             'ARC': 'mdi-pac-man',
+             // Other
+             'BR': 'mdi-web', 'VR': 'mdi-virtual-reality'
+         },
+         getIcon(code) {
+             return this.platformIcons[code] || 'mdi-controller';
+         },
          init() {
              try {
                  const msId = this.$el.getAttribute('data-ms-id');
@@ -94,6 +139,11 @@
                            const selectedItems = selectableItems.filter(x => x.selected).map(x => x.item);
                            $dispatch('filter-changed', { type: filterType, items: selectedItems });
                        ">
+                <template x-if="showIcons && item.item.code">
+                    <span class="icon is-small platform-icon" style="margin-right: 0.25rem;">
+                        <span class="mdi" :class="getIcon(item.item.code)"></span>
+                    </span>
+                </template>
                 <span x-text="item.item.name || item.item"></span>
             </label>
         </div>

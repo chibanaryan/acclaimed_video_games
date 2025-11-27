@@ -1,6 +1,7 @@
 {# GameRow component #}
 {# Props: game, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional game ID) #}
 <div class="columns is-hidden-mobile game-row desktop {% if highlight and game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}">
+    {# Rank + Thumbnail column #}
     <div class="column is-narrow">
         <div class="columns">
             {% if show_rank == 'alltime' %}
@@ -26,21 +27,33 @@
             </div>
         </div>
     </div>
-    <div class="column">
+    {# Title column #}
+    <div class="column is-4">
         <div>
             <a href="{% url 'game-detail' slug=game.slug %}"
                 class="game-name has-text-weight-bold">
                 {{ game.name }}
             </a>
-            <a href="{% url 'games-list' %}?year={{ game.year_of_release }}">
+            <a href="{% url 'games-list' %}?year={{ game.year_of_release }}" class="game-year">
                 ({{ game.year_of_release }})
             </a>
         </div>
-        {% if show_rank_in_details or show_rank == 'filtered' %}
-            {% include 'games/includes/_game_row_properties.html' with game=game show_rank=True %}
-        {% else %}
-            {% include 'games/includes/_game_row_properties.html' with game=game show_rank=False %}
+        {% if show_rank == 'filtered' %}
+        <div class="game-global-rank">Global Rank: {{ game.rank }}</div>
         {% endif %}
+    </div>
+    {# Developer column #}
+    <div class="column is-3 game-column-dev">
+        {% with developers=game.developers.all %}
+        {% for developer in developers %}{% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}">{{ developer.name }}</a>{% else %}{{ developer.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+        {% endwith %}
+    </div>
+    {# Genres column - icons with tooltips, color-coded by category #}
+    <div class="column is-narrow game-column-genre">
+        {% load static %}
+        {% with genres=game.genres.all %}
+        {% for genre in genres %}<a href="{% url 'games-search' %}?genres={{ genre.id }}" title="{{ genre.name }}" class="genre-icon-link" data-group="{% if genre.name == 'Action' or genre.name == 'Shooter' or genre.name == 'Fighting' or genre.name == 'Hack and slash/Beat \'em up' or genre.name == 'MOBA' or genre.name == 'Stealth' or genre.name == 'Horror' %}combat{% elif genre.name == 'Puzzle' or genre.name == 'Strategy' or genre.name == 'Real Time Strategy (RTS)' or genre.name == 'Turn-based strategy (TBS)' or genre.name == '4X (explore, expand, exploit, and exterminate)' or genre.name == 'Tactical' %}brain{% elif genre.name == 'Adventure' or genre.name == 'Role-playing (RPG)' or genre.name == 'Open world' or genre.name == 'Sandbox' or genre.name == 'Platform' or genre.name == 'Survival' or genre.name == 'Visual Novel' or genre.name == 'Point-and-click' %}world{% elif genre.name == 'Racing' or genre.name == 'Sport' or genre.name == 'Simulator' or genre.name == 'Pinball' %}sim{% else %}arcade{% endif %}"><svg class="genre-row-icon" aria-label="{{ genre.name }}"><use href="{% static 'games/images/genre-icons.svg' %}#genre-{% if genre.name == 'Action' %}action{% elif genre.name == 'Shooter' %}shooter{% elif genre.name == 'Fighting' %}fighting{% elif genre.name == 'Hack and slash/Beat \'em up' %}hackslash{% elif genre.name == 'MOBA' %}moba{% elif genre.name == 'Stealth' %}stealth{% elif genre.name == 'Puzzle' %}puzzle{% elif genre.name == 'Strategy' %}strategy{% elif genre.name == 'Real Time Strategy (RTS)' %}rts{% elif genre.name == 'Turn-based strategy (TBS)' %}tbs{% elif genre.name == '4X (explore, expand, exploit, and exterminate)' %}4x{% elif genre.name == 'Tactical' %}tactical{% elif genre.name == 'Adventure' %}adventure{% elif genre.name == 'Role-playing (RPG)' %}rpg{% elif genre.name == 'Open world' %}openworld{% elif genre.name == 'Sandbox' %}sandbox{% elif genre.name == 'Platform' %}platform{% elif genre.name == 'Survival' %}survival{% elif genre.name == 'Racing' %}racing{% elif genre.name == 'Sport' %}sport{% elif genre.name == 'Simulator' %}simulator{% elif genre.name == 'Pinball' %}pinball{% elif genre.name == 'Horror' %}horror{% elif genre.name == 'Visual Novel' %}visualnovel{% elif genre.name == 'Point-and-click' %}pointclick{% elif genre.name == 'Arcade' %}arcade{% elif genre.name == 'Party' %}party{% elif genre.name == 'Music' %}music{% elif genre.name == 'Quiz/Trivia' %}quiz{% elif genre.name == 'Card & Board Game' %}cardboard{% elif genre.name == 'Indie' %}indie{% else %}arcade{% endif %}"></use></svg></a>{% endfor %}
+        {% endwith %}
     </div>
 </div>
 <div class="is-hidden-desktop is-hidden-tablet game-row mobile {% if highlight and game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}-mobile">
@@ -56,6 +69,5 @@
              alt="{{ game.name }}" loading="lazy" decoding="async" width="40" height="40">
     </a>
     <a href="{% url 'game-detail' slug=game.slug %}" class="game-name has-text-weight-bold">{{ game.name }}</a>
-    <a href="{% url 'games-list' %}?year={{ game.year_of_release }}">({{ game.year_of_release }})</a>
+    <a href="{% url 'games-list' %}?year={{ game.year_of_release }}" class="game-year">({{ game.year_of_release }})</a>
 </div>
-

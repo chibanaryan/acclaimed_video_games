@@ -2,13 +2,13 @@
 {# Props: value (current search value), placeholder (optional), show_submit_button (default: False), id (optional), name (optional) #}
 {# Uses Alpine.js for interactivity - operates within parent Alpine.js scope (expects filters.q) #}
 {# Note: No x-data scope to allow proper binding to parent's filters.q #}
-<div class="control is-flex">
-    <div :class="{ 'has-addons': filters.q }" class="field">
-        <div class="control has-icons-left">
+<div class="control is-flex is-fullwidth">
+    <div :class="{ 'has-addons': filters.q }" class="field is-fullwidth" style="width: 100%;">
+        <div class="control has-icons-left is-expanded" style="width: 100%;">
             <span class="icon is-left">
                 <span class="mdi mdi-magnify"></span>
             </span>
-            <input class="input custom-input"
+            <input class="input custom-input is-fullwidth"
                    style="background-color: rgb(20, 22, 26); border-color: rgb(53, 58, 70); color: rgb(235, 236, 240);"
                    {% if id %}id="{{ id }}"{% endif %}
                    {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}

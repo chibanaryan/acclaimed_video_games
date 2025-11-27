@@ -39,4 +39,45 @@
 .mdi-email::before { content: "\F01EE"; }
 .mdi-chevron-double-right::before { content: "\F013E"; }
 .mdi-chevron-double-left::before { content: "\F013D"; }
+.mdi-chevron-right::before { content: "\F0142"; }
+.mdi-chevron-up::before { content: "\F0143"; }
+.mdi-chevron-down::before { content: "\F0140"; }
 .mdi-send::before { content: "\F048A"; }
+
+/* Platform icons for filter dropdowns */
+/* Sony */
+.mdi-sony-playstation::before { content: "\F0414"; }
+/* Microsoft */
+.mdi-microsoft-xbox::before { content: "\F05B1"; }
+.mdi-microsoft-windows::before { content: "\F05B3"; }
+/* Nintendo */
+.mdi-nintendo-switch::before { content: "\F07E1"; }
+.mdi-nintendo-game-boy::before { content: "\F1393"; }
+.mdi-nintendo-wii::before { content: "\F05AB"; }
+.mdi-nintendo-wiiu::before { content: "\F072C"; }
+/* Apple */
+.mdi-apple::before { content: "\F0035"; }
+.mdi-apple-ios::before { content: "\F0037"; }
+/* Other OS */
+.mdi-linux::before { content: "\F033D"; }
+.mdi-android::before { content: "\F0032"; }
+/* Gamepads - different styles for console families */
+.mdi-gamepad::before { content: "\F0296"; }
+.mdi-gamepad-variant::before { content: "\F0297"; }
+.mdi-gamepad-square::before { content: "\F0EB5"; }
+.mdi-controller::before { content: "\F0B66"; }
+.mdi-controller-classic::before { content: "\F0B67"; }
+/* Sega icons */
+.mdi-pinwheel::before { content: "\F0AD5"; }
+.mdi-fan::before { content: "\F0210"; }
+.mdi-alpha-s-circle::before { content: "\F0C34"; }
+.mdi-run-fast::before { content: "\F046E"; }
+/* Computer/Retro */
+.mdi-floppy::before { content: "\F0218"; }
+.mdi-desktop-classic::before { content: "\F07C0"; }
+.mdi-cellphone::before { content: "\F011C"; }
+/* Other */
+.mdi-pac-man::before { content: "\F0BC5"; }
+.mdi-space-invaders::before { content: "\F0BC9"; }
+.mdi-web::before { content: "\F059F"; }
+.mdi-virtual-reality::before { content: "\F0895"; }

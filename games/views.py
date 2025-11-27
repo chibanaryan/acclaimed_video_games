@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,6 +15,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.text import slugify
 from django.views import View
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
@@ -21,6 +23,125 @@ from django.views.generic import ListView, DetailView, TemplateView, FormView
 from games import config, constants, models, utils
 from games.forms import ImportForm, ContactForm
 from games.mixins import HTMXPartialMixin, RobustPaginationMixin
+
+
+def _get_year_bounds():
+    """Return cached global min/max release years."""
+    year_stats = cache.get("game_year_stats")
+    if year_stats is None:
+        year_stats = models.Game.objects.aggregate(
+            min_year=Min("year_of_release"),
+            max_year=Max("year_of_release"),
+        )
+        cache.set("game_year_stats", year_stats, config.CACHE_TIMEOUT_24_HOURS)
+    min_year = year_stats["min_year"] or 1970
+    max_year = year_stats["max_year"] or datetime.today().year
+    return min_year, max_year
+
+
+def _join_names(names):
+    """Join a list of names with commas and an 'and' before the last item."""
+    if not names:
+        return ""
+    if len(names) == 1:
+        return names[0]
+    if len(names) == 2:
+        return " and ".join(names)
+    return ", ".join(names[:-1]) + f", and {names[-1]}"
+
+
+def _build_time_window(start_year, end_year, min_year, max_year):
+    """Return a human-readable time window label for headings and filenames."""
+    if start_year is None or end_year is None:
+        return ""
+    if start_year <= min_year and end_year >= max_year:
+        return "All Time"
+    if start_year == end_year:
+        return str(start_year)
+    if start_year % 10 == 0 and end_year == start_year + 9:
+        return f"the {start_year}'s"
+    return f"{start_year}-{end_year}"
+
+
+def _build_platform_segment(selected_platform_ids, platforms, include_games=True):
+    """Return platform segment text like 'Nintendo Switch Games'."""
+    big_five_groups = {
+        "Nintendo": [
+            "NES",
+            "SNES",
+            "N64",
+            "GC",
+            "Wii",
+            "WiiU",
+            "DS",
+            "3DS",
+            "SW",
+            "GB",
+            "GBA",
+            "GBC",
+            "FDS",
+        ],
+        "PlayStation": ["PS", "PS2", "PS3", "PS4", "PS5", "PSP", "PSV", "PSVR"],
+        "Xbox": ["Xbox", "X360", "XB1", "XBXS"],
+        "Sega": ["GEN", "SMS", "DC", "SAT", "GG", "SCD"],
+        "PC": ["WIN", "DOS", "LIN", "MAC"],
+        "Arcade, Mobile & VR": ["ARC", "AND", "iOS", "LMD", "VR", "BR"],
+    }
+
+    name_lookup = {str(p["id"]): p["name"] for p in platforms}
+    code_lookup = {str(p["id"]): p.get("code") for p in platforms}
+
+    selected_ids = {str(pid) for pid in selected_platform_ids}
+    labels = []
+    consumed_ids = set()
+
+    # Add group labels when entire big group is selected
+    for group_name, codes in big_five_groups.items():
+        group_ids = [pid for pid, code in code_lookup.items() if code in codes]
+        if group_ids and all(gid in selected_ids for gid in group_ids):
+            labels.append(group_name)
+            consumed_ids.update(group_ids)
+
+    # Add remaining platform names
+    for pid in selected_ids - consumed_ids:
+        labels.append(name_lookup.get(pid, pid))
+
+    if not labels:
+        return "Video" + (" Games" if include_games else "")
+    return f"{_join_names(labels)}" + (" Games" if include_games else "")
+
+
+def _build_genre_subtitle(selected_genre_ids, option, genres):
+    """Return subtitle string with AND/OR connector for genres."""
+    if not selected_genre_ids:
+        return ""
+    name_lookup = {str(g["id"]): g["name"] for g in genres}
+    genre_names = [name_lookup.get(str(gid), str(gid)) for gid in selected_genre_ids]
+    if not genre_names:
+        return ""
+    connector = " AND " if option == "L" else " OR "
+    return f"Genre: {connector.join(genre_names)}"
+
+
+def _build_filter_title(filters, genres, platforms, min_year, max_year):
+    """Compose the heading text based on filters."""
+    start_year = filters.get("start")
+    end_year = filters.get("end")
+    time_window = _build_time_window(start_year, end_year, min_year, max_year)
+    platform_label = _build_platform_segment(
+        filters.get("platforms", []), platforms, include_games=False
+    )
+    # If exactly one genre is selected, fold it into the title after platform
+    genre_label = ""
+    selected_genres = filters.get("genres") or []
+    if len(selected_genres) == 1:
+        name_lookup = {str(g["id"]): g["name"] for g in genres}
+        genre_name = name_lookup.get(str(selected_genres[0]), "").strip()
+        if genre_name:
+            genre_label = f" {genre_name}"
+
+    time_suffix = f" of {time_window}" if time_window else ""
+    return f"Most Acclaimed {platform_label}{genre_label} Games{time_suffix}"
 
 
 class HomePageView(FormView):
@@ -176,42 +297,141 @@ class GameListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
 def download_games_csv(request):
     """Download games list as CSV, respecting current filters."""
-    # Get filtered queryset using same logic as GameListView
+    # Get filtered queryset using same logic as GameSearchView / GameListView
     qs = models.Game.objects.with_relations()
 
+    q = request.GET.get("q")
     decade = request.GET.get("decade")
     year = request.GET.get("year")
     start = request.GET.get("start")
     end = request.GET.get("end")
+    genres_param = request.GET.get("genres")
+    genre_option = request.GET.get("genre_option", "L")
+    platforms_param = request.GET.get("platforms")
+
+    if q:
+        qs = qs.filter(name__icontains=q)
 
     qs = utils.apply_year_filters(qs, decade=decade, year=year, start=start, end=end)
-    qs = qs.order_by("rank")
 
-    # Determine if filtered (use filtered rank instead of alltime rank)
-    is_filtered = bool(decade or year or start or end)
+    if genres_param:
+        genre_ids = [int(x) for x in genres_param.split(",") if x]
+        match_all = genre_option != "A"  # "A" = Any, otherwise All
+        qs = utils.apply_genre_filter(qs, genre_ids, match_all=match_all)
+    else:
+        genre_ids = []
+
+    if platforms_param:
+        platform_ids = [int(x) for x in platforms_param.split(",") if x]
+        qs = utils.apply_platform_filter(qs, platform_ids)
+    else:
+        platform_ids = []
+
+    qs = qs.distinct().order_by("rank")
+
+    use_filtered_rank = True
 
     # Build filename based on filters
-    filename = "acclaimed_games"
+    min_year, max_year = _get_year_bounds()
+    genres_lookup = utils.get_or_set_cache(
+        "search_genres_list_with_counts",
+        models.Genre.objects.annotate(game_count=Count("game")),
+        ["id", "name", "game_count"],
+        order_by="name",
+        transform_id=True,
+    )
+    platforms_lookup = utils.get_or_set_cache(
+        "search_platforms_list",
+        models.Platform.objects.all(),
+        ["id", "name", "code"],
+        order_by="name",
+        transform_id=True,
+    )
+
+    def _safe_int(val, default):
+        try:
+            return int(val)
+        except (TypeError, ValueError):
+            return default
+
+    def _decade_bounds(decade_str):
+        import re
+
+        pattern = re.compile(r"(\d{2})(\d{2})-(\d{2})")
+        match = pattern.match(decade_str) if decade_str else None
+        if not match:
+            return None, None
+        start_str = match.group(1) + match.group(2)
+        end_str = match.group(1) + match.group(3)
+        return _safe_int(start_str, None), _safe_int(end_str, None)
+
+    start_for_title = _safe_int(start, None)
+    end_for_title = _safe_int(end, None)
     if decade:
-        filename += f"_{decade}"
+        d_start, d_end = _decade_bounds(decade)
+        start_for_title = d_start
+        end_for_title = d_end
     elif year:
-        filename += f"_{year}"
-    filename += ".csv"
+        y_val = _safe_int(year, None)
+        start_for_title = y_val
+        end_for_title = y_val
+    if start_for_title is None:
+        start_for_title = min_year
+    if end_for_title is None:
+        end_for_title = max_year
+
+    filters_for_title = {
+        "q": q or "",
+        "start": start_for_title,
+        "end": end_for_title,
+        "genres": [str(gid) for gid in genre_ids],
+        "platforms": [str(pid) for pid in platform_ids],
+        "genre_option": genre_option,
+        "rank_display": "filtered",
+    }
+    filter_title = _build_filter_title(
+        filters_for_title, genres_lookup, platforms_lookup, min_year, max_year
+    )
+    filename_base = filter_title
+    if decade:
+        filename_base = f"{filename_base} {decade}"
+    elif year:
+        filename_base = f"{filename_base} {year}"
+    filename_base = slugify(filename_base) or "acclaimed-games"
+    filename = f"{filename_base}.csv"
 
     # Create CSV response
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
-    writer.writerow(["Rank", "Name", "Year", "Developers", "Platforms", "Genres"])
+    writer.writerow(
+        [
+            "Filtered Rank",
+            "Global Rank",
+            "Name",
+            "Year",
+            "Developers",
+            "Platforms",
+            "Genres",
+        ]
+    )
 
     for index, game in enumerate(qs, start=1):
         developers = ", ".join(d.name for d in game.developers.all())
         platforms = ", ".join(p.name for p in game.platforms.all())
         genres = ", ".join(g.name for g in game.genres.all())
-        rank = index if is_filtered else game.rank
+        filtered_rank = index if use_filtered_rank else game.rank
         writer.writerow(
-            [rank, game.name, game.year_of_release, developers, platforms, genres]
+            [
+                filtered_rank,
+                game.rank,
+                game.name,
+                game.year_of_release,
+                developers,
+                platforms,
+                genres,
+            ]
         )
 
     return response
@@ -309,10 +529,11 @@ class GameSearchView(RobustPaginationMixin, ListView):
 
         # Get genres and platforms for AdvancedFilters (cached for 24 hours)
         # Convert IDs to strings for proper Alpine.js binding
+        # Includes game_count for heatmap visualization
         genres = utils.get_or_set_cache(
-            "search_genres_list",
-            models.Genre.objects.all(),
-            ["id", "name"],
+            "search_genres_list_with_counts",
+            models.Genre.objects.annotate(game_count=Count("game")),
+            ["id", "name", "game_count"],
             order_by="name",
             transform_id=True,
         )
@@ -325,16 +546,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             transform_id=True,
         )
 
-        # Get min/max years (cached for 24 hours)
-        year_stats = cache.get("game_year_stats")
-        if year_stats is None:
-            year_stats = models.Game.objects.aggregate(
-                min_year=Min("year_of_release"),
-                max_year=Max("year_of_release"),
-            )
-            cache.set("game_year_stats", year_stats, config.CACHE_TIMEOUT_24_HOURS)
-        min_year = year_stats["min_year"] or 1970
-        max_year = year_stats["max_year"] or datetime.today().year
+        min_year, max_year = _get_year_bounds()
 
         # Build filters dict from query params
         filters = {
@@ -344,7 +556,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             "genres": [],
             "platforms": [],
             "genre_option": self.request.GET.get("genre_option", "L"),
-            "rank_display": self.request.GET.get("rank_display", "alltime"),
+            "rank_display": "filtered",
         }
 
         # Parse selected genres - send string IDs for HTML select compatibility
@@ -360,10 +572,77 @@ class GameSearchView(RobustPaginationMixin, ListView):
         context["genres"] = genres
         context["platforms"] = platforms
         context["filters"] = filters
+        context["download_query"] = urlencode(
+            {
+                **({"q": filters["q"]} if filters["q"] else {}),
+                **(
+                    {"start": filters["start"]} if self.request.GET.get("start") else {}
+                ),
+                **({"end": filters["end"]} if self.request.GET.get("end") else {}),
+                **(
+                    {"genres": ",".join(filters["genres"])} if filters["genres"] else {}
+                ),
+                **(
+                    {"platforms": ",".join(filters["platforms"])}
+                    if filters["platforms"]
+                    else {}
+                ),
+                **(
+                    {"genre_option": filters["genre_option"]}
+                    if self.request.GET.get("genre_option")
+                    else {}
+                ),
+            }
+        )
         context["min_year"] = min_year
         context["max_year"] = max_year
         context["highlight"] = self.request.GET.get("highlight")
         context["is_filtered"] = True  # GameSearch is always filtered
+        context["filter_title"] = _build_filter_title(
+            filters, genres, platforms, min_year, max_year
+        )
+        # Only show subtitle when multiple genres are selected
+        if len(filters["genres"]) > 1:
+            context["genre_subtitle"] = _build_genre_subtitle(
+                filters["genres"], filters["genre_option"], genres
+            )
+        else:
+            context["genre_subtitle"] = ""
+
+        # Get year counts for heatmap grid (reuse cache from GameListView)
+        year_counts_data = cache.get("game_list_meta")
+        if year_counts_data is None:
+            # Build year counts if not cached (same logic as GameListView)
+            all_years = range(min_year, max_year + 1)
+            year_count_map = {
+                entry["year_of_release"]: entry["count"]
+                for entry in models.Game.objects.values("year_of_release")
+                .annotate(count=Count("id"))
+                .order_by("year_of_release")
+            }
+            all_years_with_counts = [
+                {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
+            ]
+            decade_starts = sorted(list(set(int(x / 10) * 10 for x in all_years)))
+            decades_with_counts = []
+            for decade_start in decade_starts:
+                decade_end = decade_start + 9
+                count = sum(
+                    year_count_map.get(year, 0)
+                    for year in range(decade_start, decade_end + 1)
+                )
+                decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
+                decades_with_counts.append({"decade": decade_str, "count": count})
+
+            year_counts_data = {
+                "games": {
+                    "years": all_years_with_counts,
+                    "decades": decades_with_counts,
+                }
+            }
+            cache.set("game_list_meta", year_counts_data, config.CACHE_TIMEOUT_1_HOUR)
+
+        context["year_counts"] = year_counts_data.get("games", {}).get("years", [])
 
         return context
 

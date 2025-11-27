@@ -1,8 +1,9 @@
-{# AdvancedFilters component #}
+{# AdvancedFilters component - Sidebar layout #}
 {# Props: filters (dict with q, start, end, genres, platforms, genre_option, rank_display), genres (list), platforms (list) #}
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
-{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "genre_option": "L", "rank_display": "alltime"}</script>{% endif %}
+{% load humanize %}
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "genre_option": "A", "rank_display": "filtered"}</script>{% endif %}
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 <div x-data="{
@@ -11,16 +12,21 @@
         platforms: JSON.parse(document.getElementById('platforms-data').textContent),
         initialized: false,
         isLoading: false,
+        genresExpanded: false,
+        platformsExpanded: false,
+        filtersPowerOn: (new URLSearchParams(window.location.search).get('filters') === 'on'),
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
         _debouncedFilter: null,
         _debouncedDisplay: null,
         init() {
-            // Ensure genre_option has a default value
+            // Ensure genre_option has a default value (A = Match Any)
             if (!this.filters.genre_option || this.filters.genre_option === '') {
-                this.filters.genre_option = 'L';
+                this.filters.genre_option = 'A';
             }
+            // Normalize rank_display to filtered
+            this.filters.rank_display = 'filtered';
             // Mark as initialized after a short delay to prevent initial watcher triggers
             setTimeout(() => { this.initialized = true; }, 100);
 
@@ -70,7 +76,8 @@
                 this.filters.start = params.get('start') ? parseInt(params.get('start')) : {{ min_year }};
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
                 this.filters.genre_option = params.get('genre_option') || 'L';
-                this.filters.rank_display = params.get('rank_display') || 'alltime';
+                this.filters.rank_display = 'filtered';
+                this.filtersPowerOn = (params.get('filters') === 'on');
                 const genresParam = params.get('genres');
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
                 const platformsParam = params.get('platforms');
@@ -107,6 +114,7 @@
             setLoading('game-results-container');
 
             const params = buildFilterParams(this.filters, { preservePage });
+            params.set('filters', this.filtersPowerOn ? 'on' : 'off');
             const url = '{% url 'games-search' %}?' + normalizeUrl(params.toString());
 
             try {
@@ -114,7 +122,7 @@
 
                 if (partial) {
                     const content = parseAndExtract(html, [
-                        { selector: 'h1.title', targetId: 'search-title' },
+                        { selector: '#search-heading', targetId: 'search-heading' },
                         { selector: '#game-results-container', targetId: 'game-results-container' }
                     ]);
                     updateDomElements(content);
@@ -144,6 +152,16 @@
             if (this._debouncedUpdate) this._debouncedUpdate.cancel();
             this.performUpdate({ partial: false, historyMethod: 'pushState' });
         },
+        updateFiltersParam() {
+            const params = new URLSearchParams(window.location.search);
+            if (this.filtersPowerOn) {
+                params.set('filters', 'on');
+            } else {
+                params.set('filters', 'off');
+            }
+            const newUrl = window.location.pathname + '?' + normalizeUrl(params.toString());
+            window.history.replaceState({}, '', newUrl);
+        },
         throttledSliderUpdate() {
             this._throttledSlider.call();
         },
@@ -166,156 +184,201 @@
              this.filters = $event.detail;
          } else if (Array.isArray($event.detail)) {
              // Handle multi-select updates (genres/platforms)
-             // The event target will determine which filter to update
-             // This is handled by the specific change handlers in the multi-select components
          } else if (typeof $event.detail === 'string' || $event.detail === null) {
-             // Handle search input updates
              this.filters.q = $event.detail || '';
-             // Don't update URL - the watcher will update results, Enter key will update URL
          }
-     "
+    "
      @change.window="
          if (Array.isArray($event.detail)) {
              // Handle multi-select changes (genres/platforms)
-             // The event target will determine which filter to update
-             // This is handled by the specific change handlers in the multi-select components
          } else if (typeof $event.detail === 'string' || $event.detail === null) {
-             // Handle search input changes
              this.filters.q = $event.detail || '';
-             // Don't update URL - the watcher will update results, Enter key will update URL
          }
      ">
-    <div class="columns">
-        <div class="column">
-            <div class="p-2">
-                <div class="has-text-weight-bold">Release Year Range</div>
+
+    {# Page heading above the two-column layout #}
+    <div id="search-heading" class="mb-4">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-1">
+            <h1 class="title mb-0" id="search-title">
+                {{ filter_title|default:"Advanced Search" }}
+            </h1>
+            <div class="buttons are-small">
+                <button type="button"
+                        class="button nes-power-button"
+                        :class="filtersPowerOn ? 'is-on' : 'is-off'"
+                        @click="filtersPowerOn = !filtersPowerOn; updateFiltersParam();"
+                        :aria-pressed="filtersPowerOn.toString()">
+                    <span class="icon is-small">
+                        <span class="mdi mdi-power"></span>
+                    </span>
+                    <span x-text="filtersPowerOn ? 'Filters On' : 'Filters Off'"></span>
+                    <span class="power-led" :class="filtersPowerOn ? 'is-lit' : ''"></span>
+                </button>
+                <a href="{% url 'games-download' %}{% if download_query %}?{{ download_query }}{% endif %}"
+                   class="button is-dark is-hidden-mobile"
+                   title="Download CSV">
+                    <span class="icon is-small">
+                        <span class="mdi mdi-download"></span>
+                    </span>
+                    <span>Download CSV</span>
+                </a>
             </div>
-            <div class="field">
-                <div class="control">
-                    <div class="dual-range-container"
-                         :style="'--range-start: ' + (((filters.start || {{ min_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100) + '; --range-end: ' + (((filters.end || {{ max_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100)">
-                        <span class="dual-range-label dual-range-label-start"
-                              x-text="filters.start || {{ min_year }}"></span>
-                        <span class="dual-range-label dual-range-label-end"
-                              x-text="filters.end || {{ max_year }}"></span>
-                        <div class="dual-range-track"></div>
-                        <div class="dual-range-selected"></div>
-                        <input type="range"
-                               class="dual-range"
-                               id="filter-start-year"
-                               name="start"
-                               min="{{ min_year }}"
-                               max="{{ max_year }}"
-                               :value="filters.start || {{ min_year }}"
-                               @input="filters.start = parseInt($event.target.value);
-                                       if (filters.end && filters.start > parseInt(filters.end)) { filters.end = filters.start; }
-                                       if (initialized) throttledSliderUpdate()"
-                               @pointerup="filters.start = parseInt($event.target.value);
-                                       if (filters.end && filters.start > parseInt(filters.end)) { filters.end = filters.start; }
-                                       if (initialized) forceSliderUpdate()">
-                        <input type="range"
-                               class="dual-range"
-                               id="filter-end-year"
-                               name="end"
-                               min="{{ min_year }}"
-                               max="{{ max_year }}"
-                               :value="filters.end || {{ max_year }}"
-                               @input="filters.end = parseInt($event.target.value);
-                                       if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
-                                       if (initialized) throttledSliderUpdate()"
-                               @pointerup="filters.end = parseInt($event.target.value);
-                                       if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
-                                       if (initialized) forceSliderUpdate()">
+        </div>
+        {% if genre_subtitle %}
+            <p class="is-size-6 has-text-weight-semibold has-text-grey-dark" id="genre-subtitle">
+                {{ genre_subtitle }}
+            </p>
+        {% endif %}
+    </div>
+
+        {# Two-column layout: filters sidebar on left, results on right #}
+        <div class="columns advanced-layout" :class="filtersPowerOn ? 'filters-on' : 'filters-off'">
+            {# Left sidebar - Filters (hidden on mobile) #}
+            <div class="column is-hidden-mobile filters-collapsible"
+                 :class="filtersPowerOn ? 'is-expanded' : 'is-collapsed'">
+                <div class="filters-sidebar">
+                {# Header with navigation buttons #}
+                <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                    <h2 class="title is-5 mb-0">Filters</h2>
+                    <div class="buttons are-small">
+                        <a :href="filtersPowerOn ? '{% url 'games-search' %}?filters=on' : '{% url 'games-search' %}?filters=off'"
+                           class="button is-small is-light nes-reset-button">
+                            <span class="icon is-small">
+                                <span class="mdi mdi-undo"></span>
+                            </span>
+                            <span>Reset</span>
+                        </a>
                     </div>
                 </div>
-            </div>
-            <div class="field">
-                <div class="control">
-                    <label class="checkbox">
-                        <input type="checkbox"
-                               id="rank-display-filtered"
-                               name="rank_display"
-                               :checked="filters.rank_display === 'filtered'"
-                               @change="filters.rank_display = $event.target.checked ? 'filtered' : 'alltime'; updateDisplayOnly()">
-                        Show Filtered Rank
-                    </label>
+
+                {# Search input #}
+                <div class="mb-4">
+                    {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
                 </div>
+
+                {# Year range heatmap grid #}
+                <div class="mb-4">
+                    <div class="has-text-weight-bold mb-2">Release Year</div>
+                    <div class="is-size-7 has-text-grey mb-2 is-flex is-justify-content-space-between">
+                        <span>Click year or decade</span>
+                        <span>Drag or shift+click for ranges</span>
+                    </div>
+                    {% include 'includes/_year_grid.html' %}
+                </div>
+
+                {% if platforms %}
+                {# Platforms filter - Tiered component #}
+                <div class="mb-4 filter-section">
+                    <div class="has-text-weight-bold mb-2">Platforms</div>
+                    <div data-filter-type="platforms"
+                         @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
+                         @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
+                        {% include 'includes/_platform_filter.html' %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if genres %}
+                {# Genres filter - Inventory Grid Style #}
+                <div class="mb-4 filter-section">
+                    <div class="has-text-weight-bold mb-2">Genres</div>
+                    <div data-filter-type="genres"
+                         @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
+                         @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
+                        {% include 'includes/_genre_filter.html' %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
+        </div>
+
+        {# Mobile filters (shown only on mobile) #}
+        <div class="column is-hidden-tablet" x-show="filtersPowerOn" x-transition>
+            <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                <a href="{% url 'games-search' %}" class="button is-small">
+                    <span class="icon is-small">
+                        <span class="mdi mdi-close"></span>
+                    </span>
+                </a>
+            </div>
+
             {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
+
+            <div class="mb-3 mt-3">
+                <div class="has-text-weight-bold mb-2">Release Year</div>
+                <div class="dual-range-container"
+                     :style="'--range-start: ' + (((filters.start || {{ min_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100) + '; --range-end: ' + (((filters.end || {{ max_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100)">
+                    <span class="dual-range-label dual-range-label-start"
+                          x-text="filters.start || {{ min_year }}"></span>
+                    <span class="dual-range-label dual-range-label-end"
+                          x-text="filters.end || {{ max_year }}"></span>
+                    <div class="dual-range-track"></div>
+                    <div class="dual-range-selected"></div>
+                    <input type="range"
+                           class="dual-range"
+                           name="start"
+                           min="{{ min_year }}"
+                           max="{{ max_year }}"
+                           :value="filters.start || {{ min_year }}"
+                           @input="filters.start = parseInt($event.target.value);
+                                   if (filters.end && filters.start > parseInt(filters.end)) { filters.end = filters.start; }
+                                   if (initialized) throttledSliderUpdate()"
+                           @pointerup="filters.start = parseInt($event.target.value);
+                                   if (filters.end && filters.start > parseInt(filters.end)) { filters.end = filters.start; }
+                                   if (initialized) forceSliderUpdate()">
+                    <input type="range"
+                           class="dual-range"
+                           name="end"
+                           min="{{ min_year }}"
+                           max="{{ max_year }}"
+                           :value="filters.end || {{ max_year }}"
+                           @input="filters.end = parseInt($event.target.value);
+                                   if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
+                                   if (initialized) throttledSliderUpdate()"
+                           @pointerup="filters.end = parseInt($event.target.value);
+                                   if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
+                                   if (initialized) forceSliderUpdate()">
+                </div>
+            </div>
+
+            {% if genres %}
+            <div class="mb-3">
+                <div class="has-text-weight-bold mb-2">Genres</div>
+                <select multiple
+                        id="filter-genres-mobile"
+                        name="genres"
+                        @change="filters.genres = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
+                    <template x-for="genre in genres" :key="genre.id">
+                        <option :value="genre.id"
+                                :selected="filters.genres && filters.genres.includes(genre.id)"
+                                x-text="genre.name"></option>
+                    </template>
+                </select>
+            </div>
+            {% endif %}
+
+            {% if platforms %}
+            <div class="mb-3">
+                <div class="has-text-weight-bold mb-2">Platforms</div>
+                <select multiple
+                        id="filter-platforms-mobile"
+                        name="platforms"
+                        @change="filters.platforms = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
+                    <template x-for="platform in platforms" :key="platform.id">
+                        <option :value="platform.id"
+                                :selected="filters.platforms && filters.platforms.includes(platform.id)"
+                                x-text="platform.name"></option>
+                    </template>
+                </select>
+            </div>
+            {% endif %}
         </div>
 
-        {% if genres %}
-        <div class="column">
-            <div class="p-2">
-                <div class="control is-pulled-right">
-                    <label class="radio">
-                        All
-                        <input type="radio"
-                               id="genre-option-all"
-                               name="genre_option"
-                               x-model="filters.genre_option"
-                               value="L"
-                               @change="updateUrl()">
-                    </label>
-                    <label class="radio">
-                        Any
-                        <input type="radio"
-                               id="genre-option-any"
-                               name="genre_option"
-                               x-model="filters.genre_option"
-                               value="A"
-                               @change="updateUrl()">
-                    </label>
-                </div>
-                <div class="has-text-weight-bold">Genres</div>
-            </div>
-            <select multiple
-                    id="filter-genres-mobile"
-                    name="genres"
-                    class="is-hidden-tablet"
-                    @change="filters.genres = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
-                <template x-for="genre in genres" :key="genre.id">
-                    <option :value="genre.id"
-                            :selected="filters.genres && filters.genres.includes(genre.id)"
-                            x-text="genre.name"></option>
-                </template>
-            </select>
-            <div class="is-hidden-mobile">
-                <div data-filter-type="genres"
-                     @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
-                     @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
-                    {% include 'includes/_multi_select.html' with items=genres selected=filters.genres type="genres" %}
-                </div>
-                {% include 'includes/_selectable_tag_list.html' with filter_type="genres" %}
+        {# Right column - Results #}
+        <div class="column main-panel">
+            <div id="game-results-container">
+                {% include 'games/includes/_game_search_results.html' %}
             </div>
         </div>
-        {% endif %}
-
-        {% if platforms %}
-        <div class="column">
-            <div class="p-2">
-                <div class="has-text-weight-bold">Platforms</div>
-            </div>
-            <select multiple
-                    id="filter-platforms-mobile"
-                    name="platforms"
-                    class="is-hidden-tablet"
-                    @change="filters.platforms = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
-                <template x-for="platform in platforms" :key="platform.id">
-                    <option :value="platform.id"
-                            :selected="filters.platforms && filters.platforms.includes(platform.id)"
-                            x-text="platform.name"></option>
-                </template>
-            </select>
-            <div class="is-hidden-mobile">
-                <div data-filter-type="platforms"
-                     @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
-                     @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
-                    {% include 'includes/_multi_select.html' with items=platforms selected=filters.platforms type="platforms" %}
-                </div>
-                {% include 'includes/_selectable_tag_list.html' with filter_type="platforms" %}
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>

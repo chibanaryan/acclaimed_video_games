@@ -74,6 +74,18 @@ git push origin main
 git push heroku main
 ```
 
+## CSS Workflow
+
+The site uses a concatenated CSS file for production performance:
+
+1. **Edit `main.css`** - Source file at `games/static/games/css/main.css`
+2. **Regenerate `combined.css`** - After any changes:
+   ```bash
+   cd games/static/games/css && cat vendor/bulma-1.0.0.min.css vendor/bulmaswatch-cyborg-0.8.1.min.css main.css > combined.css
+   ```
+
+**Note:** `combined.css` is a build artifact. Never edit it directly.
+
 ## Pre-commit Hooks
 
 This repo uses [pre-commit](https://pre-commit.com/) to enforce code quality:

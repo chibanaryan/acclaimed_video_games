@@ -221,7 +221,7 @@ function buildFilterParams(filters, options = {}) {
         if (platformIds.length > 0) params.set('platforms', platformIds.join(','));
     }
     if (filters.genre_option) params.set('genre_option', filters.genre_option);
-    if (filters.rank_display) params.set('rank_display', filters.rank_display);
+    // rank_display is always filtered; no param needed
 
     return params;
 }

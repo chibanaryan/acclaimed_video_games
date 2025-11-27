@@ -937,7 +937,8 @@ class GameDownloadCSVTest(TestCase):
         content = response.content.decode("utf-8")
         lines = content.strip().split("\n")
         # Strip \r from line (CSV uses \r\n line endings)
-        self.assertEqual(lines[0].strip(), "Rank,Name,Year,Developers,Platforms,Genres")
+        expected = "Filtered Rank,Global Rank,Name,Year,Developers,Platforms,Genres"
+        self.assertEqual(lines[0].strip(), expected)
 
     def test_csv_contains_game_data(self):
         """Test that CSV contains game data."""

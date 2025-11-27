@@ -1,8 +1,17 @@
 {# Game search results partial - used for both initial render and HTMX updates #}
+{% load humanize %}
 {% if games %}
 <div class="pagination-spacing-top">
     {# Pagination at top #}
     {% include 'includes/_pagination_responsive.html' with page_obj=page_obj target_id='content' spacing='top' %}
+
+    <div class="is-size-7 has-text-grey result-summary mb-3 has-text-right">
+        {% if page_obj %}
+            Showing {{ page_obj.start_index|intcomma }} to {{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }} Results
+        {% else %}
+            Advanced Search
+        {% endif %}
+    </div>
 
     {% for game in games %}
         {% with index=page_obj.start_index|add:forloop.counter0 %}
@@ -13,4 +22,13 @@
     {# Pagination at bottom #}
     {% include 'includes/_pagination_responsive.html' with page_obj=page_obj target_id='content' spacing='top' %}
 </div>
+{% else %}
+<div class="is-size-7 has-text-grey result-summary mb-3 has-text-right">
+    {% if page_obj %}
+        Showing {{ page_obj.start_index|intcomma }} to {{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }} Results
+    {% else %}
+        Advanced Search
+    {% endif %}
+</div>
+<div class="has-text-grey">No results found.</div>
 {% endif %}

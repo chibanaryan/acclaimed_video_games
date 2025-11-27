@@ -1,0 +1,373 @@
+{# TieredPlatformFilter component #}
+{# Props: platforms (list), selected (list of selected platform ids) #}
+{# Uses parent Alpine.js context (filters.platforms, platforms array) #}
+{% load game_filters %}
+{% load static %}
+
+<div class="platform-filter"
+     x-data="{
+         expandedGroups: {},
+
+         // Platform family definitions
+         platformGroups: {
+             // Big Five (shown as buttons at top)
+             nintendo: {
+                 name: 'Nintendo',
+                 icon: 'mdi-nintendo-switch',
+                 codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
+                 isBigFive: true
+             },
+             playstation: {
+                 name: 'PlayStation',
+                 icon: 'mdi-sony-playstation',
+                 codes: ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'],
+                 isBigFive: true
+             },
+             xbox: {
+                 name: 'Xbox',
+                 icon: 'mdi-microsoft-xbox',
+                 codes: ['Xbox', 'X360', 'XB1', 'XBXS'],
+                 isBigFive: true
+             },
+             sega: {
+                 name: 'Sega',
+                 svgIcon: 'platform-sega',
+                 codes: ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'],
+                 isBigFive: true
+             },
+             pc: {
+                 name: 'PC',
+                 icon: 'mdi-microsoft-windows',
+                 codes: ['WIN', 'DOS', 'LIN', 'MAC'],
+                 isBigFive: true
+             },
+             arcadeMobileVr: {
+                 name: 'Arcade, Mobile & VR',
+                 icon: 'mdi-space-invaders',
+                 codes: ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR'],
+                 isBigFive: true
+             },
+             // Secondary categories (accordion sections)
+             retro: {
+                 name: 'Retro Consoles',
+                 icon: 'mdi-gamepad-square',
+                 codes: ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS']
+             },
+             computers: {
+                 name: 'Microcomputers',
+                 icon: 'mdi-floppy',
+                 codes: ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2']
+             },
+         },
+
+         // Platform icons (same as _multi_select.html)
+         platformIcons: {
+             'PS': 'mdi-sony-playstation', 'PS2': 'mdi-sony-playstation', 'PS3': 'mdi-sony-playstation',
+             'PS4': 'mdi-sony-playstation', 'PS5': 'mdi-sony-playstation', 'PSP': 'mdi-sony-playstation',
+             'PSV': 'mdi-sony-playstation', 'PSVR': 'mdi-sony-playstation',
+             'Xbox': 'mdi-microsoft-xbox', 'X360': 'mdi-microsoft-xbox', 'XB1': 'mdi-microsoft-xbox',
+             'XBXS': 'mdi-microsoft-xbox',
+             'SW': 'mdi-nintendo-switch', 'NES': 'mdi-nintendo-game-boy', 'SNES': 'mdi-nintendo-game-boy',
+             'N64': 'mdi-nintendo-game-boy', 'GC': 'mdi-nintendo-game-boy', 'Wii': 'mdi-nintendo-wii',
+             'WiiU': 'mdi-nintendo-wiiu', '3DS': 'mdi-nintendo-game-boy', 'DS': 'mdi-nintendo-game-boy',
+             'GB': 'mdi-nintendo-game-boy', 'GBA': 'mdi-nintendo-game-boy', 'GBC': 'mdi-nintendo-game-boy',
+             'FDS': 'mdi-nintendo-game-boy',
+             'WIN': 'mdi-microsoft-windows', 'DOS': 'mdi-floppy', 'MAC': 'mdi-apple',
+             'LIN': 'mdi-linux', 'A2': 'mdi-floppy',
+             'AND': 'mdi-android', 'iOS': 'mdi-apple-ios', 'LMD': 'mdi-cellphone',
+             'GEN': 'mdi-controller-classic', 'SMS': 'mdi-controller-classic', 'DC': 'mdi-controller-classic',
+             'SAT': 'mdi-controller-classic', 'GG': 'mdi-controller-classic', 'SCD': 'mdi-controller-classic',
+             'A26': 'mdi-gamepad-square', 'A52': 'mdi-gamepad-square', 'A78': 'mdi-gamepad-square',
+             'A8': 'mdi-gamepad-square', 'JAG': 'mdi-gamepad-square', 'LYNX': 'mdi-gamepad-square',
+             'AST': 'mdi-gamepad-square',
+             'TG16': 'mdi-gamepad', 'NG': 'mdi-gamepad', '3DO': 'mdi-gamepad',
+             'INTV': 'mdi-gamepad', 'CV': 'mdi-gamepad', 'NGP': 'mdi-gamepad', 'WS': 'mdi-gamepad',
+             'C64': 'mdi-floppy', 'AMI': 'mdi-floppy', 'CD32': 'mdi-floppy',
+             'MSX': 'mdi-floppy', 'CPC': 'mdi-floppy', 'ZXS': 'mdi-floppy',
+             'BBCM': 'mdi-floppy', 'PC88': 'mdi-floppy', 'PC98': 'mdi-floppy',
+             'FMT': 'mdi-floppy', 'FM7': 'mdi-floppy', 'SX1': 'mdi-floppy',
+             'T80': 'mdi-floppy', 'TCC': 'mdi-floppy', 'VC20': 'mdi-floppy',
+             'ARC': 'mdi-pac-man',
+             'BR': 'mdi-web', 'VR': 'mdi-virtual-reality'
+         },
+
+         // Platform release years for chronological sorting (earliest regional release)
+         platformReleaseYears: {
+             // Nintendo
+             'NES': 1983, 'FDS': 1986, 'GB': 1989, 'SNES': 1990, 'GBC': 1998,
+             'N64': 1996, 'GBA': 2001, 'GC': 2001, 'DS': 2004, 'Wii': 2006,
+             '3DS': 2011, 'WiiU': 2012, 'SW': 2017,
+             // PlayStation
+             'PS': 1994, 'PS2': 2000, 'PSP': 2004, 'PS3': 2006, 'PSV': 2011,
+             'PS4': 2013, 'PSVR': 2016, 'PS5': 2020,
+             // Xbox
+             'Xbox': 2001, 'X360': 2005, 'XB1': 2013, 'XBXS': 2020,
+             // Sega
+             'SMS': 1985, 'GEN': 1988, 'GG': 1990, 'SCD': 1991, 'SAT': 1994, 'DC': 1998,
+             // PC
+             'DOS': 1981, 'WIN': 1985, 'MAC': 1984, 'LIN': 1991,
+             // Arcade/Mobile/VR
+             'ARC': 1970, 'iOS': 2007, 'AND': 2008, 'LMD': 2000, 'VR': 2016, 'BR': 1990,
+             // Retro
+             'A26': 1977, 'INTV': 1979, 'CV': 1982, 'A52': 1982, 'A78': 1986,
+             'TG16': 1987, 'NG': 1990, 'LYNX': 1989, '3DO': 1993, 'JAG': 1993,
+             'NGP': 1998, 'WS': 1999,
+             // Microcomputers
+             'A2': 1977, 'A8': 1979, 'ZXS': 1982, 'C64': 1982, 'CPC': 1984,
+             'MSX': 1983, 'AMI': 1985, 'AST': 1985, 'BBCM': 1981,
+             'PC88': 1981, 'PC98': 1982, 'FM7': 1982, 'FMT': 1989,
+             'SX1': 1984, 'T80': 1985, 'TCC': 1983, 'VC20': 1980, 'CD32': 1993
+         },
+
+         getIcon(code) {
+             return this.platformIcons[code] || 'mdi-controller';
+         },
+
+         // Get total game count for a platform group (sum of all platforms in group)
+         getGroupTotalCount(groupKey) {
+             const group = this.platformGroups[groupKey];
+             if (!group || !platforms) return 0;
+             return platforms
+                 .filter(p => group.codes.includes(p.code))
+                 .reduce((sum, p) => sum + (p.game_count || 0), 0);
+         },
+
+         // Get Big Five groups sorted by total game count (descending)
+         get sortedBigFiveGroups() {
+             return Object.entries(this.platformGroups)
+                 .filter(([key, group]) => group.isBigFive)
+                 .map(([key, group]) => ({ key, group, total: this.getGroupTotalCount(key) }))
+                 .sort((a, b) => b.total - a.total);
+         },
+
+         // Get accordion groups sorted by total game count (descending)
+         get sortedAccordionGroups() {
+             return Object.entries(this.platformGroups)
+                 .filter(([key, group]) => !group.isBigFive)
+                 .map(([key, group]) => ({ key, group, total: this.getGroupTotalCount(key) }))
+                 .sort((a, b) => b.total - a.total);
+         },
+
+         // Get platforms in a group that exist in the available platforms list, sorted by release year
+         getPlatformsInGroup(groupKey) {
+             const group = this.platformGroups[groupKey];
+             if (!group) return [];
+             return platforms
+                 .filter(p => group.codes.includes(p.code))
+                 .sort((a, b) => {
+                     const yearA = this.platformReleaseYears[a.code] || 9999;
+                     const yearB = this.platformReleaseYears[b.code] || 9999;
+                     return yearA - yearB;
+                 });
+         },
+
+         // Get selected count for a group
+         getSelectedCount(groupKey) {
+             const groupPlatforms = this.getPlatformsInGroup(groupKey);
+             return groupPlatforms.filter(p => filters.platforms.includes(String(p.id))).length;
+         },
+
+         // Check if all platforms in a group are selected
+         isGroupFullySelected(groupKey) {
+             const groupPlatforms = this.getPlatformsInGroup(groupKey);
+             if (groupPlatforms.length === 0) return false;
+             return groupPlatforms.every(p => filters.platforms.includes(String(p.id)));
+         },
+
+         // Check if any platform in a group is selected
+         isGroupPartiallySelected(groupKey) {
+             const groupPlatforms = this.getPlatformsInGroup(groupKey);
+             const selectedCount = this.getSelectedCount(groupKey);
+             return selectedCount > 0 && selectedCount < groupPlatforms.length;
+         },
+
+         // Toggle all platforms in a group
+         toggleGroup(groupKey) {
+             const groupPlatforms = this.getPlatformsInGroup(groupKey);
+             const groupIds = groupPlatforms.map(p => String(p.id));
+
+             if (this.isGroupFullySelected(groupKey)) {
+                 // Deselect all in group
+                 filters.platforms = filters.platforms.filter(id => !groupIds.includes(id));
+             } else {
+                 // Select all in group (add any not already selected)
+                 const newSelection = [...filters.platforms];
+                 groupIds.forEach(id => {
+                     if (!newSelection.includes(id)) {
+                         newSelection.push(id);
+                     }
+                 });
+                 filters.platforms = newSelection;
+             }
+             this.dispatchFilterChange();
+         },
+
+         // Toggle individual platform
+         togglePlatform(platformId) {
+             const id = String(platformId);
+             if (filters.platforms.includes(id)) {
+                 filters.platforms = filters.platforms.filter(p => p !== id);
+             } else {
+                 filters.platforms = [...filters.platforms, id];
+             }
+             this.dispatchFilterChange();
+         },
+
+         // Check if platform is selected
+         isPlatformSelected(platformId) {
+             return filters.platforms.includes(String(platformId));
+         },
+
+         // Toggle accordion section
+         toggleAccordion(groupKey) {
+             this.expandedGroups[groupKey] = !this.expandedGroups[groupKey];
+         },
+
+         // Get ungrouped platforms (not in any defined group), sorted by release year
+         getUngroupedPlatforms() {
+             const allGroupedCodes = Object.values(this.platformGroups)
+                 .flatMap(g => g.codes);
+             return platforms
+                 .filter(p => !allGroupedCodes.includes(p.code))
+                 .sort((a, b) => {
+                     const yearA = this.platformReleaseYears[a.code] || 9999;
+                     const yearB = this.platformReleaseYears[b.code] || 9999;
+                     return yearA - yearB;
+                 });
+         },
+
+         // Dispatch filter change event
+         dispatchFilterChange() {
+             const selectedItems = platforms.filter(p => filters.platforms.includes(String(p.id)));
+             $dispatch('filter-changed', { type: 'platforms', items: selectedItems });
+         }
+     }">
+
+    {# Big Five Brand Buttons with overlay dropdown - sorted by game count #}
+    <div class="platform-brand-container">
+        <div class="platform-brand-groups">
+            <template x-for="item in sortedBigFiveGroups" :key="item.key">
+                <div class="platform-brand-group">
+                    <div class="platform-brand-btn-row">
+                        <button type="button"
+                                class="platform-brand-btn"
+                                :class="{
+                                    'is-active': isGroupFullySelected(item.key),
+                                    'is-partial': isGroupPartiallySelected(item.key),
+                                    'is-expanded': expandedGroups[item.key]
+                                }"
+                                @click="toggleGroup(item.key)"
+                                :title="'Select all ' + item.group.name + ' platforms'">
+                            <span class="platform-brand-icon">
+                                <template x-if="item.group.svgIcon">
+                                    <svg class="platform-svg-icon" aria-hidden="true">
+                                        <use :href="'{% static 'games/images/platform-icons.svg' %}#' + item.group.svgIcon"></use>
+                                    </svg>
+                                </template>
+                                <template x-if="item.group.icon">
+                                    <span class="mdi" :class="item.group.icon"></span>
+                                </template>
+                            </span>
+                            <span class="platform-brand-name" x-text="item.group.name"></span>
+                            <span class="platform-brand-count"
+                                  x-show="getSelectedCount(item.key) > 0"
+                                  x-text="getSelectedCount(item.key) + '/' + getPlatformsInGroup(item.key).length"></span>
+                        </button>
+                        <button type="button"
+                                class="platform-brand-expand"
+                                :class="{ 'is-expanded': expandedGroups[item.key] }"
+                                @click.stop="toggleAccordion(item.key)"
+                                :title="expandedGroups[item.key] ? 'Collapse' : 'Expand to pick individual platforms'">
+                            <span class="mdi" :class="expandedGroups[item.key] ? 'mdi-chevron-up' : 'mdi-chevron-down'"></span>
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        {# Expanded content for Big Five - overlay dropdown #}
+        <template x-for="item in sortedBigFiveGroups" :key="'content-' + item.key">
+            <div class="platform-brand-content" x-show="expandedGroups[item.key]" x-transition>
+                <div class="platform-brand-content-header">
+                    <template x-if="item.group.svgIcon">
+                        <svg class="platform-svg-icon" aria-hidden="true">
+                            <use :href="'{% static 'games/images/platform-icons.svg' %}#' + item.group.svgIcon"></use>
+                        </svg>
+                    </template>
+                    <template x-if="item.group.icon">
+                        <span class="mdi" :class="item.group.icon"></span>
+                    </template>
+                    <span x-text="item.group.name"></span>
+                </div>
+                <div class="platform-brand-content-items">
+                    <template x-for="platform in getPlatformsInGroup(item.key)" :key="platform.id">
+                        <label class="platform-checkbox">
+                            <input type="checkbox"
+                                   :checked="isPlatformSelected(platform.id)"
+                                   @change="togglePlatform(platform.id)">
+                            <span x-text="platform.name"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    {# Secondary categories (accordions) - sorted by game count #}
+    <div class="platform-accordions">
+        <template x-for="item in sortedAccordionGroups" :key="item.key">
+            <div class="platform-accordion" x-show="getPlatformsInGroup(item.key).length > 0">
+                <div class="platform-accordion-header"
+                     @click="toggleAccordion(item.key)"
+                     :class="{ 'has-selection': getSelectedCount(item.key) > 0 }">
+                    <span class="icon is-small" :class="expandedGroups[item.key] ? 'is-rotated' : ''">
+                        <span class="mdi mdi-chevron-right"></span>
+                    </span>
+                    <span class="mdi" :class="item.group.icon" style="margin-right: 0.25rem;"></span>
+                    <span class="platform-accordion-name" x-text="item.group.name"></span>
+                    <span class="platform-accordion-count">
+                        (<span x-text="getSelectedCount(item.key)"></span>/<span x-text="getPlatformsInGroup(item.key).length"></span>)
+                    </span>
+                </div>
+                <div class="platform-accordion-content" x-show="expandedGroups[item.key]" x-transition>
+                    <template x-for="platform in getPlatformsInGroup(item.key)" :key="platform.id">
+                        <label class="platform-checkbox">
+                            <input type="checkbox"
+                                   :checked="isPlatformSelected(platform.id)"
+                                   @change="togglePlatform(platform.id)">
+                            <span x-text="platform.name"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        {# Ungrouped platforms (if any) #}
+        <template x-if="getUngroupedPlatforms().length > 0">
+            <div class="platform-accordion">
+                <div class="platform-accordion-header"
+                     @click="toggleAccordion('other')"
+                     :class="{ 'has-selection': getUngroupedPlatforms().some(p => isPlatformSelected(p.id)) }">
+                    <span class="icon is-small" :class="expandedGroups['other'] ? 'is-rotated' : ''">
+                        <span class="mdi mdi-chevron-right"></span>
+                    </span>
+                    <span class="mdi mdi-controller" style="margin-right: 0.25rem;"></span>
+                    <span class="platform-accordion-name">Other</span>
+                    <span class="platform-accordion-count">
+                        (<span x-text="getUngroupedPlatforms().filter(p => isPlatformSelected(p.id)).length"></span>/<span x-text="getUngroupedPlatforms().length"></span>)
+                    </span>
+                </div>
+                <div class="platform-accordion-content" x-show="expandedGroups['other']" x-transition>
+                    <template x-for="platform in getUngroupedPlatforms()" :key="platform.id">
+                        <label class="platform-checkbox">
+                            <input type="checkbox"
+                                   :checked="isPlatformSelected(platform.id)"
+                                   @change="togglePlatform(platform.id)">
+                            <span x-text="platform.name"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>

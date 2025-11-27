@@ -1,0 +1,276 @@
+{# GenreFilter component - Inventory Grid Style with Heatmap #}
+{# Props: genres (list from parent with game_count), filters (from parent Alpine context) #}
+{# Uses parent Alpine.js context for genres array and filters.genres/filters.genre_option #}
+{% load static %}
+
+<div class="genre-filter"
+     x-data="{
+         // Genre groupings by gameplay 'vibe' - 5 columns
+         genreGroups: {
+             combat: {
+                 name: 'Combat',
+                 color: '#e74c3c',
+                 genres: ['Action', 'Shooter', 'Fighting', 'Hack and slash/Beat \u0027em up', 'MOBA', 'Stealth', 'Horror']
+             },
+             brain: {
+                 name: 'Brain',
+                 color: '#3498db',
+                 genres: ['Puzzle', 'Strategy', 'Real Time Strategy (RTS)', 'Turn-based strategy (TBS)', '4X (explore, expand, exploit, and exterminate)', 'Tactical']
+             },
+             world: {
+                 name: 'World',
+                 color: '#2ecc71',
+                 genres: ['Adventure', 'Role-playing (RPG)', 'Open world', 'Sandbox', 'Platform', 'Survival', 'Visual Novel', 'Point-and-click']
+             },
+             sim: {
+                 name: 'Sim & Sports',
+                 color: '#f1c40f',
+                 genres: ['Racing', 'Sport', 'Simulator', 'Pinball']
+             },
+             arcade: {
+                 name: 'Arcade & Social',
+                 color: '#e67e22',
+                 genres: ['Arcade', 'Party', 'Music', 'Quiz/Trivia', 'Card & Board Game', 'Indie']
+             }
+         },
+
+         // Map genre names to icon IDs in the SVG sprite
+         genreIcons: {
+             'Action': 'genre-action',
+             'Shooter': 'genre-shooter',
+             'Fighting': 'genre-fighting',
+             'Hack and slash/Beat \u0027em up': 'genre-hackslash',
+             'MOBA': 'genre-moba',
+             'Stealth': 'genre-stealth',
+             'Puzzle': 'genre-puzzle',
+             'Strategy': 'genre-strategy',
+             'Real Time Strategy (RTS)': 'genre-rts',
+             'Turn-based strategy (TBS)': 'genre-tbs',
+             '4X (explore, expand, exploit, and exterminate)': 'genre-4x',
+             'Tactical': 'genre-tactical',
+             'Adventure': 'genre-adventure',
+             'Role-playing (RPG)': 'genre-rpg',
+             'Open world': 'genre-openworld',
+             'Sandbox': 'genre-sandbox',
+             'Platform': 'genre-platform',
+             'Survival': 'genre-survival',
+             'Racing': 'genre-racing',
+             'Sport': 'genre-sport',
+             'Simulator': 'genre-simulator',
+             'Pinball': 'genre-pinball',
+             'Horror': 'genre-horror',
+             'Visual Novel': 'genre-visualnovel',
+             'Point-and-click': 'genre-pointclick',
+             'Arcade': 'genre-arcade',
+             'Party': 'genre-party',
+             'Music': 'genre-music',
+             'Quiz/Trivia': 'genre-quiz',
+             'Card & Board Game': 'genre-cardboard',
+             'Indie': 'genre-indie'
+         },
+
+         // Heatmap: Calculate max game count for normalization
+         get maxGameCount() {
+             if (!genres || genres.length === 0) return 1;
+             return Math.max(...genres.map(g => g.game_count || 0), 1);
+         },
+
+         // Get total game count for a category (sum of all genres in group)
+         getGroupTotalCount(groupKey) {
+             const group = this.genreGroups[groupKey];
+             if (!group || !genres) return 0;
+             return genres
+                 .filter(g => group.genres.includes(g.name))
+                 .reduce((sum, g) => sum + (g.game_count || 0), 0);
+         },
+
+         // Get groups sorted by total game count (descending)
+         get sortedGroups() {
+             return Object.entries(this.genreGroups)
+                 .map(([key, group]) => ({ key, group, total: this.getGroupTotalCount(key) }))
+                 .sort((a, b) => b.total - a.total);
+         },
+
+         // Get brightness factor (0.4 to 1.0) based on game count
+         getBrightness(gameCount) {
+             const count = gameCount || 0;
+             // Use logarithmic scale for better distribution
+             const logMax = Math.log(this.maxGameCount + 1);
+             const logCount = Math.log(count + 1);
+             // Scale from 0.4 (dimmest) to 1.0 (brightest)
+             return 0.4 + (logCount / logMax) * 0.6;
+         },
+
+         getIcon(genreName) {
+             return this.genreIcons[genreName] || 'genre-arcade';
+         },
+
+         // Get genres in a group that exist in the available genres list, sorted by game count
+         getGenresInGroup(groupKey) {
+             const group = this.genreGroups[groupKey];
+             if (!group) return [];
+             return genres
+                 .filter(g => group.genres.includes(g.name))
+                 .sort((a, b) => (b.game_count || 0) - (a.game_count || 0));
+         },
+
+         // Check if genre is selected
+         isGenreSelected(genreId) {
+             return filters.genres.includes(String(genreId));
+         },
+
+         // Toggle individual genre
+         toggleGenre(genreId) {
+             const id = String(genreId);
+             if (filters.genres.includes(id)) {
+                 filters.genres = filters.genres.filter(g => g !== id);
+             } else {
+                 filters.genres = [...filters.genres, id];
+             }
+             this.dispatchFilterChange();
+         },
+
+         // Get group key for a genre (for coloring)
+         getGroupForGenre(genreName) {
+             for (const [key, group] of Object.entries(this.genreGroups)) {
+                 if (group.genres.includes(genreName)) {
+                     return key;
+                 }
+             }
+             return 'arcade';
+         },
+
+         // Dispatch filter change event
+         dispatchFilterChange() {
+             const selectedItems = genres.filter(g => filters.genres.includes(String(g.id)));
+             $dispatch('filter-changed', { type: 'genres', items: selectedItems });
+         },
+
+         // Toggle genre option between All (L) and Any (A)
+         toggleGenreOption() {
+             filters.genre_option = filters.genre_option === 'L' ? 'A' : 'L';
+             if (filters.genres.length > 0) {
+                 this.dispatchFilterChange();
+             }
+         },
+
+         // Get selected count
+         getSelectedCount() {
+             return filters.genres.length;
+         },
+
+         // Check if all genres in a group are selected
+         isGroupFullySelected(groupKey) {
+             const groupGenres = this.getGenresInGroup(groupKey);
+             if (groupGenres.length === 0) return false;
+             return groupGenres.every(g => filters.genres.includes(String(g.id)));
+         },
+
+        // Check if any genres in a group are selected
+        isGroupPartiallySelected(groupKey) {
+            const groupGenres = this.getGenresInGroup(groupKey);
+            const selectedCount = groupGenres.filter(g => filters.genres.includes(String(g.id))).length;
+            return selectedCount > 0 && selectedCount < groupGenres.length;
+        },
+
+        getGroupSelectedCount(groupKey) {
+            const groupGenres = this.getGenresInGroup(groupKey);
+            return groupGenres.filter(g => filters.genres.includes(String(g.id))).length;
+        },
+
+         // Toggle all genres in a group
+         toggleGroup(groupKey) {
+             const groupGenres = this.getGenresInGroup(groupKey);
+             const groupIds = groupGenres.map(g => String(g.id));
+             const allSelected = this.isGroupFullySelected(groupKey);
+
+             if (allSelected) {
+                 // Deselect all in group
+                 filters.genres = filters.genres.filter(id => !groupIds.includes(id));
+             } else {
+                 // Select all in group (add missing ones)
+                 const currentSet = new Set(filters.genres);
+                 groupIds.forEach(id => currentSet.add(id));
+                 filters.genres = [...currentSet];
+                 // Auto-switch to Match Any when selecting a category
+                 // (Match All with many genres would be too restrictive)
+                 filters.genre_option = 'A';
+             }
+             this.dispatchFilterChange();
+         },
+
+         // Abbreviate long genre names for tiles
+         abbreviate(name) {
+             const abbrevs = {
+                 'Hack and slash/Beat \u0027em up': 'Hack\u0027n\u0027 Slash',
+                 'Real Time Strategy (RTS)': 'RTS',
+                 'Turn-based strategy (TBS)': 'TBS',
+                 '4X (explore, expand, exploit, and exterminate)': '4X',
+                 'Role-playing (RPG)': 'RPG',
+                 'Card & Board Game': 'Card/Board',
+                 'Quiz/Trivia': 'Quiz',
+                 'Point-and-click': 'Point & Click',
+                 'Visual Novel': 'Visual Novel'
+             };
+             return abbrevs[name] || name;
+         }
+     }">
+
+    {# Match All / Match Any Toggle #}
+    <div class="genre-logic-toggle">
+        <button type="button"
+                class="genre-logic-option"
+                :class="{ 'is-active': filters.genre_option === 'L' }"
+                @click="filters.genre_option = 'L'; if (filters.genres.length > 0) dispatchFilterChange()">
+            <span class="genre-logic-icon">&#x1F517;</span>
+            <span>Match All</span>
+        </button>
+        <button type="button"
+                class="genre-logic-option"
+                :class="{ 'is-active': filters.genre_option === 'A' }"
+                @click="filters.genre_option = 'A'; if (filters.genres.length > 0) dispatchFilterChange()">
+            <span class="genre-logic-icon">&#x2728;</span>
+            <span>Match Any</span>
+        </button>
+    </div>
+
+    {# 5-Column Vertical Layout - each category is a column #}
+    <div class="genre-columns">
+        <template x-for="item in sortedGroups" :key="item.key">
+            <div class="genre-column" :style="'--group-color: ' + item.group.color">
+                <div class="genre-column-count is-size-7 has-text-weight-semibold" style="margin-bottom: 0.25rem;">
+                    (<span x-text="getGroupSelectedCount(item.key)"></span>/<span x-text="getGenresInGroup(item.key).length"></span>)
+                </div>
+                {# Column header with category name - clickable to select/deselect all #}
+                <button type="button"
+                        class="genre-column-header"
+                        :class="{
+                            'is-fully-selected': isGroupFullySelected(item.key),
+                            'is-partially-selected': isGroupPartiallySelected(item.key)
+                        }"
+                        @click="toggleGroup(item.key)"
+                        :title="item.group.name + ' - Click to ' + (isGroupFullySelected(item.key) ? 'deselect all' : 'select all')">
+                    <span class="genre-column-dot"></span>
+                    <span class="genre-column-name" x-text="item.group.name"></span>
+                </button>
+                {# Genres in this column #}
+                <div class="genre-column-items">
+                    <template x-for="genre in getGenresInGroup(item.key)" :key="genre.id">
+                        <button type="button"
+                                class="genre-tile"
+                                :class="{ 'is-selected': isGenreSelected(genre.id) }"
+                                :data-group="item.key"
+                                :style="'--brightness: ' + getBrightness(genre.game_count)"
+                                @click="toggleGenre(genre.id)"
+                                :title="genre.name + ' - ' + (genre.game_count || 0) + ' games'">
+                            <svg class="genre-icon" aria-hidden="true">
+                                <use :href="'{% static 'games/images/genre-icons.svg' %}#' + getIcon(genre.name)"></use>
+                            </svg>
+                            <span class="genre-name" x-text="abbreviate(genre.name)"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>

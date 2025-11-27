@@ -1,10 +1,10 @@
 {# GameRowProperties component #}
-{# Props: game, show_rank (default: True) #}
+{# Props: game, show_global_rank (default False) #}
 
 <div class="game-properties">
-    {% if show_rank %}
+    {% if show_global_rank %}
     <div class="game-property">
-        <span>Rank:</span>
+        <span>Global Rank:</span>
         <span>{{ game.rank }}</span>
     </div>
     {% endif %}
@@ -30,4 +30,3 @@
     </div>
     {% endwith %}
 </div>
-

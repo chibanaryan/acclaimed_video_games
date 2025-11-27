@@ -185,5 +185,6 @@ class PlatformSerializer(serializers.ModelSerializer):
         model = models.Platform
         fields = [
             "id",
+            "code",
             "name",
         ]

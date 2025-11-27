@@ -1,0 +1,240 @@
+{# YearGrid component - Heatmap year selector #}
+{# Props: year_counts (list of {year, count}), min_year, max_year #}
+{# Uses parent Alpine.js context (filters.start, filters.end) #}
+{% load game_filters %}
+
+{# Pass year counts data to Alpine.js via JSON script tag #}
+<script type="application/json" id="year-counts-data">{{ year_counts|tojson }}</script>
+
+<div class="year-grid-wrapper"
+     x-data="{
+         yearCounts: [],
+         maxCount: 0,
+         decades: [],
+         dragStart: null,
+         dragAnchorEnd: null,  // End of initial selection (for decade ranges)
+         dragEnd: null,
+         isDragging: false,
+         isDraggingDecade: false,  // Track if drag started from decade label
+         isDraggingToDecade: false,  // Track if currently hovering over a decade
+         lastClicked: null,  // Track last clicked year for shift+click ranges
+
+         init() {
+             // Load year counts from JSON
+             const dataEl = document.getElementById('year-counts-data');
+             if (dataEl) {
+                 this.yearCounts = JSON.parse(dataEl.textContent);
+                 this.maxCount = Math.max(...this.yearCounts.map(y => y.count));
+                 this.buildDecades();
+             }
+         },
+
+         buildDecades() {
+             // Group years into decades (newest first), skip years with 0 games
+             const decadeMap = {};
+             this.yearCounts.forEach(yc => {
+                 if (yc.count === 0) return;  // Skip years with no games
+                 const decadeStart = Math.floor(yc.year / 10) * 10;
+                 if (!decadeMap[decadeStart]) {
+                     decadeMap[decadeStart] = {};
+                 }
+                 // Store by position (0-9) based on last digit
+                 const position = yc.year % 10;
+                 decadeMap[decadeStart][position] = yc;
+             });
+
+             // Sort decades descending (newest first)
+             const decadeStarts = Object.keys(decadeMap).map(Number).sort((a, b) => b - a);
+             this.decades = decadeStarts.map(ds => {
+                 // Find max position with data
+                 const positions = Object.keys(decadeMap[ds]).map(Number);
+                 const maxPos = Math.max(...positions);
+                 // Always create 10 cells, mark trailing ones as hidden
+                 const cells = [];
+                 for (let i = 0; i < 10; i++) {
+                     if (i > maxPos) {
+                         cells.push({ hidden: true });  // Invisible spacer
+                     } else {
+                         cells.push(decadeMap[ds][i] || null);  // Data or empty placeholder
+                     }
+                 }
+                 return {
+                     start: ds,
+                     label: ds + 's',
+                     cells: cells
+                 };
+             });
+         },
+
+         getOpacity(count) {
+             if (count === 0) return 0.05;
+             return 0.15 + (count / this.maxCount) * 0.85;
+         },
+
+         getYearLabel(year) {
+             return String(year).slice(-2);
+         },
+
+         isInRange(year) {
+             if (this.isDragging) {
+                 // Include anchor range (dragStart to dragAnchorEnd) and current position (dragEnd)
+                 const min = Math.min(this.dragStart, this.dragAnchorEnd, this.dragEnd);
+                 const max = Math.max(this.dragStart, this.dragAnchorEnd, this.dragEnd);
+                 return year >= min && year <= max;
+             }
+             // Don't show selection when full range is selected (show heatmap instead)
+             if (filters.start === {{ min_year }} && filters.end === {{ max_year }}) {
+                 return false;
+             }
+             return year >= filters.start && year <= filters.end;
+         },
+
+         isDecadeSelected(decadeStart) {
+             // Don't show previous selection while dragging
+             if (this.isDragging) return false;
+             // Don't show decade as selected when full range is selected
+             if (filters.start === {{ min_year }} && filters.end === {{ max_year }}) {
+                 return false;
+             }
+             // Check if selection aligns with decade boundaries (start ends in 0, end ends in 9)
+             const isDecadeAligned = filters.start % 10 === 0 && filters.end % 10 === 9;
+             if (!isDecadeAligned) return false;
+             // Highlight if this decade is fully contained in the selection
+             return decadeStart >= filters.start && decadeStart + 9 <= filters.end;
+         },
+
+         isDecadeInDragRange(decadeStart) {
+             // Only highlight decades when dragging from a decade label
+             if (!this.isDragging || !this.isDraggingDecade) return false;
+
+             // If dragging to a year (not a decade), only highlight starting decade
+             if (!this.isDraggingToDecade) {
+                 return decadeStart === this.dragStart;
+             }
+
+             // Dragging decade-to-decade: highlight all decades in range
+             const min = Math.min(this.dragStart, this.dragEnd);
+             const max = Math.max(this.dragStart, this.dragEnd);
+             return decadeStart >= min && decadeStart <= max;
+         },
+
+         selectDecade(decadeStart, event) {
+             // Shift+click creates a range from last clicked year/decade
+             if (event && event.shiftKey && this.lastClicked !== null) {
+                 filters.start = Math.min(this.lastClicked, decadeStart);
+                 filters.end = Math.max(this.lastClicked, decadeStart + 9);
+             } else {
+                 filters.start = decadeStart;
+                 filters.end = decadeStart + 9;
+                 this.lastClicked = decadeStart;
+             }
+             if (initialized) debouncedFilterUpdate();
+         },
+
+         startDragDecade(decadeStart, event) {
+             event.preventDefault();
+             this.isDragging = true;
+             this.isDraggingDecade = true;
+             this.isDraggingToDecade = true;
+             this.dragStart = decadeStart;
+             this.dragAnchorEnd = decadeStart + 9;
+             this.dragEnd = decadeStart + 9;
+         },
+
+         updateDragDecade(decadeStart) {
+             if (this.isDragging) {
+                 this.isDraggingToDecade = true;
+                 // Use decade start if dragging to earlier decades, decade end if later
+                 if (decadeStart < this.dragStart) {
+                     this.dragEnd = decadeStart;  // Include full earlier decade
+                 } else {
+                     this.dragEnd = decadeStart + 9;  // Include full later decade
+                 }
+             }
+         },
+
+         selectYear(year, event) {
+             // Shift+click creates a range from last clicked year
+             if (event && event.shiftKey && this.lastClicked !== null) {
+                 filters.start = Math.min(this.lastClicked, year);
+                 filters.end = Math.max(this.lastClicked, year);
+             } else {
+                 filters.start = year;
+                 filters.end = year;
+                 this.lastClicked = year;
+             }
+             if (initialized) debouncedFilterUpdate();
+         },
+
+         startDrag(year, event) {
+             event.preventDefault();
+             this.isDragging = true;
+             this.dragStart = year;
+             this.dragAnchorEnd = year;
+             this.dragEnd = year;
+         },
+
+         updateDrag(year) {
+             if (this.isDragging) {
+                 this.isDraggingToDecade = false;
+                 this.dragEnd = year;
+             }
+         },
+
+         endDrag() {
+             if (this.isDragging) {
+                 // Use full anchor range plus current position
+                 filters.start = Math.min(this.dragStart, this.dragAnchorEnd, this.dragEnd);
+                 filters.end = Math.max(this.dragStart, this.dragAnchorEnd, this.dragEnd);
+                 if (initialized) debouncedFilterUpdate();
+             }
+             this.isDragging = false;
+             this.isDraggingDecade = false;
+             this.isDraggingToDecade = false;
+             this.dragStart = null;
+             this.dragAnchorEnd = null;
+             this.dragEnd = null;
+         },
+
+         cancelDrag() {
+             this.isDragging = false;
+             this.isDraggingDecade = false;
+             this.isDraggingToDecade = false;
+             this.dragStart = null;
+             this.dragAnchorEnd = null;
+             this.dragEnd = null;
+         }
+     }"
+     @mouseleave="cancelDrag()"
+     @mouseup.window="endDrag()">
+
+    <div class="year-grid">
+        <template x-for="decade in decades" :key="decade.start">
+            <div class="year-grid-row">
+                {# Decade label - clickable to select entire decade, draggable for ranges #}
+                <div class="year-grid-decade"
+                     :class="{ 'is-selected': isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start) }"
+                     @mousedown="startDragDecade(decade.start, $event)"
+                     @mouseenter="updateDragDecade(decade.start)"
+                     @click.stop="if (!isDragging || (dragStart === decade.start && dragEnd === decade.start + 9)) selectDecade(decade.start, $event)"
+                     :title="decade.label">
+                    <span x-text="decade.label"></span>
+                </div>
+
+                {# Year cells - positioned by column (0-9) #}
+                <template x-for="(cell, idx) in decade.cells" :key="decade.start + '-' + idx">
+                    <div class="year-grid-cell"
+                         :class="{ 'is-selected': cell && cell.year && isInRange(cell.year), 'is-dragging': cell && cell.year && isDragging && isInRange(cell.year), 'year-grid-cell-empty': !cell, 'year-grid-cell-hidden': cell && cell.hidden }"
+                         :style="cell && cell.year ? '--heatmap-opacity: ' + getOpacity(cell.count) : ''"
+                         :title="cell && cell.year ? cell.year + ': ' + cell.count + ' games' : ''"
+                         @mousedown="cell && cell.year && startDrag(cell.year, $event)"
+                         @mouseenter="cell && cell.year && updateDrag(cell.year)"
+                         @click.stop="cell && cell.year && (!isDragging || dragStart === cell.year) && selectYear(cell.year, $event)">
+                        <span class="year-grid-cell-label" x-text="cell && cell.year ? getYearLabel(cell.year) : ''"></span>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+</div>

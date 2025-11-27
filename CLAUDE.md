@@ -8,14 +8,19 @@ Acclaimed Games is a video game ranking and aggregation website that combines da
 
 ## Instructions for Claude
 
-**When the user asks to deploy, commit and push, or mentions "production/heroku":**
+**When the user asks to "commit and push" (WITHOUT deploying):**
 
-Always follow the **Complete Deployment Workflow** documented in the Deployment section below. This includes:
+Follow the **Commit and Push Workflow** (steps 1-4 only, NO Heroku deployment):
 1. Updating DEVLOG.md (if changes warrant documentation - see DEVLOG guidelines below)
 2. Collecting static files
 3. Committing all changes
-4. Pushing to main
-5. Deploying to Heroku
+4. Pushing to main branch
+
+**IMPORTANT:** Do NOT deploy to Heroku unless explicitly asked to "deploy" or push to "production/heroku".
+
+**When the user asks to "deploy" or mentions "production/heroku":**
+
+Follow the **Complete Deployment Workflow** which includes all steps above PLUS deploying to Heroku.
 
 Do not skip any steps. The user should not have to remind you to collect static files.
 
@@ -86,6 +91,25 @@ python3 manage.py sync_from_prod
 ```
 Downloads all game data from production Heroku and loads it into local SQLite. Auth users are excluded - create a local superuser after syncing with `python3 manage.py createsuperuser`.
 
+**Fetch primary genre from Wikipedia/Wikidata:**
+```bash
+# Process all games (outputs to CSV)
+python3 manage.py get_wiki_genres
+
+# Process all games and save to database
+python3 manage.py get_wiki_genres --save
+
+# Process single game (for testing)
+python3 manage.py get_wiki_genres --game "The Legend of Zelda"
+
+# Process with limit
+python3 manage.py get_wiki_genres --limit 100
+
+# Skip games that already have Wikipedia genre data
+python3 manage.py get_wiki_genres --skip-existing --save
+```
+Uses a cascade approach: first queries Wikidata P136 (Genre) property, then falls back to scraping Wikipedia infobox if Wikidata fails. Results are stored separately from IGDB genres in `Game.wikipedia_primary_genre` and `Game.wikidata_id` fields.
+
 **Run tests:**
 ```bash
 python3 manage.py test games.tests
@@ -102,6 +126,30 @@ coverage report
 **Production URL:** https://www.acclaimedvideogames.com/
 
 The project is deployed to Heroku.
+
+**Commit and Push Workflow (NO deployment):**
+
+Use this when you want to save changes to the repository WITHOUT deploying to production:
+
+```bash
+# 0. Update DEVLOG.md if changes warrant documentation (see DEVLOG section)
+#    Only if: bug fixes, features, optimizations, or breaking changes
+#    Keep to 8 bullet points max per day
+
+# 1. Collect static files
+python3 manage.py collectstatic --noinput
+
+# 2. Stage all changes
+git add -A
+
+# 3. Commit with descriptive message
+git commit -m "Your commit message here"
+
+# 4. Push to main branch
+git push origin main
+
+# STOP HERE - Do NOT push to Heroku unless explicitly asked to deploy
+```
 
 **Complete Deployment Workflow:**
 
@@ -124,7 +172,7 @@ git commit -m "Your commit message here"
 # 4. Push to main branch
 git push origin main
 
-# 5. Deploy to Heroku
+# 5. Deploy to Heroku (ONLY when user explicitly asks to deploy)
 git push heroku main
 ```
 
@@ -469,3 +517,15 @@ pip install -r requirements.txt
 - Static files are located in:
   - `games/static/` - Game app static files
   - `games/templates/` - Template files with inline styles
+
+### CSS Workflow
+
+The site uses a concatenated CSS file for production performance. When editing styles:
+
+1. **Edit `main.css`** - The source file at `games/static/games/css/main.css`
+2. **Regenerate `combined.css`** - After any changes to main.css, run:
+   ```bash
+   cd games/static/games/css && cat vendor/bulma-1.0.0.min.css vendor/bulmaswatch-cyborg-0.8.1.min.css main.css > combined.css
+   ```
+
+**Important:** `combined.css` is a build artifact (Bulma + Bulmaswatch Cyborg + main.css). Never edit it directly - always edit `main.css` and regenerate.

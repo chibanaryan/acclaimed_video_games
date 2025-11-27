@@ -164,6 +164,12 @@ class Game(models.Model):
     igdb_url = models.URLField(null=True, blank=True)
     year_rank = models.IntegerField(null=True, blank=True, db_index=True)
     decade_rank = models.IntegerField(null=True, blank=True, db_index=True)
+    # Wikipedia genre data (separate from IGDB genres)
+    # primary_genre is the first genre in the ordered list (for sorting)
+    # all_genres is pipe-separated for display/filtering
+    wikipedia_primary_genre = models.CharField(max_length=200, null=True, blank=True)
+    wikipedia_all_genres = models.TextField(null=True, blank=True)
+    wikidata_id = models.CharField(max_length=20, null=True, blank=True)  # deprecated
 
     objects = GameQuerySet.as_manager()
 
