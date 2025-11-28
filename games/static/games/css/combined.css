@@ -1274,7 +1274,7 @@ table.detail td {
 .game-row.desktop:hover {
     background: linear-gradient(to right, #363636 0%, #363636 70%, transparent 100%);
     transform: translateY(-1px);
-    border-left-color: var(--color-primary);
+    border-left-color: var(--color-gold);
 }
 
 /* Desktop: Circular game cover thumbnails - expand on hover */
@@ -1393,6 +1393,7 @@ table.detail td {
 
 .game-row.highlight {
     background: #393939;
+    border-left-color: var(--color-gold);
 }
 
 /* Game content columns - vertically centered */
@@ -1894,12 +1895,12 @@ a.platform-family-icon.mdi {
 }
 
 .tag.is-primary .delete {
-    background-color: rgba(10, 10, 10, 0.2) !important;
+    background-color: #c64646 !important;
 }
 
 .tag.is-primary .delete:hover,
 .tag.is-primary .delete:focus {
-    background-color: rgba(10, 10, 10, 0.3) !important;
+    background-color: #d05252 !important;
 }
 
 /* ==========================================================================
@@ -2355,6 +2356,18 @@ use[href$="platform-sega"] {
 .platform-checkbox .platform-icon {
     color: var(--color-text-muted);
     font-size: 0.9rem;
+}
+
+/* Console-style buttons in filters header */
+.filters-header .buttons {
+    align-items: center;
+    margin-top: 3px; /* Offset 3D shadow to align with FILTERS text */
+}
+
+.nes-reset-button,
+.nes-download-button {
+    min-width: 5.5rem;
+    justify-content: center;
 }
 
 .nes-reset-button {

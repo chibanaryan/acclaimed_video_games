@@ -39,7 +39,7 @@
                                x-model="q"
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
-                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-search' %}?q=' + encodeURIComponent(q.trim())"
+                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                                placeholder="Search all games"
                                class="input input-dark"
                                autocomplete="off">
@@ -79,7 +79,7 @@
                         </a>
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
-                        <a :href="'{% url 'games-search' %}?q=' + encodeURIComponent(q.trim())"
+                        <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                            class="dropdown-item">
                             See all results &hellip;
                         </a>
@@ -107,7 +107,7 @@
                                x-model="q"
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
-                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-search' %}?q=' + encodeURIComponent(q.trim())"
+                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                                autocomplete="off">
                     </div>
                     <div class="control" x-show="q && q.trim()" x-cloak>
@@ -146,7 +146,7 @@
                             </a>
                         </template>
                         <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
-                            <a :href="'{% url 'games-search' %}?q=' + encodeURIComponent(q.trim())"
+                            <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                                class="dropdown-item">
                                 See all results &hellip;
                             </a>

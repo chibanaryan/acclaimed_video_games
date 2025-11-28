@@ -142,7 +142,7 @@
             setLoading('game-results-container');
 
             const params = buildFilterParams(this.filters, { preservePage });
-            const url = '{% url 'games-search' %}?' + normalizeUrl(params.toString());
+            const url = '{% url 'games-list' %}?' + normalizeUrl(params.toString());
 
             try {
                 const html = await fetchHtml(url, signal);
@@ -155,6 +155,17 @@
                     updateDomElements(content);
                     // Reinitialize Load More button after DOM update
                     if (typeof initLoadMore === 'function') initLoadMore();
+
+                    // Update year grid heatmap with filtered counts
+                    const yearCountsEl = document.getElementById('year-counts-update');
+                    if (yearCountsEl) {
+                        try {
+                            const yearCounts = JSON.parse(yearCountsEl.textContent);
+                            window.dispatchEvent(new CustomEvent('year-counts-update', { detail: yearCounts }));
+                        } catch (e) {
+                            console.error('Error parsing year counts:', e);
+                        }
+                    }
                 } else {
                     const contentEl = document.getElementById('content');
                     if (contentEl) {
@@ -247,7 +258,7 @@
                         <h2>Filters</h2>
                     </div>
                     <div class="buttons are-small mb-0">
-                        <a href="{% url 'games-download' %}{% if download_query %}?{{ download_query }}{% endif %}"
+                        <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
                            class="button is-small nes-download-button"
                            title="Download CSV">
                             <span class="icon is-small">
@@ -255,7 +266,7 @@
                             </span>
                             <span>CSV</span>
                         </a>
-                        <a href="{% url 'games-search' %}"
+                        <a href="{% url 'games-list' %}"
                            class="button is-small nes-reset-button">
                             <span class="icon is-small">
                                 <span class="mdi mdi-undo"></span>
@@ -420,7 +431,7 @@
         {# Right column - Results #}
         <div class="column main-panel">
             <div id="game-results-container">
-                {% include 'games/includes/_game_search_results.html' %}
+                {% include 'games/includes/_game_list_results.html' %}
             </div>
         </div>
     </div>

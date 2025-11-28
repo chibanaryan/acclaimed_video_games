@@ -170,10 +170,14 @@ def from_now(value):
 @register.simple_tag
 def game_rank_url(rank, game_id=None, start=None, end=None):
     """
-    Generate URL for game rank route with page-based pagination.
+    Generate URL for game rank with highlight for smooth scrolling.
+
+    The games list uses infinite scroll with dynamic page sizing. When a highlight
+    parameter is provided, the view automatically loads enough games to include
+    the highlighted one, then smooth scrolls to it.
 
     Args:
-        rank: The rank number
+        rank: The rank number (unused, kept for backward compatibility)
         game_id: Optional game ID for highlighting
         start: Optional start year for filtering
         end: Optional end year for filtering
@@ -184,40 +188,24 @@ def game_rank_url(rank, game_id=None, start=None, end=None):
     from django.urls import reverse
     from urllib.parse import urlencode
 
-    # Calculate page number from rank
-    # Page 1: ranks 1-100, Page 2: ranks 101-200, etc.
-    page = (rank - 1) // 100 + 1
-
-    # Build query parameters
-    query_params = {
-        "page": page,
-    }
+    # Build query parameters - no page needed, view handles dynamic loading
+    query_params = {}
 
     if game_id:
         query_params["highlight"] = game_id
 
-    # Convert start/end to decade or year parameter
-    if start and end:
-        if start == end:
-            # Same year - use year parameter
-            query_params["year"] = start
-        elif end - start == 9:
-            # Decade range - use decade parameter (format: "1990-99")
-            decade_str = f"{start}-{str(end)[2:4]}"
-            query_params["decade"] = decade_str
-        else:
-            # Custom range - use start/end
-            query_params["start"] = start
-            query_params["end"] = end
-    elif start:
+    # Always use start/end parameters for year filtering
+    if start:
         query_params["start"] = start
-    elif end:
+    if end:
         query_params["end"] = end
 
     # Build URL with query string
     base_url = reverse("games-list")
-    query_string = urlencode(query_params)
-    return f"{base_url}?{query_string}"
+    if query_params:
+        query_string = urlencode(query_params)
+        return f"{base_url}?{query_string}"
+    return base_url
 
 
 @register.filter

@@ -1,86 +1,42 @@
 {% extends 'base.html' %}
 {% load game_filters %}
+{% load humanize %}
 
-{% block title %}Games - Acclaimed Games{% endblock %}
+{% block title %}Game Search - Acclaimed Games{% endblock %}
 
 {% block content %}
 <div id="content">
-    <h1 class="title">
-        {% if filters.year %}
-            Most Acclaimed Games of {{ filters.year }}
-        {% elif filters.decade %}
-            Most Acclaimed Games of the {{ filters.decade|format_decade }}
-        {% else %}
-            Most Acclaimed Games of All Time
-        {% endif %}
-    </h1>
-    
-    <div class="field is-grouped is-grouped-multiline">
-        <div class="filter-row">
-            {% include 'includes/_simple_filters.html' with meta=meta filters=filters %}
-        </div>
-        <div class="control filter-row" style="margin-left: auto;">
-            <a href="{% url 'games-download' %}{% if filters.decade %}?decade={{ filters.decade }}{% elif filters.year %}?year={{ filters.year }}{% endif %}" class="button is-dark is-hidden-mobile" title="Download CSV">
-                <span class="icon is-small">
-                    <span class="mdi mdi-download"></span>
-                </span>
-                <span>Download CSV</span>
-            </a>
-            <a href="{% url 'games-search' %}" class="button is-link is-hidden-mobile">
-                <span class="icon is-small">
-                    <span class="mdi mdi-tune-variant"></span>
-                </span>
-                <span>Advanced Search</span>
-            </a>
-            <a href="{% url 'games-search' %}" class="button is-link is-hidden-tablet">
-                <span class="icon is-small">
-                    <span class="mdi mdi-tune-variant"></span>
-                </span>
-            </a>
-        </div>
-    </div>
-
-    {# Pagination at top #}
-    {% include 'includes/_pagination_responsive.html' with page_obj=page_obj target_id='content' spacing='top' %}
-
-    <div id="game-list" class="pagination-spacing-bottom">
-        {% for game in games %}
-            {% with index=page_obj.start_index|add:forloop.counter0 %}
-                {% include 'games/includes/_game_row.html' with game=game index=index show_rank=is_filtered|yesno:'filtered,alltime' show_rank_in_details=is_filtered highlight=highlight %}
-            {% endwith %}
-        {% endfor %}
-    </div>
-    
-    {# Script to scroll to highlighted game #}
-    {% if highlight %}
-    <script>
-        setTimeout(function() {
-            // Get both desktop and mobile elements
-            var desktopElement = document.getElementById('game-{{ highlight }}');
-            var mobileElement = document.getElementById('game-{{ highlight }}-mobile');
-
-            // Find which one is actually visible (offsetParent is null for hidden elements)
-            var element = null;
-            if (desktopElement && desktopElement.offsetParent !== null) {
-                element = desktopElement;
-            } else if (mobileElement && mobileElement.offsetParent !== null) {
-                element = mobileElement;
-            }
-
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-                setTimeout(function() {
-                    // Remove highlight from both elements to be safe
-                    if (desktopElement) desktopElement.classList.remove('highlight');
-                    if (mobileElement) mobileElement.classList.remove('highlight');
-                }, 2000);
-            }
-        }, 500);
-    </script>
-    {% endif %}
-
-    {# Pagination at bottom #}
-    {% include 'includes/_pagination_responsive.html' with page_obj=page_obj target_id='content' spacing='top' %}
+    {% include 'includes/_advanced_filters.html' with filters=filters genres=genres platforms=platforms min_year=min_year max_year=max_year %}
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if highlight %}
+<script>
+    setTimeout(function() {
+        var desktopElement = document.getElementById('game-{{ highlight }}');
+        var mobileElement = document.getElementById('game-{{ highlight }}-mobile');
+        var element = null;
+        if (desktopElement && desktopElement.offsetParent !== null) {
+            element = desktopElement;
+        } else if (mobileElement && mobileElement.offsetParent !== null) {
+            element = mobileElement;
+        }
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Remove highlight when user hovers over any other game row
+            var gameRows = document.querySelectorAll('.game-row');
+            gameRows.forEach(function(row) {
+                if (row !== desktopElement && row !== mobileElement) {
+                    row.addEventListener('mouseenter', function() {
+                        if (desktopElement) desktopElement.classList.remove('highlight');
+                        if (mobileElement) mobileElement.classList.remove('highlight');
+                    }, { once: true });
+                }
+            });
+        }
+    }, 500);
+</script>
+{% endif %}
 {% endblock %}
 

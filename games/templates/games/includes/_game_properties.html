@@ -37,13 +37,13 @@
     <tr>
         <th>Platforms:</th>
         <td>
-            {% for platform in game.platforms.all %}<a href="{% url 'games-search' %}?platforms={{ platform.id }}">{{ platform.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+            {% for platform in game.platforms.all %}<a href="{% url 'games-list' %}?platforms={{ platform.id }}&highlight={{ game.id }}">{{ platform.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
         </td>
     </tr>
     <tr>
         <th>Year of release:</th>
         <td>
-            <a href="{% url 'games-list' %}?year={{ game.year_of_release }}">
+            <a href="{% url 'games-list' %}?start={{ game.year_of_release }}&end={{ game.year_of_release }}&highlight={{ game.id }}">
                 {{ game.year_of_release }}
             </a>
         </td>
@@ -51,7 +51,7 @@
     <tr>
         <th>Genres:</th>
         <td>
-            {% for genre in game.genres.all %}<a href="{% url 'games-search' %}?genres={{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+            {% for genre in game.genres.all %}<a href="{% url 'games-list' %}?genres={{ genre.id }}&highlight={{ game.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
         </td>
     </tr>
     {% if game.igdb_url %}

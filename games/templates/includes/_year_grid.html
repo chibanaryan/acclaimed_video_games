@@ -9,7 +9,9 @@
 <div class="year-grid-wrapper"
      x-data="{
          yearCounts: [],
+         originalYearCounts: [],  // Store original data for structure
          maxCount: 0,
+         originalMaxCount: 0,  // Store original max for consistent intensity scale
          decades: [],
          dragStart: null,
          dragAnchorEnd: null,  // End of initial selection (for decade ranges)
@@ -24,41 +26,71 @@
              const dataEl = document.getElementById('year-counts-data');
              if (dataEl) {
                  this.yearCounts = JSON.parse(dataEl.textContent);
-                 this.maxCount = Math.max(...this.yearCounts.map(y => y.count));
+                 this.originalYearCounts = [...this.yearCounts];  // Store original structure
+                 this.maxCount = Math.max(...this.yearCounts.map(y => y.count), 1);
+                 this.originalMaxCount = this.maxCount;  // Store for consistent intensity
                  this.buildDecades();
              }
+
+             // Listen for updates when filters change
+             window.addEventListener('year-counts-update', (event) => {
+                 this.yearCounts = event.detail;
+                 // Keep originalMaxCount for consistent intensity scale
+                 this.maxCount = this.originalMaxCount;
+                 this.buildDecades();
+             });
          },
          handleReset() {
              this.lastClicked = null;
          },
 
          buildDecades() {
-             // Group years into decades (newest first), skip years with 0 games
-             const decadeMap = {};
+             // Build structure from ORIGINAL data (decades always visible)
+             // but only show years that have games in current filtered results
+             const currentCountMap = {};
              this.yearCounts.forEach(yc => {
-                 if (yc.count === 0) return;  // Skip years with no games
+                 currentCountMap[yc.year] = yc.count;
+             });
+
+             // Group years into decades from original data (newest first)
+             const decadeMap = {};
+             this.originalYearCounts.forEach(yc => {
+                 // Skip years with no games in original data
+                 if (yc.count === 0) return;
+
                  const decadeStart = Math.floor(yc.year / 10) * 10;
                  if (!decadeMap[decadeStart]) {
                      decadeMap[decadeStart] = {};
                  }
-                 // Store by position (0-9) based on last digit
+
                  const position = yc.year % 10;
-                 decadeMap[decadeStart][position] = yc;
+                 const currentCount = currentCountMap[yc.year] || 0;
+
+                 // Only show year if it has games in current filtered results
+                 if (currentCount > 0) {
+                     decadeMap[decadeStart][position] = {
+                         year: yc.year,
+                         count: currentCount
+                     };
+                 }
+                 // Always mark the position as existing to maintain decade structure
+                 if (!decadeMap[decadeStart].maxOriginalPos || position > decadeMap[decadeStart].maxOriginalPos) {
+                     decadeMap[decadeStart].maxOriginalPos = position;
+                 }
              });
 
              // Sort decades descending (newest first)
              const decadeStarts = Object.keys(decadeMap).map(Number).sort((a, b) => b - a);
              this.decades = decadeStarts.map(ds => {
-                 // Find max position with data
-                 const positions = Object.keys(decadeMap[ds]).map(Number);
-                 const maxPos = Math.max(...positions);
+                 // Use original max position to maintain consistent decade width
+                 const maxPos = decadeMap[ds].maxOriginalPos || 0;
                  // Always create 10 cells, mark trailing ones as hidden
                  const cells = [];
                  for (let i = 0; i < 10; i++) {
                      if (i > maxPos) {
                          cells.push({ hidden: true });  // Invisible spacer
                      } else {
-                         cells.push(decadeMap[ds][i] || null);  // Data or empty placeholder
+                         cells.push(decadeMap[ds][i] || null);  // Data or empty (winks out)
                      }
                  }
                  return {

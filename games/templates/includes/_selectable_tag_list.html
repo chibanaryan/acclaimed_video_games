@@ -8,7 +8,7 @@
     <template x-for="(item, index) in filters.{{ filter_type }}" :key="index">
         <span class="tag is-primary">
             <span x-text="('{{ filter_type }}' === 'genres' ? genres : platforms).find(x => x.id === item)?.name || item"></span>
-            <button @click="if (initialized) removeFilterItem(filters, '{{ filter_type }}', index, '{% url 'games-search' %}')"
+            <button @click="if (initialized) removeFilterItem(filters, '{{ filter_type }}', index, '{% url 'games-list' %}')"
                     title="Remove filter"
                     class="delete is-small"></button>
         </span>

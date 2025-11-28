@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
+from django.views.generic import RedirectView
 
 from games import views
 from games.api import views as api_views
@@ -41,9 +42,14 @@ urlpatterns = [
         views.ContactThankYouView.as_view(),
         name="contact_thank_you",
     ),
-    path("games/", views.GameListView.as_view(), name="games-list"),
+    path("games/", views.GameSearchView.as_view(), name="games-list"),
     path("games/download/", views.download_games_csv, name="games-download"),
-    path("games/search/", views.GameSearchView.as_view(), name="games-search"),
+    # Redirect old search URL to new unified games page (preserves query params)
+    path(
+        "games/search/",
+        RedirectView.as_view(url="/games/", permanent=True, query_string=True),
+        name="games-search",
+    ),
     path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
     path("developers/", views.DeveloperListView.as_view(), name="developers-list"),
     path(

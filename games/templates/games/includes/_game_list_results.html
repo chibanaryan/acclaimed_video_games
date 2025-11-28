@@ -1,5 +1,10 @@
 {# Game search results partial - used for both initial render and HTMX updates #}
 {% load humanize %}
+{% load game_filters %}
+{# Include updated year counts for heatmap - JavaScript will detect and update #}
+{% if year_counts %}
+<script type="application/json" id="year-counts-update">{{ year_counts|tojson }}</script>
+{% endif %}
 {% if games %}
 <div id="game-list-container">
     {% for game in games %}

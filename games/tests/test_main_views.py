@@ -170,7 +170,7 @@ class ContactThankYouViewTest(TestCase):
 
 
 class GameListViewTest(TestCase):
-    """Test the game list view."""
+    """Test the game list view (now uses GameSearchView with legacy param support)."""
 
     def setUp(self):
         # Create 150 games for pagination testing
@@ -200,7 +200,7 @@ class GameListViewTest(TestCase):
         self.assertEqual(len(response.context["games"]), 50)
 
     def test_decade_filter(self):
-        """Test filtering by decade."""
+        """Test filtering by decade (legacy param support)."""
         response = self.client.get(reverse("games-list") + "?decade=1990-99")
         self.assertEqual(response.status_code, 200)
         # All games should be from 1990-1999
@@ -209,7 +209,7 @@ class GameListViewTest(TestCase):
             self.assertLessEqual(game.year_of_release, 1999)
 
     def test_year_filter(self):
-        """Test filtering by single year."""
+        """Test filtering by single year (legacy param support)."""
         response = self.client.get(reverse("games-list") + "?year=1995")
         self.assertEqual(response.status_code, 200)
         # All games should be from 1995
@@ -237,16 +237,87 @@ class GameListViewTest(TestCase):
         self.assertEqual(response.context["page_obj"].number, 1)
 
     def test_context_has_filters(self):
-        """Test that context includes filter information."""
+        """Test that context includes filter information with legacy params."""
         response = self.client.get(reverse("games-list") + "?decade=2000-09")
         self.assertIn("filters", response.context)
+        # Decade is preserved in filters for legacy compatibility
         self.assertEqual(response.context["filters"]["decade"], "2000-09")
+        # Decade is also converted to start/end
+        self.assertEqual(response.context["filters"]["start"], 2000)
+        self.assertEqual(response.context["filters"]["end"], 2009)
 
-    def test_context_has_meta_data(self):
-        """Test that context includes metadata for filters."""
+    def test_context_has_year_counts(self):
+        """Test that context includes year counts for year grid."""
         response = self.client.get(reverse("games-list"))
-        self.assertIn("meta", response.context)
-        self.assertIn("games", response.context["meta"])
+        self.assertIn("year_counts", response.context)
+
+    def test_year_counts_reflects_genre_filter(self):
+        """Test that year counts reflect genre filter."""
+        from django.core.cache import cache
+        from games.models import Genre
+
+        # Clear only year-related caches to avoid affecting other tests
+        cache.delete("game_year_stats")
+        cache.delete("game_list_meta")
+
+        action = Genre.objects.create(name="ActionTest")
+        rpg = Genre.objects.create(name="RPGTest")
+
+        # Create games with specific genres and years
+        # Use years covered by setUp (1990-2019 range)
+        game1 = Game.objects.create(
+            name="Action Game 2010", slug="action-2010", rank=200, year_of_release=2010
+        )
+        game1.genres.add(action)
+
+        game2 = Game.objects.create(
+            name="RPG Game 2015", slug="rpg-2015", rank=201, year_of_release=2015
+        )
+        game2.genres.add(rpg)
+
+        # Without filter, both years should have counts
+        response = self.client.get(reverse("games-list"))
+        year_counts = {
+            yc["year"]: yc["count"] for yc in response.context["year_counts"]
+        }
+        self.assertGreaterEqual(year_counts.get(2010, 0), 1)
+        self.assertGreaterEqual(year_counts.get(2015, 0), 1)
+
+        # With genre filter, only matching year should have count
+        response = self.client.get(reverse("games-list") + f"?genres={action.id}")
+        year_counts = {
+            yc["year"]: yc["count"] for yc in response.context["year_counts"]
+        }
+        self.assertGreaterEqual(year_counts.get(2010, 0), 1)
+        self.assertEqual(year_counts.get(2015, 0), 0)
+
+    def test_year_counts_reflects_search_filter(self):
+        """Test that year counts reflect search filter."""
+        from django.core.cache import cache
+
+        # Clear only year-related caches to avoid affecting other tests
+        cache.delete("game_year_stats")
+        cache.delete("game_list_meta")
+
+        # Create games with distinct names and years
+        # Use years covered by setUp (1990-2019 range)
+        Game.objects.create(
+            name="ZeldaTest Adventure",
+            slug="zelda-adventure",
+            rank=202,
+            year_of_release=2018,
+        )
+        Game.objects.create(
+            name="MarioTest Quest", slug="mario-quest", rank=203, year_of_release=2019
+        )
+
+        # With search filter, only matching year should have count
+        response = self.client.get(reverse("games-list") + "?q=ZeldaTest")
+        year_counts = {
+            yc["year"]: yc["count"] for yc in response.context["year_counts"]
+        }
+        self.assertGreaterEqual(year_counts.get(2018, 0), 1)
+        self.assertEqual(year_counts.get(2019, 0), 0)
 
 
 class GameDetailViewTest(TestCase):
@@ -297,7 +368,7 @@ class GameDetailViewTest(TestCase):
 
 
 class GameSearchViewTest(TestCase):
-    """Test the game search view."""
+    """Test the game search view (now at /games/ URL)."""
 
     def setUp(self):
         # Create test games with different attributes
@@ -321,20 +392,32 @@ class GameSearchViewTest(TestCase):
 
     def test_search_page_loads(self):
         """Test that search page loads."""
-        response = self.client.get(reverse("games-search"))
+        response = self.client.get(reverse("games-list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "games/game_search.html")
+        self.assertTemplateUsed(response, "games/game_list.html")
+
+    def test_old_search_url_redirects(self):
+        """Test that old /games/search/ URL redirects to /games/."""
+        response = self.client.get(reverse("games-search"))
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.url, "/games/")
+
+    def test_old_search_url_preserves_query_params(self):
+        """Test that redirect preserves query parameters."""
+        response = self.client.get(reverse("games-search") + "?q=zelda&page=2")
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.url, "/games/?q=zelda&page=2")
 
     def test_search_by_name(self):
         """Test searching games by name."""
-        response = self.client.get(reverse("games-search") + "?q=zelda")
+        response = self.client.get(reverse("games-list") + "?q=zelda")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         self.assertEqual(len(games), 2)  # Should find both Zelda games
 
     def test_search_with_year_range(self):
         """Test searching with year range filter."""
-        response = self.client.get(reverse("games-search") + "?start=1986&end=1987")
+        response = self.client.get(reverse("games-list") + "?start=1986&end=1987")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         self.assertEqual(len(games), 2)  # Zelda games from 1986-1987
@@ -342,7 +425,7 @@ class GameSearchViewTest(TestCase):
     def test_search_with_genre_filter(self):
         """Test searching with genre filter."""
         response = self.client.get(
-            reverse("games-search") + f"?genres={self.rpg_genre.id}"
+            reverse("games-list") + f"?genres={self.rpg_genre.id}"
         )
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
@@ -350,10 +433,28 @@ class GameSearchViewTest(TestCase):
         self.assertIn(self.game1, games)
         self.assertIn(self.game2, games)
 
+    def test_filter_title_genre_without_video_prefix(self):
+        """Test that genre filter title does not include 'Video' prefix."""
+        response = self.client.get(
+            reverse("games-list") + f"?genres={self.action_genre.id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        filter_title = response.context["filter_title"]
+        # Should be "Action Games" not "Video Action Games"
+        self.assertIn("Action Games", filter_title)
+        self.assertNotIn("Video Action", filter_title)
+
+    def test_filter_title_no_filters_has_video(self):
+        """Test that filter title with no filters includes 'Video Games'."""
+        response = self.client.get(reverse("games-list"))
+        self.assertEqual(response.status_code, 200)
+        filter_title = response.context["filter_title"]
+        self.assertIn("Video Games", filter_title)
+
     def test_search_with_platform_filter(self):
         """Test searching with platform filter."""
         response = self.client.get(
-            reverse("games-search") + f"?platforms={self.nes_platform.id}"
+            reverse("games-list") + f"?platforms={self.nes_platform.id}"
         )
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
@@ -362,38 +463,54 @@ class GameSearchViewTest(TestCase):
     def test_htmx_request_returns_partial(self):
         """Test that HTMX requests return partial template."""
         response = self.client.get(
-            reverse("games-search") + "?q=zelda",
+            reverse("games-list") + "?q=zelda",
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "games/includes/_game_search_content.html")
+        self.assertTemplateUsed(response, "games/includes/_game_list_content.html")
 
     def test_htmx_request_with_target_returns_results_template(self):
         """Test that HTMX request with HX-Target returns results-only template."""
         response = self.client.get(
-            reverse("games-search") + "?q=zelda",
+            reverse("games-list") + "?q=zelda",
             HTTP_HX_REQUEST="true",
             HTTP_HX_TARGET="game-results-container",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "games/includes/_game_search_results.html")
+        self.assertTemplateUsed(response, "games/includes/_game_list_results.html")
 
     def test_context_has_filters(self):
         """Test that context includes filter data."""
-        response = self.client.get(reverse("games-search"))
+        response = self.client.get(reverse("games-list"))
         self.assertIn("filters", response.context)
         self.assertIn("genres", response.context)
         self.assertIn("platforms", response.context)
 
     def test_invalid_page_defaults_to_first(self):
         """Test that invalid page parameter defaults to page 1."""
-        response = self.client.get(reverse("games-search") + "?page=invalid")
+        response = self.client.get(reverse("games-list") + "?page=invalid")
         self.assertEqual(response.status_code, 200)
 
     def test_out_of_range_page_returns_last(self):
         """Test that out of range page returns last page."""
-        response = self.client.get(reverse("games-search") + "?page=999")
+        response = self.client.get(reverse("games-list") + "?page=999")
         self.assertEqual(response.status_code, 200)
+
+    def test_highlight_parameter_in_context(self):
+        """Test that highlight parameter is passed to context as integer."""
+        response = self.client.get(
+            reverse("games-list") + f"?highlight={self.game1.id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        # Should be converted to integer for comparison with game.id
+        self.assertEqual(response.context["highlight"], self.game1.id)
+        self.assertIsInstance(response.context["highlight"], int)
+
+    def test_highlight_invalid_value_is_none(self):
+        """Test that invalid highlight value results in None."""
+        response = self.client.get(reverse("games-list") + "?highlight=invalid")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["highlight"])
 
 
 class GameSearchLoadMoreTest(TestCase):
@@ -410,7 +527,7 @@ class GameSearchLoadMoreTest(TestCase):
 
     def test_initial_load_includes_load_more_context(self):
         """Test that initial load includes load more context variables."""
-        response = self.client.get(reverse("games-search"))
+        response = self.client.get(reverse("games-list"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["games"]), 100)
         self.assertTrue(response.context["has_more"])
@@ -423,17 +540,17 @@ class GameSearchLoadMoreTest(TestCase):
     def test_append_mode_returns_append_template(self):
         """Test that append=true returns the append template."""
         response = self.client.get(
-            reverse("games-search"),
+            reverse("games-list"),
             {"page": 2, "append": "true"},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "games/includes/_game_search_append.html")
+        self.assertTemplateUsed(response, "games/includes/_game_list_append.html")
 
     def test_append_mode_contains_game_rows(self):
         """Test that append mode response contains game rows."""
         response = self.client.get(
-            reverse("games-search"),
+            reverse("games-list"),
             {"page": 2, "append": "true"},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
@@ -443,7 +560,7 @@ class GameSearchLoadMoreTest(TestCase):
     def test_append_mode_contains_metadata(self):
         """Test that append mode returns JSON metadata."""
         response = self.client.get(
-            reverse("games-search"),
+            reverse("games-list"),
             {"page": 2, "append": "true"},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
@@ -453,7 +570,7 @@ class GameSearchLoadMoreTest(TestCase):
 
     def test_last_page_has_no_more(self):
         """Test that last page correctly reports no more items."""
-        response = self.client.get(reverse("games-search"), {"page": 2})
+        response = self.client.get(reverse("games-list"), {"page": 2})
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["has_more"])
         self.assertIsNone(response.context["next_page"])
@@ -462,12 +579,36 @@ class GameSearchLoadMoreTest(TestCase):
         """Test that filters with few results don't show load more."""
         Game.objects.create(name="Unique2021Game", rank=200, year_of_release=2021)
 
-        response = self.client.get(
-            reverse("games-search"), {"start": 2021, "end": 2021}
-        )
+        response = self.client.get(reverse("games-list"), {"start": 2021, "end": 2021})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["games"]), 1)
         self.assertFalse(response.context["has_more"])
+
+    def test_highlight_beyond_100_loads_enough_games(self):
+        """Test that highlighting a game beyond position 100 loads enough games."""
+        # Get the game at position 120 (rank 121)
+        game_120 = Game.objects.get(rank=121)
+
+        response = self.client.get(reverse("games-list") + f"?highlight={game_120.id}")
+        self.assertEqual(response.status_code, 200)
+        # Should load 200 games to include position 121
+        self.assertEqual(len(response.context["games"]), 150)  # All 150 games
+        # Verify the highlighted game is in the results
+        game_ids = [g.id for g in response.context["games"]]
+        self.assertIn(game_120.id, game_ids)
+
+    def test_highlight_within_100_loads_normal_page(self):
+        """Test that highlighting a game within position 100 loads normal page size."""
+        # Get the game at position 50 (rank 51)
+        game_50 = Game.objects.get(rank=51)
+
+        response = self.client.get(reverse("games-list") + f"?highlight={game_50.id}")
+        self.assertEqual(response.status_code, 200)
+        # Should load normal 100 games
+        self.assertEqual(len(response.context["games"]), 100)
+        # Verify the highlighted game is in the results
+        game_ids = [g.id for g in response.context["games"]]
+        self.assertIn(game_50.id, game_ids)
 
 
 class DeveloperListViewTest(TestCase):

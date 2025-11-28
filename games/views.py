@@ -139,6 +139,9 @@ def _build_filter_title(filters, genres, platforms, min_year, max_year):
         genre_name = name_lookup.get(str(selected_genres[0]), "").strip()
         if genre_name:
             genre_label = f" {genre_name}"
+            # Omit "Video" prefix when genre selected ("Action Games")
+            if platform_label == "Video":
+                platform_label = ""
 
     time_suffix = f" of {time_window}" if time_window else ""
     return f"Most Acclaimed {platform_label}{genre_label} Games{time_suffix}"
@@ -197,102 +200,6 @@ class ContactThankYouView(TemplateView):
     """Display thank you page after successful contact form submission."""
 
     template_name = "contact_thank_you.html"
-
-
-class GameListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
-    model = models.Game
-    template_name = "games/game_list.html"
-    context_object_name = "games"
-    paginate_by = 100
-    paginate_orphans = 0
-    htmx_partial_template = "games/includes/_game_list_content.html"
-
-    def get_queryset(self):
-        qs = models.Game.objects.with_relations()
-
-        # Apply year/decade filters using utility function
-        qs = utils.apply_year_filters(
-            qs,
-            decade=self.request.GET.get("decade"),
-            year=self.request.GET.get("year"),
-            start=self.request.GET.get("start"),
-            end=self.request.GET.get("end"),
-        )
-
-        return qs.order_by("rank")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Add meta data for SimpleFilters component
-
-        # Get meta data (cached for 1 hour to improve performance)
-        data = cache.get("game_list_meta")
-        if data is None:
-            data = {}
-
-            # Games meta
-            game_stats = models.Game.objects.aggregate(
-                min_year=Min("year_of_release"),
-            )
-            min_year = game_stats["min_year"] or 1970
-            max_year = datetime.today().year
-            all_years = range(min_year, max_year + 1)
-            year_count_map = {
-                entry["year_of_release"]: entry["count"]
-                for entry in models.Game.objects.values("year_of_release")
-                .annotate(count=Count("id"))
-                .order_by("year_of_release")
-            }
-
-            all_years_with_counts = [
-                {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
-            ]
-            decade_starts = sorted(list(set(int(x / 10) * 10 for x in all_years)))
-
-            # Calculate counts for each decade from year_count_map (no DB queries)
-            decades_with_counts = []
-            for decade_start in decade_starts:
-                decade_end = decade_start + 9
-                # Sum counts from year_count_map instead of querying database
-                count = sum(
-                    year_count_map.get(year, 0)
-                    for year in range(decade_start, decade_end + 1)
-                )
-                decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
-                decades_with_counts.append({"decade": decade_str, "count": count})
-
-            # Get last_full_update from SiteMetadata
-            metadata = models.SiteMetadata.get_instance()
-
-            data["games"] = {
-                "years": all_years_with_counts,
-                "decades": decades_with_counts,
-                "last_update": metadata.last_full_update,
-            }
-
-            cache.set("game_list_meta", data, config.CACHE_TIMEOUT_1_HOUR)
-
-        context["meta"] = data
-
-        # Add filters from query params
-        start = self.request.GET.get("start")
-        end = self.request.GET.get("end")
-        context["filters"] = {
-            "decade": self.request.GET.get("decade"),
-            "year": self.request.GET.get("year"),
-        }
-
-        # Add highlight parameter for scrolling to specific game
-        highlight = self.request.GET.get("highlight")
-        context["highlight"] = int(highlight) if highlight else None
-
-        # Determine if filtered (for show_rank logic)
-        is_filtered = bool(
-            context["filters"]["decade"] or context["filters"]["year"] or start or end
-        )
-        context["is_filtered"] = is_filtered
-
-        return context
 
 
 def download_games_csv(request):
@@ -471,10 +378,29 @@ class GameDetailView(DetailView):
 @method_decorator(vary_on_headers("X-Requested-With", "HX-Request"), name="dispatch")
 class GameSearchView(RobustPaginationMixin, ListView):
     model = models.Game
-    template_name = "games/game_search.html"
+    template_name = "games/game_list.html"
     context_object_name = "games"
     paginate_by = 100
     paginate_orphans = 0
+
+    def get_paginate_by(self, queryset):
+        """Dynamically adjust page size to include highlighted game."""
+        highlight_str = self.request.GET.get("highlight")
+        if highlight_str and highlight_str.isdigit():
+            highlight_id = int(highlight_str)
+            # Find position of highlighted game in queryset
+            # We need to count how many games come before it
+            try:
+                # Get list of game IDs in order to find position
+                game_ids = list(queryset.values_list("id", flat=True))
+                if highlight_id in game_ids:
+                    position = game_ids.index(highlight_id) + 1  # 1-based position
+                    # Round up to nearest 100 to include the game
+                    if position > self.paginate_by:
+                        return ((position - 1) // 100 + 1) * 100
+            except (ValueError, models.Game.DoesNotExist):
+                pass
+        return self.paginate_by
 
     def get_template_names(self):
         # Support HTMX partial responses
@@ -488,14 +414,14 @@ class GameSearchView(RobustPaginationMixin, ListView):
 
         # Append mode for Load More - returns just game rows
         if self.request.GET.get("append") == "true":
-            return ["games/includes/_game_search_append.html"]
+            return ["games/includes/_game_list_append.html"]
 
         if is_htmx:
             # Targeted update for just the results container
             if self.request.headers.get("HX-Target") == "game-results-container":
-                return ["games/includes/_game_search_results.html"]
+                return ["games/includes/_game_list_results.html"]
             # Full content partial for pagination and initial loads
-            return ["games/includes/_game_search_content.html"]
+            return ["games/includes/_game_list_content.html"]
         return super().get_template_names()
 
     def get_queryset(self):
@@ -507,8 +433,11 @@ class GameSearchView(RobustPaginationMixin, ListView):
             qs = qs.filter(name__icontains=q)
 
         # Year range filtering using utility function
+        # Support legacy decade/year params from old GameListView
         qs = utils.apply_year_filters(
             qs,
+            decade=self.request.GET.get("decade"),
+            year=self.request.GET.get("year"),
             start=self.request.GET.get("start"),
             end=self.request.GET.get("end"),
         )
@@ -553,15 +482,40 @@ class GameSearchView(RobustPaginationMixin, ListView):
 
         min_year, max_year = _get_year_bounds()
 
+        # Parse year/decade params and convert to start/end
+        # Priority: start/end > year > decade
+        start_param = self.request.GET.get("start")
+        end_param = self.request.GET.get("end")
+        year_param = self.request.GET.get("year")
+        decade_param = self.request.GET.get("decade")
+
+        if start_param or end_param:
+            start_val = int(start_param) if start_param else min_year
+            end_val = int(end_param) if end_param else max_year
+        elif year_param:
+            start_val = int(year_param)
+            end_val = int(year_param)
+        elif decade_param:
+            # Parse decade format like "1990-99"
+            decade_start = int(decade_param.split("-")[0])
+            start_val = decade_start
+            end_val = decade_start + 9
+        else:
+            start_val = min_year
+            end_val = max_year
+
         # Build filters dict from query params
         filters = {
             "q": self.request.GET.get("q", ""),
-            "start": int(self.request.GET.get("start", min_year)),
-            "end": int(self.request.GET.get("end", max_year)),
+            "start": start_val,
+            "end": end_val,
             "genres": [],
             "platforms": [],
             "genre_option": self.request.GET.get("genre_option", "all"),
             "rank_display": "filtered",
+            # Keep legacy params for context
+            "year": year_param,
+            "decade": decade_param,
         }
 
         # Parse selected genres - send string IDs for HTML select compatibility
@@ -577,13 +531,13 @@ class GameSearchView(RobustPaginationMixin, ListView):
         context["genres"] = genres
         context["platforms"] = platforms
         context["filters"] = filters
+        # Check if year filtering is active (via start/end, year, or decade)
+        has_year_filter = start_param or end_param or year_param or decade_param
         context["download_query"] = urlencode(
             {
                 **({"q": filters["q"]} if filters["q"] else {}),
-                **(
-                    {"start": filters["start"]} if self.request.GET.get("start") else {}
-                ),
-                **({"end": filters["end"]} if self.request.GET.get("end") else {}),
+                **({"start": filters["start"]} if has_year_filter else {}),
+                **({"end": filters["end"]} if has_year_filter else {}),
                 **(
                     {"genres": ",".join(filters["genres"])} if filters["genres"] else {}
                 ),
@@ -601,7 +555,11 @@ class GameSearchView(RobustPaginationMixin, ListView):
         )
         context["min_year"] = min_year
         context["max_year"] = max_year
-        context["highlight"] = self.request.GET.get("highlight")
+        # Convert highlight to int for comparison with game.id in template
+        highlight_str = self.request.GET.get("highlight")
+        context["highlight"] = (
+            int(highlight_str) if highlight_str and highlight_str.isdigit() else None
+        )
         context["is_filtered"] = True  # GameSearch is always filtered
         context["filter_title"] = _build_filter_title(
             filters, genres, platforms, min_year, max_year
@@ -614,40 +572,42 @@ class GameSearchView(RobustPaginationMixin, ListView):
         else:
             context["genre_subtitle"] = ""
 
-        # Get year counts for heatmap grid (reuse cache from GameListView)
-        year_counts_data = cache.get("game_list_meta")
-        if year_counts_data is None:
-            # Build year counts if not cached (same logic as GameListView)
-            all_years = range(min_year, max_year + 1)
-            year_count_map = {
-                entry["year_of_release"]: entry["count"]
-                for entry in models.Game.objects.values("year_of_release")
-                .annotate(count=Count("id"))
-                .order_by("year_of_release")
-            }
-            all_years_with_counts = [
-                {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
-            ]
-            decade_starts = sorted(list(set(int(x / 10) * 10 for x in all_years)))
-            decades_with_counts = []
-            for decade_start in decade_starts:
-                decade_end = decade_start + 9
-                count = sum(
-                    year_count_map.get(year, 0)
-                    for year in range(decade_start, decade_end + 1)
-                )
-                decade_str = f"{decade_start}-{str(decade_end)[2:4]}"
-                decades_with_counts.append({"decade": decade_str, "count": count})
+        # Get year counts for heatmap grid based on current filters (excluding year)
+        # This allows users to see which years have games given their other filters
+        base_qs = models.Game.objects.all()
 
-            year_counts_data = {
-                "games": {
-                    "years": all_years_with_counts,
-                    "decades": decades_with_counts,
-                }
-            }
-            cache.set("game_list_meta", year_counts_data, config.CACHE_TIMEOUT_1_HOUR)
+        # Apply search filter (same as get_queryset)
+        q = self.request.GET.get("q")
+        if q:
+            base_qs = base_qs.filter(name__icontains=q)
 
-        context["year_counts"] = year_counts_data.get("games", {}).get("years", [])
+        # Apply genre filter (same as get_queryset)
+        genre_option = self.request.GET.get("genre_option", "all")
+        genres_param = self.request.GET.get("genres")
+        if genres_param:
+            genre_ids = [int(x) for x in genres_param.split(",")]
+            match_all = genre_option != "any"
+            base_qs = utils.apply_genre_filter(base_qs, genre_ids, match_all=match_all)
+
+        # Apply platform filter (same as get_queryset)
+        platforms_param = self.request.GET.get("platforms")
+        if platforms_param:
+            platform_ids = [int(x) for x in platforms_param.split(",")]
+            base_qs = utils.apply_platform_filter(base_qs, platform_ids)
+
+        # Calculate year counts from filtered base queryset
+        all_years = range(min_year, max_year + 1)
+        year_count_map = {
+            entry["year_of_release"]: entry["count"]
+            for entry in base_qs.values("year_of_release")
+            .annotate(count=Count("id"))
+            .order_by("year_of_release")
+        }
+        all_years_with_counts = [
+            {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
+        ]
+
+        context["year_counts"] = all_years_with_counts
 
         # Load More context
         page_obj = context.get("page_obj")

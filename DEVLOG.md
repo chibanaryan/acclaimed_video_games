@@ -7,6 +7,7 @@
 - Removed filter toggle - filters always visible on advanced search
 - Moved CSV download button into filters header with console-style button
 - Fixed first game row alignment with filters panel (reset Bulma negative margin)
+- Dynamic year heatmap: reflects filtered game counts, years "wink out" when no matches
 
 ## 2025-11-26
 
