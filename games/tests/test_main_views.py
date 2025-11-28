@@ -396,6 +396,80 @@ class GameSearchViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class GameSearchLoadMoreTest(TestCase):
+    """Test the Load More functionality in game search."""
+
+    def setUp(self):
+        # Create 150 test games to test pagination
+        for i in range(150):
+            Game.objects.create(
+                name=f"Game {i:03d}",
+                rank=i + 1,
+                year_of_release=2020,
+            )
+
+    def test_initial_load_includes_load_more_context(self):
+        """Test that initial load includes load more context variables."""
+        response = self.client.get(reverse("games-search"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["games"]), 100)
+        self.assertTrue(response.context["has_more"])
+        self.assertEqual(response.context["next_page"], 2)
+        self.assertEqual(response.context["loaded_count"], 100)
+        self.assertEqual(response.context["total_count"], 150)
+        self.assertEqual(response.context["remaining_count"], 50)
+        self.assertFalse(response.context["max_loaded"])
+
+    def test_append_mode_returns_append_template(self):
+        """Test that append=true returns the append template."""
+        response = self.client.get(
+            reverse("games-search"),
+            {"page": 2, "append": "true"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "games/includes/_game_search_append.html")
+
+    def test_append_mode_contains_game_rows(self):
+        """Test that append mode response contains game rows."""
+        response = self.client.get(
+            reverse("games-search"),
+            {"page": 2, "append": "true"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertContains(response, "game-row")
+        self.assertContains(response, "Game 100")  # First game of page 2
+
+    def test_append_mode_contains_metadata(self):
+        """Test that append mode returns JSON metadata."""
+        response = self.client.get(
+            reverse("games-search"),
+            {"page": 2, "append": "true"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertContains(response, "load-more-meta")
+        self.assertContains(response, '"hasMore": false')
+        self.assertContains(response, '"loadedCount": 150')
+
+    def test_last_page_has_no_more(self):
+        """Test that last page correctly reports no more items."""
+        response = self.client.get(reverse("games-search"), {"page": 2})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["has_more"])
+        self.assertIsNone(response.context["next_page"])
+
+    def test_filter_with_few_results_no_load_more(self):
+        """Test that filters with few results don't show load more."""
+        Game.objects.create(name="Unique2021Game", rank=200, year_of_release=2021)
+
+        response = self.client.get(
+            reverse("games-search"), {"start": 2021, "end": 2021}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["games"]), 1)
+        self.assertFalse(response.context["has_more"])
+
+
 class DeveloperListViewTest(TestCase):
     """Test the developer list view."""
 

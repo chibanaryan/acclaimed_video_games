@@ -27,7 +27,7 @@ class GameFilters:
         q: Search query for game name
         genres: List of genre IDs to filter by
         platforms: List of platform IDs to filter by
-        genre_option: "A" for Any (OR), "L" for All (AND match)
+        genre_option: "any" for Any (OR), "all" for All (AND match)
         start: Minimum year of release
         end: Maximum year of release
         decade: Decade string (e.g., "1990-99")
@@ -38,7 +38,7 @@ class GameFilters:
     q: Optional[str] = None
     genres: List[int] = field(default_factory=list)
     platforms: List[int] = field(default_factory=list)
-    genre_option: str = "L"  # "L" = All (AND), "A" = Any (OR)
+    genre_option: str = "all"  # "all" = All (AND), "any" = Any (OR)
     start: Optional[int] = None
     end: Optional[int] = None
     decade: Optional[str] = None
@@ -71,7 +71,7 @@ class GameFilters:
             except (ValueError, TypeError):
                 filters.genres = []
 
-        filters.genre_option = request.GET.get("genre_option", "L")
+        filters.genre_option = request.GET.get("genre_option", "all")
 
         # Platform filtering
         platforms_param = request.GET.get("platforms")
@@ -112,7 +112,7 @@ class GameFilters:
     @property
     def match_all_genres(self) -> bool:
         """Returns True if genre matching should use AND (all genres required)."""
-        return self.genre_option != "A"
+        return self.genre_option != "any"
 
     @property
     def is_filtered(self) -> bool:

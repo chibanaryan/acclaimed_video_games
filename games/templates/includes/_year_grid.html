@@ -28,6 +28,9 @@
                  this.buildDecades();
              }
          },
+         handleReset() {
+             this.lastClicked = null;
+         },
 
          buildDecades() {
              // Group years into decades (newest first), skip years with 0 games
@@ -139,6 +142,7 @@
              this.dragStart = decadeStart;
              this.dragAnchorEnd = decadeStart + 9;
              this.dragEnd = decadeStart + 9;
+             this.dispatchPreview();
          },
 
          updateDragDecade(decadeStart) {
@@ -150,6 +154,7 @@
                  } else {
                      this.dragEnd = decadeStart + 9;  // Include full later decade
                  }
+                 this.dispatchPreview();
              }
          },
 
@@ -172,12 +177,14 @@
              this.dragStart = year;
              this.dragAnchorEnd = year;
              this.dragEnd = year;
+             this.dispatchPreview();
          },
 
          updateDrag(year) {
              if (this.isDragging) {
                  this.isDraggingToDecade = false;
                  this.dragEnd = year;
+                 this.dispatchPreview();
              }
          },
 
@@ -194,6 +201,8 @@
              this.dragStart = null;
              this.dragAnchorEnd = null;
              this.dragEnd = null;
+             // Clear year preview
+             window.dispatchEvent(new CustomEvent('year-preview', { detail: { active: false } }));
          },
 
          cancelDrag() {
@@ -203,10 +212,24 @@
              this.dragStart = null;
              this.dragAnchorEnd = null;
              this.dragEnd = null;
+             // Clear year preview
+             window.dispatchEvent(new CustomEvent('year-preview', { detail: { active: false } }));
+         },
+
+         // Dispatch preview event during drag
+         dispatchPreview() {
+             if (this.isDragging) {
+                 const min = Math.min(this.dragStart, this.dragAnchorEnd, this.dragEnd);
+                 const max = Math.max(this.dragStart, this.dragAnchorEnd, this.dragEnd);
+                 window.dispatchEvent(new CustomEvent('year-preview', {
+                     detail: { active: true, start: min, end: max }
+                 }));
+             }
          }
      }"
      @mouseleave="cancelDrag()"
-     @mouseup.window="endDrag()">
+     @mouseup.window="endDrag()"
+     @year-reset.window="handleReset()">
 
     <div class="year-grid">
         <template x-for="decade in decades" :key="decade.start">

@@ -3,7 +3,7 @@
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
 {% load humanize %}
-{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "genre_option": "A", "rank_display": "filtered"}</script>{% endif %}
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "genre_option": "any", "rank_display": "filtered"}</script>{% endif %}
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 <div x-data="{
@@ -21,9 +21,9 @@
         _debouncedFilter: null,
         _debouncedDisplay: null,
         init() {
-            // Ensure genre_option has a default value (A = Match Any)
+            // Ensure genre_option has a default value (any = Match Any)
             if (!this.filters.genre_option || this.filters.genre_option === '') {
-                this.filters.genre_option = 'A';
+                this.filters.genre_option = 'any';
             }
             // Normalize rank_display to filtered
             this.filters.rank_display = 'filtered';
@@ -75,7 +75,7 @@
                 this.filters.q = params.get('q') || '';
                 this.filters.start = params.get('start') ? parseInt(params.get('start')) : {{ min_year }};
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
-                this.filters.genre_option = params.get('genre_option') || 'L';
+                this.filters.genre_option = params.get('genre_option') || 'all';
                 this.filters.rank_display = 'filtered';
                 this.filtersPowerOn = (params.get('filters') === 'on');
                 const genresParam = params.get('genres');
@@ -89,6 +89,12 @@
                 if (!this.initialized) return;
                 this.updateResults();
             });
+
+            // Initialize Load More button handler
+            setTimeout(() => { if (typeof initLoadMore === 'function') initLoadMore(); }, 150);
+
+            // Initialize year preview highlighting for drag selection
+            if (typeof initYearPreview === 'function') initYearPreview();
         },
         handleFilterChange(type, items) {
             const itemIds = items.map(item => {
@@ -105,6 +111,30 @@
             if (this.initialized) {
                 this.debouncedFilterUpdate();
             }
+        },
+        resetSearch() {
+            this.filters.q = '';
+            if (this.initialized) this.updateResults();
+        },
+        resetYears() {
+            this.filters.start = {{ min_year }};
+            this.filters.end = {{ max_year }};
+            // Dispatch event to update the year grid component
+            this.$dispatch('year-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
+        resetPlatforms() {
+            this.filters.platforms = [];
+            // Dispatch event to update the platform filter component
+            this.$dispatch('platforms-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
+        resetGenres() {
+            this.filters.genres = [];
+            this.filters.genre_option = 'any';
+            // Dispatch event to update the genre filter component
+            this.$dispatch('genres-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
         },
         async performUpdate(options = {}) {
             const { partial = false, historyMethod = 'pushState', preservePage = false } = options;
@@ -126,6 +156,8 @@
                         { selector: '#game-results-container', targetId: 'game-results-container' }
                     ]);
                     updateDomElements(content);
+                    // Reinitialize Load More button after DOM update
+                    if (typeof initLoadMore === 'function') initLoadMore();
                 } else {
                     const contentEl = document.getElementById('content');
                     if (contentEl) {
@@ -263,7 +295,7 @@
                         <span class="filter-panel-title">Search</span>
                     </div>
                     <div class="filter-panel-content">
-                        {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
+                        {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
                     </div>
                 </div>
 
@@ -274,6 +306,9 @@
                             <span class="mdi mdi-calendar-range"></span>
                         </span>
                         <span class="filter-panel-title">Release Year</span>
+                        <button type="button" class="filter-panel-reset" @click="resetYears()" title="Reset years" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
+                            <span class="mdi mdi-close"></span>
+                        </button>
                     </div>
                     <div class="filter-panel-content">
                         <div class="filter-help">
@@ -292,6 +327,9 @@
                             <span class="mdi mdi-controller"></span>
                         </span>
                         <span class="filter-panel-title">Platforms</span>
+                        <button type="button" class="filter-panel-reset" @click="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
+                            <span class="mdi mdi-close"></span>
+                        </button>
                     </div>
                     <div class="filter-panel-content"
                          data-filter-type="platforms"
@@ -310,6 +348,9 @@
                             <span class="mdi mdi-gamepad-variant"></span>
                         </span>
                         <span class="filter-panel-title">Genres</span>
+                        <button type="button" class="filter-panel-reset" @click="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
+                            <span class="mdi mdi-close"></span>
+                        </button>
                     </div>
                     <div class="filter-panel-content"
                          data-filter-type="genres"
@@ -332,7 +373,7 @@
                 </a>
             </div>
 
-            {% include 'includes/_search_input.html' with value=filters.q placeholder='Search by name' %}
+            {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
 
             <div class="mb-3 mt-3">
                 <div class="has-text-weight-bold mb-2">Release Year</div>

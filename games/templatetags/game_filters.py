@@ -254,3 +254,137 @@ def pagination_url(context, page_num):
     params["page"] = page_num
     # Return full URL path for HTMX (relative to current path)
     return f"{request.path}?{params.urlencode()}"
+
+
+# Platform family mappings - code to family key
+PLATFORM_FAMILIES = {
+    # Nintendo
+    "SW": "nintendo",  # Nintendo Switch
+    "WiiU": "nintendo",
+    "Wii": "nintendo",
+    "GC": "nintendo",
+    "N64": "nintendo",
+    "SNES": "nintendo",
+    "NES": "nintendo",
+    "GB": "nintendo",
+    "GBC": "nintendo",
+    "GBA": "nintendo",
+    "DS": "nintendo",  # Nintendo DS
+    "3DS": "nintendo",
+    "FDS": "nintendo",  # Famicom Disk System
+    # PlayStation
+    "PS5": "playstation",
+    "PS4": "playstation",
+    "PS3": "playstation",
+    "PS2": "playstation",
+    "PS": "playstation",
+    "PSP": "playstation",
+    "PSV": "playstation",  # PlayStation Vita
+    "PSVR": "playstation",  # PlayStation VR
+    # Xbox
+    "XBXS": "xbox",  # Xbox Series X/S
+    "XB1": "xbox",  # Xbox One
+    "X360": "xbox",
+    "Xbox": "xbox",
+    # Sega
+    "GEN": "sega",
+    "DC": "sega",
+    "SAT": "sega",
+    "SMS": "sega",
+    "GG": "sega",
+    "SCD": "sega",  # Sega CD
+    # PC
+    "WIN": "pc",
+    "DOS": "pc",
+    "LIN": "pc",
+    "MAC": "pc",
+    # Retro consoles
+    "A26": "retro",
+    "A52": "retro",
+    "A78": "retro",
+    "INTV": "retro",
+    "CV": "retro",
+    "TG16": "retro",
+    "3DO": "retro",
+    "NG": "retro",
+    "JAG": "retro",
+    "LYNX": "retro",
+    # Microcomputers
+    "C64": "computers",
+    "AMI": "computers",
+    "CD32": "computers",
+    "MSX": "computers",
+    "CPC": "computers",
+    "ZXS": "computers",
+    "AST": "computers",
+    "BBCM": "computers",
+    "PC88": "computers",
+    "PC98": "computers",
+    "FMT": "computers",
+    "FM7": "computers",
+    "SX1": "computers",
+    "T80": "computers",
+    "TCC": "computers",
+    "VC20": "computers",
+    "A8": "computers",
+    "A2": "computers",
+    "ARCH": "computers",  # Acorn Archimedes
+    "E60": "computers",  # Electronika 60
+    "HP21": "computers",  # HP 2100
+    "PDP": "computers",  # DEC PDP
+    # Arcade/Mobile/VR
+    "ARC": "arcade",
+    "AND": "arcade",
+    "iOS": "arcade",
+    "LMD": "arcade",
+    "VR": "arcade",
+    "BR": "arcade",
+}
+
+# Family display info - key to (icon_class, display_name, sort_order)
+FAMILY_INFO = {
+    "nintendo": ("mdi-nintendo-switch", "Nintendo", 1),
+    "playstation": ("mdi-sony-playstation", "PlayStation", 2),
+    "xbox": ("mdi-microsoft-xbox", "Xbox", 3),
+    "pc": ("mdi-microsoft-windows", "PC", 4),
+    "sega": ("mdi-controller-classic", "Sega", 5),
+    "retro": ("mdi-gamepad-variant", "Retro", 6),
+    "computers": ("mdi-desktop-classic", "Microcomputers", 7),
+    "arcade": ("mdi-space-invaders", "Arcade+", 8),
+}
+
+
+@register.filter
+def platform_families(platforms):
+    """
+    Convert a list of platforms to unique families with icons.
+    Returns list of dicts with 'icon', 'name', 'key', 'platform_id', 'platform_name'.
+    The platform_id and platform_name are from the first platform in each family.
+    Order is preserved based on encounter order in the platforms list.
+    """
+    seen_families = set()
+    families = []
+
+    for platform in platforms:
+        code = platform.code if hasattr(platform, "code") else str(platform)
+        family_key = PLATFORM_FAMILIES.get(code, "other")
+
+        if family_key not in seen_families and family_key in FAMILY_INFO:
+            seen_families.add(family_key)
+            icon, name, order = FAMILY_INFO[family_key]
+            # Get platform ID and name for linking and tooltip
+            platform_id = platform.id if hasattr(platform, "id") else None
+            platform_name = platform.name if hasattr(platform, "name") else code
+            families.append(
+                {
+                    "icon": icon,
+                    "name": name,
+                    "key": family_key,
+                    "order": order,
+                    "platform_id": platform_id,
+                    "platform_name": platform_name,
+                }
+            )
+
+    # Preserve encounter order (no sorting)
+    return families

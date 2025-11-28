@@ -65,7 +65,9 @@ class GameListApiTests(TestCase):
 
     def test_filter_by_genres_any_option(self):
         self.game2.genres.add(self.genre_action)
-        names = self._get_game_names(genres=str(self.genre_action.id), genre_option="A")
+        names = self._get_game_names(
+            genres=str(self.genre_action.id), genre_option="any"
+        )
         self.assertCountEqual(names, ["Alpha Quest", "Beta Saga"])
 
     def test_order_by_parameter_applies(self):

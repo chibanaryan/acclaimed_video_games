@@ -306,7 +306,7 @@ def download_games_csv(request):
     start = request.GET.get("start")
     end = request.GET.get("end")
     genres_param = request.GET.get("genres")
-    genre_option = request.GET.get("genre_option", "L")
+    genre_option = request.GET.get("genre_option", "all")
     platforms_param = request.GET.get("platforms")
 
     if q:
@@ -316,7 +316,7 @@ def download_games_csv(request):
 
     if genres_param:
         genre_ids = [int(x) for x in genres_param.split(",") if x]
-        match_all = genre_option != "A"  # "A" = Any, otherwise All
+        match_all = genre_option != "any"  # "any" = Any, otherwise All
         qs = utils.apply_genre_filter(qs, genre_ids, match_all=match_all)
     else:
         genre_ids = []
@@ -485,6 +485,11 @@ class GameSearchView(RobustPaginationMixin, ListView):
             or self.request.headers.get("X-Requested-With") == "XMLHttpRequest"
             or self.request.GET.get("partial") == "true"
         )
+
+        # Append mode for Load More - returns just game rows
+        if self.request.GET.get("append") == "true":
+            return ["games/includes/_game_search_append.html"]
+
         if is_htmx:
             # Targeted update for just the results container
             if self.request.headers.get("HX-Target") == "game-results-container":
@@ -509,11 +514,11 @@ class GameSearchView(RobustPaginationMixin, ListView):
         )
 
         # Genre filtering
-        genre_option = self.request.GET.get("genre_option", "L")
+        genre_option = self.request.GET.get("genre_option", "all")
         genres = self.request.GET.get("genres")
         if genres:
             genre_ids = [int(x) for x in genres.split(",")]
-            match_all = genre_option != "A"  # "A" = Any, otherwise All
+            match_all = genre_option != "any"  # "any" = Any, otherwise All
             qs = utils.apply_genre_filter(qs, genre_ids, match_all=match_all)
 
         # Platform filtering
@@ -555,7 +560,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             "end": int(self.request.GET.get("end", max_year)),
             "genres": [],
             "platforms": [],
-            "genre_option": self.request.GET.get("genre_option", "L"),
+            "genre_option": self.request.GET.get("genre_option", "all"),
             "rank_display": "filtered",
         }
 
@@ -643,6 +648,20 @@ class GameSearchView(RobustPaginationMixin, ListView):
             cache.set("game_list_meta", year_counts_data, config.CACHE_TIMEOUT_1_HOUR)
 
         context["year_counts"] = year_counts_data.get("games", {}).get("years", [])
+
+        # Load More context
+        page_obj = context.get("page_obj")
+        if page_obj:
+            context["has_more"] = page_obj.has_next()
+            context["next_page"] = (
+                page_obj.next_page_number() if page_obj.has_next() else None
+            )
+            context["total_count"] = page_obj.paginator.count
+            context["loaded_count"] = page_obj.end_index()
+            context["remaining_count"] = max(
+                0, page_obj.paginator.count - page_obj.end_index()
+            )
+            context["max_loaded"] = page_obj.end_index() >= 1000
 
         return context
 

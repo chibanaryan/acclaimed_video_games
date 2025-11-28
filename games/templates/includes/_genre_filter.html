@@ -146,9 +146,9 @@
              $dispatch('filter-changed', { type: 'genres', items: selectedItems });
          },
 
-         // Toggle genre option between All (L) and Any (A)
+         // Toggle genre option between All and Any
          toggleGenreOption() {
-             filters.genre_option = filters.genre_option === 'L' ? 'A' : 'L';
+             filters.genre_option = filters.genre_option === 'all' ? 'any' : 'all';
              if (filters.genres.length > 0) {
                  this.dispatchFilterChange();
              }
@@ -194,7 +194,7 @@
                  filters.genres = [...currentSet];
                  // Auto-switch to Match Any when selecting a category
                  // (Match All with many genres would be too restrictive)
-                 filters.genre_option = 'A';
+                 filters.genre_option = 'any';
              }
              this.dispatchFilterChange();
          },
@@ -213,22 +213,27 @@
                  'Visual Novel': 'Visual Novel'
              };
              return abbrevs[name] || name;
+         },
+         // Handle reset from parent (no internal state to clear, but good to have)
+         handleReset() {
+             // Nothing to reset - component reads from filters.genres
          }
-     }">
+     }"
+     @genres-reset.window="handleReset()">
 
     {# Match All / Match Any Toggle #}
     <div class="genre-logic-toggle">
         <button type="button"
                 class="genre-logic-option"
-                :class="{ 'is-active': filters.genre_option === 'L' }"
-                @click="filters.genre_option = 'L'; if (filters.genres.length > 0) dispatchFilterChange()">
+                :class="{ 'is-active': filters.genre_option === 'all' }"
+                @click="filters.genre_option = 'all'; if (filters.genres.length > 0) dispatchFilterChange()">
             <span class="genre-logic-icon">&#x1F517;</span>
             <span>Match All</span>
         </button>
         <button type="button"
                 class="genre-logic-option"
-                :class="{ 'is-active': filters.genre_option === 'A' }"
-                @click="filters.genre_option = 'A'; if (filters.genres.length > 0) dispatchFilterChange()">
+                :class="{ 'is-active': filters.genre_option === 'any' }"
+                @click="filters.genre_option = 'any'; if (filters.genres.length > 0) dispatchFilterChange()">
             <span class="genre-logic-icon">&#x2728;</span>
             <span>Match Any</span>
         </button>

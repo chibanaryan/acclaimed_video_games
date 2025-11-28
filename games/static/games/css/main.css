@@ -780,28 +780,21 @@ table.detail td {
    Filter Panels - Distinctive Category Cards
    ========================================================================== */
 
-/* Main filters header */
+/* Main filters header - blends with card */
 .filters-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     margin-bottom: 1rem;
-    background: linear-gradient(135deg, rgba(50, 115, 220, 0.15) 0%, rgba(50, 115, 220, 0.05) 100%);
-    border: 1px solid rgba(50, 115, 220, 0.3);
+    background: linear-gradient(180deg, rgba(42, 42, 42, 0.9) 0%, rgba(30, 30, 30, 0.95) 100%);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     position: relative;
 }
 
 .filters-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
-    border-radius: 8px 8px 0 0;
+    display: none;
 }
 
 .filters-header-title {
@@ -816,9 +809,9 @@ table.detail td {
     justify-content: center;
     width: 32px;
     height: 32px;
-    background: rgba(50, 115, 220, 0.2);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 6px;
-    color: var(--color-primary);
+    color: #aaa;
     font-size: 1.1rem;
 }
 
@@ -826,7 +819,7 @@ table.detail td {
     margin: 0;
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--color-text-primary);
+    color: #ccc;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -893,6 +886,36 @@ table.detail td {
     color: var(--color-text-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    flex: 1;
+}
+
+/* Tiny reset button for individual panels - styled like NES reset button */
+.filter-panel-reset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #a84040 0%, #8a2828 100%);
+    border: 1px solid #501010;
+    color: #f0f0f0;
+    font-size: 0.7rem;
+    cursor: pointer;
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.12), inset 0 -2px 0 rgba(0, 0, 0, 0.25), 0 2px 0 #2a0808;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    margin-left: auto;
+    padding: 0;
+}
+
+.filter-panel-reset:hover {
+    background: linear-gradient(180deg, #b84848 0%, #982e2e 100%);
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 2px 0 #2a0808;
+}
+
+.filter-panel-reset:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 1px 0 #2a0808;
 }
 
 /* Accent line at top of panel matching icon color */
@@ -1324,20 +1347,20 @@ table.detail td {
     color: var(--color-gold);
     font-family: Handjet, sans-serif;
     font-weight: 800;
-    text-shadow: -3px 3px 0px #5d5b5b;
+    text-shadow: -2px 2px 0px #5d5b5b;
     /* Fixed dimensions to prevent CLS when font loads */
-    width: 95px;
-    min-width: 95px;
-    height: 56px;
-    font-size: 47px;
+    width: 55px;
+    min-width: 55px;
+    height: 44px;
+    font-size: 38px;
     line-height: 1.2;
-    margin-right: 0.25rem;
+    margin: 0 0.5rem;
     transition: font-size 0.25s ease, height 0.25s ease;
 }
 
 .game-row.desktop:hover .rank {
-    font-size: 67px;
-    height: 80px;
+    font-size: 54px;
+    height: 64px;
 }
 
 /* Mobile rank styling */
@@ -1375,14 +1398,18 @@ table.detail td {
 /* Game row columns - Developer and Genre always visible */
 /* Override parent flex-direction: column to allow inline text flow */
 .game-row.desktop .game-column-dev {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    align-content: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
     font-size: 0.9rem;
     color: #aaa;
     line-height: 1.6;
+    flex: 0 0 auto;
+    max-width: 180px;
+    align-self: center;
 }
 
 .game-row.desktop .game-column-dev a {
@@ -1393,25 +1420,31 @@ table.detail td {
     color: #fff;
 }
 
-/* Genre column with icons */
+/* Genre column with icons - right-aligned */
 .game-row.desktop .game-column-genre {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     align-content: center;
+    align-self: center;
+    justify-content: flex-end;
     gap: 0.35rem;
+    margin-left: auto;
 }
 
 .genre-icon-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    line-height: 1;
 }
 
 .genre-row-icon {
     width: 20px;
     height: 20px;
+    vertical-align: middle;
+    display: block;
     transition: color 0.15s ease, transform 0.15s ease;
 }
 
@@ -1431,11 +1464,55 @@ table.detail td {
     transform: scale(1.15);
 }
 
-/* Global rank shown below title when filtered */
-.game-global-rank {
+/* Hover details row - Global rank and developer, only visible on hover or highlighted rows */
+.game-hover-details {
     font-size: 0.85rem;
     color: #999;
     margin-top: 0.25rem;
+    display: none;
+}
+
+.game-row:hover .game-hover-details,
+.game-row.highlight .game-hover-details {
+    display: block;
+}
+
+.game-hover-details .game-global-rank {
+    margin-right: 1rem;
+}
+
+.game-hover-details .game-developer a {
+    color: #ccc;
+}
+
+.game-hover-details .game-developer a:hover {
+    color: #fff;
+}
+
+/* Platforms column - family icons */
+.game-row.desktop .game-column-platforms {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    align-self: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-width: 120px;
+    text-align: center;
+}
+
+a.platform-family-icon.mdi {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+    color: #888;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.platform-family-icon:hover {
+    color: #fff;
 }
 
 /* Game year - dimmed to let title stand out */
@@ -1446,6 +1523,12 @@ table.detail td {
 
 .game-year:hover {
     color: #ccc;
+}
+
+/* Year preview highlight during year grid drag selection */
+.game-year.year-preview {
+    color: var(--color-primary) !important;
+    transition: color 0.1s ease;
 }
 
 .game-row.mobile .game-name {
@@ -1977,6 +2060,10 @@ table.detail td {
     flex-direction: column;
 }
 
+.platform-brand-group.is-expanded {
+    grid-column: 1 / -1;
+}
+
 .platform-brand-btn-row {
     display: flex;
     gap: 0;
@@ -2064,6 +2151,12 @@ table.detail td {
     height: 1.25rem;
     fill: var(--color-text-muted);
     vertical-align: middle;
+}
+
+/* Sega logo is a wide wordmark - scale down to match compact icons */
+.platform-svg-icon[href$="platform-sega"],
+use[href$="platform-sega"] {
+    transform: scale(0.8);
 }
 
 /* Match hover/active states of MDI icons */
@@ -2274,7 +2367,9 @@ table.detail td {
     box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 1px 0 #350909;
 }
 
-.nes-power-button {
+.nes-power-button,
+.buttons .nes-power-button,
+.buttons.are-small .nes-power-button {
     background: linear-gradient(180deg, #676565 0%, #3b3a3a 100%);
     color: #f3f3f3;
     border: 2px solid #1f1e1e;
@@ -2286,6 +2381,13 @@ table.detail td {
     gap: 0.35rem;
     position: relative;
     padding-right: 2.25rem;
+    width: 145px !important;
+    min-width: 145px !important;
+    max-width: 145px !important;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    font-size: 0.75rem;
+    justify-content: flex-start;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
 }
 
@@ -2648,4 +2750,63 @@ table.detail td {
         padding: 0.4rem 0.5rem;
         font-size: 0.8rem;
     }
+}
+
+/* ============================================================
+   LOAD MORE BUTTON (Ghost Style)
+   ============================================================ */
+
+.load-more-button {
+    min-width: 280px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.load-more-button:hover:not(:disabled):not(.is-loading) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.load-more-button:focus {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.load-more-button.is-loading {
+    pointer-events: none;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.load-more-button.is-loading .load-more-text {
+    visibility: hidden;
+}
+
+.load-more-button .icon {
+    opacity: 0.7;
+}
+
+.load-more-button:hover .icon {
+    opacity: 1;
+}
+
+/* Mobile: full width button */
+@media screen and (max-width: 768px) {
+    .load-more-button {
+        width: 100%;
+    }
+
+    #load-more-container {
+        padding: 0 1rem;
+    }
+}
+
+/* Result summary row layout */
+.result-summary-row {
+    display: flex;
+    justify-content: flex-end;
 }

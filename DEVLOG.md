@@ -1,5 +1,10 @@
 # Developer Log
 
+## 2025-11-28
+
+- Replaced pagination with "Load More" button on advanced search (ghost-style, 1000 item limit)
+- Added year preview: game release years highlight blue during year grid drag selection
+
 ## 2025-11-26
 
 - MDI CSS subset: reduced 53KB CDN file to ~1KB by including only 10 used icons (98% reduction)

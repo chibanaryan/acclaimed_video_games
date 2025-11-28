@@ -42,7 +42,7 @@
                  isBigFive: true
              },
              arcadeMobileVr: {
-                 name: 'Arcade, Mobile & VR',
+                 name: 'Arcade+',
                  icon: 'mdi-space-invaders',
                  codes: ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR'],
                  isBigFive: true
@@ -218,9 +218,16 @@
              return filters.platforms.includes(String(platformId));
          },
 
-         // Toggle accordion section
+         // Toggle accordion section (closes others when opening)
          toggleAccordion(groupKey) {
-             this.expandedGroups[groupKey] = !this.expandedGroups[groupKey];
+             const isOpening = !this.expandedGroups[groupKey];
+             if (isOpening) {
+                 // Close all other expanded groups
+                 Object.keys(this.expandedGroups).forEach(key => {
+                     this.expandedGroups[key] = false;
+                 });
+             }
+             this.expandedGroups[groupKey] = isOpening;
          },
 
          // Get ungrouped platforms (not in any defined group), sorted by release year
@@ -240,14 +247,19 @@
          dispatchFilterChange() {
              const selectedItems = platforms.filter(p => filters.platforms.includes(String(p.id)));
              $dispatch('filter-changed', { type: 'platforms', items: selectedItems });
+         },
+         // Handle reset from parent
+         handleReset() {
+             this.expandedGroups = {};
          }
-     }">
+     }"
+     @platforms-reset.window="handleReset()">
 
-    {# Big Five Brand Buttons with overlay dropdown - sorted by game count #}
+    {# Big Five Brand Buttons with inline dropdown - sorted by game count #}
     <div class="platform-brand-container">
         <div class="platform-brand-groups">
             <template x-for="item in sortedBigFiveGroups" :key="item.key">
-                <div class="platform-brand-group">
+                <div class="platform-brand-group" :class="{ 'is-expanded': expandedGroups[item.key] }">
                     <div class="platform-brand-btn-row">
                         <button type="button"
                                 class="platform-brand-btn"
@@ -281,36 +293,33 @@
                             <span class="mdi" :class="expandedGroups[item.key] ? 'mdi-chevron-up' : 'mdi-chevron-down'"></span>
                         </button>
                     </div>
+                    {# Expanded content appears directly below each button #}
+                    <div class="platform-brand-content" x-show="expandedGroups[item.key]" x-transition>
+                        <div class="platform-brand-content-header">
+                            <template x-if="item.group.svgIcon">
+                                <svg class="platform-svg-icon" aria-hidden="true">
+                                    <use :href="'{% static 'games/images/platform-icons.svg' %}#' + item.group.svgIcon"></use>
+                                </svg>
+                            </template>
+                            <template x-if="item.group.icon">
+                                <span class="mdi" :class="item.group.icon"></span>
+                            </template>
+                            <span x-text="item.group.name"></span>
+                        </div>
+                        <div class="platform-brand-content-items">
+                            <template x-for="platform in getPlatformsInGroup(item.key)" :key="platform.id">
+                                <label class="platform-checkbox">
+                                    <input type="checkbox"
+                                           :checked="isPlatformSelected(platform.id)"
+                                           @change="togglePlatform(platform.id)">
+                                    <span x-text="platform.name"></span>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </template>
         </div>
-
-        {# Expanded content for Big Five - overlay dropdown #}
-        <template x-for="item in sortedBigFiveGroups" :key="'content-' + item.key">
-            <div class="platform-brand-content" x-show="expandedGroups[item.key]" x-transition>
-                <div class="platform-brand-content-header">
-                    <template x-if="item.group.svgIcon">
-                        <svg class="platform-svg-icon" aria-hidden="true">
-                            <use :href="'{% static 'games/images/platform-icons.svg' %}#' + item.group.svgIcon"></use>
-                        </svg>
-                    </template>
-                    <template x-if="item.group.icon">
-                        <span class="mdi" :class="item.group.icon"></span>
-                    </template>
-                    <span x-text="item.group.name"></span>
-                </div>
-                <div class="platform-brand-content-items">
-                    <template x-for="platform in getPlatformsInGroup(item.key)" :key="platform.id">
-                        <label class="platform-checkbox">
-                            <input type="checkbox"
-                                   :checked="isPlatformSelected(platform.id)"
-                                   @change="togglePlatform(platform.id)">
-                            <span x-text="platform.name"></span>
-                        </label>
-                    </template>
-                </div>
-            </div>
-        </template>
     </div>
 
     {# Secondary categories (accordions) - sorted by game count #}

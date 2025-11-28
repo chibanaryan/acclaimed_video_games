@@ -406,3 +406,174 @@ function createSearchData(apiUrl, limit = 5) {
         }
     };
 }
+
+// ============================================================
+// LOAD MORE UTILITIES
+// ============================================================
+
+/**
+ * Initializes Load More functionality for game search
+ * Called after page load and after filter updates
+ */
+function initLoadMore() {
+    const container = document.getElementById('game-results-container');
+    if (!container) return;
+
+    const button = container.querySelector('.load-more-button');
+    if (!button) return;
+
+    // Remove existing listener to prevent duplicates after DOM updates
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+    newButton.addEventListener('click', handleLoadMore);
+}
+
+/**
+ * Handles Load More button click
+ * @param {Event} event - Click event
+ */
+async function handleLoadMore(event) {
+    const button = event.currentTarget;
+    const nextPage = button.dataset.nextPage;
+
+    if (!nextPage || button.classList.contains('is-loading')) return;
+
+    // Set loading state
+    button.classList.add('is-loading');
+    button.disabled = true;
+
+    // Build URL with current filters + next page + append flag
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', nextPage);
+    params.set('append', 'true');
+
+    const url = window.location.pathname + '?' + params.toString();
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'HX-Request': 'true'
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to load more');
+
+        const html = await response.text();
+
+        // Parse the response to separate game rows from metadata
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Extract metadata
+        const metaScript = doc.getElementById('load-more-meta');
+        const meta = metaScript ? JSON.parse(metaScript.textContent) : null;
+
+        // Remove the metadata script from the parsed doc
+        if (metaScript) metaScript.remove();
+
+        // Append game rows to the list
+        const gameList = document.getElementById('game-list-container');
+        if (gameList) {
+            gameList.insertAdjacentHTML('beforeend', doc.body.innerHTML);
+        }
+
+        // Update result summary and button
+        if (meta) {
+            updateResultSummary(meta.loadedCount, meta.totalCount);
+            updateLoadMoreButton(button, meta);
+        }
+
+    } catch (err) {
+        console.error('Load more error:', err);
+        button.classList.remove('is-loading');
+        button.disabled = false;
+    }
+}
+
+/**
+ * Updates the result summary text
+ * @param {number} loaded - Number of items currently loaded
+ * @param {number} total - Total number of items
+ */
+function updateResultSummary(loaded, total) {
+    const loadedCountEl = document.getElementById('loaded-count');
+    if (loadedCountEl) {
+        loadedCountEl.textContent = loaded.toLocaleString();
+    }
+}
+
+/**
+ * Updates the Load More button state based on server response
+ * @param {HTMLElement} button - The Load More button
+ * @param {Object} meta - Metadata from server response
+ */
+function updateLoadMoreButton(button, meta) {
+    button.classList.remove('is-loading');
+
+    if (!meta.hasMore || meta.maxLoaded) {
+        const container = button.parentElement;
+        if (meta.maxLoaded) {
+            container.innerHTML = `
+                <div class="notification is-dark">
+                    <span class="icon is-small mr-2">
+                        <span class="mdi mdi-information-outline"></span>
+                    </span>
+                    Showing maximum of 1,000 results. Refine your filters to see more specific results.
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="has-text-grey-light has-text-centered">
+                    All ${meta.totalCount.toLocaleString()} results loaded
+                </div>
+            `;
+        }
+    } else {
+        button.disabled = false;
+        button.dataset.nextPage = meta.nextPage;
+        button.dataset.loaded = meta.loadedCount;
+
+        const textSpan = button.querySelector('.load-more-text');
+        if (textSpan) {
+            textSpan.textContent = `Load More (${meta.remainingCount.toLocaleString()} remaining)`;
+        }
+    }
+}
+
+// ============================================================
+// YEAR PREVIEW UTILITIES
+// ============================================================
+
+/**
+ * Initializes year preview highlighting during year grid drag selection
+ * Called on page load for advanced search page
+ */
+function initYearPreview() {
+    window.addEventListener('year-preview', handleYearPreview);
+}
+
+/**
+ * Handles year preview event from year grid drag selection
+ * @param {CustomEvent} event - Event with detail: { active, start, end }
+ */
+function handleYearPreview(event) {
+    const { active, start, end } = event.detail;
+    const gameYears = document.querySelectorAll('.game-year[data-year]');
+
+    if (!active) {
+        // Clear all previews
+        gameYears.forEach(el => el.classList.remove('year-preview'));
+        return;
+    }
+
+    // Apply preview to years in range
+    gameYears.forEach(el => {
+        const year = parseInt(el.dataset.year, 10);
+        if (year >= start && year <= end) {
+            el.classList.add('year-preview');
+        } else {
+            el.classList.remove('year-preview');
+        }
+    });
+}

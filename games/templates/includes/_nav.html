@@ -40,7 +40,7 @@
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
                                @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-search' %}?q=' + encodeURIComponent(q.trim())"
-                               placeholder="Search games"
+                               placeholder="Search all games"
                                class="input input-dark"
                                autocomplete="off">
                     </div>
@@ -102,7 +102,7 @@
                         <input type="text"
                                id="nav-search-desktop"
                                name="q"
-                               placeholder="Search games"
+                               placeholder="Search all games"
                                class="input input-dark"
                                x-model="q"
                                @focus="showMenu = true"

@@ -7,6 +7,7 @@ to extract the ordered genre list (primary genre at index 0).
 
 import csv
 import logging
+import os
 import time
 from datetime import datetime
 
@@ -65,6 +66,11 @@ class Command(BaseCommand):
             help="Output CSV file path (default: game_genres_ordered_TIMESTAMP.csv)",
         )
         parser.add_argument(
+            "--resume",
+            type=str,
+            help="Resume from existing CSV file (skips games already processed)",
+        )
+        parser.add_argument(
             "--no-output",
             action="store_true",
             help="Skip CSV output (console only)",
@@ -89,9 +95,28 @@ class Command(BaseCommand):
         offset = options.get("offset", 0)
         delay = options.get("delay", config.WIKI_REQUEST_DELAY)
         output_path = options.get("output")
+        resume_path = options.get("resume")
         no_output = options.get("no_output", False)
         save_to_db = options.get("save", False)
         skip_existing = options.get("skip_existing", False)
+
+        # Handle resume mode - read already-processed game ranks from CSV
+        processed_ranks = set()
+        if resume_path:
+            processed_ranks = self._read_processed_ranks(resume_path)
+            if processed_ranks:
+                self.stdout.write(
+                    f"Resuming from {resume_path}: {len(processed_ranks)} games "
+                    "already processed"
+                )
+                # Use resume file as output (append mode)
+                output_path = resume_path
+            else:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"No existing data in {resume_path}, starting fresh"
+                    )
+                )
 
         # Build game queryset
         if game_name or game_slug or game_id:
@@ -128,7 +153,8 @@ class Command(BaseCommand):
 
         # Initialize service
         self.start_time = time.time()
-        results = []
+        success_count = 0
+        failure_count = 0
 
         def progress_callback(event_type: str, data: dict) -> None:
             """Handle progress events from service."""
@@ -147,52 +173,116 @@ class Command(BaseCommand):
         # Process games - prefetch genres for CSV comparison
         game_list = list(games.prefetch_related("genres"))
 
-        for idx, game in enumerate(game_list):
-            result = service.get_genre(game.name, year=game.year_of_release)
-            # Store game reference with result for CSV output
-            result.game = game
-            results.append(result)
+        # Set up incremental CSV writing (append after each game)
+        csv_file = None
+        csv_writer = None
+        if not no_output:
+            if output_path is None:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_path = f"wiki_genres_{timestamp}.csv"
 
-            # Update database if requested
-            if save_to_db and result.source != GenreSource.FAILED:
-                game.wikipedia_primary_genre = result.primary_genre
-                game.wikipedia_all_genres = result.all_genres_str
-                game.save(
-                    update_fields=["wikipedia_primary_genre", "wikipedia_all_genres"]
-                )
+            # Append mode if resuming, write mode if new
+            is_append = resume_path and processed_ranks
+            file_mode = "a" if is_append else "w"
+            csv_file = open(output_path, file_mode, newline="", encoding="utf-8")
+            csv_writer = csv.writer(csv_file)
 
-            # Progress output
-            current = idx + 1
-            if result.source != GenreSource.FAILED:
-                genre_count = len(result.all_genres)
-                self.stdout.write(
-                    f"[{current}/{total_games}] {game.name}: "
-                    f"{result.primary_genre} ({genre_count} genres)"
+            # Only write header for new files
+            if not is_append:
+                csv_writer.writerow(
+                    [
+                        "Rank",
+                        "Original Title",
+                        "Primary Genre",
+                        "All Genres",
+                        "IGDB Genres",
+                        "Source URL",
+                        "Error",
+                    ]
                 )
+                csv_file.flush()
+                self.stdout.write(f"Starting fresh run: {output_path}")
             else:
-                self.stdout.write(
-                    self.style.WARNING(
-                        f"[{current}/{total_games}] {game.name}: "
-                        f"FAILED - {result.error_message}"
+                self.stdout.write(f"Appending to: {output_path}")
+
+        skipped_count = 0
+        try:
+            for idx, game in enumerate(game_list):
+                # Skip already-processed games (resume mode)
+                if game.rank in processed_ranks:
+                    skipped_count += 1
+                    continue
+
+                result = service.get_genre(game.name, year=game.year_of_release)
+                # Store game reference with result
+                result.game = game
+
+                # Update database if requested
+                if save_to_db and result.source != GenreSource.FAILED:
+                    game.wikipedia_primary_genre = result.primary_genre
+                    game.wikipedia_all_genres = result.all_genres_str
+                    game.save(
+                        update_fields=[
+                            "wikipedia_primary_genre",
+                            "wikipedia_all_genres",
+                        ]
                     )
-                )
+
+                # Write to CSV immediately (incremental save)
+                if csv_writer:
+                    igdb_genres = ", ".join(g.name for g in game.genres.all())
+                    csv_writer.writerow(
+                        [
+                            game.rank,
+                            result.game_name,
+                            result.primary_genre or "",
+                            result.all_genres_str,
+                            igdb_genres,
+                            result.source_url or "",
+                            result.error_message or "",
+                        ]
+                    )
+                    csv_file.flush()  # Ensure data is written to disk
+
+                # Progress output (show processed count, not index)
+                processed_so_far = success_count + failure_count + 1
+                games_to_process = total_games - skipped_count
+                if result.source != GenreSource.FAILED:
+                    success_count += 1
+                    genre_count = len(result.all_genres)
+                    self.stdout.write(
+                        f"[{processed_so_far}/{games_to_process}] {game.name}: "
+                        f"{result.primary_genre} ({genre_count} genres)"
+                    )
+                else:
+                    failure_count += 1
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"[{processed_so_far}/{games_to_process}] {game.name}: "
+                            f"FAILED - {result.error_message}"
+                        )
+                    )
+        finally:
+            if csv_file:
+                csv_file.close()
 
         # Summary
-        success_count = sum(1 for r in results if r.source != GenreSource.FAILED)
-        failure_count = len(results) - success_count
         elapsed = time.time() - self.start_time
+        processed_total = success_count + failure_count
 
         self.stdout.write("")
+        summary_parts = [f"{success_count} successful", f"{failure_count} failed"]
+        if skipped_count > 0:
+            summary_parts.append(f"{skipped_count} skipped (already processed)")
         self.stdout.write(
             self.style.SUCCESS(
-                f"Completed: {success_count}/{total_games} successful, "
-                f"{failure_count} failed in {elapsed:.0f}s"
+                f"Completed {processed_total} games in {elapsed:.0f}s: "
+                + ", ".join(summary_parts)
             )
         )
 
-        # Write CSV output
         if not no_output:
-            self._write_csv(results, output_path)
+            self.stdout.write(self.style.SUCCESS(f"Results saved to: {output_path}"))
 
     def _get_single_game_queryset(self, game_name, game_slug, game_id):
         """Get queryset for a single game."""
@@ -213,6 +303,27 @@ class Command(BaseCommand):
                 )
             )
             return None
+
+    def _read_processed_ranks(self, csv_path: str) -> set:
+        """Read already-processed game ranks from CSV file."""
+        processed_ranks = set()
+        if not os.path.exists(csv_path):
+            return processed_ranks
+
+        try:
+            with open(csv_path, "r", encoding="utf-8") as f:
+                reader = csv.reader(f)
+                next(reader, None)  # Skip header
+                for row in reader:
+                    if row and row[0]:  # First column is Rank
+                        try:
+                            processed_ranks.add(int(row[0]))
+                        except ValueError:
+                            continue  # Skip non-numeric ranks
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f"Error reading {csv_path}: {e}"))
+
+        return processed_ranks
 
     def _handle_progress_event(self, data: dict) -> None:
         """Handle progress event from service."""

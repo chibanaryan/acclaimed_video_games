@@ -49,7 +49,7 @@ class GameListView(ListAPIView):
         genres = self.request.GET.get("genres")
         if genres:
             genre_ids = [int(x) for x in genres.split(",")]
-            match_all = genre_option != "A"  # "A" = Any, otherwise All
+            match_all = genre_option != "any"  # "any" = Any, otherwise All
             qs = utils.apply_genre_filter(qs, genre_ids, match_all=match_all)
 
         # Platform filtering
