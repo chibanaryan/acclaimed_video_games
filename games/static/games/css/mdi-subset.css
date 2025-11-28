@@ -47,6 +47,7 @@
 .mdi-power::before { content: "\F0425"; }
 .mdi-undo::before { content: "\F054C"; }
 .mdi-tune::before { content: "\F062E"; }
+.mdi-format-list-numbered::before { content: "\F027B"; }
 
 /* Platform icons for filter dropdowns */
 /* Sony */
@@ -85,3 +86,7 @@
 .mdi-space-invaders::before { content: "\F0BC9"; }
 .mdi-web::before { content: "\F059F"; }
 .mdi-virtual-reality::before { content: "\F0895"; }
+
+/* Load More button */
+.mdi-plus-circle-outline::before { content: "\F0763"; }
+.mdi-information-outline::before { content: "\F02FD"; }

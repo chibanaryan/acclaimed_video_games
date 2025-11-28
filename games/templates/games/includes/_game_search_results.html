@@ -1,12 +1,6 @@
 {# Game search results partial - used for both initial render and HTMX updates #}
 {% load humanize %}
 {% if games %}
-<div class="result-summary-row mb-3">
-    <div class="is-size-7 has-text-grey result-summary has-text-right">
-        Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} Results
-    </div>
-</div>
-
 <div id="game-list-container">
     {% for game in games %}
         {% with index=page_obj.start_index|add:forloop.counter0 %}
@@ -40,8 +34,5 @@
 {% endif %}
 
 {% else %}
-<div class="is-size-7 has-text-grey result-summary mb-3 has-text-right">
-    Advanced Search
-</div>
-<div class="has-text-grey">No results found.</div>
+<div class="has-text-grey">No games match your filters.</div>
 {% endif %}

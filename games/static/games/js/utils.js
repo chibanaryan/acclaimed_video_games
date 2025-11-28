@@ -426,7 +426,20 @@ function initLoadMore() {
     const newButton = button.cloneNode(true);
     button.parentNode.replaceChild(newButton, button);
     newButton.addEventListener('click', handleLoadMore);
+    // Randomize icon on each hover
+    newButton.addEventListener('mouseenter', () => randomizeLoadMoreIcon(newButton));
 }
+
+// Gaming icons for hover effect (from MDI subset)
+const LOAD_MORE_ICONS = [
+    'mdi-gamepad-variant',
+    'mdi-controller',
+    'mdi-controller-classic',
+    'mdi-pac-man',
+    'mdi-space-invaders',
+    'mdi-run-fast',
+    'mdi-power'
+];
 
 /**
  * Handles Load More button click
@@ -472,10 +485,21 @@ async function handleLoadMore(event) {
         // Remove the metadata script from the parsed doc
         if (metaScript) metaScript.remove();
 
-        // Append game rows to the list
+        // Append game rows with staggered cascade animation
         const gameList = document.getElementById('game-list-container');
         if (gameList) {
-            gameList.insertAdjacentHTML('beforeend', doc.body.innerHTML);
+            // Only animate desktop rows for speed (mobile rows animate instantly)
+            const newRows = doc.querySelectorAll('.game-row.desktop');
+            const allRows = doc.querySelectorAll('.game-row');
+            let desktopIndex = 0;
+            allRows.forEach((row) => {
+                if (row.classList.contains('desktop')) {
+                    row.classList.add('game-row-enter');
+                    row.style.animationDelay = `${desktopIndex * 8}ms`;
+                    desktopIndex++;
+                }
+                gameList.appendChild(row);
+            });
         }
 
         // Update result summary and button
@@ -488,6 +512,21 @@ async function handleLoadMore(event) {
         console.error('Load more error:', err);
         button.classList.remove('is-loading');
         button.disabled = false;
+    }
+}
+
+/**
+ * Randomizes the Load More button icon on hover
+ * @param {HTMLElement} button - The Load More button
+ */
+function randomizeLoadMoreIcon(button) {
+    const iconSpan = button.querySelector('.icon .mdi');
+    if (iconSpan) {
+        // Remove default and all gaming icon classes, then add a random one
+        iconSpan.classList.remove('mdi-plus-circle-outline');
+        LOAD_MORE_ICONS.forEach(cls => iconSpan.classList.remove(cls));
+        const randomIcon = LOAD_MORE_ICONS[Math.floor(Math.random() * LOAD_MORE_ICONS.length)];
+        iconSpan.classList.add(randomIcon);
     }
 }
 

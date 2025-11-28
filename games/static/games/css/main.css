@@ -1258,6 +1258,10 @@ table.detail td {
     position: relative;
 }
 
+/* Reset Bulma's negative margin-top on first game row only */
+#game-list-container > .game-row:first-child {
+    margin-top: 0;
+}
 
 .game-row.desktop:hover {
     background: linear-gradient(to right, #363636 0%, #363636 70%, transparent 100%);
@@ -2367,6 +2371,29 @@ use[href$="platform-sega"] {
     box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 1px 0 #350909;
 }
 
+.nes-download-button {
+    background: linear-gradient(180deg, #3a8a7a 0%, #2a6a5a 100%);
+    color: #f7f7f7;
+    border: 2px solid #1a4a3a;
+    border-radius: 8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 0 rgba(0, 0, 0, 0.25), 0 3px 0 #0a2a1a;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.nes-download-button:hover {
+    background: linear-gradient(180deg, #4a9a8a 0%, #3a7a6a 100%);
+    color: #fff;
+    box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.18), inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 2px 0 #0a2a1a;
+}
+
+.nes-download-button:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 1px 0 #0a2a1a;
+}
+
 .nes-power-button,
 .buttons .nes-power-button,
 .buttons.are-small .nes-power-button {
@@ -2438,6 +2465,7 @@ use[href$="platform-sega"] {
     max-width: none;
     overflow: visible;
     transition: margin-left var(--filters-transition), opacity var(--filters-transition);
+    padding-top: 0;
 }
 
 .filters-collapsible.is-collapsed {
@@ -2454,6 +2482,7 @@ use[href$="platform-sega"] {
 .advanced-layout .main-panel {
     flex: 1 1 auto;
     min-width: 0;
+    padding-top: 0;
 }
 
 /* Responsive adjustments */
@@ -2786,12 +2815,34 @@ use[href$="platform-sega"] {
     visibility: hidden;
 }
 
+/* Hide default icon, show random hover icon */
 .load-more-button .icon {
-    opacity: 0.7;
+    opacity: 0;
+    transition: opacity 0.15s ease;
 }
 
 .load-more-button:hover .icon {
     opacity: 1;
+}
+
+/* ============================================================
+   STAGGERED CASCADE ANIMATION (Load More rows)
+   ============================================================ */
+
+@keyframes gameRowEnter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.game-row-enter {
+    animation: gameRowEnter 0.25s ease-out forwards;
+    opacity: 0;
 }
 
 /* Mobile: full width button */

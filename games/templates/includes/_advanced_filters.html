@@ -14,7 +14,6 @@
         isLoading: false,
         genresExpanded: false,
         platformsExpanded: false,
-        filtersPowerOn: (new URLSearchParams(window.location.search).get('filters') === 'on'),
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
@@ -77,7 +76,6 @@
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
                 this.filters.genre_option = params.get('genre_option') || 'all';
                 this.filters.rank_display = 'filtered';
-                this.filtersPowerOn = (params.get('filters') === 'on');
                 const genresParam = params.get('genres');
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
                 const platformsParam = params.get('platforms');
@@ -144,7 +142,6 @@
             setLoading('game-results-container');
 
             const params = buildFilterParams(this.filters, { preservePage });
-            params.set('filters', this.filtersPowerOn ? 'on' : 'off');
             const url = '{% url 'games-search' %}?' + normalizeUrl(params.toString());
 
             try {
@@ -183,16 +180,6 @@
             if (!this.initialized) return;
             if (this._debouncedUpdate) this._debouncedUpdate.cancel();
             this.performUpdate({ partial: false, historyMethod: 'pushState' });
-        },
-        updateFiltersParam() {
-            const params = new URLSearchParams(window.location.search);
-            if (this.filtersPowerOn) {
-                params.set('filters', 'on');
-            } else {
-                params.set('filters', 'off');
-            }
-            const newUrl = window.location.pathname + '?' + normalizeUrl(params.toString());
-            window.history.replaceState({}, '', newUrl);
         },
         throttledSliderUpdate() {
             this._throttledSlider.call();
@@ -234,40 +221,22 @@
             <h1 class="title mb-0" id="search-title">
                 {{ filter_title|default:"Advanced Search" }}
             </h1>
-            <div class="buttons are-small">
-                <button type="button"
-                        class="button nes-power-button"
-                        :class="filtersPowerOn ? 'is-on' : 'is-off'"
-                        @click="filtersPowerOn = !filtersPowerOn; updateFiltersParam();"
-                        :aria-pressed="filtersPowerOn.toString()">
-                    <span class="icon is-small">
-                        <span class="mdi mdi-power"></span>
-                    </span>
-                    <span x-text="filtersPowerOn ? 'Filters On' : 'Filters Off'"></span>
-                    <span class="power-led" :class="filtersPowerOn ? 'is-lit' : ''"></span>
-                </button>
-                <a href="{% url 'games-download' %}{% if download_query %}?{{ download_query }}{% endif %}"
-                   class="button is-dark is-hidden-mobile"
-                   title="Download CSV">
-                    <span class="icon is-small">
-                        <span class="mdi mdi-download"></span>
-                    </span>
-                    <span>Download CSV</span>
-                </a>
-            </div>
         </div>
         {% if genre_subtitle %}
             <p class="is-size-6 has-text-weight-semibold has-text-grey-dark" id="genre-subtitle">
                 {{ genre_subtitle }}
             </p>
         {% endif %}
+        {% load humanize %}
+        <div class="is-size-7 has-text-grey result-summary has-text-right">
+            {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
+        </div>
     </div>
 
         {# Two-column layout: filters sidebar on left, results on right #}
-        <div class="columns advanced-layout" :class="filtersPowerOn ? 'filters-on' : 'filters-off'">
+        <div class="columns advanced-layout filters-on">
             {# Left sidebar - Filters (hidden on mobile) #}
-            <div class="column is-hidden-mobile filters-collapsible"
-                 :class="filtersPowerOn ? 'is-expanded' : 'is-collapsed'">
+            <div class="column is-hidden-mobile filters-collapsible is-expanded">
                 <div class="filters-sidebar">
                 {# Header with navigation buttons #}
                 <div class="filters-header">
@@ -277,13 +246,23 @@
                         </span>
                         <h2>Filters</h2>
                     </div>
-                    <a :href="filtersPowerOn ? '{% url 'games-search' %}?filters=on' : '{% url 'games-search' %}?filters=off'"
-                       class="button is-small nes-reset-button">
-                        <span class="icon is-small">
-                            <span class="mdi mdi-undo"></span>
-                        </span>
-                        <span>Reset</span>
-                    </a>
+                    <div class="buttons are-small mb-0">
+                        <a href="{% url 'games-download' %}{% if download_query %}?{{ download_query }}{% endif %}"
+                           class="button is-small nes-download-button"
+                           title="Download CSV">
+                            <span class="icon is-small">
+                                <span class="mdi mdi-download"></span>
+                            </span>
+                            <span>CSV</span>
+                        </a>
+                        <a href="{% url 'games-search' %}"
+                           class="button is-small nes-reset-button">
+                            <span class="icon is-small">
+                                <span class="mdi mdi-undo"></span>
+                            </span>
+                            <span>Reset</span>
+                        </a>
+                    </div>
                 </div>
 
                 {# Search input #}
@@ -364,14 +343,7 @@
         </div>
 
         {# Mobile filters (shown only on mobile) #}
-        <div class="column is-hidden-tablet" x-show="filtersPowerOn" x-transition>
-            <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
-                <a href="{% url 'games-search' %}" class="button is-small">
-                    <span class="icon is-small">
-                        <span class="mdi mdi-close"></span>
-                    </span>
-                </a>
-            </div>
+        <div class="column is-hidden-tablet">
 
             {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
 

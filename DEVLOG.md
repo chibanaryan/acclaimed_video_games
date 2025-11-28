@@ -4,6 +4,9 @@
 
 - Replaced pagination with "Load More" button on advanced search (ghost-style, 1000 item limit)
 - Added year preview: game release years highlight blue during year grid drag selection
+- Removed filter toggle - filters always visible on advanced search
+- Moved CSV download button into filters header with console-style button
+- Fixed first game row alignment with filters panel (reset Bulma negative margin)
 
 ## 2025-11-26
 
