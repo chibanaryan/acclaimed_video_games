@@ -1,0 +1,86 @@
+{# Full list view partial - includes subtitle, filters, and results #}
+{# Used for both initial render and HTMX filter updates #}
+{% load game_filters %}
+{% load humanize %}
+
+<h2 id="results-count" class="subtitle">
+    {% if page_obj %}
+    Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} list{{ total_count|pluralize }}
+    {% else %}
+    Showing 0
+    {% endif %}
+</h2>
+
+<div class="field is-grouped is-grouped-multiline">
+    <div class="control">
+        <div class="select">
+            <select id="filter-publisher"
+                    name="publisher"
+                    hx-get="{% url 'list-list' %}"
+                    hx-target="#filter-results-wrapper"
+                    hx-trigger="change"
+                    hx-swap="innerHTML"
+                    hx-include="[name='publisher'], [name='year'], [name='type']"
+                    x-on:htmx:after-request="updateUrl($event)">
+                <option value="">All publishers</option>
+                {% for publisher in publishers %}
+                <option value="{{ publisher.id }}" {% if filters.publisher == publisher.id|stringformat:"s" %}selected{% endif %}>
+                    {{ publisher.name }} ({{ publisher.list_count }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="control">
+        <div class="select">
+            <select id="filter-list-year"
+                    name="year"
+                    hx-get="{% url 'list-list' %}"
+                    hx-target="#filter-results-wrapper"
+                    hx-trigger="change"
+                    hx-swap="innerHTML"
+                    hx-include="[name='publisher'], [name='year'], [name='type']"
+                    x-on:htmx:after-request="updateUrl($event)">
+                <option value="">All years</option>
+                {% for year_data in meta.lists.years %}
+                <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>
+                    {{ year_data.year }} ({{ year_data.count }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="control">
+        <div class="select">
+            <select id="filter-list-type"
+                    name="type"
+                    hx-get="{% url 'list-list' %}"
+                    hx-target="#filter-results-wrapper"
+                    hx-trigger="change"
+                    hx-swap="innerHTML"
+                    hx-include="[name='publisher'], [name='year'], [name='type']"
+                    x-on:htmx:after-request="updateUrl($event)">
+                <option value="">All list types</option>
+                {% for type_data in type_counts %}
+                <option value="{{ type_data.slug }}" {% if filters.type == type_data.slug %}selected{% endif %}>
+                    {{ type_data.type|get_list_type_label }} ({{ type_data.count }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    {% if filters.publisher or filters.year or filters.type %}
+    <div class="control">
+        <a href="{% url 'list-list' %}" class="button">
+            <span class="icon">
+                <span class="mdi mdi-close"></span>
+            </span>
+            <span>Clear filters</span>
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div id="results-container">
+    {% include 'lists/includes/_list_list_results.html' %}
+</div>

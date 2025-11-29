@@ -1,9 +1,15 @@
 {# Game search results partial - used for both initial render and HTMX updates #}
 {% load humanize %}
 {% load game_filters %}
-{# Include updated year counts for heatmap - JavaScript will detect and update #}
+{# Include updated counts for filter heatmaps - JavaScript will detect and update #}
 {% if year_counts %}
 <script type="application/json" id="year-counts-update">{{ year_counts|tojson }}</script>
+{% endif %}
+{% if genre_counts_json %}
+<script type="application/json" id="genre-counts-update">{{ genre_counts_json|tojson }}</script>
+{% endif %}
+{% if platform_counts_json %}
+<script type="application/json" id="platform-counts-update">{{ platform_counts_json|tojson }}</script>
 {% endif %}
 {% if games %}
 <div id="game-list-container">

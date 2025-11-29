@@ -1,0 +1,63 @@
+{# Append-only partial - returns just list rows for Load More #}
+{% load game_filters %}
+{# Wrap in table so DOMParser doesn't discard tr elements #}
+<table id="append-rows-container">
+<tbody>
+{# Desktop table rows #}
+{% for list in lists %}
+<tr class="list-row">
+    <td class="publication">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</td>
+    <td class="year">{{ list.year }}</td>
+    <td>
+        {% if list.url %}
+        <a href="{{ list.url }}" target="_blank">
+            {{ list.name }}
+        </a>
+        {% else %}
+        <span>{{ list.name }}</span>
+        {% endif %}
+    </td>
+    <td>{{ list.get_type_display }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{# Mobile card rows in a container div #}
+<div id="append-mobile-container">
+{% for list in lists %}
+<div class="list-row list-item">
+    <div>
+        <strong>{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</strong>
+    </div>
+    <div>
+        {% if list.url %}
+        <a href="{{ list.url }}" target="_blank">
+            {{ list.name }}
+        </a>
+        {% else %}
+        <span>{{ list.name }}</span>
+        {% endif %}
+    </div>
+    <div>
+        <span class="has-text-weight-semibold">Year:</span>
+        {{ list.year }}
+    </div>
+    <div>
+        <span class="has-text-weight-semibold">Type:</span>
+        {{ list.get_type_display }}
+    </div>
+</div>
+{% endfor %}
+</div>
+
+{# JSON metadata for JavaScript to update the button #}
+<script type="application/json" id="load-more-meta">
+{
+    "hasMore": {{ has_more|yesno:"true,false" }},
+    "nextPage": {{ next_page|default:"null" }},
+    "loadedCount": {{ loaded_count }},
+    "totalCount": {{ total_count }},
+    "remainingCount": {{ remaining_count }}
+}
+</script>

@@ -329,16 +329,17 @@ PLATFORM_FAMILIES = {
     "BR": "arcade",
 }
 
-# Family display info - key to (icon_class, display_name, sort_order)
+# Family display info - key to (icon_class, display_name, sort_order, svg_icon)
+# svg_icon is optional - if provided, use SVG instead of MDI icon
 FAMILY_INFO = {
-    "nintendo": ("mdi-nintendo-switch", "Nintendo", 1),
-    "playstation": ("mdi-sony-playstation", "PlayStation", 2),
-    "xbox": ("mdi-microsoft-xbox", "Xbox", 3),
-    "pc": ("mdi-microsoft-windows", "PC", 4),
-    "sega": ("mdi-controller-classic", "Sega", 5),
-    "retro": ("mdi-gamepad-variant", "Retro", 6),
-    "computers": ("mdi-desktop-classic", "Microcomputers", 7),
-    "arcade": ("mdi-space-invaders", "Arcade+", 8),
+    "nintendo": ("mdi-nintendo-switch", "Nintendo", 1, None),
+    "playstation": ("mdi-sony-playstation", "PlayStation", 2, None),
+    "xbox": ("mdi-microsoft-xbox", "Xbox", 3, None),
+    "pc": ("mdi-microsoft-windows", "PC", 4, None),
+    "sega": (None, "Sega", 5, "platform-sega"),
+    "retro": ("mdi-gamepad-variant", "Retro", 6, None),
+    "computers": ("mdi-desktop-classic", "Microcomputers", 7, None),
+    "arcade": ("mdi-space-invaders", "Arcade+", 8, None),
 }
 
 
@@ -346,9 +347,9 @@ FAMILY_INFO = {
 def platform_families(platforms):
     """
     Convert a list of platforms to unique families with icons.
-    Returns list of dicts with 'icon', 'name', 'key', 'platform_id', 'platform_name'.
-    The platform_id and platform_name are from the first platform in each family.
-    Order is preserved based on encounter order in the platforms list.
+    Returns list of dicts with 'icon', 'svg_icon', 'name', 'key', 'platform_id',
+    'platform_name'. The platform_id and platform_name are from the first platform
+    in each family. Order is preserved based on encounter order in the platforms list.
     """
     seen_families = set()
     families = []
@@ -359,13 +360,14 @@ def platform_families(platforms):
 
         if family_key not in seen_families and family_key in FAMILY_INFO:
             seen_families.add(family_key)
-            icon, name, order = FAMILY_INFO[family_key]
+            icon, name, order, svg_icon = FAMILY_INFO[family_key]
             # Get platform ID and name for linking and tooltip
             platform_id = platform.id if hasattr(platform, "id") else None
             platform_name = platform.name if hasattr(platform, "name") else code
             families.append(
                 {
                     "icon": icon,
+                    "svg_icon": svg_icon,
                     "name": name,
                     "key": family_key,
                     "order": order,

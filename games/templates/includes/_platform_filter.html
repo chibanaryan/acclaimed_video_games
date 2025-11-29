@@ -1,5 +1,5 @@
 {# TieredPlatformFilter component #}
-{# Props: platforms (list), selected (list of selected platform ids) #}
+{# Props: platforms (list with filtered_count), selected (list of selected platform ids) #}
 {# Uses parent Alpine.js context (filters.platforms, platforms array) #}
 {% load game_filters %}
 {% load static %}
@@ -7,6 +7,47 @@
 <div class="platform-filter"
      x-data="{
          expandedGroups: {},
+
+         init() {
+             // Listen for filtered count updates from HTMX responses
+             window.addEventListener('platform-counts-update', (event) => {
+                 this.updateFilteredCounts(event.detail);
+             });
+         },
+
+         // Update filtered counts on the platforms array
+         updateFilteredCounts(countMap) {
+             platforms.forEach(p => {
+                 p.filtered_count = countMap[String(p.id)] || 0;
+             });
+         },
+
+         // Get the effective count for a platform (use filtered_count if available)
+         getEffectiveCount(platform) {
+             return platform.filtered_count !== undefined ? platform.filtered_count : (platform.game_count || 0);
+         },
+
+         // Check if platform has any games with current filters (or is selected)
+         isPlatformAvailable(platformId) {
+             const platform = platforms.find(p => String(p.id) === String(platformId));
+             if (!platform) return false;
+             const count = this.getEffectiveCount(platform);
+             return count > 0 || this.isPlatformSelected(platformId);
+         },
+
+         // Check if selected platform has zero results (for very-dimmed styling)
+         hasZeroResults(platformId) {
+             const platform = platforms.find(p => String(p.id) === String(platformId));
+             if (!platform) return false;
+             const count = this.getEffectiveCount(platform);
+             return count === 0 && this.isPlatformSelected(platformId);
+         },
+
+         // Check if group has any available platforms
+         isGroupAvailable(groupKey) {
+             const groupPlatforms = this.getPlatformsInGroup(groupKey);
+             return groupPlatforms.some(p => this.isPlatformAvailable(p.id));
+         },
 
          // Platform family definitions
          platformGroups: {
@@ -123,8 +164,8 @@
              return this.platformIcons[code] || 'mdi-controller';
          },
 
-         // Get total game count for a platform group (sum of all platforms in group)
-         getGroupTotalCount(groupKey) {
+         // Get ORIGINAL total game count for a platform group (for stable sorting)
+         getGroupOriginalCount(groupKey) {
              const group = this.platformGroups[groupKey];
              if (!group || !platforms) return 0;
              return platforms
@@ -132,19 +173,28 @@
                  .reduce((sum, p) => sum + (p.game_count || 0), 0);
          },
 
-         // Get Big Five groups sorted by total game count (descending)
+         // Get FILTERED total game count for a platform group (for availability checking)
+         getGroupTotalCount(groupKey) {
+             const group = this.platformGroups[groupKey];
+             if (!group || !platforms) return 0;
+             return platforms
+                 .filter(p => group.codes.includes(p.code))
+                 .reduce((sum, p) => sum + this.getEffectiveCount(p), 0);
+         },
+
+         // Get Big Five groups sorted by ORIGINAL game count (stable positions)
          get sortedBigFiveGroups() {
              return Object.entries(this.platformGroups)
                  .filter(([key, group]) => group.isBigFive)
-                 .map(([key, group]) => ({ key, group, total: this.getGroupTotalCount(key) }))
+                 .map(([key, group]) => ({ key, group, total: this.getGroupOriginalCount(key) }))
                  .sort((a, b) => b.total - a.total);
          },
 
-         // Get accordion groups sorted by total game count (descending)
+         // Get accordion groups sorted by ORIGINAL game count (stable positions)
          get sortedAccordionGroups() {
              return Object.entries(this.platformGroups)
                  .filter(([key, group]) => !group.isBigFive)
-                 .map(([key, group]) => ({ key, group, total: this.getGroupTotalCount(key) }))
+                 .map(([key, group]) => ({ key, group, total: this.getGroupOriginalCount(key) }))
                  .sort((a, b) => b.total - a.total);
          },
 
@@ -183,10 +233,17 @@
 
          // Toggle all platforms in a group
          toggleGroup(groupKey) {
-             const groupPlatforms = this.getPlatformsInGroup(groupKey);
+             // Handle 'other' (ungrouped) platforms specially
+             const groupPlatforms = groupKey === 'other'
+                 ? this.getUngroupedPlatforms()
+                 : this.getPlatformsInGroup(groupKey);
              const groupIds = groupPlatforms.map(p => String(p.id));
 
-             if (this.isGroupFullySelected(groupKey)) {
+             const isFullySelected = groupKey === 'other'
+                 ? groupPlatforms.every(p => filters.platforms.includes(String(p.id)))
+                 : this.isGroupFullySelected(groupKey);
+
+             if (isFullySelected) {
                  // Deselect all in group
                  filters.platforms = filters.platforms.filter(id => !groupIds.includes(id));
              } else {
@@ -255,60 +312,63 @@
      }"
      @platforms-reset.window="handleReset()">
 
-    {# Big Five Brand Buttons with inline dropdown - sorted by game count #}
+    {# Big Five Brand Buttons - sorted by game count #}
     <div class="platform-brand-container">
         <div class="platform-brand-groups">
-            <template x-for="item in sortedBigFiveGroups" :key="item.key">
-                <div class="platform-brand-group" :class="{ 'is-expanded': expandedGroups[item.key] }">
-                    <div class="platform-brand-btn-row">
-                        <button type="button"
-                                class="platform-brand-btn"
-                                :class="{
-                                    'is-active': isGroupFullySelected(item.key),
-                                    'is-partial': isGroupPartiallySelected(item.key),
-                                    'is-expanded': expandedGroups[item.key]
-                                }"
-                                @click="toggleGroup(item.key)"
-                                :title="'Select all ' + item.group.name + ' platforms'">
-                            <span class="platform-brand-icon">
-                                <template x-if="item.group.svgIcon">
-                                    <svg class="platform-svg-icon" aria-hidden="true">
-                                        <use :href="'{% static 'games/images/platform-icons.svg' %}#' + item.group.svgIcon"></use>
-                                    </svg>
-                                </template>
-                                <template x-if="item.group.icon">
-                                    <span class="mdi" :class="item.group.icon"></span>
-                                </template>
-                            </span>
-                            <span class="platform-brand-name" x-text="item.group.name"></span>
-                            <span class="platform-brand-count"
-                                  x-show="getSelectedCount(item.key) > 0"
-                                  x-text="getSelectedCount(item.key) + '/' + getPlatformsInGroup(item.key).length"></span>
-                        </button>
-                        <button type="button"
-                                class="platform-brand-expand"
-                                :class="{ 'is-expanded': expandedGroups[item.key] }"
-                                @click.stop="toggleAccordion(item.key)"
-                                :title="expandedGroups[item.key] ? 'Collapse' : 'Expand to pick individual platforms'">
-                            <span class="mdi" :class="expandedGroups[item.key] ? 'mdi-chevron-up' : 'mdi-chevron-down'"></span>
-                        </button>
-                    </div>
-                    {# Expanded content appears directly below each button #}
-                    <div class="platform-brand-content" x-show="expandedGroups[item.key]" x-transition>
-                        <div class="platform-brand-content-header">
-                            <template x-if="item.group.svgIcon">
-                                <svg class="platform-svg-icon" aria-hidden="true">
-                                    <use :href="'{% static 'games/images/platform-icons.svg' %}#' + item.group.svgIcon"></use>
-                                </svg>
-                            </template>
-                            <template x-if="item.group.icon">
-                                <span class="mdi" :class="item.group.icon"></span>
-                            </template>
-                            <span x-text="item.group.name"></span>
+            <template x-for="(item, index) in sortedBigFiveGroups" :key="item.key">
+                <div class="platform-brand-group"
+                     :class="{
+                         'is-expanded': expandedGroups[item.key],
+                         'is-empty': !isGroupAvailable(item.key)
+                     }"
+                     :data-column="index % 3">
+                    {# Button wrapper - stays in grid cell #}
+                    <div class="platform-brand-wrapper" :class="{ 'is-expanded': expandedGroups[item.key] }">
+                        <div class="platform-brand-btn-row">
+                            {# Expand button on LEFT with accordion-style arrows (right → down) #}
+                            <button type="button"
+                                    class="platform-brand-expand"
+                                    :class="{ 'is-expanded': expandedGroups[item.key] }"
+                                    @click.stop="toggleAccordion(item.key)"
+                                    :title="expandedGroups[item.key] ? 'Collapse' : 'Expand to pick individual platforms'">
+                                <span class="mdi mdi-chevron-right" :class="{ 'is-rotated': expandedGroups[item.key] }"></span>
+                            </button>
+                            <button type="button"
+                                    class="platform-brand-btn"
+                                    :class="{
+                                        'is-active': isGroupFullySelected(item.key),
+                                        'is-partial': isGroupPartiallySelected(item.key),
+                                        'is-expanded': expandedGroups[item.key],
+                                        'has-zero-results': getGroupTotalCount(item.key) === 0 && getSelectedCount(item.key) > 0
+                                    }"
+                                    @click="toggleGroup(item.key)"
+                                    :title="'Select all ' + item.group.name + ' platforms'">
+                                <span class="platform-brand-icon">
+                                    <template x-if="item.group.svgIcon">
+                                        <svg class="platform-svg-icon" aria-hidden="true">
+                                            <use :href="'{% static 'games/images/platform-icons.svg' %}#' + item.group.svgIcon"></use>
+                                        </svg>
+                                    </template>
+                                    <template x-if="item.group.icon">
+                                        <span class="mdi" :class="item.group.icon"></span>
+                                    </template>
+                                </span>
+                                <span class="platform-brand-name" x-text="item.group.name"></span>
+                                <span class="platform-brand-count"
+                                      x-show="getSelectedCount(item.key) > 0"
+                                      x-text="getSelectedCount(item.key) + '/' + getPlatformsInGroup(item.key).filter(p => isPlatformAvailable(p.id)).length"></span>
+                            </button>
                         </div>
-                        <div class="platform-brand-content-items">
+                        {# Dropdown INSIDE wrapper - directly connected to button (no transition to avoid border flash) #}
+                        <div class="platform-brand-dropdown"
+                             x-show="expandedGroups[item.key]"
+                             :data-column="index % 3">
                             <template x-for="platform in getPlatformsInGroup(item.key)" :key="platform.id">
-                                <label class="platform-checkbox">
+                                <label class="platform-checkbox"
+                                       :class="{
+                                           'has-zero-results': hasZeroResults(platform.id),
+                                           'is-unavailable': !isPlatformAvailable(platform.id)
+                                       }">
                                     <input type="checkbox"
                                            :checked="isPlatformSelected(platform.id)"
                                            @change="togglePlatform(platform.id)">
@@ -325,22 +385,40 @@
     {# Secondary categories (accordions) - sorted by game count #}
     <div class="platform-accordions">
         <template x-for="item in sortedAccordionGroups" :key="item.key">
-            <div class="platform-accordion" x-show="getPlatformsInGroup(item.key).length > 0">
+            <div class="platform-accordion"
+                 :class="{ 'is-empty': !isGroupAvailable(item.key), 'is-expanded': expandedGroups[item.key] }">
                 <div class="platform-accordion-header"
-                     @click="toggleAccordion(item.key)"
-                     :class="{ 'has-selection': getSelectedCount(item.key) > 0 }">
-                    <span class="icon is-small" :class="expandedGroups[item.key] ? 'is-rotated' : ''">
-                        <span class="mdi mdi-chevron-right"></span>
-                    </span>
-                    <span class="mdi" :class="item.group.icon" style="margin-right: 0.25rem;"></span>
-                    <span class="platform-accordion-name" x-text="item.group.name"></span>
-                    <span class="platform-accordion-count">
-                        (<span x-text="getSelectedCount(item.key)"></span>/<span x-text="getPlatformsInGroup(item.key).length"></span>)
-                    </span>
+                     :class="{
+                         'has-selection': getSelectedCount(item.key) > 0,
+                         'has-zero-results': getGroupTotalCount(item.key) === 0 && getSelectedCount(item.key) > 0,
+                         'is-fully-selected': isGroupFullySelected(item.key),
+                         'is-expanded': expandedGroups[item.key]
+                     }">
+                    {# Expand button - toggles dropdown #}
+                    <button type="button"
+                            class="platform-accordion-expand"
+                            @click.stop="toggleAccordion(item.key)"
+                            :title="expandedGroups[item.key] ? 'Collapse' : 'Expand to pick individual platforms'">
+                        <span class="mdi mdi-chevron-right" :class="{ 'is-rotated': expandedGroups[item.key] }"></span>
+                    </button>
+                    {# Main button - selects all in group #}
+                    <button type="button"
+                            class="platform-accordion-btn"
+                            @click="toggleGroup(item.key)"
+                            :title="'Select all ' + item.group.name + ' platforms'">
+                        <span class="mdi" :class="item.group.icon"></span>
+                        <span class="platform-accordion-name" x-text="item.group.name"></span>
+                        <span class="platform-accordion-count"
+                              x-text="getSelectedCount(item.key) + '/' + getPlatformsInGroup(item.key).filter(p => isPlatformAvailable(p.id)).length"></span>
+                    </button>
                 </div>
                 <div class="platform-accordion-content" x-show="expandedGroups[item.key]" x-transition>
                     <template x-for="platform in getPlatformsInGroup(item.key)" :key="platform.id">
-                        <label class="platform-checkbox">
+                        <label class="platform-checkbox"
+                               :class="{
+                                   'has-zero-results': hasZeroResults(platform.id),
+                                   'is-unavailable': !isPlatformAvailable(platform.id)
+                               }">
                             <input type="checkbox"
                                    :checked="isPlatformSelected(platform.id)"
                                    @change="togglePlatform(platform.id)">
@@ -352,23 +430,40 @@
         </template>
 
         {# Ungrouped platforms (if any) #}
-        <template x-if="getUngroupedPlatforms().length > 0">
-            <div class="platform-accordion">
+        <template x-if="getUngroupedPlatforms().some(p => isPlatformAvailable(p.id))">
+            <div class="platform-accordion"
+                 :class="{ 'is-expanded': expandedGroups['other'] }">
                 <div class="platform-accordion-header"
-                     @click="toggleAccordion('other')"
-                     :class="{ 'has-selection': getUngroupedPlatforms().some(p => isPlatformSelected(p.id)) }">
-                    <span class="icon is-small" :class="expandedGroups['other'] ? 'is-rotated' : ''">
-                        <span class="mdi mdi-chevron-right"></span>
-                    </span>
-                    <span class="mdi mdi-controller" style="margin-right: 0.25rem;"></span>
-                    <span class="platform-accordion-name">Other</span>
-                    <span class="platform-accordion-count">
-                        (<span x-text="getUngroupedPlatforms().filter(p => isPlatformSelected(p.id)).length"></span>/<span x-text="getUngroupedPlatforms().length"></span>)
-                    </span>
+                     :class="{
+                         'has-selection': getUngroupedPlatforms().some(p => isPlatformSelected(p.id)),
+                         'is-fully-selected': getUngroupedPlatforms().filter(p => isPlatformAvailable(p.id)).every(p => isPlatformSelected(p.id)) && getUngroupedPlatforms().some(p => isPlatformAvailable(p.id)),
+                         'is-expanded': expandedGroups['other']
+                     }">
+                    {# Expand button - toggles dropdown #}
+                    <button type="button"
+                            class="platform-accordion-expand"
+                            @click.stop="toggleAccordion('other')"
+                            :title="expandedGroups['other'] ? 'Collapse' : 'Expand to pick individual platforms'">
+                        <span class="mdi mdi-chevron-right" :class="{ 'is-rotated': expandedGroups['other'] }"></span>
+                    </button>
+                    {# Main button - selects all in group #}
+                    <button type="button"
+                            class="platform-accordion-btn"
+                            @click="toggleGroup('other')"
+                            title="Select all Other platforms">
+                        <span class="mdi mdi-controller"></span>
+                        <span class="platform-accordion-name">Other</span>
+                        <span class="platform-accordion-count"
+                              x-text="getUngroupedPlatforms().filter(p => isPlatformSelected(p.id)).length + '/' + getUngroupedPlatforms().filter(p => isPlatformAvailable(p.id)).length"></span>
+                    </button>
                 </div>
                 <div class="platform-accordion-content" x-show="expandedGroups['other']" x-transition>
                     <template x-for="platform in getUngroupedPlatforms()" :key="platform.id">
-                        <label class="platform-checkbox">
+                        <label class="platform-checkbox"
+                               :class="{
+                                   'has-zero-results': hasZeroResults(platform.id),
+                                   'is-unavailable': !isPlatformAvailable(platform.id)
+                               }">
                             <input type="checkbox"
                                    :checked="isPlatformSelected(platform.id)"
                                    @change="togglePlatform(platform.id)">

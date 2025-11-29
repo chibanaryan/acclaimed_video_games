@@ -1,10 +1,52 @@
 {# GenreFilter component - Inventory Grid Style with Heatmap #}
-{# Props: genres (list from parent with game_count), filters (from parent Alpine context) #}
+{# Props: genres (list from parent with game_count and filtered_count), filters (from parent Alpine context) #}
 {# Uses parent Alpine.js context for genres array and filters.genres/filters.genre_option #}
 {% load static %}
 
 <div class="genre-filter"
      x-data="{
+         init() {
+             // Listen for filtered count updates from HTMX responses
+             window.addEventListener('genre-counts-update', (event) => {
+                 this.updateFilteredCounts(event.detail);
+             });
+         },
+
+         // Update filtered counts on the genres array
+         updateFilteredCounts(countMap) {
+             genres.forEach(g => {
+                 g.filtered_count = countMap[String(g.id)] || 0;
+             });
+         },
+
+         // Check if genre has any games with current filters (or is selected)
+         isGenreAvailable(genreId) {
+             const genre = genres.find(g => String(g.id) === String(genreId));
+             if (!genre) return false;
+             // Available if has filtered results OR is currently selected
+             const count = genre.filtered_count !== undefined ? genre.filtered_count : genre.game_count;
+             return count > 0 || this.isGenreSelected(genreId);
+         },
+
+         // Check if selected genre has zero results (for very-dimmed styling)
+         hasZeroResults(genreId) {
+             const genre = genres.find(g => String(g.id) === String(genreId));
+             if (!genre) return false;
+             const count = genre.filtered_count !== undefined ? genre.filtered_count : genre.game_count;
+             return count === 0 && this.isGenreSelected(genreId);
+         },
+
+         // Get the effective count for heatmap (use filtered_count if available)
+         getEffectiveCount(genre) {
+             return genre.filtered_count !== undefined ? genre.filtered_count : genre.game_count;
+         },
+
+         // Check if group has any available genres
+         isGroupAvailable(groupKey) {
+             const groupGenres = this.getGenresInGroup(groupKey);
+             return groupGenres.some(g => this.isGenreAvailable(g.id));
+         },
+
          // Genre groupings by gameplay 'vibe' - 5 columns
          genreGroups: {
              combat: {
@@ -69,14 +111,14 @@
              'Indie': 'genre-indie'
          },
 
-         // Heatmap: Calculate max game count for normalization
+         // Heatmap: Calculate max game count for normalization (use ORIGINAL counts for stable scale)
          get maxGameCount() {
              if (!genres || genres.length === 0) return 1;
              return Math.max(...genres.map(g => g.game_count || 0), 1);
          },
 
-         // Get total game count for a category (sum of all genres in group)
-         getGroupTotalCount(groupKey) {
+         // Get ORIGINAL total game count for a category (for stable sorting)
+         getGroupOriginalCount(groupKey) {
              const group = this.genreGroups[groupKey];
              if (!group || !genres) return 0;
              return genres
@@ -84,10 +126,19 @@
                  .reduce((sum, g) => sum + (g.game_count || 0), 0);
          },
 
-         // Get groups sorted by total game count (descending)
+         // Get FILTERED total game count for a category (for availability checking)
+         getGroupTotalCount(groupKey) {
+             const group = this.genreGroups[groupKey];
+             if (!group || !genres) return 0;
+             return genres
+                 .filter(g => group.genres.includes(g.name))
+                 .reduce((sum, g) => sum + this.getEffectiveCount(g), 0);
+         },
+
+         // Get groups sorted by ORIGINAL game count (stable positions)
          get sortedGroups() {
              return Object.entries(this.genreGroups)
-                 .map(([key, group]) => ({ key, group, total: this.getGroupTotalCount(key) }))
+                 .map(([key, group]) => ({ key, group, total: this.getGroupOriginalCount(key) }))
                  .sort((a, b) => b.total - a.total);
          },
 
@@ -242,9 +293,11 @@
     {# 5-Column Vertical Layout - each category is a column #}
     <div class="genre-columns">
         <template x-for="item in sortedGroups" :key="item.key">
-            <div class="genre-column" :style="'--group-color: ' + item.group.color">
+            <div class="genre-column"
+                 :class="{ 'is-empty': !isGroupAvailable(item.key) }"
+                 :style="'--group-color: ' + item.group.color">
                 <div class="genre-column-count is-size-7 has-text-weight-semibold" style="margin-bottom: 0.25rem;">
-                    (<span x-text="getGroupSelectedCount(item.key)"></span>/<span x-text="getGenresInGroup(item.key).length"></span>)
+                    (<span x-text="getGroupSelectedCount(item.key)"></span>/<span x-text="getGenresInGroup(item.key).filter(g => isGenreAvailable(g.id)).length"></span>)
                 </div>
                 {# Column header with category name - clickable to select/deselect all #}
                 <button type="button"
@@ -258,16 +311,20 @@
                     <span class="genre-column-dot"></span>
                     <span class="genre-column-name" x-text="item.group.name"></span>
                 </button>
-                {# Genres in this column #}
+                {# Genres in this column - hidden if unavailable #}
                 <div class="genre-column-items">
                     <template x-for="genre in getGenresInGroup(item.key)" :key="genre.id">
                         <button type="button"
                                 class="genre-tile"
-                                :class="{ 'is-selected': isGenreSelected(genre.id) }"
+                                :class="{
+                                    'is-selected': isGenreSelected(genre.id),
+                                    'has-zero-results': hasZeroResults(genre.id),
+                                    'is-unavailable': !isGenreAvailable(genre.id)
+                                }"
                                 :data-group="item.key"
                                 :style="'--brightness: ' + getBrightness(genre.game_count)"
                                 @click="toggleGenre(genre.id)"
-                                :title="genre.name + ' - ' + (genre.game_count || 0) + ' games'">
+                                :title="genre.name + ' - ' + getEffectiveCount(genre) + ' games'">
                             <svg class="genre-icon" aria-hidden="true">
                                 <use :href="'{% static 'games/images/genre-icons.svg' %}#' + getIcon(genre.name)"></use>
                             </svg>

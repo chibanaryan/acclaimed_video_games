@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load game_filters %}
+{% load humanize %}
 
 {% block title %}Source Lists - Acclaimed Games{% endblock %}
 
@@ -29,94 +30,139 @@
         window.history.pushState({}, '', url);
     }
 }">
-    <h1 class="title">Source Lists</h1>
+    <h1 class="title is-spaced">Source Lists</h1>
 
-    <div class="field is-grouped is-grouped-multiline">
-        <div class="control">
-            <div class="select">
-                <select id="filter-publisher"
-                        name="publisher"
-                        hx-get="{% url 'list-list' %}"
-                        hx-target="#content"
-                        hx-trigger="change"
-                        hx-swap="innerHTML"
-                        hx-include="[name='publisher'], [name='year'], [name='type']"
-                        x-on:htmx:after-request="updateUrl($event)">
-                    <option value="">All publishers</option>
-                    {% for publisher in publishers %}
-                    <option value="{{ publisher.id }}" {% if filters.publisher == publisher.id|stringformat:"s" %}selected{% endif %}>
-                        {{ publisher.name }} ({{ publisher.list_count }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="control">
-            <div class="select">
-                <select id="filter-list-year"
-                        name="year"
-                        hx-get="{% url 'list-list' %}"
-                        hx-target="#content"
-                        hx-trigger="change"
-                        hx-swap="innerHTML"
-                        hx-include="[name='publisher'], [name='year'], [name='type']"
-                        x-on:htmx:after-request="updateUrl($event)">
-                    <option value="">All years</option>
-                    {% for year_data in meta.lists.years %}
-                    <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>
-                        {{ year_data.year }} ({{ year_data.count }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="control">
-            <div class="select">
-                <select id="filter-list-type"
-                        name="type"
-                        hx-get="{% url 'list-list' %}"
-                        hx-target="#content"
-                        hx-trigger="change"
-                        hx-swap="innerHTML"
-                        hx-include="[name='publisher'], [name='year'], [name='type']"
-                        x-on:htmx:after-request="updateUrl($event)">
-                    <option value="">All list types</option>
-                    {% for type_data in type_counts %}
-                    <option value="{{ type_data.slug }}" {% if filters.type == type_data.slug %}selected{% endif %}>
-                        {{ type_data.type|get_list_type_label }} ({{ type_data.count }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        {% if filters.publisher or filters.year or filters.type %}
-        <div class="control">
-            <a href="{% url 'list-list' %}" class="button">
-                <span class="icon">
-                    <span class="mdi mdi-close"></span>
-                </span>
-                <span>Clear filters</span>
-            </a>
-        </div>
-        {% endif %}
-    </div>
-
-    <div class="pagination-wrapper pagination-spacing-top">
-        {% if page_obj %}
-        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
-        {% endif %}
-    </div>
-
-    {% if lists %}
-        {% include 'includes/_list_results.html' with items=lists show_type=True show_rank=False %}
-    {% endif %}
-
-    <div class="pagination-wrapper pagination-spacing-top">
-        {% if page_obj %}
-        {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='content' %}
-        {% endif %}
+    <div id="filter-results-wrapper">
+        {% include 'lists/includes/_list_list_full.html' %}
     </div>
 </div>
+
+<script>
+// Generic Load More handler for lists
+function initListLoadMore() {
+    const container = document.getElementById('results-container');
+    if (!container) return;
+
+    const button = container.querySelector('.load-more-button');
+    if (!button) return;
+
+    // Remove existing listener to prevent duplicates after DOM updates
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+    newButton.addEventListener('click', handleListLoadMore);
+}
+
+async function handleListLoadMore(event) {
+    const button = event.currentTarget;
+    const nextPage = button.dataset.nextPage;
+
+    if (!nextPage || button.classList.contains('is-loading')) return;
+
+    // Set loading state
+    button.classList.add('is-loading');
+    button.disabled = true;
+
+    // Build URL with current filters + next page + append flag
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', nextPage);
+    params.set('append', 'true');
+
+    const url = window.location.pathname + '?' + params.toString();
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'HX-Request': 'true'
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to load more');
+
+        const html = await response.text();
+
+        // Parse the response to separate rows from metadata
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Extract metadata
+        const metaScript = doc.getElementById('load-more-meta');
+        const meta = metaScript ? JSON.parse(metaScript.textContent) : null;
+
+        // Remove the metadata script from the parsed doc
+        if (metaScript) metaScript.remove();
+
+        // Append desktop rows to table body with staggered cascade animation
+        const tbody = document.getElementById('list-table-body');
+        const appendContainer = doc.getElementById('append-rows-container');
+        if (tbody && appendContainer) {
+            const newRows = appendContainer.querySelectorAll('tr.list-row');
+            let index = 0;
+            newRows.forEach(row => {
+                row.classList.add('game-row-enter');
+                row.style.animationDelay = `${index * 8}ms`;
+                index++;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Append mobile rows to mobile container (no animation on mobile for performance)
+        const mobileContainer = document.getElementById('list-mobile-container');
+        const appendMobileContainer = doc.getElementById('append-mobile-container');
+        if (mobileContainer && appendMobileContainer) {
+            const newMobileRows = appendMobileContainer.querySelectorAll('div.list-row');
+            newMobileRows.forEach(row => {
+                mobileContainer.appendChild(row);
+            });
+        }
+
+        // Update result summary and button
+        if (meta) {
+            const loadedCountEl = document.getElementById('loaded-count');
+            if (loadedCountEl) {
+                loadedCountEl.textContent = meta.loadedCount.toLocaleString();
+            }
+
+            button.classList.remove('is-loading');
+
+            if (!meta.hasMore) {
+                const container = button.parentElement;
+                container.innerHTML = `
+                    <div class="has-text-grey-light has-text-centered">
+                        All ${meta.totalCount.toLocaleString()} results loaded
+                    </div>
+                `;
+            } else {
+                button.disabled = false;
+                button.dataset.nextPage = meta.nextPage;
+                button.dataset.loaded = meta.loadedCount;
+
+                const textSpan = button.querySelector('.load-more-text');
+                if (textSpan) {
+                    textSpan.textContent = `Load More (${meta.remainingCount.toLocaleString()} remaining)`;
+                }
+            }
+        }
+
+    } catch (err) {
+        console.error('Load more error:', err);
+        button.classList.remove('is-loading');
+        button.disabled = false;
+    }
+}
+
+// Initialize on page load (handle case where DOMContentLoaded already fired)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initListLoadMore);
+} else {
+    initListLoadMore();
+}
+
+// Reinitialize after HTMX swaps (for filter changes)
+document.body.addEventListener('htmx:afterSwap', function(e) {
+    if (e.detail.target.id === 'filter-results-wrapper') {
+        initListLoadMore();
+    }
+});
+</script>
 {% endblock %}
-
-

@@ -1,0 +1,82 @@
+{# List search results partial - used for both initial render and HTMX updates #}
+{% load humanize %}
+{% load game_filters %}
+{% if lists %}
+{# Desktop table view #}
+<table class="table is-fullwidth is-hidden-mobile">
+    <thead>
+        <tr>
+            <th>Publication</th>
+            <th>Year</th>
+            <th>Name</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+    <tbody id="list-table-body">
+        {% for list in lists %}
+        <tr class="list-row">
+            <td class="publication">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</td>
+            <td class="year">{{ list.year }}</td>
+            <td>
+                {% if list.url %}
+                <a href="{{ list.url }}" target="_blank">
+                    {{ list.name }}
+                </a>
+                {% else %}
+                <span>{{ list.name }}</span>
+                {% endif %}
+            </td>
+            <td>{{ list.get_type_display }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{# Mobile card view #}
+<div id="list-mobile-container" class="is-hidden-tablet">
+    {% for list in lists %}
+    <div class="list-row list-item">
+        <div>
+            <strong>{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</strong>
+        </div>
+        <div>
+            {% if list.url %}
+            <a href="{{ list.url }}" target="_blank">
+                {{ list.name }}
+            </a>
+            {% else %}
+            <span>{{ list.name }}</span>
+            {% endif %}
+        </div>
+        <div>
+            <span class="has-text-weight-semibold">Year:</span>
+            {{ list.year }}
+        </div>
+        <div>
+            <span class="has-text-weight-semibold">Type:</span>
+            {{ list.get_type_display }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if has_more %}
+<div id="load-more-container" class="has-text-centered mt-5 mb-5">
+    <button type="button"
+            class="button is-medium load-more-button"
+            data-next-page="{{ next_page }}"
+            data-total="{{ total_count }}"
+            data-loaded="{{ loaded_count }}">
+        <span class="icon is-small">
+            <span class="mdi mdi-plus-circle-outline"></span>
+        </span>
+        <span class="load-more-text">Load More ({{ remaining_count|intcomma }} remaining)</span>
+    </button>
+</div>
+{% endif %}
+
+{% else %}
+<div class="notification">
+    <p>No lists found.</p>
+</div>
+{% endif %}

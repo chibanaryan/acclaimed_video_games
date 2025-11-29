@@ -1,6 +1,7 @@
 {# GameRow component #}
 {# Props: game, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional game ID) #}
 {% load game_filters %}
+{% load static %}
 <div class="columns is-hidden-mobile game-row desktop {% if highlight and game.id == highlight %}highlight{% endif %}" id="game-{{ game.id }}">
     {# Rank + Thumbnail column #}
     <div class="column is-narrow">
@@ -49,7 +50,7 @@
     </div>
     {# Platforms column - family icons #}
     <div class="column is-narrow game-column-platforms">
-        {% for family in game.platforms.all|platform_families %}<a href="{% url 'games-list' %}?platforms={{ family.platform_id }}&highlight={{ game.id }}" class="platform-family-icon mdi {{ family.icon }}" title="{{ family.platform_name }}"></a> {% endfor %}
+        {% for family in game.platforms.all|platform_families %}{% if family.svg_icon %}<a href="{% url 'games-list' %}?platforms={{ family.platform_id }}&highlight={{ game.id }}" class="platform-family-icon" title="{{ family.platform_name }}"><svg class="platform-svg-icon" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ family.svg_icon }}"></use></svg></a>{% else %}<a href="{% url 'games-list' %}?platforms={{ family.platform_id }}&highlight={{ game.id }}" class="platform-family-icon mdi {{ family.icon }}" title="{{ family.platform_name }}"></a>{% endif %} {% endfor %}
     </div>
     {# Genres column - icons with tooltips, color-coded by category (max 7) #}
     <div class="column is-narrow game-column-genre">

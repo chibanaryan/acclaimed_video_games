@@ -1,52 +1,11 @@
 {# HTMX partial response for DeveloperListView - just the results container #}
 {% load game_filters %}
+{% load humanize %}
 
 {# Store pagination data in a hidden element for JavaScript access #}
 <div id="pagination-data"
-     data-start-index="{% if page_obj %}{{ page_obj.start_index }}{% else %}0{% endif %}"
-     data-end-index="{% if page_obj %}{{ page_obj.end_index }}{% else %}0{% endif %}"
-     data-total-count="{% if page_obj %}{{ page_obj.paginator.count }}{% else %}0{% endif %}"
+     data-loaded-count="{% if page_obj %}{{ loaded_count }}{% else %}0{% endif %}"
+     data-total-count="{% if page_obj %}{{ total_count }}{% else %}0{% endif %}"
      style="display: none;"></div>
-<div class="pagination-wrapper pagination-spacing-top">
-    {% if page_obj %}
-    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
-    {% endif %}
-</div>
 
-{% if developers %}
-<table class="table is-fullwidth">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <td># Games</td>
-        </tr>
-    </thead>
-    <tbody>
-        {% for alias in developers %}
-        <tr>
-            <td>
-                {% if alias.developer.slug %}
-                    <a href="{% url 'developer-detail' slug=alias.developer.slug %}">
-                        {{ alias.name }} ({{ alias.developer.name }})
-                    </a>
-                {% else %}
-                    <span>{{ alias.name }} ({{ alias.developer.name }})</span>
-                {% endif %}
-            </td>
-            <td>{{ alias.games_count }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<div class="notification">
-    <p>No developers found.</p>
-</div>
-{% endif %}
-
-<div class="pagination-wrapper pagination-spacing-top">
-    {% if page_obj %}
-    {% include 'includes/_pagination.html' with page_obj=page_obj show_all_pages=False target_id='results-container' %}
-    {% endif %}
-</div>
-
+{% include 'developers/includes/_developer_list_results.html' %}

@@ -596,11 +596,13 @@ class GameSearchView(RobustPaginationMixin, ListView):
             base_qs = utils.apply_platform_filter(base_qs, platform_ids)
 
         # Calculate year counts from filtered base queryset
+        # Use distinct=True to avoid counting games multiple times when M2M JOINs
+        # cause duplicate rows (e.g., a game with WIN+MAC platforms matched twice)
         all_years = range(min_year, max_year + 1)
         year_count_map = {
             entry["year_of_release"]: entry["count"]
             for entry in base_qs.values("year_of_release")
-            .annotate(count=Count("id"))
+            .annotate(count=Count("id", distinct=True))
             .order_by("year_of_release")
         }
         all_years_with_counts = [
@@ -608,6 +610,97 @@ class GameSearchView(RobustPaginationMixin, ListView):
         ]
 
         context["year_counts"] = all_years_with_counts
+
+        # FACETED COUNTS FOR GENRES
+        # For "Match Any": apply all filters EXCEPT genres (standard faceted filtering)
+        # For "Match All": INCLUDE genre filter (shows intersection - how many games
+        #                 have ALL selected genres AND this additional genre)
+        genre_facet_qs = models.Game.objects.all()
+        if q:
+            genre_facet_qs = genre_facet_qs.filter(name__icontains=q)
+        genre_facet_qs = utils.apply_year_filters(
+            genre_facet_qs,
+            decade=decade_param,
+            year=year_param,
+            start=start_param,
+            end=end_param,
+        )
+        if platforms_param:
+            platform_ids = [int(x) for x in platforms_param.split(",")]
+            genre_facet_qs = utils.apply_platform_filter(genre_facet_qs, platform_ids)
+
+        # For Match All mode, use subquery approach to get all genres on matching games
+        # This shows "how many games have all selected genres AND this genre"
+        # Note: We must use a subquery because Django ORM reuses JOINs, which would
+        # otherwise limit results to only the filtered genre IDs
+        if genres_param and genre_option == "all":
+            genre_ids = [int(x) for x in genres_param.split(",")]
+            # First, get IDs of games that have ALL selected genres
+            filtered_game_ids = utils.apply_genre_filter(
+                genre_facet_qs, genre_ids, match_all=True
+            ).values_list("id", flat=True)
+            # Then count genres on those games (fresh queryset avoids JOIN reuse)
+            genre_counts = dict(
+                models.Game.objects.filter(id__in=list(filtered_game_ids))
+                .values("genres__id")
+                .exclude(genres__id__isnull=True)
+                .annotate(count=Count("id", distinct=True))
+                .values_list("genres__id", "count")
+            )
+        else:
+            # For Match Any mode or no genre filter, standard faceted counting
+            genre_counts = dict(
+                genre_facet_qs.values("genres__id")
+                .exclude(genres__id__isnull=True)
+                .annotate(count=Count("id", distinct=True))
+                .values_list("genres__id", "count")
+            )
+
+        # FACETED COUNTS FOR PLATFORMS
+        # Base: apply all filters EXCEPT platforms (q, year, genres)
+        platform_facet_qs = models.Game.objects.all()
+        if q:
+            platform_facet_qs = platform_facet_qs.filter(name__icontains=q)
+        platform_facet_qs = utils.apply_year_filters(
+            platform_facet_qs,
+            decade=decade_param,
+            year=year_param,
+            start=start_param,
+            end=end_param,
+        )
+        if genres_param:
+            genre_ids = [int(x) for x in genres_param.split(",")]
+            match_all = genre_option != "any"
+            platform_facet_qs = utils.apply_genre_filter(
+                platform_facet_qs, genre_ids, match_all=match_all
+            )
+
+        # Count games per platform
+        platform_counts = dict(
+            platform_facet_qs.values("platforms__id")
+            .exclude(platforms__id__isnull=True)
+            .annotate(count=Count("id", distinct=True))
+            .values_list("platforms__id", "count")
+        )
+
+        # Merge filtered counts into genres/platforms lists
+        genres_with_filtered = [
+            {**g, "filtered_count": genre_counts.get(int(g["id"]), 0)} for g in genres
+        ]
+        platforms_with_filtered = [
+            {**p, "filtered_count": platform_counts.get(int(p["id"]), 0)}
+            for p in platforms
+        ]
+
+        # Replace context with filtered versions
+        context["genres"] = genres_with_filtered
+        context["platforms"] = platforms_with_filtered
+
+        # JSON for HTMX partial updates (keyed by string ID)
+        context["genre_counts_json"] = {str(k): v for k, v in genre_counts.items()}
+        context["platform_counts_json"] = {
+            str(k): v for k, v in platform_counts.items()
+        }
 
         # Load More context
         page_obj = context.get("page_obj")
@@ -630,9 +723,15 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.DeveloperAlias
     template_name = "developers/developer_list.html"
     context_object_name = "developers"
-    paginate_by = 100
+    paginate_by = 200
     paginate_orphans = 0
     htmx_partial_template = "developers/includes/_developer_list_content.html"
+
+    def get_template_names(self):
+        # Append mode for Load More - returns just rows
+        if self.request.GET.get("append") == "true":
+            return ["developers/includes/_developer_list_append.html"]
+        return super().get_template_names()
 
     def get_queryset(self):
         qs = (
@@ -651,6 +750,24 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             qs = qs.filter(name__icontains=q)
 
         return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Load More context
+        page_obj = context.get("page_obj")
+        if page_obj:
+            context["has_more"] = page_obj.has_next()
+            context["next_page"] = (
+                page_obj.next_page_number() if page_obj.has_next() else None
+            )
+            context["total_count"] = page_obj.paginator.count
+            context["loaded_count"] = page_obj.end_index()
+            context["remaining_count"] = max(
+                0, page_obj.paginator.count - page_obj.end_index()
+            )
+
+        return context
 
 
 class DeveloperDetailView(DetailView):
@@ -750,9 +867,15 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.List
     template_name = "lists/list_list.html"
     context_object_name = "lists"
-    paginate_by = 100
+    paginate_by = 200
     paginate_orphans = 0
     htmx_partial_template = "lists/includes/_list_list_content.html"
+
+    def get_template_names(self):
+        # Append mode for Load More - returns just rows
+        if self.request.GET.get("append") == "true":
+            return ["lists/includes/_list_list_append.html"]
+        return super().get_template_names()
 
     def get_queryset(self):
         qs = models.List.objects.select_related("publisher").order_by(
@@ -875,6 +998,19 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             "year": str(year_value) if year_value else None,
             "type": type_slug,  # Keep as slug for template comparison
         }
+
+        # Load More context
+        page_obj = context.get("page_obj")
+        if page_obj:
+            context["has_more"] = page_obj.has_next()
+            context["next_page"] = (
+                page_obj.next_page_number() if page_obj.has_next() else None
+            )
+            context["total_count"] = page_obj.paginator.count
+            context["loaded_count"] = page_obj.end_index()
+            context["remaining_count"] = max(
+                0, page_obj.paginator.count - page_obj.end_index()
+            )
 
         return context
 

@@ -960,6 +960,20 @@ table.detail td {
     /* Content inherits panel padding */
 }
 
+/* Reserve space for filter panel contents to prevent layout shift */
+.year-panel .filter-panel-content {
+    min-height: 190px;
+}
+
+.platform-panel .filter-panel-content {
+    min-height: 270px;
+}
+
+.genre-panel .filter-panel-content {
+    /* Toggle (40px) + gap (12px) + columns (520px) = 572px + buffer */
+    min-height: 575px;
+}
+
 /* Helper text styling within panels */
 .filter-panel .filter-help {
     font-size: 0.75rem;
@@ -1049,6 +1063,8 @@ table.detail td {
 .year-grid-wrapper {
     user-select: none;
     -webkit-user-select: none;
+    /* Reserve space for ~6 decades to prevent layout shift on load */
+    min-height: 190px;
 }
 
 .year-grid {
@@ -1056,6 +1072,8 @@ table.detail td {
     flex-direction: column;
     gap: 2px;
     font-size: 0.75rem;
+    /* Reserve space for ~6 decades (28px each + 2px gaps) to prevent layout shift on load */
+    min-height: 180px;
 }
 
 .year-grid-row {
@@ -1528,6 +1546,30 @@ a.platform-family-icon.mdi {
 
 .platform-family-icon:hover {
     color: #fff;
+}
+
+/* SVG platform icon in game rows (e.g., Sega) */
+a.platform-family-icon:not(.mdi) {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.game-column-platforms .platform-svg-icon {
+    height: 1.45rem;
+    width: 1.45rem;
+    color: #888 !important;  /* Match MDI icon color - use color (not fill) because SVG path uses fill="currentColor" */
+    transform: none !important;  /* Override scale from filter panel styles */
+}
+
+.game-column-platforms .platform-svg-icon use {
+    transform: none !important;
+}
+
+.game-column-platforms .platform-family-icon:hover .platform-svg-icon {
+    color: #fff !important;
 }
 
 /* Game year - dimmed to let title stand out */
@@ -2046,6 +2088,8 @@ a.platform-family-icon.mdi {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    /* Reserve space for Big 6 buttons + accordions to prevent layout shift */
+    min-height: 230px;
 }
 
 /* Container for Big Five buttons and overlay dropdown */
@@ -2059,15 +2103,45 @@ a.platform-family-icon.mdi {
     grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
     align-items: start;
+    /* Reserve space for 2 rows of 3 buttons (60px each + gap) to prevent layout shift */
+    min-height: 130px;
 }
 
 .platform-brand-group {
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
-.platform-brand-group.is-expanded {
-    grid-column: 1 / -1;
+/* Wrapper just for button styling - stays in place */
+.platform-brand-wrapper {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow: visible;
+}
+
+/* When expanded, adjust border for connection to dropdown */
+.platform-brand-wrapper.is-expanded {
+    border-color: var(--color-text-muted);
+    border-radius: 6px 6px 0 0;
+    border-bottom: none;
+    z-index: 101;
+    position: relative;
+}
+
+/* Cover the dropdown's top border under the button to create visual connection */
+.platform-brand-wrapper.is-expanded::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--color-bg-card);
+    z-index: 102;
 }
 
 .platform-brand-btn-row {
@@ -2075,32 +2149,15 @@ a.platform-family-icon.mdi {
     gap: 0;
 }
 
-.platform-brand-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    padding: 0.5rem 0.25rem;
-    background-color: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    border-radius: 6px 0 0 6px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    position: relative;
-    min-height: 60px;
-    flex: 1;
-}
-
+/* Expand button on LEFT side - no border (wrapper has border) */
 .platform-brand-expand {
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0 0.35rem;
-    background-color: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    border-left: none;
-    border-radius: 0 6px 6px 0;
+    background-color: transparent;
+    border: none;
+    border-right: 1px solid var(--color-border);
     cursor: pointer;
     transition: all var(--transition-fast);
     color: var(--color-text-muted);
@@ -2112,31 +2169,88 @@ a.platform-family-icon.mdi {
     color: var(--color-text);
 }
 
-.platform-brand-btn:hover {
-    background-color: var(--color-bg-hover);
-    border-color: var(--color-text-muted);
+/* Chevron rotation like accordions */
+.platform-brand-expand .mdi {
+    transition: transform var(--transition-normal);
 }
 
-.platform-brand-btn:hover + .platform-brand-expand {
-    border-color: var(--color-text-muted);
+.platform-brand-expand .mdi.is-rotated {
+    transform: rotate(90deg);
+}
+
+/* Hide divider when expanded - cleaner continuous look */
+.platform-brand-wrapper.is-expanded .platform-brand-expand {
+    border-right-color: transparent;
+}
+
+/* Main button - no border (wrapper has border) */
+.platform-brand-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.25rem;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    min-height: 60px;
+    flex: 1;
+}
+
+.platform-brand-btn:hover {
+    background-color: var(--color-bg-hover);
 }
 
 .platform-brand-btn.is-active {
     background-color: var(--color-success-dark, #1d4a2a);
-    border-color: var(--color-success, #48c774);
 }
 
-.platform-brand-btn.is-active + .platform-brand-expand {
+.platform-brand-wrapper:has(.platform-brand-btn.is-active) {
     border-color: var(--color-success, #48c774);
 }
 
 .platform-brand-btn.is-partial {
     background-color: var(--color-bg-hover);
+}
+
+.platform-brand-wrapper:has(.platform-brand-btn.is-partial) {
     border-color: var(--color-info, #3e8ed0);
 }
 
-.platform-brand-btn.is-partial + .platform-brand-expand {
-    border-color: var(--color-info, #3e8ed0);
+/* Dropdown content - inside wrapper, directly connected to button, extends to full width */
+.platform-brand-dropdown {
+    position: absolute;
+    top: 100%;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-text-muted);
+    border-radius: 0 0 6px 6px;
+    padding: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+}
+
+/* Column 0 (left): extend right to container edge */
+.platform-brand-group[data-column="0"] .platform-brand-dropdown {
+    left: -1px;
+    right: calc(-200% - 1rem - 2px);
+}
+
+/* Column 1 (middle): extend both directions */
+.platform-brand-group[data-column="1"] .platform-brand-dropdown {
+    left: calc(-100% - 0.5rem - 2px);
+    right: calc(-100% - 0.5rem - 2px);
+}
+
+/* Column 2 (right): extend left to container edge */
+.platform-brand-group[data-column="2"] .platform-brand-dropdown {
+    left: calc(-200% - 1rem - 2px);
+    right: -1px;
 }
 
 .platform-brand-icon {
@@ -2172,38 +2286,6 @@ use[href$="platform-sega"] {
     fill: var(--color-text);
 }
 
-/* Expanded content panel for Big Five - Overlay dropdown */
-.platform-brand-content {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background-color: var(--color-bg-card);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
-    margin-top: 0.25rem;
-}
-
-.platform-brand-content-header {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.4rem 0.6rem;
-    background-color: rgba(62, 142, 208, 0.1);
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--color-text);
-}
-
-.platform-brand-content-items {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem 0.5rem 1.5rem;
-}
-
 .platform-brand-name {
     font-size: 0.7rem;
     font-weight: 600;
@@ -2222,7 +2304,7 @@ use[href$="platform-sega"] {
     position: absolute;
     top: 4px;
     right: 4px;
-    background-color: var(--color-info, #3e8ed0);
+    background-color: #5cb5f7;
     color: #fff;
     font-size: 0.6rem;
     font-weight: 600;
@@ -2234,6 +2316,40 @@ use[href$="platform-sega"] {
 
 .platform-brand-btn.is-active .platform-brand-count {
     background-color: var(--color-success, #48c774);
+}
+
+/* Selected but no results - very dimmed */
+.platform-brand-btn.is-active.has-zero-results,
+.platform-brand-btn.is-partial.has-zero-results {
+    opacity: 0.15;
+}
+
+/* Platform checkbox - selected but no results */
+.platform-checkbox.has-zero-results {
+    opacity: 0.15;
+}
+
+/* Unavailable platform - hide without layout shift */
+.platform-checkbox.is-unavailable {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Empty platform group - hide without layout shift */
+.platform-brand-group.is-empty {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Platform accordion - selected but no results */
+.platform-accordion-header.has-zero-results {
+    opacity: 0.15;
+}
+
+/* Empty platform accordion - hide without layout shift */
+.platform-accordion.is-empty {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 /* Platform Search */
@@ -2261,6 +2377,8 @@ use[href$="platform-sega"] {
     flex-direction: column;
     gap: 4px;
     margin-top: 0.5rem;
+    /* Reserve space for 3 accordions (36px + 2px border each = 38px × 3 + 8px gaps = 122px) */
+    min-height: 124px;
 }
 
 /* NES Cartridge-style accordion - matches Big Five buttons */
@@ -2269,42 +2387,115 @@ use[href$="platform-sega"] {
     background-color: var(--color-bg-card);
     border: 1px solid var(--color-border);
     border-radius: 6px;
-    overflow: hidden;
+    overflow: visible;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .platform-accordion:hover {
-    transform: translateY(-1px);
     border-color: var(--color-text-muted);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-/* Accordion header - matches Big Five button styling */
+/* When accordion is expanded, white border like Big 6 */
+.platform-accordion.is-expanded {
+    border-color: var(--color-text-muted);
+    z-index: 100;
+    border-radius: 6px 6px 0 0;
+    border-bottom-color: transparent;
+}
+
+/* Fully selected state - green border like Big 6 */
+.platform-accordion:has(.platform-accordion-header.is-fully-selected) {
+    border-color: var(--color-success, #48c774);
+}
+
+/* Partial selection state - blue border */
+.platform-accordion:has(.platform-accordion-header.has-selection:not(.is-fully-selected)) {
+    border-color: var(--color-info, #3e8ed0);
+}
+
+/* Accordion header - two-button layout like Big 6 */
 .platform-accordion-header {
     display: flex;
+    align-items: stretch;
+    /* Fixed height to prevent layout shift when icons load */
+    min-height: 36px;
+}
+
+/* Expand button on LEFT side - toggles dropdown */
+.platform-accordion-expand {
+    display: flex;
     align-items: center;
+    justify-content: center;
+    padding: 0 0.5rem;
+    background-color: transparent;
+    border: none;
+    border-right: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.platform-accordion-expand:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text);
+}
+
+/* Chevron rotation */
+.platform-accordion-expand .mdi {
+    transition: transform var(--transition-normal);
+}
+
+.platform-accordion-expand .mdi.is-rotated {
+    transform: rotate(90deg);
+}
+
+/* Hide divider when expanded - cleaner continuous look */
+.platform-accordion-header.is-expanded .platform-accordion-expand {
+    border-right-color: transparent;
+}
+
+/* Main button - selects all in group */
+.platform-accordion-btn {
+    display: flex;
+    align-items: center;
+    flex: 1;
     padding: 0.5rem 0.6rem;
+    background-color: transparent;
+    border: none;
     cursor: pointer;
     gap: 0.35rem;
     transition: background-color var(--transition-fast);
+    text-align: left;
 }
 
-.platform-accordion-header:hover {
+.platform-accordion-btn:hover {
     background-color: var(--color-bg-hover);
 }
 
-.platform-accordion-header.has-selection {
+/* Selection states on main button */
+.platform-accordion-header.has-selection .platform-accordion-btn {
     background-color: rgba(62, 142, 208, 0.1);
 }
 
-.platform-accordion-header .icon {
-    color: var(--color-text-muted);
-    transition: transform var(--transition-normal);
-    font-size: 0.85rem;
+.platform-accordion-header.is-fully-selected .platform-accordion-btn {
+    background-color: var(--color-success-dark, #1d4a2a);
 }
 
-.platform-accordion-header .icon.is-rotated {
-    transform: rotate(90deg);
+/* Category icon - fixed dimensions */
+.platform-accordion-btn > .mdi {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+}
+
+.platform-accordion-btn:hover > .mdi,
+.platform-accordion-header.has-selection .platform-accordion-btn > .mdi {
+    color: var(--color-text);
 }
 
 .platform-accordion-name {
@@ -2313,37 +2504,89 @@ use[href$="platform-sega"] {
     flex: 1;
 }
 
+/* Count badge - hidden by default, shown when selected (like Big 6) */
 .platform-accordion-count {
-    font-size: 0.7rem;
-    color: var(--color-text-muted);
-    font-weight: 500;
+    display: none;
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 0.1rem 0.3rem;
+    border-radius: 8px;
+    min-width: 14px;
+    text-align: center;
+    background-color: #5cb5f7;
+    color: #fff;
 }
 
-/* Expanded content area */
+/* Show count when has selection */
+.platform-accordion-header.has-selection .platform-accordion-count {
+    display: inline-block;
+}
+
+/* Green badge when fully selected */
+.platform-accordion-header.is-fully-selected .platform-accordion-count {
+    background-color: var(--color-success, #48c774);
+}
+
+/* Expanded content area - positioned to overlay siblings */
 .platform-accordion-content {
-    padding: 0.25rem 0.5rem 0.5rem 1.5rem;
+    position: absolute;
+    top: 100%;
+    left: -1px;
+    right: -1px;
+    padding: 0.25rem 0 0.5rem 0;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-text-muted);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-/* Platform Checkbox */
+/* Platform Selectable Row - modern pattern (no visible checkbox) */
 .platform-checkbox {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.2rem 0;
+    justify-content: space-between;
+    padding: 0.4rem 0.75rem 0.4rem 1.5rem;
     cursor: pointer;
     font-size: 0.85rem;
+    color: var(--color-text-muted);
+    transition: all var(--transition-fast);
 }
 
 .platform-checkbox:hover {
+    background-color: var(--color-bg-hover);
     color: var(--color-text);
 }
 
+/* Hide the actual checkbox visually but keep for accessibility */
 .platform-checkbox input[type="checkbox"] {
-    margin: 0;
-    cursor: pointer;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+/* Selected state - highlight row with accent color */
+.platform-checkbox:has(input:checked) {
+    background-color: rgba(62, 142, 208, 0.15);
+    color: var(--color-info, #3e8ed0);
+    font-weight: 500;
+}
+
+/* Add checkmark icon on right when selected */
+.platform-checkbox:has(input:checked)::after {
+    content: '\F012C';
+    font-family: 'Material Design Icons';
+    font-size: 1rem;
+    color: var(--color-info, #3e8ed0);
+}
+
+.platform-checkbox:has(input:checked):hover {
+    background-color: rgba(62, 142, 208, 0.25);
 }
 
 .platform-checkbox .platform-icon {
@@ -2546,6 +2789,9 @@ use[href$="platform-sega"] {
     border-radius: 6px;
     padding: 2px;
     gap: 2px;
+    /* Fixed height (38px + 2px border = 40px total) to prevent layout shift */
+    min-height: 40px;
+    box-sizing: border-box;
 }
 
 .genre-logic-option {
@@ -2577,6 +2823,13 @@ use[href$="platform-sega"] {
 
 .genre-logic-icon {
     font-size: 0.9rem;
+    /* Fixed dimensions to prevent emoji rendering shifts */
+    width: 1rem;
+    height: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* Selection summary bar */
@@ -2617,6 +2870,8 @@ use[href$="platform-sega"] {
     grid-template-columns: repeat(5, 1fr);
     gap: 0.4rem;
     width: 100%;
+    /* Reserve space: count 22px + gap 5px + header 44px + gap 5px + items 444px = 520px */
+    min-height: 520px;
 }
 
 .genre-column {
@@ -2626,6 +2881,14 @@ use[href$="platform-sega"] {
     min-width: 0; /* Allow columns to shrink */
 }
 
+/* Genre column count - reserve space for "(0/8)" style text */
+.genre-column-count {
+    min-width: 4rem;
+    /* Height for .is-size-7 (12px) with ~1.4 line-height ≈ 17px */
+    min-height: 1.5em;
+    text-align: center;
+}
+
 /* Column header with category name - clickable label style */
 .genre-column-header {
     display: flex;
@@ -2633,7 +2896,8 @@ use[href$="platform-sega"] {
     justify-content: flex-start;
     gap: 0.35rem;
     padding: 0.25rem 0.1rem;
-    min-height: 2.5rem; /* Fixed height so all headers align at bottom */
+    /* Fixed height for 2-line text (e.g., "Arcade & Social") + padding + border */
+    min-height: 2.75rem;
     background: transparent;
     border: none;
     border-bottom: 2px solid color-mix(in srgb, var(--group-color) 40%, transparent);
@@ -2756,6 +3020,29 @@ use[href$="platform-sega"] {
 .genre-tile:hover .genre-name,
 .genre-tile.is-selected .genre-name {
     color: var(--color-text);
+}
+
+/* Selected but no results - very dimmed, still clickable to deselect */
+.genre-tile.is-selected.has-zero-results {
+    opacity: 0.15;
+}
+
+/* Unavailable genre - hide without layout shift */
+.genre-tile.is-unavailable {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Empty category - hide without layout shift */
+.genre-column.is-empty {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Fade out transition for hiding */
+.transition-fade-out {
+    opacity: 0;
+    transition: opacity 150ms ease-out;
 }
 
 /* Responsive - stack columns on mobile */

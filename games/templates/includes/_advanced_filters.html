@@ -166,6 +166,28 @@
                             console.error('Error parsing year counts:', e);
                         }
                     }
+
+                    // Update genre filter with faceted counts
+                    const genreCountsEl = document.getElementById('genre-counts-update');
+                    if (genreCountsEl) {
+                        try {
+                            const genreCounts = JSON.parse(genreCountsEl.textContent);
+                            window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: genreCounts }));
+                        } catch (e) {
+                            console.error('Error parsing genre counts:', e);
+                        }
+                    }
+
+                    // Update platform filter with faceted counts
+                    const platformCountsEl = document.getElementById('platform-counts-update');
+                    if (platformCountsEl) {
+                        try {
+                            const platformCounts = JSON.parse(platformCountsEl.textContent);
+                            window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: platformCounts }));
+                        } catch (e) {
+                            console.error('Error parsing platform counts:', e);
+                        }
+                    }
                 } else {
                     const contentEl = document.getElementById('content');
                     if (contentEl) {
