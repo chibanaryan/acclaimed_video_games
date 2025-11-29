@@ -20,6 +20,7 @@
          isDraggingDecade: false,  // Track if drag started from decade label
          isDraggingToDecade: false,  // Track if currently hovering over a decade
          lastClicked: null,  // Track last clicked year for shift+click ranges
+         wasAlreadySelected: false,  // Track if clicked item was already selected (for toggle)
 
          init() {
              // Load year counts from JSON
@@ -158,12 +159,18 @@
              if (event && event.shiftKey && this.lastClicked !== null) {
                  filters.start = Math.min(this.lastClicked, decadeStart);
                  filters.end = Math.max(this.lastClicked, decadeStart + 9);
+                 if (initialized) debouncedFilterUpdate();
+             } else if (this.wasAlreadySelected) {
+                 // Toggle off if clicking already selected decade
+                 filters.start = {{ min_year }};
+                 filters.end = {{ max_year }};
+                 this.lastClicked = null;
+                 this.wasAlreadySelected = false;
+                 if (initialized) debouncedFilterUpdate();
              } else {
-                 filters.start = decadeStart;
-                 filters.end = decadeStart + 9;
+                 // Just update lastClicked (endDrag already set the filters)
                  this.lastClicked = decadeStart;
              }
-             if (initialized) debouncedFilterUpdate();
          },
 
          startDragDecade(decadeStart, event) {
@@ -174,6 +181,8 @@
              this.dragStart = decadeStart;
              this.dragAnchorEnd = decadeStart + 9;
              this.dragEnd = decadeStart + 9;
+             // Check if this decade was already selected (for toggle on click)
+             this.wasAlreadySelected = (filters.start === decadeStart && filters.end === decadeStart + 9);
              this.dispatchPreview();
          },
 
@@ -195,12 +204,18 @@
              if (event && event.shiftKey && this.lastClicked !== null) {
                  filters.start = Math.min(this.lastClicked, year);
                  filters.end = Math.max(this.lastClicked, year);
+                 if (initialized) debouncedFilterUpdate();
+             } else if (this.wasAlreadySelected) {
+                 // Toggle off if clicking already selected year
+                 filters.start = {{ min_year }};
+                 filters.end = {{ max_year }};
+                 this.lastClicked = null;
+                 this.wasAlreadySelected = false;
+                 if (initialized) debouncedFilterUpdate();
              } else {
-                 filters.start = year;
-                 filters.end = year;
+                 // Just update lastClicked (endDrag already set the filters)
                  this.lastClicked = year;
              }
-             if (initialized) debouncedFilterUpdate();
          },
 
          startDrag(year, event) {
@@ -209,6 +224,8 @@
              this.dragStart = year;
              this.dragAnchorEnd = year;
              this.dragEnd = year;
+             // Check if this year was already selected (for toggle on click)
+             this.wasAlreadySelected = (filters.start === year && filters.end === year);
              this.dispatchPreview();
          },
 

@@ -186,18 +186,18 @@ header,
    Link Styling - Modern Hover Effects
    ========================================================================== */
 
-/* Default link styling with smooth transition */
+/* Default link styling - blue for text content links (readable against body text) */
 a {
-    color: var(--color-info);
+    color: #5dade2;
     transition: color var(--transition-fast), text-shadow var(--transition-fast);
 }
 
 a:hover {
-    color: #fff;
-    text-shadow: 0 0 8px rgba(255, 213, 79, 0.25);
+    color: #85c1e9;
+    text-shadow: 0 0 8px rgba(93, 173, 226, 0.25);
 }
 
-/* Title links - game names, etc */
+/* Title links - game names, headings - use white/off-white for prominence */
 .title a,
 .game-name a,
 h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
@@ -210,6 +210,16 @@ h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
 h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover {
     color: #fff;
     text-shadow: 0 0 10px rgba(255, 213, 79, 0.3);
+}
+
+/* Game list links - white for game titles (high contrast on dark rows) */
+.game-row a {
+    color: var(--color-info);
+}
+
+.game-row a:hover {
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 213, 79, 0.25);
 }
 
 /* ==========================================================================
@@ -2034,15 +2044,6 @@ a.platform-family-icon.mdi {
 /* Fix timestamp contrast on dark backgrounds */
 .has-text-grey-dark {
     color: #9a9a9a !important;
-}
-
-/* Fix post content link contrast on dark box backgrounds */
-.box a:not(.button) {
-    color: #5dade2;
-}
-
-.box a:not(.button):hover {
-    color: #85c1e9;
 }
 
 /* ==========================================================================
