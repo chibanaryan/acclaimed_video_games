@@ -20,16 +20,12 @@
         _debouncedFilter: null,
         _debouncedDisplay: null,
         init() {
-            // Ensure genre_option has a default value (any = Match Any)
             if (!this.filters.genre_option || this.filters.genre_option === '') {
                 this.filters.genre_option = 'any';
             }
-            // Normalize rank_display to filtered
             this.filters.rank_display = 'filtered';
-            // Mark as initialized after a short delay to prevent initial watcher triggers
             setTimeout(() => { this.initialized = true; }, 100);
 
-            // Create timing-controlled handlers using utils.js
             this._debouncedUpdate = debounce(() => this.performUpdate({
                 partial: true, historyMethod: 'pushState'
             }), 300);
@@ -46,7 +42,6 @@
                 partial: true, historyMethod: 'pushState', preservePage: true
             }), 150);
 
-            // Restore scroll position if returning from another page
             const savedScrollPos = sessionStorage.getItem('gameListScrollPos');
             if (savedScrollPos) {
                 setTimeout(() => {
@@ -55,12 +50,10 @@
                 }, 100);
             }
 
-            // Save scroll position before navigating away (for back button restoration)
             const saveScrollPosition = () => {
                 sessionStorage.setItem('gameListScrollPos', window.scrollY.toString());
             };
 
-            // Listen for clicks on game links to save scroll position
             document.addEventListener('click', (e) => {
                 const link = e.target.closest(`a[href*='/game/']`);
                 if (link) {
@@ -68,7 +61,6 @@
                 }
             });
 
-            // Handle browser back/forward button to sync state from URL
             window.addEventListener('popstate', (event) => {
                 const params = new URLSearchParams(window.location.search);
                 this.filters.q = params.get('q') || '';
@@ -88,10 +80,7 @@
                 this.updateResults();
             });
 
-            // Initialize Load More button handler
             setTimeout(() => { if (typeof initLoadMore === 'function') initLoadMore(); }, 150);
-
-            // Initialize year preview highlighting for drag selection
             if (typeof initYearPreview === 'function') initYearPreview();
         },
         handleFilterChange(type, items) {
@@ -117,20 +106,17 @@
         resetYears() {
             this.filters.start = {{ min_year }};
             this.filters.end = {{ max_year }};
-            // Dispatch event to update the year grid component
             this.$dispatch('year-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
         resetPlatforms() {
             this.filters.platforms = [];
-            // Dispatch event to update the platform filter component
             this.$dispatch('platforms-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
         resetGenres() {
             this.filters.genres = [];
             this.filters.genre_option = 'any';
-            // Dispatch event to update the genre filter component
             this.$dispatch('genres-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
@@ -153,10 +139,8 @@
                         { selector: '#game-results-container', targetId: 'game-results-container' }
                     ]);
                     updateDomElements(content);
-                    // Reinitialize Load More button after DOM update
                     if (typeof initLoadMore === 'function') initLoadMore();
 
-                    // Update year grid heatmap with filtered counts
                     const yearCountsEl = document.getElementById('year-counts-update');
                     if (yearCountsEl) {
                         try {
@@ -167,7 +151,6 @@
                         }
                     }
 
-                    // Update genre filter with faceted counts
                     const genreCountsEl = document.getElementById('genre-counts-update');
                     if (genreCountsEl) {
                         try {
@@ -178,7 +161,6 @@
                         }
                     }
 
-                    // Update platform filter with faceted counts
                     const platformCountsEl = document.getElementById('platform-counts-update');
                     if (platformCountsEl) {
                         try {
@@ -235,14 +217,12 @@
          if ($event.detail && typeof $event.detail === 'object' && !Array.isArray($event.detail)) {
              this.filters = $event.detail;
          } else if (Array.isArray($event.detail)) {
-             // Handle multi-select updates (genres/platforms)
          } else if (typeof $event.detail === 'string' || $event.detail === null) {
              this.filters.q = $event.detail || '';
          }
     "
      @change.window="
          if (Array.isArray($event.detail)) {
-             // Handle multi-select changes (genres/platforms)
          } else if (typeof $event.detail === 'string' || $event.detail === null) {
              this.filters.q = $event.detail || '';
          }
@@ -250,27 +230,26 @@
 
     {# Page heading above the two-column layout #}
     <div id="search-heading" class="mb-4">
-        <div class="is-flex is-justify-content-space-between is-align-items-center mb-1">
-            <h1 class="title mb-0" id="search-title">
+        <div class="flex justify-between items-center mb-1">
+            <h1 class="title text-2xl" id="search-title">
                 {{ filter_title|default:"Advanced Search" }}
             </h1>
         </div>
         {% if genre_subtitle %}
-            <p class="is-size-6 has-text-weight-semibold has-text-grey-dark" id="genre-subtitle">
+            <p class="text-sm font-semibold text-text-muted" id="genre-subtitle">
                 {{ genre_subtitle }}
             </p>
         {% endif %}
-        {% load humanize %}
-        <div class="is-size-7 has-text-grey result-summary has-text-right">
+        <div class="result-summary text-right">
             {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
         </div>
     </div>
 
-        {# Two-column layout: filters sidebar on left, results on right #}
-        <div class="columns advanced-layout filters-on">
-            {# Left sidebar - Filters (hidden on mobile) #}
-            <div class="column is-hidden-mobile filters-collapsible is-expanded">
-                <div class="filters-sidebar">
+    {# Two-column layout: filters sidebar on left, results on right #}
+    <div class="advanced-layout">
+        {# Left sidebar - Filters (hidden on mobile) #}
+        <div class="hidden md:block">
+            <div class="filters-sidebar">
                 {# Header with navigation buttons #}
                 <div class="filters-header">
                     <div class="filters-header-title">
@@ -279,27 +258,23 @@
                         </span>
                         <h2>Filters</h2>
                     </div>
-                    <div class="buttons are-small mb-0">
+                    <div class="flex gap-1">
                         <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
-                           class="button is-small nes-download-button"
+                           class="nes-download-button"
                            title="Download CSV">
-                            <span class="icon is-small">
-                                <span class="mdi mdi-download"></span>
-                            </span>
+                            <span class="mdi mdi-download"></span>
                             <span>CSV</span>
                         </a>
                         <a href="{% url 'games-list' %}"
-                           class="button is-small nes-reset-button">
-                            <span class="icon is-small">
-                                <span class="mdi mdi-undo"></span>
-                            </span>
+                           class="nes-reset-button">
+                            <span class="mdi mdi-undo"></span>
                             <span>Reset</span>
                         </a>
                     </div>
                 </div>
 
                 {# Search input #}
-                <div class="filter-panel search-panel">
+                <div class="filter-panel">
                     <div class="filter-panel-header">
                         <span class="filter-panel-icon">
                             <span class="mdi mdi-magnify"></span>
@@ -312,7 +287,7 @@
                 </div>
 
                 {# Year range heatmap grid #}
-                <div class="filter-panel year-panel">
+                <div class="filter-panel">
                     <div class="filter-panel-header">
                         <span class="filter-panel-icon">
                             <span class="mdi mdi-calendar-range"></span>
@@ -332,8 +307,8 @@
                 </div>
 
                 {% if platforms %}
-                {# Platforms filter - Tiered component #}
-                <div class="filter-panel platform-panel">
+                {# Platforms filter #}
+                <div class="filter-panel">
                     <div class="filter-panel-header">
                         <span class="filter-panel-icon">
                             <span class="mdi mdi-controller"></span>
@@ -353,8 +328,8 @@
                 {% endif %}
 
                 {% if genres %}
-                {# Genres filter - Inventory Grid Style #}
-                <div class="filter-panel genre-panel">
+                {# Genres filter #}
+                <div class="filter-panel">
                     <div class="filter-panel-header">
                         <span class="filter-panel-icon">
                             <span class="mdi mdi-gamepad-variant"></span>
@@ -376,12 +351,11 @@
         </div>
 
         {# Mobile filters (shown only on mobile) #}
-        <div class="column is-hidden-tablet">
-
+        <div class="md:hidden">
             {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
 
-            <div class="mb-3 mt-3">
-                <div class="has-text-weight-bold mb-2">Release Year</div>
+            <div class="my-3">
+                <div class="font-bold mb-2">Release Year</div>
                 <div class="dual-range-container"
                      :style="'--range-start: ' + (((filters.start || {{ min_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100) + '; --range-end: ' + (((filters.end || {{ max_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100)">
                     <span class="dual-range-label dual-range-label-start"
@@ -419,10 +393,11 @@
 
             {% if genres %}
             <div class="mb-3">
-                <div class="has-text-weight-bold mb-2">Genres</div>
+                <div class="font-bold mb-2">Genres</div>
                 <select multiple
                         id="filter-genres-mobile"
                         name="genres"
+                        class="select-dark w-full h-32"
                         @change="filters.genres = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
                     <template x-for="genre in genres" :key="genre.id">
                         <option :value="genre.id"
@@ -435,10 +410,11 @@
 
             {% if platforms %}
             <div class="mb-3">
-                <div class="has-text-weight-bold mb-2">Platforms</div>
+                <div class="font-bold mb-2">Platforms</div>
                 <select multiple
                         id="filter-platforms-mobile"
                         name="platforms"
+                        class="select-dark w-full h-32"
                         @change="filters.platforms = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
                     <template x-for="platform in platforms" :key="platform.id">
                         <option :value="platform.id"
@@ -451,7 +427,7 @@
         </div>
 
         {# Right column - Results #}
-        <div class="column main-panel">
+        <div class="main-panel">
             <div id="game-results-container">
                 {% include 'games/includes/_game_list_results.html' %}
             </div>

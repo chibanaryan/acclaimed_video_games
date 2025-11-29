@@ -3,7 +3,7 @@
 {% load game_filters %}
 {% if lists %}
 {# Desktop table view #}
-<table class="table is-fullwidth is-hidden-mobile">
+<table class="table hidden md:table">
     <thead>
         <tr>
             <th>Publication</th>
@@ -33,15 +33,15 @@
 </table>
 
 {# Mobile card view #}
-<div id="list-mobile-container" class="is-hidden-tablet">
+<div id="list-mobile-container" class="md:hidden">
     {% for list in lists %}
-    <div class="list-row list-item">
+    <div class="list-row list-item border-b border-border/50 py-3">
         <div>
             <strong>{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</strong>
         </div>
         <div>
             {% if list.url %}
-            <a href="{{ list.url }}" target="_blank">
+            <a href="{{ list.url }}" target="_blank" class="text-info hover:text-white">
                 {{ list.name }}
             </a>
             {% else %}
@@ -49,11 +49,11 @@
             {% endif %}
         </div>
         <div>
-            <span class="has-text-weight-semibold">Year:</span>
+            <span class="font-semibold">Year:</span>
             {{ list.year }}
         </div>
         <div>
-            <span class="has-text-weight-semibold">Type:</span>
+            <span class="font-semibold">Type:</span>
             {{ list.get_type_display }}
         </div>
     </div>
@@ -61,15 +61,13 @@
 </div>
 
 {% if has_more %}
-<div id="load-more-container" class="has-text-centered mt-5 mb-5">
+<div id="load-more-container" class="text-center mt-5 mb-5">
     <button type="button"
-            class="button is-medium load-more-button"
+            class="load-more-button"
             data-next-page="{{ next_page }}"
             data-total="{{ total_count }}"
             data-loaded="{{ loaded_count }}">
-        <span class="icon is-small">
-            <span class="mdi mdi-plus-circle-outline"></span>
-        </span>
+        <span class="mdi mdi-plus-circle-outline"></span>
         <span class="load-more-text">Load More ({{ remaining_count|intcomma }} remaining)</span>
     </button>
 </div>

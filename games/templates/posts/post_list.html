@@ -11,53 +11,37 @@
 {% endfor %}
 
 {% if page_obj %}
-<div class="level">
-    <div class="level-left">
-        <div class="level-item">
-            {% if page_obj.has_previous %}
-                {% if page_obj.number == 2 %}
-                    <a href="{% url 'home' %}" class="button">
-                        <span class="icon">
-                            <span class="mdi mdi-chevron-double-left"></span>
-                        </span>
-                        <span>Return to home page</span>
-                    </a>
-                {% else %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="button">
-                        <span class="icon">
-                            <span class="mdi mdi-chevron-double-left"></span>
-                        </span>
-                        <span>Previous</span>
-                    </a>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
-    <div class="level-right">
-        <div class="level-item">
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="button">
-                    <span>Next</span>
-                    <span class="icon">
-                        <span class="mdi mdi-chevron-double-right"></span>
-                    </span>
+<div class="flex justify-between items-center mt-6">
+    <div>
+        {% if page_obj.has_previous %}
+            {% if page_obj.number == 2 %}
+                <a href="{% url 'home' %}" class="btn-ghost inline-flex items-center gap-2">
+                    <span class="mdi mdi-chevron-double-left"></span>
+                    <span>Return to home page</span>
+                </a>
+            {% else %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn-ghost inline-flex items-center gap-2">
+                    <span class="mdi mdi-chevron-double-left"></span>
+                    <span>Previous</span>
                 </a>
             {% endif %}
-        </div>
+        {% endif %}
+    </div>
+    <div>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn-ghost inline-flex items-center gap-2">
+                <span>Next</span>
+                <span class="mdi mdi-chevron-double-right"></span>
+            </a>
+        {% endif %}
     </div>
 </div>
 {% elif request.GET.offset %}
-<div class="level">
-    <div class="level-left">
-        <div class="level-item">
-            <a href="{% url 'home' %}" class="button">
-                <span class="icon">
-                    <span class="mdi mdi-chevron-double-left"></span>
-                </span>
-                <span>Return to home page</span>
-            </a>
-        </div>
-    </div>
+<div class="flex items-center mt-6">
+    <a href="{% url 'home' %}" class="btn-ghost inline-flex items-center gap-2">
+        <span class="mdi mdi-chevron-double-left"></span>
+        <span>Return to home page</span>
+    </a>
 </div>
 {% endif %}
 </div>

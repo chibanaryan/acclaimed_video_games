@@ -11,7 +11,7 @@
         "games": {% if games_data %}{{ games_data|tojson }}{% else %}[]{% endif %}
     }
     </script>
-    <h1 class="title">{{ developer.name }}</h1>
+    <h1 class="title text-2xl mb-4">{{ developer.name }}</h1>
     <div x-data="{
             aliases: [],
             allGames: [],
@@ -47,7 +47,7 @@
             }
          }">
         {% if developer.aliases.count > 1 %}
-        <h2>Including:</h2>
+        <h2 class="text-lg font-semibold text-white mb-2">Including:</h2>
         <ul class="mb-5">
             <template x-for="alias in aliases" :key="alias.id">
                 <li>
@@ -62,12 +62,12 @@
             </template>
         </ul>
         {% endif %}
-        <h2 class="subtitle is-4 mt-5">
+        <h2 class="subtitle text-xl mt-5 mb-3">
             <span x-text="filteredGames.length"></span> Game<span x-text="filteredGames.length === 1 ? '' : 's'"></span>
         </h2>
         <div>
             {% for game in games %}
-                <div x-show="isGameVisible({{ game.igdb_id|default:game.id }})" 
+                <div x-show="isGameVisible({{ game.igdb_id|default:game.id }})"
                      data-game-id="{{ game.igdb_id|default:game.id }}">
                     {% include 'games/includes/_game_row.html' with game=game show_rank=False show_rank_in_details=True %}
                 </div>

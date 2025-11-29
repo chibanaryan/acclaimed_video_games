@@ -2,38 +2,31 @@
 {# Props: value (current search value), placeholder (optional), show_submit_button (default: False), id (optional), name (optional) #}
 {# Uses Alpine.js for interactivity - operates within parent Alpine.js scope (expects filters.q) #}
 {# Note: No x-data scope to allow proper binding to parent's filters.q #}
-<div class="control is-flex is-fullwidth">
-    <div :class="{ 'has-addons': filters.q }" class="field is-fullwidth" style="width: 100%;">
-        <div class="control has-icons-left is-expanded" style="width: 100%;">
-            <span class="icon is-left">
-                <span class="mdi mdi-magnify"></span>
-            </span>
-            <input class="input custom-input is-fullwidth"
-                   style="background-color: rgb(20, 22, 26); border-color: rgb(53, 58, 70); color: rgb(235, 236, 240);"
-                   {% if id %}id="{{ id }}"{% endif %}
-                   {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}
-                   x-model="filters.q"
-                   @keyup.enter="updateUrlAndResults()"
-                   placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}"
-                   autocomplete="off">
-        </div>
-        <div class="control is-clear" x-show="filters.q" x-cloak>
-            <button @click="filters.q = ''"
-                    title="Clear search text"
-                    class="button">
-                <span class="icon">
-                    <span class="mdi mdi-close"></span>
-                </span>
-            </button>
-        </div>
-        {% if show_submit_button %}
-        <div class="control" x-show="filters.q" x-cloak>
-            <button @click="filters.q = filters.q"
-                    title="Submit search text"
-                    class="button">
-                Submit
-            </button>
-        </div>
-        {% endif %}
+<div class="flex w-full gap-1">
+    <div class="relative flex-1">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+            <span class="mdi mdi-magnify"></span>
+        </span>
+        <input class="input-dark w-full pl-10"
+               {% if id %}id="{{ id }}"{% endif %}
+               {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}
+               x-model="filters.q"
+               @keyup.enter="updateUrlAndResults()"
+               placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}"
+               autocomplete="off">
     </div>
+    <button x-show="filters.q" x-cloak
+            @click="filters.q = ''"
+            title="Clear search text"
+            class="px-3 py-2 bg-bg-card rounded text-text-body hover:text-white transition-colors">
+        <span class="mdi mdi-close"></span>
+    </button>
+    {% if show_submit_button %}
+    <button x-show="filters.q" x-cloak
+            @click="filters.q = filters.q"
+            title="Submit search text"
+            class="btn-ghost">
+        Submit
+    </button>
+    {% endif %}
 </div>

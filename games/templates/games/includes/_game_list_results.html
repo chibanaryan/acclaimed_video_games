@@ -21,29 +21,25 @@
 </div>
 
 {% if has_more and not max_loaded %}
-<div id="load-more-container" class="has-text-centered mt-5 mb-5">
+<div id="load-more-container" class="text-center my-8">
     <button type="button"
-            class="button is-medium load-more-button"
+            class="load-more-button"
             data-next-page="{{ next_page }}"
             data-total="{{ total_count }}"
             data-loaded="{{ loaded_count }}">
-        <span class="icon is-small">
-            <span class="mdi mdi-plus-circle-outline"></span>
-        </span>
+        <span class="mdi mdi-plus-circle-outline"></span>
         <span class="load-more-text">Load More ({{ remaining_count|intcomma }} remaining)</span>
     </button>
 </div>
 {% elif max_loaded %}
-<div id="load-more-container" class="has-text-centered mt-5 mb-5">
-    <div class="notification is-dark">
-        <span class="icon is-small mr-2">
-            <span class="mdi mdi-information-outline"></span>
-        </span>
+<div id="load-more-container" class="text-center my-8">
+    <div class="notification is-dark inline-flex items-center gap-2">
+        <span class="mdi mdi-information-outline"></span>
         Showing maximum of 1,000 results. Refine your filters to see more specific results.
     </div>
 </div>
 {% endif %}
 
 {% else %}
-<div class="has-text-grey">No games match your filters.</div>
+<div class="text-text-muted">No games match your filters.</div>
 {% endif %}

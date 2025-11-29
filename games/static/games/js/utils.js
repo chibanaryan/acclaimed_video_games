@@ -283,26 +283,26 @@ function clearLoading(elementId) {
 // ============================================================
 
 /**
- * Opens a Bulma modal
+ * Opens a modal
  * @param {string} modalId - Modal element ID
  */
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('is-active');
-        document.documentElement.classList.add('is-clipped');
+        document.documentElement.classList.add('overflow-hidden');
     }
 }
 
 /**
- * Closes a Bulma modal
+ * Closes a modal
  * @param {string} modalId - Modal element ID
  */
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('is-active');
-        document.documentElement.classList.remove('is-clipped');
+        document.documentElement.classList.remove('overflow-hidden');
     }
 }
 
@@ -520,7 +520,7 @@ async function handleLoadMore(event) {
  * @param {HTMLElement} button - The Load More button
  */
 function randomizeLoadMoreIcon(button) {
-    const iconSpan = button.querySelector('.icon .mdi');
+    const iconSpan = button.querySelector('.mdi');
     if (iconSpan) {
         // Remove default and all gaming icon classes, then add a random one
         iconSpan.classList.remove('mdi-plus-circle-outline');
@@ -555,15 +555,13 @@ function updateLoadMoreButton(button, meta) {
         if (meta.maxLoaded) {
             container.innerHTML = `
                 <div class="notification is-dark">
-                    <span class="icon is-small mr-2">
-                        <span class="mdi mdi-information-outline"></span>
-                    </span>
+                    <span class="mdi mdi-information-outline mr-2"></span>
                     Showing maximum of 1,000 results. Refine your filters to see more specific results.
                 </div>
             `;
         } else {
             container.innerHTML = `
-                <div class="has-text-grey-light has-text-centered">
+                <div class="text-text-muted text-center">
                     All ${meta.totalCount.toLocaleString()} results loaded
                 </div>
             `;

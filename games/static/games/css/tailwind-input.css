@@ -1,3 +1,65 @@
+@import "tailwindcss";
+
+/* Tell Tailwind where to find classes */
+@source "../../../templates/**/*.html";
+@source "../js/*.js";
+
+/* Custom theme (dark theme palette for Tailwind utilities) */
+@theme {
+  /* Background colors */
+  --color-bg-dark: #000;
+  --color-bg-header: #131313;
+  --color-bg-card: #242424;
+  --color-bg-input: rgb(20, 22, 26);
+  --color-bg-hover: rgba(255, 255, 255, 0.1);
+  --color-bg-row-hover: #363636;
+  --color-bg-modal: #1a1a1a;
+
+  /* Border colors */
+  --color-border: #4a4a4a;
+  --color-border-hover: #5a5a5a;
+  --color-border-input: rgb(53, 58, 70);
+
+  /* Text colors */
+  --color-text-primary: #fff;
+  --color-text-body: #ABB1BF;
+  --color-text-muted: #aaa;
+  --color-text-footer: #8b8b8b;
+
+  /* Accent colors */
+  --color-gold: #FFC107;
+  --color-info: #E0E0E0;
+  --color-primary: #3273dc;
+  --color-danger: #f14668;
+  --color-link: #485fc7;
+  --color-link-hover: #fff;
+
+  /* Max widths */
+  --width-container: 1440px;
+  --width-reading: 800px;
+
+  /* Fonts */
+  --font-display: 'Handjet', sans-serif;
+}
+
+/* Custom utilities */
+@layer utilities {
+  /* Transitions */
+  .transition-fast {
+    transition: all 0.15s ease;
+  }
+  .transition-normal {
+    transition: all 0.2s ease;
+  }
+}
+
+/* ==========================================================================
+   ORIGINAL MAIN.CSS - Acclaimed Games Stylesheet
+
+   This is the complete original CSS from the Bulma/Cyborg theme migration.
+   All component styles are preserved exactly as they were.
+   ========================================================================== */
+
 /**
  * Acclaimed Games - Main Stylesheet
  *

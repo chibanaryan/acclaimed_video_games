@@ -1,12 +1,14 @@
 {% load static %}
-<nav class="navbar" role="navigation" aria-label="main navigation" x-data="{ expanded: false, mobileSearchActive: false }">
-    <div class="navbar-brand">
-        <a href="{% url 'home' %}" class="navbar-item has-text-weight-bold pl-0" x-show="!mobileSearchActive">
-            <img src="{% static 'games/avg_logo_small.png' %}" alt="Acclaimed Games" width="401" height="263">
+<nav class="flex items-center gap-1 h-14" role="navigation" aria-label="main navigation" x-data="{ expanded: false, mobileSearchActive: false }">
+    {# Logo and brand #}
+    <div class="flex items-center gap-2">
+        <a href="{% url 'home' %}" class="flex items-center font-bold" x-show="!mobileSearchActive">
+            <img src="{% static 'games/avg_logo_small.png' %}" alt="Acclaimed Games" class="h-[30px] w-auto" width="401" height="263">
         </a>
-        {# Mobile search button - appears between logo and Top 1000 on mobile #}
-        <div class="navbar-item is-hidden-tablet mobile-search"
-             :class="{ 'is-expanded': mobileSearchActive }"
+
+        {# Mobile search - appears between logo and Top 1000 on mobile #}
+        <div class="md:hidden"
+             :class="{ 'flex-1': mobileSearchActive }"
              x-data="{
                  ...createSearchData('{% url 'api-games-search' %}', 5),
                  toggleInput() {
@@ -20,16 +22,14 @@
                  }
              }"
              x-init="window.addEventListener('reset-search-state', () => { reset(); mobileSearchActive = false; })">
-            <button @click="toggleInput()" x-show="!mobileSearchActive" class="button is-text" aria-label="Open search">
-                <span class="icon">
-                    <span class="mdi mdi-magnify mdi-24px" aria-hidden="true"></span>
-                </span>
+            <button @click="toggleInput()" x-show="!mobileSearchActive" class="p-2 text-text-body hover:text-white transition-colors" aria-label="Open search">
+                <span class="mdi mdi-magnify mdi-24px" aria-hidden="true"></span>
             </button>
-            <div x-show="mobileSearchActive" x-cloak class="results-wrapper">
-                <div class="field has-addons">
-                    <div class="control has-icons-left is-expanded">
-                        <label for="nav-search-mobile" class="is-sr-only">Search games</label>
-                        <span class="icon" aria-hidden="true">
+            <div x-show="mobileSearchActive" x-cloak class="relative w-full">
+                <div class="flex gap-1">
+                    <div class="relative flex-1">
+                        <label for="nav-search-mobile" class="sr-only">Search games</label>
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden="true">
                             <span class="mdi mdi-magnify"></span>
                         </span>
                         <input type="text"
@@ -41,146 +41,141 @@
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
                                @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                                placeholder="Search all games"
-                               class="input input-dark"
+                               class="input-dark w-full pl-10"
                                autocomplete="off">
                     </div>
-                    <div class="control">
-                        <a @click="mobileSearchActive = false; q = ''; results = []; showMenu = false" class="button" role="button" aria-label="Close search">
-                            <span class="icon" aria-hidden="true">
-                                <span class="mdi mdi-close"></span>
-                            </span>
-                        </a>
-                    </div>
+                    <button @click="mobileSearchActive = false; q = ''; results = []; showMenu = false" class="p-2 bg-bg-card rounded text-text-body hover:text-white" aria-label="Close search">
+                        <span class="mdi mdi-close" aria-hidden="true"></span>
+                    </button>
                 </div>
-                <div x-show="showMenu" class="results">
+                <div x-show="showMenu" class="absolute top-full left-0 right-0 mt-1 bg-bg-card rounded shadow-lg z-50 max-h-80 overflow-y-auto">
                     <template x-if="!q || q.trim().length < 2">
-                        <div class="dropdown-item">
+                        <div class="px-4 py-2 text-text-muted">
                             Please enter two or more characters
                         </div>
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                        <div class="dropdown-item">
+                        <div class="px-4 py-2 text-text-muted">
                             No results found
                         </div>
                     </template>
                     <template x-for="result in results" :key="result.id">
-                        <a :href="'/game/' + result.slug + '/'" class="result dropdown-item">
-                            <div class="media">
-                                <div class="media-left">
-                                    <figure class="image is-32x32">
-                                        <img :src="result.thumbnail" :alt="result.name" width="32" height="32">
-                                    </figure>
-                                </div>
-                                <div class="media-content">
-                                    <div class="has-text-weight-semibold" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
-                                    <div class="has-text-weight-light" x-text="'All time rank: ' + result.rank"></div>
-                                </div>
+                        <a :href="'/game/' + result.slug + '/'" class="flex items-center gap-3 px-4 py-2 hover:bg-bg-hover transition-colors">
+                            <img :src="result.thumbnail" :alt="result.name" class="w-8 h-8 object-cover rounded" width="32" height="32">
+                            <div>
+                                <div class="font-semibold text-text-primary" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
+                                <div class="text-sm text-text-muted" x-text="'All time rank: ' + result.rank"></div>
                             </div>
                         </a>
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
                         <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
-                           class="dropdown-item">
+                           class="block px-4 py-2 text-primary hover:bg-bg-hover transition-colors">
                             See all results &hellip;
                         </a>
                     </template>
                 </div>
             </div>
         </div>
-        {# Desktop search with dropdown - full search functionality #}
-        <div class="navbar-item is-hidden-mobile desktop-search"
+
+        {# Desktop search #}
+        <div class="hidden md:block relative"
              x-data="createSearchData('{% url 'api-games-search' %}', 5)"
              x-init="window.addEventListener('reset-search-state', () => reset())"
              @click.away="showMenu = false">
-            <div class="dropdown" :class="{ 'is-active': showMenu }">
-                <div class="field has-addons m-0">
-                    <div class="control has-icons-left">
-                        <label for="nav-search-desktop" class="is-sr-only">Search games</label>
-                        <span class="icon" aria-hidden="true">
-                            <span class="mdi mdi-magnify"></span>
-                        </span>
-                        <input type="text"
-                               id="nav-search-desktop"
-                               name="q"
-                               placeholder="Search all games"
-                               class="input input-dark"
-                               x-model="q"
-                               @focus="showMenu = true"
-                               @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
-                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
-                               autocomplete="off">
-                    </div>
-                    <div class="control" x-show="q && q.trim()" x-cloak>
-                        <a @click="q = ''; results = []; showMenu = false" class="button" role="button" aria-label="Clear search">
-                            <span class="icon" aria-hidden="true">
-                                <span class="mdi mdi-close"></span>
-                            </span>
-                        </a>
-                    </div>
+            <div class="flex gap-1">
+                <div class="relative">
+                    <label for="nav-search-desktop" class="sr-only">Search games</label>
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden="true">
+                        <span class="mdi mdi-magnify"></span>
+                    </span>
+                    <input type="text"
+                           id="nav-search-desktop"
+                           name="q"
+                           placeholder="Search all games"
+                           class="input-dark pl-10 w-64"
+                           x-model="q"
+                           @focus="showMenu = true"
+                           @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
+                           @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
+                           autocomplete="off">
                 </div>
-                <div class="dropdown-menu" x-show="showMenu">
-                    <div class="dropdown-content">
-                        <template x-if="!q || q.trim().length < 2">
-                            <div class="dropdown-item">
-                                Please enter two or more characters
-                            </div>
-                        </template>
-                        <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                            <div class="dropdown-item">
-                                No results found
-                            </div>
-                        </template>
-                        <template x-for="result in results" :key="result.id">
-                            <a :href="'/game/' + result.slug + '/'" class="result dropdown-item">
-                                <div class="media">
-                                    <div class="media-left">
-                                        <figure class="image is-32x32">
-                                            <img :src="result.thumbnail" :alt="result.name" width="32" height="32">
-                                        </figure>
-                                    </div>
-                                    <div class="media-content">
-                                        <div class="has-text-weight-semibold" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
-                                        <div class="has-text-weight-light" x-text="'All time rank: ' + result.rank"></div>
-                                    </div>
-                                </div>
-                            </a>
-                        </template>
-                        <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
-                            <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
-                               class="dropdown-item">
-                                See all results &hellip;
-                            </a>
-                        </template>
+                <button x-show="q && q.trim()" x-cloak @click="q = ''; results = []; showMenu = false" class="p-2 bg-bg-card rounded text-text-body hover:text-white" aria-label="Clear search">
+                    <span class="mdi mdi-close" aria-hidden="true"></span>
+                </button>
+            </div>
+            <div x-show="showMenu" class="absolute top-full left-0 mt-1 bg-bg-card rounded shadow-lg z-50 min-w-[320px] max-h-80 overflow-y-auto">
+                <template x-if="!q || q.trim().length < 2">
+                    <div class="px-4 py-2 text-text-muted">
+                        Please enter two or more characters
                     </div>
-                </div>
+                </template>
+                <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
+                    <div class="px-4 py-2 text-text-muted">
+                        No results found
+                    </div>
+                </template>
+                <template x-for="result in results" :key="result.id">
+                    <a :href="'/game/' + result.slug + '/'" class="flex items-center gap-3 px-4 py-2 hover:bg-bg-hover transition-colors">
+                        <img :src="result.thumbnail" :alt="result.name" class="w-8 h-8 object-cover rounded" width="32" height="32">
+                        <div>
+                            <div class="font-semibold text-text-primary" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
+                            <div class="text-sm text-text-muted" x-text="'All time rank: ' + result.rank"></div>
+                        </div>
+                    </a>
+                </template>
+                <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
+                    <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
+                       class="block px-4 py-2 text-primary hover:bg-bg-hover transition-colors">
+                        See all results &hellip;
+                    </a>
+                </template>
             </div>
         </div>
-        <a href="{% url 'games-list' %}" class="navbar-item nav-link" x-show="!mobileSearchActive">
+
+        {# Top 1000 link (visible when search not active on mobile) #}
+        <a href="{% url 'games-list' %}" class="px-3 py-2 text-info hover:text-white transition-colors" x-show="!mobileSearchActive">
             Top 1000
         </a>
     </div>
-    <div class="navbar-menu" :class="{ 'is-active': expanded }" @click="expanded = false">
-        <div class="navbar-start">
-            <a href="{% url 'developers-list' %}" class="navbar-item nav-link">Developers</a>
-            <a href="{% url 'list-list' %}" class="navbar-item nav-link">Lists</a>
-            <a href="{% url 'page-detail' slug='about' %}" class="navbar-item nav-link">About</a>
-            <a href="{% url 'page-detail' slug='donate' %}" class="navbar-item nav-link">Donate</a>
-            <a href="{% url 'page-detail' slug='palestine' %}" class="navbar-item nav-link" title="Statement on Palestine">
-                <span class="icon">
-                    <img src="{% static 'games/palestine-flag-xs.png' %}" alt="Palestine" width="24" height="12">
-                </span>
+
+    {# Desktop navigation links #}
+    <div class="hidden md:flex items-stretch self-stretch">
+        <a href="{% url 'developers-list' %}" class="px-3 flex items-center text-info hover:text-white hover:bg-bg-hover transition-colors">Developers</a>
+        <a href="{% url 'list-list' %}" class="px-3 flex items-center text-info hover:text-white hover:bg-bg-hover transition-colors">Lists</a>
+        <a href="{% url 'page-detail' slug='about' %}" class="px-3 flex items-center text-info hover:text-white hover:bg-bg-hover transition-colors">About</a>
+        <a href="{% url 'page-detail' slug='donate' %}" class="px-3 flex items-center text-info hover:text-white hover:bg-bg-hover transition-colors">Donate</a>
+        <a href="{% url 'page-detail' slug='palestine' %}" class="px-3 flex items-center hover:bg-bg-hover transition-colors" title="Statement on Palestine">
+            <img src="{% static 'games/palestine-flag-xs.png' %}" alt="Palestine" class="w-6 h-3" width="24" height="12">
+        </a>
+    </div>
+
+    {# Mobile menu button #}
+    <button @click="expanded = !expanded"
+            class="md:hidden p-2 text-text-body hover:text-white ml-auto"
+            x-show="!mobileSearchActive"
+            aria-label="menu"
+            :aria-expanded="expanded">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path x-show="!expanded" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            <path x-show="expanded" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </button>
+
+    {# Mobile menu dropdown #}
+    <div x-show="expanded"
+         x-cloak
+         @click="expanded = false"
+         class="md:hidden absolute top-14 left-0 right-0 bg-bg-header border-t border-border z-40">
+        <div class="container-main py-2 flex flex-col">
+            <a href="{% url 'developers-list' %}" class="px-3 py-2 text-info hover:text-white hover:bg-bg-hover transition-colors">Developers</a>
+            <a href="{% url 'list-list' %}" class="px-3 py-2 text-info hover:text-white hover:bg-bg-hover transition-colors">Lists</a>
+            <a href="{% url 'page-detail' slug='about' %}" class="px-3 py-2 text-info hover:text-white hover:bg-bg-hover transition-colors">About</a>
+            <a href="{% url 'page-detail' slug='donate' %}" class="px-3 py-2 text-info hover:text-white hover:bg-bg-hover transition-colors">Donate</a>
+            <a href="{% url 'page-detail' slug='palestine' %}" class="px-3 py-2 flex items-center gap-2 hover:bg-bg-hover transition-colors">
+                <img src="{% static 'games/palestine-flag-xs.png' %}" alt="Palestine" class="w-6 h-3" width="24" height="12">
+                <span class="text-info">Palestine</span>
             </a>
         </div>
     </div>
-    <a @click="expanded = !expanded"
-       class="navbar-burger is-hidden-desktop"
-       :class="{ 'is-active': expanded }"
-       x-show="!mobileSearchActive"
-       aria-label="menu"
-       :aria-expanded="expanded"
-       role="button">
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-    </a>
 </nav>
-

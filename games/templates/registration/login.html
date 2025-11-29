@@ -3,10 +3,10 @@
 {% block title %} - Login{% endblock %}
 
 {% block content %}
-    <h1 class="title">Login</h1>
+    <h1 class="title text-2xl mb-4">Login</h1>
 
     {% if form.errors %}
-        <p class="notification">Your username and password didn't match. Please try again.</p>
+        <p class="notification is-danger">Your username and password didn't match. Please try again.</p>
     {% endif %}
 
     {% if next %}
@@ -18,29 +18,27 @@
         {% endif %}
     {% endif %}
 
-    <div class="columns">
-        <div class="column is-half">
-            <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
-                <div class="field">
-                    <label class="label" for="id_username">Username:</label>
-                    <div class="control">
-                        <input class="input" type="text" name="username"  id="id_username" >
-                    </div>
+    <div class="max-w-md">
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="field">
+                <label class="label" for="id_username">Username:</label>
+                <div class="control">
+                    <input class="input-dark w-full" type="text" name="username" id="id_username">
                 </div>
-                <div class="field">
-                    <label class="label"  for="id_password">Password:</label>
-                    <div class="control">
-                        <input class="input"  type="password" name="password"  id="id_password" >
-                    </div>
+            </div>
+            <div class="field">
+                <label class="label" for="id_password">Password:</label>
+                <div class="control">
+                    <input class="input-dark w-full" type="password" name="password" id="id_password">
                 </div>
-                <div class="field">
-                    <div class="control">
-                        <input type="submit" value="Login" class="button">
-                    </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <input type="submit" value="Login" class="btn-primary">
                 </div>
-                <input type="hidden" name="next" value="{{ next }}">
-            </form>
-        </div>
+            </div>
+            <input type="hidden" name="next" value="{{ next }}">
+        </form>
     </div>
 {% endblock %}

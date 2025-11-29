@@ -136,16 +136,19 @@ Use this when you want to save changes to the repository WITHOUT deploying to pr
 #    Only if: bug fixes, features, optimizations, or breaking changes
 #    Keep to 8 bullet points max per day
 
-# 1. Collect static files
+# 1. Rebuild Tailwind CSS if you edited tailwind-input.css or templates
+./tailwindcss -i games/static/games/css/tailwind-input.css -o games/static/games/css/tailwind.css --minify
+
+# 2. Collect static files
 python3 manage.py collectstatic --noinput
 
-# 2. Stage all changes
+# 3. Stage all changes
 git add -A
 
-# 3. Commit with descriptive message
+# 4. Commit with descriptive message
 git commit -m "Your commit message here"
 
-# 4. Push to main branch
+# 5. Push to main branch
 git push origin main
 
 # STOP HERE - Do NOT push to Heroku unless explicitly asked to deploy
@@ -160,19 +163,22 @@ When making changes that need to be deployed to production, follow this complete
 #    Only if: bug fixes, features, optimizations, or breaking changes
 #    Keep to 8 bullet points max per day
 
-# 1. Collect static files
+# 1. Rebuild Tailwind CSS if you edited tailwind-input.css or templates
+./tailwindcss -i games/static/games/css/tailwind-input.css -o games/static/games/css/tailwind.css --minify
+
+# 2. Collect static files
 python3 manage.py collectstatic --noinput
 
-# 2. Stage all changes
+# 3. Stage all changes
 git add -A
 
-# 3. Commit with descriptive message
+# 4. Commit with descriptive message
 git commit -m "Your commit message here"
 
-# 4. Push to main branch
+# 5. Push to main branch
 git push origin main
 
-# 5. Deploy to Heroku (ONLY when user explicitly asks to deploy)
+# 6. Deploy to Heroku (ONLY when user explicitly asks to deploy)
 git push heroku main
 ```
 
@@ -350,7 +356,8 @@ The application uses Django templates with HTMX for dynamic interactions and Alp
 ### Application Features
 
 **Styling:**
-- Uses Bulma CSS framework with Bulmaswatch Cyborg theme for modern dark UI
+- Uses Tailwind CSS v4 with Standalone CLI (no Node.js required)
+- Dark theme with custom color palette inspired by Cyborg theme
 - Responsive design compatible with all screen sizes
 
 **Template Filters:**
@@ -518,14 +525,49 @@ pip install -r requirements.txt
   - `games/static/` - Game app static files
   - `games/templates/` - Template files with inline styles
 
-### CSS Workflow
+### CSS Workflow (Tailwind CSS v4)
 
-The site uses a concatenated CSS file for production performance. When editing styles:
+The site uses Tailwind CSS v4 with the Standalone CLI (no Node.js required).
 
-1. **Edit `main.css`** - The source file at `games/static/games/css/main.css`
-2. **Regenerate `combined.css`** - After any changes to main.css, run:
-   ```bash
-   cd games/static/games/css && cat vendor/bulma-1.0.0.min.css vendor/bulmaswatch-cyborg-0.8.1.min.css main.css > combined.css
-   ```
+**File Structure:**
+- `games/static/games/css/tailwind-input.css` - Source file with Tailwind config, theme, and custom components
+- `games/static/games/css/tailwind.css` - Compiled output (committed to repo)
+- `tailwindcss` - Standalone CLI binary (not committed, download as needed)
 
-**Important:** `combined.css` is a build artifact (Bulma + Bulmaswatch Cyborg + main.css). Never edit it directly - always edit `main.css` and regenerate.
+**Initial Setup (new development environments):**
+
+Download the Tailwind Standalone CLI for your platform:
+```bash
+# macOS ARM (Apple Silicon)
+curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
+chmod +x tailwindcss-macos-arm64
+mv tailwindcss-macos-arm64 tailwindcss
+
+# macOS Intel
+curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-x64
+chmod +x tailwindcss-macos-x64
+mv tailwindcss-macos-x64 tailwindcss
+
+# Linux
+curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
+chmod +x tailwindcss-linux-x64
+mv tailwindcss-linux-x64 tailwindcss
+```
+
+**Development (watch mode):**
+```bash
+./tailwindcss -i games/static/games/css/tailwind-input.css -o games/static/games/css/tailwind.css --watch
+```
+
+**Production build:**
+```bash
+./tailwindcss -i games/static/games/css/tailwind-input.css -o games/static/games/css/tailwind.css --minify
+```
+
+**Editing Styles:**
+1. Edit `tailwind-input.css` for theme customization or custom components
+2. Use Tailwind utility classes directly in templates
+3. The watch mode will auto-rebuild on changes
+4. Commit both `tailwind-input.css` and `tailwind.css`
+
+**Important:** The `tailwindcss` binary is in `.gitignore` and must be downloaded for each development environment. The compiled `tailwind.css` IS committed to ensure production deployments work without the CLI.

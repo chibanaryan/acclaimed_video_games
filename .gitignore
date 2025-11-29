@@ -19,3 +19,7 @@ static/*
 staticfiles/*
 venv/*
 .playwright-mcp/
+
+# Tailwind CLI binary (download per platform)
+tailwindcss
+tailwindcss-*

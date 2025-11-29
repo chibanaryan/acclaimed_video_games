@@ -2,9 +2,8 @@
 {# Props: post #}
 {% load game_filters %}
 
-<div class="is-clearfix my-5 box">
-    <h4 class="title is-size-5">{{ post.title }}</h4>
-    <div class="content">{{ post.text_rendered|safe }}</div>
-    <div class="has-text-grey-dark is-pulled-right">{% if post.author %}{{ post.author.get_full_name|default:post.author.username }} · {% endif %}{{ post.date|from_now }}</div>
+<div class="box my-5">
+    <h4 class="title text-lg mb-2">{{ post.title }}</h4>
+    <div class="prose prose-invert text-text-body">{{ post.text_rendered|safe }}</div>
+    <div class="text-text-muted text-sm text-right mt-3">{% if post.author %}{{ post.author.get_full_name|default:post.author.username }} · {% endif %}{{ post.date|from_now }}</div>
 </div>
-

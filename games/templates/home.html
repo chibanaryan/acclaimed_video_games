@@ -12,17 +12,17 @@
 {% endblock %}
 
 {% block content %}
-<div class="columns">
-    <div class="column">
+<div class="grid md:grid-cols-2 gap-8">
+    <div>
         <img src="{% static 'games/avg_logo.png' %}"
              srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
              sizes="(max-width: 600px) 100vw, 548px"
              alt="Acclaimed Games" width="1092" height="737" fetchpriority="high">
-        <div class="is-size-4 snippet-text">
+        <div class="snippet-text mt-4">
             The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
         </div>
-        <h3 class="title is-size-4 mt-5">Current Top {{ games|length }}</h3>
-        <div class="top-ten is-clearfix">
+        <h3 class="title text-xl mt-6 mb-3">Current Top {{ games|length }}</h3>
+        <div class="top-ten">
             {% for game in games %}
             <div class="game">
                 <a href="{% url 'game-detail' slug=game.slug %}">
@@ -33,57 +33,49 @@
                 </a>
             </div>
             {% endfor %}
-            <div class="link">
-                <a href="{% url 'games-list' %}" class="button">
+            <div class="see-more">
+                <a href="{% url 'games-list' %}">
                     See the full list&hellip;
                 </a>
             </div>
         </div>
         {% if last_update %}
-        <div class="py-3 last-update">
+        <div class="last-update py-3">
             List last updated: {{ last_update|date:"F j, Y" }}
         </div>
         {% endif %}
     </div>
-    <div class="column">
+    <div>
         {# Social Media #}
-        <div x-data class="is-flex is-align-items-center is-justify-content-flex-end mb-5" style="gap: 0.5rem;">
-            <span class="has-text-grey-light">Follow on:</span>
+        <div x-data class="flex items-center justify-end gap-2 mb-6">
+            <span class="text-text-muted">Follow on:</span>
             <a href="https://x.com/AVGRankings" target="_blank" rel="noopener noreferrer"
-               class="button is-link" title="Follow us on X">
-                <span class="icon">
-                    <svg width="20" height="20" viewBox="0 0 1200 1227" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/>
-                    </svg>
-                </span>
+               class="btn-link px-3 py-2" title="Follow us on X">
+                <svg width="20" height="20" viewBox="0 0 1200 1227" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/>
+                </svg>
             </a>
             <a href="https://bsky.app/profile/avgrankings.bsky.social" target="_blank" rel="noopener noreferrer"
-               class="button is-link" title="Follow us on Bluesky">
-                <span class="icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5.202 2.857C7.954 4.922 10.913 9.11 12 11.358c1.087-2.247 4.046-6.436 6.798-8.501C20.783 1.366 24 .213 24 3.883c0 .732-.42 6.156-.667 7.037-.856 3.061-3.978 3.842-6.755 3.37 4.854.826 6.089 3.562 3.422 6.299-5.065 5.196-7.28-1.304-7.847-2.97-.104-.305-.152-.448-.153-.327 0-.121-.05.022-.153.327-.568 1.666-2.782 8.166-7.847 2.97-2.667-2.737-1.432-5.473 3.422-6.3-2.777.473-5.899-.308-6.755-3.369C.42 10.04 0 4.615 0 3.883c0-3.67 3.217-2.517 5.202-1.026"/>
-                    </svg>
-                </span>
+               class="btn-link px-3 py-2" title="Follow us on Bluesky">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5.202 2.857C7.954 4.922 10.913 9.11 12 11.358c1.087-2.247 4.046-6.436 6.798-8.501C20.783 1.366 24 .213 24 3.883c0 .732-.42 6.156-.667 7.037-.856 3.061-3.978 3.842-6.755 3.37 4.854.826 6.089 3.562 3.422 6.299-5.065 5.196-7.28-1.304-7.847-2.97-.104-.305-.152-.448-.153-.327 0-.121-.05.022-.153.327-.568 1.666-2.782 8.166-7.847 2.97-2.667-2.737-1.432-5.473 3.422-6.3-2.777.473-5.899-.308-6.755-3.369C.42 10.04 0 4.615 0 3.883c0-3.67 3.217-2.517 5.202-1.026"/>
+                </svg>
                 <span>Bluesky</span>
             </a>
-            <button class="button is-link" style="flex-grow: 1;" @click="$dispatch('open-contact')">
-                <span class="icon">
-                    <span class="mdi mdi-email"></span>
-                </span>
+            <button class="btn-link" @click="$dispatch('open-contact')">
+                <span class="mdi mdi-email"></span>
                 <span>Contact Us</span>
             </button>
         </div>
 
-        <h3 class="title is-size-4">Latest News</h3>
+        <h3 class="title text-xl mb-4">Latest News</h3>
         {% for post in posts %}
             {% include 'posts/includes/_post_item.html' with post=post %}
         {% endfor %}
-        <div class="is-clearfix">
-            <a href="{% url 'post-list' %}?offset=5" class="button is-link is-pulled-right">
+        <div class="text-right">
+            <a href="{% url 'post-list' %}?offset=5" class="btn-link">
                 <span>Older posts</span>
-                <span class="icon">
-                    <span class="mdi mdi-chevron-double-right"></span>
-                </span>
+                <span class="mdi mdi-chevron-double-right"></span>
             </a>
         </div>
     </div>
@@ -111,15 +103,17 @@
      @open-contact.window="openContact()">
 <div id="contactModal" class="modal" :class="{ 'is-active': modalOpen }">
     <div class="modal-background" @click="closeContact()"></div>
-    <div class="modal-card" style="border-radius: 6px; overflow: hidden;">
-        <section class="modal-card-body" style="background: #1a1a1a; padding-top: 1.5rem;">
-            <button class="delete is-pulled-right" aria-label="close" @click="closeContact()" style="position: absolute; right: 1rem; top: 1rem;"></button>
-            <p class="is-size-5 has-text-weight-bold mb-4" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                <img src="https://static.wikia.nocookie.net/zelda_gamepedia_en/images/0/08/OoT3D_Navi_Artwork.png" alt="" role="presentation" style="width: 28px; height: auto; filter: drop-shadow(0 0 4px #00d4ff);">
+    <div class="modal-card">
+        <section class="modal-card-body relative">
+            <button class="absolute right-4 top-4 text-text-muted hover:text-white" aria-label="close" @click="closeContact()">
+                <span class="mdi mdi-close text-xl"></span>
+            </button>
+            <p class="text-lg font-bold mb-4 flex items-center gap-2 flex-wrap">
+                <img src="https://static.wikia.nocookie.net/zelda_gamepedia_en/images/0/08/OoT3D_Navi_Artwork.png" alt="" role="presentation" class="w-7 h-auto" style="filter: drop-shadow(0 0 4px #00d4ff);">
                 <em>"Hey! Listen!"</em>
-                <span class="has-text-grey-light is-size-7" style="font-weight: normal;">~Navi, <a href="{% url 'game-detail' slug='the-legend-of-zelda-ocarina-of-time' %}" class="has-text-info">The Legend of Zelda: Ocarina of Time</a></span>
+                <span class="text-text-muted text-xs font-normal">~Navi, <a href="{% url 'game-detail' slug='the-legend-of-zelda-ocarina-of-time' %}" class="text-info hover:text-white">The Legend of Zelda: Ocarina of Time</a></span>
             </p>
-            <p class="mb-4">
+            <p class="mb-4 text-text-body">
                 Have a question, suggestion, or found an issue? We'd love to hear from you!
                 Fill out the form below and we'll get back to you as soon as possible.
             </p>
@@ -128,7 +122,7 @@
 
                 {# Display non-field errors #}
                 {% if form.non_field_errors %}
-                <div class="notification is-danger">
+                <div class="notification is-danger mb-4">
                     {{ form.non_field_errors }}
                 </div>
                 {% endif %}
@@ -159,9 +153,7 @@
                 <div class="field">
                     <label class="label" for="{{ form.category.id_for_label }}">Category</label>
                     <div class="control">
-                        <div class="select is-fullwidth">
-                            {{ form.category }}
-                        </div>
+                        {{ form.category }}
                     </div>
                     {% if form.category.errors %}
                     <p class="help is-danger">{{ form.category.errors.0 }}</p>
@@ -182,18 +174,12 @@
                 {# Honeypot field (hidden) #}
                 {{ form.website }}
 
-                <div class="field is-grouped mt-5">
-                    <div class="control">
-                        <button type="submit" class="button is-link">
-                            <span class="icon">
-                                <span class="mdi mdi-send"></span>
-                            </span>
-                            <span>Send Message</span>
-                        </button>
-                    </div>
-                    <div class="control">
-                        <button type="button" class="button" @click="closeContact()">Cancel</button>
-                    </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn-primary inline-flex items-center gap-2">
+                        <span class="mdi mdi-send"></span>
+                        <span>Send Message</span>
+                    </button>
+                    <button type="button" class="btn-ghost" @click="closeContact()">Cancel</button>
                 </div>
             </form>
         </section>

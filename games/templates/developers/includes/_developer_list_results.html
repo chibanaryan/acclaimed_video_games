@@ -1,7 +1,7 @@
 {# Developer search results partial - used for both initial render and HTMX updates #}
 {% load humanize %}
 {% if developers %}
-<table class="table is-fullwidth">
+<table class="table">
     <thead>
         <tr>
             <th>Name</th>
@@ -27,15 +27,13 @@
 </table>
 
 {% if has_more %}
-<div id="load-more-container" class="has-text-centered mt-5 mb-5">
+<div id="load-more-container" class="text-center mt-5 mb-5">
     <button type="button"
-            class="button is-medium load-more-button"
+            class="load-more-button"
             data-next-page="{{ next_page }}"
             data-total="{{ total_count }}"
             data-loaded="{{ loaded_count }}">
-        <span class="icon is-small">
-            <span class="mdi mdi-plus-circle-outline"></span>
-        </span>
+        <span class="mdi mdi-plus-circle-outline"></span>
         <span class="load-more-text">Load More ({{ remaining_count|intcomma }} remaining)</span>
     </button>
 </div>

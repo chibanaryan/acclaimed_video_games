@@ -30,7 +30,7 @@
         window.history.pushState({}, '', url);
     }
 }">
-    <h1 class="title is-spaced">Source Lists</h1>
+    <h1 class="title text-2xl mb-2">Source Lists</h1>
 
     <div id="filter-results-wrapper">
         {% include 'lists/includes/_list_list_full.html' %}
@@ -128,7 +128,7 @@ async function handleListLoadMore(event) {
             if (!meta.hasMore) {
                 const container = button.parentElement;
                 container.innerHTML = `
-                    <div class="has-text-grey-light has-text-centered">
+                    <div class="text-text-muted text-center">
                         All ${meta.totalCount.toLocaleString()} results loaded
                     </div>
                 `;

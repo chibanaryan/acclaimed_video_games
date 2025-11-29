@@ -5,8 +5,8 @@
 {% block title %}Developers - Acclaimed Games{% endblock %}
 
 {% block content %}
-<h1 class="title is-spaced">Developers</h1>
-<h2 id="results-count" class="subtitle">
+<h1 class="title text-2xl mb-2">Developers</h1>
+<h2 id="results-count" class="subtitle mb-4">
     {% if page_obj %}
     Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} result{{ total_count|pluralize }}
     {% else %}
@@ -27,9 +27,12 @@
         window.history.pushState({}, '', url);
     }
 }">
-    <div class="control has-icons-left">
+    <div class="search-field">
+        <span class="search-icon">
+            <i class="mdi mdi-magnify"></i>
+        </span>
         <input type="text"
-               class="input input-dark"
+               class="input-dark w-full pl-10"
                name="q"
                id="developer-search"
                placeholder="Search by name"
@@ -40,9 +43,6 @@
                hx-swap="innerHTML"
                x-on:htmx:after-request="updateUrl($event)"
                autocomplete="off">
-        <span class="icon is-small is-left">
-            <i class="mdi mdi-magnify"></i>
-        </span>
     </div>
 </div>
 
@@ -131,7 +131,7 @@ async function handleDeveloperLoadMore(event) {
             if (!meta.hasMore) {
                 const container = button.parentElement;
                 container.innerHTML = `
-                    <div class="has-text-grey-light has-text-centered">
+                    <div class="text-text-muted text-center">
                         All ${meta.totalCount.toLocaleString()} results loaded
                     </div>
                 `;
