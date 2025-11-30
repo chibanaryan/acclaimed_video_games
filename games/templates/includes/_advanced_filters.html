@@ -250,80 +250,70 @@
 
     {# Page heading above the two-column layout #}
     <div id="search-heading" class="mb-4">
-        <div class="is-flex is-justify-content-space-between is-align-items-center mb-1">
-            <h1 class="title mb-0" id="search-title">
+        <div class="flex justify-between items-center mb-1">
+            <h1 class="text-2xl font-bold" id="search-title">
                 {{ filter_title|default:"Advanced Search" }}
             </h1>
         </div>
         {% if genre_subtitle %}
-            <p class="is-size-6 has-text-weight-semibold has-text-grey-dark" id="genre-subtitle">
+            <p class="text-base font-semibold text-base-content/70" id="genre-subtitle">
                 {{ genre_subtitle }}
             </p>
         {% endif %}
         {% load humanize %}
-        <div class="is-size-7 has-text-grey result-summary has-text-right">
+        <div class="text-sm text-base-content/50 text-right">
             {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
         </div>
     </div>
 
-        {# Two-column layout: filters sidebar on left, results on right #}
-        <div class="columns advanced-layout filters-on">
-            {# Left sidebar - Filters (hidden on mobile) #}
-            <div class="column is-hidden-mobile filters-collapsible is-expanded">
-                <div class="filters-sidebar">
+    {# Two-column layout: filters sidebar on left, results on right #}
+    <div class="flex flex-col lg:flex-row gap-6">
+        {# Left sidebar - Filters (hidden on mobile) #}
+        <div class="hidden md:block w-full lg:w-[420px] flex-shrink-0">
+            <div class="bg-base-200 rounded-lg p-4">
                 {# Header with navigation buttons #}
-                <div class="filters-header">
-                    <div class="filters-header-title">
-                        <span class="filters-header-icon">
-                            <span class="mdi mdi-tune"></span>
-                        </span>
-                        <h2>Filters</h2>
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-base-300">
+                    <div class="flex items-center gap-2">
+                        <span class="mdi mdi-tune text-lg text-primary"></span>
+                        <h2 class="font-bold">Filters</h2>
                     </div>
-                    <div class="buttons are-small mb-0">
+                    <div class="flex gap-2">
                         <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
-                           class="button is-small nes-download-button"
+                           class="btn btn-sm btn-ghost"
                            title="Download CSV">
-                            <span class="icon is-small">
-                                <span class="mdi mdi-download"></span>
-                            </span>
+                            <span class="mdi mdi-download"></span>
                             <span>CSV</span>
                         </a>
                         <a href="{% url 'games-list' %}"
-                           class="button is-small nes-reset-button">
-                            <span class="icon is-small">
-                                <span class="mdi mdi-undo"></span>
-                            </span>
+                           class="btn btn-sm btn-ghost">
+                            <span class="mdi mdi-undo"></span>
                             <span>Reset</span>
                         </a>
                     </div>
                 </div>
 
                 {# Search input #}
-                <div class="filter-panel search-panel">
-                    <div class="filter-panel-header">
-                        <span class="filter-panel-icon">
-                            <span class="mdi mdi-magnify"></span>
-                        </span>
-                        <span class="filter-panel-title">Search</span>
+                <div class="mb-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="mdi mdi-magnify text-base-content/50"></span>
+                        <span class="font-semibold text-sm">Search</span>
                     </div>
-                    <div class="filter-panel-content">
+                    <div>
                         {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
                     </div>
                 </div>
 
                 {# Year range heatmap grid #}
-                <div class="filter-panel year-panel">
-                    <div class="filter-panel-header">
-                        <span class="filter-panel-icon">
-                            <span class="mdi mdi-calendar-range"></span>
-                        </span>
-                        <span class="filter-panel-title">Release Year</span>
-                        <button type="button" class="filter-panel-reset" @click="resetYears()" title="Reset years" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
+                <div class="mb-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="mdi mdi-calendar-range text-base-content/50"></span>
+                        <span class="font-semibold text-sm">Release Year</span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetYears()" title="Reset years" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
                             <span class="mdi mdi-close"></span>
                         </button>
                     </div>
-                    <div class="filter-panel-content">
-                        <div class="filter-help">
+                    <div>
+                        <div class="text-xs text-base-content/50 mb-2 flex justify-between">
                             <span>Click year or decade</span>
                             <span>Drag or shift+click for ranges</span>
                         </div>
@@ -333,18 +323,15 @@
 
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
-                <div class="filter-panel platform-panel">
-                    <div class="filter-panel-header">
-                        <span class="filter-panel-icon">
-                            <span class="mdi mdi-controller"></span>
-                        </span>
-                        <span class="filter-panel-title">Platforms</span>
-                        <button type="button" class="filter-panel-reset" @click="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
+                <div class="mb-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="mdi mdi-controller text-base-content/50"></span>
+                        <span class="font-semibold text-sm">Platforms</span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
                             <span class="mdi mdi-close"></span>
                         </button>
                     </div>
-                    <div class="filter-panel-content"
-                         data-filter-type="platforms"
+                    <div data-filter-type="platforms"
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                         {% include 'includes/_platform_filter.html' %}
@@ -354,18 +341,15 @@
 
                 {% if genres %}
                 {# Genres filter - Inventory Grid Style #}
-                <div class="filter-panel genre-panel">
-                    <div class="filter-panel-header">
-                        <span class="filter-panel-icon">
-                            <span class="mdi mdi-gamepad-variant"></span>
-                        </span>
-                        <span class="filter-panel-title">Genres</span>
-                        <button type="button" class="filter-panel-reset" @click="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
+                <div class="mb-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="mdi mdi-gamepad-variant text-base-content/50"></span>
+                        <span class="font-semibold text-sm">Genres</span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
                             <span class="mdi mdi-close"></span>
                         </button>
                     </div>
-                    <div class="filter-panel-content"
-                         data-filter-type="genres"
+                    <div data-filter-type="genres"
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                         {% include 'includes/_genre_filter.html' %}
@@ -376,22 +360,20 @@
         </div>
 
         {# Mobile filters (shown only on mobile) #}
-        <div class="column is-hidden-tablet">
+        <div class="md:hidden">
 
             {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
 
-            <div class="mb-3 mt-3">
-                <div class="has-text-weight-bold mb-2">Release Year</div>
-                <div class="dual-range-container"
+            <div class="my-4">
+                <div class="font-bold mb-2">Release Year</div>
+                <div class="relative h-12"
                      :style="'--range-start: ' + (((filters.start || {{ min_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100) + '; --range-end: ' + (((filters.end || {{ max_year }}) - {{ min_year }}) / ({{ max_year }} - {{ min_year }}) * 100)">
-                    <span class="dual-range-label dual-range-label-start"
+                    <span class="absolute left-0 top-0 text-sm text-base-content/70"
                           x-text="filters.start || {{ min_year }}"></span>
-                    <span class="dual-range-label dual-range-label-end"
+                    <span class="absolute right-0 top-0 text-sm text-base-content/70"
                           x-text="filters.end || {{ max_year }}"></span>
-                    <div class="dual-range-track"></div>
-                    <div class="dual-range-selected"></div>
                     <input type="range"
-                           class="dual-range"
+                           class="range range-primary range-sm absolute bottom-0 w-full"
                            name="start"
                            min="{{ min_year }}"
                            max="{{ max_year }}"
@@ -402,27 +384,16 @@
                            @pointerup="filters.start = parseInt($event.target.value);
                                    if (filters.end && filters.start > parseInt(filters.end)) { filters.end = filters.start; }
                                    if (initialized) forceSliderUpdate()">
-                    <input type="range"
-                           class="dual-range"
-                           name="end"
-                           min="{{ min_year }}"
-                           max="{{ max_year }}"
-                           :value="filters.end || {{ max_year }}"
-                           @input="filters.end = parseInt($event.target.value);
-                                   if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
-                                   if (initialized) throttledSliderUpdate()"
-                           @pointerup="filters.end = parseInt($event.target.value);
-                                   if (filters.start && filters.end < parseInt(filters.start)) { filters.start = filters.end; }
-                                   if (initialized) forceSliderUpdate()">
                 </div>
             </div>
 
             {% if genres %}
-            <div class="mb-3">
-                <div class="has-text-weight-bold mb-2">Genres</div>
+            <div class="mb-4">
+                <div class="font-bold mb-2">Genres</div>
                 <select multiple
                         id="filter-genres-mobile"
                         name="genres"
+                        class="select select-bordered w-full h-32"
                         @change="filters.genres = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
                     <template x-for="genre in genres" :key="genre.id">
                         <option :value="genre.id"
@@ -434,11 +405,12 @@
             {% endif %}
 
             {% if platforms %}
-            <div class="mb-3">
-                <div class="has-text-weight-bold mb-2">Platforms</div>
+            <div class="mb-4">
+                <div class="font-bold mb-2">Platforms</div>
                 <select multiple
                         id="filter-platforms-mobile"
                         name="platforms"
+                        class="select select-bordered w-full h-32"
                         @change="filters.platforms = Array.from($event.target.selectedOptions).map(o => o.value); updateUrl()">
                     <template x-for="platform in platforms" :key="platform.id">
                         <option :value="platform.id"
@@ -451,7 +423,7 @@
         </div>
 
         {# Right column - Results #}
-        <div class="column main-panel">
+        <div class="flex-1 min-w-0">
             <div id="game-results-container">
                 {% include 'games/includes/_game_list_results.html' %}
             </div>

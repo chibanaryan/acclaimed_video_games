@@ -4,7 +4,8 @@ Acclaimed Games is a video game ranking and aggregation website built with:
 - **Django** - Backend framework with server-side rendering
 - **HTMX** - Dynamic interactions without full page reloads
 - **Alpine.js** - Client-side reactivity for UI components
-- **Bulma CSS** - Styling with Bulmaswatch Cyborg theme
+- **Tailwind CSS v4** - Utility-first CSS framework
+- **DaisyUI v5** - Component library for Tailwind
 
 For detailed documentation, see [CLAUDE.md](CLAUDE.md).
 
@@ -13,6 +14,7 @@ For detailed documentation, see [CLAUDE.md](CLAUDE.md).
 ### Prerequisites
 
 - Python 3
+- Node.js (for Tailwind CSS)
 - Git
 - Heroku CLI
 
@@ -38,6 +40,9 @@ venv\Scripts\activate
 
 pip install -r requirements.txt
 pre-commit install
+
+# Install Tailwind CSS dependencies
+python3 manage.py tailwind install
 ```
 
 ### Get Data
@@ -64,9 +69,12 @@ Then import data via `/import/` (see [Import New Data](#import-new-data) below).
 python3 manage.py runserver
 ```
 
+**Note:** The Tailwind CSS watcher (`python3 manage.py tailwind start`) is only needed if you're actively editing styles. The compiled CSS is committed to git, so for most dev work you just need the Django server.
+
 ## Deploy to Production
 
 ```bash
+python3 manage.py tailwind build
 python3 manage.py collectstatic --noinput
 git add -A
 git commit -m "Your commit message"
@@ -74,17 +82,27 @@ git push origin main
 git push heroku main
 ```
 
-## CSS Workflow
+## CSS Workflow (Tailwind CSS)
 
-The site uses a concatenated CSS file for production performance:
+The site uses django-tailwind with Tailwind CSS v4 and DaisyUI v5.
 
-1. **Edit `main.css`** - Source file at `games/static/games/css/main.css`
-2. **Regenerate `combined.css`** - After any changes:
-   ```bash
-   cd games/static/games/css && cat vendor/bulma-1.0.0.min.css vendor/bulmaswatch-cyborg-0.8.1.min.css main.css > combined.css
-   ```
+**Development:**
+- Run `python3 manage.py tailwind start` to watch for changes
+- Edit styles in `theme/static_src/src/styles.css`
+- CSS automatically rebuilds on save
 
-**Note:** `combined.css` is a build artifact. Never edit it directly.
+**Key Files:**
+- `theme/static_src/src/styles.css` - Main Tailwind source with custom components
+- `theme/static/css/dist/styles.css` - Compiled output (auto-generated)
+- `games/static/games/css/mdi-subset.css` - Material Design Icons subset
+
+**Theme Configuration:**
+Themes are configured in `styles.css`:
+```css
+@plugin "daisyui" {
+  themes: forest --default, night, sunset, nord, lofi;
+}
+```
 
 ## Pre-commit Hooks
 

@@ -14,7 +14,7 @@ class ContactForm(forms.Form):
         required=True,
         widget=forms.TextInput(
             attrs={
-                "class": "input",
+                "class": "input input-bordered w-full",
                 "placeholder": "Your name",
             }
         ),
@@ -24,7 +24,7 @@ class ContactForm(forms.Form):
         required=False,
         widget=forms.EmailInput(
             attrs={
-                "class": "input",
+                "class": "input input-bordered w-full",
                 "placeholder": "your.email@example.com (optional)",
             }
         ),
@@ -35,7 +35,7 @@ class ContactForm(forms.Form):
         required=True,
         widget=forms.Select(
             attrs={
-                "class": "select",
+                "class": "select select-bordered w-full",
             }
         ),
     )
@@ -44,7 +44,7 @@ class ContactForm(forms.Form):
         required=True,
         widget=forms.Textarea(
             attrs={
-                "class": "textarea",
+                "class": "textarea textarea-bordered w-full",
                 "placeholder": "Tell us what's on your mind...",
                 "rows": 6,
             }

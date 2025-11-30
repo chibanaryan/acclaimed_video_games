@@ -3,44 +3,45 @@
 {% block title %} - Login{% endblock %}
 
 {% block content %}
-    <h1 class="title">Login</h1>
+    <h1 class="text-3xl font-bold mb-6">Login</h1>
 
     {% if form.errors %}
-        <p class="notification">Your username and password didn't match. Please try again.</p>
+        <div class="alert alert-error mb-4">
+            <span>Your username and password didn't match. Please try again.</span>
+        </div>
     {% endif %}
 
     {% if next %}
         {% if user.is_authenticated %}
-            <p class="notification">Your account doesn't have access to this page. To proceed,
-                please login with an account that has access.</p>
+            <div class="alert alert-warning mb-4">
+                <span>Your account doesn't have access to this page. To proceed, please login with an account that has access.</span>
+            </div>
         {% else %}
-            <p class="notification">Please login to see this page.</p>
+            <div class="alert alert-info mb-4">
+                <span>Please login to see this page.</span>
+            </div>
         {% endif %}
     {% endif %}
 
-    <div class="columns">
-        <div class="column is-half">
-            <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
-                <div class="field">
-                    <label class="label" for="id_username">Username:</label>
-                    <div class="control">
-                        <input class="input" type="text" name="username"  id="id_username" >
-                    </div>
-                </div>
-                <div class="field">
-                    <label class="label"  for="id_password">Password:</label>
-                    <div class="control">
-                        <input class="input"  type="password" name="password"  id="id_password" >
-                    </div>
-                </div>
-                <div class="field">
-                    <div class="control">
-                        <input type="submit" value="Login" class="button">
-                    </div>
-                </div>
-                <input type="hidden" name="next" value="{{ next }}">
-            </form>
-        </div>
+    <div class="max-w-md">
+        <form method="post" action="{% url 'login' %}" class="space-y-4">
+            {% csrf_token %}
+            <div class="form-control">
+                <label class="label" for="id_username">
+                    <span class="label-text">Username:</span>
+                </label>
+                <input class="input input-bordered w-full" type="text" name="username" id="id_username">
+            </div>
+            <div class="form-control">
+                <label class="label" for="id_password">
+                    <span class="label-text">Password:</span>
+                </label>
+                <input class="input input-bordered w-full" type="password" name="password" id="id_password">
+            </div>
+            <div class="form-control mt-6">
+                <input type="submit" value="Login" class="btn btn-primary">
+            </div>
+            <input type="hidden" name="next" value="{{ next }}">
+        </form>
     </div>
 {% endblock %}

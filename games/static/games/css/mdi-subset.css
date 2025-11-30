@@ -90,3 +90,7 @@
 /* Load More button */
 .mdi-plus-circle-outline::before { content: "\F0763"; }
 .mdi-information-outline::before { content: "\F02FD"; }
+
+/* Navigation */
+.mdi-menu::before { content: "\F035C"; }
+.mdi-palette::before { content: "\F03D8"; }

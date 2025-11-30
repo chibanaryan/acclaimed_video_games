@@ -280,6 +280,8 @@ The `DEVLOG.md` file tracks significant changes and improvements to the project.
 - `django.contrib.postgres` - PostgreSQL-specific features
 - `rest_framework` - Django REST Framework
 - `corsheaders` - CORS support
+- `tailwind` - django-tailwind integration
+- `theme` - Tailwind CSS theme app with DaisyUI
 - `games` - Main game aggregation app with HTMX and Alpine.js
 
 **Middleware:**
@@ -350,8 +352,10 @@ The application uses Django templates with HTMX for dynamic interactions and Alp
 ### Application Features
 
 **Styling:**
-- Uses Bulma CSS framework with Bulmaswatch Cyborg theme for modern dark UI
-- Responsive design compatible with all screen sizes
+- Uses Tailwind CSS v4 with DaisyUI v5 component library
+- Dark theme (forest) as default with theme switcher (night, business, black alternatives)
+- Responsive design using Tailwind's mobile-first breakpoints (md:, lg:, etc.)
+- Custom components defined in `theme/static_src/src/styles.css` using Tailwind's `@layer components`
 
 **Template Filters:**
 - `from_now` - Converts datetime to relative time (e.g., "2 hours ago")
@@ -501,9 +505,12 @@ Environment variables are managed via django-environ (`.env` file):
 The backend dependencies are listed in `requirements.txt` and include:
 - **coverage** - Test coverage reporting tool (required for pre-commit hooks)
 - **Django** and related packages - Web framework and extensions
+- **django-tailwind** - Tailwind CSS integration for Django
 - **djangorestframework** - REST API framework
 - **psycopg2** - PostgreSQL database adapter
 - And other supporting packages
+
+**Note:** Tailwind CSS and DaisyUI are managed via npm in `theme/static_src/` (not Python packages).
 
 Install all backend dependencies with:
 ```bash
@@ -515,17 +522,56 @@ pip install -r requirements.txt
 - Django collectstatic copies static files from apps to `staticfiles/`
 - WhiteNoise serves static files in production
 - Static files are located in:
-  - `games/static/` - Game app static files
-  - `games/templates/` - Template files with inline styles
+  - `games/static/` - Game app static files (icons, fonts, images)
+  - `theme/static/` - Tailwind CSS compiled output
+  - `games/templates/` - Template files
 
-### CSS Workflow
+### CSS Workflow (Tailwind CSS)
 
-The site uses a concatenated CSS file for production performance. When editing styles:
+The site uses django-tailwind with Tailwind CSS v4 and DaisyUI v5 for styling.
 
-1. **Edit `main.css`** - The source file at `games/static/games/css/main.css`
-2. **Regenerate `combined.css`** - After any changes to main.css, run:
-   ```bash
-   cd games/static/games/css && cat vendor/bulma-1.0.0.min.css vendor/bulmaswatch-cyborg-0.8.1.min.css main.css > combined.css
-   ```
+**Development:**
+```bash
+# Start Tailwind CSS watcher (rebuilds CSS on file changes)
+python manage.py tailwind start
 
-**Important:** `combined.css` is a build artifact (Bulma + Bulmaswatch Cyborg + main.css). Never edit it directly - always edit `main.css` and regenerate.
+# Run Django dev server (in separate terminal)
+python manage.py runserver
+```
+
+**Production Build:**
+```bash
+# Build minified CSS for production
+python manage.py tailwind build
+
+# Collect static files
+python manage.py collectstatic --noinput
+```
+
+**File Locations:**
+- `theme/static_src/src/styles.css` - Main Tailwind CSS source file with custom components
+- `theme/static/css/dist/styles.css` - Compiled CSS output (auto-generated)
+- `games/static/games/css/mdi-subset.css` - Material Design Icons (self-hosted subset)
+- `games/static/games/css/import.css` - Standalone CSS for admin import page
+
+**Adding Custom Styles:**
+Edit `theme/static_src/src/styles.css` and use Tailwind's `@layer` directive:
+```css
+@layer components {
+  .my-component {
+    @apply flex items-center gap-2;
+  }
+}
+```
+
+**DaisyUI Components:**
+Common components used: `btn`, `card`, `table`, `alert`, `badge`, `input`, `select`, `checkbox`, `dropdown`, `modal`, `link`
+
+**Theme Configuration:**
+Themes are defined in `theme/static_src/src/styles.css` using DaisyUI's `@plugin` directive:
+```css
+@plugin "daisyui" {
+  themes: forest --default, night, sunset, nord, lofi;
+}
+```
+The theme switcher in the navigation allows users to change themes, with the selection persisted in localStorage.

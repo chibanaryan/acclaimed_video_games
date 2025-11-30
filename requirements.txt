@@ -4,9 +4,8 @@ django
 django-debug-toolbar
 django-environ
 django-extensions
-django-crispy-forms
+django-tailwind[reload]
 djangorestframework
-crispy-bulma
 gunicorn
 ipython
 markdown

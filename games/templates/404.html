@@ -4,43 +4,42 @@
 {% block title %}Page Not Found - Acclaimed Games{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="section pt-4 pb-4">
-        <div class="content has-text-centered">
-            <!-- 4 🌙 4 header -->
-            <h1 class="title mb-1 has-text-danger" style="font-size: clamp(4rem, 15vw, 8rem);">
+<div class="container mx-auto">
+    <div class="py-8">
+        <div class="text-center">
+            {# 4 Moon 4 header #}
+            <h1 class="text-error font-bold mb-2" style="font-size: clamp(4rem, 15vw, 8rem);">
                 4<img src="{% static 'games/zelda-moon.png' %}"
                      alt="Moon"
-                     class="moon-falling"
-                     style="height: 1em; vertical-align: middle; margin: 0 0.1em; position: relative; top: -0.05em; aspect-ratio: 514 / 498;">4
+                     class="inline-block align-middle mx-1 animate-bounce"
+                     style="height: 1em; position: relative; top: -0.05em; aspect-ratio: 514 / 498;">4
             </h1>
 
-            <!-- Salesman GIF -->
-            <figure class="image is-inline-block mb-1" style="max-width: 400px; width: 100%;">
+            {# Salesman GIF #}
+            <figure class="inline-block mb-2 max-w-[400px] w-full">
                 <img src="{% static 'games/zelda-salesman.gif' %}"
                      alt="Happy Mask Salesman"
-                     style="width: 100%; height: auto; aspect-ratio: 640 / 346;">
+                     class="w-full h-auto"
+                     style="aspect-ratio: 640 / 346;">
             </figure>
 
-            <!-- Quote -->
-            <h2 class="title is-3 mb-2">
+            {# Quote #}
+            <h2 class="text-2xl font-bold mb-2">
                 <em>"You've met with a terrible fate, haven't you?"</em>
             </h2>
-            <p class="has-text-grey-light is-size-7 mb-5">
+            <p class="text-base-content/50 text-sm mb-6">
                 ~Happy Mask Salesman,
                 <a href="{% url 'game-detail' slug='the-legend-of-zelda-majora-s-mask' %}"
-                   class="has-text-info">
+                   class="link link-info">
                     The Legend of Zelda: Majora's Mask
                 </a>
             </p>
 
-            <p class="is-size-5 mb-5">
+            <p class="text-lg mb-6">
                 The page you are looking for doesn't exist in this timeline.
             </p>
-            <a href="{% url 'games-list' %}" id="song-of-time-btn" class="button is-link is-medium">
-                <span class="icon">
-                    <img src="{% static 'games/zelda-ocarina.svg' %}" alt="Ocarina" style="height: 1.2em; filter: brightness(0) invert(1);">
-                </span>
+            <a href="{% url 'games-list' %}" id="song-of-time-btn" class="btn btn-primary btn-lg">
+                <img src="{% static 'games/zelda-ocarina.svg' %}" alt="Ocarina" class="h-5 invert">
                 <span>Play the Song of Time</span>
             </a>
             <audio id="song-of-time" src="{% static 'games/zelda-song-of-time.mp3' %}" preload="auto"></audio>
@@ -55,7 +54,7 @@
         const destination = this.href;
 
         // Disable button to prevent multiple clicks
-        this.classList.add('is-loading');
+        this.classList.add('loading');
 
         audio.volume = 0.7;
         audio.play();

@@ -2,9 +2,13 @@
 
 ## 2025-11-29
 
-- Changed default link color from white to blue for better visibility on text content pages
-- Game list page retains white links for titles; other pages (About, Developers, Lists, etc.) now use blue
-- Year grid toggle: clicking already-selected year/decade now deselects it
+- Migrated CSS framework from Bulma/Bulmaswatch to Tailwind CSS v4 + DaisyUI v5
+- Added django-tailwind integration for development workflow with hot-reload
+- Implemented theme switcher with 5 themes: Forest (default), Night, Sunset, Nord, Lo-Fi
+- Theme persists across sessions via localStorage
+- Converted all templates to use Tailwind utilities and DaisyUI components
+- Removed Bulma CSS files (combined.css, main.css, vendor/)
+- Updated documentation (CLAUDE.md, README.md) for new CSS workflow
 
 ## 2025-11-28
 

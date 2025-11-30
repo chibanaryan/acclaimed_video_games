@@ -3,57 +3,59 @@
 {% load game_filters %}
 {% if lists %}
 {# Desktop table view #}
-<table class="table is-fullwidth is-hidden-mobile">
-    <thead>
-        <tr>
-            <th>Publication</th>
-            <th>Year</th>
-            <th>Name</th>
-            <th>Type</th>
-        </tr>
-    </thead>
-    <tbody id="list-table-body">
-        {% for list in lists %}
-        <tr class="list-row">
-            <td class="publication">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</td>
-            <td class="year">{{ list.year }}</td>
-            <td>
-                {% if list.url %}
-                <a href="{{ list.url }}" target="_blank">
-                    {{ list.name }}
-                </a>
-                {% else %}
-                <span>{{ list.name }}</span>
-                {% endif %}
-            </td>
-            <td>{{ list.get_type_display }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="hidden md:block overflow-x-auto">
+    <table class="table table-sm w-full">
+        <thead>
+            <tr>
+                <th>Publication</th>
+                <th>Year</th>
+                <th>Name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody id="list-table-body">
+            {% for list in lists %}
+            <tr class="list-row">
+                <td class="text-base-content/80">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</td>
+                <td>{{ list.year }}</td>
+                <td>
+                    {% if list.url %}
+                    <a href="{{ list.url }}" target="_blank" class="link link-primary">
+                        {{ list.name }}
+                    </a>
+                    {% else %}
+                    <span>{{ list.name }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ list.get_type_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {# Mobile card view #}
-<div id="list-mobile-container" class="is-hidden-tablet">
+<div id="list-mobile-container" class="md:hidden space-y-3">
     {% for list in lists %}
-    <div class="list-row list-item">
-        <div>
-            <strong>{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</strong>
+    <div class="list-row card bg-base-200 p-3">
+        <div class="font-bold">
+            {% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}
         </div>
-        <div>
+        <div class="mt-1">
             {% if list.url %}
-            <a href="{{ list.url }}" target="_blank">
+            <a href="{{ list.url }}" target="_blank" class="link link-primary">
                 {{ list.name }}
             </a>
             {% else %}
             <span>{{ list.name }}</span>
             {% endif %}
         </div>
-        <div>
-            <span class="has-text-weight-semibold">Year:</span>
+        <div class="text-sm text-base-content/70 mt-1">
+            <span class="font-semibold">Year:</span>
             {{ list.year }}
         </div>
-        <div>
-            <span class="has-text-weight-semibold">Type:</span>
+        <div class="text-sm text-base-content/70">
+            <span class="font-semibold">Type:</span>
             {{ list.get_type_display }}
         </div>
     </div>
@@ -61,22 +63,21 @@
 </div>
 
 {% if has_more %}
-<div id="load-more-container" class="has-text-centered mt-5 mb-5">
+<div id="load-more-container" class="text-center my-6">
     <button type="button"
-            class="button is-medium load-more-button"
+            class="btn btn-primary load-more-button"
             data-next-page="{{ next_page }}"
             data-total="{{ total_count }}"
             data-loaded="{{ loaded_count }}">
-        <span class="icon is-small">
-            <span class="mdi mdi-plus-circle-outline"></span>
-        </span>
+        <span class="mdi mdi-plus-circle-outline"></span>
         <span class="load-more-text">Load More ({{ remaining_count|intcomma }} remaining)</span>
     </button>
 </div>
 {% endif %}
 
 {% else %}
-<div class="notification">
-    <p>No lists found.</p>
+<div class="alert">
+    <span class="mdi mdi-information-outline"></span>
+    <span>No lists found.</span>
 </div>
 {% endif %}

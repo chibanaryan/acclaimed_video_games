@@ -296,7 +296,7 @@
             <div class="genre-column"
                  :class="{ 'is-empty': !isGroupAvailable(item.key) }"
                  :style="'--group-color: ' + item.group.color">
-                <div class="genre-column-count is-size-7 has-text-weight-semibold" style="margin-bottom: 0.25rem;">
+                <div class="genre-column-count mb-1">
                     (<span x-text="getGroupSelectedCount(item.key)"></span>/<span x-text="getGenresInGroup(item.key).filter(g => isGenreAvailable(g.id)).length"></span>)
                 </div>
                 {# Column header with category name - clickable to select/deselect all #}

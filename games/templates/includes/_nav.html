@@ -1,12 +1,14 @@
 {% load static %}
-<nav class="navbar" role="navigation" aria-label="main navigation" x-data="{ expanded: false, mobileSearchActive: false }">
-    <div class="navbar-brand">
-        <a href="{% url 'home' %}" class="navbar-item has-text-weight-bold pl-0" x-show="!mobileSearchActive">
-            <img src="{% static 'games/avg_logo_small.png' %}" alt="Acclaimed Games" width="401" height="263">
+<nav class="navbar bg-transparent px-0" role="navigation" aria-label="main navigation" x-data="{ expanded: false, mobileSearchActive: false }">
+    {# Left side: Logo + Search + Top 1000 #}
+    <div class="navbar-start gap-2">
+        <a href="{% url 'home' %}" class="btn btn-ghost px-0 font-bold" x-show="!mobileSearchActive">
+            <img src="{% static 'games/avg_logo_small.png' %}" alt="Acclaimed Games" width="401" height="263" class="h-8 w-auto">
         </a>
-        {# Mobile search button - appears between logo and Top 1000 on mobile #}
-        <div class="navbar-item is-hidden-tablet mobile-search"
-             :class="{ 'is-expanded': mobileSearchActive }"
+
+        {# Mobile search button - appears on mobile only #}
+        <div class="md:hidden"
+             :class="{ 'flex-1': mobileSearchActive }"
              x-data="{
                  ...createSearchData('{% url 'api-games-search' %}', 5),
                  toggleInput() {
@@ -20,18 +22,14 @@
                  }
              }"
              x-init="window.addEventListener('reset-search-state', () => { reset(); mobileSearchActive = false; })">
-            <button @click="toggleInput()" x-show="!mobileSearchActive" class="button is-text" aria-label="Open search">
-                <span class="icon">
-                    <span class="mdi mdi-magnify mdi-24px" aria-hidden="true"></span>
-                </span>
+            <button @click="toggleInput()" x-show="!mobileSearchActive" class="btn btn-ghost btn-sm" aria-label="Open search">
+                <span class="mdi mdi-magnify text-xl" aria-hidden="true"></span>
             </button>
-            <div x-show="mobileSearchActive" x-cloak class="results-wrapper">
-                <div class="field has-addons">
-                    <div class="control has-icons-left is-expanded">
-                        <label for="nav-search-mobile" class="is-sr-only">Search games</label>
-                        <span class="icon" aria-hidden="true">
-                            <span class="mdi mdi-magnify"></span>
-                        </span>
+            <div x-show="mobileSearchActive" x-cloak class="w-full">
+                <div class="join w-full">
+                    <div class="relative flex-1">
+                        <label for="nav-search-mobile" class="sr-only">Search games</label>
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-magnify text-base-content/50" aria-hidden="true"></span>
                         <input type="text"
                                id="nav-search-mobile"
                                name="q"
@@ -41,146 +39,161 @@
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
                                @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                                placeholder="Search all games"
-                               class="input input-dark"
+                               class="input input-bordered input-sm w-full pl-9 bg-base-200"
                                autocomplete="off">
                     </div>
-                    <div class="control">
-                        <a @click="mobileSearchActive = false; q = ''; results = []; showMenu = false" class="button" role="button" aria-label="Close search">
-                            <span class="icon" aria-hidden="true">
-                                <span class="mdi mdi-close"></span>
-                            </span>
-                        </a>
-                    </div>
+                    <button @click="mobileSearchActive = false; q = ''; results = []; showMenu = false" class="btn btn-sm join-item" aria-label="Close search">
+                        <span class="mdi mdi-close" aria-hidden="true"></span>
+                    </button>
                 </div>
-                <div x-show="showMenu" class="results">
-                    <template x-if="!q || q.trim().length < 2">
-                        <div class="dropdown-item">
-                            Please enter two or more characters
-                        </div>
-                    </template>
-                    <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                        <div class="dropdown-item">
-                            No results found
-                        </div>
-                    </template>
-                    <template x-for="result in results" :key="result.id">
-                        <a :href="'/game/' + result.slug + '/'" class="result dropdown-item">
-                            <div class="media">
-                                <div class="media-left">
-                                    <figure class="image is-32x32">
-                                        <img :src="result.thumbnail" :alt="result.name" width="32" height="32">
-                                    </figure>
-                                </div>
-                                <div class="media-content">
-                                    <div class="has-text-weight-semibold" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
-                                    <div class="has-text-weight-light" x-text="'All time rank: ' + result.rank"></div>
-                                </div>
-                            </div>
-                        </a>
-                    </template>
-                    <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
-                        <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
-                           class="dropdown-item">
-                            See all results &hellip;
-                        </a>
-                    </template>
+                {# Mobile search results dropdown #}
+                <div x-show="showMenu" class="absolute left-0 right-0 mt-1 bg-base-200 rounded-box shadow-lg z-50 max-h-80 overflow-y-auto">
+                    <ul class="menu p-2">
+                        <template x-if="!q || q.trim().length < 2">
+                            <li class="disabled"><span class="text-base-content/50">Please enter two or more characters</span></li>
+                        </template>
+                        <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
+                            <li class="disabled"><span class="text-base-content/50">No results found</span></li>
+                        </template>
+                        <template x-for="result in results" :key="result.id">
+                            <li>
+                                <a :href="'/game/' + result.slug + '/'" class="flex items-center gap-3">
+                                    <img :src="result.thumbnail" :alt="result.name" width="32" height="32" class="w-8 h-8 rounded">
+                                    <div>
+                                        <div class="font-semibold" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
+                                        <div class="text-sm text-base-content/70" x-text="'All time rank: ' + result.rank"></div>
+                                    </div>
+                                </a>
+                            </li>
+                        </template>
+                        <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
+                            <li>
+                                <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
+                                    See all results &hellip;
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
                 </div>
             </div>
         </div>
-        {# Desktop search with dropdown - full search functionality #}
-        <div class="navbar-item is-hidden-mobile desktop-search"
+
+        {# Desktop search with dropdown #}
+        <div class="hidden md:block"
              x-data="createSearchData('{% url 'api-games-search' %}', 5)"
              x-init="window.addEventListener('reset-search-state', () => reset())"
              @click.away="showMenu = false">
-            <div class="dropdown" :class="{ 'is-active': showMenu }">
-                <div class="field has-addons m-0">
-                    <div class="control has-icons-left">
-                        <label for="nav-search-desktop" class="is-sr-only">Search games</label>
-                        <span class="icon" aria-hidden="true">
-                            <span class="mdi mdi-magnify"></span>
-                        </span>
+            <div class="dropdown" :class="{ 'dropdown-open': showMenu }">
+                <div class="join">
+                    <div class="relative">
+                        <label for="nav-search-desktop" class="sr-only">Search games</label>
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-magnify text-base-content/50" aria-hidden="true"></span>
                         <input type="text"
                                id="nav-search-desktop"
                                name="q"
                                placeholder="Search all games"
-                               class="input input-dark"
+                               class="input input-bordered input-sm w-64 pl-9 bg-base-200"
                                x-model="q"
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
                                @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                                autocomplete="off">
                     </div>
-                    <div class="control" x-show="q && q.trim()" x-cloak>
-                        <a @click="q = ''; results = []; showMenu = false" class="button" role="button" aria-label="Clear search">
-                            <span class="icon" aria-hidden="true">
-                                <span class="mdi mdi-close"></span>
-                            </span>
-                        </a>
-                    </div>
+                    <button x-show="q && q.trim()" x-cloak @click="q = ''; results = []; showMenu = false" class="btn btn-sm join-item" aria-label="Clear search">
+                        <span class="mdi mdi-close" aria-hidden="true"></span>
+                    </button>
                 </div>
-                <div class="dropdown-menu" x-show="showMenu">
-                    <div class="dropdown-content">
-                        <template x-if="!q || q.trim().length < 2">
-                            <div class="dropdown-item">
-                                Please enter two or more characters
-                            </div>
-                        </template>
-                        <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                            <div class="dropdown-item">
-                                No results found
-                            </div>
-                        </template>
-                        <template x-for="result in results" :key="result.id">
-                            <a :href="'/game/' + result.slug + '/'" class="result dropdown-item">
-                                <div class="media">
-                                    <div class="media-left">
-                                        <figure class="image is-32x32">
-                                            <img :src="result.thumbnail" :alt="result.name" width="32" height="32">
-                                        </figure>
-                                    </div>
-                                    <div class="media-content">
-                                        <div class="has-text-weight-semibold" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
-                                        <div class="has-text-weight-light" x-text="'All time rank: ' + result.rank"></div>
-                                    </div>
+                <ul class="dropdown-content menu bg-base-200 rounded-box w-80 p-2 shadow-lg z-50 mt-1">
+                    <template x-if="!q || q.trim().length < 2">
+                        <li class="disabled"><span class="text-base-content/50">Please enter two or more characters</span></li>
+                    </template>
+                    <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
+                        <li class="disabled"><span class="text-base-content/50">No results found</span></li>
+                    </template>
+                    <template x-for="result in results" :key="result.id">
+                        <li>
+                            <a :href="'/game/' + result.slug + '/'" class="flex items-center gap-3">
+                                <img :src="result.thumbnail" :alt="result.name" width="32" height="32" class="w-8 h-8 rounded">
+                                <div>
+                                    <div class="font-semibold" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
+                                    <div class="text-sm text-base-content/70" x-text="'All time rank: ' + result.rank"></div>
                                 </div>
                             </a>
-                        </template>
-                        <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
-                            <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
-                               class="dropdown-item">
+                        </li>
+                    </template>
+                    <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
+                        <li>
+                            <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
                                 See all results &hellip;
                             </a>
-                        </template>
-                    </div>
-                </div>
+                        </li>
+                    </template>
+                </ul>
             </div>
         </div>
-        <a href="{% url 'games-list' %}" class="navbar-item nav-link" x-show="!mobileSearchActive">
+
+        <a href="{% url 'games-list' %}" class="btn btn-ghost btn-sm" x-show="!mobileSearchActive">
             Top 1000
         </a>
     </div>
-    <div class="navbar-menu" :class="{ 'is-active': expanded }" @click="expanded = false">
-        <div class="navbar-start">
-            <a href="{% url 'developers-list' %}" class="navbar-item nav-link">Developers</a>
-            <a href="{% url 'list-list' %}" class="navbar-item nav-link">Lists</a>
-            <a href="{% url 'page-detail' slug='about' %}" class="navbar-item nav-link">About</a>
-            <a href="{% url 'page-detail' slug='donate' %}" class="navbar-item nav-link">Donate</a>
-            <a href="{% url 'page-detail' slug='palestine' %}" class="navbar-item nav-link" title="Statement on Palestine">
-                <span class="icon">
-                    <img src="{% static 'games/palestine-flag-xs.png' %}" alt="Palestine" width="24" height="12">
-                </span>
-            </a>
+
+    {# Center/End: Navigation links (desktop) #}
+    <div class="navbar-end hidden lg:flex gap-1">
+        <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm">Developers</a>
+        <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm">Lists</a>
+        <a href="{% url 'page-detail' slug='about' %}" class="btn btn-ghost btn-sm">About</a>
+        <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-ghost btn-sm">Donate</a>
+        <a href="{% url 'page-detail' slug='palestine' %}" class="btn btn-ghost btn-sm px-2" title="Statement on Palestine">
+            <img src="{% static 'games/palestine-flag-xs.png' %}" alt="Palestine" width="24" height="12">
+        </a>
+
+        {# Theme Switcher #}
+        <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
+                <span class="mdi mdi-palette"></span>
+            </div>
+            <ul tabindex="0" class="dropdown-content menu bg-base-200 rounded-box w-36 p-2 shadow-lg z-50">
+                <li><button type="button" onclick="setTheme('forest')" class="w-full text-left">Forest</button></li>
+                <li><button type="button" onclick="setTheme('night')" class="w-full text-left">Night</button></li>
+                <li><button type="button" onclick="setTheme('sunset')" class="w-full text-left">Sunset</button></li>
+                <li><button type="button" onclick="setTheme('nord')" class="w-full text-left">Nord</button></li>
+                <li><button type="button" onclick="setTheme('lofi')" class="w-full text-left">Lo-Fi</button></li>
+            </ul>
         </div>
     </div>
-    <a @click="expanded = !expanded"
-       class="navbar-burger is-hidden-desktop"
-       :class="{ 'is-active': expanded }"
-       x-show="!mobileSearchActive"
-       aria-label="menu"
-       :aria-expanded="expanded"
-       role="button">
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-    </a>
-</nav>
 
+    {# Mobile menu (dropdown) #}
+    <div class="navbar-end lg:hidden" x-show="!mobileSearchActive">
+        <div class="dropdown dropdown-end">
+            <label tabindex="0" @click="expanded = !expanded" class="btn btn-ghost btn-sm" aria-label="menu" :aria-expanded="expanded">
+                <span class="mdi mdi-menu text-xl" x-show="!expanded"></span>
+                <span class="mdi mdi-close text-xl" x-show="expanded" x-cloak></span>
+            </label>
+            <ul class="dropdown-content menu bg-base-200 rounded-box w-52 p-2 shadow-lg z-50" :class="{ 'hidden': !expanded }" @click="expanded = false">
+                <li><a href="{% url 'developers-list' %}">Developers</a></li>
+                <li><a href="{% url 'list-list' %}">Lists</a></li>
+                <li><a href="{% url 'page-detail' slug='about' %}">About</a></li>
+                <li><a href="{% url 'page-detail' slug='donate' %}">Donate</a></li>
+                <li>
+                    <a href="{% url 'page-detail' slug='palestine' %}" class="flex items-center gap-2">
+                        <img src="{% static 'games/palestine-flag-xs.png' %}" alt="" width="24" height="12">
+                        Palestine
+                    </a>
+                </li>
+                <li class="menu-title mt-2">Theme</li>
+                <li>
+                    <details>
+                        <summary>Select Theme</summary>
+                        <ul>
+                            <li><button type="button" onclick="setTheme('forest')" class="w-full text-left">Forest</button></li>
+                            <li><button type="button" onclick="setTheme('night')" class="w-full text-left">Night</button></li>
+                            <li><button type="button" onclick="setTheme('sunset')" class="w-full text-left">Sunset</button></li>
+                            <li><button type="button" onclick="setTheme('nord')" class="w-full text-left">Nord</button></li>
+                            <li><button type="button" onclick="setTheme('lofi')" class="w-full text-left">Lo-Fi</button></li>
+                        </ul>
+                    </details>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

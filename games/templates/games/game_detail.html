@@ -29,7 +29,7 @@
 
 {% block content %}
 {% if game %}
-    <h1 class="title">{{ game.name }}</h1>
+    <h1 class="text-3xl font-bold mb-4">{{ game.name }}</h1>
     {% block extra_head %}
         {% if game.image %}
             <link rel="preload"
@@ -40,13 +40,13 @@
                   fetchpriority="high">
         {% endif %}
     {% endblock %}
-    <div class="columns game-detail-columns is-variable is-5">
-        <div class="column is-7-tablet">
+    <div class="flex flex-col-reverse md:flex-row gap-6 mb-8">
+        <div class="flex-1">
             {% include 'games/includes/_game_properties.html' with game=game %}
         </div>
         {% if game.image %}
-        <div class="column is-narrow">
-            <figure class="game-cover-frame">
+        <div class="flex-shrink-0">
+            <figure class="w-full max-w-[264px] mx-auto md:mx-0">
                 <img src="{{ game.image }}"
                      {% if game.image_2x %}srcset="{{ game.image }} 1x, {{ game.image_2x }} 2x"{% endif %}
                      sizes="(max-width: 768px) 70vw, 320px"
@@ -55,19 +55,22 @@
                      loading="eager"
                      fetchpriority="high"
                      decoding="async"
-                     class="game-cover">
+                     class="rounded-lg shadow-lg w-full h-auto">
             </figure>
         </div>
         {% endif %}
     </div>
     {% for group_label, group_items in grouped_lists %}
-        <h2 class="title is-5">{{ group_label }} Lists</h2>
+        <h2 class="text-xl font-bold mt-6 mb-4">{{ group_label }} Lists</h2>
         {% include 'includes/_list_results.html' with items=group_items show_type=False show_rank=True %}
     {% endfor %}
 {% else %}
-    <div class="notification is-danger">
-        <p><strong>Error:</strong> Game not found</p>
-        <p>The game you're looking for could not be found or there was a problem loading it.</p>
+    <div class="alert alert-error">
+        <span class="mdi mdi-alert-circle"></span>
+        <div>
+            <p class="font-bold">Error: Game not found</p>
+            <p>The game you're looking for could not be found or there was a problem loading it.</p>
+        </div>
     </div>
 {% endif %}
 {% endblock %}

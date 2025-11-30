@@ -26,25 +26,25 @@
 {# Mobile card rows in a container div #}
 <div id="append-mobile-container">
 {% for list in lists %}
-<div class="list-row list-item">
-    <div>
-        <strong>{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</strong>
+<div class="list-row card bg-base-200 p-3">
+    <div class="font-bold">
+        {% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}
     </div>
-    <div>
+    <div class="mt-1">
         {% if list.url %}
-        <a href="{{ list.url }}" target="_blank">
+        <a href="{{ list.url }}" target="_blank" class="link link-primary">
             {{ list.name }}
         </a>
         {% else %}
         <span>{{ list.name }}</span>
         {% endif %}
     </div>
-    <div>
-        <span class="has-text-weight-semibold">Year:</span>
+    <div class="text-sm text-base-content/70 mt-1">
+        <span class="font-semibold">Year:</span>
         {{ list.year }}
     </div>
-    <div>
-        <span class="has-text-weight-semibold">Type:</span>
+    <div class="text-sm text-base-content/70">
+        <span class="font-semibold">Type:</span>
         {{ list.get_type_display }}
     </div>
 </div>

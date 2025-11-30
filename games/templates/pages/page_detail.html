@@ -3,9 +3,9 @@
 {% block title %}{{ flatpage.title }} - Acclaimed Games{% endblock %}
 
 {% block content %}
-<div class="container-reading">
-    <h1 class="title">{{ flatpage.title }}</h1>
-    <div class="content">
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">{{ flatpage.title }}</h1>
+    <div class="prose prose-invert max-w-none">
         {{ flatpage.rendered_content|safe }}
     </div>
 </div>

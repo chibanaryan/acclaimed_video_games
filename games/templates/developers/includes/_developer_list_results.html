@@ -1,48 +1,49 @@
 {# Developer search results partial - used for both initial render and HTMX updates #}
 {% load humanize %}
 {% if developers %}
-<table class="table is-fullwidth">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <td># Games</td>
-        </tr>
-    </thead>
-    <tbody id="developer-list-body">
-        {% for alias in developers %}
-        <tr class="developer-row">
-            <td>
-                {% if alias.developer.slug %}
-                    <a href="{% url 'developer-detail' slug=alias.developer.slug %}">
-                        {{ alias.name }} ({{ alias.developer.name }})
-                    </a>
-                {% else %}
-                    <span>{{ alias.name }} ({{ alias.developer.name }})</span>
-                {% endif %}
-            </td>
-            <td>{{ alias.games_count }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="overflow-x-auto">
+    <table class="table table-sm w-full">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th># Games</th>
+            </tr>
+        </thead>
+        <tbody id="developer-list-body">
+            {% for alias in developers %}
+            <tr class="developer-row">
+                <td>
+                    {% if alias.developer.slug %}
+                        <a href="{% url 'developer-detail' slug=alias.developer.slug %}" class="link link-primary">
+                            {{ alias.name }} ({{ alias.developer.name }})
+                        </a>
+                    {% else %}
+                        <span>{{ alias.name }} ({{ alias.developer.name }})</span>
+                    {% endif %}
+                </td>
+                <td>{{ alias.games_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% if has_more %}
-<div id="load-more-container" class="has-text-centered mt-5 mb-5">
+<div id="load-more-container" class="text-center my-6">
     <button type="button"
-            class="button is-medium load-more-button"
+            class="btn btn-primary load-more-button"
             data-next-page="{{ next_page }}"
             data-total="{{ total_count }}"
             data-loaded="{{ loaded_count }}">
-        <span class="icon is-small">
-            <span class="mdi mdi-plus-circle-outline"></span>
-        </span>
+        <span class="mdi mdi-plus-circle-outline"></span>
         <span class="load-more-text">Load More ({{ remaining_count|intcomma }} remaining)</span>
     </button>
 </div>
 {% endif %}
 
 {% else %}
-<div class="notification">
-    <p>No developers found.</p>
+<div class="alert">
+    <span class="mdi mdi-information-outline"></span>
+    <span>No developers found.</span>
 </div>
 {% endif %}

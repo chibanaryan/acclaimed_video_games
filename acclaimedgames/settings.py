@@ -60,8 +60,13 @@ INSTALLED_APPS = [
     "django.forms",
     "corsheaders",
     "rest_framework",
+    "tailwind",
+    "theme",
     "games",
 ]
+
+# django-tailwind configuration
+TAILWIND_APP_NAME = "theme"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

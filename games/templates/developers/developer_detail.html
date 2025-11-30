@@ -11,7 +11,7 @@
         "games": {% if games_data %}{{ games_data|tojson }}{% else %}[]{% endif %}
     }
     </script>
-    <h1 class="title">{{ developer.name }}</h1>
+    <h1 class="text-3xl font-bold mb-4">{{ developer.name }}</h1>
     <div x-data="{
             aliases: [],
             allGames: [],
@@ -47,27 +47,28 @@
             }
          }">
         {% if developer.aliases.count > 1 %}
-        <h2>Including:</h2>
-        <ul class="mb-5">
+        <h2 class="text-xl font-semibold mb-2">Including:</h2>
+        <ul class="mb-6 space-y-1">
             <template x-for="alias in aliases" :key="alias.id">
                 <li>
-                    <label class="checkbox" :for="'alias-' + alias.id">
+                    <label class="label cursor-pointer justify-start gap-2" :for="'alias-' + alias.id">
                         <input type="checkbox"
+                               class="checkbox checkbox-primary checkbox-sm"
                                :id="'alias-' + alias.id"
                                :name="'alias-' + alias.id"
                                x-model="alias.selected">
-                        <span x-text="alias.name"></span>
+                        <span class="label-text" x-text="alias.name"></span>
                     </label>
                 </li>
             </template>
         </ul>
         {% endif %}
-        <h2 class="subtitle is-4 mt-5">
+        <h2 class="text-xl text-base-content/70 mt-6 mb-4">
             <span x-text="filteredGames.length"></span> Game<span x-text="filteredGames.length === 1 ? '' : 's'"></span>
         </h2>
         <div>
             {% for game in games %}
-                <div x-show="isGameVisible({{ game.igdb_id|default:game.id }})" 
+                <div x-show="isGameVisible({{ game.igdb_id|default:game.id }})"
                      data-game-id="{{ game.igdb_id|default:game.id }}">
                     {% include 'games/includes/_game_row.html' with game=game show_rank=False show_rank_in_details=True %}
                 </div>
@@ -75,9 +76,12 @@
         </div>
     </div>
 {% else %}
-    <div class="notification is-danger">
-        <p><strong>Error:</strong> Developer not found</p>
-        <p>The developer you're looking for could not be found or there was a problem loading it.</p>
+    <div class="alert alert-error">
+        <span class="mdi mdi-alert-circle"></span>
+        <div>
+            <p class="font-bold">Error: Developer not found</p>
+            <p>The developer you're looking for could not be found or there was a problem loading it.</p>
+        </div>
     </div>
 {% endif %}
 {% endblock %}
