@@ -3,18 +3,7 @@
 {% if items %}
     {# Desktop table view #}
     <div class="hidden md:block overflow-x-auto">
-        <table class="table w-full text-base" style="table-layout: fixed;">
-            <colgroup>
-                <col style="width: 25%;">  <!-- Publication -->
-                <col style="width: 10%;">  <!-- Year -->
-                {% if show_rank %}
-                <col style="width: 10%;">  <!-- Rank -->
-                {% endif %}
-                <col style="width: 55%;">  <!-- Name -->
-                {% if show_type %}
-                <col style="width: auto;">  <!-- Type -->
-                {% endif %}
-            </colgroup>
+        <table class="table w-full">
             <thead>
                 <tr>
                     <th>Publication</th>
@@ -57,7 +46,7 @@
     {# Mobile card view #}
     <div class="md:hidden space-y-3">
         {% for list in items %}
-        <div class="card bg-base-200 p-3 text-base">
+        <div class="card bg-base-200 p-3">
             <div class="font-bold">
                 {% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}
             </div>

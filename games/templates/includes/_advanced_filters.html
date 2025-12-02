@@ -293,10 +293,10 @@
                 </div>
 
                 {# Search input #}
-                <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-magnify text-base-content/60"></span>
-                        <span class="font-semibold text-sm">Search</span>
+                <div class="mb-6 pb-4 border-b border-base-300">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="mdi mdi-magnify text-xl text-primary"></span>
+                        <span class="font-bold text-base">Search</span>
                     </div>
                     <div>
                         {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
@@ -304,10 +304,10 @@
                 </div>
 
                 {# Year range heatmap grid #}
-                <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-calendar-range text-base-content/60"></span>
-                        <span class="font-semibold text-sm">Release Year</span>
+                <div class="mb-6 pb-4 border-b border-base-300">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="mdi mdi-calendar-range text-xl text-primary"></span>
+                        <span class="font-bold text-base">Release Year</span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetYears()" title="Reset years" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
                             <span class="mdi mdi-close"></span>
                         </button>
@@ -323,10 +323,10 @@
 
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
-                <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-controller text-base-content/60"></span>
-                        <span class="font-semibold text-sm">Platforms</span>
+                <div class="mb-6 pb-4 border-b border-base-300">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="mdi mdi-controller text-xl text-primary"></span>
+                        <span class="font-bold text-base">Platforms</span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
                             <span class="mdi mdi-close"></span>
                         </button>
@@ -342,9 +342,9 @@
                 {% if genres %}
                 {# Genres filter - Inventory Grid Style #}
                 <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-gamepad-variant text-base-content/60"></span>
-                        <span class="font-semibold text-sm">Genres</span>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="mdi mdi-gamepad-variant text-xl text-primary"></span>
+                        <span class="font-bold text-base">Genres</span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
                             <span class="mdi mdi-close"></span>
                         </button>

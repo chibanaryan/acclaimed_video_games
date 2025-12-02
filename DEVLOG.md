@@ -2,11 +2,10 @@
 
 ## 2025-12-02
 
-- Enhanced game detail page with improved typography: text-base sizing for better readability
+- Standardized list table text sizes across game detail and source list pages
 - Converted game properties from table layout to div-based layout (removed visual row dividers)
 - Implemented 50/50 split layout on game detail: properties on left, centered game cover on right
 - Added DaisyUI hover-3d effect to game cover for interactive 3D tilt animation
-- Fixed list column alignment on game detail pages using table-layout: fixed with colgroup
 - Added accordion category grouping in platform titles (desktop and mobile) for Retro Consoles and Microcomputers
 - Reorganized sidebar layout using flexbox space-between technique (top: logo/nav/search, middle: flex gap, bottom: secondary nav/contact/theme/social)
 - Increased sidebar text sizes: navigation menus from menu-sm to default, icons from text-lg to text-xl, labels from text-xs/text-sm to text-sm/text-base
