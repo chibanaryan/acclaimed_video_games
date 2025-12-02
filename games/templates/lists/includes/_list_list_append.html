@@ -5,20 +5,7 @@
 <tbody>
 {# Desktop table rows #}
 {% for list in lists %}
-<tr class="list-row">
-    <td class="publication">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</td>
-    <td class="year">{{ list.year }}</td>
-    <td>{{ list.get_type_display }}</td>
-    <td>
-        {% if list.url %}
-        <a href="{{ list.url }}" target="_blank" class="link link-primary">
-            {{ list.name }}
-        </a>
-        {% else %}
-        <span>{{ list.name }}</span>
-        {% endif %}
-    </td>
-</tr>
+{% include 'lists/includes/_list_row.html' %}
 {% endfor %}
 </tbody>
 </table>
@@ -26,23 +13,7 @@
 {# Mobile card rows in a container div #}
 <div id="append-mobile-container">
 {% for list in lists %}
-<div class="list-row card bg-base-200 p-3">
-    <div class="font-bold">
-        {% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}
-    </div>
-    <div class="text-sm text-base-content/85 mt-1">
-        {{ list.year }} • {{ list.get_type_display }}
-    </div>
-    <div class="mt-1">
-        {% if list.url %}
-        <a href="{{ list.url }}" target="_blank" class="link link-primary text-sm">
-            {{ list.name }}
-        </a>
-        {% else %}
-        <span class="text-sm">{{ list.name }}</span>
-        {% endif %}
-    </div>
-</div>
+{% include 'lists/includes/_list_card.html' %}
 {% endfor %}
 </div>
 

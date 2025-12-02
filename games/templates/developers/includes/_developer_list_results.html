@@ -1,8 +1,13 @@
 {# Developer search results partial - used for both initial render and HTMX updates #}
 {% load humanize %}
 {% if developers %}
-<div class="overflow-x-auto">
-    <table class="table w-full">
+{# Desktop table view #}
+<div class="hidden md:block overflow-x-auto">
+    <table class="table table-fixed" style="width: 700px;">
+        <colgroup>
+            <col style="width: 600px;">
+            <col style="width: 100px;">
+        </colgroup>
         <thead>
             <tr>
                 <th>Name</th>
@@ -26,6 +31,26 @@
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+{# Mobile card view #}
+<div id="developer-mobile-container" class="md:hidden space-y-3">
+    {% for alias in developers %}
+    <div class="developer-row card bg-base-200 p-3">
+        <div class="flex items-center justify-between gap-2">
+            <div class="flex-1">
+                {% if alias.developer.slug %}
+                    <a href="{% url 'developer-detail' slug=alias.developer.slug %}" class="link link-primary font-bold">
+                        {{ alias.name }} ({{ alias.developer.name }})
+                    </a>
+                {% else %}
+                    <span class="font-bold">{{ alias.name }} ({{ alias.developer.name }})</span>
+                {% endif %}
+            </div>
+            <div class="badge badge-ghost">{{ alias.games_count }} game{{ alias.games_count|pluralize }}</div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 
 {% if has_more %}

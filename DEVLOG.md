@@ -26,6 +26,9 @@
 - Added floating Back to Top button (bottom-right, appears after 300px scroll with smooth animation)
 - Aligned list table columns on game detail page using colgroup with fixed widths (300px publication, 80px year/rank)
 - Optimized WhiteNoise static file serving: moved middleware to position #2, enabled KEEP_ONLY_HASHED_FILES for aggressive caching (1 year cache with gzip+brotli compression)
+- Fixed table layouts on Developers and Source Lists pages: set fixed column widths (700px for Developers, 900px for Source Lists) to prevent column stretching
+- Added responsive mobile card view to Developers page (matches Source Lists design with badge showing game count)
+- Constrained search bar width on Developers page using max-w-lg for better visual hierarchy
 
 ## 2025-12-01
 

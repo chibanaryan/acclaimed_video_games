@@ -56,6 +56,8 @@ async function handleListLoadMore(event) {
     const button = event.currentTarget;
     const nextPage = button.dataset.nextPage;
 
+    console.log('Load More clicked, nextPage:', nextPage);
+
     if (!nextPage || button.classList.contains('loading')) return;
 
     // Set loading state
@@ -69,17 +71,23 @@ async function handleListLoadMore(event) {
 
     const url = window.location.pathname + '?' + params.toString();
 
+    console.log('Fetching:', url);
+
     try {
         const response = await fetch(url, {
+            cache: 'no-store',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'HX-Request': 'true'
             }
         });
 
+        console.log('Response status:', response.status);
+
         if (!response.ok) throw new Error('Failed to load more');
 
         const html = await response.text();
+        console.log('Response HTML length:', html.length);
 
         // Parse the response to separate rows from metadata
         const parser = new DOMParser();

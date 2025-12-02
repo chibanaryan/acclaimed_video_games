@@ -27,7 +27,7 @@
         window.history.pushState({}, '', url);
     }
 }">
-    <div class="relative">
+    <div class="relative max-w-lg">
         <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-magnify text-base-content/60"></span>
         <input type="text"
                class="input input-bordered w-full pl-10 bg-base-200"
@@ -103,7 +103,7 @@ async function handleDeveloperLoadMore(event) {
         // Remove the metadata script from the parsed doc
         if (metaScript) metaScript.remove();
 
-        // Append rows to table body with staggered cascade animation
+        // Append rows to desktop table body with staggered cascade animation
         const tbody = document.getElementById('developer-list-body');
         const appendContainer = doc.getElementById('append-rows-container');
         if (tbody && appendContainer) {
@@ -114,6 +114,20 @@ async function handleDeveloperLoadMore(event) {
                 row.style.animationDelay = `${index * 8}ms`;
                 index++;
                 tbody.appendChild(row);
+            });
+        }
+
+        // Append cards to mobile container with staggered cascade animation
+        const mobileContainer = document.getElementById('developer-mobile-container');
+        const mobileAppendContainer = doc.getElementById('mobile-append-container');
+        if (mobileContainer && mobileAppendContainer) {
+            const newCards = mobileAppendContainer.querySelectorAll('.developer-row');
+            let index = 0;
+            newCards.forEach(card => {
+                card.classList.add('game-row-enter');
+                card.style.animationDelay = `${index * 8}ms`;
+                index++;
+                mobileContainer.appendChild(card);
             });
         }
 

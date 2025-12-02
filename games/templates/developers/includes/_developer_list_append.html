@@ -1,4 +1,4 @@
-{# Append-only partial - returns just developer rows for Load More #}
+{# Append-only partial - returns developer rows/cards for Load More #}
 {# Wrap in table so DOMParser doesn't discard tr elements #}
 <table id="append-rows-container">
 <tbody>
@@ -18,6 +18,26 @@
 {% endfor %}
 </tbody>
 </table>
+
+{# Mobile cards container #}
+<div id="mobile-append-container">
+{% for alias in developers %}
+<div class="developer-row card bg-base-200 p-3">
+    <div class="flex items-center justify-between gap-2">
+        <div class="flex-1">
+            {% if alias.developer.slug %}
+                <a href="{% url 'developer-detail' slug=alias.developer.slug %}" class="link link-primary font-bold">
+                    {{ alias.name }} ({{ alias.developer.name }})
+                </a>
+            {% else %}
+                <span class="font-bold">{{ alias.name }} ({{ alias.developer.name }})</span>
+            {% endif %}
+        </div>
+        <div class="badge badge-ghost">{{ alias.games_count }} game{{ alias.games_count|pluralize }}</div>
+    </div>
+</div>
+{% endfor %}
+</div>
 
 {# JSON metadata for JavaScript to update the button #}
 <script type="application/json" id="load-more-meta">
