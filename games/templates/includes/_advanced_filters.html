@@ -256,12 +256,12 @@
             </h1>
         </div>
         {% if genre_subtitle %}
-            <p class="text-base font-semibold text-base-content/70" id="genre-subtitle">
+            <p class="text-base font-semibold text-base-content/85" id="genre-subtitle">
                 {{ genre_subtitle }}
             </p>
         {% endif %}
         {% load humanize %}
-        <div class="text-sm text-base-content/50 text-right">
+        <div class="text-sm text-base-content/60 text-right">
             {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
         </div>
     </div>
@@ -295,7 +295,7 @@
                 {# Search input #}
                 <div class="mb-4">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-magnify text-base-content/50"></span>
+                        <span class="mdi mdi-magnify text-base-content/60"></span>
                         <span class="font-semibold text-sm">Search</span>
                     </div>
                     <div>
@@ -306,14 +306,14 @@
                 {# Year range heatmap grid #}
                 <div class="mb-4">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-calendar-range text-base-content/50"></span>
+                        <span class="mdi mdi-calendar-range text-base-content/60"></span>
                         <span class="font-semibold text-sm">Release Year</span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetYears()" title="Reset years" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
                             <span class="mdi mdi-close"></span>
                         </button>
                     </div>
                     <div>
-                        <div class="text-xs text-base-content/50 mb-2 flex justify-between">
+                        <div class="text-xs text-base-content/60 mb-2 flex justify-between">
                             <span>Click year or decade</span>
                             <span>Drag or shift+click for ranges</span>
                         </div>
@@ -325,7 +325,7 @@
                 {# Platforms filter - Tiered component #}
                 <div class="mb-4">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-controller text-base-content/50"></span>
+                        <span class="mdi mdi-controller text-base-content/60"></span>
                         <span class="font-semibold text-sm">Platforms</span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
                             <span class="mdi mdi-close"></span>
@@ -343,7 +343,7 @@
                 {# Genres filter - Inventory Grid Style #}
                 <div class="mb-4">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-gamepad-variant text-base-content/50"></span>
+                        <span class="mdi mdi-gamepad-variant text-base-content/60"></span>
                         <span class="font-semibold text-sm">Genres</span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
                             <span class="mdi mdi-close"></span>

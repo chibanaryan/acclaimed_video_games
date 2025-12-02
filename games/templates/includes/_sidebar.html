@@ -59,7 +59,7 @@
              @click.away="showMenu = false">
             <div class="relative">
                 <label for="sidebar-search" class="sr-only">Search games</label>
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-magnify text-lg text-base-content/50" aria-hidden="true"></span>
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-magnify text-lg text-base-content/60" aria-hidden="true"></span>
                 <input type="text"
                        id="sidebar-search"
                        name="q"
@@ -82,10 +82,10 @@
                  class="absolute left-0 top-full mt-1 bg-base-200 rounded-box w-80 p-2 shadow-lg z-[9999] max-h-80 overflow-y-auto">
                 <ul class="menu menu-sm p-0">
                     <template x-if="!q || q.trim().length < 2">
-                        <li class="disabled"><span class="text-base-content/70 text-sm">Enter 2+ characters</span></li>
+                        <li class="disabled"><span class="text-base-content/85 text-sm">Enter 2+ characters</span></li>
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                        <li class="disabled"><span class="text-base-content/70 text-sm">No results found</span></li>
+                        <li class="disabled"><span class="text-base-content/85 text-sm">No results found</span></li>
                     </template>
                     <template x-for="result in results" :key="result.id">
                         <li>
@@ -93,7 +93,7 @@
                                 <img :src="result.thumbnail" :alt="result.name" width="24" height="24" class="w-6 h-6 rounded">
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-sm truncate" x-text="result.name"></div>
-                                    <div class="text-xs text-base-content/70" x-text="result.year_of_release + ' &bull; #' + result.rank"></div>
+                                    <div class="text-xs text-base-content/85" x-text="result.year_of_release + ' &bull; #' + result.rank"></div>
                                 </div>
                             </a>
                         </li>
@@ -139,14 +139,15 @@
 
         {# Theme toggle #}
         <div class="flex items-center justify-between px-3 py-2 mb-3 bg-base-200 rounded-lg">
-            <span class="text-sm text-base-content/70">Theme</span>
-            <label class="flex cursor-pointer gap-2 items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <span class="text-sm text-base-content/85">Theme</span>
+            <label class="flex cursor-pointer gap-2 items-center" for="theme-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="5" />
                     <path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />
                 </svg>
-                <input type="checkbox" value="synthwave" class="toggle toggle-sm theme-controller theme-loading" id="theme-toggle" />
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <span class="sr-only">Toggle theme</span>
+                <input type="checkbox" value="synthwave" class="toggle toggle-sm theme-controller theme-loading" id="theme-toggle" aria-label="Toggle theme" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </label>
@@ -154,7 +155,7 @@
 
         {# Social links #}
         <div class="text-center">
-            <span class="text-xs text-base-content/70 block mb-2">Follow us</span>
+            <span class="text-xs text-base-content/85 block mb-2">Follow us</span>
             <div class="flex justify-center gap-2">
                 <a href="https://x.com/AVGRankings" target="_blank" rel="noopener noreferrer"
                    class="btn btn-ghost btn-sm btn-square" title="Follow on X" aria-label="Follow on X">

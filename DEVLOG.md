@@ -7,6 +7,7 @@
 - Reorganized sidebar layout using flexbox space-between technique (top: logo/nav/search, middle: flex gap, bottom: secondary nav/contact/theme/social)
 - Made search bar more prominent with darker background and "Search all games..." placeholder
 - Contact Us now displayed as prominent primary button in bottom section
+- Fixed accessibility contrast ratio issues across all templates (text-base-content/50→60, /70→85) for WCAG 2.1 AA compliance
 
 ## 2025-12-01
 

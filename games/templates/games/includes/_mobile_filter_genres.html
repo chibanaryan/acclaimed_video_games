@@ -197,13 +197,13 @@
             <div class="flex bg-base-200 rounded-lg p-0.5">
                 <button type="button"
                         @click="filters.genre_option = 'any'; debouncedFilterUpdate();"
-                        :class="filters.genre_option === 'any' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/70'"
+                        :class="filters.genre_option === 'any' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/85'"
                         class="px-3 py-1 rounded-md text-sm font-medium transition-all">
                     Any
                 </button>
                 <button type="button"
                         @click="filters.genre_option = 'all'; debouncedFilterUpdate();"
-                        :class="filters.genre_option === 'all' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/70'"
+                        :class="filters.genre_option === 'all' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/85'"
                         class="px-3 py-1 rounded-md text-sm font-medium transition-all">
                     All
                 </button>

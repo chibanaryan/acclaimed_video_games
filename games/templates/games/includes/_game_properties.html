@@ -5,7 +5,7 @@
 <table class="table table-sm">
     <tbody>
         <tr>
-            <th class="text-base-content/70 font-semibold w-40">All time rank:</th>
+            <th class="text-base-content/85 font-semibold w-40">All time rank:</th>
             <td>
                 {% game_rank_url game.rank game.id as rank_url %}
                 <a href="{{ rank_url }}" class="link link-primary">{{ game.rank }}</a>
@@ -13,7 +13,7 @@
         </tr>
         {% if game.decade_rank %}
         <tr>
-            <th class="text-base-content/70 font-semibold">{{ game.decade }}s rank:</th>
+            <th class="text-base-content/85 font-semibold">{{ game.decade }}s rank:</th>
             <td>
                 {% game_rank_url game.decade_rank game.id game.decade game.decade|add:9 as decade_url %}
                 <a href="{{ decade_url }}" class="link link-primary">{{ game.decade_rank }}</a>
@@ -22,7 +22,7 @@
         {% endif %}
         {% if game.year_rank %}
         <tr>
-            <th class="text-base-content/70 font-semibold">{{ game.year_of_release }} rank:</th>
+            <th class="text-base-content/85 font-semibold">{{ game.year_of_release }} rank:</th>
             <td>
                 {% game_rank_url game.year_rank game.id game.year_of_release game.year_of_release as year_url %}
                 <a href="{{ year_url }}" class="link link-primary">{{ game.year_rank }}</a>
@@ -30,19 +30,19 @@
         </tr>
         {% endif %}
         <tr>
-            <th class="text-base-content/70 font-semibold">Developers:</th>
+            <th class="text-base-content/85 font-semibold">Developers:</th>
             <td>
                 {% for developer in game.developers.all %}{% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}" class="link link-primary">{{ developer.name }}</a>{% else %}<span>{{ developer.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
             </td>
         </tr>
         <tr>
-            <th class="text-base-content/70 font-semibold">Platforms:</th>
+            <th class="text-base-content/85 font-semibold">Platforms:</th>
             <td>
                 {% for platform in game.platforms.all %}<a href="{% url 'games-list' %}?platforms={{ platform.id }}&highlight={{ game.id }}" class="link link-primary">{{ platform.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
             </td>
         </tr>
         <tr>
-            <th class="text-base-content/70 font-semibold">Year of release:</th>
+            <th class="text-base-content/85 font-semibold">Year of release:</th>
             <td>
                 <a href="{% url 'games-list' %}?start={{ game.year_of_release }}&end={{ game.year_of_release }}&highlight={{ game.id }}" class="link link-primary">
                     {{ game.year_of_release }}
@@ -50,14 +50,14 @@
             </td>
         </tr>
         <tr>
-            <th class="text-base-content/70 font-semibold">Genres:</th>
+            <th class="text-base-content/85 font-semibold">Genres:</th>
             <td>
                 {% for genre in game.genres.all %}<a href="{% url 'games-list' %}?genres={{ genre.id }}&highlight={{ game.id }}" class="link link-primary">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
             </td>
         </tr>
         {% if game.igdb_url %}
         <tr>
-            <th class="text-base-content/70 font-semibold">IGDB Link:</th>
+            <th class="text-base-content/85 font-semibold">IGDB Link:</th>
             <td>
                 <a href="{{ game.igdb_url }}" target="_blank" class="link link-primary inline-flex items-center gap-1">
                     IGDB <span class="mdi mdi-open-in-new"></span>

@@ -70,18 +70,18 @@
                 <span>{{ list.name }}</span>
                 {% endif %}
             </div>
-            <div class="text-base text-base-content/70 mt-1">
+            <div class="text-base text-base-content/85 mt-1">
                 <span class="font-semibold">Year:</span>
                 {{ list.year }}
             </div>
             {% if show_rank %}
-            <div class="text-base text-base-content/70">
+            <div class="text-base text-base-content/85">
                 <span class="font-semibold">Rank:</span>
                 {{ list.rank|default:'' }}
             </div>
             {% endif %}
             {% if show_type %}
-            <div class="text-base text-base-content/70">
+            <div class="text-base text-base-content/85">
                 <span class="font-semibold">Type:</span>
                 {% if list.get_type_display %}{{ list.get_type_display }}{% else %}{{ list.type_name|default:'' }}{% endif %}
             </div>

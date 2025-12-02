@@ -3,7 +3,7 @@
 {% load game_filters %}
 {% load humanize %}
 
-<h2 id="results-count" class="text-xl text-base-content/70 mb-4">
+<h2 id="results-count" class="text-xl text-base-content/85 mb-4">
     {% if page_obj %}
     Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} list{{ total_count|pluralize }}
     {% else %}

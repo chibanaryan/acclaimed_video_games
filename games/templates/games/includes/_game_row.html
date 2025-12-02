@@ -29,7 +29,7 @@
             </a>
         </div>
         {# Hover row: Global Rank and Developer - hidden by default, shown on hover #}
-        <div class="game-row-details text-sm text-base-content/70 mt-1">
+        <div class="game-row-details text-sm text-base-content/85 mt-1">
             {% if show_rank == 'filtered' %}<span class="mr-3">Global Rank: {{ game.rank }}</span>{% endif %}
             {% with developers=game.developers.all %}
             <span>Dev: {% for developer in developers %}{% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}" class="link link-hover">{{ developer.name }}</a>{% else %}{{ developer.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
