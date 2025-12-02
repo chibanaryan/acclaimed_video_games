@@ -361,9 +361,9 @@
                 return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
             }
          }">
-        <div class="relative z-10 bg-base-200 border-b border-base-content/10 py-3 mb-4 -mx-4 px-4">
-            <h1 class="text-base font-bold mb-2" x-text="buildDynamicTitle()"></h1>
-            <button type="button" class="btn btn-primary btn-sm w-full" @click="filterOpen = true">
+        <div class="relative z-10 bg-base-200 border-b border-base-content/10 py-3 mb-4 -mx-4 px-4 flex items-center justify-between gap-3">
+            <h1 class="text-base font-bold flex-1 min-w-0" x-text="buildDynamicTitle()"></h1>
+            <button type="button" class="btn btn-primary btn-sm shrink-0" @click="filterOpen = true">
                 <span class="mdi mdi-tune"></span>
                 Filters
                 <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
