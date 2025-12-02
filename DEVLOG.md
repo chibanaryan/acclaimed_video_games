@@ -19,6 +19,7 @@
 - Reorganized sidebar layout using flexbox space-between technique (top: logo/nav/search, middle: flex gap, bottom: secondary nav/contact/theme/social)
 - Increased sidebar text sizes: navigation menus from menu-sm to default, icons from text-lg to text-xl, labels from text-xs/text-sm to text-sm/text-base
 - Fixed game row alignment: platform and genre icon columns now use fixed widths (120px, 100px) for consistent vertical alignment
+- Implemented responsive game row layout: genre icons disappear below 1200px, platform icons below 1100px, with subtle column dividers
 - Added "Jump to Rank" feature at top of game list for quick navigation to any rank position
 - Fixed Jump to Rank overshoot bug: corrected data-per-page from 50 to 100 to match backend pagination
 - Fixed duplicate event listeners on Jump to Rank by cloning elements before attaching handlers

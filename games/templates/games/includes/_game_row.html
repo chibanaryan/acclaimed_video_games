@@ -36,26 +36,55 @@
             {% endwith %}
         </div>
     </div>
-    {# Platforms column - family icons (max 5) - hidden on narrow screens (< 1100px) #}
-    <div class="hidden xl:flex items-center justify-center gap-1 px-4">
+    {# Platforms column - family icons (max 5) - disappears second (below 1100px) #}
+    <div class="hidden platform-column">
         {% for family in game.platforms.all|platform_families|slice:":5" %}{% if family.svg_icon %}<a href="{% url 'games-list' %}?platforms={{ family.platform_id }}&highlight={{ game.id }}" class="text-base-content/60 hover:text-primary transition-colors" title="{{ family.platform_name }}"><svg class="w-5 h-5" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ family.svg_icon }}"></use></svg></a>{% else %}<a href="{% url 'games-list' %}?platforms={{ family.platform_id }}&highlight={{ game.id }}" class="text-base-content/60 hover:text-primary transition-colors mdi {{ family.icon }} text-lg" title="{{ family.platform_name }}"></a>{% endif %} {% endfor %}
     </div>
-    {# Genres column - icons with tooltips (max 5) - hidden on narrower screens (< 1300px) #}
-    <div class="hidden 2xl:flex items-center justify-center gap-1 px-4">
+    {# Genres column - icons with tooltips (max 5) - disappears first (below 1200px) #}
+    <div class="hidden genre-column">
         {% with genres=game.genres.all|slice:":5" %}
         {% for genre in genres %}<a href="{% url 'games-list' %}?genres={{ genre.id }}&highlight={{ game.id }}" title="{{ genre.name }}" class="text-base-content/60 hover:text-primary transition-colors" data-group="{% if genre.name == 'Action' or genre.name == 'Shooter' or genre.name == 'Fighting' or genre.name == 'Hack and slash/Beat \'em up' or genre.name == 'MOBA' or genre.name == 'Stealth' or genre.name == 'Horror' %}combat{% elif genre.name == 'Puzzle' or genre.name == 'Strategy' or genre.name == 'Real Time Strategy (RTS)' or genre.name == 'Turn-based strategy (TBS)' or genre.name == '4X (explore, expand, exploit, and exterminate)' or genre.name == 'Tactical' %}brain{% elif genre.name == 'Adventure' or genre.name == 'Role-playing (RPG)' or genre.name == 'Open world' or genre.name == 'Sandbox' or genre.name == 'Platform' or genre.name == 'Survival' or genre.name == 'Visual Novel' or genre.name == 'Point-and-click' %}world{% elif genre.name == 'Racing' or genre.name == 'Sport' or genre.name == 'Simulator' or genre.name == 'Pinball' %}sim{% else %}arcade{% endif %}"><svg class="w-4 h-4" aria-label="{{ genre.name }}"><use href="{% static 'games/images/genre-icons.svg' %}#genre-{% if genre.name == 'Action' %}action{% elif genre.name == 'Shooter' %}shooter{% elif genre.name == 'Fighting' %}fighting{% elif genre.name == 'Hack and slash/Beat \'em up' %}hackslash{% elif genre.name == 'MOBA' %}moba{% elif genre.name == 'Stealth' %}stealth{% elif genre.name == 'Puzzle' %}puzzle{% elif genre.name == 'Strategy' %}strategy{% elif genre.name == 'Real Time Strategy (RTS)' %}rts{% elif genre.name == 'Turn-based strategy (TBS)' %}tbs{% elif genre.name == '4X (explore, expand, exploit, and exterminate)' %}4x{% elif genre.name == 'Tactical' %}tactical{% elif genre.name == 'Adventure' %}adventure{% elif genre.name == 'Role-playing (RPG)' %}rpg{% elif genre.name == 'Open world' %}openworld{% elif genre.name == 'Sandbox' %}sandbox{% elif genre.name == 'Platform' %}platform{% elif genre.name == 'Survival' %}survival{% elif genre.name == 'Racing' %}racing{% elif genre.name == 'Sport' %}sport{% elif genre.name == 'Simulator' %}simulator{% elif genre.name == 'Pinball' %}pinball{% elif genre.name == 'Horror' %}horror{% elif genre.name == 'Visual Novel' %}visualnovel{% elif genre.name == 'Point-and-click' %}pointclick{% elif genre.name == 'Arcade' %}arcade{% elif genre.name == 'Party' %}party{% elif genre.name == 'Music' %}music{% elif genre.name == 'Quiz/Trivia' %}quiz{% elif genre.name == 'Card & Board Game' %}cardboard{% elif genre.name == 'Indie' %}indie{% else %}arcade{% endif %}"></use></svg></a>{% endfor %}
         {% endwith %}
     </div>
 </div>
 <style>
-@media (min-width: 1280px) {
+/* 768px-1099px: title only (2 columns) */
+/* 1100px-1199px: title + platforms (3 columns) */
+@media (min-width: 1100px) {
     .game-row.desktop {
-        grid-template-columns: auto 1fr 120px !important;
+        grid-template-columns: auto 1fr 115px !important;
+    }
+    .platform-column {
+        display: flex !important;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        flex-wrap: nowrap;
     }
 }
-@media (min-width: 1536px) {
+/* 1200px+: title + platforms + genres (4 columns) */
+@media (min-width: 1200px) {
     .game-row.desktop {
-        grid-template-columns: auto 1fr 120px 100px !important;
+        grid-template-columns: auto 1fr 115px 100px !important;
+    }
+    .genre-column {
+        display: flex !important;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        flex-wrap: nowrap;
+    }
+    .genre-column a {
+        display: inline-flex;
+        flex-shrink: 0;
     }
 }
 </style>
