@@ -58,34 +58,19 @@
     <div class="md:hidden space-y-3">
         {% for list in items %}
         <div class="card bg-base-200 p-3">
-            <div class="font-bold">
-                {% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</span>
+                <span class="text-xs text-base-content/60">({{ list.year }}{% if show_rank and list.rank %} • Rank {{ list.rank }}{% endif %}{% if show_type %} • {% if list.get_type_display %}{{ list.get_type_display }}{% else %}{{ list.type_name|default:'' }}{% endif %}{% endif %})</span>
             </div>
             <div class="mt-1">
                 {% if list.url %}
-                <a href="{{ list.url }}" target="_blank" class="link link-primary">
+                <a href="{{ list.url }}" target="_blank" class="link link-primary text-sm">
                     {{ list.name }}
                 </a>
                 {% else %}
-                <span>{{ list.name }}</span>
+                <span class="text-sm">{{ list.name }}</span>
                 {% endif %}
             </div>
-            <div class="text-base-content/85 mt-1">
-                <span class="font-semibold">Year:</span>
-                {{ list.year }}
-            </div>
-            {% if show_rank %}
-            <div class="text-base-content/85">
-                <span class="font-semibold">Rank:</span>
-                {{ list.rank|default:'' }}
-            </div>
-            {% endif %}
-            {% if show_type %}
-            <div class="text-base-content/85">
-                <span class="font-semibold">Type:</span>
-                {% if list.get_type_display %}{{ list.get_type_display }}{% else %}{{ list.type_name|default:'' }}{% endif %}
-            </div>
-            {% endif %}
         </div>
         {% endfor %}
     </div>

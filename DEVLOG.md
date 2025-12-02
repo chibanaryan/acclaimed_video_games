@@ -2,6 +2,8 @@
 
 ## 2025-12-02
 
+- Fixed JavaScript code appearing as text in mobile navbar by removing redundant inline script tag (theme initialization already handled in base.html)
+- Fixed horizontal scrolling on mobile by removing overflow-visible classes and simplifying mobile header structure
 - Eliminated layout shift on games list during HTMX navigation: added max-width constraint to results column and explicit width/min-width/min-height to filter sidebar with CSS containment
 - Reserved space for filter dropdowns on source lists page (min-h-[2.5rem]) to prevent layout adjustment on load
 - Fixed squished thumbnails in sidebar search dropdown by using flexible height (w-6 h-auto) to maintain aspect ratio
