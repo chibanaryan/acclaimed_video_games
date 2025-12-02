@@ -18,34 +18,34 @@
 
         {# Primary navigation links #}
         <nav class="mb-4">
-            <ul class="menu menu-sm gap-1">
+            <ul class="menu gap-1">
                 <li>
                     <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                        <span class="mdi mdi-home text-lg"></span>
+                        <span class="mdi mdi-home text-xl"></span>
                         Home
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'games-list' %}" class="{% if request.resolver_match.url_name == 'games-list' %}active{% endif %}">
-                        <span class="mdi mdi-medal text-lg"></span>
+                        <span class="mdi mdi-medal text-xl"></span>
                         Rankings
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'developers-list' %}" class="{% if request.resolver_match.url_name == 'developers-list' %}active{% endif %}">
-                        <span class="mdi mdi-account-group text-lg"></span>
+                        <span class="mdi mdi-account-group text-xl"></span>
                         Developers
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'list-list' %}" class="{% if request.resolver_match.url_name == 'list-list' %}active{% endif %}">
-                        <span class="mdi mdi-format-list-numbered text-lg"></span>
+                        <span class="mdi mdi-format-list-numbered text-xl"></span>
                         Lists
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'post-list' %}" class="{% if request.resolver_match.url_name == 'post-list' %}active{% endif %}">
-                        <span class="mdi mdi-newspaper text-lg"></span>
+                        <span class="mdi mdi-newspaper text-xl"></span>
                         News
                     </a>
                 </li>
@@ -116,30 +116,30 @@
     {# BOTTOM CONTAINER: Secondary nav, Social, Theme, Contact #}
     <div class="p-4 pt-3 border-t border-base-content/10">
         {# Secondary navigation #}
-        <ul class="menu menu-sm gap-1 mb-3">
+        <ul class="menu gap-1 mb-3">
             <li>
                 <a href="{% url 'page-detail' slug='about' %}">
-                    <span class="mdi mdi-information text-lg"></span>
+                    <span class="mdi mdi-information text-xl"></span>
                     About / FAQ
                 </a>
             </li>
             <li>
                 <a href="{% url 'page-detail' slug='donate' %}">
-                    <span class="mdi mdi-heart text-lg"></span>
+                    <span class="mdi mdi-heart text-xl"></span>
                     Donate
                 </a>
             </li>
         </ul>
 
         {# Contact button #}
-        <button class="btn btn-primary btn-sm w-full mb-3 contact-modal-trigger">
-            <span class="mdi mdi-email text-lg"></span>
+        <button class="btn btn-primary w-full mb-3 contact-modal-trigger">
+            <span class="mdi mdi-email text-xl"></span>
             Contact Us
         </button>
 
         {# Theme toggle #}
         <div class="flex items-center justify-between px-3 py-2 mb-3 bg-base-200 rounded-lg">
-            <span class="text-sm text-base-content/85">Theme</span>
+            <span class="text-base text-base-content/85">Theme</span>
             <label class="flex cursor-pointer gap-2 items-center" for="theme-toggle">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="5" />
@@ -155,7 +155,7 @@
 
         {# Social links #}
         <div class="text-center">
-            <span class="text-xs text-base-content/85 block mb-2">Follow us</span>
+            <span class="text-sm text-base-content/85 block mb-2">Follow us</span>
             <div class="flex justify-center gap-2">
                 <a href="https://x.com/AVGRankings" target="_blank" rel="noopener noreferrer"
                    class="btn btn-ghost btn-sm btn-square" title="Follow on X" aria-label="Follow on X">

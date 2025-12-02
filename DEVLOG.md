@@ -9,7 +9,7 @@
 - Fixed list column alignment on game detail pages using table-layout: fixed with colgroup
 - Added accordion category grouping in platform titles (desktop and mobile) for Retro Consoles and Microcomputers
 - Reorganized sidebar layout using flexbox space-between technique (top: logo/nav/search, middle: flex gap, bottom: secondary nav/contact/theme/social)
-- Made search bar more prominent with darker background and "Search all games..." placeholder
+- Increased sidebar text sizes: navigation menus from menu-sm to default, icons from text-lg to text-xl, labels from text-xs/text-sm to text-sm/text-base
 
 ## 2025-12-01
 
