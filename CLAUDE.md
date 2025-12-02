@@ -10,11 +10,12 @@ Acclaimed Games is a video game ranking and aggregation website that combines da
 
 **When the user asks to "commit and push" (WITHOUT deploying):**
 
-Follow the **Commit and Push Workflow** (steps 1-4 only, NO Heroku deployment):
+Follow the **Commit and Push Workflow** (steps 1-5 only, NO Heroku deployment):
 1. Updating DEVLOG.md (if changes warrant documentation - see DEVLOG guidelines below)
-2. Collecting static files
-3. Committing all changes
-4. Pushing to main branch
+2. Building Tailwind CSS for production
+3. Collecting static files
+4. Committing all changes
+5. Pushing to main branch
 
 **IMPORTANT:** Do NOT deploy to Heroku unless explicitly asked to "deploy" or push to "production/heroku".
 
@@ -22,7 +23,7 @@ Follow the **Commit and Push Workflow** (steps 1-4 only, NO Heroku deployment):
 
 Follow the **Complete Deployment Workflow** which includes all steps above PLUS deploying to Heroku.
 
-Do not skip any steps. The user should not have to remind you to collect static files.
+Do not skip any steps. The user should not have to remind you to build Tailwind CSS or collect static files.
 
 ## Development Commands
 
@@ -136,16 +137,19 @@ Use this when you want to save changes to the repository WITHOUT deploying to pr
 #    Only if: bug fixes, features, optimizations, or breaking changes
 #    Keep to 8 bullet points max per day
 
-# 1. Collect static files
+# 1. Build Tailwind CSS for production
+python3 manage.py tailwind build
+
+# 2. Collect static files
 python3 manage.py collectstatic --noinput
 
-# 2. Stage all changes
+# 3. Stage all changes
 git add -A
 
-# 3. Commit with descriptive message
+# 4. Commit with descriptive message
 git commit -m "Your commit message here"
 
-# 4. Push to main branch
+# 5. Push to main branch
 git push origin main
 
 # STOP HERE - Do NOT push to Heroku unless explicitly asked to deploy
@@ -160,19 +164,22 @@ When making changes that need to be deployed to production, follow this complete
 #    Only if: bug fixes, features, optimizations, or breaking changes
 #    Keep to 8 bullet points max per day
 
-# 1. Collect static files
+# 1. Build Tailwind CSS for production
+python3 manage.py tailwind build
+
+# 2. Collect static files
 python3 manage.py collectstatic --noinput
 
-# 2. Stage all changes
+# 3. Stage all changes
 git add -A
 
-# 3. Commit with descriptive message
+# 4. Commit with descriptive message
 git commit -m "Your commit message here"
 
-# 4. Push to main branch
+# 5. Push to main branch
 git push origin main
 
-# 5. Deploy to Heroku (ONLY when user explicitly asks to deploy)
+# 6. Deploy to Heroku (ONLY when user explicitly asks to deploy)
 git push heroku main
 ```
 
