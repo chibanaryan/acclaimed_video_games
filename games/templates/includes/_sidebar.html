@@ -1,11 +1,7 @@
 {% load static %}
 <div class="flex flex-col h-full">
-    {# Fixed header area (logo + search) - not scrollable, z-10 to stay above nav #}
-    <div class="p-4 pb-0 relative z-10"
-         x-data="createSearchData('{% url 'api-games-search' %}', 5)"
-         x-init="window.addEventListener('reset-search-state', () => reset())"
-         @click.away="showMenu = false">
-
+    {# TOP CONTAINER: Logo + Navigation + Search (as footer) #}
+    <div class="p-4">
         {# Logo at top #}
         <div class="mb-6">
             <a href="{% url 'home' %}" class="block">
@@ -20,16 +16,55 @@
             </a>
         </div>
 
-        {# Search bar with dropdown - positioned relative so dropdown extends beyond sidebar #}
-        <div class="mb-4 relative">
+        {# Primary navigation links #}
+        <nav class="mb-4">
+            <ul class="menu menu-sm gap-1">
+                <li>
+                    <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <span class="mdi mdi-home text-lg"></span>
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'games-list' %}" class="{% if request.resolver_match.url_name == 'games-list' %}active{% endif %}">
+                        <span class="mdi mdi-medal text-lg"></span>
+                        Rankings
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'developers-list' %}" class="{% if request.resolver_match.url_name == 'developers-list' %}active{% endif %}">
+                        <span class="mdi mdi-account-group text-lg"></span>
+                        Developers
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'list-list' %}" class="{% if request.resolver_match.url_name == 'list-list' %}active{% endif %}">
+                        <span class="mdi mdi-format-list-numbered text-lg"></span>
+                        Lists
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'post-list' %}" class="{% if request.resolver_match.url_name == 'post-list' %}active{% endif %}">
+                        <span class="mdi mdi-newspaper text-lg"></span>
+                        News
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        {# Search bar - positioned at bottom of top section #}
+        <div class="relative"
+             x-data="createSearchData('{% url 'api-games-search' %}', 5)"
+             x-init="window.addEventListener('reset-search-state', () => reset())"
+             @click.away="showMenu = false">
             <div class="relative">
                 <label for="sidebar-search" class="sr-only">Search games</label>
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-magnify text-base-content/50" aria-hidden="true"></span>
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-magnify text-lg text-base-content/50" aria-hidden="true"></span>
                 <input type="text"
                        id="sidebar-search"
                        name="q"
-                       placeholder="Search games..."
-                       class="input input-bordered input-sm w-full pl-9 bg-base-200"
+                       placeholder="Search all games..."
+                       class="input input-bordered input-sm w-full pl-9 bg-base-300 border-base-content/20"
                        x-model="q"
                        @focus="showMenu = true"
                        @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
@@ -75,58 +110,17 @@
         </div>
     </div>
 
-    {# Scrollable navigation area #}
-    <div class="flex-1 overflow-y-auto px-4 pb-4">
-        {# Primary navigation links #}
-        <nav>
-        <ul class="menu menu-sm gap-1">
-            <li>
-                <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                    <span class="mdi mdi-home text-lg"></span>
-                    Home
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'games-list' %}" class="{% if request.resolver_match.url_name == 'games-list' %}active{% endif %}">
-                    <span class="mdi mdi-medal text-lg"></span>
-                    Rankings
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'developers-list' %}" class="{% if request.resolver_match.url_name == 'developers-list' %}active{% endif %}">
-                    <span class="mdi mdi-account-group text-lg"></span>
-                    Developers
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'list-list' %}" class="{% if request.resolver_match.url_name == 'list-list' %}active{% endif %}">
-                    <span class="mdi mdi-format-list-numbered text-lg"></span>
-                    Lists
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'post-list' %}" class="{% if request.resolver_match.url_name == 'post-list' %}active{% endif %}">
-                    <span class="mdi mdi-newspaper text-lg"></span>
-                    News
-                </a>
-            </li>
-        </ul>
-    </nav>
+    {# FLEX GAP - Auto-expanding space #}
+    <div class="flex-1"></div>
 
-    {# Bottom section: Secondary nav, Theme toggle, Social links #}
-    <div class="mt-auto pt-4 border-t border-base-content/10">
+    {# BOTTOM CONTAINER: Secondary nav, Social, Theme, Contact #}
+    <div class="p-4 pt-3 border-t border-base-content/10">
         {# Secondary navigation #}
-        <ul class="menu menu-sm gap-1 mb-4">
+        <ul class="menu menu-sm gap-1 mb-3">
             <li>
                 <a href="{% url 'page-detail' slug='about' %}">
                     <span class="mdi mdi-information text-lg"></span>
                     About / FAQ
-                </a>
-            </li>
-            <li>
-                <a href="#" class="contact-modal-trigger">
-                    <span class="mdi mdi-email text-lg"></span>
-                    Contact Us
                 </a>
             </li>
             <li>
@@ -137,8 +131,14 @@
             </li>
         </ul>
 
+        {# Contact button #}
+        <button class="btn btn-primary btn-sm w-full mb-3 contact-modal-trigger">
+            <span class="mdi mdi-email text-lg"></span>
+            Contact Us
+        </button>
+
         {# Theme toggle #}
-        <div class="flex items-center justify-between px-3 py-2 mb-4">
+        <div class="flex items-center justify-between px-3 py-2 mb-3 bg-base-200 rounded-lg">
             <span class="text-sm text-base-content/70">Theme</span>
             <label class="flex cursor-pointer gap-2 items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -154,23 +154,21 @@
 
         {# Social links #}
         <div class="text-center">
-            <span class="text-xs text-base-content/70 block mb-2">Follow on</span>
+            <span class="text-xs text-base-content/70 block mb-2">Follow us</span>
             <div class="flex justify-center gap-2">
                 <a href="https://x.com/AVGRankings" target="_blank" rel="noopener noreferrer"
-                   class="btn btn-ghost btn-sm btn-square" title="Follow on X">
+                   class="btn btn-ghost btn-sm btn-square" title="Follow on X" aria-label="Follow on X">
                     <svg width="14" height="14" viewBox="0 0 1200 1227" fill="currentColor">
                         <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/>
                     </svg>
                 </a>
                 <a href="https://bsky.app/profile/avgrankings.bsky.social" target="_blank" rel="noopener noreferrer"
-                   class="btn btn-ghost btn-sm btn-square" title="Follow on Bluesky">
+                   class="btn btn-ghost btn-sm btn-square" title="Follow on Bluesky" aria-label="Follow on Bluesky">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M5.202 2.857C7.954 4.922 10.913 9.11 12 11.358c1.087-2.247 4.046-6.436 6.798-8.501C20.783 1.366 24 .213 24 3.883c0 .732-.42 6.156-.667 7.037-.856 3.061-3.978 3.842-6.755 3.37 4.854.826 6.089 3.562 3.422 6.299-5.065 5.196-7.28-1.304-7.847-2.97-.104-.305-.152-.448-.153-.327 0-.121-.05.022-.153.327-.568 1.666-2.782 8.166-7.847 2.97-2.667-2.737-1.432-5.473 3.422-6.3-2.777.473-5.899-.308-6.755-3.369C.42 10.04 0 4.615 0 3.883c0-3.67 3.217-2.517 5.202-1.026"/>
                     </svg>
                 </a>
             </div>
         </div>
-    </div>
-    {# Close scrollable area #}
     </div>
 </div>
