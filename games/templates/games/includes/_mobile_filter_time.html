@@ -73,7 +73,7 @@
         {# Clear button #}
         <div class="flex justify-end" x-show="hasYearFilter()">
             <button type="button"
-                    @click="clearYears()"
+                    @click="clearYears(); debouncedFilterUpdate();"
                     class="btn btn-ghost btn-xs">
                 Clear Time Filter
             </button>
@@ -105,7 +105,7 @@
         <div x-show="mode === 'decade'" class="grid grid-cols-3 gap-2">
             <template x-for="decade in decades" :key="decade.label">
                 <button type="button"
-                        @click="selectDecade(decade)"
+                        @click="selectDecade(decade); debouncedFilterUpdate()"
                         :class="{
                             'btn-primary': isDecadeSelected(decade),
                             'btn-outline btn-primary': isDecadePartial(decade),
@@ -122,7 +122,7 @@
             <div>
                 <label class="text-xs text-base-content/60 mb-1 block">Select Year</label>
                 <select x-model.number="filters.start"
-                        @change="filters.end = filters.start"
+                        @change="filters.end = filters.start; debouncedFilterUpdate()"
                         class="select select-bordered w-full">
                     <option value="{{ min_year }}">All Years</option>
                     <template x-for="year in Array.from({length: {{ max_year }} - {{ min_year }} + 1}, (_, i) => {{ max_year }} - i)" :key="year">
@@ -131,54 +131,58 @@
                 </select>
             </div>
             <button type="button"
-                    @click="filters.start = {{ min_year }}; filters.end = {{ max_year }};"
+                    @click="filters.start = {{ min_year }}; filters.end = {{ max_year }}; debouncedFilterUpdate();"
                     class="btn btn-ghost btn-sm w-full"
                     x-show="filters.start !== {{ min_year }}">
                 Clear Year Filter
             </button>
         </div>
 
-        {# Year Range Inputs #}
-        <div x-show="mode === 'range'" class="space-y-3">
-            <div class="flex items-center gap-3">
-                <div class="flex-1">
+        {# Year Range Dropdowns #}
+        <div x-show="mode === 'range'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                {# Start Year #}
+                <div>
                     <label class="text-xs text-base-content/60 mb-1 block">From</label>
-                    <input type="number"
-                           x-model.number="filters.start"
-                           :min="{{ min_year }}"
-                           :max="filters.end"
-                           placeholder="{{ min_year }}"
-                           class="input input-bordered input-sm w-full">
+                    <select x-model.number="filters.start"
+                            @change="debouncedFilterUpdate()"
+                            class="select select-bordered w-full">
+                        <template x-for="year in Array.from({length: {{ max_year }} - {{ min_year }} + 1}, (_, i) => {{ max_year }} - i).filter(y => y <= filters.end)" :key="year">
+                            <option :value="year" x-text="year"></option>
+                        </template>
+                    </select>
                 </div>
-                <div class="text-base-content/40 pt-5">—</div>
-                <div class="flex-1">
+
+                {# End Year #}
+                <div>
                     <label class="text-xs text-base-content/60 mb-1 block">To</label>
-                    <input type="number"
-                           x-model.number="filters.end"
-                           :min="filters.start"
-                           :max="{{ max_year }}"
-                           placeholder="{{ max_year }}"
-                           class="input input-bordered input-sm w-full">
+                    <select x-model.number="filters.end"
+                            @change="debouncedFilterUpdate()"
+                            class="select select-bordered w-full">
+                        <template x-for="year in Array.from({length: {{ max_year }} - {{ min_year }} + 1}, (_, i) => {{ max_year }} - i).filter(y => y >= filters.start)" :key="year">
+                            <option :value="year" x-text="year"></option>
+                        </template>
+                    </select>
                 </div>
             </div>
 
             {# Quick preset buttons #}
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2 justify-center">
                 <button type="button"
-                        @click="filters.start = new Date().getFullYear() - 4; filters.end = new Date().getFullYear();"
+                        @click="filters.start = new Date().getFullYear() - 4; filters.end = new Date().getFullYear(); debouncedFilterUpdate();"
                         class="btn btn-ghost btn-xs">
                     Last 5 years
                 </button>
                 <button type="button"
-                        @click="filters.start = new Date().getFullYear() - 9; filters.end = new Date().getFullYear();"
+                        @click="filters.start = new Date().getFullYear() - 9; filters.end = new Date().getFullYear(); debouncedFilterUpdate();"
                         class="btn btn-ghost btn-xs">
                     Last 10 years
                 </button>
                 <button type="button"
-                        @click="clearYears()"
+                        @click="clearYears(); debouncedFilterUpdate();"
                         class="btn btn-ghost btn-xs"
                         x-show="hasYearFilter()">
-                    Clear
+                    Reset
                 </button>
             </div>
         </div>

@@ -9,6 +9,7 @@
 - Modal plays Navi sound effect ("Hey! Listen!") when opened
 - Search dropdown in sidebar extends beyond sidebar width for long game titles
 - Theme-aware logos: dark version on light themes, light version on dark themes
+- Mobile filter improvements: instant filter updates (no "Apply" button), genres sorted by popularity, dropdown search panel, year range dropdowns
 
 ## 2025-11-29
 

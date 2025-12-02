@@ -123,7 +123,9 @@
         getGenresInGroup(groupKey) {
             const group = this.genreGroups[groupKey];
             if (!group) return [];
-            return genres.filter(g => group.genres.includes(g.name));
+            return genres
+                .filter(g => group.genres.includes(g.name))
+                .sort((a, b) => (b.game_count || 0) - (a.game_count || 0));
         },
 
         selectGroup(groupKey) {
@@ -194,13 +196,13 @@
             <span class="text-sm text-base-content/60">Match:</span>
             <div class="flex bg-base-200 rounded-lg p-0.5">
                 <button type="button"
-                        @click="filters.genre_option = 'any'"
+                        @click="filters.genre_option = 'any'; debouncedFilterUpdate();"
                         :class="filters.genre_option === 'any' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/70'"
                         class="px-3 py-1 rounded-md text-sm font-medium transition-all">
                     Any
                 </button>
                 <button type="button"
-                        @click="filters.genre_option = 'all'"
+                        @click="filters.genre_option = 'all'; debouncedFilterUpdate();"
                         :class="filters.genre_option === 'all' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/70'"
                         class="px-3 py-1 rounded-md text-sm font-medium transition-all">
                     All
@@ -208,7 +210,7 @@
             </div>
             <button type="button"
                     x-show="selectedCount() > 0"
-                    @click="clearGenres()"
+                    @click="clearGenres(); debouncedFilterUpdate();"
                     class="btn btn-ghost btn-xs ml-auto">
                 Clear
             </button>
@@ -224,7 +226,7 @@
                             <input type="checkbox"
                                    :checked="isGroupSelected(key)"
                                    :indeterminate="isGroupPartial(key)"
-                                   @change="selectGroup(key)"
+                                   @change="selectGroup(key); debouncedFilterUpdate();"
                                    class="checkbox checkbox-sm checkbox-primary">
                         </label>
 
@@ -250,7 +252,7 @@
                                 <input type="checkbox"
                                        :value="genre.id"
                                        :checked="isGenreSelected(genre.id)"
-                                       @change="toggleGenre(genre.id)"
+                                       @change="toggleGenre(genre.id); debouncedFilterUpdate();"
                                        class="hidden peer">
                                 <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
                                     <svg class="w-4 h-4 shrink-0" aria-hidden="true">

@@ -334,7 +334,7 @@
                             <input type="checkbox"
                                    :checked="isFamilySelected(key)"
                                    :indeterminate="isFamilyPartial(key)"
-                                   @change="selectFamily(key)"
+                                   @change="selectFamily(key); debouncedFilterUpdate();"
                                    class="checkbox checkbox-sm checkbox-primary">
                         </label>
 
@@ -370,12 +370,9 @@
                                 <input type="checkbox"
                                        :value="platform.id"
                                        :checked="isPlatformSelected(platform.id)"
-                                       @change="togglePlatform(platform.id)"
+                                       @change="togglePlatform(platform.id); debouncedFilterUpdate();"
                                        class="hidden peer">
-                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
-                                    <span :class="'mdi ' + getIcon(platform.code)" class="text-sm shrink-0"></span>
-                                    <span x-text="platform.name"></span>
-                                </span>
+                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs" x-text="platform.name"></span>
                             </label>
                         </template>
                     </div>
@@ -386,7 +383,7 @@
         {# Clear button #}
         <div class="flex justify-end" x-show="selectedCount() > 0">
             <button type="button"
-                    @click="clearPlatforms()"
+                    @click="clearPlatforms(); debouncedFilterUpdate();"
                     class="btn btn-ghost btn-xs">
                 Clear All
             </button>
@@ -402,7 +399,7 @@
                             <input type="checkbox"
                                    :checked="isSectionSelected(key)"
                                    :indeterminate="isSectionPartial(key)"
-                                   @change="selectSection(key)"
+                                   @change="selectSection(key); debouncedFilterUpdate();"
                                    class="checkbox checkbox-sm checkbox-primary">
                         </label>
 
@@ -431,12 +428,9 @@
                                 <input type="checkbox"
                                        :value="platform.id"
                                        :checked="isPlatformSelected(platform.id)"
-                                       @change="togglePlatform(platform.id)"
+                                       @change="togglePlatform(platform.id); debouncedFilterUpdate();"
                                        class="hidden peer">
-                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
-                                    <span :class="'mdi ' + getIcon(platform.code)" class="text-sm shrink-0"></span>
-                                    <span x-text="platform.name"></span>
-                                </span>
+                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs" x-text="platform.name"></span>
                             </label>
                         </template>
                     </div>
@@ -453,7 +447,7 @@
                         <input type="checkbox"
                                :checked="isUngroupedSelected()"
                                :indeterminate="isUngroupedPartial()"
-                               @change="selectUngrouped()"
+                               @change="selectUngrouped(); debouncedFilterUpdate();"
                                class="checkbox checkbox-sm checkbox-primary">
                     </label>
 
@@ -482,7 +476,7 @@
                             <input type="checkbox"
                                    :value="platform.id"
                                    :checked="isPlatformSelected(platform.id)"
-                                   @change="togglePlatform(platform.id)"
+                                   @change="togglePlatform(platform.id); debouncedFilterUpdate();"
                                    class="hidden peer">
                             <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
                                 <span :class="'mdi ' + getIcon(platform.code)" class="text-sm shrink-0"></span>
