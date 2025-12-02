@@ -38,35 +38,6 @@
                 setTheme(newTheme);
             }
         });
-
-        // Sync toggle state once DOM is ready (checkboxes don't exist in <head>)
-        document.addEventListener('DOMContentLoaded', function() {
-            var theme = localStorage.getItem('theme') || 'lofi';
-            var toggles = document.querySelectorAll('.theme-controller.theme-loading');
-
-            // Set checked state while still hidden
-            toggles.forEach(function(el) {
-                el.checked = (theme === 'night' || theme === 'forest');
-            });
-
-            // Force reflow so browser registers state before making visible
-            void document.body.offsetHeight;
-
-            // Make visible (still no transitions)
-            toggles.forEach(function(el) {
-                el.classList.remove('theme-loading');
-                el.classList.add('theme-no-transition');
-            });
-
-            // Enable transitions after a frame
-            requestAnimationFrame(function() {
-                requestAnimationFrame(function() {
-                    toggles.forEach(function(el) {
-                        el.classList.remove('theme-no-transition');
-                    });
-                });
-            });
-        });
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -110,8 +81,9 @@
     <link rel="preload" href="{% static 'games/fonts/materialdesignicons-webfont.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{% static 'games/fonts/Handjet-ExtraBold.woff2' %}" as="font" type="font/woff2" crossorigin>
 
-    {# Prefetch critical images that appear on every page #}
-    <link rel="prefetch" href="{% static 'games/avg_logo_small.png' %}" as="image">
+    {# Preload sidebar logos for LCP optimization on desktop (hidden on mobile) #}
+    <link rel="preload" href="{% static 'games/avg_logo_dark.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
+    <link rel="preload" href="{% static 'games/avg_logo.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
 
     {# HTMX - defer to prevent render blocking #}
     <script defer src="https://unpkg.com/htmx.org@1.9.10" nonce="{{ csp_nonce }}"></script>

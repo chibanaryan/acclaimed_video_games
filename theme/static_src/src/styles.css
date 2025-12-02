@@ -103,22 +103,6 @@
   display: none !important;
 }
 
-/* Hide theme toggle until JavaScript syncs it with localStorage */
-.theme-loading,
-.theme-loading::before,
-.theme-loading::after {
-  visibility: hidden !important;
-  transition: none !important;
-}
-
-/* Disable transitions during initial state sync */
-.theme-no-transition,
-.theme-no-transition::before,
-.theme-no-transition::after,
-.theme-no-transition * {
-  transition: none !important;
-}
-
 /* Theme-aware visibility utilities for DaisyUI data-theme system */
 /* Show only in dark themes (forest, night) */
 .show-dark {
