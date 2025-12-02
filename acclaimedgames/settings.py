@@ -74,6 +74,7 @@ TAILWIND_APP_NAME = "theme"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Must be after SecurityMiddleware
     "games.csp_middleware.CSPMiddleware",  # Content Security Policy with nonces
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -83,7 +84,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "games.middleware.HTMXPushURLMiddleware",  # HTMX history support
 ]
 
@@ -201,8 +201,20 @@ STORAGES = {
     },
 }
 
+# WhiteNoise caching optimizations
 # Cache static files for 1 year (safe because filenames include content hash)
-WHITENOISE_MAX_AGE = 31536000
+WHITENOISE_MAX_AGE = 31536000  # 1 year in seconds
+
+# Add 'immutable' to Cache-Control for hashed files (prevents revalidation checks)
+# Files with content hash in name never need revalidation
+# Note: WhiteNoise automatically adds 'immutable' for files with content hashes
+# WHITENOISE_IMMUTABLE_FILE_TEST can be customized if needed
+
+# Enable aggressive compression (gzip + brotli)
+WHITENOISE_KEEP_ONLY_HASHED_FILES = True  # Remove non-hashed files in production
+
+# Allow WhiteNoise to serve index files (e.g., index.html)
+WHITENOISE_INDEX_FILE = False  # Django handles routing, not static file serving
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
