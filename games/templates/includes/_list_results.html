@@ -3,7 +3,18 @@
 {% if items %}
     {# Desktop table view #}
     <div class="hidden md:block overflow-x-auto">
-        <table class="table w-full">
+        <table class="table table-fixed" style="width: 100%; min-width: 1000px;">
+            <colgroup>
+                <col style="width: 300px;">
+                <col style="width: 80px;">
+                {% if show_rank %}
+                <col style="width: 80px;">
+                {% endif %}
+                <col>
+                {% if show_type %}
+                <col style="width: 128px;">
+                {% endif %}
+            </colgroup>
             <thead>
                 <tr>
                     <th>Publication</th>

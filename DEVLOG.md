@@ -14,6 +14,7 @@
 - Fixed Jump to Rank overshoot bug: corrected data-per-page from 50 to 100 to match backend pagination
 - Fixed duplicate event listeners on Jump to Rank by cloning elements before attaching handlers
 - Added floating Back to Top button (bottom-right, appears after 300px scroll with smooth animation)
+- Aligned list table columns on game detail page using colgroup with fixed widths (300px publication, 80px year/rank)
 
 ## 2025-12-01
 
