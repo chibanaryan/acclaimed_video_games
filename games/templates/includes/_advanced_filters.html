@@ -12,8 +12,8 @@
         platforms: JSON.parse(document.getElementById('platforms-data').textContent),
         initialized: false,
         isLoading: false,
-        genresExpanded: false,
-        platformsExpanded: false,
+        genresExpanded: localStorage.getItem('genresExpanded') === 'true',
+        platformsExpanded: localStorage.getItem('platformsExpanded') === 'true',
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
@@ -86,6 +86,15 @@
             this.$watch('filters.q', val => {
                 if (!this.initialized) return;
                 this.updateResults();
+            });
+
+            // Watch for changes to expanded states and save to localStorage
+            this.$watch('platformsExpanded', val => {
+                localStorage.setItem('platformsExpanded', val);
+            });
+
+            this.$watch('genresExpanded', val => {
+                localStorage.setItem('genresExpanded', val);
             });
 
             // Initialize Load More button handler
@@ -260,16 +269,152 @@
                 {{ genre_subtitle }}
             </p>
         {% endif %}
-        {% load humanize %}
-        <div class="text-sm text-base-content/60 text-right">
-            {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
-        </div>
     </div>
 
-    {# Two-column layout: filters sidebar on left, results on right #}
+    {# Mobile Sticky Header + Bottom Sheet (shown only on mobile) #}
+    <div class="md:hidden" x-data="{
+            filterOpen: false,
+            platforms: JSON.parse(document.getElementById('platforms-data').textContent),
+            genres: JSON.parse(document.getElementById('genres-data').textContent),
+
+            buildDynamicTitle() {
+                const timeWindow = this.buildTimeWindow();
+                const platformLabel = this.buildPlatformSegment();
+                let genreLabel = '';
+
+                // If exactly one genre is selected, fold it into the title
+                if (filters.genres && filters.genres.length === 1) {
+                    const genre = genres.find(g => String(g.id) === String(filters.genres[0]));
+                    if (genre) {
+                        genreLabel = ' ' + genre.name;
+                    }
+                }
+
+                const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
+                let platform = platformLabel;
+
+                // Omit 'Video' prefix when genre is selected
+                if (genreLabel && platform === 'Video') {
+                    platform = '';
+                }
+
+                return 'Most Acclaimed ' + platform + genreLabel + ' Games' + timeSuffix;
+            },
+
+            buildTimeWindow() {
+                const start = filters.start;
+                const end = filters.end;
+                const minYear = {{ min_year }};
+                const maxYear = {{ max_year }};
+
+                if (!start || !end) return '';
+                if (start <= minYear && end >= maxYear) return 'All Time';
+                if (start === end) return String(start);
+                if (start % 10 === 0 && end === start + 9) return 'the ' + start + '\u0027s';
+                return start + '-' + end;
+            },
+
+            buildPlatformSegment() {
+                const allGroups = {
+                    // Accordion categories (check these first)
+                    'Retro Consoles': ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS'],
+                    'Microcomputers': ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2'],
+                    // Big Five groups
+                    'Nintendo': ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
+                    'PlayStation': ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'],
+                    'Xbox': ['Xbox', 'X360', 'XB1', 'XBXS'],
+                    'Sega': ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'],
+                    'PC': ['WIN', 'DOS', 'LIN', 'MAC'],
+                    'Arcade, Mobile & VR': ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
+                };
+
+                const selectedIds = new Set(filters.platforms.map(String));
+                const labels = [];
+                const consumedIds = new Set();
+
+                // Add group labels when entire group is selected
+                for (const [groupName, codes] of Object.entries(allGroups)) {
+                    const groupPlatforms = platforms.filter(p => codes.includes(p.code));
+                    const groupIds = groupPlatforms.map(p => String(p.id));
+                    if (groupIds.length > 0 && groupIds.every(id => selectedIds.has(id))) {
+                        labels.push(groupName);
+                        groupIds.forEach(id => consumedIds.add(id));
+                    }
+                }
+
+                // Add remaining platform names
+                for (const pid of selectedIds) {
+                    if (!consumedIds.has(pid)) {
+                        const platform = platforms.find(p => String(p.id) === pid);
+                        if (platform) labels.push(platform.name);
+                    }
+                }
+
+                if (labels.length === 0) return 'Video';
+                return this.joinNames(labels);
+            },
+
+            joinNames(names) {
+                if (!names || names.length === 0) return '';
+                if (names.length === 1) return names[0];
+                if (names.length === 2) return names.join(' and ');
+                return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+            }
+         }">
+        <div class="relative z-10 bg-base-200 border-b border-base-content/10 py-3 mb-4 -mx-4 px-4">
+            <h1 class="text-base font-bold mb-2" x-text="buildDynamicTitle()"></h1>
+            <button type="button" class="btn btn-primary btn-sm w-full" @click="filterOpen = true">
+                <span class="mdi mdi-tune"></span>
+                Filters
+                <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
+                    <span class="badge badge-xs badge-secondary">!</span>
+                </template>
+            </button>
+        </div>
+
+        {# Bottom Sheet #}
+        {% include 'games/includes/_mobile_filter_sheet.html' with genres=genres platforms=platforms min_year=min_year max_year=max_year %}
+    </div>
+
+    {# Two-column layout: results on left, filters sidebar on right #}
     <div class="flex flex-col lg:flex-row gap-6">
-        {# Left sidebar - Filters (hidden on mobile) #}
+        {# Left column - Results #}
+        <div class="flex-1 min-w-0">
+            {% load humanize %}
+            {# Desktop: Jump to rank + result count #}
+            <div class="hidden md:flex items-center justify-between mb-2 text-sm">
+                {# Jump to Rank - Left side #}
+                <div class="flex items-center gap-2">
+                    <span class="text-base-content/60">Jump to rank:</span>
+                    <input type="number"
+                           id="jump-to-rank-input"
+                           min="1"
+                           max="{{ total_count }}"
+                           placeholder="#"
+                           class="input input-xs input-bordered w-16 text-center"
+                           data-total="{{ total_count }}"
+                           data-loaded="{{ loaded_count }}"
+                           data-per-page="100">
+                    <button type="button"
+                            id="jump-to-rank-btn"
+                            class="btn btn-xs btn-primary">
+                        Go
+                    </button>
+                </div>
+                {# Result count - Right side #}
+                <div class="text-base-content/60">
+                    {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
+                </div>
+            </div>
+            <div id="game-results-container">
+                {% include 'games/includes/_game_list_results.html' %}
+            </div>
+        </div>
+
+        {# Right sidebar - Filters (hidden on mobile) #}
         <div class="hidden md:block w-full lg:w-[420px] flex-shrink-0">
+            {# Spacer to align with game list count #}
+            <div class="h-[calc(1rem+0.5rem)]"></div>
             <div class="bg-base-200 rounded-lg p-4">
                 {# Header with navigation buttons #}
                 <div class="flex justify-between items-center mb-4 pb-3 border-b border-base-300">
@@ -279,13 +424,15 @@
                     </div>
                     <div class="flex gap-2">
                         <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
-                           class="btn btn-sm btn-ghost"
+                           class="btn btn-sm game-btn shadow-lg text-white border-0 w-[88px]"
+                           style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);"
                            title="Download CSV">
                             <span class="mdi mdi-download"></span>
                             <span>CSV</span>
                         </a>
                         <a href="{% url 'games-list' %}"
-                           class="btn btn-sm btn-ghost">
+                           class="btn btn-sm game-btn shadow-lg text-white border-0 w-[88px]"
+                           style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
                             <span class="mdi mdi-undo"></span>
                             <span>Reset</span>
                         </a>
@@ -323,15 +470,21 @@
 
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
-                <div class="mb-6 pb-4 border-b border-base-300">
-                    <div class="flex items-center gap-2 mb-3">
+                <div :class="platformsExpanded ? 'mb-6 pb-4 border-b border-base-300' : 'mb-4 pb-2'">
+                    <div class="flex items-center gap-2 mb-3 cursor-pointer" @click="platformsExpanded = !platformsExpanded">
                         <span class="mdi mdi-controller text-xl text-primary"></span>
                         <span class="font-bold text-base">Platforms</span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
+                        <span class="mdi text-base-content/60 ml-1"
+                              :class="platformsExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click.stop="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
                             <span class="mdi mdi-close"></span>
                         </button>
                     </div>
-                    <div data-filter-type="platforms"
+                    <div x-show="platformsExpanded"
+                         x-cloak
+                         x-collapse
+                         style="display: none;"
+                         data-filter-type="platforms"
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                         {% include 'includes/_platform_filter.html' %}
@@ -341,144 +494,27 @@
 
                 {% if genres %}
                 {# Genres filter - Inventory Grid Style #}
-                <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-3">
+                <div :class="genresExpanded ? 'mb-4' : 'mb-2'">
+                    <div class="flex items-center gap-2 mb-3 cursor-pointer" @click="genresExpanded = !genresExpanded">
                         <span class="mdi mdi-gamepad-variant text-xl text-primary"></span>
                         <span class="font-bold text-base">Genres</span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
+                        <span class="mdi text-base-content/60 ml-1"
+                              :class="genresExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click.stop="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
                             <span class="mdi mdi-close"></span>
                         </button>
                     </div>
-                    <div data-filter-type="genres"
+                    <div x-show="genresExpanded"
+                         x-cloak
+                         x-collapse
+                         style="display: none;"
+                         data-filter-type="genres"
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                         {% include 'includes/_genre_filter.html' %}
                     </div>
                 </div>
                 {% endif %}
-            </div>
-        </div>
-
-        {# Mobile Sticky Header + Bottom Sheet (shown only on mobile) #}
-        <div class="md:hidden" x-data="{
-                filterOpen: false,
-                platforms: JSON.parse(document.getElementById('platforms-data').textContent),
-                genres: JSON.parse(document.getElementById('genres-data').textContent),
-
-                buildDynamicTitle() {
-                    const timeWindow = this.buildTimeWindow();
-                    const platformLabel = this.buildPlatformSegment();
-                    let genreLabel = '';
-
-                    // If exactly one genre is selected, fold it into the title
-                    if (filters.genres && filters.genres.length === 1) {
-                        const genre = genres.find(g => String(g.id) === String(filters.genres[0]));
-                        if (genre) {
-                            genreLabel = ' ' + genre.name;
-                        }
-                    }
-
-                    const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
-                    let platform = platformLabel;
-
-                    // Omit 'Video' prefix when genre is selected
-                    if (genreLabel && platform === 'Video') {
-                        platform = '';
-                    }
-
-                    return 'Most Acclaimed ' + platform + genreLabel + ' Games' + timeSuffix;
-                },
-
-                buildTimeWindow() {
-                    const start = filters.start;
-                    const end = filters.end;
-                    const minYear = {{ min_year }};
-                    const maxYear = {{ max_year }};
-
-                    if (!start || !end) return '';
-                    if (start <= minYear && end >= maxYear) return 'All Time';
-                    if (start === end) return String(start);
-                    if (start % 10 === 0 && end === start + 9) return 'the ' + start + '\u0027s';
-                    return start + '-' + end;
-                },
-
-                buildPlatformSegment() {
-                    const allGroups = {
-                        // Accordion categories (check these first)
-                        'Retro Consoles': ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS'],
-                        'Microcomputers': ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2'],
-                        // Big Five groups
-                        'Nintendo': ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
-                        'PlayStation': ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'],
-                        'Xbox': ['Xbox', 'X360', 'XB1', 'XBXS'],
-                        'Sega': ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'],
-                        'PC': ['WIN', 'DOS', 'LIN', 'MAC'],
-                        'Arcade, Mobile & VR': ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
-                    };
-
-                    const selectedIds = new Set(filters.platforms.map(String));
-                    const labels = [];
-                    const consumedIds = new Set();
-
-                    // Add group labels when entire group is selected
-                    for (const [groupName, codes] of Object.entries(allGroups)) {
-                        const groupPlatforms = platforms.filter(p => codes.includes(p.code));
-                        const groupIds = groupPlatforms.map(p => String(p.id));
-                        if (groupIds.length > 0 && groupIds.every(id => selectedIds.has(id))) {
-                            labels.push(groupName);
-                            groupIds.forEach(id => consumedIds.add(id));
-                        }
-                    }
-
-                    // Add remaining platform names
-                    for (const pid of selectedIds) {
-                        if (!consumedIds.has(pid)) {
-                            const platform = platforms.find(p => String(p.id) === pid);
-                            if (platform) labels.push(platform.name);
-                        }
-                    }
-
-                    if (labels.length === 0) return 'Video';
-                    return this.joinNames(labels);
-                },
-
-                joinNames(names) {
-                    if (!names || names.length === 0) return '';
-                    if (names.length === 1) return names[0];
-                    if (names.length === 2) return names.join(' and ');
-                    return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
-                }
-             }">
-            {# Sticky Header Bar #}
-            <div class="sticky top-0 z-30 bg-base-100 border-b border-base-300 -mx-4 px-4 py-3 flex items-center justify-between">
-                {# Left: Dynamic title #}
-                <div class="flex items-center gap-2">
-                    <span class="text-lg font-bold" x-text="buildDynamicTitle()"></span>
-                    <span class="badge badge-ghost badge-sm" x-text="'(' + (document.getElementById('loaded-count')?.textContent || '{{ loaded_count }}') + ')'"></span>
-                </div>
-
-                {# Right: Filter Button #}
-                <button type="button"
-                        @click="filterOpen = true"
-                        class="btn btn-primary btn-sm gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-                    </svg>
-                    <span>Filter</span>
-                    <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
-                        <span class="badge badge-xs badge-secondary">!</span>
-                    </template>
-                </button>
-            </div>
-
-            {# Bottom Sheet #}
-            {% include 'games/includes/_mobile_filter_sheet.html' with genres=genres platforms=platforms min_year=min_year max_year=max_year %}
-        </div>
-
-        {# Right column - Results #}
-        <div class="flex-1 min-w-0">
-            <div id="game-results-container">
-                {% include 'games/includes/_game_list_results.html' %}
             </div>
         </div>
     </div>

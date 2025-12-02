@@ -428,6 +428,179 @@ function initLoadMore() {
     newButton.addEventListener('click', handleLoadMore);
     // Randomize icon on each hover
     newButton.addEventListener('mouseenter', () => randomizeLoadMoreIcon(newButton));
+
+    // Initialize Jump to Rank functionality
+    initJumpToRank();
+}
+
+/**
+ * Initializes Jump to Rank functionality
+ */
+function initJumpToRank() {
+    const input = document.getElementById('jump-to-rank-input');
+    const button = document.getElementById('jump-to-rank-btn');
+
+    if (!input || !button) return;
+
+    // Clone button to remove existing listeners (prevents duplicates after DOM updates)
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+
+    // Clone input to remove existing listeners
+    const newInput = input.cloneNode(true);
+    input.parentNode.replaceChild(newInput, input);
+
+    // Handle button click
+    newButton.addEventListener('click', () => handleJumpToRank(newInput));
+
+    // Handle Enter key in input
+    newInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleJumpToRank(newInput);
+        }
+    });
+}
+
+/**
+ * Handles jumping to a specific rank
+ * @param {HTMLInputElement} input - The rank input element
+ */
+async function handleJumpToRank(input) {
+    const targetRank = parseInt(input.value);
+    const total = parseInt(input.dataset.total);
+    const loaded = parseInt(input.dataset.loaded);
+    const perPage = parseInt(input.dataset.perPage);
+
+    // Validate input
+    if (!targetRank || targetRank < 1 || targetRank > total) {
+        input.classList.add('input-error');
+        setTimeout(() => input.classList.remove('input-error'), 1000);
+        return;
+    }
+
+    // Check if target is already loaded
+    if (targetRank <= loaded) {
+        scrollToAndHighlightRank(targetRank);
+        return;
+    }
+
+    // Calculate target page and load pages progressively
+    const targetPage = Math.ceil(targetRank / perPage);
+    const currentPage = Math.ceil(loaded / perPage);
+
+    // Show loading state
+    const button = document.getElementById('jump-to-rank-btn');
+    button.classList.add('loading');
+    button.disabled = true;
+    input.disabled = true;
+
+    try {
+        // Load pages progressively to reach target
+        for (let page = currentPage + 1; page <= targetPage; page++) {
+            await loadPage(page);
+        }
+
+        // Scroll to and highlight the target rank
+        setTimeout(() => {
+            scrollToAndHighlightRank(targetRank);
+        }, 300); // Wait for animations to settle
+    } catch (err) {
+        console.error('Jump to rank error:', err);
+    } finally {
+        button.classList.remove('loading');
+        button.disabled = false;
+        input.disabled = false;
+        input.value = ''; // Clear input
+    }
+}
+
+/**
+ * Loads a specific page and appends to the list
+ * @param {number} page - The page number to load
+ * @returns {Promise<void>}
+ */
+async function loadPage(page) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', page);
+    params.set('append', 'true');
+
+    const url = window.location.pathname + '?' + params.toString();
+
+    const response = await fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'HX-Request': 'true'
+        }
+    });
+
+    if (!response.ok) throw new Error('Failed to load page');
+
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Extract metadata
+    const metaScript = doc.getElementById('load-more-meta');
+    const meta = metaScript ? JSON.parse(metaScript.textContent) : null;
+    if (metaScript) metaScript.remove();
+
+    // Append game rows (without animation for jump)
+    const gameList = document.getElementById('game-list-container');
+    if (gameList) {
+        const allRows = doc.querySelectorAll('.game-row');
+        allRows.forEach((row) => {
+            gameList.appendChild(row);
+        });
+    }
+
+    // Update metadata
+    if (meta) {
+        updateResultSummary(meta.loadedCount, meta.totalCount);
+
+        // Update jump to rank input data
+        const input = document.getElementById('jump-to-rank-input');
+        if (input) {
+            input.dataset.loaded = meta.loadedCount;
+        }
+
+        // Update or remove load more button
+        const loadMoreButton = document.querySelector('.load-more-button');
+        if (loadMoreButton && meta) {
+            updateLoadMoreButton(loadMoreButton, meta);
+        }
+    }
+}
+
+/**
+ * Scrolls to and highlights a specific rank
+ * @param {number} rank - The rank number to scroll to
+ */
+function scrollToAndHighlightRank(rank) {
+    // Find the game row by rank
+    const gameRows = document.querySelectorAll('.game-row');
+    let targetRow = null;
+
+    for (const row of gameRows) {
+        const rankSpan = row.querySelector('.text-2xl.font-bold.text-primary');
+        if (rankSpan && parseInt(rankSpan.textContent.trim()) === rank) {
+            targetRow = row;
+            break;
+        }
+    }
+
+    if (!targetRow) {
+        console.warn('Could not find rank:', rank);
+        return;
+    }
+
+    // Scroll to the row with smooth scrolling
+    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Add temporary highlight
+    targetRow.classList.add('is-highlighted');
+    setTimeout(() => {
+        targetRow.classList.remove('is-highlighted');
+    }, 3000); // Remove highlight after 3 seconds
 }
 
 // Gaming icons for hover effect (from MDI subset)
