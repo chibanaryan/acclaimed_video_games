@@ -3,7 +3,7 @@
 {% if items %}
     {# Desktop table view #}
     <div class="hidden md:block overflow-x-auto">
-        <table class="table w-full" style="table-layout: fixed;">
+        <table class="table w-full text-base" style="table-layout: fixed;">
             <colgroup>
                 <col style="width: 25%;">  <!-- Publication -->
                 <col style="width: 10%;">  <!-- Year -->
@@ -57,7 +57,7 @@
     {# Mobile card view #}
     <div class="md:hidden space-y-3">
         {% for list in items %}
-        <div class="card bg-base-200 p-3">
+        <div class="card bg-base-200 p-3 text-base">
             <div class="font-bold">
                 {% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}
             </div>
@@ -70,18 +70,18 @@
                 <span>{{ list.name }}</span>
                 {% endif %}
             </div>
-            <div class="text-base text-base-content/85 mt-1">
+            <div class="text-base-content/85 mt-1">
                 <span class="font-semibold">Year:</span>
                 {{ list.year }}
             </div>
             {% if show_rank %}
-            <div class="text-base text-base-content/85">
+            <div class="text-base-content/85">
                 <span class="font-semibold">Rank:</span>
                 {{ list.rank|default:'' }}
             </div>
             {% endif %}
             {% if show_type %}
-            <div class="text-base text-base-content/85">
+            <div class="text-base-content/85">
                 <span class="font-semibold">Type:</span>
                 {% if list.get_type_display %}{{ list.get_type_display }}{% else %}{{ list.type_name|default:'' }}{% endif %}
             </div>
