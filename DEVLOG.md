@@ -2,6 +2,8 @@
 
 ## 2025-12-02
 
+- Eliminated layout shift on games list during HTMX navigation: added max-width constraint to results column and explicit width/min-width/min-height to filter sidebar with CSS containment
+- Reserved space for filter dropdowns on source lists page (min-h-[2.5rem]) to prevent layout adjustment on load
 - Fixed squished thumbnails in sidebar search dropdown by using flexible height (w-6 h-auto) to maintain aspect ratio
 - Fixed "Showing X of Y" counter to update dynamically with filter changes (moved into HTMX swap container)
 - Fixed Jump to Rank max value to respect filtered results count instead of showing total database count
