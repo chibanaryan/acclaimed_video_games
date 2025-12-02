@@ -24,13 +24,21 @@
         }
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            // Remove highlight when user hovers over any other game row
+
+            // Fade out highlight after 2 seconds
+            var fadeTimeout = setTimeout(function() {
+                if (desktopElement) desktopElement.classList.add('fade-out');
+                if (mobileElement) mobileElement.classList.add('fade-out');
+            }, 2000);
+
+            // Also fade out if user hovers over any other game row
             var gameRows = document.querySelectorAll('.game-row');
             gameRows.forEach(function(row) {
                 if (row !== desktopElement && row !== mobileElement) {
                     row.addEventListener('mouseenter', function() {
-                        if (desktopElement) desktopElement.classList.remove('highlight');
-                        if (mobileElement) mobileElement.classList.remove('highlight');
+                        clearTimeout(fadeTimeout);
+                        if (desktopElement) desktopElement.classList.add('fade-out');
+                        if (mobileElement) mobileElement.classList.add('fade-out');
                     }, { once: true });
                 }
             });

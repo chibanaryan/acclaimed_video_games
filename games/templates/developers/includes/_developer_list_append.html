@@ -6,7 +6,7 @@
 <tr class="developer-row">
     <td>
         {% if alias.developer.slug %}
-            <a href="{% url 'developer-detail' slug=alias.developer.slug %}">
+            <a href="{% url 'developer-detail' slug=alias.developer.slug %}" class="link link-primary">
                 {{ alias.name }} ({{ alias.developer.name }})
             </a>
         {% else %}

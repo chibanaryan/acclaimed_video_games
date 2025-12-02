@@ -1,5 +1,15 @@
 # Developer Log
 
+## 2025-12-01
+
+- Migrated navigation from top navbar to persistent left sidebar on desktop (≥1024px)
+- Sidebar includes: logo, search, navigation links, Contact Us modal trigger, theme switcher, social links
+- Mobile navigation remains as hamburger menu with same functionality
+- Implemented global Contact Us modal accessible from any page using DaisyUI checkbox method
+- Modal plays Navi sound effect ("Hey! Listen!") when opened
+- Search dropdown in sidebar extends beyond sidebar width for long game titles
+- Theme-aware logos: dark version on light themes, light version on dark themes
+
 ## 2025-11-29
 
 - Migrated CSS framework from Bulma/Bulmaswatch to Tailwind CSS v4 + DaisyUI v5

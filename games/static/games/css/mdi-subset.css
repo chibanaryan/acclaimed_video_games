@@ -53,7 +53,7 @@
 /* Sony */
 .mdi-sony-playstation::before { content: "\F0414"; }
 /* Microsoft */
-.mdi-microsoft-xbox::before { content: "\F05B1"; }
+.mdi-microsoft-xbox::before { content: "\F05B9"; }
 .mdi-microsoft-windows::before { content: "\F05B3"; }
 /* Nintendo */
 .mdi-nintendo-switch::before { content: "\F07E1"; }
@@ -93,4 +93,14 @@
 
 /* Navigation */
 .mdi-menu::before { content: "\F035C"; }
+.mdi-home::before { content: "\F0191"; }
 .mdi-palette::before { content: "\F03D8"; }
+
+/* Sidebar navigation icons */
+.mdi-trophy::before { content: "\F0548"; }
+.mdi-medal::before { content: "\F0987"; }
+.mdi-podium::before { content: "\F0D25"; }
+.mdi-account-group::before { content: "\F0849"; }
+.mdi-newspaper::before { content: "\F0870"; }
+.mdi-information::before { content: "\F02FC"; }
+.mdi-heart::before { content: "\F02D1"; }

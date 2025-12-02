@@ -1,18 +1,72 @@
 {% load static tailwind_tags %}
 <!DOCTYPE html>
-<html lang="en" data-theme="forest">
+<html lang="en" data-theme="lofi">
 <head>
     <script>
         // Set theme immediately from localStorage to prevent flash of wrong theme
         (function() {
-            var theme = localStorage.getItem('theme') || 'forest';
+            var theme = localStorage.getItem('theme') || 'lofi';
             document.documentElement.setAttribute('data-theme', theme);
+            updateThemeToggle(theme);
         })();
+        
         // Theme switcher function
         function setTheme(theme) {
             localStorage.setItem('theme', theme);
             document.documentElement.setAttribute('data-theme', theme);
+            updateThemeToggle(theme);
         }
+        
+        // Update theme toggle checkboxes based on current theme
+        function updateThemeToggle(theme) {
+            const isDarkTheme = theme === 'night' || theme === 'forest';
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeToggleMobile = document.getElementById('theme-toggle-mobile');
+            
+            if (themeToggle) {
+                themeToggle.checked = isDarkTheme;
+            }
+            if (themeToggleMobile) {
+                themeToggleMobile.checked = isDarkTheme;
+            }
+        }
+        
+        // Listen for theme controller checkbox changes
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('theme-controller')) {
+                var newTheme = e.target.checked ? 'forest' : 'lofi';
+                setTheme(newTheme);
+            }
+        });
+
+        // Sync toggle state once DOM is ready (checkboxes don't exist in <head>)
+        document.addEventListener('DOMContentLoaded', function() {
+            var theme = localStorage.getItem('theme') || 'lofi';
+            var toggles = document.querySelectorAll('.theme-controller.theme-loading');
+
+            // Set checked state while still hidden
+            toggles.forEach(function(el) {
+                el.checked = (theme === 'night' || theme === 'forest');
+            });
+
+            // Force reflow so browser registers state before making visible
+            void document.body.offsetHeight;
+
+            // Make visible (still no transitions)
+            toggles.forEach(function(el) {
+                el.classList.remove('theme-loading');
+                el.classList.add('theme-no-transition');
+            });
+
+            // Enable transitions after a frame
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    toggles.forEach(function(el) {
+                        el.classList.remove('theme-no-transition');
+                    });
+                });
+            });
+        });
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,7 +113,6 @@
 
     {# Prefetch critical images that appear on every page #}
     <link rel="prefetch" href="{% static 'games/avg_logo_small.png' %}" as="image">
-    <link rel="prefetch" href="{% static 'games/palestine-flag-xs.png' %}" as="image">
 
     {# HTMX - defer to prevent render blocking #}
     <script defer src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -88,31 +141,140 @@
     }{% endblock %}
     </script>
 </head>
-<body class="min-h-screen flex flex-col bg-base-300">
+<body class="min-h-screen bg-base-300">
     {# Skip navigation link for accessibility #}
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <header id="header" class="bg-base-100 border-b border-base-content/10">
-        <div class="container mx-auto px-4 max-w-7xl">
-            {% include 'includes/_nav.html' %}
+    {# Mobile header - fixed at top, visible only below lg: breakpoint #}
+    <header id="header" class="lg:hidden bg-base-100 border-b border-base-content/10 fixed top-0 left-0 right-0" style="z-index: 99999 !important;">
+        <div class="container mx-auto px-4 overflow-visible">
+            {% include 'includes/_nav_mobile.html' %}
         </div>
     </header>
 
-    <main id="main-content" class="flex-1">
-        <div class="container mx-auto px-4 max-w-7xl py-6">
-            {% block content %}{% endblock %}
-        </div>
-    </main>
+    {# Main layout wrapper - padding-top on mobile for fixed header space, isolate creates stacking boundary #}
+    <style>@media (min-width: 1024px) { #main-wrapper { padding-top: 0 !important; } }</style>
+    <div id="main-wrapper" class="flex" style="isolation: isolate; position: relative; z-index: 1; padding-top: 60px;">
+        {# Desktop sidebar - fixed position, hidden on mobile #}
+        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:left-0 bg-base-100 border-r border-base-content/10 z-40 overflow-visible">
+            {% include 'includes/_sidebar.html' %}
+        </aside>
 
-    <footer class="bg-base-100 border-t border-base-content/10 py-6">
-        <div class="container mx-auto px-4 max-w-7xl text-center text-base-content/70">
-            <a href="{% url 'home' %}" class="link link-hover">Home</a>
-            <span class="mx-2">•</span>
-            <a href="{% url 'post-list' %}" class="link link-hover">News</a>
-            <span class="mx-2">•</span>
-            <a href="{% url 'page-detail' slug='about' %}" class="link link-hover">About / FAQ</a>
+        {# Main content area - offset by sidebar width on desktop #}
+        <main id="main-content" class="flex-1 lg:ml-64 min-h-screen">
+            <div class="container mx-auto px-4 max-w-7xl py-6">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    {# Global Contact Form Modal - accessible from any page #}
+    <input type="checkbox" id="contactModalToggle" class="modal-toggle" />
+    <div class="modal" role="dialog">
+        <div class="modal-box bg-base-200 max-w-lg">
+            <label for="contactModalToggle" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" aria-label="close">
+                <span class="mdi mdi-close"></span>
+            </label>
+            <p class="text-lg font-bold mb-4 flex items-center gap-2 flex-wrap">
+                <img src="https://static.wikia.nocookie.net/zelda_gamepedia_en/images/0/08/OoT3D_Navi_Artwork.png" alt="" role="presentation" class="w-7 h-auto drop-shadow-[0_0_4px_#00d4ff]">
+                <em>"Hey! Listen!"</em>
+                <span class="text-base-content/50 text-xs font-normal">~Navi, <a href="{% url 'game-detail' slug='the-legend-of-zelda-ocarina-of-time' %}" class="link link-primary link-hover">The Legend of Zelda: Ocarina of Time</a></span>
+            </p>
+            <p class="mb-4">
+                Have a question, suggestion, or found an issue? We'd love to hear from you!
+                Fill out the form below and we'll get back to you as soon as possible.
+            </p>
+            <form method="post" action="{% url 'home' %}" id="contactForm">
+                {% csrf_token %}
+
+                {# Name field #}
+                <div class="form-control w-full mb-3">
+                    <label class="label" for="id_name">
+                        <span class="label-text">Name</span>
+                    </label>
+                    <input type="text" name="name" id="id_name" required maxlength="100"
+                           class="input input-bordered w-full" placeholder="Your name">
+                </div>
+
+                {# Email field #}
+                <div class="form-control w-full mb-3">
+                    <label class="label" for="id_email">
+                        <span class="label-text">Email</span>
+                    </label>
+                    <input type="email" name="email" id="id_email"
+                           class="input input-bordered w-full" placeholder="your.email@example.com (optional)">
+                </div>
+
+                {# Category field #}
+                <div class="form-control w-full mb-3">
+                    <label class="label" for="id_category">
+                        <span class="label-text">Category</span>
+                    </label>
+                    <select name="category" id="id_category" required class="select select-bordered w-full">
+                        <option value="feature">Feature Request</option>
+                        <option value="bug">Bug Report</option>
+                        <option value="data">Data Issue</option>
+                        <option value="general">General</option>
+                        <option value="partnership">Partnership/Business</option>
+                        <option value="press">Press Inquiry</option>
+                    </select>
+                </div>
+
+                {# Message field #}
+                <div class="form-control w-full mb-3">
+                    <label class="label" for="id_message">
+                        <span class="label-text">Message</span>
+                    </label>
+                    <textarea name="message" id="id_message" required rows="6"
+                              class="textarea textarea-bordered w-full" placeholder="Tell us what's on your mind..."></textarea>
+                </div>
+
+                {# Honeypot field (hidden) #}
+                <input type="text" name="website" style="display:none;" tabindex="-1" autocomplete="off">
+
+                <div class="flex gap-2 mt-5">
+                    <button type="submit" class="btn btn-primary">
+                        <span class="mdi mdi-send"></span>
+                        <span>Send Message</span>
+                    </button>
+                    <label for="contactModalToggle" class="btn">Cancel</label>
+                </div>
+            </form>
         </div>
-    </footer>
+        <label class="modal-backdrop" for="contactModalToggle">Close</label>
+    </div>
+
+    <audio id="naviSound" preload="auto">
+        <source src="{% static 'audio/navi_fly.mp3' %}" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Play sound when modal opens
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('contactModalToggle');
+            const sound = document.getElementById('naviSound');
+
+            if (checkbox) {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked && sound) {
+                        sound.volume = 0.3;
+                        sound.currentTime = 0;
+                        sound.play();
+                    }
+                });
+            }
+
+            // Auto-open if hash is #contact
+            if (window.location.hash === '#contact') {
+                setTimeout(function() {
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        history.replaceState(null, '', window.location.pathname);
+                    }
+                }, 100);
+            }
+        });
+    </script>
 
     {% block extra_scripts %}{% endblock %}
 
@@ -150,9 +312,16 @@
                 if (targetId === 'content' || targetId === 'results-container' || targetId === 'game-results-container') {
                     // Scroll to top after content update with delay for DOM paint
                     setTimeout(function() {
-                        const header = document.getElementById('header');
-                        if (header) {
-                            header.scrollIntoView({ behavior: 'smooth' });
+                        // On desktop (sidebar visible), scroll to top of page
+                        // On mobile, scroll to header
+                        const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+                        if (isDesktop) {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                            const header = document.getElementById('header');
+                            if (header) {
+                                header.scrollIntoView({ behavior: 'smooth' });
+                            }
                         }
                     }, 200);
                 }

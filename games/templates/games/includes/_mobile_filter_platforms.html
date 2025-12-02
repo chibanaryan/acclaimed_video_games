@@ -1,0 +1,497 @@
+{# Mobile Platform Filter - Chip Grid with Progressive Disclosure #}
+{# Assumes parent has filters.platforms (array) and platforms (list) from main Alpine.js state #}
+{% load static %}
+
+<div x-data="{
+        expanded: true,
+        expandedFamilies: [],
+
+        // Platform family groupings (Big Six)
+        platformFamilies: {
+            nintendo: { name: 'Nintendo', icon: 'mdi-nintendo-switch', codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'] },
+            playstation: { name: 'PlayStation', icon: 'mdi-sony-playstation', codes: ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'] },
+            xbox: { name: 'Xbox', icon: 'mdi-microsoft-xbox', codes: ['Xbox', 'X360', 'XB1', 'XBXS'] },
+            sega: { name: 'Sega', svgIcon: 'platform-sega', codes: ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'] },
+            pc: { name: 'PC', icon: 'mdi-microsoft-windows', codes: ['WIN', 'DOS', 'LIN', 'MAC'] },
+            arcadeMobileVr: { name: 'Arcade+', icon: 'mdi-space-invaders', codes: ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR'] }
+        },
+
+        // Secondary accordion sections
+        accordionSections: {
+            retro: { name: 'Retro Consoles', icon: 'mdi-gamepad-square', codes: ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS'] },
+            computers: { name: 'Microcomputers', icon: 'mdi-desktop-classic', codes: ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2'] }
+        },
+
+        // Platform release years for chronological sorting (earliest regional release)
+        platformReleaseYears: {
+            // Nintendo
+            'NES': 1983, 'FDS': 1986, 'GB': 1989, 'SNES': 1990, 'GBC': 1998,
+            'N64': 1996, 'GBA': 2001, 'GC': 2001, 'DS': 2004, 'Wii': 2006,
+            '3DS': 2011, 'WiiU': 2012, 'SW': 2017,
+            // PlayStation
+            'PS': 1994, 'PS2': 2000, 'PSP': 2004, 'PS3': 2006, 'PSV': 2011,
+            'PS4': 2013, 'PSVR': 2016, 'PS5': 2020,
+            // Xbox
+            'Xbox': 2001, 'X360': 2005, 'XB1': 2013, 'XBXS': 2020,
+            // Sega
+            'SMS': 1985, 'GEN': 1988, 'GG': 1990, 'SCD': 1991, 'SAT': 1994, 'DC': 1998,
+            // PC
+            'DOS': 1981, 'WIN': 1985, 'MAC': 1984, 'LIN': 1991,
+            // Arcade/Mobile/VR
+            'ARC': 1970, 'iOS': 2007, 'AND': 2008, 'LMD': 2000, 'VR': 2016, 'BR': 1990,
+            // Retro
+            'A26': 1977, 'INTV': 1979, 'CV': 1982, 'A52': 1982, 'A78': 1986,
+            'TG16': 1987, 'NG': 1990, 'LYNX': 1989, '3DO': 1993, 'JAG': 1993,
+            'NGP': 1998, 'WS': 1999,
+            // Microcomputers
+            'A2': 1977, 'A8': 1979, 'ZXS': 1982, 'C64': 1982, 'CPC': 1984,
+            'MSX': 1983, 'AMI': 1985, 'AST': 1985, 'BBCM': 1981,
+            'PC88': 1981, 'PC98': 1982, 'FM7': 1982, 'FMT': 1989,
+            'SX1': 1984, 'T80': 1985, 'TCC': 1983, 'VC20': 1980, 'CD32': 1993
+        },
+
+        // Platform icons (matches desktop version)
+        platformIcons: {
+            'PS': 'mdi-sony-playstation', 'PS2': 'mdi-sony-playstation', 'PS3': 'mdi-sony-playstation',
+            'PS4': 'mdi-sony-playstation', 'PS5': 'mdi-sony-playstation', 'PSP': 'mdi-sony-playstation',
+            'PSV': 'mdi-sony-playstation', 'PSVR': 'mdi-sony-playstation',
+            'Xbox': 'mdi-microsoft-xbox', 'X360': 'mdi-microsoft-xbox', 'XB1': 'mdi-microsoft-xbox',
+            'XBXS': 'mdi-microsoft-xbox',
+            'SW': 'mdi-nintendo-switch', 'NES': 'mdi-nintendo-game-boy', 'SNES': 'mdi-nintendo-game-boy',
+            'N64': 'mdi-nintendo-game-boy', 'GC': 'mdi-nintendo-game-boy', 'Wii': 'mdi-nintendo-wii',
+            'WiiU': 'mdi-nintendo-wiiu', '3DS': 'mdi-nintendo-game-boy', 'DS': 'mdi-nintendo-game-boy',
+            'GB': 'mdi-nintendo-game-boy', 'GBA': 'mdi-nintendo-game-boy', 'GBC': 'mdi-nintendo-game-boy',
+            'FDS': 'mdi-nintendo-game-boy',
+            'WIN': 'mdi-microsoft-windows', 'DOS': 'mdi-floppy', 'MAC': 'mdi-apple',
+            'LIN': 'mdi-linux', 'A2': 'mdi-floppy',
+            'AND': 'mdi-android', 'iOS': 'mdi-apple-ios', 'LMD': 'mdi-cellphone',
+            'GEN': 'mdi-controller-classic', 'SMS': 'mdi-controller-classic', 'DC': 'mdi-controller-classic',
+            'SAT': 'mdi-controller-classic', 'GG': 'mdi-controller-classic', 'SCD': 'mdi-controller-classic',
+            'A26': 'mdi-gamepad-square', 'A52': 'mdi-gamepad-square', 'A78': 'mdi-gamepad-square',
+            'A8': 'mdi-gamepad-square', 'JAG': 'mdi-gamepad-square', 'LYNX': 'mdi-gamepad-square',
+            'AST': 'mdi-gamepad-square',
+            'TG16': 'mdi-gamepad', 'NG': 'mdi-gamepad', '3DO': 'mdi-gamepad',
+            'INTV': 'mdi-gamepad', 'CV': 'mdi-gamepad', 'NGP': 'mdi-gamepad', 'WS': 'mdi-gamepad',
+            'C64': 'mdi-floppy', 'AMI': 'mdi-floppy', 'CD32': 'mdi-floppy',
+            'MSX': 'mdi-floppy', 'CPC': 'mdi-floppy', 'ZXS': 'mdi-floppy',
+            'BBCM': 'mdi-floppy', 'PC88': 'mdi-floppy', 'PC98': 'mdi-floppy',
+            'FMT': 'mdi-floppy', 'FM7': 'mdi-floppy', 'SX1': 'mdi-floppy',
+            'T80': 'mdi-floppy', 'TCC': 'mdi-floppy', 'VC20': 'mdi-floppy',
+            'ARC': 'mdi-pac-man',
+            'BR': 'mdi-web', 'VR': 'mdi-virtual-reality'
+        },
+
+        getIcon(code) {
+            return this.platformIcons[code] || 'mdi-gamepad-variant';
+        },
+
+        isPlatformSelected(platformId) {
+            return filters.platforms.includes(String(platformId));
+        },
+
+        togglePlatform(platformId) {
+            const id = String(platformId);
+            const idx = filters.platforms.indexOf(id);
+            if (idx > -1) {
+                filters.platforms.splice(idx, 1);
+            } else {
+                filters.platforms.push(id);
+            }
+        },
+
+        // Select all platforms in a family
+        selectFamily(familyKey) {
+            const family = this.platformFamilies[familyKey];
+            if (!family) return;
+
+            const familyPlatformIds = platforms
+                .filter(p => family.codes.includes(p.code))
+                .map(p => String(p.id));
+
+            // Check if all are already selected
+            const allSelected = familyPlatformIds.every(id => filters.platforms.includes(id));
+
+            if (allSelected) {
+                // Deselect all
+                familyPlatformIds.forEach(id => {
+                    const idx = filters.platforms.indexOf(id);
+                    if (idx > -1) filters.platforms.splice(idx, 1);
+                });
+            } else {
+                // Select all
+                familyPlatformIds.forEach(id => {
+                    if (!filters.platforms.includes(id)) {
+                        filters.platforms.push(id);
+                    }
+                });
+            }
+        },
+
+        isFamilySelected(familyKey) {
+            const family = this.platformFamilies[familyKey];
+            if (!family) return false;
+
+            const familyPlatformIds = platforms
+                .filter(p => family.codes.includes(p.code))
+                .map(p => String(p.id));
+
+            return familyPlatformIds.length > 0 && familyPlatformIds.every(id => filters.platforms.includes(id));
+        },
+
+        isFamilyPartial(familyKey) {
+            const family = this.platformFamilies[familyKey];
+            if (!family) return false;
+
+            const familyPlatformIds = platforms
+                .filter(p => family.codes.includes(p.code))
+                .map(p => String(p.id));
+
+            const selectedCount = familyPlatformIds.filter(id => filters.platforms.includes(id)).length;
+            return selectedCount > 0 && selectedCount < familyPlatformIds.length;
+        },
+
+        isFamilyExpanded(familyKey) {
+            return this.expandedFamilies.includes(familyKey);
+        },
+
+        toggleFamilyExpansion(familyKey) {
+            const idx = this.expandedFamilies.indexOf(familyKey);
+            if (idx > -1) {
+                this.expandedFamilies.splice(idx, 1);
+            } else {
+                this.expandedFamilies.push(familyKey);
+            }
+        },
+
+        getFamilyPlatforms(familyKey) {
+            const family = this.platformFamilies[familyKey];
+            if (!family) return [];
+            return platforms
+                .filter(p => family.codes.includes(p.code))
+                .sort((a, b) => {
+                    const yearA = this.platformReleaseYears[a.code] || 9999;
+                    const yearB = this.platformReleaseYears[b.code] || 9999;
+                    return yearA - yearB;
+                });
+        },
+
+        // Generic section lookup (works with both platformFamilies and accordionSections)
+        getSection(key) {
+            return this.platformFamilies[key] || this.accordionSections[key];
+        },
+
+        // Generic section functions that work with both platformFamilies and accordionSections
+        selectSection(sectionKey) {
+            const section = this.getSection(sectionKey);
+            if (!section) return;
+
+            const sectionPlatformIds = platforms
+                .filter(p => section.codes.includes(p.code))
+                .map(p => String(p.id));
+
+            // Check if all are already selected
+            const allSelected = sectionPlatformIds.every(id => filters.platforms.includes(id));
+
+            if (allSelected) {
+                // Deselect all
+                sectionPlatformIds.forEach(id => {
+                    const idx = filters.platforms.indexOf(id);
+                    if (idx > -1) filters.platforms.splice(idx, 1);
+                });
+            } else {
+                // Select all
+                sectionPlatformIds.forEach(id => {
+                    if (!filters.platforms.includes(id)) {
+                        filters.platforms.push(id);
+                    }
+                });
+            }
+        },
+
+        isSectionSelected(sectionKey) {
+            const section = this.getSection(sectionKey);
+            if (!section) return false;
+
+            const sectionPlatformIds = platforms
+                .filter(p => section.codes.includes(p.code))
+                .map(p => String(p.id));
+
+            return sectionPlatformIds.length > 0 && sectionPlatformIds.every(id => filters.platforms.includes(id));
+        },
+
+        isSectionPartial(sectionKey) {
+            const section = this.getSection(sectionKey);
+            if (!section) return false;
+
+            const sectionPlatformIds = platforms
+                .filter(p => section.codes.includes(p.code))
+                .map(p => String(p.id));
+
+            const selectedCount = sectionPlatformIds.filter(id => filters.platforms.includes(id)).length;
+            return selectedCount > 0 && selectedCount < sectionPlatformIds.length;
+        },
+
+        getSectionPlatforms(sectionKey) {
+            const section = this.getSection(sectionKey);
+            if (!section) return [];
+            return platforms
+                .filter(p => section.codes.includes(p.code))
+                .sort((a, b) => {
+                    const yearA = this.platformReleaseYears[a.code] || 9999;
+                    const yearB = this.platformReleaseYears[b.code] || 9999;
+                    return yearA - yearB;
+                });
+        },
+
+        // Get ungrouped platforms (not in any defined group), sorted chronologically
+        getUngroupedPlatforms() {
+            const allGroupedCodes = [
+                ...Object.values(this.platformFamilies).flatMap(g => g.codes),
+                ...Object.values(this.accordionSections).flatMap(g => g.codes)
+            ];
+            return platforms
+                .filter(p => !allGroupedCodes.includes(p.code))
+                .sort((a, b) => {
+                    const yearA = this.platformReleaseYears[a.code] || 9999;
+                    const yearB = this.platformReleaseYears[b.code] || 9999;
+                    return yearA - yearB;
+                });
+        },
+
+        // Select/deselect all ungrouped platforms
+        selectUngrouped() {
+            const ungroupedIds = this.getUngroupedPlatforms().map(p => String(p.id));
+            const allSelected = ungroupedIds.every(id => filters.platforms.includes(id));
+
+            if (allSelected) {
+                // Deselect all
+                ungroupedIds.forEach(id => {
+                    const idx = filters.platforms.indexOf(id);
+                    if (idx > -1) filters.platforms.splice(idx, 1);
+                });
+            } else {
+                // Select all
+                ungroupedIds.forEach(id => {
+                    if (!filters.platforms.includes(id)) {
+                        filters.platforms.push(id);
+                    }
+                });
+            }
+        },
+
+        isUngroupedSelected() {
+            const ungroupedIds = this.getUngroupedPlatforms().map(p => String(p.id));
+            return ungroupedIds.length > 0 && ungroupedIds.every(id => filters.platforms.includes(id));
+        },
+
+        isUngroupedPartial() {
+            const ungroupedIds = this.getUngroupedPlatforms().map(p => String(p.id));
+            const selectedCount = ungroupedIds.filter(id => filters.platforms.includes(id)).length;
+            return selectedCount > 0 && selectedCount < ungroupedIds.length;
+        },
+
+        selectedCount() {
+            return filters.platforms.length;
+        },
+
+        clearPlatforms() {
+            filters.platforms = [];
+        }
+     }"
+     @platforms-reset.window="filters.platforms = [];"
+     class="space-y-3">
+
+    {# Accordion Header #}
+    <button type="button"
+            @click="expanded = !expanded"
+            class="flex items-center justify-between w-full text-base font-semibold">
+        <span class="flex items-center gap-2">
+            <span class="mdi mdi-controller text-lg text-base-content/60"></span>
+            Platforms
+            <template x-if="selectedCount() > 0">
+                <span class="badge badge-primary badge-sm" x-text="selectedCount() + ' selected'"></span>
+            </template>
+        </span>
+        <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+    </button>
+
+    {# Accordion Content #}
+    <div x-show="expanded"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 -translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="space-y-4">
+
+        {# Big Six Platform Families #}
+        <div class="space-y-3">
+            <template x-for="(family, key) in platformFamilies" :key="key">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        {# Checkbox to select/deselect entire family #}
+                        <label class="cursor-pointer" @click.stop>
+                            <input type="checkbox"
+                                   :checked="isFamilySelected(key)"
+                                   :indeterminate="isFamilyPartial(key)"
+                                   @change="selectFamily(key)"
+                                   class="checkbox checkbox-sm checkbox-primary">
+                        </label>
+
+                        {# Button to expand/collapse family #}
+                        <button type="button"
+                                @click="toggleFamilyExpansion(key)"
+                                class="btn btn-sm gap-1 flex-1 justify-between btn-ghost">
+                            <span class="flex items-center gap-1">
+                                <template x-if="family.svgIcon">
+                                    <svg class="w-4 h-4">
+                                        <use :href="'{% static 'games/images/platform-icons.svg' %}#' + family.svgIcon"></use>
+                                    </svg>
+                                </template>
+                                <template x-if="!family.svgIcon && family.icon">
+                                    <span :class="'mdi ' + family.icon" class="text-sm"></span>
+                                </template>
+                                <span x-text="family.name" class="text-xs"></span>
+                            </span>
+                            <svg :class="{ 'rotate-180': isFamilyExpanded(key) }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    {# Individual platforms for this family #}
+                    <div x-show="isFamilyExpanded(key)"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="pl-4 flex flex-wrap gap-2">
+                        <template x-for="platform in getFamilyPlatforms(key)" :key="platform.id">
+                            <label class="cursor-pointer">
+                                <input type="checkbox"
+                                       :value="platform.id"
+                                       :checked="isPlatformSelected(platform.id)"
+                                       @change="togglePlatform(platform.id)"
+                                       class="hidden peer">
+                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
+                                    <span :class="'mdi ' + getIcon(platform.code)" class="text-sm shrink-0"></span>
+                                    <span x-text="platform.name"></span>
+                                </span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        {# Clear button #}
+        <div class="flex justify-end" x-show="selectedCount() > 0">
+            <button type="button"
+                    @click="clearPlatforms()"
+                    class="btn btn-ghost btn-xs">
+                Clear All
+            </button>
+        </div>
+
+        {# Accordion Sections (Retro Consoles, Microcomputers) #}
+        <div class="space-y-3">
+            <template x-for="(section, key) in accordionSections" :key="key">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        {# Checkbox to select/deselect entire section #}
+                        <label class="cursor-pointer" @click.stop>
+                            <input type="checkbox"
+                                   :checked="isSectionSelected(key)"
+                                   :indeterminate="isSectionPartial(key)"
+                                   @change="selectSection(key)"
+                                   class="checkbox checkbox-sm checkbox-primary">
+                        </label>
+
+                        {# Button to expand/collapse section #}
+                        <button type="button"
+                                @click="toggleFamilyExpansion(key)"
+                                class="btn btn-sm gap-1 flex-1 justify-between btn-ghost">
+                            <span class="flex items-center gap-1">
+                                <span :class="'mdi ' + section.icon" class="text-sm"></span>
+                                <span x-text="section.name" class="text-xs"></span>
+                            </span>
+                            <svg :class="{ 'rotate-180': isFamilyExpanded(key) }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    {# Individual platforms for this section #}
+                    <div x-show="isFamilyExpanded(key)"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="pl-4 flex flex-wrap gap-2">
+                        <template x-for="platform in getSectionPlatforms(key)" :key="platform.id">
+                            <label class="cursor-pointer">
+                                <input type="checkbox"
+                                       :value="platform.id"
+                                       :checked="isPlatformSelected(platform.id)"
+                                       @change="togglePlatform(platform.id)"
+                                       class="hidden peer">
+                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
+                                    <span :class="'mdi ' + getIcon(platform.code)" class="text-sm shrink-0"></span>
+                                    <span x-text="platform.name"></span>
+                                </span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        {# Other/Ungrouped Platforms Accordion (if any exist) #}
+        <template x-if="getUngroupedPlatforms().length > 0">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    {# Checkbox to select/deselect all ungrouped #}
+                    <label class="cursor-pointer" @click.stop>
+                        <input type="checkbox"
+                               :checked="isUngroupedSelected()"
+                               :indeterminate="isUngroupedPartial()"
+                               @change="selectUngrouped()"
+                               class="checkbox checkbox-sm checkbox-primary">
+                    </label>
+
+                    {# Button to expand/collapse Other section #}
+                    <button type="button"
+                            @click="toggleFamilyExpansion('other')"
+                            class="btn btn-sm gap-1 flex-1 justify-between btn-ghost">
+                        <span class="flex items-center gap-1">
+                            <span class="mdi mdi-controller text-sm"></span>
+                            <span class="text-xs">Other</span>
+                        </span>
+                        <svg :class="{ 'rotate-180': isFamilyExpanded('other') }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                {# Individual ungrouped platforms #}
+                <div x-show="isFamilyExpanded('other')"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="pl-4 flex flex-wrap gap-2">
+                    <template x-for="platform in getUngroupedPlatforms()" :key="platform.id">
+                        <label class="cursor-pointer">
+                            <input type="checkbox"
+                                   :value="platform.id"
+                                   :checked="isPlatformSelected(platform.id)"
+                                   @change="togglePlatform(platform.id)"
+                                   class="hidden peer">
+                            <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
+                                <span :class="'mdi ' + getIcon(platform.code)" class="text-sm shrink-0"></span>
+                                <span x-text="platform.name"></span>
+                            </span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>

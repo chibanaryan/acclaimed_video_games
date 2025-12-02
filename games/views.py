@@ -159,8 +159,8 @@ class HomePageView(FormView):
         # Fetch latest posts (limit 5)
         context["posts"] = models.Post.objects.filter(active=True).order_by("-date")[:5]
 
-        # Fetch top 10 games
-        context["games"] = models.Game.objects.with_relations().order_by("rank")[:10]
+        # Fetch top 30 games for staggered animation display
+        context["games"] = models.Game.objects.with_relations().order_by("rank")[:30]
 
         # Fetch counts for dynamic tagline
         context["list_count"] = models.List.objects.count()
@@ -723,7 +723,7 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.DeveloperAlias
     template_name = "developers/developer_list.html"
     context_object_name = "developers"
-    paginate_by = 200
+    paginate_by = 150
     paginate_orphans = 0
     htmx_partial_template = "developers/includes/_developer_list_content.html"
 
@@ -867,7 +867,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.List
     template_name = "lists/list_list.html"
     context_object_name = "lists"
-    paginate_by = 200
+    paginate_by = 150
     paginate_orphans = 0
     htmx_partial_template = "lists/includes/_list_list_content.html"
 

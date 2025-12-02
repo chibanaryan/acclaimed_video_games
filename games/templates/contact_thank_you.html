@@ -37,8 +37,6 @@
         left: 0;
         right: 0;
         bottom: 0;
-        /* Clip at the inner right edge of the portal (the opening) */
-        /* Portal outer edge at 140px, minus 5px border = 135px inner edge */
         clip-path: inset(0 25px 0 0);
         z-index: 2;
     }
@@ -74,43 +72,50 @@
     .portal-blue {
         color: #00A2E8;
     }
-    .button.is-portal {
+    .btn-portal {
         background-color: #00A2E8;
-        border-color: transparent;
+        border-color: #00A2E8;
         color: white;
-        transition: background-color 0.2s ease;
     }
-    .button.is-portal:hover {
+    .btn-portal:hover {
         background-color: #F68A25;
+        border-color: #F68A25;
         color: white;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="columns is-centered mt-6">
-    <div class="column is-half">
-        <div class="box has-text-centered" style="padding: 3rem;">
-            <div class="mb-5">
-                <div class="portal-scene">
-                    <div class="portal-oval"></div>
-                    <div class="envelope-container">
-                        <span class="portal-envelope mdi mdi-email"></span>
-                    </div>
+<div class="flex items-center justify-center min-h-[60vh]">
+    <div class="card bg-base-100 shadow-xl max-w-md w-full">
+        <div class="card-body items-center text-center">
+            {# Portal Animation #}
+            <div class="portal-scene mb-4">
+                <div class="portal-oval"></div>
+                <div class="envelope-container">
+                    <span class="portal-envelope mdi mdi-email"></span>
                 </div>
             </div>
-            <h1 class="title is-4 mb-2">
+
+            {# GLaDOS Quote #}
+            <h1 class="text-xl font-bold">
                 <em>"This was a triumph. I'm making a note here: <span class="portal-blue">HUGE SUCCESS</span>."</em>
             </h1>
-            <p class="has-text-grey-light is-size-7 mb-5">
-                ~GLaDOS, <a href="{% url 'game-detail' slug='portal' %}" class="has-text-info">Portal</a>
+            <p class="text-base-content/50 text-xs">
+                ~GLaDOS, <a href="{% url 'game-detail' slug='portal' %}" class="link link-primary link-hover">Portal</a>
             </p>
-            <p class="has-text-grey-light mb-5">
+
+            {# Message #}
+            <p class="text-base-content/70 mt-4">
                 The Enrichment Center acknowledges receipt of your data. A testing associate will review your file shortly.
             </p>
-            <a href="{% url 'home' %}" class="button is-portal is-medium">
-                <span>Resume Testing</span>
-            </a>
+
+            {# Button #}
+            <div class="card-actions mt-6">
+                <a href="{% url 'home' %}" class="btn btn-portal btn-lg">
+                    Resume Testing
+                </a>
+            </div>
         </div>
     </div>
 </div>

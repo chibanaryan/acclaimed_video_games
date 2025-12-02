@@ -3,45 +3,69 @@
 
 {% block title %}Page Not Found - Acclaimed Games{% endblock %}
 
+{% block extra_head %}
+<style>
+    @keyframes moon-shake {
+        0%, 100% { transform: rotate(0deg); }
+        12.5% { transform: rotate(-8deg); }
+        25% { transform: rotate(8deg); }
+        37.5% { transform: rotate(-8deg); }
+        50% { transform: rotate(8deg); }
+        62.5% { transform: rotate(-8deg); }
+        75% { transform: rotate(8deg); }
+        87.5% { transform: rotate(-8deg); }
+    }
+    .animate-moon-shake {
+        animation: moon-shake 0.5s linear infinite;
+        transform-origin: center center;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mx-auto">
-    <div class="py-8">
-        <div class="text-center">
+<div class="flex justify-center pt-4">
+    <div class="card bg-base-100 shadow-xl max-w-lg w-full">
+        <div class="card-body items-center text-center">
             {# 4 Moon 4 header #}
-            <h1 class="text-error font-bold mb-2" style="font-size: clamp(4rem, 15vw, 8rem);">
+            <h1 class="text-error font-bold" style="font-size: clamp(4rem, 15vw, 8rem);">
                 4<img src="{% static 'games/zelda-moon.png' %}"
                      alt="Moon"
-                     class="inline-block align-middle mx-1 animate-bounce"
+                     class="inline-block align-middle mx-1 animate-moon-shake"
                      style="height: 1em; position: relative; top: -0.05em; aspect-ratio: 514 / 498;">4
             </h1>
 
             {# Salesman GIF #}
-            <figure class="inline-block mb-2 max-w-[400px] w-full">
+            <figure class="max-w-[300px] w-full">
                 <img src="{% static 'games/zelda-salesman.gif' %}"
                      alt="Happy Mask Salesman"
-                     class="w-full h-auto"
+                     class="w-full h-auto rounded-lg"
                      style="aspect-ratio: 640 / 346;">
             </figure>
 
             {# Quote #}
-            <h2 class="text-2xl font-bold mb-2">
+            <h2 class="text-xl font-bold mt-4">
                 <em>"You've met with a terrible fate, haven't you?"</em>
             </h2>
-            <p class="text-base-content/50 text-sm mb-6">
+            <p class="text-base-content/50 text-xs">
                 ~Happy Mask Salesman,
                 <a href="{% url 'game-detail' slug='the-legend-of-zelda-majora-s-mask' %}"
-                   class="link link-info">
+                   class="link link-primary link-hover">
                     The Legend of Zelda: Majora's Mask
                 </a>
             </p>
 
-            <p class="text-lg mb-6">
+            {# Message #}
+            <p class="text-base-content/70 mt-4">
                 The page you are looking for doesn't exist in this timeline.
             </p>
-            <a href="{% url 'games-list' %}" id="song-of-time-btn" class="btn btn-primary btn-lg">
-                <img src="{% static 'games/zelda-ocarina.svg' %}" alt="Ocarina" class="h-5 invert">
-                <span>Play the Song of Time</span>
-            </a>
+
+            {# Button #}
+            <div class="card-actions mt-6">
+                <a href="{% url 'games-list' %}" id="song-of-time-btn" class="btn btn-primary btn-lg gap-2">
+                    <img src="{% static 'games/zelda-ocarina.svg' %}" alt="" class="h-5" style="filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(186deg) brightness(100%) contrast(101%);">
+                    Play the Song of Time
+                </a>
+            </div>
             <audio id="song-of-time" src="{% static 'games/zelda-song-of-time.mp3' %}" preload="auto"></audio>
         </div>
     </div>
@@ -67,7 +91,7 @@
                 clearInterval(fadeInterval);
                 window.location.href = destination;
             }
-        }, 200); // 20 steps over 4 seconds
+        }, 200);
     });
 </script>
 {% endblock %}

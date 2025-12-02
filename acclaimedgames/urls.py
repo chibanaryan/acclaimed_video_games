@@ -42,12 +42,17 @@ urlpatterns = [
         views.ContactThankYouView.as_view(),
         name="contact_thank_you",
     ),
-    path("games/", views.GameSearchView.as_view(), name="games-list"),
-    path("games/download/", views.download_games_csv, name="games-download"),
-    # Redirect old search URL to new unified games page (preserves query params)
+    path("rankings/", views.GameSearchView.as_view(), name="games-list"),
+    path("rankings/download/", views.download_games_csv, name="games-download"),
+    # Redirect old URLs to new rankings page (preserves query params)
+    path(
+        "games/",
+        RedirectView.as_view(url="/rankings/", permanent=True, query_string=True),
+        name="games-redirect",
+    ),
     path(
         "games/search/",
-        RedirectView.as_view(url="/games/", permanent=True, query_string=True),
+        RedirectView.as_view(url="/rankings/", permanent=True, query_string=True),
         name="games-search",
     ),
     path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),

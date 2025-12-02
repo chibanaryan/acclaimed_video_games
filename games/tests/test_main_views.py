@@ -368,7 +368,7 @@ class GameDetailViewTest(TestCase):
 
 
 class GameSearchViewTest(TestCase):
-    """Test the game search view (now at /games/ URL)."""
+    """Test the game search view (at /rankings/ URL)."""
 
     def setUp(self):
         # Create test games with different attributes
@@ -397,16 +397,28 @@ class GameSearchViewTest(TestCase):
         self.assertTemplateUsed(response, "games/game_list.html")
 
     def test_old_search_url_redirects(self):
-        """Test that old /games/search/ URL redirects to /games/."""
+        """Test that old /games/search/ URL redirects to /rankings/."""
         response = self.client.get(reverse("games-search"))
         self.assertEqual(response.status_code, 301)
-        self.assertEqual(response.url, "/games/")
+        self.assertEqual(response.url, "/rankings/")
 
     def test_old_search_url_preserves_query_params(self):
         """Test that redirect preserves query parameters."""
         response = self.client.get(reverse("games-search") + "?q=zelda&page=2")
         self.assertEqual(response.status_code, 301)
-        self.assertEqual(response.url, "/games/?q=zelda&page=2")
+        self.assertEqual(response.url, "/rankings/?q=zelda&page=2")
+
+    def test_old_games_url_redirects(self):
+        """Test that old /games/ URL redirects to /rankings/."""
+        response = self.client.get(reverse("games-redirect"))
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.url, "/rankings/")
+
+    def test_old_games_url_preserves_query_params(self):
+        """Test that /games/ redirect preserves query parameters."""
+        response = self.client.get(reverse("games-redirect") + "?q=zelda&page=2")
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.url, "/rankings/?q=zelda&page=2")
 
     def test_search_by_name(self):
         """Test searching games by name."""
@@ -1251,7 +1263,7 @@ class SitemapViewTest(TestCase):
         response = self.client.get("/sitemap.xml")
         content = response.content.decode("utf-8")
         # Check for static page paths
-        self.assertIn("/games/", content)
+        self.assertIn("/rankings/", content)
         self.assertIn("/developers/", content)
         self.assertIn("/lists/", content)
         self.assertIn("/posts/", content)

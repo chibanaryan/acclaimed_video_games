@@ -8,6 +8,10 @@ from sentry_sdk.integrations.django import DjangoIntegration
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DEBUG=(bool, False))
 env.read_env(BASE_DIR / ".env")
+# Load local development overrides if present (higher priority)
+local_env = BASE_DIR / ".env.development.local"
+if local_env.exists():
+    env.read_env(local_env, overwrite=True)
 
 # Define TEST_MODE early for Sentry configuration
 TEST_MODE = "test" in sys.argv

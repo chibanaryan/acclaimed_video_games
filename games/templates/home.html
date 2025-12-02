@@ -7,32 +7,57 @@
 {% block meta_description %}The definitive ranking of the most critically acclaimed video games, based on {{ list_count }} critic lists from {{ publication_count }} publications. Explore top-rated games from every era.{% endblock %}
 
 {% block extra_head %}
-{# Preload home page hero image - LCP element #}
+{# Preload home page hero image - LCP element (dark theme version) #}
 <link rel="preload" href="{% static 'games/avg_logo_web.png' %}" as="image" fetchpriority="high" imagesrcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
 {% endblock %}
 
 {% block content %}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <div>
+    <div class="text-center">
+        {# Dark theme logo (white text) - shown in dark themes #}
         <img src="{% static 'games/avg_logo.png' %}"
              srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
              sizes="(max-width: 600px) 100vw, 548px"
              alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
-             class="w-full h-auto">
+             class="w-full h-auto show-dark">
+        {# Light theme logo (black text) - shown in light themes #}
+        <img src="{% static 'games/avg_logo_dark.png' %}"
+             srcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w"
+             sizes="(max-width: 600px) 100vw, 548px"
+             alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
+             class="w-full h-auto show-light">
         <p class="text-xl mt-4 text-base-content/80">
             The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
         </p>
         <h3 class="text-xl font-bold mt-6 mb-4">Current Top {{ games|length }}</h3>
-        <div class="flex flex-wrap gap-2 items-end">
+        <div class="inline-flex flex-wrap items-end justify-center"
+             x-data="{
+                 loaded: 0,
+                 total: {{ games|length }},
+                 init() {
+                     this.revealNext();
+                 },
+                 revealNext() {
+                     if (this.loaded < this.total) {
+                         this.loaded++;
+                         setTimeout(() => this.revealNext(), 60);
+                     }
+                 }
+             }">
             {% for game in games %}
-            <a href="{% url 'game-detail' slug=game.slug %}" class="relative group">
+            <a href="{% url 'game-detail' slug=game.slug %}"
+               class="relative group block transition-all duration-300 ease-out"
+               style="margin: 10px;"
+               :class="loaded >= {{ forloop.counter }} ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'">
                 <span class="absolute -top-2 -left-1 bg-primary text-primary-content text-xs font-bold px-1.5 py-0.5 rounded z-10">{{ game.rank }}</span>
                 <img src="{{ game.thumbnail }}"
                      srcset="{{ game.thumbnail }} 1x, {{ game.thumbnail_2x }} 2x"
-                     alt="{{ game.name }}" width="90" height="120" loading="lazy" decoding="async"
-                     class="rounded shadow-md hover:shadow-lg transition-shadow">
+                     alt="{{ game.name }}" width="120" height="160" loading="lazy" decoding="async"
+                     class="w-[120px] h-auto rounded shadow-md hover:shadow-lg transition-shadow">
             </a>
             {% endfor %}
+        </div>
+        <div class="mt-4">
             <a href="{% url 'games-list' %}" class="btn btn-primary">
                 See the full list&hellip;
             </a>
@@ -44,28 +69,6 @@
         {% endif %}
     </div>
     <div>
-        {# Social Media #}
-        <div x-data class="flex items-center justify-end gap-2 mb-6 flex-wrap">
-            <span class="text-base-content/50">Follow on:</span>
-            <a href="https://x.com/AVGRankings" target="_blank" rel="noopener noreferrer"
-               class="btn btn-primary btn-sm" title="Follow us on X">
-                <svg width="16" height="16" viewBox="0 0 1200 1227" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/>
-                </svg>
-            </a>
-            <a href="https://bsky.app/profile/avgrankings.bsky.social" target="_blank" rel="noopener noreferrer"
-               class="btn btn-primary btn-sm" title="Follow us on Bluesky">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5.202 2.857C7.954 4.922 10.913 9.11 12 11.358c1.087-2.247 4.046-6.436 6.798-8.501C20.783 1.366 24 .213 24 3.883c0 .732-.42 6.156-.667 7.037-.856 3.061-3.978 3.842-6.755 3.37 4.854.826 6.089 3.562 3.422 6.299-5.065 5.196-7.28-1.304-7.847-2.97-.104-.305-.152-.448-.153-.327 0-.121-.05.022-.153.327-.568 1.666-2.782 8.166-7.847 2.97-2.667-2.737-1.432-5.473 3.422-6.3-2.777.473-5.899-.308-6.755-3.369C.42 10.04 0 4.615 0 3.883c0-3.67 3.217-2.517 5.202-1.026"/>
-                </svg>
-                <span>Bluesky</span>
-            </a>
-            <button class="btn btn-primary btn-sm flex-grow" @click="$dispatch('open-contact')">
-                <span class="mdi mdi-email"></span>
-                <span>Contact Us</span>
-            </button>
-        </div>
-
         <h3 class="text-xl font-bold mb-4">Latest News</h3>
         {% for post in posts %}
             {% include 'posts/includes/_post_item.html' with post=post %}
@@ -78,121 +81,4 @@
         </div>
     </div>
 </div>
-
-{# Contact Form Modal #}
-<div x-data="{
-        modalOpen: {% if form.errors %}true{% else %}false{% endif %},
-        openContact() {
-            this.modalOpen = true;
-            openModal('contactModal');
-            const sound = document.getElementById('naviSound');
-            if (sound) {
-                sound.volume = 0.3;
-                sound.currentTime = 0;
-                sound.play();
-            }
-        },
-        closeContact() {
-            this.modalOpen = false;
-            closeModal('contactModal');
-        }
-     }"
-     x-init="{% if form.errors %}openContact(){% endif %}"
-     @open-contact.window="openContact()">
-<div id="contactModal" class="modal" :class="{ 'modal-open': modalOpen }">
-    <div class="modal-backdrop bg-black/60" @click="closeContact()"></div>
-    <div class="modal-box bg-base-200 max-w-lg">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" aria-label="close" @click="closeContact()">
-            <span class="mdi mdi-close"></span>
-        </button>
-        <p class="text-lg font-bold mb-4 flex items-center gap-2 flex-wrap">
-            <img src="https://static.wikia.nocookie.net/zelda_gamepedia_en/images/0/08/OoT3D_Navi_Artwork.png" alt="" role="presentation" class="w-7 h-auto drop-shadow-[0_0_4px_#00d4ff]">
-            <em>"Hey! Listen!"</em>
-            <span class="text-base-content/50 text-xs font-normal">~Navi, <a href="{% url 'game-detail' slug='the-legend-of-zelda-ocarina-of-time' %}" class="link link-info">The Legend of Zelda: Ocarina of Time</a></span>
-        </p>
-        <p class="mb-4">
-            Have a question, suggestion, or found an issue? We'd love to hear from you!
-            Fill out the form below and we'll get back to you as soon as possible.
-        </p>
-        <form method="post" action="{% url 'home' %}" id="contactForm">
-            {% csrf_token %}
-
-            {# Display non-field errors #}
-            {% if form.non_field_errors %}
-            <div class="alert alert-error mb-4">
-                {{ form.non_field_errors }}
-            </div>
-            {% endif %}
-
-            {# Name field #}
-            <div class="form-control w-full mb-3">
-                <label class="label" for="{{ form.name.id_for_label }}">
-                    <span class="label-text">Name</span>
-                </label>
-                {{ form.name }}
-                {% if form.name.errors %}
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ form.name.errors.0 }}</span>
-                </label>
-                {% endif %}
-            </div>
-
-            {# Email field #}
-            <div class="form-control w-full mb-3">
-                <label class="label" for="{{ form.email.id_for_label }}">
-                    <span class="label-text">Email</span>
-                </label>
-                {{ form.email }}
-                {% if form.email.errors %}
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ form.email.errors.0 }}</span>
-                </label>
-                {% endif %}
-            </div>
-
-            {# Category field #}
-            <div class="form-control w-full mb-3">
-                <label class="label" for="{{ form.category.id_for_label }}">
-                    <span class="label-text">Category</span>
-                </label>
-                {{ form.category }}
-                {% if form.category.errors %}
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ form.category.errors.0 }}</span>
-                </label>
-                {% endif %}
-            </div>
-
-            {# Message field #}
-            <div class="form-control w-full mb-3">
-                <label class="label" for="{{ form.message.id_for_label }}">
-                    <span class="label-text">Message</span>
-                </label>
-                {{ form.message }}
-                {% if form.message.errors %}
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ form.message.errors.0 }}</span>
-                </label>
-                {% endif %}
-            </div>
-
-            {# Honeypot field (hidden) #}
-            {{ form.website }}
-
-            <div class="flex gap-2 mt-5">
-                <button type="submit" class="btn btn-primary">
-                    <span class="mdi mdi-send"></span>
-                    <span>Send Message</span>
-                </button>
-                <button type="button" class="btn" @click="closeContact()">Cancel</button>
-            </div>
-        </form>
-    </div>
-</div>
-</div>
-
-<audio id="naviSound" preload="auto">
-    <source src="{% static 'audio/navi_fly.mp3' %}" type="audio/mpeg">
-</audio>
-
 {% endblock %}

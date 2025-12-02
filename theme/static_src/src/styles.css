@@ -1,8 +1,76 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes: forest --default, night, sunset, nord, lofi;
-}
+@plugin "daisyui";
 @plugin "@tailwindcss/typography";
+
+@plugin "daisyui/theme" {
+  name: "lofi";
+  default: false;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(97% 0 0);
+  --color-base-300: oklch(94% 0 0);
+  --color-base-content: oklch(0% 0 0);
+  --color-primary: oklch(32.6% 0.185 149);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(39.7% 0.177 154.6);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(44.7% 0.111 185.1);
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(13.1% 0.103 134.4);
+  --color-neutral-content: oklch(100% 0 0);
+  --color-info: oklch(89.0% 0.132 205.900);
+  --color-info-content: oklch(15.908% 0.02 205.9);
+  --color-success: oklch(76.6% 0.184 164.140);
+  --color-success-content: oklch(18.026% 0.03 164.14);
+  --color-warning: oklch(86.0% 0.154 79.940);
+  --color-warning-content: oklch(17.674% 0.027 79.94);
+  --color-error: oklch(80.8% 0.247 28.470);
+  --color-error-content: oklch(15.732% 0.03 28.47);
+  --radius-selector: 2rem;
+  --radius-field: 1rem;
+  --radius-box: 2rem;
+  --size-selector: 0.28125rem;
+  --size-field: 0.28125rem;
+  --border: 2px;
+  --depth: 1;
+  --noise: 1;
+}
+
+@plugin "daisyui/theme" {
+  name: "forest";
+  default: false;
+  prefersdark: true;
+  color-scheme: "light";
+  --color-base-100: oklch(20.8% 0.015 17.911);
+  --color-base-200: oklch(18.5% 0.014 17.911);
+  --color-base-300: oklch(16.2% 0.014 17.911);
+  --color-base-content: oklch(100.0% 0.001 17.911);
+  --color-primary: oklch(79.1% 0.267 152.600);
+  --color-primary-content: oklch(0% 0 0);
+  --color-secondary: oklch(81.1% 0.239 159.300);
+  --color-secondary-content: oklch(13.955% 0.027 168.327);
+  --color-accent: oklch(77.2% 0.153 185.713);
+  --color-accent-content: oklch(14.125% 0.023 185.713);
+  --color-neutral: oklch(24.3% 0.049 153.000);
+  --color-neutral-content: oklch(90.4% 0.007 171.364);
+  --color-info: oklch(72.5% 0.159 231.600);
+  --color-info-content: oklch(0% 0 0);
+  --color-success: oklch(74.9% 0.157 160.000);
+  --color-success-content: oklch(0% 0 0);
+  --color-warning: oklch(82.3% 0.157 83.870);
+  --color-warning-content: oklch(0% 0 0);
+  --color-error: oklch(61.5% 0.221 22.18);
+  --color-error-content: oklch(0% 0 0);
+  --radius-selector: 2rem;
+  --radius-field: 1rem;
+  --radius-box: 2rem;
+  --size-selector: 0.28125rem;
+  --size-field: 0.28125rem;
+  --border: 2px;
+  --depth: 1;
+  --noise: 1;
+}
 
 /**
  * A catch-all path to Django template files, JavaScript, and Python files
@@ -33,6 +101,41 @@
 /* Alpine.js cloak - hide elements until Alpine initializes */
 [x-cloak] {
   display: none !important;
+}
+
+/* Hide theme toggle until JavaScript syncs it with localStorage */
+.theme-loading,
+.theme-loading::before,
+.theme-loading::after {
+  visibility: hidden !important;
+  transition: none !important;
+}
+
+/* Disable transitions during initial state sync */
+.theme-no-transition,
+.theme-no-transition::before,
+.theme-no-transition::after,
+.theme-no-transition * {
+  transition: none !important;
+}
+
+/* Theme-aware visibility utilities for DaisyUI data-theme system */
+/* Show only in dark themes (forest, night) */
+.show-dark {
+  display: none;
+}
+[data-theme="forest"] .show-dark,
+[data-theme="night"] .show-dark {
+  display: block;
+}
+
+/* Show only in light themes (lofi, nord, etc.) */
+.show-light {
+  display: block;
+}
+[data-theme="forest"] .show-light,
+[data-theme="night"] .show-light {
+  display: none;
 }
 
 /* Prose typography customization for dark theme */
@@ -136,8 +239,8 @@
   .year-grid-cell {
     @apply flex-1 min-w-0 h-7 flex items-center justify-center;
     @apply rounded-sm cursor-pointer relative transition-all duration-150;
-    /* Warm amber heatmap using CSS variable for dynamic opacity */
-    background-color: rgba(255, 152, 0, var(--heatmap-opacity, 0.1));
+    /* Warm saturated heatmap - uses accent color for visible contrast with primary selection */
+    background-color: color-mix(in oklch, var(--color-accent) var(--heatmap-opacity, 10%), transparent);
   }
 
   .year-grid-cell:hover {
@@ -218,7 +321,7 @@
   }
 
   .genre-column-count {
-    @apply text-xs font-semibold text-center min-w-16;
+    @apply text-xs font-semibold text-center;
     min-height: 1.5em;
   }
 
@@ -465,7 +568,12 @@
   }
 
   .platform-brand-icon {
-    @apply text-xl text-base-content/60 transition-colors duration-150;
+    @apply text-xl text-base-content/60 transition-colors duration-150 shrink-0;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .platform-brand-btn:hover .platform-brand-icon,
@@ -475,7 +583,9 @@
   }
 
   .platform-svg-icon {
-    @apply w-5 h-5 fill-current align-middle;
+    @apply fill-current align-middle shrink-0;
+    width: 1.5rem;
+    height: 1.5rem;
     color: inherit;
   }
 
@@ -593,7 +703,12 @@
   }
 
   .platform-accordion-name {
-    @apply font-medium text-sm flex-1;
+    @apply text-[0.7rem] font-semibold text-base-content/60 uppercase tracking-wide flex-1;
+  }
+
+  .platform-accordion-btn:hover .platform-accordion-name,
+  .platform-accordion-header.has-selection .platform-accordion-btn .platform-accordion-name {
+    @apply text-base-content;
   }
 
   .platform-accordion-count {
@@ -684,7 +799,7 @@
   position: relative;
   border-left: 3px solid transparent;
   border-bottom: 1px solid color-mix(in oklch, currentColor 15%, transparent);
-  transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.5s ease, transform 0.2s ease, border-color 0.5s ease;
 }
 
 /* Highlighted row (from URL param) */
@@ -693,11 +808,27 @@
   border-left-color: var(--color-primary);
 }
 
-/* Desktop hover effects */
+/* Fade out animation for highlight */
+.game-row.is-highlighted.fade-out {
+  background-color: transparent;
+  border-left-color: transparent;
+}
+
+/* Desktop grid layout with equidistant spacing */
+.game-row.desktop {
+  align-items: center;
+}
+
+/* Desktop hover effects - match highlight color */
 .game-row.desktop:hover {
-  background-color: var(--color-base-300);
+  background-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
   transform: translateY(-1px);
   border-left-color: var(--color-primary);
+}
+
+/* Mobile hover effects - match highlight color */
+.game-row.mobile:hover {
+  background-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
 }
 
 @layer components {
@@ -753,6 +884,27 @@
     object-fit: cover;
     object-position: center top;
   }
+
+  /* Genre icon colors based on category */
+  .game-row a[data-group="combat"] svg {
+    color: #e74c3c;
+  }
+
+  .game-row a[data-group="brain"] svg {
+    color: #3498db;
+  }
+
+  .game-row a[data-group="world"] svg {
+    color: #2ecc71;
+  }
+
+  .game-row a[data-group="sim"] svg {
+    color: #f1c40f;
+  }
+
+  .game-row a[data-group="arcade"] svg {
+    color: #e67e22;
+  }
 }
 
 /* Animation for new game rows loaded via HTMX */
@@ -769,4 +921,104 @@
 
 .game-row-enter {
   animation: game-row-enter 0.2s ease-out forwards;
+}
+
+/* =============================================================================
+   Mobile Filter Components - Bottom Sheet, Chips, etc.
+   ============================================================================= */
+
+@layer components {
+  /* Mobile Filter Chip - styled checkbox label */
+  .mobile-filter-chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm
+           bg-base-200 border border-base-300
+           transition-all duration-200 cursor-pointer
+           hover:bg-base-300 hover:border-base-content/20;
+  }
+
+  .mobile-filter-chip-selected,
+  .mobile-filter-chip.peer-checked {
+    @apply bg-primary text-primary-content border-primary
+           hover:bg-primary/90 hover:border-primary/90;
+  }
+
+  /* Make peer-checked work properly */
+  input:checked + .mobile-filter-chip,
+  .peer:checked ~ .mobile-filter-chip {
+    @apply bg-primary text-primary-content border-primary;
+  }
+
+  /* Mobile Game Card */
+  .game-card-mobile {
+    position: relative;
+    border-left: 3px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .game-card-mobile.is-highlighted {
+    background-color: color-mix(in oklch, var(--color-primary) 20%, transparent) !important;
+    border-left-color: var(--color-primary);
+  }
+
+  .game-card-mobile.is-highlighted.fade-out {
+    background-color: var(--color-base-200);
+    border-left-color: transparent;
+  }
+
+  /* Safe area padding for bottom sheet footer (iOS notch) */
+  .safe-area-inset-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Bottom Sheet Backdrop Animation */
+@keyframes bottom-sheet-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Bottom Sheet Slide Up Animation */
+@keyframes bottom-sheet-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Bottom Sheet Slide Down Animation */
+@keyframes bottom-sheet-slide-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* =============================================================================
+   Sidebar Navigation Component
+   ============================================================================= */
+
+@layer components {
+  /* Active nav item styling for sidebar menu */
+  aside .menu li a.active,
+  aside .menu li > a.active {
+    @apply bg-primary/20 text-primary font-semibold border-l-2 border-primary -ml-[2px] pl-[calc(0.75rem+2px)];
+  }
+
+  /* Sidebar menu hover states */
+  aside .menu li a:hover:not(.active) {
+    @apply bg-base-content/10;
+  }
+
+  /* Ensure sidebar dropdown doesn't overflow */
+  aside .dropdown-content {
+    @apply max-h-80 overflow-y-auto;
+  }
 }
