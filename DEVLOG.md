@@ -2,6 +2,7 @@
 
 ## 2025-12-02
 
+- Fixed squished thumbnails in sidebar search dropdown by using flexible height (w-6 h-auto) to maintain aspect ratio
 - Fixed "Showing X of Y" counter to update dynamically with filter changes (moved into HTMX swap container)
 - Fixed Jump to Rank max value to respect filtered results count instead of showing total database count
 - Removed confusing "Filters" heading and reorganized filter sidebar: CSV/Reset buttons now positioned next to Search
