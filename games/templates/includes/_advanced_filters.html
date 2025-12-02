@@ -379,8 +379,8 @@
     {# Two-column layout: results on left, filters sidebar on right #}
     <div class="flex flex-col lg:flex-row gap-6">
         {# Left column - Results #}
-        {# Max-width prevents column from taking full width during HTMX swap #}
-        <div class="flex-1 min-w-0" style="max-width: calc(100% - 444px); contain: layout;">
+        {# Max-width prevents column from taking full width during HTMX swap (desktop only) #}
+        <div class="flex-1 min-w-0 md:max-w-[calc(100%-444px)]" style="contain: layout;">
             <div id="game-results-container">
                 {% include 'games/includes/_game_list_results.html' %}
             </div>
@@ -441,7 +441,7 @@
 
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
-                <div :class="platformsExpanded ? 'mb-6 pb-4 border-b border-base-300' : 'mb-4 pb-2'" class="min-h-[3rem]">
+                <div :class="platformsExpanded ? 'mb-6 pb-4 border-b border-base-300' : 'mb-4 pb-2'" class="min-h-[4.5rem]">
                     <div class="flex items-center gap-2 mb-3 cursor-pointer" @click="platformsExpanded = !platformsExpanded">
                         <span class="mdi mdi-controller text-xl text-primary"></span>
                         <span class="font-bold text-base">Platforms</span>
@@ -465,7 +465,7 @@
 
                 {% if genres %}
                 {# Genres filter - Inventory Grid Style #}
-                <div :class="genresExpanded ? 'mb-4' : 'mb-2'" class="min-h-[3rem]">
+                <div :class="genresExpanded ? 'mb-4' : 'mb-2'" class="min-h-[4rem]">
                     <div class="flex items-center gap-2 mb-3 cursor-pointer" @click="genresExpanded = !genresExpanded">
                         <span class="mdi mdi-gamepad-variant text-xl text-primary"></span>
                         <span class="font-bold text-base">Genres</span>
