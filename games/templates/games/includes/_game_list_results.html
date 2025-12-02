@@ -11,6 +11,33 @@
 {% if platform_counts_json %}
 <script type="application/json" id="platform-counts-update">{{ platform_counts_json|tojson }}</script>
 {% endif %}
+
+{# Desktop: Jump to rank + result count #}
+<div class="hidden md:flex items-center justify-between mb-2 text-sm">
+    {# Jump to Rank - Left side #}
+    <div class="flex items-center gap-2">
+        <span class="text-base-content/60">Jump to rank:</span>
+        <input type="number"
+               id="jump-to-rank-input"
+               min="1"
+               max="{{ total_count }}"
+               placeholder="#"
+               class="input input-xs input-bordered w-16 text-center"
+               data-total="{{ total_count }}"
+               data-loaded="{{ loaded_count }}"
+               data-per-page="100">
+        <button type="button"
+                id="jump-to-rank-btn"
+                class="btn btn-xs btn-primary">
+            Go
+        </button>
+    </div>
+    {# Result count - Right side #}
+    <div class="text-base-content/60">
+        {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
+    </div>
+</div>
+
 {% if games %}
 <div id="game-list-container">
     {% for game in games %}

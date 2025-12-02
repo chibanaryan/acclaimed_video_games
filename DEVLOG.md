@@ -2,6 +2,10 @@
 
 ## 2025-12-02
 
+- Fixed "Showing X of Y" counter to update dynamically with filter changes (moved into HTMX swap container)
+- Fixed Jump to Rank max value to respect filtered results count instead of showing total database count
+- Removed confusing "Filters" heading and reorganized filter sidebar: CSV/Reset buttons now positioned next to Search
+- Upgraded home page cover images from thumbnail (264x352) to full size (571x857) for sharper image quality
 - Standardized list table text sizes across game detail and source list pages
 - Converted game properties from table layout to div-based layout (removed visual row dividers)
 - Implemented 50/50 split layout on game detail: properties on left, centered game cover on right

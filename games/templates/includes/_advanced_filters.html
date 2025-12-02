@@ -380,32 +380,6 @@
     <div class="flex flex-col lg:flex-row gap-6">
         {# Left column - Results #}
         <div class="flex-1 min-w-0">
-            {% load humanize %}
-            {# Desktop: Jump to rank + result count #}
-            <div class="hidden md:flex items-center justify-between mb-2 text-sm">
-                {# Jump to Rank - Left side #}
-                <div class="flex items-center gap-2">
-                    <span class="text-base-content/60">Jump to rank:</span>
-                    <input type="number"
-                           id="jump-to-rank-input"
-                           min="1"
-                           max="{{ total_count }}"
-                           placeholder="#"
-                           class="input input-xs input-bordered w-16 text-center"
-                           data-total="{{ total_count }}"
-                           data-loaded="{{ loaded_count }}"
-                           data-per-page="100">
-                    <button type="button"
-                            id="jump-to-rank-btn"
-                            class="btn btn-xs btn-primary">
-                        Go
-                    </button>
-                </div>
-                {# Result count - Right side #}
-                <div class="text-base-content/60">
-                    {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
-                </div>
-            </div>
             <div id="game-results-container">
                 {% include 'games/includes/_game_list_results.html' %}
             </div>
@@ -416,34 +390,28 @@
             {# Spacer to align with game list count #}
             <div class="h-[calc(1rem+0.5rem)]"></div>
             <div class="bg-base-200 rounded-lg p-4">
-                {# Header with navigation buttons #}
-                <div class="flex justify-between items-center mb-4 pb-3 border-b border-base-300">
-                    <div class="flex items-center gap-2">
-                        <span class="mdi mdi-tune text-lg text-primary"></span>
-                        <h2 class="font-bold">Filters</h2>
-                    </div>
-                    <div class="flex gap-2">
-                        <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
-                           class="btn btn-sm game-btn shadow-lg text-white border-0 w-[88px]"
-                           style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);"
-                           title="Download CSV">
-                            <span class="mdi mdi-download"></span>
-                            <span>CSV</span>
-                        </a>
-                        <a href="{% url 'games-list' %}"
-                           class="btn btn-sm game-btn shadow-lg text-white border-0 w-[88px]"
-                           style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
-                            <span class="mdi mdi-undo"></span>
-                            <span>Reset</span>
-                        </a>
-                    </div>
-                </div>
-
-                {# Search input #}
+                {# Search input with action buttons #}
                 <div class="mb-6 pb-4 border-b border-base-300">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="mdi mdi-magnify text-xl text-primary"></span>
-                        <span class="font-bold text-base">Search</span>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="mdi mdi-magnify text-xl text-primary"></span>
+                            <span class="font-bold text-base">Search</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
+                               class="btn btn-sm game-btn shadow-lg text-white border-0 w-[88px]"
+                               style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);"
+                               title="Download CSV">
+                                <span class="mdi mdi-download"></span>
+                                <span>CSV</span>
+                            </a>
+                            <a href="{% url 'games-list' %}"
+                               class="btn btn-sm game-btn shadow-lg text-white border-0 w-[88px]"
+                               style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                                <span class="mdi mdi-undo"></span>
+                                <span>Reset</span>
+                            </a>
+                        </div>
                     </div>
                     <div>
                         {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
