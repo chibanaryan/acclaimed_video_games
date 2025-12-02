@@ -23,7 +23,7 @@
 {% if has_more and not max_loaded %}
 <div id="load-more-container" class="text-center my-6">
     <button type="button"
-            class="btn btn-primary load-more-button"
+            class="btn btn-ghost load-more-button"
             data-next-page="{{ next_page }}"
             data-total="{{ total_count }}"
             data-loaded="{{ loaded_count }}">
@@ -41,5 +41,5 @@
 {% endif %}
 
 {% else %}
-<div class="text-base-content/50 py-8 text-center">No games match your filters.</div>
+<div class="text-base-content/70 py-8 text-center">No games match your filters.</div>
 {% endif %}

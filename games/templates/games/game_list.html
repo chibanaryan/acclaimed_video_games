@@ -12,7 +12,7 @@
 
 {% block extra_scripts %}
 {% if highlight %}
-<script>
+<script nonce="{{ csp_nonce }}">
     setTimeout(function() {
         var desktopElement = document.getElementById('game-{{ highlight }}');
         var mobileElement = document.getElementById('game-{{ highlight }}-mobile');

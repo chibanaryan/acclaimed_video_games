@@ -74,7 +74,7 @@
             {% include 'posts/includes/_post_item.html' with post=post %}
         {% endfor %}
         <div class="flex justify-end">
-            <a href="{% url 'post-list' %}?offset=5" class="btn btn-primary btn-sm">
+            <a href="{% url 'post-list' %}?page=2" class="btn btn-primary btn-sm">
                 <span>Older posts</span>
                 <span class="mdi mdi-chevron-double-right"></span>
             </a>

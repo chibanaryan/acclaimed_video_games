@@ -4,7 +4,7 @@
 {% if lists %}
 {# Desktop table view #}
 <div class="hidden md:block overflow-x-auto">
-    <table class="table table-sm w-full">
+    <table class="table w-full">
         <thead>
             <tr>
                 <th>Publication</th>
@@ -50,11 +50,11 @@
             <span>{{ list.name }}</span>
             {% endif %}
         </div>
-        <div class="text-sm text-base-content/70 mt-1">
+        <div class="text-base text-base-content/70 mt-1">
             <span class="font-semibold">Year:</span>
             {{ list.year }}
         </div>
-        <div class="text-sm text-base-content/70">
+        <div class="text-base text-base-content/70">
             <span class="font-semibold">Type:</span>
             {{ list.get_type_display }}
         </div>
@@ -65,7 +65,7 @@
 {% if has_more %}
 <div id="load-more-container" class="text-center my-6">
     <button type="button"
-            class="btn btn-primary load-more-button"
+            class="btn btn-ghost load-more-button"
             data-next-page="{{ next_page }}"
             data-total="{{ total_count }}"
             data-loaded="{{ loaded_count }}">

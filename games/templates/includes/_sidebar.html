@@ -47,10 +47,10 @@
                  class="absolute left-0 top-full mt-1 bg-base-200 rounded-box w-80 p-2 shadow-lg z-[9999] max-h-80 overflow-y-auto">
                 <ul class="menu menu-sm p-0">
                     <template x-if="!q || q.trim().length < 2">
-                        <li class="disabled"><span class="text-base-content/50 text-sm">Enter 2+ characters</span></li>
+                        <li class="disabled"><span class="text-base-content/70 text-sm">Enter 2+ characters</span></li>
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                        <li class="disabled"><span class="text-base-content/50 text-sm">No results found</span></li>
+                        <li class="disabled"><span class="text-base-content/70 text-sm">No results found</span></li>
                     </template>
                     <template x-for="result in results" :key="result.id">
                         <li>
@@ -124,10 +124,10 @@
                 </a>
             </li>
             <li>
-                <label for="contactModalToggle" class="cursor-pointer">
+                <a href="#" class="contact-modal-trigger">
                     <span class="mdi mdi-email text-lg"></span>
                     Contact Us
-                </label>
+                </a>
             </li>
             <li>
                 <a href="{% url 'page-detail' slug='donate' %}">
@@ -154,7 +154,7 @@
 
         {# Social links #}
         <div class="text-center">
-            <span class="text-xs text-base-content/50 block mb-2">Follow on</span>
+            <span class="text-xs text-base-content/70 block mb-2">Follow on</span>
             <div class="flex justify-center gap-2">
                 <a href="https://x.com/AVGRankings" target="_blank" rel="noopener noreferrer"
                    class="btn btn-ghost btn-sm btn-square" title="Follow on X">

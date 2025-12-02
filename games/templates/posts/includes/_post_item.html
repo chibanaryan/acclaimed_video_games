@@ -6,7 +6,7 @@
     <div class="card-body p-4">
         <h4 class="card-title text-lg">{{ post.title }}</h4>
         <div class="prose prose-sm prose-invert max-w-none">{{ post.text_rendered|safe }}</div>
-        <div class="text-base-content/50 text-sm text-right mt-2">
+        <div class="text-base-content/70 text-sm text-right mt-2">
             {% if post.author %}{{ post.author.get_full_name|default:post.author.username }} · {% endif %}{{ post.date|from_now }}
         </div>
     </div>

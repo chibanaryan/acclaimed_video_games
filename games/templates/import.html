@@ -18,7 +18,7 @@
     {# Import page custom styles #}
     <link rel="stylesheet" href="{% static 'games/css/import.css' %}">
 
-<script>
+<script nonce="{{ csp_nonce }}">
     document.addEventListener('DOMContentLoaded', () => {
         let fileInputs = document.querySelectorAll('.file.has-name')
         for (let fileInput of fileInputs) {
@@ -95,7 +95,7 @@
         <button type="button" onclick="dismissErrorContainer();">Dismiss</button>
     </div>
 </div>
-<script>
+<script nonce="{{ csp_nonce }}">
     // New errors have appeared, clear the dismissed flag
     localStorage.removeItem('importErrorsDismissed');
 
@@ -110,7 +110,7 @@
     }
 </script>
 {% else %}
-<script>
+<script nonce="{{ csp_nonce }}">
     // No errors on this page load, check if errors were already dismissed previously
     document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('error-container');
@@ -452,7 +452,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
     // Close notification on close button click
     document.querySelectorAll('.notification .delete').forEach(closeBtn => {
         closeBtn.addEventListener('click', () => {

@@ -3,7 +3,18 @@
 {% if items %}
     {# Desktop table view #}
     <div class="hidden md:block overflow-x-auto">
-        <table class="table table-sm w-full">
+        <table class="table w-full" style="table-layout: fixed;">
+            <colgroup>
+                <col style="width: 25%;">  <!-- Publication -->
+                <col style="width: 10%;">  <!-- Year -->
+                {% if show_rank %}
+                <col style="width: 10%;">  <!-- Rank -->
+                {% endif %}
+                <col style="width: 55%;">  <!-- Name -->
+                {% if show_type %}
+                <col style="width: auto;">  <!-- Type -->
+                {% endif %}
+            </colgroup>
             <thead>
                 <tr>
                     <th>Publication</th>
@@ -20,12 +31,12 @@
             <tbody>
                 {% for list in items %}
                 <tr>
-                    <td class="text-base-content/80">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</td>
+                    <td class="text-base-content/80 truncate" title="{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</td>
                     <td>{{ list.year }}</td>
                     {% if show_rank %}
                     <td class="font-mono">{{ list.rank|default:'' }}</td>
                     {% endif %}
-                    <td>
+                    <td class="truncate" title="{{ list.name }}">
                         {% if list.url %}
                         <a href="{{ list.url }}" target="_blank" class="link link-primary">
                             {{ list.name }}
@@ -59,18 +70,18 @@
                 <span>{{ list.name }}</span>
                 {% endif %}
             </div>
-            <div class="text-sm text-base-content/70 mt-1">
+            <div class="text-base text-base-content/70 mt-1">
                 <span class="font-semibold">Year:</span>
                 {{ list.year }}
             </div>
             {% if show_rank %}
-            <div class="text-sm text-base-content/70">
+            <div class="text-base text-base-content/70">
                 <span class="font-semibold">Rank:</span>
                 {{ list.rank|default:'' }}
             </div>
             {% endif %}
             {% if show_type %}
-            <div class="text-sm text-base-content/70">
+            <div class="text-base text-base-content/70">
                 <span class="font-semibold">Type:</span>
                 {% if list.get_type_display %}{{ list.get_type_display }}{% else %}{{ list.type_name|default:'' }}{% endif %}
             </div>

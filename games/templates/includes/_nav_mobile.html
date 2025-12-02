@@ -47,10 +47,10 @@
                     <div x-show="showMenu" x-cloak class="mt-2 max-h-80 overflow-y-auto">
                         <ul class="menu p-0">
                             <template x-if="!q || q.trim().length < 2">
-                                <li class="disabled"><span class="text-base-content/50 text-sm">Please enter two or more characters</span></li>
+                                <li class="disabled"><span class="text-base-content/70 text-sm">Please enter two or more characters</span></li>
                             </template>
                             <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                                <li class="disabled"><span class="text-base-content/50 text-sm">No results found</span></li>
+                                <li class="disabled"><span class="text-base-content/70 text-sm">No results found</span></li>
                             </template>
                             <template x-for="result in results" :key="result.id">
                                 <li>
@@ -103,7 +103,11 @@
                 <li><a href="{% url 'list-list' %}">Lists</a></li>
                 <li><a href="{% url 'post-list' %}">News</a></li>
                 <li><a href="{% url 'page-detail' slug='about' %}">About</a></li>
-                <li><label for="contactModalToggle" @click="expanded = false">Contact Us</label></li>
+                <li>
+                    <a href="#" class="contact-modal-trigger">
+                        Contact Us
+                    </a>
+                </li>
                 <li><a href="{% url 'page-detail' slug='donate' %}">Donate</a></li>
                 <li class="menu-title mt-2">Theme</li>
                 <li>

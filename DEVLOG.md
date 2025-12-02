@@ -1,5 +1,10 @@
 # Developer Log
 
+## 2025-12-02
+
+- Fixed list column alignment on game detail pages using table-layout: fixed with colgroup
+- Added accordion category grouping in platform titles (desktop and mobile) for Retro Consoles and Microcomputers
+
 ## 2025-12-01
 
 - Migrated navigation from top navbar to persistent left sidebar on desktop (≥1024px)

@@ -2,7 +2,7 @@
 {% load humanize %}
 {% if developers %}
 <div class="overflow-x-auto">
-    <table class="table table-sm w-full">
+    <table class="table w-full">
         <thead>
             <tr>
                 <th>Name</th>
@@ -31,7 +31,7 @@
 {% if has_more %}
 <div id="load-more-container" class="text-center my-6">
     <button type="button"
-            class="btn btn-primary load-more-button"
+            class="btn btn-ghost load-more-button"
             data-next-page="{{ next_page }}"
             data-total="{{ total_count }}"
             data-loaded="{{ loaded_count }}">

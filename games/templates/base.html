@@ -2,27 +2,27 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="lofi">
 <head>
-    <script>
+    <script nonce="{{ csp_nonce }}">
         // Set theme immediately from localStorage to prevent flash of wrong theme
         (function() {
             var theme = localStorage.getItem('theme') || 'lofi';
             document.documentElement.setAttribute('data-theme', theme);
             updateThemeToggle(theme);
         })();
-        
+
         // Theme switcher function
         function setTheme(theme) {
             localStorage.setItem('theme', theme);
             document.documentElement.setAttribute('data-theme', theme);
             updateThemeToggle(theme);
         }
-        
+
         // Update theme toggle checkboxes based on current theme
         function updateThemeToggle(theme) {
             const isDarkTheme = theme === 'night' || theme === 'forest';
             const themeToggle = document.getElementById('theme-toggle');
             const themeToggleMobile = document.getElementById('theme-toggle-mobile');
-            
+
             if (themeToggle) {
                 themeToggle.checked = isDarkTheme;
             }
@@ -30,7 +30,7 @@
                 themeToggleMobile.checked = isDarkTheme;
             }
         }
-        
+
         // Listen for theme controller checkbox changes
         document.addEventListener('change', function(e) {
             if (e.target.classList.contains('theme-controller')) {
@@ -72,9 +72,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{% block meta_description %}Discover the most critically acclaimed video games of all time, ranked by aggregating hundreds of critic lists from major gaming publications.{% endblock %}">
     <link rel="canonical" href="{% block canonical_url %}https://www.acclaimedvideogames.com{{ request.path }}{% endblock %}">
-    {# Content Security Policy - allows unsafe-eval for Alpine.js x-data expressions #}
-    {# Note: unsafe-eval is required for Alpine.js to evaluate x-data expressions #}
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self';">
+    {# Content Security Policy is set via CSPMiddleware with nonce support #}
+    {# Note: 'unsafe-eval' is required for Alpine.js x-data expressions #}
     <title>{% block title %}Acclaimed Games{% endblock %}</title>
 
     {# Open Graph Tags for social sharing #}
@@ -115,18 +114,18 @@
     <link rel="prefetch" href="{% static 'games/avg_logo_small.png' %}" as="image">
 
     {# HTMX - defer to prevent render blocking #}
-    <script defer src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://unpkg.com/htmx.org@1.9.10" nonce="{{ csp_nonce }}"></script>
 
     {# Shared Utilities - Must load before Alpine.js, defer maintains order #}
-    <script defer src="{% static 'games/js/utils.js' %}"></script>
+    <script defer src="{% static 'games/js/utils.js' %}" nonce="{{ csp_nonce }}"></script>
 
     {# Alpine.js #}
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
 
     {% block extra_head %}{% endblock %}
 
     {# Structured Data (JSON-LD) #}
-    <script type="application/ld+json">
+    <script type="application/ld+json" nonce="{{ csp_nonce }}">
     {% block structured_data %}{
         "@context": "https://schema.org",
         "@type": "WebSite",
@@ -169,16 +168,17 @@
     </div>
 
     {# Global Contact Form Modal - accessible from any page #}
-    <input type="checkbox" id="contactModalToggle" class="modal-toggle" />
-    <div class="modal" role="dialog">
+    <dialog id="contactModal" class="modal">
         <div class="modal-box bg-base-200 max-w-lg">
-            <label for="contactModalToggle" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" aria-label="close">
-                <span class="mdi mdi-close"></span>
-            </label>
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" aria-label="close">
+                    <span class="mdi mdi-close"></span>
+                </button>
+            </form>
             <p class="text-lg font-bold mb-4 flex items-center gap-2 flex-wrap">
                 <img src="https://static.wikia.nocookie.net/zelda_gamepedia_en/images/0/08/OoT3D_Navi_Artwork.png" alt="" role="presentation" class="w-7 h-auto drop-shadow-[0_0_4px_#00d4ff]">
                 <em>"Hey! Listen!"</em>
-                <span class="text-base-content/50 text-xs font-normal">~Navi, <a href="{% url 'game-detail' slug='the-legend-of-zelda-ocarina-of-time' %}" class="link link-primary link-hover">The Legend of Zelda: Ocarina of Time</a></span>
+                <span class="text-base-content/70 text-xs font-normal">~Navi, <a href="{% url 'game-detail' slug='the-legend-of-zelda-ocarina-of-time' %}" class="link link-primary link-hover">The Legend of Zelda: Ocarina of Time</a></span>
             </p>
             <p class="mb-4">
                 Have a question, suggestion, or found an issue? We'd love to hear from you!
@@ -237,41 +237,69 @@
                         <span class="mdi mdi-send"></span>
                         <span>Send Message</span>
                     </button>
-                    <label for="contactModalToggle" class="btn">Cancel</label>
+                    <button type="button" class="btn contact-modal-close">Cancel</button>
                 </div>
             </form>
         </div>
-        <label class="modal-backdrop" for="contactModalToggle">Close</label>
-    </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
 
     <audio id="naviSound" preload="auto">
         <source src="{% static 'audio/navi_fly.mp3' %}" type="audio/mpeg">
     </audio>
 
-    <script>
-        // Play sound when modal opens
+    <script nonce="{{ csp_nonce }}">
+        // Contact modal functionality
         document.addEventListener('DOMContentLoaded', function() {
-            const checkbox = document.getElementById('contactModalToggle');
+            const modal = document.getElementById('contactModal');
             const sound = document.getElementById('naviSound');
 
-            if (checkbox) {
-                checkbox.addEventListener('change', function() {
-                    if (this.checked && sound) {
-                        sound.volume = 0.3;
-                        sound.currentTime = 0;
-                        sound.play();
+            if (modal) {
+                // Handle contact modal trigger clicks
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.contact-modal-trigger')) {
+                        e.preventDefault();
+                        modal.showModal();
+
+                        // Close mobile menu if open
+                        const mobileMenu = document.querySelector('[x-data]');
+                        if (mobileMenu && mobileMenu.__x) {
+                            mobileMenu.__x.$data.expanded = false;
+                        }
+                    }
+
+                    // Handle close button
+                    if (e.target.closest('.contact-modal-close')) {
+                        modal.close();
                     }
                 });
-            }
 
-            // Auto-open if hash is #contact
-            if (window.location.hash === '#contact') {
-                setTimeout(function() {
-                    if (checkbox) {
-                        checkbox.checked = true;
+                // Create a MutationObserver to detect when dialog opens (for sound)
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === 'open' && modal.hasAttribute('open')) {
+                            if (sound) {
+                                sound.volume = 0.3;
+                                sound.currentTime = 0;
+                                sound.play().catch(function() {
+                                    // Autoplay might be blocked by browser
+                                });
+                            }
+                        }
+                    });
+                });
+
+                observer.observe(modal, { attributes: true });
+
+                // Auto-open if hash is #contact
+                if (window.location.hash === '#contact') {
+                    setTimeout(function() {
+                        modal.showModal();
                         history.replaceState(null, '', window.location.pathname);
-                    }
-                }, 100);
+                    }, 100);
+                }
             }
         });
     </script>
@@ -279,7 +307,7 @@
     {% block extra_scripts %}{% endblock %}
 
     {# Google Analytics - Deferred to prevent forced reflow on mobile #}
-    <script>
+    <script nonce="{{ csp_nonce }}">
         function loadGoogleAnalytics() {
             var script = document.createElement('script');
             script.src = 'https://www.googletagmanager.com/gtag/js?id=G-0591405Q89';
@@ -303,7 +331,7 @@
     </script>
 
     {# HTMX Event Listeners - moved to end of body to prevent render blocking #}
-    <script>
+    <script nonce="{{ csp_nonce }}">
         document.addEventListener('DOMContentLoaded', function() {
             // Listen for HTMX afterSwap event on pagination and search updates
             document.body.addEventListener('htmx:afterSwap', function(event) {

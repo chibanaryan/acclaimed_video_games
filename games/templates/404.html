@@ -46,7 +46,7 @@
             <h2 class="text-xl font-bold mt-4">
                 <em>"You've met with a terrible fate, haven't you?"</em>
             </h2>
-            <p class="text-base-content/50 text-xs">
+            <p class="text-base-content/70 text-xs">
                 ~Happy Mask Salesman,
                 <a href="{% url 'game-detail' slug='the-legend-of-zelda-majora-s-mask' %}"
                    class="link link-primary link-hover">
@@ -71,7 +71,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
     document.getElementById('song-of-time-btn').addEventListener('click', function(e) {
         e.preventDefault();
         const audio = document.getElementById('song-of-time');

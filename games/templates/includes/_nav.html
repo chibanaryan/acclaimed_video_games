@@ -50,10 +50,10 @@
                 <div x-show="showMenu" class="absolute left-0 right-0 mt-1 bg-base-200 rounded-box shadow-lg z-50 max-h-80 overflow-y-auto">
                     <ul class="menu p-2">
                         <template x-if="!q || q.trim().length < 2">
-                            <li class="disabled"><span class="text-base-content/50">Please enter two or more characters</span></li>
+                            <li class="disabled"><span class="text-base-content/70">Please enter two or more characters</span></li>
                         </template>
                         <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                            <li class="disabled"><span class="text-base-content/50">No results found</span></li>
+                            <li class="disabled"><span class="text-base-content/70">No results found</span></li>
                         </template>
                         <template x-for="result in results" :key="result.id">
                             <li>
@@ -105,10 +105,10 @@
                 </div>
                 <ul class="dropdown-content menu bg-base-200 rounded-box w-80 p-2 shadow-lg z-50 mt-1">
                     <template x-if="!q || q.trim().length < 2">
-                        <li class="disabled"><span class="text-base-content/50">Please enter two or more characters</span></li>
+                        <li class="disabled"><span class="text-base-content/70">Please enter two or more characters</span></li>
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
-                        <li class="disabled"><span class="text-base-content/50">No results found</span></li>
+                        <li class="disabled"><span class="text-base-content/70">No results found</span></li>
                     </template>
                     <template x-for="result in results" :key="result.id">
                         <li>

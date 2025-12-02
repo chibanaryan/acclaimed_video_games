@@ -74,6 +74,7 @@ TAILWIND_APP_NAME = "theme"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "games.csp_middleware.CSPMiddleware",  # Content Security Policy with nonces
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -109,6 +110,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "games.context_processors.csp_nonce",  # CSP nonce for templates
             ],
             # In development, don't use cached template loader
             # This ensures template changes are picked up immediately

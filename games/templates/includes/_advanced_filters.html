@@ -362,6 +362,8 @@
         {# Mobile Sticky Header + Bottom Sheet (shown only on mobile) #}
         <div class="md:hidden" x-data="{
                 filterOpen: false,
+                platforms: JSON.parse(document.getElementById('platforms-data').textContent),
+                genres: JSON.parse(document.getElementById('genres-data').textContent),
 
                 buildDynamicTitle() {
                     const timeWindow = this.buildTimeWindow();
@@ -401,7 +403,11 @@
                 },
 
                 buildPlatformSegment() {
-                    const bigFiveGroups = {
+                    const allGroups = {
+                        // Accordion categories (check these first)
+                        'Retro Consoles': ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS'],
+                        'Microcomputers': ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2'],
+                        // Big Five groups
                         'Nintendo': ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
                         'PlayStation': ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'],
                         'Xbox': ['Xbox', 'X360', 'XB1', 'XBXS'],
@@ -415,7 +421,7 @@
                     const consumedIds = new Set();
 
                     // Add group labels when entire group is selected
-                    for (const [groupName, codes] of Object.entries(bigFiveGroups)) {
+                    for (const [groupName, codes] of Object.entries(allGroups)) {
                         const groupPlatforms = platforms.filter(p => codes.includes(p.code));
                         const groupIds = groupPlatforms.map(p => String(p.id));
                         if (groupIds.length > 0 && groupIds.every(id => selectedIds.has(id))) {

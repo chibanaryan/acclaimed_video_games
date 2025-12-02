@@ -7,7 +7,6 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.flatpages.models import FlatPage
 from django.core.cache import cache
-from django.core.paginator import Paginator
 from django.db.models import Count, Min, Max, Prefetch, Q
 from django.db.models.functions import Lower
 from django.forms import Form
@@ -65,7 +64,43 @@ def _build_time_window(start_year, end_year, min_year, max_year):
 
 def _build_platform_segment(selected_platform_ids, platforms, include_games=True):
     """Return platform segment text like 'Nintendo Switch Games'."""
-    big_five_groups = {
+    all_groups = {
+        # Accordion categories (check these first)
+        "Retro Consoles": [
+            "A26",
+            "A52",
+            "A78",
+            "INTV",
+            "CV",
+            "TG16",
+            "3DO",
+            "NG",
+            "JAG",
+            "LYNX",
+            "NGP",
+            "WS",
+        ],
+        "Microcomputers": [
+            "C64",
+            "AMI",
+            "CD32",
+            "MSX",
+            "CPC",
+            "ZXS",
+            "AST",
+            "BBCM",
+            "PC88",
+            "PC98",
+            "FMT",
+            "FM7",
+            "SX1",
+            "T80",
+            "TCC",
+            "VC20",
+            "A8",
+            "A2",
+        ],
+        # Big Five groups
         "Nintendo": [
             "NES",
             "SNES",
@@ -95,8 +130,8 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
     labels = []
     consumed_ids = set()
 
-    # Add group labels when entire big group is selected
-    for group_name, codes in big_five_groups.items():
+    # Add group labels when entire group is selected
+    for group_name, codes in all_groups.items():
         group_ids = [pid for pid, code in code_lookup.items() if code in codes]
         if group_ids and all(gid in selected_ids for gid in group_ids):
             labels.append(group_name)
@@ -1022,31 +1057,32 @@ class PostListView(RobustPaginationMixin, ListView):
     paginate_by = 5
     paginate_orphans = 0
 
+    def get_template_names(self):
+        # Append mode for Load More - returns just posts
+        if self.request.GET.get("append") == "true":
+            return ["posts/includes/_post_list_append.html"]
+        return super().get_template_names()
+
     def get_queryset(self):
-        qs = models.Post.objects.filter(active=True).order_by("-date")
+        return models.Post.objects.filter(active=True).order_by("-date")
 
-        # Check for offset parameter (from "older posts" link on home page)
-        offset = self.request.GET.get("offset")
-        if offset:
-            try:
-                offset = int(offset)
-                # Apply offset and limit to 100
-                qs = qs[offset : offset + 100]
-                # Return as list to bypass pagination
-                return list(qs)
-            except (TypeError, ValueError):
-                pass
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-        return qs
+        # Load More context
+        page_obj = context.get("page_obj")
+        if page_obj:
+            context["has_more"] = page_obj.has_next()
+            context["next_page"] = (
+                page_obj.next_page_number() if page_obj.has_next() else None
+            )
+            context["total_count"] = page_obj.paginator.count
+            context["loaded_count"] = page_obj.end_index()
+            context["remaining_count"] = max(
+                0, page_obj.paginator.count - page_obj.end_index()
+            )
 
-    def paginate_queryset(self, queryset, page_size):
-        """Handle offset list case, delegate standard pagination to mixin."""
-        # If queryset is a list (from offset parameter), skip pagination
-        if isinstance(queryset, list):
-            paginator = Paginator(queryset, len(queryset) or 1)
-            return (paginator, None, queryset, False)
-
-        return super().paginate_queryset(queryset, page_size)
+        return context
 
 
 class PageDetailView(TemplateView):

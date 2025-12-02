@@ -1,0 +1,17 @@
+{# Append-only partial - returns just post items for Load More #}
+<div id="append-posts-container">
+{% for post in posts %}
+    {% include 'posts/includes/_post_item.html' with post=post %}
+{% endfor %}
+</div>
+
+{# JSON metadata for JavaScript to update the button #}
+<script type="application/json" id="load-more-meta">
+{
+    "hasMore": {{ has_more|yesno:"true,false" }},
+    "nextPage": {{ next_page|default:"null" }},
+    "loadedCount": {{ loaded_count }},
+    "totalCount": {{ total_count }},
+    "remainingCount": {{ remaining_count }}
+}
+</script>
