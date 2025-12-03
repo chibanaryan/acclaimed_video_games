@@ -3,7 +3,7 @@
 ## 2025-12-02 - 2025-12-03
 
 - Performance optimizations: optimized mobile images (square thumbnails save ~214 KiB), converted logo images to WebP format (36-44% smaller), split/minified JavaScript (60% less main thread blocking), inlined MDI CSS (510ms faster), deferred Google Analytics, enabled GZip compression, optimized WhiteNoise caching
-- Mobile LCP improvements: preload critical images, streamlined theme script, responsive image loading with width descriptors (saves 105-195 KB per page)
+- Mobile LCP improvements: preload critical images, streamlined theme script, responsive image loading with width descriptors (saves 105-195 KB per page), server-side render mobile title to eliminate 1,120ms Alpine.js render delay
 - Implemented responsive game row layout with platform/genre icon columns that adapt to screen width (1200px+, 1100px+ breakpoints)
 - Redesigned game detail page with 50/50 split layout, centered game cover with 3D hover effect, improved table alignment
 - Added Jump to Rank feature with bug fixes (max value, overshoot, scroll position) and floating Back to Top button
