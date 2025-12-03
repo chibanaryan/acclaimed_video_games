@@ -97,12 +97,52 @@
     {# HTMX - defer to prevent render blocking #}
     <script defer src="https://unpkg.com/htmx.org@1.9.10" nonce="{{ csp_nonce }}"></script>
 
-    {# Base Utilities - Essential functions that must be available before Alpine.js initializes #}
-    <script defer src="{% static 'games/js/utils-base.min.js' %}" nonce="{{ csp_nonce }}"></script>
+    {# Base Utilities - Load asynchronously to prevent blocking #}
+    <script nonce="{{ csp_nonce }}">
+        // Load utils-base asynchronously to reduce main-thread blocking
+        (function() {
+            var script = document.createElement('script');
+            script.src = "{% static 'games/js/utils-base.min.js' %}";
+            script.async = true;
+            script.nonce = "{{ csp_nonce }}";
+            document.head.appendChild(script);
+        })();
+    </script>
 
-    {# Alpine.js with Collapse plugin - Pinned versions for 1-year cache (vs 7-day with 3.x.x) #}
-    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.3/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
+    {# Alpine.js with Collapse plugin - Defer initialization until browser is idle #}
+    {# This prevents the ~1100ms Alpine.js initialization from blocking the main thread #}
+    <script nonce="{{ csp_nonce }}">
+        (function() {
+            var alpineLoaded = false;
+
+            function loadAlpine() {
+                if (alpineLoaded) return;
+                alpineLoaded = true;
+
+                // Load Alpine Collapse plugin
+                var collapseScript = document.createElement('script');
+                collapseScript.src = "https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.3/dist/cdn.min.js";
+                collapseScript.nonce = "{{ csp_nonce }}";
+                document.head.appendChild(collapseScript);
+
+                // Load Alpine.js after collapse plugin
+                collapseScript.onload = function() {
+                    var alpineScript = document.createElement('script');
+                    alpineScript.src = "https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js";
+                    alpineScript.nonce = "{{ csp_nonce }}";
+                    document.head.appendChild(alpineScript);
+                };
+            }
+
+            // Use requestIdleCallback to load Alpine when browser is idle
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(loadAlpine, { timeout: 1000 });
+            } else {
+                // Fallback: load after a brief delay
+                setTimeout(loadAlpine, 50);
+            }
+        })();
+    </script>
 
     {% block extra_head %}{% endblock %}
 
