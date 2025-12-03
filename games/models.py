@@ -329,6 +329,16 @@ class Game(models.Model):
         return None
 
     @cached_property
+    def homepage_thumb_small(self) -> Optional[str]:
+        """Get smallest homepage thumbnail - t_cover_small (90x128) for mobile."""
+        if self.igdb_artwork_id:
+            return (
+                "https://images.igdb.com/igdb/image/upload/t_cover_small/"
+                f"{self.igdb_artwork_id}"
+            )
+        return None
+
+    @cached_property
     def homepage_thumb(self) -> Optional[str]:
         """Get homepage thumbnail - t_cover_small_2x (180x256) avoids upscaling blur."""
         if self.igdb_artwork_id:

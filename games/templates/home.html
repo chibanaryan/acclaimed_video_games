@@ -40,7 +40,8 @@
                style="margin: 10px;">
                 <span class="absolute -top-2 -left-1 bg-primary text-primary-content text-xs font-bold px-1.5 py-0.5 rounded z-10">{{ game.rank }}</span>
                 <img src="{{ game.homepage_thumb }}"
-                     srcset="{{ game.homepage_thumb }} 1x, {{ game.homepage_thumb_2x }} 2x"
+                     srcset="{{ game.homepage_thumb_small }} 90w, {{ game.homepage_thumb }} 180w, {{ game.homepage_thumb_2x }} 264w"
+                     sizes="120px"
                      alt="{{ game.name }}" width="120" height="171" loading="lazy" decoding="async"
                      class="w-[120px] h-auto rounded shadow-md hover:shadow-lg transition-shadow">
             </a>
