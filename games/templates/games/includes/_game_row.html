@@ -102,10 +102,9 @@
 
     {# Thumbnail #}
     <div class="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-base-300">
-        <img src="{{ game.thumbnail }}"
-             srcset="{{ game.thumbnail }} 1x, {{ game.thumbnail_2x }} 2x"
+        <img src="{{ game.thumbnail_square }}"
              alt="{{ game.name }}"
-             width="90" height="128"
+             width="90" height="90"
              class="w-full h-full object-cover"
              loading="lazy"
              decoding="async">

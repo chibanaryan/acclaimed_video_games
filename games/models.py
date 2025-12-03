@@ -359,6 +359,16 @@ class Game(models.Model):
         return None
 
     @cached_property
+    def thumbnail_square(self) -> Optional[str]:
+        """Get square thumbnail for mobile cards - t_thumb (90x90) (cached)."""
+        if self.igdb_artwork_id:
+            return (
+                "https://images.igdb.com/igdb/image/upload/t_thumb/"
+                f"{self.igdb_artwork_id}"
+            )
+        return None
+
+    @cached_property
     def decade(self) -> Optional[int]:
         """Get the decade the game was released (cached)."""
         if self.year_of_release:
