@@ -404,10 +404,9 @@ class GameDetailViewTest(TestCase):
 
     def test_game_of_the_day_flag_when_is_gotd(self):
         """Test that is_game_of_the_day flag is True when game is Game of the Day."""
-        from games.models import Developer, DeveloperAlias, GameQuote
-        from django.core.cache import cache
+        from datetime import datetime
 
-        cache.clear()
+        from games.models import Developer, DeveloperAlias, GameQuote
 
         # Create complete game that can be Game of the Day
         dev = Developer.objects.create(name="Dev", slug="dev")
@@ -423,6 +422,11 @@ class GameDetailViewTest(TestCase):
         )
         complete_game.developers.add(dev_alias)
         GameQuote.objects.create(game=complete_game, text="Great!", is_featured=True)
+
+        # Set as Game of the Day
+        complete_game.is_game_of_the_day = True
+        complete_game.game_of_the_day_date = datetime.utcnow().date()
+        complete_game.save()
 
         # Access the game detail page
         response = self.client.get(

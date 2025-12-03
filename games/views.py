@@ -419,10 +419,7 @@ class GameDetailView(DetailView):
         context["grouped_lists"] = list(game.lists_grouped_by_type.items())
 
         # Check if this game is the Game of the Day
-        from games.services import game_of_the_day
-
-        gotd = game_of_the_day.get_game_of_the_day()
-        context["is_game_of_the_day"] = gotd and gotd.id == game.id
+        context["is_game_of_the_day"] = game.is_game_of_the_day
 
         return context
 

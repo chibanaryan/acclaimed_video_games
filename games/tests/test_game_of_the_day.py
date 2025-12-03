@@ -4,7 +4,6 @@ Tests for Game of the Day service.
 
 from datetime import datetime
 
-from django.core.cache import cache
 from django.test import TestCase
 
 from games.models import Developer, DeveloperAlias, Game, GameQuote
@@ -12,11 +11,12 @@ from games.services import game_of_the_day
 
 
 class GameOfTheDayServiceTest(TestCase):
-    """Test Game of the Day selection and caching."""
+    """Test Game of the Day selection and database tracking."""
 
     def setUp(self):
         """Create test games with varying completeness."""
-        cache.clear()
+        # Clear any Game of the Day flags
+        Game.objects.filter(is_game_of_the_day=True).update(is_game_of_the_day=False)
 
         # Create developer (required for complete games)
         dev = Developer.objects.create(name="Test Developer", slug="test-dev")
@@ -94,7 +94,10 @@ class GameOfTheDayServiceTest(TestCase):
         # Run selection multiple times
         for _ in range(20):
             game = game_of_the_day.get_game_of_the_day()
-            cache.clear()
+            # Clear flag to force new selection
+            Game.objects.filter(is_game_of_the_day=True).update(
+                is_game_of_the_day=False
+            )
 
             # Should only select one of the complete games (not incomplete ones)
             self.assertIn(game.id, [self.complete_game.id, self.no_quote_game.id])
@@ -114,25 +117,28 @@ class GameOfTheDayServiceTest(TestCase):
         self.assertTrue(game.developers.exists())
         # Quotes are optional now
 
-    def test_game_selection_cached_daily(self):
-        """Test that game selection is cached for the day."""
+    def test_game_selection_persists_for_day(self):
+        """Test that game selection persists for the day."""
         game1 = game_of_the_day.get_game_of_the_day()
         game2 = game_of_the_day.get_game_of_the_day()
 
-        # Should return same game (cached)
+        # Should return same game (from database)
         self.assertEqual(game1.id, game2.id)
 
-    def test_cache_key_includes_date(self):
-        """Test that cache key includes current date."""
+    def test_database_flag_includes_date(self):
+        """Test that database tracks current date."""
         today = datetime.utcnow().date()
-        expected_key = f"game_of_the_day_{today.isoformat()}"
 
-        # Get game (populates cache)
-        game_of_the_day.get_game_of_the_day()
+        # Get game (sets database flag)
+        game = game_of_the_day.get_game_of_the_day()
 
-        # Check cache key exists
-        cached_id = cache.get(expected_key)
-        self.assertIsNotNone(cached_id)
+        # Check database flag is set correctly
+        self.assertTrue(game.is_game_of_the_day)
+        self.assertEqual(game.game_of_the_day_date, today)
+
+        # Verify only one game has the flag
+        gotd_count = Game.objects.filter(is_game_of_the_day=True).count()
+        self.assertEqual(gotd_count, 1)
 
     def test_returns_none_when_no_complete_games(self):
         """Test that None is returned when no complete games exist."""
@@ -161,7 +167,6 @@ class GameOfTheDayServiceTest(TestCase):
         # Run many selections (200 trials to ensure all games get selected)
         selections = []
         for _ in range(200):
-            cache.clear()
             game = game_of_the_day._select_weighted_random_game()
             selections.append(game.rank)
 
@@ -175,16 +180,19 @@ class GameOfTheDayServiceTest(TestCase):
         rank100_count = selections.count(100)
         self.assertGreater(rank1_count, rank100_count)
 
-    def test_cache_invalidation_on_deletion(self):
-        """Test that cache handles deleted games gracefully."""
-        # Get a game (caches it)
+    def test_database_flag_cleared_on_deletion(self):
+        """Test that database handles deleted games gracefully."""
+        # Get a game (sets database flag)
         game = game_of_the_day.get_game_of_the_day()
         game_id = game.id
 
         # Delete the game
         game.delete()
 
-        # Should return a different game (we have 2 complete games)
+        # Clear flags to force new selection
+        Game.objects.filter(is_game_of_the_day=True).update(is_game_of_the_day=False)
+
+        # Should return a different game (we have 1 complete game left)
         new_game = game_of_the_day.get_game_of_the_day()
         self.assertIsNotNone(new_game)
         self.assertNotEqual(new_game.id, game_id)
@@ -232,7 +240,10 @@ class GameOfTheDayServiceTest(TestCase):
         # Should only select complete games (not the empty desc one)
         for _ in range(10):
             game = game_of_the_day.get_game_of_the_day()
-            cache.clear()
+            # Clear flag to force new selection
+            Game.objects.filter(is_game_of_the_day=True).update(
+                is_game_of_the_day=False
+            )
             # Should be one of the two complete games, not the empty desc game
             self.assertIn(game.id, [self.complete_game.id, self.no_quote_game.id])
             self.assertNotEqual(game.id, empty_desc_game.id)

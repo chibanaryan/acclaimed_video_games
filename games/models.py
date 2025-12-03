@@ -170,6 +170,18 @@ class Game(models.Model):
     wikipedia_primary_genre = models.CharField(max_length=200, null=True, blank=True)
     wikipedia_all_genres = models.TextField(null=True, blank=True)
     wikidata_id = models.CharField(max_length=20, null=True, blank=True)  # deprecated
+    # Game of the Day tracking
+    is_game_of_the_day = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Whether this game is currently the Game of the Day",
+    )
+    game_of_the_day_date = models.DateField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="The date this game was last selected as Game of the Day",
+    )
 
     objects = GameQuerySet.as_manager()
 

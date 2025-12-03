@@ -1,13 +1,13 @@
 """
-Game of the Day service - weighted random selection with daily caching.
+Game of the Day service - weighted random selection with daily database tracking.
 """
 
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
-from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Count
 
 from games import models
@@ -19,38 +19,39 @@ def get_game_of_the_day() -> Optional[models.Game]:
     """
     Get the Game of the Day with weighted random selection.
 
-    Selection is cached daily (resets at midnight UTC).
+    Selection is tracked in the database and updates daily (midnight UTC).
     Only selects "complete" games with cover, description, year, and
     developer(s).
 
     Returns:
         Game instance or None if no eligible games exist
     """
-    # Generate cache key based on current date
     today = datetime.utcnow().date()
-    cache_key = f"game_of_the_day_{today.isoformat()}"
 
-    # Try to get from cache
-    cached_game_id = cache.get(cache_key)
-    if cached_game_id:
-        try:
-            return models.Game.objects.with_relations().get(id=cached_game_id)
-        except models.Game.DoesNotExist:
-            # Game was deleted, fall through to new selection
-            cache.delete(cache_key)
+    # Check if there's a current Game of the Day for today
+    current_gotd = models.Game.objects.filter(
+        is_game_of_the_day=True, game_of_the_day_date=today
+    ).first()
 
-    # Select new game with weighted randomization
-    game = _select_weighted_random_game()
+    if current_gotd:
+        return current_gotd
 
-    if game:
-        # Calculate seconds until midnight UTC for cache timeout
-        now = datetime.utcnow()
-        midnight = datetime.combine(today + timedelta(days=1), datetime.min.time())
-        seconds_until_midnight = int((midnight - now).total_seconds())
+    # No current game or it's a new day - select a new one
+    with transaction.atomic():
+        # Clear any old Game of the Day flags
+        models.Game.objects.filter(is_game_of_the_day=True).update(
+            is_game_of_the_day=False
+        )
 
-        # Cache the selection until midnight
-        cache.set(cache_key, game.id, timeout=seconds_until_midnight)
-        logger.info(f"Selected Game of the Day: {game.name} (rank {game.rank})")
+        # Select new game with weighted randomization
+        game = _select_weighted_random_game()
+
+        if game:
+            # Mark as Game of the Day
+            game.is_game_of_the_day = True
+            game.game_of_the_day_date = today
+            game.save(update_fields=["is_game_of_the_day", "game_of_the_day_date"])
+            logger.info(f"Selected Game of the Day: {game.name} (rank {game.rank})")
 
     return game
 
