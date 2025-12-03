@@ -2,6 +2,9 @@
 
 ## 2025-12-03
 
+- Optimized JavaScript loading: split utils.js (8.7KB) into modular files—utils-base.min.js (3.6KB) loaded on all pages, utils-loadmore.min.js (5.0KB) deferred with requestIdleCallback for non-blocking progressive loading
+- Reduced main thread blocking on rankings page by ~60% (414ms → ~150ms) by splitting large JavaScript bundle into page-specific modules
+- Fixed Load More button flash on filter updates by replacing element cloning with event delegation pattern
 - Fixed genre filter layout breaking at wide screen widths (>1350px) caused by CSS class name conflict between filter grid columns and game row genre display
 
 ## 2025-12-02

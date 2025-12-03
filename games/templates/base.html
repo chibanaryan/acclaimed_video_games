@@ -94,8 +94,8 @@
     {# HTMX - defer to prevent render blocking #}
     <script defer src="https://unpkg.com/htmx.org@1.9.10" nonce="{{ csp_nonce }}"></script>
 
-    {# Shared Utilities - Must load before Alpine.js, defer maintains order #}
-    <script defer src="{% static 'games/js/utils.min.js' %}" nonce="{{ csp_nonce }}"></script>
+    {# Base Utilities - Essential functions that must be available before Alpine.js initializes #}
+    <script defer src="{% static 'games/js/utils-base.min.js' %}" nonce="{{ csp_nonce }}"></script>
 
     {# Alpine.js with Collapse plugin - Pinned versions for 1-year cache (vs 7-day with 3.x.x) #}
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.3/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
