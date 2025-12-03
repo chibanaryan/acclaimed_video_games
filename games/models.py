@@ -290,7 +290,7 @@ class Game(models.Model):
 
     @cached_property
     def thumbnail(self) -> Optional[str]:
-        """Get the thumbnail URL for the game's cover art (cached)."""
+        """Get the thumbnail URL for the game's cover art (90x128) (cached)."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_small/"
@@ -300,7 +300,7 @@ class Game(models.Model):
 
     @cached_property
     def thumbnail_2x(self) -> Optional[str]:
-        """Get the 2x thumbnail URL for retina displays (cached)."""
+        """Get the 2x thumbnail URL for retina displays (180x256) (cached)."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_small_2x/"
@@ -310,7 +310,7 @@ class Game(models.Model):
 
     @cached_property
     def image(self) -> Optional[str]:
-        """Get the full-size image URL for the game's cover art (cached)."""
+        """Get the full-size image URL for the game's cover art (264x352) (cached)."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_big/"
@@ -320,10 +320,30 @@ class Game(models.Model):
 
     @cached_property
     def image_2x(self) -> Optional[str]:
-        """Get the 2x retina URL for the game's cover art (cached)."""
+        """Get the 2x retina URL for the game's cover art (528x704) (cached)."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/"
+                f"{self.igdb_artwork_id}"
+            )
+        return None
+
+    @cached_property
+    def homepage_thumb(self) -> Optional[str]:
+        """Get homepage thumbnail - uses t_cover_big (264x352) (cached)."""
+        if self.igdb_artwork_id:
+            return (
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/"
+                f"{self.igdb_artwork_id}"
+            )
+        return None
+
+    @cached_property
+    def homepage_thumb_2x(self) -> Optional[str]:
+        """Get homepage 2x thumbnail - t_cover_big for bandwidth savings (cached)."""
+        if self.igdb_artwork_id:
+            return (
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/"
                 f"{self.igdb_artwork_id}"
             )
         return None

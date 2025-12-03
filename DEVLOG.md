@@ -28,6 +28,7 @@
 - Optimized WhiteNoise static file serving: moved middleware to position #2, enabled KEEP_ONLY_HASHED_FILES for aggressive caching (1 year cache with gzip+brotli compression)
 - Fixed table layouts on Developers and Source Lists pages: set fixed column widths (700px for Developers, 900px for Source Lists) to prevent column stretching
 - Added responsive mobile card view to Developers page (matches Source Lists design with badge showing game count)
+- Optimized homepage image delivery: reduced retina display downloads from 528x704 to 264x352 (~50% size reduction, ~880KB saved on initial load)
 - Constrained search bar width on Developers page using max-w-lg for better visual hierarchy
 
 ## 2025-12-01
