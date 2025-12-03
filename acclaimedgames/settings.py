@@ -178,9 +178,11 @@ if cache_url:
         "default": env.cache(),
     }
 else:
+    # Use file-based cache as default to persist across development server restarts
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+            "LOCATION": BASE_DIR / "django_cache",
         }
     }
 
