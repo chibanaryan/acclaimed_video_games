@@ -32,6 +32,8 @@
 - Constrained search bar width on Developers page using max-w-lg for better visual hierarchy
 - Replaced MDI font magnifying glass icons with inline SVG across all search inputs (sidebar, navigation, developer search)
 - Fixed search icon visibility with proper z-index layering and color matching (text-base-content/60 to match search bar borders)
+- Removed spinner controls from Jump to Rank number input field for cleaner UI
+- Changed Jump to Rank scroll behavior to position highlighted game at top of screen instead of center
 
 ## 2025-12-01
 

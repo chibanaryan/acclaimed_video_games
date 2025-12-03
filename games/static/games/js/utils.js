@@ -594,7 +594,7 @@ function scrollToAndHighlightRank(rank) {
     }
 
     // Scroll to the row with smooth scrolling
-    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    targetRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     // Add temporary highlight
     targetRow.classList.add('is-highlighted');
