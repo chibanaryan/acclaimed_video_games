@@ -70,6 +70,10 @@
     {# Favicon #}
     <link rel="icon" type="image/x-icon" href="{% static 'games/avg_logo_small.png' %}">
 
+    {# Preload critical CSS for faster rendering - eliminates render-blocking delay #}
+    <link rel="preload" href="{% static 'css/dist/styles.css' %}" as="style">
+    <link rel="preload" href="{% static 'games/css/mdi-subset.css' %}" as="style">
+
     {# Tailwind CSS + DaisyUI #}
     {% tailwind_css %}
 

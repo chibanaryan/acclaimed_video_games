@@ -30,6 +30,8 @@
 - Added responsive mobile card view to Developers page (matches Source Lists design with badge showing game count)
 - Optimized homepage image delivery: reduced retina display downloads from 528x704 to 264x352 (~50% size reduction, ~880KB saved on initial load)
 - Constrained search bar width on Developers page using max-w-lg for better visual hierarchy
+- Replaced MDI font magnifying glass icons with inline SVG across all search inputs (sidebar, navigation, developer search)
+- Fixed search icon visibility with proper z-index layering and color matching (text-base-content/60 to match search bar borders)
 
 ## 2025-12-01
 

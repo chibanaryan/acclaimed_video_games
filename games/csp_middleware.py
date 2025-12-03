@@ -25,6 +25,15 @@ class CSPMiddleware:
 
         response = self.get_response(request)
 
+        # Add CORS headers for font files
+        if request.path.startswith("/static/") and any(
+            request.path.endswith(ext)
+            for ext in [".woff", ".woff2", ".ttf", ".eot", ".otf"]
+        ):
+            response["Access-Control-Allow-Origin"] = "*"
+            response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+            response["Access-Control-Allow-Headers"] = "Content-Type"
+
         # Build CSP policy with nonce
         # Note: 'unsafe-eval' and 'unsafe-inline' are required for Alpine.js
         # - 'unsafe-eval' for x-data expressions

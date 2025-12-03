@@ -72,8 +72,6 @@ urlpatterns = [
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
 ]
 
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
 if settings.DEBUG:
     import debug_toolbar
     from django.views.defaults import page_not_found
@@ -85,4 +83,6 @@ if settings.DEBUG:
             "test-404/", lambda request: page_not_found(request, Exception("Test 404"))
         ),
         *urlpatterns,
-    ]
+    ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

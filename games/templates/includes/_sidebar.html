@@ -65,7 +65,12 @@
              @click.away="showMenu = false">
             <div class="relative">
                 <label for="sidebar-search" class="sr-only">Search games</label>
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-magnify text-lg text-base-content/60" aria-hidden="true"></span>
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </g>
+                </svg>
                 <input type="text"
                        id="sidebar-search"
                        name="q"

@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Test</title>
+    <link rel="stylesheet" href="{% static 'games/css/mdi-subset.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .icon-test {
+            margin: 20px 0;
+            font-size: 24px;
+            padding: 15px;
+            background: #eee;
+            border-radius: 4px;
+        }
+        .icon-test .mdi {
+            color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Material Design Icons Test</h1>
+
+        <div class="icon-test">
+            <span class="mdi mdi-magnify"></span> <strong>Magnify icon</strong> - should see a magnifying glass
+        </div>
+
+        <div class="icon-test">
+            <span class="mdi mdi-close"></span> <strong>Close icon</strong> - should see an X
+        </div>
+
+        <div class="icon-test">
+            <span class="mdi mdi-home"></span> <strong>Home icon</strong> - should see a house
+        </div>
+
+        <div class="icon-test">
+            <span class="mdi mdi-heart"></span> <strong>Heart icon</strong> - should see a heart
+        </div>
+
+        <h2>Font Loading Check:</h2>
+        <div id="font-status" style="margin: 20px 0; padding: 15px; background: #fff3cd; border-radius: 4px;">
+            Checking font...
+        </div>
+    </div>
+
+    <script>
+        // Check if font is loaded
+        document.fonts.ready.then(function() {
+            let fontLoaded = false;
+            for (let font of document.fonts.values()) {
+                if (font.family === 'Material Design Icons') {
+                    fontLoaded = true;
+                    document.getElementById('font-status').innerHTML =
+                        '✅ Font "Material Design Icons" is loaded and ready!<br>' +
+                        'Font status: ' + font.status + '<br>' +
+                        'If you still don\'t see icons above, there may be a CSS issue.';
+                    document.getElementById('font-status').style.background = '#d4edda';
+                    break;
+                }
+            }
+            if (!fontLoaded) {
+                document.getElementById('font-status').innerHTML =
+                    '❌ Font "Material Design Icons" is NOT loaded!<br>' +
+                    'Check browser console for errors.';
+                document.getElementById('font-status').style.background = '#f8d7da';
+            }
+        });
+
+        // Also log to console
+        console.log('Available fonts:', Array.from(document.fonts.values()).map(f => f.family));
+    </script>
+</body>
+</html>

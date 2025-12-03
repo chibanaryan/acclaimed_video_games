@@ -75,7 +75,7 @@ TAILWIND_APP_NAME = "theme"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Must be after SecurityMiddleware
-    "games.csp_middleware.CSPMiddleware",  # Content Security Policy with nonces
+    "games.csp_middleware.CSPMiddleware",  # CSP with nonces + CORS for fonts
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -202,6 +202,7 @@ STORAGES = {
 }
 
 # WhiteNoise caching optimizations
+# Note: CORS headers for font files are handled in CSP middleware
 # Cache static files for 1 year (safe because filenames include content hash)
 WHITENOISE_MAX_AGE = 31536000  # 1 year in seconds
 
