@@ -90,3 +90,14 @@ WIKI_USER_AGENT = (
 
 # Wikidata property IDs
 WIKIDATA_GENRE_PROPERTY = "P136"
+
+# =============================================================================
+# Wikiquote Configuration
+# =============================================================================
+
+# API endpoints
+WIKIQUOTE_API_URL = "https://en.wikiquote.org/w/api.php"
+
+# Quote validation
+MIN_QUOTE_LENGTH = 10
+MAX_QUOTE_LENGTH = 200

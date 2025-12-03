@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.forms import ModelForm
 from django.http import HttpRequest
+from django.utils.text import Truncator
 
 from . import models
 
@@ -28,6 +29,14 @@ class DeveloperAliasAdmin(admin.ModelAdmin):
     search_fields = ["name"]
 
 
+class GameQuoteInline(admin.TabularInline):
+    """Inline editor for game quotes."""
+
+    model = models.GameQuote
+    extra = 1
+    fields = ["text", "attribution", "is_featured"]
+
+
 @admin.register(models.Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = [
@@ -45,6 +54,7 @@ class GameAdmin(admin.ModelAdmin):
     list_filter = ["year_of_release"]
     search_fields = ["name"]
     filter_horizontal = ["developers", "platforms", "genres"]
+    inlines = [GameQuoteInline]
 
     def get_queryset(self, request: HttpRequest):
         """Prefetch genres to avoid N+1 queries in list display."""
@@ -61,6 +71,22 @@ class GameAdmin(admin.ModelAdmin):
         """Display comma-separated list of genres for the game."""
         # Use prefetched genres instead of values_list to avoid extra query
         return ", ".join(genre.name for genre in obj.genres.all())
+
+
+@admin.register(models.GameQuote)
+class GameQuoteAdmin(admin.ModelAdmin):
+    """Admin interface for game quotes."""
+
+    list_display = ["game", "quote_preview", "attribution", "is_featured", "created"]
+    list_filter = ["is_featured", "created"]
+    search_fields = ["game__name", "text", "attribution"]
+    raw_id_fields = ["game"]
+
+    def quote_preview(self, obj: models.GameQuote) -> str:
+        """Display truncated quote text."""
+        return Truncator(obj.text).words(15)
+
+    quote_preview.short_description = "Quote"
 
 
 @admin.register(models.List)

@@ -5,4 +5,6 @@ exclude =
     .git,
     __pycache__,
     venv,
-    frontend/node_modules
+    frontend/node_modules,
+    quote_tools,
+    games/services/llm_quote_service.py

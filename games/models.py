@@ -419,6 +419,40 @@ class Game(models.Model):
         return result
 
 
+class GameQuote(models.Model):
+    """
+    A memorable quote from or about a game.
+    Can be from the game itself or from reviews/critics.
+    """
+
+    game = models.ForeignKey("Game", on_delete=models.CASCADE, related_name="quotes")
+    text = models.TextField(help_text="The quote text")
+    attribution = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text="Source of quote (e.g., 'IGN Review', 'Game dialogue')",
+    )
+    is_featured = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Featured quotes are prioritized for Game of the Day",
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-is_featured", "-created"]
+        indexes = [
+            models.Index(fields=["game", "-is_featured"]),
+        ]
+
+    def __str__(self) -> str:
+        from django.utils.text import Truncator
+
+        return f"{self.game.name}: {Truncator(self.text).words(10)}"
+
+
 class Publication(models.Model):
     """
     A magazine, website etc that publishes lists

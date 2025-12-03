@@ -18,4 +18,4 @@ unidecode
 wheel
 whitenoise
 Brotli
-django-cors-headers
+django-cors-headersanthropic>=0.39.0

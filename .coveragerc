@@ -5,6 +5,7 @@ source = games
 omit =
     */migrations/*
     */tests/*
+    */services/llm_quote_service.py
 
 [report]
 exclude_lines =

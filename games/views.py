@@ -191,8 +191,17 @@ class HomePageView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Fetch latest posts (limit 5)
-        context["posts"] = models.Post.objects.filter(active=True).order_by("-date")[:5]
+
+        # Fetch Game of the Day
+        from games.services import game_of_the_day
+
+        gotd = game_of_the_day.get_game_of_the_day()
+        if gotd:
+            context["game_of_the_day"] = gotd
+            context["game_of_the_day_quote"] = game_of_the_day.get_featured_quote(gotd)
+
+        # Fetch latest posts (limit 3 for home page)
+        context["posts"] = models.Post.objects.filter(active=True).order_by("-date")[:3]
 
         # Fetch top 30 games for staggered animation display
         context["games"] = models.Game.objects.with_relations().order_by("rank")[:30]
@@ -393,6 +402,7 @@ class GameDetailView(DetailView):
             "developers__developer",
             "platforms",
             "genres",
+            "quotes",
             Prefetch(
                 "lists",
                 queryset=models.ListMembership.objects.select_related(
@@ -407,6 +417,13 @@ class GameDetailView(DetailView):
 
         # Get lists grouped by type using model property
         context["grouped_lists"] = list(game.lists_grouped_by_type.items())
+
+        # Check if this game is the Game of the Day
+        from games.services import game_of_the_day
+
+        gotd = game_of_the_day.get_game_of_the_day()
+        context["is_game_of_the_day"] = gotd and gotd.id == game.id
+
         return context
 
 

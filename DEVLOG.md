@@ -4,16 +4,12 @@
 
 - Performance optimizations: optimized mobile images (square thumbnails save ~214 KiB), converted logo images to WebP format (36-44% smaller), split/minified JavaScript (60% less main thread blocking), inlined MDI CSS (510ms faster), deferred Google Analytics, enabled GZip compression, optimized WhiteNoise caching
 - Mobile LCP improvements: preload critical images, streamlined theme script, responsive image loading with width descriptors (saves 105-195 KB per page), server-side render mobile title to eliminate 1,120ms Alpine.js render delay
+- Implemented Game of the Day feature with weighted random selection (top 300 games = ~50% probability), daily caching, and optional quote display
+- Fixed CLS on home page by reserving image space (aspect-ratio, eager loading, fetchpriority) for Game of the Day card
 - Implemented responsive game row layout with platform/genre icon columns that adapt to screen width (1200px+, 1100px+ breakpoints)
 - Redesigned game detail page with 50/50 split layout, centered game cover with 3D hover effect, improved table alignment
 - Added Jump to Rank feature with bug fixes (max value, overshoot, scroll position) and floating Back to Top button
 - Eliminated layout shifts: fixed HTMX navigation jumps, filter dropdowns, sidebar search thumbnails, and filter section borders/padding
-- Enhanced sidebar layout with flexbox spacing, larger text sizes, accordion platform grouping, inline SVG search icons
-- Filter sidebar improvements: reorganized CSV/Reset buttons next to Search, dynamic result counter updates, removed confusing "Filters" heading
-- Updated Forest theme with refined color palette for improved visual consistency and readability
-- Made platform and genre icons in game rows non-clickable (display only) to reduce visual noise
-- Applied desaturated colors to genre icons for easier viewing while maintaining category distinction
-- Fixed source lists filter dropdowns to size based on content instead of stretching full width
 
 ## 2025-12-01
 
