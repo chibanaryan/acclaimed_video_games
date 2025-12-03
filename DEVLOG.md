@@ -2,6 +2,7 @@
 
 ## 2025-12-02
 
+- Added preload tags for homepage logo images (both light/dark themes) to optimize LCP with fetchpriority=high
 - Fixed forced reflow (58ms) by replacing offsetParent checks with media queries in game highlight scroll
 - Pinned Alpine.js to v3.14.3 for 1-year CDN cache (vs 7-day with version ranges)
 - Added GZipMiddleware for HTML compression (48 KiB savings per page)
