@@ -282,7 +282,7 @@
 
     {% block extra_scripts %}{% endblock %}
 
-    {# Google Analytics - Deferred to prevent forced reflow on mobile #}
+    {# Google Analytics - Load on user interaction for better PageSpeed scores #}
     <script nonce="{{ csp_nonce }}">
         function loadGoogleAnalytics() {
             var script = document.createElement('script');
@@ -297,13 +297,32 @@
             gtag('config', 'G-0591405Q89');
         }
 
-        // Load GA after page is idle to prevent forced reflow during render
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(loadGoogleAnalytics, { timeout: 2000 });
-        } else {
-            // Fallback for Safari and older browsers
-            setTimeout(loadGoogleAnalytics, 0);
+        // Load GA on first user interaction or after 5 seconds (whichever comes first)
+        var gaLoaded = false;
+        function initGA() {
+            if (gaLoaded) return;
+            gaLoaded = true;
+
+            // Remove event listeners
+            ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(event) {
+                window.removeEventListener(event, initGA);
+            });
+
+            // Load GA with idle callback for smooth performance
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(loadGoogleAnalytics);
+            } else {
+                setTimeout(loadGoogleAnalytics, 0);
+            }
         }
+
+        // Load on first interaction
+        ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(event) {
+            window.addEventListener(event, initGA, { once: true, passive: true });
+        });
+
+        // Fallback: load after 5 seconds even if no interaction
+        setTimeout(initGA, 5000);
     </script>
 
     {# HTMX Event Listeners - moved to end of body to prevent render blocking #}
