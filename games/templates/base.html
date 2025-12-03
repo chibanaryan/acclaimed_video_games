@@ -47,6 +47,13 @@
     {# CRITICAL: Early preload for LCP images - must be before other resources #}
     {% block early_preload %}{% endblock %}
 
+    {# Preload sidebar logos for LCP optimization on desktop only (hidden on mobile) #}
+    {# Positioned here to start loading ASAP before CSS/fonts - eliminates 1000ms+ resource load delay #}
+    {# Preload both theme variants since we can't predict user's theme from localStorage #}
+    {# Browser will only download the one that matches the active theme (show-dark vs show-light) #}
+    <link rel="preload" href="{% static 'games/avg_logo_dark_160w.webp' %}" as="image" type="image/webp" fetchpriority="high" media="(min-width: 1024px)">
+    <link rel="preload" href="{% static 'games/avg_logo_160w.webp' %}" as="image" type="image/webp" fetchpriority="high" media="(min-width: 1024px)">
+
     {# Open Graph Tags for social sharing #}
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:title" content="{% block og_title %}Acclaimed Games{% endblock %}">
@@ -86,13 +93,6 @@
 .mdi-sony-playstation::before{content:"\F0414"}.mdi-microsoft-xbox::before{content:"\F05B9"}.mdi-microsoft-windows::before{content:"\F05B3"}.mdi-nintendo-switch::before{content:"\F07E1"}.mdi-nintendo-game-boy::before{content:"\F1393"}.mdi-nintendo-wii::before{content:"\F05AB"}.mdi-nintendo-wiiu::before{content:"\F072C"}.mdi-apple::before{content:"\F0035"}.mdi-apple-ios::before{content:"\F0037"}.mdi-linux::before{content:"\F033D"}.mdi-android::before{content:"\F0032"}.mdi-gamepad::before{content:"\F0296"}.mdi-gamepad-variant::before{content:"\F0297"}.mdi-gamepad-square::before{content:"\F0EB5"}.mdi-controller::before{content:"\F0B66"}.mdi-controller-classic::before{content:"\F0B67"}.mdi-pinwheel::before{content:"\F0AD5"}.mdi-fan::before{content:"\F0210"}.mdi-alpha-s-circle::before{content:"\F0C34"}.mdi-run-fast::before{content:"\F046E"}.mdi-floppy::before{content:"\F0218"}.mdi-desktop-classic::before{content:"\F07C0"}.mdi-cellphone::before{content:"\F011C"}.mdi-pac-man::before{content:"\F0BC5"}.mdi-space-invaders::before{content:"\F0BC9"}.mdi-web::before{content:"\F059F"}.mdi-virtual-reality::before{content:"\F0895"}
 .mdi-plus-circle-outline::before{content:"\F0763"}.mdi-information-outline::before{content:"\F02FD"}.mdi-menu::before{content:"\F035C"}.mdi-home::before{content:"\F0191"}.mdi-palette::before{content:"\F03D8"}.mdi-trophy::before{content:"\F0548"}.mdi-medal::before{content:"\F0987"}.mdi-podium::before{content:"\F0D25"}.mdi-account-group::before{content:"\F0849"}.mdi-newspaper::before{content:"\F0870"}.mdi-information::before{content:"\F02FC"}.mdi-heart::before{content:"\F02D1"}
     </style>
-
-    {# Preload sidebar logos for LCP optimization on desktop only (hidden on mobile) #}
-    {# Preload WebP versions first for browsers that support it, PNG as fallback #}
-    <link rel="preload" href="{% static 'games/avg_logo_dark_160w.webp' %}" as="image" type="image/webp" fetchpriority="high" media="(min-width: 1024px)">
-    <link rel="preload" href="{% static 'games/avg_logo_dark_160w.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
-    <link rel="preload" href="{% static 'games/avg_logo_160w.webp' %}" as="image" type="image/webp" fetchpriority="high" media="(min-width: 1024px)">
-    <link rel="preload" href="{% static 'games/avg_logo_160w.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
 
     {# HTMX - defer to prevent render blocking #}
     <script defer src="https://unpkg.com/htmx.org@1.9.10" nonce="{{ csp_nonce }}"></script>
