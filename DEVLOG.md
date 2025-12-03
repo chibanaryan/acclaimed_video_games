@@ -10,8 +10,9 @@
 - Eliminated layout shifts: fixed HTMX navigation jumps, filter dropdowns, sidebar search thumbnails, and filter section borders/padding
 - Enhanced sidebar layout with flexbox spacing, larger text sizes, accordion platform grouping, inline SVG search icons
 - Filter sidebar improvements: reorganized CSV/Reset buttons next to Search, dynamic result counter updates, removed confusing "Filters" heading
-- Added responsive mobile card view to Developers page with game count badges and table layout fixes across all list pages
-- Fixed genre filter layout conflicts at wide screens, Load More button flash, horizontal scrolling on mobile, and navbar script duplication
+- Updated Forest theme with refined color palette for improved visual consistency and readability
+- Made platform and genre icons in game rows non-clickable (display only) to reduce visual noise
+- Applied desaturated colors to genre icons for easier viewing while maintaining category distinction
 
 ## 2025-12-01
 

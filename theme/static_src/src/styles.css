@@ -41,26 +41,26 @@
   name: "forest";
   default: false;
   prefersdark: true;
-  color-scheme: "light";
-  --color-base-100: oklch(20.8% 0.008 17.911);
-  --color-base-200: oklch(18.5% 0.008 17.911);
-  --color-base-300: oklch(16.2% 0.008 17.911);
-  --color-base-content: oklch(100% 0.001 17.911);
-  --color-primary: oklch(79.0% 0.197 152.600);
+  color-scheme: "dark";
+  --color-base-100: oklch(20.84% 0.008 17.911);
+  --color-base-200: oklch(18.522% 0.007 17.911);
+  --color-base-300: oklch(16.203% 0.007 17.911);
+  --color-base-content: oklch(83.768% 0.001 17.911);
+  --color-primary: oklch(68.628% 0.185 148.958);
   --color-primary-content: oklch(0% 0 0);
-  --color-secondary: oklch(75.4% 0.188 159.300);
+  --color-secondary: oklch(69.776% 0.135 168.327);
   --color-secondary-content: oklch(13.955% 0.027 168.327);
-  --color-accent: oklch(77.2% 0.153 185.713);
+  --color-accent: oklch(70.628% 0.119 185.713);
   --color-accent-content: oklch(14.125% 0.023 185.713);
-  --color-neutral: oklch(24.3% 0.049 153);
-  --color-neutral-content: oklch(90.4% 0.007 171.364);
-  --color-info: oklch(72.5% 0.159 231.6);
+  --color-neutral: oklch(30.698% 0.039 171.364);
+  --color-neutral-content: oklch(86.139% 0.007 171.364);
+  --color-info: oklch(72.06% 0.191 231.6);
   --color-info-content: oklch(0% 0 0);
-  --color-success: oklch(74.9% 0.157 160);
+  --color-success: oklch(64.8% 0.15 160);
   --color-success-content: oklch(0% 0 0);
-  --color-warning: oklch(82.3% 0.157 83.87);
+  --color-warning: oklch(84.71% 0.199 83.87);
   --color-warning-content: oklch(0% 0 0);
-  --color-error: oklch(61.5% 0.221 22.18);
+  --color-error: oklch(71.76% 0.221 22.18);
   --color-error-content: oklch(0% 0 0);
   --radius-selector: 2rem;
   --radius-field: 1rem;
@@ -876,24 +876,24 @@
   }
 
   /* Genre icon colors based on category */
-  .game-row a[data-group="combat"] svg {
-    color: #e74c3c;
+  .game-row span[data-group="combat"] {
+    color: #c77872 !important;
   }
 
-  .game-row a[data-group="brain"] svg {
-    color: #3498db;
+  .game-row span[data-group="brain"] {
+    color: #6b9db8 !important;
   }
 
-  .game-row a[data-group="world"] svg {
-    color: #2ecc71;
+  .game-row span[data-group="world"] {
+    color: #6bb894 !important;
   }
 
-  .game-row a[data-group="sim"] svg {
-    color: #f1c40f;
+  .game-row span[data-group="sim"] {
+    color: #d4ba6f !important;
   }
 
-  .game-row a[data-group="arcade"] svg {
-    color: #e67e22;
+  .game-row span[data-group="arcade"] {
+    color: #c99268 !important;
   }
 }
 
