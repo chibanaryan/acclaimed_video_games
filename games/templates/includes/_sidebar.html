@@ -6,17 +6,23 @@
         <div class="mb-6">
             <a href="{% url 'home' %}" class="block">
                 {# White logo for dark theme #}
-                <img src="{% static 'games/avg_logo.png' %}"
+                <img src="{% static 'games/avg_logo_160w.png' %}"
+                     srcset="{% static 'games/avg_logo_160w.png' %} 160w,
+                             {% static 'games/avg_logo_320w.png' %} 320w"
+                     sizes="(max-width: 1023px) 0px, 160px"
                      alt="Acclaimed Games"
-                     width="1092"
-                     height="737"
+                     width="160"
+                     height="108"
                      fetchpriority="high"
                      class="w-full max-w-[160px] mx-auto show-dark">
                 {# Dark logo for light theme #}
-                <img src="{% static 'games/avg_logo_dark.png' %}"
+                <img src="{% static 'games/avg_logo_dark_160w.png' %}"
+                     srcset="{% static 'games/avg_logo_dark_160w.png' %} 160w,
+                             {% static 'games/avg_logo_dark_320w.png' %} 320w"
+                     sizes="(max-width: 1023px) 0px, 160px"
                      alt="Acclaimed Games"
-                     width="1092"
-                     height="737"
+                     width="160"
+                     height="108"
                      fetchpriority="high"
                      class="w-full max-w-[160px] mx-auto show-light">
             </a>

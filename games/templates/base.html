@@ -88,8 +88,8 @@
     </style>
 
     {# Preload sidebar logos for LCP optimization on desktop only (hidden on mobile) #}
-    <link rel="preload" href="{% static 'games/avg_logo_dark.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
-    <link rel="preload" href="{% static 'games/avg_logo.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
+    <link rel="preload" href="{% static 'games/avg_logo_dark_160w.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
+    <link rel="preload" href="{% static 'games/avg_logo_160w.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
 
     {# HTMX - defer to prevent render blocking #}
     <script defer src="https://unpkg.com/htmx.org@1.9.10" nonce="{{ csp_nonce }}"></script>
