@@ -446,7 +446,7 @@
 
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
-                <div :class="platformsExpanded ? 'mb-6 pb-4 border-b border-base-300' : 'mb-4 pb-2'" class="min-h-[4.5rem]">
+                <div :class="platformsExpanded ? 'mb-6 pb-4' : ''" class="mb-4 pb-2 border-b border-base-300 min-h-[4.5rem]">
                     <div class="flex items-center gap-2 mb-3 cursor-pointer" @click="platformsExpanded = !platformsExpanded">
                         <span class="mdi mdi-controller text-xl text-primary"></span>
                         <span class="font-bold text-base">Platforms</span>

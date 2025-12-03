@@ -6,6 +6,8 @@
 
 ## 2025-12-02
 
+- Made border between Platform and Genre filter sections always visible (was conditional on Platform expansion)
+- Fixed layout shift by reserving default padding above Genres header in static classes
 - Inlined MDI subset CSS to eliminate 510ms render-blocking request (reduces total CSS blocking from 850ms to 340ms)
 - Optimized mobile LCP by 2-3x: moved image preload hints to top of <head>, streamlined theme script, prioritized critical resources
 - Added preload tags for homepage logo images (both light/dark themes) to optimize LCP with fetchpriority=high
