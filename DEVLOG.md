@@ -2,6 +2,7 @@
 
 ## 2025-12-02
 
+- Inlined MDI subset CSS to eliminate 510ms render-blocking request (reduces total CSS blocking from 850ms to 340ms)
 - Optimized mobile LCP by 2-3x: moved image preload hints to top of <head>, streamlined theme script, prioritized critical resources
 - Added preload tags for homepage logo images (both light/dark themes) to optimize LCP with fetchpriority=high
 - Fixed forced reflow (58ms) by replacing offsetParent checks with media queries in game highlight scroll
