@@ -8,7 +8,7 @@
 <h1 class="text-3xl font-bold mb-4">Developers</h1>
 <h2 id="results-count" class="text-xl text-base-content/85 mb-4">
     {% if page_obj %}
-    Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} result{{ total_count|pluralize }}
+    Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} developer{{ total_count|pluralize }}
     {% else %}
     Showing 0
     {% endif %}
@@ -149,7 +149,7 @@ async function handleDeveloperLoadMore(event) {
                 const container = button.parentElement;
                 container.innerHTML = `
                     <div class="text-base-content/85 text-center">
-                        All ${meta.totalCount.toLocaleString()} results loaded
+                        All ${meta.totalCount.toLocaleString()} developers loaded
                     </div>
                 `;
             } else {
@@ -190,7 +190,7 @@ document.body.addEventListener('htmx:afterSwap', function(e) {
             const resultsCount = document.querySelector('#results-count');
             if (resultsCount) {
                 const plural = totalCount == 1 ? '' : 's';
-                resultsCount.innerHTML = `Showing <span id="loaded-count">${parseInt(loadedCount).toLocaleString()}</span> of ${parseInt(totalCount).toLocaleString()} result${plural}`;
+                resultsCount.innerHTML = `Showing <span id="loaded-count">${parseInt(loadedCount).toLocaleString()}</span> of ${parseInt(totalCount).toLocaleString()} developer${plural}`;
             }
         }
     }
