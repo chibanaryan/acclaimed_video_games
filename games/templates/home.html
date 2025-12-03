@@ -8,9 +8,12 @@
 
 {% block early_preload %}
 {# CRITICAL: Preload LCP images as early as possible in <head> #}
+{# Preload WebP versions first for browsers that support it #}
 {# Light theme logo (shown by default in lofi theme) - loads 548w on mobile #}
+<link rel="preload" href="{% static 'games/avg_logo_dark_web.webp' %}" as="image" type="image/webp" fetchpriority="high" imagesrcset="{% static 'games/avg_logo_dark_web.webp' %} 548w, {% static 'games/avg_logo_dark.webp' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
 <link rel="preload" href="{% static 'games/avg_logo_dark_web.png' %}" as="image" fetchpriority="high" imagesrcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
 {# Dark theme logo (forest/night themes) - loads 548w on mobile #}
+<link rel="preload" href="{% static 'games/avg_logo_web.webp' %}" as="image" type="image/webp" fetchpriority="high" imagesrcset="{% static 'games/avg_logo_web.webp' %} 548w, {% static 'games/avg_logo.webp' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
 <link rel="preload" href="{% static 'games/avg_logo_web.png' %}" as="image" imagesrcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
 {% endblock %}
 
@@ -18,17 +21,27 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     <div class="text-center">
         {# Dark theme logo (white text) - shown in dark themes #}
-        <img src="{% static 'games/avg_logo.png' %}"
-             srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
-             sizes="(max-width: 600px) 100vw, 548px"
-             alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
-             class="w-full h-auto show-dark">
+        <picture class="w-full h-auto show-dark block">
+            <source type="image/webp"
+                    srcset="{% static 'games/avg_logo_web.webp' %} 548w, {% static 'games/avg_logo.webp' %} 1092w"
+                    sizes="(max-width: 600px) 100vw, 548px">
+            <img src="{% static 'games/avg_logo.png' %}"
+                 srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
+                 sizes="(max-width: 600px) 100vw, 548px"
+                 alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
+                 class="w-full h-auto">
+        </picture>
         {# Light theme logo (black text) - shown in light themes #}
-        <img src="{% static 'games/avg_logo_dark.png' %}"
-             srcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w"
-             sizes="(max-width: 600px) 100vw, 548px"
-             alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
-             class="w-full h-auto show-light">
+        <picture class="w-full h-auto show-light block">
+            <source type="image/webp"
+                    srcset="{% static 'games/avg_logo_dark_web.webp' %} 548w, {% static 'games/avg_logo_dark.webp' %} 1092w"
+                    sizes="(max-width: 600px) 100vw, 548px">
+            <img src="{% static 'games/avg_logo_dark.png' %}"
+                 srcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w"
+                 sizes="(max-width: 600px) 100vw, 548px"
+                 alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
+                 class="w-full h-auto">
+        </picture>
         <p class="text-xl mt-4 text-base-content/80">
             The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
         </p>

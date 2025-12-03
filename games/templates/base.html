@@ -88,7 +88,10 @@
     </style>
 
     {# Preload sidebar logos for LCP optimization on desktop only (hidden on mobile) #}
+    {# Preload WebP versions first for browsers that support it, PNG as fallback #}
+    <link rel="preload" href="{% static 'games/avg_logo_dark_160w.webp' %}" as="image" type="image/webp" fetchpriority="high" media="(min-width: 1024px)">
     <link rel="preload" href="{% static 'games/avg_logo_dark_160w.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
+    <link rel="preload" href="{% static 'games/avg_logo_160w.webp' %}" as="image" type="image/webp" fetchpriority="high" media="(min-width: 1024px)">
     <link rel="preload" href="{% static 'games/avg_logo_160w.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
 
     {# HTMX - defer to prevent render blocking #}
