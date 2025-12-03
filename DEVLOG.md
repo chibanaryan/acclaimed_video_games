@@ -2,6 +2,11 @@
 
 ## 2025-12-02
 
+- Fixed forced reflow (58ms) by replacing offsetParent checks with media queries in game highlight scroll
+- Pinned Alpine.js to v3.14.3 for 1-year CDN cache (vs 7-day with version ranges)
+- Added GZipMiddleware for HTML compression (48 KiB savings per page)
+- Removed cascade loading animations from homepage and Load More for instant display
+- Optimized homepage cover images: 1x uses 180x256 (downscaled to 120px), 2x uses 264x352 for retina (~200-260 KiB savings)
 - Fixed JavaScript code appearing as text in mobile navbar by removing redundant inline script tag (theme initialization already handled in base.html)
 - Fixed horizontal scrolling on mobile by removing overflow-visible classes and simplifying mobile header structure
 - Eliminated layout shift on games list during HTMX navigation: added max-width constraint to results column and explicit width/min-width/min-height to filter sidebar with CSS containment

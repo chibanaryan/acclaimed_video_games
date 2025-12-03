@@ -431,7 +431,7 @@ class ModelHelpersTests(TestCase):
         self.assertIn("t_cover_small_2x/art123", game.thumbnail_2x)
         self.assertIn("t_cover_big/art123", game.image)
         self.assertIn("t_cover_big_2x/art123", game.image_2x)
-        self.assertIn("t_cover_big/art123", game.homepage_thumb)
+        self.assertIn("t_cover_small_2x/art123", game.homepage_thumb)
         self.assertIn("t_cover_big/art123", game.homepage_thumb_2x)
 
     def test_publication_str_and_slug_default(self):

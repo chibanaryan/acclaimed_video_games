@@ -658,19 +658,11 @@ async function handleLoadMore(event) {
         // Remove the metadata script from the parsed doc
         if (metaScript) metaScript.remove();
 
-        // Append game rows with staggered cascade animation
+        // Append game rows without animation (instant load)
         const gameList = document.getElementById('game-list-container');
         if (gameList) {
-            // Only animate desktop rows for speed (mobile rows animate instantly)
-            const newRows = doc.querySelectorAll('.game-row.desktop');
             const allRows = doc.querySelectorAll('.game-row');
-            let desktopIndex = 0;
             allRows.forEach((row) => {
-                if (row.classList.contains('desktop')) {
-                    row.classList.add('game-row-enter');
-                    row.style.animationDelay = `${desktopIndex * 8}ms`;
-                    desktopIndex++;
-                }
                 gameList.appendChild(row);
             });
         }

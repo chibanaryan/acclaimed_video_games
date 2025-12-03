@@ -95,9 +95,9 @@
     {# Shared Utilities - Must load before Alpine.js, defer maintains order #}
     <script defer src="{% static 'games/js/utils.js' %}" nonce="{{ csp_nonce }}"></script>
 
-    {# Alpine.js with Collapse plugin #}
-    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
+    {# Alpine.js with Collapse plugin - Pinned versions for 1-year cache (vs 7-day with 3.x.x) #}
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.3/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
 
     {% block extra_head %}{% endblock %}
 

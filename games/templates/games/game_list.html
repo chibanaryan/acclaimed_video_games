@@ -16,12 +16,10 @@
     setTimeout(function() {
         var desktopElement = document.getElementById('game-{{ highlight }}');
         var mobileElement = document.getElementById('game-{{ highlight }}-mobile');
-        var element = null;
-        if (desktopElement && desktopElement.offsetParent !== null) {
-            element = desktopElement;
-        } else if (mobileElement && mobileElement.offsetParent !== null) {
-            element = mobileElement;
-        }
+        // Use media query to determine which element to scroll to (avoids forced reflow)
+        var isDesktop = window.matchMedia('(min-width: 768px)').matches;
+        var element = isDesktop ? desktopElement : mobileElement;
+
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 

@@ -330,17 +330,17 @@ class Game(models.Model):
 
     @cached_property
     def homepage_thumb(self) -> Optional[str]:
-        """Get homepage thumbnail - uses t_cover_big (264x352) (cached)."""
+        """Get homepage thumbnail - t_cover_small_2x (180x256) avoids upscaling blur."""
         if self.igdb_artwork_id:
             return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/"
+                "https://images.igdb.com/igdb/image/upload/t_cover_small_2x/"
                 f"{self.igdb_artwork_id}"
             )
         return None
 
     @cached_property
     def homepage_thumb_2x(self) -> Optional[str]:
-        """Get homepage 2x thumbnail - t_cover_big for bandwidth savings (cached)."""
+        """Get homepage 2x thumbnail - t_cover_big (264x352) for retina quality."""
         if self.igdb_artwork_id:
             return (
                 "https://images.igdb.com/igdb/image/upload/t_cover_big/"

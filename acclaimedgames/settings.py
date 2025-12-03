@@ -75,6 +75,7 @@ TAILWIND_APP_NAME = "theme"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Must be after SecurityMiddleware
+    "django.middleware.gzip.GZipMiddleware",  # Compress HTML responses (48 KiB savings)
     "games.csp_middleware.CSPMiddleware",  # CSP with nonces + CORS for fonts
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",

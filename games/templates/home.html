@@ -30,29 +30,15 @@
             The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
         </p>
         <h3 class="text-xl font-bold mt-6 mb-4">Current Top {{ games|length }}</h3>
-        <div class="inline-flex flex-wrap items-end justify-center"
-             x-data="{
-                 loaded: 0,
-                 total: {{ games|length }},
-                 init() {
-                     this.revealNext();
-                 },
-                 revealNext() {
-                     if (this.loaded < this.total) {
-                         this.loaded++;
-                         setTimeout(() => this.revealNext(), 60);
-                     }
-                 }
-             }">
+        <div class="inline-flex flex-wrap items-end justify-center">
             {% for game in games %}
             <a href="{% url 'game-detail' slug=game.slug %}"
-               class="relative group block transition-all duration-300 ease-out"
-               style="margin: 10px;"
-               :class="loaded >= {{ forloop.counter }} ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'">
+               class="relative group block"
+               style="margin: 10px;">
                 <span class="absolute -top-2 -left-1 bg-primary text-primary-content text-xs font-bold px-1.5 py-0.5 rounded z-10">{{ game.rank }}</span>
                 <img src="{{ game.homepage_thumb }}"
                      srcset="{{ game.homepage_thumb }} 1x, {{ game.homepage_thumb_2x }} 2x"
-                     alt="{{ game.name }}" width="120" height="180" loading="lazy" decoding="async"
+                     alt="{{ game.name }}" width="120" height="171" loading="lazy" decoding="async"
                      class="w-[120px] h-auto rounded shadow-md hover:shadow-lg transition-shadow">
             </a>
             {% endfor %}
