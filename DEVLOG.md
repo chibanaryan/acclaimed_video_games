@@ -13,6 +13,7 @@
 - Updated Forest theme with refined color palette for improved visual consistency and readability
 - Made platform and genre icons in game rows non-clickable (display only) to reduce visual noise
 - Applied desaturated colors to genre icons for easier viewing while maintaining category distinction
+- Fixed source lists filter dropdowns to size based on content instead of stretching full width
 
 ## 2025-12-01
 
