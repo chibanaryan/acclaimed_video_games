@@ -1,60 +1,17 @@
 # Developer Log
 
-## 2025-12-03
+## 2025-12-02 - 2025-12-03
 
-- Optimized mobile rankings page images: replaced rectangular thumbnails (90x128) with square thumbnails (90x90) in mobile card view, reducing image size by ~30% and saving ~214 KiB per page load
-- Optimized JavaScript loading: split utils.js (8.7KB) into modular files—utils-base.min.js (3.6KB) loaded on all pages, utils-loadmore.min.js (5.0KB) deferred with requestIdleCallback for non-blocking progressive loading
-- Reduced main thread blocking on rankings page by ~60% (414ms → ~150ms) by splitting large JavaScript bundle into page-specific modules
-- Fixed Load More button flash on filter updates by replacing element cloning with event delegation pattern
-- Fixed genre filter layout breaking at wide screen widths (>1350px) caused by CSS class name conflict between filter grid columns and game row genre display
-
-## 2025-12-02
-
-- Made border between Platform and Genre filter sections always visible (was conditional on Platform expansion)
-- Fixed layout shift by reserving default padding above Genres header in static classes
-- Inlined MDI subset CSS to eliminate 510ms render-blocking request (reduces total CSS blocking from 850ms to 340ms)
-- Optimized mobile LCP by 2-3x: moved image preload hints to top of <head>, streamlined theme script, prioritized critical resources
-- Added preload tags for homepage logo images (both light/dark themes) to optimize LCP with fetchpriority=high
-- Fixed forced reflow (58ms) by replacing offsetParent checks with media queries in game highlight scroll
-- Pinned Alpine.js to v3.14.3 for 1-year CDN cache (vs 7-day with version ranges)
-- Added GZipMiddleware for HTML compression (48 KiB savings per page)
-- Removed cascade loading animations from homepage and Load More for instant display
-- Implemented responsive image loading: mobile devices now download smaller images (90x128 vs 180x256) using width descriptors, saving ~105-195KB per page
-- Added explicit width/height attributes to all images (contact modal, 404 page, game lists, sidebar search) to eliminate CLS and improve PageSpeed scores
-- Fixed JavaScript code appearing as text in mobile navbar by removing redundant inline script tag (theme initialization already handled in base.html)
-- Fixed horizontal scrolling on mobile by removing overflow-visible classes and simplifying mobile header structure
-- Eliminated layout shift on games list during HTMX navigation: added max-width constraint to results column and explicit width/min-width/min-height to filter sidebar with CSS containment
-- Reserved space for filter dropdowns on source lists page (min-h-[2.5rem]) to prevent layout adjustment on load
-- Fixed squished thumbnails in sidebar search dropdown by using flexible height (w-6 h-auto) to maintain aspect ratio
-- Fixed "Showing X of Y" counter to update dynamically with filter changes (moved into HTMX swap container)
-- Fixed Jump to Rank max value to respect filtered results count instead of showing total database count
-- Removed confusing "Filters" heading and reorganized filter sidebar: CSV/Reset buttons now positioned next to Search
-- Upgraded home page cover images from thumbnail (264x352) to full size (571x857) for sharper image quality
-- Optimized Google Analytics loading to defer until user interaction or 5 seconds (saves 56 KiB in PageSpeed's unused JavaScript metric)
-- Minified utils.js from 23KB to 8.7KB using Terser (62% size reduction, 14KB savings)
-- Standardized list table text sizes across game detail and source list pages
-- Converted game properties from table layout to div-based layout (removed visual row dividers)
-- Implemented 50/50 split layout on game detail: properties on left, centered game cover on right
-- Added DaisyUI hover-3d effect to game cover for interactive 3D tilt animation
-- Added accordion category grouping in platform titles (desktop and mobile) for Retro Consoles and Microcomputers
-- Reorganized sidebar layout using flexbox space-between technique (top: logo/nav/search, middle: flex gap, bottom: secondary nav/contact/theme/social)
-- Increased sidebar text sizes: navigation menus from menu-sm to default, icons from text-lg to text-xl, labels from text-xs/text-sm to text-sm/text-base
-- Fixed game row alignment: platform and genre icon columns now use fixed widths (120px, 100px) for consistent vertical alignment
-- Implemented responsive game row layout: genre icons disappear below 1200px, platform icons below 1100px, with subtle column dividers
-- Added "Jump to Rank" feature at top of game list for quick navigation to any rank position
-- Fixed Jump to Rank overshoot bug: corrected data-per-page from 50 to 100 to match backend pagination
-- Fixed duplicate event listeners on Jump to Rank by cloning elements before attaching handlers
-- Added floating Back to Top button (bottom-right, appears after 300px scroll with smooth animation)
-- Aligned list table columns on game detail page using colgroup with fixed widths (300px publication, 80px year/rank)
-- Optimized WhiteNoise static file serving: moved middleware to position #2, enabled KEEP_ONLY_HASHED_FILES for aggressive caching (1 year cache with gzip+brotli compression)
-- Fixed table layouts on Developers and Source Lists pages: set fixed column widths (700px for Developers, 900px for Source Lists) to prevent column stretching
-- Added responsive mobile card view to Developers page (matches Source Lists design with badge showing game count)
-- Optimized homepage image delivery: reduced retina display downloads from 528x704 to 264x352 (~50% size reduction, ~880KB saved on initial load)
-- Constrained search bar width on Developers page using max-w-lg for better visual hierarchy
-- Replaced MDI font magnifying glass icons with inline SVG across all search inputs (sidebar, navigation, developer search)
-- Fixed search icon visibility with proper z-index layering and color matching (text-base-content/60 to match search bar borders)
-- Removed spinner controls from Jump to Rank number input field for cleaner UI
-- Changed Jump to Rank scroll behavior to position highlighted game at top of screen instead of center
+- Performance optimizations: optimized mobile images (square thumbnails save ~214 KiB), split/minified JavaScript (60% less main thread blocking), inlined MDI CSS (510ms faster), deferred Google Analytics, enabled GZip compression, optimized WhiteNoise caching
+- Mobile LCP improvements: preload critical images, streamlined theme script, responsive image loading with width descriptors (saves 105-195 KB per page)
+- Implemented responsive game row layout with platform/genre icon columns that adapt to screen width (1200px+, 1100px+ breakpoints)
+- Redesigned game detail page with 50/50 split layout, centered game cover with 3D hover effect, improved table alignment
+- Added Jump to Rank feature with bug fixes (max value, overshoot, scroll position) and floating Back to Top button
+- Eliminated layout shifts: fixed HTMX navigation jumps, filter dropdowns, sidebar search thumbnails, and filter section borders/padding
+- Enhanced sidebar layout with flexbox spacing, larger text sizes, accordion platform grouping, inline SVG search icons
+- Filter sidebar improvements: reorganized CSV/Reset buttons next to Search, dynamic result counter updates, removed confusing "Filters" heading
+- Added responsive mobile card view to Developers page with game count badges and table layout fixes across all list pages
+- Fixed genre filter layout conflicts at wide screens, Load More button flash, horizontal scrolling on mobile, and navbar script duplication
 
 ## 2025-12-01
 
