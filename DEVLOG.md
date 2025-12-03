@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2025-12-03
+
+- Fixed genre filter layout breaking at wide screen widths (>1350px) caused by CSS class name conflict between filter grid columns and game row genre display
+
 ## 2025-12-02
 
 - Inlined MDI subset CSS to eliminate 510ms render-blocking request (reduces total CSS blocking from 850ms to 340ms)

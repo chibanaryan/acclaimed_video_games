@@ -285,8 +285,10 @@
 
   /* 5-Column Genre Grid */
   .genre-columns {
-    @apply grid gap-1.5 w-full;
+    display: grid;
     grid-template-columns: repeat(5, 1fr);
+    gap: calc(var(--spacing) * 1.5);
+    width: 100%;
     min-height: 520px;
   }
 
@@ -297,7 +299,10 @@
   }
 
   .genre-column {
-    @apply flex flex-col gap-1 min-w-0;
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 1);
+    min-width: 0;
   }
 
   .genre-column.is-empty {
@@ -307,6 +312,7 @@
   .genre-column-count {
     @apply text-xs font-semibold text-center;
     min-height: 1.5em;
+    margin-bottom: calc(var(--spacing) * 1);
   }
 
   /* Column header with category name */
