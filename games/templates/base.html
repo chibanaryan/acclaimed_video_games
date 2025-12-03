@@ -3,40 +3,37 @@
 <html lang="en" data-theme="lofi">
 <head>
     <script nonce="{{ csp_nonce }}">
-        // Set theme immediately from localStorage to prevent flash of wrong theme
+        // CRITICAL: Set theme immediately to prevent FOUC - keep minimal
         (function() {
-            var theme = localStorage.getItem('theme') || 'lofi';
-            document.documentElement.setAttribute('data-theme', theme);
-            updateThemeToggle(theme);
+            var t = localStorage.getItem('theme') || 'lofi';
+            document.documentElement.setAttribute('data-theme', t);
         })();
 
-        // Theme switcher function
-        function setTheme(theme) {
-            localStorage.setItem('theme', theme);
-            document.documentElement.setAttribute('data-theme', theme);
-            updateThemeToggle(theme);
+        // Non-critical theme functions - will execute after HTML parse
+        function setTheme(t) {
+            localStorage.setItem('theme', t);
+            document.documentElement.setAttribute('data-theme', t);
+            updateThemeToggle(t);
         }
 
-        // Update theme toggle checkboxes based on current theme
-        function updateThemeToggle(theme) {
-            const isDarkTheme = theme === 'night' || theme === 'forest';
-            const themeToggle = document.getElementById('theme-toggle');
-            const themeToggleMobile = document.getElementById('theme-toggle-mobile');
-
-            if (themeToggle) {
-                themeToggle.checked = isDarkTheme;
-            }
-            if (themeToggleMobile) {
-                themeToggleMobile.checked = isDarkTheme;
-            }
+        function updateThemeToggle(t) {
+            var dark = t === 'night' || t === 'forest';
+            var toggles = ['theme-toggle', 'theme-toggle-mobile'];
+            toggles.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.checked = dark;
+            });
         }
 
-        // Listen for theme controller checkbox changes
         document.addEventListener('change', function(e) {
             if (e.target.classList.contains('theme-controller')) {
-                var newTheme = e.target.checked ? 'forest' : 'lofi';
-                setTheme(newTheme);
+                setTheme(e.target.checked ? 'forest' : 'lofi');
             }
+        });
+
+        // Initialize toggles after DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            updateThemeToggle(localStorage.getItem('theme') || 'lofi');
         });
     </script>
     <meta charset="UTF-8">
@@ -46,6 +43,9 @@
     {# Content Security Policy is set via CSPMiddleware with nonce support #}
     {# Note: 'unsafe-eval' is required for Alpine.js x-data expressions #}
     <title>{% block title %}Acclaimed Games{% endblock %}</title>
+
+    {# CRITICAL: Early preload for LCP images - must be before other resources #}
+    {% block early_preload %}{% endblock %}
 
     {# Open Graph Tags for social sharing #}
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
@@ -73,18 +73,14 @@
     {# Tailwind CSS + DaisyUI - django-tailwind handles optimal loading #}
     {% tailwind_css %}
 
-    {# Preload Material Design Icons subset for faster rendering #}
-    <link rel="preload" href="{% static 'games/css/mdi-subset.css' %}" as="style">
-
-    {# Material Design Icons - Self-hosted subset CSS (~1KB vs 53KB CDN) #}
+    {# Material Design Icons - Self-hosted subset CSS (~1KB) with font preload #}
     {# Contains only the ~10 icons actually used + font-face with font-display: swap #}
     <link rel="stylesheet" href="{% static 'games/css/mdi-subset.css' %}">
 
-    {# Fonts - Self-hosted with preload for faster loading #}
+    {# Preload MDI icon font to prevent sidebar jitter - critical for navigation icons #}
     <link rel="preload" href="{% static 'games/fonts/materialdesignicons-webfont.woff2' %}" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="{% static 'games/fonts/Handjet-ExtraBold.woff2' %}" as="font" type="font/woff2" crossorigin>
 
-    {# Preload sidebar logos for LCP optimization on desktop (hidden on mobile) #}
+    {# Preload sidebar logos for LCP optimization on desktop only (hidden on mobile) #}
     <link rel="preload" href="{% static 'games/avg_logo_dark.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
     <link rel="preload" href="{% static 'games/avg_logo.png' %}" as="image" fetchpriority="high" media="(min-width: 1024px)">
 
@@ -92,7 +88,7 @@
     <script defer src="https://unpkg.com/htmx.org@1.9.10" nonce="{{ csp_nonce }}"></script>
 
     {# Shared Utilities - Must load before Alpine.js, defer maintains order #}
-    <script defer src="{% static 'games/js/utils.js' %}" nonce="{{ csp_nonce }}"></script>
+    <script defer src="{% static 'games/js/utils.min.js' %}" nonce="{{ csp_nonce }}"></script>
 
     {# Alpine.js with Collapse plugin - Pinned versions for 1-year cache (vs 7-day with 3.x.x) #}
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.3/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>

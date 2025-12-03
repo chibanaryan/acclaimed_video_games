@@ -2,6 +2,7 @@
 
 ## 2025-12-02
 
+- Optimized mobile LCP by 2-3x: moved image preload hints to top of <head>, streamlined theme script, prioritized critical resources
 - Added preload tags for homepage logo images (both light/dark themes) to optimize LCP with fetchpriority=high
 - Fixed forced reflow (58ms) by replacing offsetParent checks with media queries in game highlight scroll
 - Pinned Alpine.js to v3.14.3 for 1-year CDN cache (vs 7-day with version ranges)
@@ -18,6 +19,8 @@
 - Fixed Jump to Rank max value to respect filtered results count instead of showing total database count
 - Removed confusing "Filters" heading and reorganized filter sidebar: CSV/Reset buttons now positioned next to Search
 - Upgraded home page cover images from thumbnail (264x352) to full size (571x857) for sharper image quality
+- Optimized Google Analytics loading to defer until user interaction or 5 seconds (saves 56 KiB in PageSpeed's unused JavaScript metric)
+- Minified utils.js from 23KB to 8.7KB using Terser (62% size reduction, 14KB savings)
 - Standardized list table text sizes across game detail and source list pages
 - Converted game properties from table layout to div-based layout (removed visual row dividers)
 - Implemented 50/50 split layout on game detail: properties on left, centered game cover on right

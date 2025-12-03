@@ -6,12 +6,12 @@
 
 {% block meta_description %}The definitive ranking of the most critically acclaimed video games, based on {{ list_count }} critic lists from {{ publication_count }} publications. Explore top-rated games from every era.{% endblock %}
 
-{% block extra_head %}
-{# Preload home page hero images - LCP elements for both themes #}
-{# Light theme logo (shown by default in lofi theme) - PRIORITY #}
-<link rel="preload" href="{% static 'games/avg_logo_dark.png' %}" as="image" fetchpriority="high" imagesrcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
-{# Dark theme logo (shown in forest/night themes) #}
-<link rel="preload" href="{% static 'games/avg_logo.png' %}" as="image" imagesrcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
+{% block early_preload %}
+{# CRITICAL: Preload LCP images as early as possible in <head> #}
+{# Light theme logo (shown by default in lofi theme) - loads 548w on mobile #}
+<link rel="preload" href="{% static 'games/avg_logo_dark_web.png' %}" as="image" fetchpriority="high" imagesrcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
+{# Dark theme logo (forest/night themes) - loads 548w on mobile #}
+<link rel="preload" href="{% static 'games/avg_logo_web.png' %}" as="image" imagesrcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w" imagesizes="(max-width: 600px) 100vw, 548px">
 {% endblock %}
 
 {% block content %}
