@@ -686,15 +686,23 @@
         progressErrors.style.display = 'none'
 
         // Connect to SSE endpoint
+        console.log('Connecting to SSE endpoint...')
         activeEventSource = new EventSource('{% url "igdb-progress" %}')
 
+        activeEventSource.onopen = (event) => {
+            console.log('SSE connection opened successfully')
+        }
+
         activeEventSource.onmessage = (event) => {
+            console.log('SSE message received:', event.data)
             try {
                 const data = JSON.parse(event.data)
+                console.log('Parsed data:', data)
 
                 if (data.event === 'start') {
                     console.log(`Starting IGDB fetch for ${data.total} games`)
                 } else if (data.event === 'progress') {
+                    console.log(`Progress: ${data.current}/${data.total} - ${data.game_name}`)
                     const percentage = data.percentage
                     progressFill.style.width = percentage + '%'
                     progressPercentage.textContent = percentage + '%'

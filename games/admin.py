@@ -47,6 +47,7 @@ class GameAdmin(admin.ModelAdmin):
         "decade_rank",
         "year_of_release",
         "igdb_id",
+        "wikidata_id",
         "igdb_artwork_id",
         "igdb_url",
         "_genres",
