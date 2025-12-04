@@ -11,6 +11,9 @@
 - Admin interface for managing subscribers (view-only, no manual additions)
 - CSP exemption added for Django admin to fix script loading issues
 - Fixed 404 page formatting: increased card width to max-w-2xl, removed width/height attrs from button icon, sized button appropriately
+- Added post author name to notification emails (displays full name or username)
+- Fixed theme persistence issue: removed hardcoded data-theme attribute, added validation to prevent invalid theme values
+- Theme now auto-detects system preference when localStorage contains invalid values (like 'auto')
 
 ## 2025-12-03
 

@@ -194,6 +194,12 @@ def send_post_notification_email(post, subscriber) -> bool:
 
     subject = f"New post: {post.title or 'Latest Update'}"
 
+    # Get author name
+    if post.author:
+        author_name = post.author.get_full_name() or post.author.username
+    else:
+        author_name = "Acclaimed Games"
+
     # Get HTML version (full post with links intact)
     post_html = post.text_rendered
 
@@ -205,6 +211,7 @@ def send_post_notification_email(post, subscriber) -> bool:
 New post on Acclaimed Games!
 
 {post.title or 'Latest Update'}
+By {author_name}
 
 {post_text}
 
@@ -238,6 +245,13 @@ Acclaimed Games
             color: #2c3e50;
             border-bottom: 2px solid #3498db;
             padding-bottom: 10px;
+            margin-bottom: 5px;
+        }}
+        .byline {{
+            color: #666;
+            font-size: 14px;
+            margin-top: 0;
+            margin-bottom: 20px;
         }}
         .content {{
             background-color: #f9f9f9;
@@ -258,6 +272,7 @@ Acclaimed Games
 </head>
 <body>
     <h2>{post.title or 'Latest Update'}</h2>
+    <p class="byline">By {author_name}</p>
 
     <div class="content">
         {post_html}
