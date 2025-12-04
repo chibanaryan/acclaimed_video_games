@@ -7,6 +7,7 @@
 - Made Game of the Day card more compact: narrower (max 448px), centered, smaller cover (160px vs 192px), tighter spacing
 - Added DaisyUI 3D hover effect to Game of the Day cover with mouse-tracking tilt animation
 - Improved press quote formatting: publication names now inline with quotes, increased spacing between quotes
+- Added "Support This Project" donate button to home page linking to /page/donate/
 
 ## 2025-12-02 - 2025-12-03
 
