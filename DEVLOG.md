@@ -23,6 +23,7 @@
 - Added DaisyUI 3D hover effect to Game of the Day cover with mouse-tracking tilt animation
 - Improved press quote formatting: publication names now inline with quotes, increased spacing between quotes
 - Added "Support This Project" donate button to home page linking to /page/donate/
+- Fixed ranking chip overlay on Game of the Day cover by moving it to header area as secondary badge
 
 ## 2025-12-02 - 2025-12-03
 

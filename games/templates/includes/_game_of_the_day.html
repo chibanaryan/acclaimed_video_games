@@ -3,8 +3,11 @@
 {# Game of the Day Card #}
 <div class="card bg-gradient-to-br from-primary/5 to-secondary/5 shadow-xl mb-8 overflow-hidden max-w-md mx-auto">
     <div class="card-body p-4">
-        <div class="mb-1">
+        <div class="mb-1 flex items-center gap-2 flex-wrap">
             <span class="badge badge-primary badge-lg">Game of the Day</span>
+            <span class="badge badge-secondary badge-lg font-bold">
+                #{{ game_of_the_day.rank }}
+            </span>
         </div>
 
         {# Cover Image - Smaller width to save space #}
@@ -21,9 +24,6 @@
                              loading="eager"
                              fetchpriority="high"
                              class="w-full h-auto rounded-lg shadow-xl">
-                        <span class="absolute top-2 left-2 bg-primary text-primary-content text-sm font-bold px-3 py-1 rounded-full shadow-lg z-10">
-                            #{{ game_of_the_day.rank }}
-                        </span>
                     </a>
                 </figure>
                 <!-- 8 empty divs needed for the 3D depth effect -->
