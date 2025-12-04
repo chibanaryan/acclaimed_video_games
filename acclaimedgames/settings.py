@@ -233,6 +233,10 @@ IGDB_CLIENT_ID = env("IGDB_CLIENT_ID", default="XXX")
 IGDB_CLIENT_SECRET = env("IGDB_CLIENT_SECRET", default="XXX")
 IGDB_USE_PRO_TIER = env.bool("IGDB_USE_PRO_TIER", default=False)
 
+# Wikidata API authentication (optional - for 10x faster rate limits)
+# Format: username@botname:password (from https://meta.wikimedia.org/wiki/Special:BotPasswords)
+WIKIDATA_ACCESS_TOKEN = env("WIKIDATA_ACCESS_TOKEN", default=None)
+
 # Email configuration (Brevo SMTP)
 # In dev: print to console. In prod: send via Brevo SMTP.
 # Brevo requires verified sender - contact@acclaimedvideogames.com is verified

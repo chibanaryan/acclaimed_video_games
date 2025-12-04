@@ -22,6 +22,7 @@ from games import constants
 from games.services.import_handler import (  # noqa: F401
     import_data,
     import_igdb_with_progress,
+    import_wikipedia_pages_with_progress,
     import_batch_with_progress,
     import_batch,
     delete_existing_data,

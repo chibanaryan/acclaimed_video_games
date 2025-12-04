@@ -2,6 +2,20 @@
 
 ## 2025-12-04
 
+- Implemented Wikipedia page lookup feature with Wikidata ID integration
+- Added "Fetch Wikipedia Pages" button to /import/ page with real-time SSE progress tracking
+- Primary lookup via Wikidata API (10x faster with authentication), fallback to OpenSearch API
+- Authentication support via WIKIDATA_ACCESS_TOKEN environment variable (0.75s vs 2.0s delay)
+- New database fields: wikipedia_page_title, wikipedia_lookup_source (wikidata/opensearch)
+- Created get_wikipedia_pages management command with CSV output and --save option
+- Wikipedia page lookup separate from genre scraping (enables future optimization)
+- Added wikipedia_page_title and wikipedia_lookup_source to Game admin display/search
+- Fixed Wikipedia page lookup bug (changed "year" to "year_of_release" field reference)
+- Added time estimates next to IGDB and Wikipedia import buttons with format_duration filter
+- Simplified import progress UI: replaced detailed progress bars with loading spinners
+- Simplified backend progress reporting: removed unused percentage/time calculations
+- Fixed redundant text in database status cards ("data data" and "pages pages")
+- Fixed Wikipedia API response handling: added type checking for None/list responses preventing AttributeError crashes
 - Implemented newsletter subscription feature with double opt-in email confirmation
 - Email notifications automatically sent to confirmed subscribers when posts are published (active=True)
 - One-time notification per post using notification_sent field to prevent duplicate emails

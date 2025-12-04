@@ -345,8 +345,18 @@ class WikiGenreServiceTests(SimpleTestCase):
                         ["https://en.wikipedia.org/wiki/Tetris_(1989_video_game)"],
                     ],
                 )
-            # Call 2: Year-specific page has no genre
+            # Call 2: Resolve redirect for year-specific page
             elif call_count[0] == 2:
+                return DummyResponse(
+                    200,
+                    {
+                        "query": {
+                            "pages": {"12345": {"title": "Tetris (1989 video game)"}}
+                        }
+                    },
+                )
+            # Call 3: Year-specific page has no genre
+            elif call_count[0] == 3:
                 html = """
                 <html>
                 <table class="infobox">
@@ -355,8 +365,8 @@ class WikiGenreServiceTests(SimpleTestCase):
                 </html>
                 """
                 return DummyResponse(200, text=html)
-            # Call 3: Fallback search returns main page
-            elif call_count[0] == 3:
+            # Call 4: Fallback search returns main page
+            elif call_count[0] == 4:
                 return DummyResponse(
                     200,
                     [
@@ -366,7 +376,13 @@ class WikiGenreServiceTests(SimpleTestCase):
                         ["https://en.wikipedia.org/wiki/Tetris_(video_game)"],
                     ],
                 )
-            # Call 4: Main page has genre
+            # Call 5: Resolve redirect for main page
+            elif call_count[0] == 5:
+                return DummyResponse(
+                    200,
+                    {"query": {"pages": {"67890": {"title": "Tetris (video game)"}}}},
+                )
+            # Call 6: Main page has genre
             else:
                 html = """
                 <html>
@@ -393,17 +409,22 @@ class WikiGenreServiceTests(SimpleTestCase):
 
         def side_effect(*args, **kwargs):
             call_count[0] += 1
-            # Game1: success (calls 1-2)
+            # Game1: success (calls 1-3)
             if call_count[0] == 1:
                 return DummyResponse(
                     200,
                     ["Game1", ["Game1"], [""], ["https://en.wikipedia.org/wiki/Game1"]],
                 )
             elif call_count[0] == 2:
+                return DummyResponse(
+                    200,
+                    {"query": {"pages": {"123": {"title": "Game1"}}}},
+                )
+            elif call_count[0] == 3:
                 infobox = "<tr><th>Genre</th><td>Action</td></tr>"
                 html = f'<table class="infobox">{infobox}</table>'
                 return DummyResponse(200, text=html)
-            # Game2: failure (calls 3+)
+            # Game2: failure (calls 4+)
             else:
                 return DummyResponse(200, ["Game2", [], [], []])
 
@@ -547,21 +568,51 @@ class WikiGenreServiceTests(SimpleTestCase):
 
         def side_effect(*args, **kwargs):
             call_count[0] += 1
-            _ = args[0] if args else kwargs.get("url", "")
 
-            # First 10 calls: strict search variants all fail (no matching title)
-            if call_count[0] <= 10:
+            # Opensearch calls return list, redirect resolution returns dict,
+            # page scraping returns HTML
+            # Pattern: opensearch (odd), redirect (even), until non-strict mode
+            # First 20 calls (10 opensearch + 10 redirect): strict search
+            # variants all fail (no matching title)
+            if call_count[0] <= 20:
+                # Odd calls: opensearch results
+                if call_count[0] % 2 == 1:
+                    return DummyResponse(
+                        200,
+                        [
+                            "Day of the Tentacle",
+                            ["Day of the Tentacle"],  # Different title
+                            [""],
+                            ["https://en.wikipedia.org/wiki/Day_of_the_Tentacle"],
+                        ],
+                    )
+                # Even calls: redirect resolution
+                else:
+                    return DummyResponse(
+                        200,
+                        {"query": {"pages": {"123": {"title": "Day of the Tentacle"}}}},
+                    )
+            # Call 21+: non-strict mode - first call is opensearch, then
+            # redirect, then checking if it's a video game page
+            elif call_count[0] == 21:
+                # Opensearch in non-strict mode
                 return DummyResponse(
                     200,
                     [
                         "Day of the Tentacle",
-                        ["Day of the Tentacle"],  # Different title
+                        ["Day of the Tentacle"],
                         [""],
                         ["https://en.wikipedia.org/wiki/Day_of_the_Tentacle"],
                     ],
                 )
-            # Call 11+: checking if it's a video game page
+            elif call_count[0] == 22:
+                # Redirect resolution
+                return DummyResponse(
+                    200,
+                    {"query": {"pages": {"123": {"title": "Day of the Tentacle"}}}},
+                )
             else:
+                # Call 23+: checking if it's a video game page
                 html = """
                 <html>
                 <table class="infobox">

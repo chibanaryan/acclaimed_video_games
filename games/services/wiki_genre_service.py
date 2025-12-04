@@ -222,6 +222,58 @@ class WikiGenreService:
 
         return None
 
+    def _resolve_redirect(self, url: str) -> str:
+        """
+        Resolve Wikipedia redirects to get the canonical page URL.
+
+        Args:
+            url: Wikipedia URL that might be a redirect
+
+        Returns:
+            Canonical URL after following redirects
+        """
+        # Extract page title from URL
+        if "/wiki/" not in url:
+            return url
+
+        page_title = url.split("/wiki/")[1]
+
+        # Use Wikipedia API to resolve redirects
+        params = {
+            "action": "query",
+            "titles": page_title,
+            "redirects": "1",
+            "format": "json",
+        }
+
+        response = self._make_request(config.WIKIPEDIA_API_URL, params)
+        if not response:
+            return url
+
+        try:
+            data = response.json()
+            # Check if data is a dict before calling .get()
+            if not isinstance(data, dict):
+                logger.warning("Unexpected response type for %s: %s", url, type(data))
+                return url
+
+            pages = data.get("query", {}).get("pages", {})
+
+            # Get the final page title
+            for page_id, page_data in pages.items():
+                if "title" in page_data:
+                    final_title = page_data["title"]
+                    canonical_url = (
+                        f"https://en.wikipedia.org/wiki/{final_title.replace(' ', '_')}"
+                    )
+                    if canonical_url != url:
+                        logger.debug("Resolved redirect: %s -> %s", url, canonical_url)
+                    return canonical_url
+        except (ValueError, KeyError) as e:
+            logger.warning("Failed to resolve redirect for %s: %s", url, e)
+
+        return url
+
     def _search_single_name(
         self, game_name: str, year: Optional[int] = None, strict: bool = True
     ) -> Optional[str]:
@@ -248,9 +300,11 @@ class WikiGenreService:
                 ]
             )
 
-        # Then try generic variants
+        # Then try generic variants (series/franchise pages, video game pages)
         search_variants.extend(
             [
+                f"{game_name} (video game series)",  # Try series page
+                f"{game_name} (series)",  # Try series page
                 f"{game_name} (video game)",
                 f"{game_name} (game)",
                 game_name,
@@ -272,6 +326,15 @@ class WikiGenreService:
 
             try:
                 data = response.json()
+                # Check if data is valid before using it
+                if not data or not isinstance(data, list):
+                    logger.warning(
+                        "Invalid opensearch response for %s: %s",
+                        search_term,
+                        type(data),
+                    )
+                    continue
+
                 # opensearch returns: [search_term, [titles], [descriptions], [urls]]
                 if len(data) >= 4 and data[3]:
                     url = data[3][0]
@@ -283,6 +346,29 @@ class WikiGenreService:
                             "Skipping disambiguation page for '%s'", search_term
                         )
                         continue
+
+                    # Resolve redirects to get canonical URL
+                    url = self._resolve_redirect(url)
+
+                    # Extract title from final URL for year validation
+                    final_title = (
+                        url.split("/wiki/")[1].replace("_", " ")
+                        if "/wiki/" in url
+                        else title
+                    )
+
+                    # If we searched with a year, validate the result matches that year
+                    if year and f"({year}" in search_term:
+                        # Check if result has a different year in parens
+                        year_pattern = r"\((\d{4})\s+(?:video\s+)?game\)"
+                        match = re.search(year_pattern, final_title)
+                        if match and int(match.group(1)) != year:
+                            logger.debug(
+                                "Skipping year mismatch: searched for %d, got '%s'",
+                                year,
+                                final_title,
+                            )
+                            continue
 
                     if strict:
                         # Validate result matches search term to prevent

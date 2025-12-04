@@ -168,6 +168,150 @@ def import_igdb_with_progress():
         yield f"data: {json.dumps({'event': 'error', 'error': str(e)})}\n\n"
 
 
+def import_wikipedia_pages_with_progress(force_refresh: bool = False):
+    """
+    Fetch Wikipedia pages for all games with progress updates.
+    Yields JSON progress events for streaming to SSE client in real-time.
+
+    Args:
+        force_refresh: If True, process all games. If False, only process games without page titles.
+
+    Yields:
+        SSE-formatted events with progress data
+    """
+    import json
+    import queue
+    import threading
+
+    from games.services.wiki_page_lookup_service import WikiPageLookupService
+
+    # Use a queue to pass events from callback to generator in real-time
+    event_queue = queue.Queue()
+
+    # Event to signal when client disconnects
+    stop_event = threading.Event()
+
+    def progress_callback(event_type: str, data: dict) -> None:  # pragma: no cover
+        """Callback to stream service events to SSE client."""
+        # Add event type if not already present
+        if "event" not in data:
+            data["event"] = event_type
+
+        # Queue the event for immediate streaming
+        event_queue.put(json.dumps(data))
+
+    try:
+        # Create service
+        service = WikiPageLookupService(progress_callback=progress_callback)
+
+        # Get games to process
+        if force_refresh:
+            # Process all games
+            games_queryset = models.Game.objects.all().order_by("rank")
+        else:
+            # Only process games without Wikipedia page data
+            games_queryset = models.Game.objects.filter(
+                wikipedia_page_title__isnull=True
+            ).order_by("rank")
+
+        # Extract needed fields
+        games_data = games_queryset.values_list(
+            "id", "name", "wikidata_id", "year_of_release"
+        )
+
+        # Run lookup in a thread to avoid blocking the generator
+        def run_lookup():
+            try:
+                total = len(games_data)
+                progress_callback("start", {"total": total})
+
+                for idx, (game_id, game_name, wikidata_id, year) in enumerate(
+                    games_data, start=1
+                ):
+                    if stop_event.is_set():
+                        break
+
+                    # Perform lookup
+                    result = service.lookup_page(game_name, wikidata_id, year)
+
+                    # Save to database if successful
+                    if result.success:
+                        models.Game.objects.filter(id=game_id).update(
+                            wikipedia_page_title=result.page_title,
+                            wikipedia_lookup_source=result.lookup_source,
+                        )
+
+                        # Emit progress event
+                        progress_callback(
+                            "progress",
+                            {
+                                "current": idx,
+                                "total": total,
+                                "game_name": game_name,
+                                "page_title": result.page_title,
+                                "lookup_source": result.lookup_source,
+                            },
+                        )
+                    else:
+                        # Emit error event
+                        progress_callback(
+                            "error",
+                            {
+                                "current": idx,
+                                "total": total,
+                                "game_name": game_name,
+                                "message": result.error_message,
+                            },
+                        )
+
+                # Emit complete event
+                progress_callback("complete", {"total": total})
+
+            except Exception as e:
+                event_queue.put(json.dumps({"event": "error", "error": str(e)}))
+            finally:
+                # Signal that we're done
+                event_queue.put(None)
+
+        lookup_thread = threading.Thread(target=run_lookup, daemon=True)
+        lookup_thread.start()
+
+        # Stream events as they come in from the queue
+        try:
+            while True:
+                try:
+                    # Wait for event with timeout
+                    event_json = event_queue.get(timeout=120)
+
+                    # None signals the end of the lookup
+                    if event_json is None:
+                        break
+
+                    # Yield the event in SSE format with padding to force flush
+                    # Adding whitespace ensures the web server doesn't buffer the response
+                    yield f"data: {event_json}\n\n" + (" " * 2048) + "\n"
+                except queue.Empty:
+                    # Timeout waiting for events
+                    error_msg = "Lookup timeout - no progress for 120 seconds"
+                    error_data = json.dumps({"event": "error", "error": error_msg})
+                    yield f"data: {error_data}\n\n"
+                    break
+        except GeneratorExit:  # pragma: no cover
+            # Client disconnected - signal the lookup thread to stop
+            stop_event.set()
+            import logging
+
+            logging.getLogger(__name__).info(
+                "Client disconnected from Wikipedia page lookup progress stream. "
+                "Lookup thread continues in background."
+            )
+            raise
+
+    except Exception as e:
+        # Yield error event
+        yield f"data: {json.dumps({'event': 'error', 'error': str(e)})}\n\n"
+
+
 def _validate_prerequisites(import_type: str) -> Optional[Tuple[bool, str]]:
     """
     Validate that prerequisites exist for the given import type.

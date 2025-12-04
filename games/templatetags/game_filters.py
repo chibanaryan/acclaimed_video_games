@@ -344,6 +344,32 @@ FAMILY_INFO = {
 
 
 @register.filter
+def format_duration(seconds):
+    """
+    Format duration in seconds to human-readable string.
+    Examples: "30s", "2m 30s", "1h 15m"
+    """
+    if not seconds or seconds < 0:
+        return "0s"
+
+    seconds = int(seconds)
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+
+    if hours > 0:
+        if minutes > 0:
+            return f"{hours}h {minutes}m"
+        return f"{hours}h"
+    elif minutes > 0:
+        if secs > 0:
+            return f"{minutes}m {secs}s"
+        return f"{minutes}m"
+    else:
+        return f"{secs}s"
+
+
+@register.filter
 def platform_families(platforms):
     """
     Convert a list of platforms to unique families with icons.

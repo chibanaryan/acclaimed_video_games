@@ -170,6 +170,19 @@ class Game(models.Model):
     wikipedia_primary_genre = models.CharField(max_length=200, null=True, blank=True)
     wikipedia_all_genres = models.TextField(null=True, blank=True)
     wikidata_id = models.CharField(max_length=20, null=True, blank=True)
+    wikipedia_page_title = models.CharField(
+        max_length=300,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Wikipedia page title (e.g., 'The Legend of Zelda: Breath of the Wild')",
+    )
+    wikipedia_lookup_source = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Method used: wikidata, opensearch_year, opensearch_basic, opensearch_fallback",
+    )
     # Game of the Day tracking
     is_game_of_the_day = models.BooleanField(
         default=False,

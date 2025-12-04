@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.forms import ModelForm
 from django.http import HttpRequest
+from django.utils.html import format_html
 from django.utils.text import Truncator
 
 from . import models
@@ -48,12 +49,15 @@ class GameAdmin(admin.ModelAdmin):
         "year_of_release",
         "igdb_id",
         "wikidata_id",
+        "wikipedia_page_title",
+        "wikipedia_lookup_source",
+        "_wikipedia_url",
         "igdb_artwork_id",
         "igdb_url",
         "_genres",
     ]
     list_filter = ["year_of_release"]
-    search_fields = ["name"]
+    search_fields = ["name", "wikipedia_page_title"]
     filter_horizontal = ["developers", "platforms", "genres"]
     inlines = [GameQuoteInline]
 
@@ -72,6 +76,15 @@ class GameAdmin(admin.ModelAdmin):
         """Display comma-separated list of genres for the game."""
         # Use prefetched genres instead of values_list to avoid extra query
         return ", ".join(genre.name for genre in obj.genres.all())
+
+    def _wikipedia_url(self, obj: models.Game) -> str:
+        """Display clickable Wikipedia URL if page title exists."""
+        if obj.wikipedia_page_title:
+            url = f"https://en.wikipedia.org/wiki/{obj.wikipedia_page_title.replace(' ', '_')}"
+            return format_html('<a href="{}" target="_blank">{}</a>', url, url)
+        return "-"
+
+    _wikipedia_url.short_description = "Wikipedia URL"
 
 
 @admin.register(models.GameQuote)

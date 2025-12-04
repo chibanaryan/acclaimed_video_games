@@ -91,6 +91,18 @@ WIKI_USER_AGENT = (
 # Wikidata property IDs
 WIKIDATA_GENRE_PROPERTY = "P136"
 
+# Wikipedia page lookup source tracking
+WIKI_LOOKUP_SOURCE_WIKIDATA = "wikidata"
+WIKI_LOOKUP_SOURCE_OPENSEARCH_YEAR = "opensearch_year"
+WIKI_LOOKUP_SOURCE_OPENSEARCH_BASIC = "opensearch_basic"
+WIKI_LOOKUP_SOURCE_OPENSEARCH_FALLBACK = "opensearch_fallback"
+
+# Wikidata API rate limiting
+# Authenticated: 5000 req/hr (~1.39 req/sec)
+# Unauthenticated: 500 req/hr (~0.14 req/sec)
+WIKIDATA_AUTHENTICATED_DELAY = 0.75  # seconds (safely under 1.39 req/sec limit)
+WIKIDATA_UNAUTHENTICATED_DELAY = 2.0  # seconds (safely under 0.14 req/sec limit)
+
 # =============================================================================
 # Wikiquote Configuration
 # =============================================================================

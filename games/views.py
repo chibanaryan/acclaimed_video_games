@@ -1186,10 +1186,14 @@ class ImportView(LoginRequiredMixin, FormView):
             total=Count("id"),
             with_igdb=Count("id", filter=Q(igdb_artwork_id__isnull=False)),
             without_igdb=Count("id", filter=Q(igdb_artwork_id__isnull=True)),
+            with_wikipedia=Count("id", filter=Q(wikipedia_page_title__isnull=False)),
+            without_wikipedia=Count("id", filter=Q(wikipedia_page_title__isnull=True)),
         )
         total_games = game_counts["total"]
         games_with_igdb = game_counts["with_igdb"]
         games_without_igdb = game_counts["without_igdb"]
+        games_with_wikipedia = game_counts["with_wikipedia"]
+        games_without_wikipedia = game_counts["without_wikipedia"]
 
         context["counts"] = {
             "platforms": models.Platform.objects.count(),
@@ -1200,6 +1204,24 @@ class ImportView(LoginRequiredMixin, FormView):
             "developers": models.Developer.objects.count(),
             "genres": models.Genre.objects.count(),
         }
+        # Calculate time estimates
+        # IGDB: ~8-10 games/sec with default settings
+        igdb_estimate_seconds = (
+            int(games_without_igdb / 9) if games_without_igdb > 0 else 0
+        )
+
+        # Wikipedia: depends on authentication
+        # Authenticated: ~1.3 games/sec, Unauthenticated: ~0.5 games/sec
+        from django.conf import settings
+
+        has_wikidata_auth = bool(getattr(settings, "WIKIDATA_ACCESS_TOKEN", None))
+        wiki_games_per_sec = 1.3 if has_wikidata_auth else 0.5
+        wiki_estimate_seconds = (
+            int(games_without_wikipedia / wiki_games_per_sec)
+            if games_without_wikipedia > 0
+            else 0
+        )
+
         context["igdb_counts"] = {
             "total": total_games,
             "with_igdb": games_with_igdb,
@@ -1207,6 +1229,17 @@ class ImportView(LoginRequiredMixin, FormView):
             "percentage": int(
                 (games_with_igdb / total_games * 100) if total_games > 0 else 0
             ),
+            "estimate_seconds": igdb_estimate_seconds,
+        }
+        context["wikipedia_counts"] = {
+            "total": total_games,
+            "with_wikipedia": games_with_wikipedia,
+            "without_wikipedia": games_without_wikipedia,
+            "percentage": int(
+                (games_with_wikipedia / total_games * 100) if total_games > 0 else 0
+            ),
+            "estimate_seconds": wiki_estimate_seconds,
+            "has_auth": has_wikidata_auth,
         }
 
         # Get persistent errors from session
@@ -1317,6 +1350,25 @@ class IGDBProgressView(LoginRequiredMixin, View):
         """Stream IGDB fetch progress as SSE events."""
         return StreamingHttpResponse(
             utils.import_igdb_with_progress(),
+            content_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+
+class WikipediaPageProgressView(LoginRequiredMixin, View):
+    """
+    Streams Wikipedia page lookup progress via Server-Sent Events (SSE).
+    Allows real-time progress bar updates in the browser.
+    """
+
+    def get(self, request, *args, **kwargs):
+        """Stream Wikipedia page lookup progress as SSE events."""
+        force_refresh = request.GET.get("force", "false").lower() == "true"
+        return StreamingHttpResponse(
+            utils.import_wikipedia_pages_with_progress(force_refresh=force_refresh),
             content_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",

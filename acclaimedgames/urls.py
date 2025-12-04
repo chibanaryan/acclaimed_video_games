@@ -34,6 +34,11 @@ urlpatterns = [
     path(
         "import/igdb-progress/", views.IGDBProgressView.as_view(), name="igdb-progress"
     ),
+    path(
+        "import/wikipedia-page-progress/",
+        views.WikipediaPageProgressView.as_view(),
+        name="wikipedia-page-progress",
+    ),
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
     # Main site routes (Django + HTMX + Alpine.js)
     path("", views.HomePageView.as_view(), name="home"),

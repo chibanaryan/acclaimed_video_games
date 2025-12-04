@@ -1893,6 +1893,16 @@
   .static {
     position: static;
   }
+  @layer daisyui.l1.l2 {
+    .tooltip-right > .tooltip-content, .tooltip-right[data-tip]:before {
+      transform: translateX(calc(var(--tt-pos, -0.25rem) + 0.25rem)) translateY(-50%);
+      inset: 50% auto auto var(--tt-off);
+    }
+    .tooltip-right:after {
+      transform: translateX(var(--tt-pos, -0.25rem)) translateY(-50%) rotate(90deg);
+      inset: 50% auto auto calc(var(--tt-tail) + 1px);
+    }
+  }
   .inset-0 {
     inset: calc(var(--spacing) * 0);
   }
@@ -3529,6 +3539,11 @@
     min-height: 100vh;
   }
   @layer daisyui.l1.l2 {
+    .loading-md {
+      width: calc(var(--size-selector, 0.25rem) * 6);
+    }
+  }
+  @layer daisyui.l1.l2 {
     .loading-sm {
       width: calc(var(--size-selector, 0.25rem) * 5);
     }
@@ -3909,6 +3924,9 @@
   .border-primary {
     border-color: var(--color-primary);
   }
+  .border-secondary {
+    border-color: var(--color-secondary);
+  }
   .glass {
     border: none;
     backdrop-filter: blur(var(--glass-blur, 40px));
@@ -3969,6 +3987,14 @@
     }
   }
   .from-primary\/5 {
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+  .from-secondary {
+    --tw-gradient-from: var(--color-secondary);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+  .to-accent {
+    --tw-gradient-to: var(--color-accent);
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
   .to-secondary {
@@ -4338,6 +4364,12 @@
   .text-primary-content {
     color: var(--color-primary-content);
   }
+  .text-secondary {
+    color: var(--color-secondary);
+  }
+  .text-secondary-content {
+    color: var(--color-secondary-content);
+  }
   .text-success {
     color: var(--color-success);
   }
@@ -4538,6 +4570,12 @@
     }
   }
   @layer daisyui.l1.l2 {
+    .badge-info {
+      --badge-color: var(--color-info);
+      --badge-fg: var(--color-info-content);
+    }
+  }
+  @layer daisyui.l1.l2 {
     .badge-primary {
       --badge-color: var(--color-primary);
       --badge-fg: var(--color-primary-content);
@@ -4547,6 +4585,12 @@
     .badge-secondary {
       --badge-color: var(--color-secondary);
       --badge-fg: var(--color-secondary-content);
+    }
+  }
+  @layer daisyui.l1.l2 {
+    .badge-success {
+      --badge-color: var(--color-success);
+      --badge-fg: var(--color-success-content);
     }
   }
   @layer daisyui.l1.l2.l3 {
