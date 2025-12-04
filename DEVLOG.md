@@ -10,6 +10,7 @@
 - Token-based unsubscribe links for easy opt-out
 - Admin interface for managing subscribers (view-only, no manual additions)
 - CSP exemption added for Django admin to fix script loading issues
+- Fixed 404 page formatting: increased card width to max-w-2xl, removed width/height attrs from button icon, sized button appropriately
 
 ## 2025-12-03
 
