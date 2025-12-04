@@ -140,8 +140,9 @@ def import_igdb_with_progress():
                     if event_json is None:
                         break
 
-                    # Yield the event in SSE format
-                    yield f"data: {event_json}\n\n"
+                    # Yield the event in SSE format with padding to force flush
+                    # Adding whitespace ensures the web server doesn't buffer the response
+                    yield f"data: {event_json}\n\n" + (" " * 2048) + "\n"
                 except queue.Empty:
                     # Timeout waiting for events
                     error_msg = "Import timeout - no progress for 120 seconds"
