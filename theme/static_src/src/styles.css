@@ -1,5 +1,7 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: ["lofi", "forest"];
+}
 @plugin "@tailwindcss/typography";
 
 @plugin "daisyui/theme" {

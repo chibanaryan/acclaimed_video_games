@@ -33,6 +33,8 @@
 - Added post author name to notification emails (displays full name or username)
 - Fixed theme persistence issue: removed hardcoded data-theme attribute, added validation to prevent invalid theme values
 - Theme now auto-detects system preference when localStorage contains invalid values (like 'auto')
+- Restricted DaisyUI configuration to only load lofi and forest themes (prevents "auto" theme from being available)
+- Removed stale 'night' theme references from theme toggle logic (fixes theme switching issues)
 
 ## 2025-12-03
 
