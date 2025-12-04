@@ -4,6 +4,9 @@
 
 - Added press quotes to home page hero section from GameStar, 4Players, and 3dJuegos
 - Quotes positioned adjacent to logo with centered tagline below for cohesive layout
+- Made Game of the Day card more compact: narrower (max 448px), centered, smaller cover (160px vs 192px), tighter spacing
+- Added DaisyUI 3D hover effect to Game of the Day cover with mouse-tracking tilt animation
+- Improved press quote formatting: publication names now inline with quotes, increased spacing between quotes
 
 ## 2025-12-02 - 2025-12-03
 
