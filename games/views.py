@@ -20,7 +20,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
 from games import config, constants, models, utils
-from games.forms import ImportForm, ContactForm
+from games.forms import ImportForm, ContactForm, SubscribeForm
 from games.mixins import HTMXPartialMixin, RobustPaginationMixin
 
 
@@ -1323,3 +1323,103 @@ class IGDBProgressView(LoginRequiredMixin, View):
                 "X-Accel-Buffering": "no",
             },
         )
+
+
+# =============================================================================
+# Newsletter Subscription Views
+# =============================================================================
+
+
+class SubscribeView(FormView):
+    """Handle newsletter subscription with double opt-in."""
+
+    template_name = "subscribe.html"
+    form_class = SubscribeForm
+    success_url = reverse_lazy("subscribe_pending")
+
+    def form_valid(self, form):
+        """Process valid subscription form and send confirmation email."""
+        email = form.cleaned_data["email"]
+
+        # Check if already subscribed
+        subscriber, created = models.Subscriber.objects.get_or_create(email=email)
+
+        if not created:
+            # Already exists - check status
+            if subscriber.is_confirmed and subscriber.is_active:
+                # Already subscribed and active
+                return redirect("subscribe_already")
+            elif not subscriber.is_confirmed:
+                # Pending confirmation - resend email
+                utils.send_subscription_confirmation_email(subscriber)
+                return redirect("subscribe_pending")
+            else:
+                # Was unsubscribed - reactivate and send confirmation
+                subscriber.is_active = True
+                subscriber.is_confirmed = False
+                subscriber.save()
+                utils.send_subscription_confirmation_email(subscriber)
+                return redirect("subscribe_pending")
+        else:
+            # New subscriber - send confirmation email
+            email_sent = utils.send_subscription_confirmation_email(subscriber)
+
+            if not email_sent:
+                # If email fails, delete the subscriber and show error
+                subscriber.delete()
+                form.add_error(
+                    None,
+                    (
+                        "We're sorry, but there was an error sending "
+                        "the confirmation email. Please try again later "
+                        "or contact us at contact@acclaimedvideogames.com"
+                    ),
+                )
+                return self.form_invalid(form)
+
+        return super().form_valid(form)
+
+
+class SubscribePendingView(TemplateView):
+    """Display pending confirmation message."""
+
+    template_name = "subscribe_pending.html"
+
+
+class SubscribeAlreadyView(TemplateView):
+    """Display already subscribed message."""
+
+    template_name = "subscribe_already.html"
+
+
+class ConfirmSubscriptionView(TemplateView):
+    """Confirm subscription via token."""
+
+    template_name = "subscribe_confirmed.html"
+
+    def get(self, request, token):
+        """Process confirmation token."""
+        try:
+            subscriber = models.Subscriber.objects.get(confirmation_token=token)
+            subscriber.is_confirmed = True
+            subscriber.is_active = True
+            subscriber.save()
+            return self.render_to_response({"success": True})
+        except models.Subscriber.DoesNotExist:
+            return self.render_to_response({"success": False})
+
+
+class UnsubscribeView(TemplateView):
+    """Handle unsubscribe requests."""
+
+    template_name = "unsubscribe.html"
+
+    def get(self, request, token):
+        """Process unsubscribe token."""
+        try:
+            subscriber = models.Subscriber.objects.get(unsubscribe_token=token)
+            subscriber.is_active = False
+            subscriber.save()
+            return self.render_to_response({"success": True, "email": subscriber.email})
+        except models.Subscriber.DoesNotExist:
+            return self.render_to_response({"success": False})

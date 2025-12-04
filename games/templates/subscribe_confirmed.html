@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if success %}Subscription Confirmed{% else %}Invalid Link{% endif %} - Acclaimed Games{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[60vh]">
+    <div class="card bg-base-100 shadow-xl max-w-md w-full">
+        <div class="card-body items-center text-center">
+            {% if success %}
+            {# Success Icon #}
+            <div class="text-6xl text-success mb-4">
+                <span class="mdi mdi-check-circle"></span>
+            </div>
+
+            <h1 class="card-title text-2xl mb-4">Subscription Confirmed!</h1>
+
+            <p class="text-base-content/85 mb-4">
+                Thank you for subscribing! You'll receive an email notification when we publish new content.
+            </p>
+
+            <div class="card-actions mt-4">
+                <a href="{% url 'home' %}" class="btn btn-primary">
+                    <span class="mdi mdi-home mr-2"></span>
+                    Return Home
+                </a>
+            </div>
+            {% else %}
+            {# Error Icon #}
+            <div class="text-6xl text-error mb-4">
+                <span class="mdi mdi-alert-circle"></span>
+            </div>
+
+            <h1 class="card-title text-2xl mb-4">Invalid Confirmation Link</h1>
+
+            <p class="text-base-content/85 mb-4">
+                This confirmation link is invalid or has expired. Please try subscribing again.
+            </p>
+
+            <div class="card-actions mt-4">
+                <a href="{% url 'subscribe' %}" class="btn btn-outline">
+                    <span class="mdi mdi-email-outline mr-2"></span>
+                    Subscribe Again
+                </a>
+                <a href="{% url 'home' %}" class="btn btn-ghost">
+                    Return Home
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

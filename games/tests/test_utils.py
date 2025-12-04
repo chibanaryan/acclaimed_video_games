@@ -445,3 +445,195 @@ class GetOrSetCacheTests(TestCase):
 
         self.assertEqual(result1, result2)
         self.assertEqual(len(result2), 3)  # Still has 3 genres from cache
+
+
+class SendSubscriptionConfirmationEmailTests(TestCase):
+    """Test send_subscription_confirmation_email utility function."""
+
+    def test_sends_confirmation_email(self):
+        """Test sending confirmation email successfully."""
+        from django.core import mail
+
+        from games.models import Subscriber
+
+        subscriber = Subscriber.objects.create(
+            email="test@example.com",
+        )
+
+        result = utils.send_subscription_confirmation_email(subscriber)
+
+        self.assertTrue(result)
+        self.assertEqual(len(mail.outbox), 1)
+
+        email = mail.outbox[0]
+        self.assertIn("Confirm your subscription", email.subject)
+        self.assertIn("test@example.com", email.to)
+        self.assertIn(subscriber.confirmation_token, email.body)
+        self.assertIn("confirm", email.body)
+
+    def test_handles_exception(self):
+        """Test email sending with exception."""
+        from games.models import Subscriber
+
+        subscriber = Subscriber.objects.create(email="test@example.com")
+
+        with mock.patch("django.core.mail.send_mail", side_effect=Exception("Error")):
+            result = utils.send_subscription_confirmation_email(subscriber)
+            self.assertFalse(result)
+
+
+class SendPostNotificationEmailTests(TestCase):
+    """Test send_post_notification_email utility function."""
+
+    def test_sends_multipart_notification_email(self):
+        """Test sending multipart notification email."""
+        from django.contrib.auth import get_user_model
+        from django.core import mail
+
+        from games.models import Post, Subscriber
+
+        User = get_user_model()
+        user = User.objects.create_user(username="testuser", email="author@example.com")
+
+        post = Post.objects.create(
+            title="Test Post",
+            text="# Test\n\n[Link](https://example.com)",
+            author=user,
+        )
+
+        subscriber = Subscriber.objects.create(
+            email="subscriber@example.com",
+            is_confirmed=True,
+        )
+
+        result = utils.send_post_notification_email(post, subscriber)
+
+        self.assertTrue(result)
+        self.assertEqual(len(mail.outbox), 1)
+
+        email = mail.outbox[0]
+        self.assertIn("Test Post", email.subject)
+        self.assertIn("subscriber@example.com", email.to)
+        self.assertIn("Test Post", email.body)
+        self.assertIn(subscriber.unsubscribe_token, email.body)
+
+        # Check multipart (HTML alternative)
+        self.assertEqual(len(email.alternatives), 1)
+        html_content, content_type = email.alternatives[0]
+        self.assertEqual(content_type, "text/html")
+        self.assertIn("<h1>Test</h1>", html_content)
+        self.assertIn('href="https://example.com"', html_content)
+
+    def test_handles_exception(self):
+        """Test notification sending with exception."""
+        from django.contrib.auth import get_user_model
+
+        from games.models import Post, Subscriber
+
+        User = get_user_model()
+        user = User.objects.create_user(username="testuser", email="author@example.com")
+
+        post = Post.objects.create(title="Test Post", text="Test content", author=user)
+
+        subscriber = Subscriber.objects.create(email="test@example.com")
+
+        with mock.patch(
+            "django.core.mail.EmailMultiAlternatives.send",
+            side_effect=Exception("Error"),
+        ):
+            result = utils.send_post_notification_email(post, subscriber)
+            self.assertFalse(result)
+
+
+class NotifySubscribersOfNewPostTests(TestCase):
+    """Test notify_subscribers_of_new_post utility function."""
+
+    def test_notifies_confirmed_active_subscribers(self):
+        """Test batch notification to confirmed subscribers."""
+        from django.contrib.auth import get_user_model
+        from django.core import mail
+
+        from games.models import Post, Subscriber
+
+        User = get_user_model()
+        user = User.objects.create_user(username="testuser", email="author@example.com")
+
+        post = Post.objects.create(title="Test Post", text="Test content", author=user)
+
+        # Create confirmed subscribers
+        Subscriber.objects.create(
+            email="confirmed1@example.com",
+            is_confirmed=True,
+            is_active=True,
+        )
+        Subscriber.objects.create(
+            email="confirmed2@example.com",
+            is_confirmed=True,
+            is_active=True,
+        )
+
+        # Create unconfirmed subscriber (should not receive email)
+        Subscriber.objects.create(
+            email="unconfirmed@example.com",
+            is_confirmed=False,
+            is_active=True,
+        )
+
+        # Create inactive subscriber (should not receive email)
+        Subscriber.objects.create(
+            email="inactive@example.com",
+            is_confirmed=True,
+            is_active=False,
+        )
+
+        sent_count = utils.notify_subscribers_of_new_post(post)
+
+        self.assertEqual(sent_count, 2)
+        self.assertEqual(len(mail.outbox), 2)
+
+        recipient_emails = [email.to[0] for email in mail.outbox]
+        self.assertIn("confirmed1@example.com", recipient_emails)
+        self.assertIn("confirmed2@example.com", recipient_emails)
+        self.assertNotIn("unconfirmed@example.com", recipient_emails)
+        self.assertNotIn("inactive@example.com", recipient_emails)
+
+    def test_handles_individual_failures(self):
+        """Test that individual email failures don't stop batch."""
+        from django.contrib.auth import get_user_model
+
+        from games.models import Post, Subscriber
+
+        User = get_user_model()
+        user = User.objects.create_user(username="testuser", email="author@example.com")
+
+        post = Post.objects.create(title="Test Post", text="Test content", author=user)
+
+        Subscriber.objects.create(
+            email="subscriber1@example.com",
+            is_confirmed=True,
+            is_active=True,
+        )
+        Subscriber.objects.create(
+            email="subscriber2@example.com",
+            is_confirmed=True,
+            is_active=True,
+        )
+
+        # Mock to fail on first, succeed on second
+        original_func = utils.send_post_notification_email
+        call_count = [0]
+
+        def side_effect_func(*args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return False  # First call fails
+            return original_func(*args, **kwargs)  # Rest succeed
+
+        with mock.patch(
+            "games.utils.send_post_notification_email",
+            side_effect=side_effect_func,
+        ):
+            sent_count = utils.notify_subscribers_of_new_post(post)
+
+        # Should send to 1 (second one succeeded)
+        self.assertEqual(sent_count, 1)

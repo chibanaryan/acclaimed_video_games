@@ -113,8 +113,9 @@ class SnippetAdmin(admin.ModelAdmin):
 
 @admin.register(models.Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "author", "date", "active"]
-    list_filter = ["author", "active"]
+    list_display = ["__str__", "author", "date", "active", "notification_sent"]
+    list_filter = ["author", "active", "notification_sent"]
+    readonly_fields = ["notification_sent"]
 
 
 @admin.register(models.SiteMetadata)
@@ -128,4 +129,30 @@ class SiteMetadataAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         # Prevent deletion of the singleton instance
+        return False
+
+
+@admin.register(models.Subscriber)
+class SubscriberAdmin(admin.ModelAdmin):
+    """Admin interface for newsletter subscribers."""
+
+    list_display = [
+        "email",
+        "is_confirmed",
+        "is_active",
+        "date_subscribed",
+    ]
+    list_filter = ["is_confirmed", "is_active", "date_subscribed"]
+    search_fields = ["email"]
+    readonly_fields = [
+        "email",
+        "date_subscribed",
+        "confirmation_token",
+        "unsubscribe_token",
+    ]
+    ordering = ["-date_subscribed"]
+
+    def has_add_permission(self, request):
+        # Prevent manual addition of subscribers through admin
+        # Subscribers should only be added via the public subscription form
         return False

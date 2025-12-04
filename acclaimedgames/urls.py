@@ -42,6 +42,26 @@ urlpatterns = [
         views.ContactThankYouView.as_view(),
         name="contact_thank_you",
     ),
+    # Newsletter subscription routes
+    path("subscribe/", views.SubscribeView.as_view(), name="subscribe"),
+    path(
+        "subscribe/pending/",
+        views.SubscribePendingView.as_view(),
+        name="subscribe_pending",
+    ),
+    path(
+        "subscribe/already/",
+        views.SubscribeAlreadyView.as_view(),
+        name="subscribe_already",
+    ),
+    path(
+        "subscribe/confirm/<str:token>/",
+        views.ConfirmSubscriptionView.as_view(),
+        name="subscribe_confirm",
+    ),
+    path(
+        "unsubscribe/<str:token>/", views.UnsubscribeView.as_view(), name="unsubscribe"
+    ),
     path("rankings/", views.GameSearchView.as_view(), name="games-list"),
     path("rankings/download/", views.download_games_csv, name="games-download"),
     # Redirect old URLs to new rankings page (preserves query params)

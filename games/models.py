@@ -544,7 +544,21 @@ class Post(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
     text = models.TextField()
     date = models.DateTimeField(auto_now_add=True, db_index=True)
-    active = models.BooleanField(default=True, db_index=True)
+    active = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text=(
+            "⚠️ Checking this box will publish the post and "
+            "send email notifications to all subscribers."
+        ),
+    )
+    notification_sent = models.BooleanField(
+        default=False,
+        help_text=(
+            "Tracks whether email notification has been sent "
+            "for this post (sent only once)."
+        ),
+    )
     author = models.ForeignKey(
         get_user_model(),
         on_delete=models.SET_NULL,
@@ -566,3 +580,39 @@ class Post(models.Model):
     def text_rendered(self) -> str:
         """Render the markdown text as HTML (cached)."""
         return markdown.markdown(self.text)
+
+
+class Subscriber(models.Model):
+    """
+    Newsletter subscriber for post notifications with double opt-in.
+    """
+
+    email = models.EmailField(unique=True, db_index=True)
+    date_subscribed = models.DateTimeField(auto_now_add=True)
+    is_confirmed = models.BooleanField(default=False, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    confirmation_token = models.CharField(max_length=64, unique=True, db_index=True)
+    unsubscribe_token = models.CharField(max_length=64, unique=True, db_index=True)
+
+    class Meta:
+        ordering = ["-date_subscribed"]
+        indexes = [
+            models.Index(fields=["is_confirmed", "is_active"]),
+        ]
+
+    def __str__(self) -> str:
+        status = "confirmed" if self.is_confirmed else "pending"
+        active_status = "" if self.is_active else " (unsubscribed)"
+        return f"{self.email} ({status}){active_status}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Generate tokens on first save if not already set."""
+        if not self.confirmation_token:
+            import secrets
+
+            self.confirmation_token = secrets.token_urlsafe(32)
+        if not self.unsubscribe_token:
+            import secrets
+
+            self.unsubscribe_token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)

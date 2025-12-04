@@ -248,6 +248,7 @@ EMAIL_HOST_PASSWORD = env("BREVO_SMTP_KEY", default="")
 
 DEFAULT_FROM_EMAIL = "contact@acclaimedvideogames.com"
 CONTACT_EMAIL = "contact@acclaimedvideogames.com"
+SITE_URL = "https://www.acclaimedvideogames.com"
 
 # Logging configuration
 # Suppress noisy logs during test runs

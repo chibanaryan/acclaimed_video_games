@@ -23,16 +23,16 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex justify-center pt-4">
-    <div class="card bg-base-100 shadow-xl max-w-lg w-full">
+<div class="flex justify-center pt-4 px-4">
+    <div class="card bg-base-100 shadow-xl max-w-2xl w-full">
         <div class="card-body items-center text-center">
             {# 4 Moon 4 header #}
-            <h1 class="text-error font-bold" style="font-size: clamp(4rem, 15vw, 8rem);">
+            <h1 class="text-error font-bold overflow-visible" style="font-size: clamp(4rem, 15vw, 8rem); line-height: 1.2;">
                 4<img src="{% static 'games/zelda-moon.png' %}"
                      alt="Moon"
                      width="514" height="498"
                      class="inline-block align-middle mx-1 animate-moon-shake"
-                     style="height: 1em; position: relative; top: -0.05em; aspect-ratio: 514 / 498;">4
+                     style="height: 1em; width: auto; position: relative; top: -0.05em; aspect-ratio: 514 / 498;">4
             </h1>
 
             {# Salesman GIF #}
@@ -62,9 +62,9 @@
             </p>
 
             {# Button #}
-            <div class="card-actions mt-6">
-                <a href="{% url 'games-list' %}" id="song-of-time-btn" class="btn btn-primary btn-lg gap-2">
-                    <img src="{% static 'games/zelda-ocarina.svg' %}" alt="" width="512" height="512" class="h-5" style="filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(186deg) brightness(100%) contrast(101%);">
+            <div class="flex justify-center mt-6">
+                <a href="{% url 'games-list' %}" id="song-of-time-btn" class="btn btn-primary btn-sm px-4">
+                    <img src="{% static 'games/zelda-ocarina.svg' %}" alt="" width="512" height="512" class="h-4" style="filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(186deg) brightness(100%) contrast(101%);">
                     Play the Song of Time
                 </a>
             </div>

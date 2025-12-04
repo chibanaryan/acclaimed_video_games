@@ -134,6 +134,26 @@
         {% endif %}
 
         <h3 class="text-xl font-bold mb-4">Latest News</h3>
+
+        {# Newsletter Subscribe Form #}
+        <div class="card bg-base-200 shadow-sm mb-6">
+            <div class="card-body py-4 px-4">
+                <p class="text-sm text-base-content/80 mb-3">
+                    <span class="mdi mdi-email-outline mr-1"></span>
+                    Get notified when we publish new content
+                </p>
+                <form method="post" action="{% url 'subscribe' %}" class="flex gap-2">
+                    {% csrf_token %}
+                    <input type="email" name="email" placeholder="your@email.com" required
+                           class="input input-bordered input-sm flex-grow text-sm" />
+                    <input type="text" name="website" style="display:none;" tabindex="-1" autocomplete="off" />
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Subscribe
+                    </button>
+                </form>
+            </div>
+        </div>
+
         {% for post in posts %}
             {% include 'posts/includes/_post_item.html' with post=post %}
         {% endfor %}

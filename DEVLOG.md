@@ -1,5 +1,16 @@
 # Developer Log
 
+## 2025-12-04
+
+- Implemented newsletter subscription feature with double opt-in email confirmation
+- Email notifications automatically sent to confirmed subscribers when posts are published (active=True)
+- One-time notification per post using notification_sent field to prevent duplicate emails
+- Subscribe form added to home page (next to Latest News) and sidebar navigation
+- Multipart emails (HTML + plain text) with full post content and working markdown links
+- Token-based unsubscribe links for easy opt-out
+- Admin interface for managing subscribers (view-only, no manual additions)
+- CSP exemption added for Django admin to fix script loading issues
+
 ## 2025-12-03
 
 - Added press quotes to home page hero section from GameStar, 4Players, and 3dJuegos

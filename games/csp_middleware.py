@@ -34,6 +34,10 @@ class CSPMiddleware:
             response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
             response["Access-Control-Allow-Headers"] = "Content-Type"
 
+        # Skip CSP for admin URLs (admin has its own security via authentication)
+        if request.path.startswith("/admin/"):
+            return response
+
         # Build CSP policy with nonce
         # Note: 'unsafe-eval' and 'unsafe-inline' are required for Alpine.js
         # - 'unsafe-eval' for x-data expressions
