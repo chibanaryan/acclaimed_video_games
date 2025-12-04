@@ -18,31 +18,71 @@
 {% endblock %}
 
 {% block content %}
-{# Centered Logo and Tagline #}
+{# Hero Section: Logo + Press Quotes #}
+<div class="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 mb-4">
+    {# Logo #}
+    <div class="flex-shrink-0">
+        {# Dark theme logo (white text) - shown in dark themes #}
+        <picture class="show-dark block" style="max-width: 450px;">
+            <source type="image/webp"
+                    srcset="{% static 'games/avg_logo_web.webp' %} 548w, {% static 'games/avg_logo.webp' %} 1092w"
+                    sizes="450px">
+            <img src="{% static 'games/avg_logo.png' %}"
+                 srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
+                 sizes="450px"
+                 alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
+                 class="w-full h-auto">
+        </picture>
+        {# Light theme logo (black text) - shown in light themes #}
+        <picture class="show-light block" style="max-width: 450px;">
+            <source type="image/webp"
+                    srcset="{% static 'games/avg_logo_dark_web.webp' %} 548w, {% static 'games/avg_logo_dark.webp' %} 1092w"
+                    sizes="450px">
+            <img src="{% static 'games/avg_logo_dark.png' %}"
+                 srcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w"
+                 sizes="450px"
+                 alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
+                 class="w-full h-auto">
+        </picture>
+    </div>
+
+    {# Press Quotes #}
+    <div class="flex flex-col gap-3 text-center lg:text-left">
+        <a href="https://youtu.be/D4SGbPzT4Oc?list=PLDVpDN_65MqCHONpuj1oYN_LNLuFAoW1b"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="transition-colors">
+            <blockquote class="text-sm italic text-base-content/80">
+                "The ultimate list of the best games of all time"
+            </blockquote>
+            <cite class="text-xs font-semibold text-primary hover:text-primary-focus not-italic">— GameStar</cite>
+        </a>
+
+        <a href="https://www.4p.de/news/gaming-fan-baut-aus-ueber-700-bestenliste-ultimative-gaming-liste/3245269"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="transition-colors">
+            <blockquote class="text-sm italic text-base-content/80">
+                "Top list of all top lists"
+            </blockquote>
+            <cite class="text-xs font-semibold text-primary hover:text-primary-focus not-italic">— 4Players</cite>
+        </a>
+
+        <a href="https://www.3djuegos.com/juegos/the-legend-of-zelda-breath-of-the-wild/noticias/ha-pasado-4-anos-analizando-700-listas-mejores-videojuegos-historia-para-crear-ranking-definitivo"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="transition-colors">
+            <blockquote class="text-sm italic text-base-content/80">
+                "The definitive ranking"
+            </blockquote>
+            <cite class="text-xs font-semibold text-primary hover:text-primary-focus not-italic">— 3dJuegos</cite>
+        </a>
+    </div>
+</div>
+
+{# Centered Tagline #}
 <div class="text-center mb-8">
-    {# Dark theme logo (white text) - shown in dark themes #}
-    <picture class="show-dark block mx-auto" style="max-width: 450px;">
-        <source type="image/webp"
-                srcset="{% static 'games/avg_logo_web.webp' %} 548w, {% static 'games/avg_logo.webp' %} 1092w"
-                sizes="450px">
-        <img src="{% static 'games/avg_logo.png' %}"
-             srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
-             sizes="450px"
-             alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
-             class="w-full h-auto">
-    </picture>
-    {# Light theme logo (black text) - shown in light themes #}
-    <picture class="show-light block mx-auto" style="max-width: 450px;">
-        <source type="image/webp"
-                srcset="{% static 'games/avg_logo_dark_web.webp' %} 548w, {% static 'games/avg_logo_dark.webp' %} 1092w"
-                sizes="450px">
-        <img src="{% static 'games/avg_logo_dark.png' %}"
-             srcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w"
-             sizes="450px"
-             alt="Acclaimed Games" width="1092" height="737" fetchpriority="high"
-             class="w-full h-auto">
-    </picture>
-    <p class="text-xl mt-4 text-base-content/80">
+    <p class="text-xl text-base-content/80">
         The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
     </p>
 </div>

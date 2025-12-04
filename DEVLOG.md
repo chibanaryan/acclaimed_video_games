@@ -1,5 +1,10 @@
 # Developer Log
 
+## 2025-12-03
+
+- Added press quotes to home page hero section from GameStar, 4Players, and 3dJuegos
+- Quotes positioned adjacent to logo with centered tagline below for cohesive layout
+
 ## 2025-12-02 - 2025-12-03
 
 - Performance optimizations: optimized mobile images (square thumbnails save ~214 KiB), converted logo images to WebP format (36-44% smaller), split/minified JavaScript (60% less main thread blocking), inlined MDI CSS (510ms faster), deferred Google Analytics, enabled GZip compression, optimized WhiteNoise caching
