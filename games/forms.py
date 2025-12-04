@@ -217,7 +217,7 @@ class ImportForm(forms.Form):
         """Validate games file format."""
         file_obj = self.cleaned_data.get("games_file")
         if file_obj:
-            self._validate_tsv_file(file_obj, 5)
+            self._validate_tsv_file(file_obj, 6)
         return file_obj
 
     def clean_memberships_file(self):

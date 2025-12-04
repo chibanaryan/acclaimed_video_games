@@ -76,7 +76,7 @@ class ImportFormTests(TestCase):
     def test_clean_games_file_valid(self):
         """Test clean_games_file with valid file."""
         form = ImportForm()
-        file_obj = SimpleUploadedFile("Top1000.txt", b"1\tGame\t2024\t12345\tPC")
+        file_obj = SimpleUploadedFile("Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ12345")
         form.cleaned_data = {"games_file": file_obj}
 
         result = form.clean_games_file()

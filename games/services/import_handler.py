@@ -608,7 +608,7 @@ def import_games(
 ) -> Tuple[bool, str]:
     """
     Import games from a TSV file with columns:
-    rank, name, year, IGDB id, comma separated platform codes.
+    rank, name, year, platforms (comma-separated codes), IGDB id, Wikidata id.
 
     Args:
         f: File object to read from
@@ -636,7 +636,7 @@ def import_games(
         progress_callback("start", {"total": total_rows, "file": "Games"})
 
     try:
-        for rank, game_name, year, igdb_id, platforms in rows:
+        for rank, game_name, year, platforms, igdb_id, wikidata_id in rows:
             row_number += 1
             platform_codes = platforms.split(",")
             platform_objs = []
@@ -650,12 +650,19 @@ def import_games(
                 )
                 platform_objs.append(platform)
 
+            # Handle Wikidata ID (take first if multiple, strip whitespace)
+            wikidata_value = None
+            if wikidata_id and wikidata_id.strip():
+                # Split by comma and take first ID only
+                wikidata_value = wikidata_id.split(",")[0].strip()
+
             game, created = models.Game.objects.update_or_create(
                 igdb_id=igdb_id,
                 defaults={
                     "rank": int(rank),
                     "name": game_name,
                     "year_of_release": year,
+                    "wikidata_id": wikidata_value,
                 },
             )
             game.platforms.set(platform_objs)

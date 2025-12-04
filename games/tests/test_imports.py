@@ -10,7 +10,7 @@ from .. import models, utils
 class ImportGamesTests(TestCase):
 
     def test_import_games_creates_and_updates(self):
-        data = "1\tFirst Game\t1990\t101\tPC\r\n"
+        data = "1\tFirst Game\t1990\tPC\t101\tQ12345\r\n"
         success, message = utils.import_games(StringIO(data))
 
         self.assertTrue(success)
@@ -20,7 +20,7 @@ class ImportGamesTests(TestCase):
         self.assertEqual(game.year_of_release, 1990)
         self.assertEqual(game.platforms.get().code, "PC")
 
-        updated_data = "1\tFirst Game Deluxe\t1991\t101\tPC,PS5\r\n"
+        updated_data = "1\tFirst Game Deluxe\t1991\tPC,PS5\t101\tQ12345\r\n"
         success, message = utils.import_games(StringIO(updated_data))
 
         self.assertTrue(success)
@@ -43,7 +43,7 @@ class ImportGamesTests(TestCase):
         # Create enough games to trigger progress updates (every 10, line 687)
         data_lines = []
         for i in range(25):  # More than 10 to trigger progress
-            data_lines.append(f"{i+1}\tGame {i+1}\t1990\t{i+100}\tPC")
+            data_lines.append(f"{i+1}\tGame {i+1}\t1990\tPC\t{i+100}\tQ{12345+i}")
         data = "\r\n".join(data_lines) + "\r\n"
 
         success, message = utils.import_games(StringIO(data), progress_callback)
@@ -81,6 +81,42 @@ class ImportGamesTests(TestCase):
         # Should have received error event
         error_events = [e for e in callback_events if e[0] == "error"]
         self.assertGreater(len(error_events), 0)
+
+    def test_import_games_with_wikidata_id(self):
+        """Test that Wikidata IDs are imported correctly."""
+        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964\r\n"
+        success, message = utils.import_games(StringIO(data))
+
+        self.assertTrue(success)
+        game = models.Game.objects.get()
+        self.assertEqual(game.wikidata_id, "Q17185964")
+
+    def test_import_games_with_multiple_wikidata_ids(self):
+        """Test that only first Wikidata ID is stored when multiple exist."""
+        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964,Q99999\r\n"
+        success, message = utils.import_games(StringIO(data))
+
+        self.assertTrue(success)
+        game = models.Game.objects.get()
+        self.assertEqual(game.wikidata_id, "Q17185964")
+
+    def test_import_games_with_empty_wikidata_id(self):
+        """Test that empty Wikidata IDs are handled gracefully."""
+        data = "1\tTest Game\t2024\tPC\t12345\t\r\n"
+        success, message = utils.import_games(StringIO(data))
+
+        self.assertTrue(success)
+        game = models.Game.objects.get()
+        self.assertIsNone(game.wikidata_id)
+
+    def test_import_games_with_whitespace_wikidata_id(self):
+        """Test that whitespace is stripped from Wikidata IDs."""
+        data = "1\tTest Game\t2024\tPC\t12345\t  Q17185964  \r\n"
+        success, message = utils.import_games(StringIO(data))
+
+        self.assertTrue(success)
+        game = models.Game.objects.get()
+        self.assertEqual(game.wikidata_id, "Q17185964")
 
 
 class ImportPlatformsTests(TestCase):
@@ -430,7 +466,9 @@ class ImportBatchWithProgressTests(TestCase):
     def test_import_batch_with_progress_validation_error(self):
         """Test import_batch_with_progress with validation error (lines 256-265)."""
         # Try to import games without platforms (should fail validation)
-        games_file = SimpleUploadedFile("Top1000.txt", b"1\tGame\t2024\t12345\tPC\r\n")
+        games_file = SimpleUploadedFile(
+            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ44444\r\n"
+        )
         data = {"games_file": games_file}
 
         # Clear platforms
@@ -553,7 +591,9 @@ class ImportBatchWithProgressTests(TestCase):
     def test_import_batch_with_progress_validation_error_detailed(self):
         """Test import_batch_with_progress validation error handling (lines 256-265)."""
         # Try to import games without platforms - should trigger validation error
-        games_file = SimpleUploadedFile("Top1000.txt", b"1\tGame\t2024\t12345\tPC\r\n")
+        games_file = SimpleUploadedFile(
+            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ88888\r\n"
+        )
         data = {"games_file": games_file}
 
         # Clear platforms to trigger validation error
@@ -580,7 +620,9 @@ class ImportBatchWithProgressTests(TestCase):
         # Mock validation to return an error
         mock_validate.return_value = (False, "Missing prerequisites")
 
-        games_file = SimpleUploadedFile("Top1000.txt", b"1\tGame\t2024\t12345\tPC\r\n")
+        games_file = SimpleUploadedFile(
+            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ77777\r\n"
+        )
         data = {"games_file": games_file}
 
         generator = utils.import_batch_with_progress(data)
@@ -613,7 +655,7 @@ class ImportBatchTests(TestCase):
             "PlatformDB.txt", b"PC\tPersonal Computer\r\n"
         )
         games_file = SimpleUploadedFile(
-            "Top1000.txt", b"1\tTest Game\t2024\t12345\tPC\r\n"
+            "Top1000.txt", b"1\tTest Game\t2024\tPC\t12345\tQ66666\r\n"
         )
 
         data = {
@@ -692,7 +734,9 @@ class ImportDataTests(TestCase):
     def test_import_batch_validation_error_return(self):
         """Test import_batch validation error return (line 355)."""
         # Try to import games without platforms
-        games_file = SimpleUploadedFile("Top1000.txt", b"1\tGame\t2024\t12345\tPC\r\n")
+        games_file = SimpleUploadedFile(
+            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ55555\r\n"
+        )
         data = {"games_file": games_file}
 
         # Clear platforms
@@ -777,8 +821,8 @@ class ImportDataTests(TestCase):
         # Create required platform
         models.Platform.objects.create(code="PC", name="PC")
 
-        # Create a game file in legacy format
-        game_data = b"1\tTest Game\t2024\t12345\tPC\r\n"
+        # Create a game file in new format
+        game_data = b"1\tTest Game\t2024\tPC\t12345\tQ99999\r\n"
         file_obj = BytesIO(game_data)
 
         # Get metadata before import

@@ -169,7 +169,7 @@ class Game(models.Model):
     # all_genres is pipe-separated for display/filtering
     wikipedia_primary_genre = models.CharField(max_length=200, null=True, blank=True)
     wikipedia_all_genres = models.TextField(null=True, blank=True)
-    wikidata_id = models.CharField(max_length=20, null=True, blank=True)  # deprecated
+    wikidata_id = models.CharField(max_length=20, null=True, blank=True)
     # Game of the Day tracking
     is_game_of_the_day = models.BooleanField(
         default=False,
