@@ -31,12 +31,6 @@
 {% if game %}
     <div class="flex items-center gap-3 mb-4">
         <h1 class="text-3xl font-bold">{{ game.name }}</h1>
-        {% if is_game_of_the_day %}
-        <span class="badge badge-primary badge-lg">
-            <span class="mdi mdi-star"></span>
-            Game of the Day
-        </span>
-        {% endif %}
     </div>
     {% block extra_head %}
         {% if game.image %}

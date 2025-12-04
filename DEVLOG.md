@@ -2,6 +2,11 @@
 
 ## 2025-12-04
 
+- Removed Game of the Day feature (model fields, service, templates, views, tests)
+- Home page now shows 5 latest posts instead of 3
+- "All posts" button on home page now links to page 2 (skipping first 5 posts)
+- Mobile home page now shows only top 10 games (desktop still shows 30)
+- Removed Subscribe page links from sidebar and mobile navigation
 - Implemented Wikipedia page lookup feature with Wikidata ID integration
 - Added "Fetch Wikipedia Pages" button to /import/ page with real-time SSE progress tracking
 - Primary lookup via Wikidata API (10x faster with authentication), fallback to OpenSearch API

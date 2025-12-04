@@ -4683,6 +4683,11 @@
     }
   }
   @media (width >= 48rem) {
+    .md\:inline {
+      display: inline;
+    }
+  }
+  @media (width >= 48rem) {
     .md\:w-1\/2 {
       width: calc(1/2 * 100%);
     }

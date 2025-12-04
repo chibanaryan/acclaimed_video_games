@@ -158,42 +158,6 @@ class HomePageViewTest(TestCase):
             self.assertIn("form", response.context)
             self.assertFalse(response.context["form"].is_valid())
 
-    def test_home_page_includes_game_of_the_day(self):
-        """Test that Game of the Day appears when complete game exists."""
-        from games.models import Developer, DeveloperAlias, GameQuote
-
-        # Create complete game
-        dev = Developer.objects.create(name="Test Dev", slug="test-dev")
-        dev_alias = DeveloperAlias.objects.create(developer=dev, name="Test Dev")
-
-        game = Game.objects.create(
-            name="Featured Game",
-            slug="featured",
-            rank=1,
-            igdb_artwork_id="test123",
-            year_of_release=2023,
-            description="A featured game.",
-        )
-        game.developers.add(dev_alias)
-        GameQuote.objects.create(
-            game=game, text="Amazing!", attribution="IGN", is_featured=True
-        )
-
-        response = self.client.get(reverse("home"))
-
-        # Should include game_of_the_day in context
-        self.assertIn("game_of_the_day", response.context)
-        gotd = response.context["game_of_the_day"]
-        self.assertIsNotNone(gotd)
-
-    def test_home_page_handles_no_game_of_the_day(self):
-        """Test that home page works when no complete games exist."""
-        response = self.client.get(reverse("home"))
-        self.assertEqual(response.status_code, 200)
-
-        # game_of_the_day may not be in context or be None
-        # No assertion - just ensure page doesn't crash
-
 
 class ContactThankYouViewTest(TestCase):
     """Test the contact thank you page view."""
@@ -401,90 +365,6 @@ class GameDetailViewTest(TestCase):
             reverse("game-detail", kwargs={"slug": "invalid-slug"})
         )
         self.assertEqual(response.status_code, 404)
-
-    def test_game_of_the_day_flag_when_is_gotd(self):
-        """Test that is_game_of_the_day flag is True when game is Game of the Day."""
-        from datetime import datetime
-
-        from games.models import Developer, DeveloperAlias, GameQuote
-
-        # Create complete game that can be Game of the Day
-        dev = Developer.objects.create(name="Dev", slug="dev")
-        dev_alias = DeveloperAlias.objects.create(developer=dev, name="Dev")
-
-        complete_game = Game.objects.create(
-            name="GOTD Game",
-            slug="gotd-game",
-            rank=1,
-            igdb_artwork_id="test123",
-            year_of_release=2023,
-            description="A complete game.",
-        )
-        complete_game.developers.add(dev_alias)
-        GameQuote.objects.create(game=complete_game, text="Great!", is_featured=True)
-
-        # Set as Game of the Day
-        complete_game.is_game_of_the_day = True
-        complete_game.game_of_the_day_date = datetime.utcnow().date()
-        complete_game.save()
-
-        # Access the game detail page
-        response = self.client.get(
-            reverse("game-detail", kwargs={"slug": complete_game.slug})
-        )
-
-        # Should flag it as Game of the Day
-        self.assertTrue(response.context["is_game_of_the_day"])
-
-    def test_game_of_the_day_flag_when_not_gotd(self):
-        """
-        Test is_game_of_the_day flag is False when game is not GOTD.
-        """
-        from django.core.cache import cache
-
-        from games.models import Developer, DeveloperAlias, GameQuote
-
-        cache.clear()
-
-        # Create two complete games
-        dev = Developer.objects.create(name="Dev", slug="dev")
-        dev_alias = DeveloperAlias.objects.create(developer=dev, name="Dev")
-
-        game1 = Game.objects.create(
-            name="Game 1",
-            slug="game-1",
-            rank=1,
-            igdb_artwork_id="test1",
-            year_of_release=2023,
-            description="First game.",
-        )
-        game1.developers.add(dev_alias)
-        GameQuote.objects.create(game=game1, text="Great!", is_featured=True)
-
-        game2 = Game.objects.create(
-            name="Game 2",
-            slug="game-2",
-            rank=2,
-            igdb_artwork_id="test2",
-            year_of_release=2023,
-            description="Second game.",
-        )
-        game2.developers.add(dev_alias)
-        GameQuote.objects.create(game=game2, text="Also great!", is_featured=True)
-
-        # Get Game of the Day (will likely be game1 due to rank)
-        from games.services import game_of_the_day
-
-        gotd = game_of_the_day.get_game_of_the_day()
-
-        # Access the detail page for the game that is NOT Game of the Day
-        other_game = game2 if gotd.id == game1.id else game1
-        response = self.client.get(
-            reverse("game-detail", kwargs={"slug": other_game.slug})
-        )
-
-        # Should NOT flag it as Game of the Day
-        self.assertFalse(response.context["is_game_of_the_day"])
 
     def test_game_description_displayed_when_present(self):
         """Test that game description is displayed when it exists."""

@@ -48,7 +48,7 @@
 
     {# Press Quotes #}
     <div class="flex flex-col gap-4 text-center items-center">
-        <a href="https://youtu.be/D4SGbPzT4Oc?list=PLDVpDN_65MqCHONpuj1oYN_LNLuFAoW1b"
+        <a href="https://youtu.be/D4SGbPzT4Oc"
            target="_blank"
            rel="noopener noreferrer"
            class="transition-colors">
@@ -95,15 +95,18 @@
     </a>
 </div>
 
-{# Two Column Layout: Top Games (Left) | Game of the Day + News (Right) #}
+{# Two Column Layout: Top Games (Left) | News (Right) #}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     {# Left Column: Top Games #}
     <div class="text-center">
-        <h3 class="text-xl font-bold mb-4">Current Top {{ games|length }}</h3>
+        <h3 class="text-xl font-bold mb-4">
+            <span class="md:hidden">Current Top 10</span>
+            <span class="hidden md:inline">Current Top {{ games|length }}</span>
+        </h3>
         <div class="inline-flex flex-wrap items-end justify-center">
             {% for game in games %}
             <a href="{% url 'game-detail' slug=game.slug %}"
-               class="relative group block"
+               class="relative group block{% if forloop.counter > 10 %} hidden md:block{% endif %}"
                style="margin: 10px;">
                 <span class="absolute -top-2 -left-1 bg-primary text-primary-content text-xs font-bold px-1.5 py-0.5 rounded z-10">{{ game.rank }}</span>
                 <img src="{{ game.homepage_thumb }}"
@@ -126,13 +129,8 @@
         {% endif %}
     </div>
 
-    {# Right Column: Game of the Day + Latest News #}
+    {# Right Column: Latest News #}
     <div>
-        {# Game of the Day Section #}
-        {% if game_of_the_day %}
-        {% include 'includes/_game_of_the_day.html' %}
-        {% endif %}
-
         <h3 class="text-xl font-bold mb-4">Latest News</h3>
 
         {# Newsletter Subscribe Form #}
@@ -158,7 +156,7 @@
             {% include 'posts/includes/_post_item.html' with post=post %}
         {% endfor %}
         <div class="flex justify-end">
-            <a href="{% url 'post-list' %}" class="btn btn-primary btn-sm">
+            <a href="{% url 'post-list' %}?page=2" class="btn btn-primary btn-sm">
                 <span>All posts</span>
                 <span class="mdi mdi-chevron-double-right"></span>
             </a>

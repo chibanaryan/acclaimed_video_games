@@ -175,25 +175,13 @@ class Game(models.Model):
         null=True,
         blank=True,
         db_index=True,
-        help_text="Wikipedia page title (e.g., 'The Legend of Zelda: Breath of the Wild')",
+        help_text="Wikipedia page title (e.g., 'Zelda: Breath of the Wild')",
     )
     wikipedia_lookup_source = models.CharField(
         max_length=50,
         null=True,
         blank=True,
-        help_text="Method used: wikidata, opensearch_year, opensearch_basic, opensearch_fallback",
-    )
-    # Game of the Day tracking
-    is_game_of_the_day = models.BooleanField(
-        default=False,
-        db_index=True,
-        help_text="Whether this game is currently the Game of the Day",
-    )
-    game_of_the_day_date = models.DateField(
-        null=True,
-        blank=True,
-        db_index=True,
-        help_text="The date this game was last selected as Game of the Day",
+        help_text="Lookup method: wikidata, opensearch_year, etc.",
     )
 
     objects = GameQuerySet.as_manager()
