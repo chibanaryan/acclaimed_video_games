@@ -30,6 +30,115 @@ class GameAdminTests(TestCase):
         value = self.admin._genres(game)
         self.assertEqual(value, "Action")
 
+    def test_igdb_artwork_id_with_data(self):
+        """Test _igdb_artwork_id displays artwork ID from primary IGDB data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        # Create IGDBGameData with artwork_id
+        models.IGDBGameData.objects.filter(game=game).update(artwork_id="test_art_id")
+        game.refresh_from_db()
+        value = self.admin._igdb_artwork_id(game)
+        self.assertEqual(value, "test_art_id")
+
+    def test_igdb_artwork_id_without_data(self):
+        """Test _igdb_artwork_id returns '-' when no IGDB data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        value = self.admin._igdb_artwork_id(game)
+        self.assertEqual(value, "-")
+
+    def test_igdb_url_with_data(self):
+        """Test _igdb_url displays clickable link from primary IGDB data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        # Create IGDBGameData with URL
+        models.IGDBGameData.objects.filter(game=game).update(
+            url="https://www.igdb.com/games/test-game"
+        )
+        game.refresh_from_db()
+        value = self.admin._igdb_url(game)
+        self.assertIn("https://www.igdb.com/games/test-game", value)
+        self.assertIn("<a href=", value)
+
+    def test_igdb_url_without_data(self):
+        """Test _igdb_url returns '-' when no IGDB data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        value = self.admin._igdb_url(game)
+        self.assertEqual(value, "-")
+
+    def test_wikipedia_page_title_with_data(self):
+        """Test _wikipedia_page_title displays page title from primary data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        # Update the auto-created WikipediaGameData with page title
+        wiki_data = models.WikipediaGameData.objects.get(game=game)
+        wiki_data.page_title = "Test_Game_(video_game)"
+        wiki_data.save()
+        game.refresh_from_db()
+        value = self.admin._wikipedia_page_title(game)
+        self.assertEqual(value, "Test_Game_(video_game)")
+
+    def test_wikipedia_page_title_without_data(self):
+        """Test _wikipedia_page_title returns '-' when no Wikipedia data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        # Remove auto-created Wikipedia data
+        models.WikipediaGameData.objects.filter(game=game).delete()
+        game.primary_wikipedia_game_data = None
+        game.save()
+        value = self.admin._wikipedia_page_title(game)
+        self.assertEqual(value, "-")
+
+    def test_wikipedia_url_with_data(self):
+        """Test _wikipedia_url displays clickable link from primary Wikipedia data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        # Update WikipediaGameData with page title
+        models.WikipediaGameData.objects.filter(game=game).update(
+            page_title="Test_Game_(video_game)"
+        )
+        game.refresh_from_db()
+        value = self.admin._wikipedia_url(game)
+        self.assertIn("Test_Game_(video_game)", value)
+        self.assertIn("<a href=", value)
+
+    def test_wikipedia_url_without_data(self):
+        """Test _wikipedia_url returns '-' when no Wikipedia data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        # Remove page title
+        models.WikipediaGameData.objects.filter(game=game).update(page_title="")
+        game.refresh_from_db()
+        value = self.admin._wikipedia_url(game)
+        self.assertEqual(value, "-")
+
 
 class SiteMetadataAdminTests(TestCase):
 
@@ -57,3 +166,79 @@ class SiteMetadataAdminTests(TestCase):
         metadata = models.SiteMetadata.get_instance()
         result = self.admin.has_delete_permission(request=None, obj=metadata)
         self.assertFalse(result)
+
+
+class IGDBGameDataAdminTests(TestCase):
+    """Tests for IGDBGameData admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.IGDBGameDataAdmin(models.IGDBGameData, self.site)
+
+    def test_url_link_with_url(self):
+        """Test _url_link displays clickable IGDB URL."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        igdb_data = models.IGDBGameData.objects.get(game=game)
+        igdb_data.url = "https://www.igdb.com/games/test-game"
+        igdb_data.save()
+
+        value = self.admin._url_link(igdb_data)
+        self.assertIn("https://www.igdb.com/games/test-game", value)
+        self.assertIn("<a href=", value)
+
+    def test_url_link_without_url(self):
+        """Test _url_link returns '-' when no URL."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        igdb_data = models.IGDBGameData.objects.get(game=game)
+        igdb_data.url = ""
+        igdb_data.save()
+
+        value = self.admin._url_link(igdb_data)
+        self.assertEqual(value, "-")
+
+
+class WikipediaGameDataAdminTests(TestCase):
+    """Tests for WikipediaGameData admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.WikipediaGameDataAdmin(models.WikipediaGameData, self.site)
+
+    def test_wikipedia_link_with_page_title(self):
+        """Test _wikipedia_link displays clickable Wikipedia URL."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        wiki_data = models.WikipediaGameData.objects.get(game=game)
+        wiki_data.page_title = "Test_Game_(video_game)"
+        wiki_data.save()
+
+        value = self.admin._wikipedia_link(wiki_data)
+        self.assertIn("Test_Game_(video_game)", value)
+        self.assertIn("<a href=", value)
+
+    def test_wikipedia_link_without_page_title(self):
+        """Test _wikipedia_link returns '-' when no page title."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        wiki_data = models.WikipediaGameData.objects.get(game=game)
+        wiki_data.page_title = ""
+        wiki_data.save()
+
+        value = self.admin._wikipedia_link(wiki_data)
+        self.assertEqual(value, "-")

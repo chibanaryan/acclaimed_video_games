@@ -68,7 +68,10 @@ class GameListView(ListAPIView):
 class GameDetailView(RetrieveAPIView):
     lookup_field = "slug"
     serializer_class = serializers.GameDetailSerializer
-    queryset = models.Game.objects.prefetch_related(
+    queryset = models.Game.objects.select_related(
+        "primary_igdb_game_data",
+        "primary_wikipedia_game_data",
+    ).prefetch_related(
         Prefetch(
             "lists",
             queryset=models.ListMembership.objects.select_related(
@@ -293,7 +296,16 @@ class GameSearchAPIView(APIView):
         # Search games by name (only fetch required fields for performance)
         games = (
             models.Game.objects.filter(name__icontains=q)
-            .only("id", "name", "slug", "year_of_release", "rank", "igdb_artwork_id")
+            .select_related("primary_igdb_game_data")
+            .only(
+                "id",
+                "name",
+                "slug",
+                "year_of_release",
+                "rank",
+                "igdb_artwork_id",
+                "primary_igdb_game_data__artwork_id",
+            )
             .order_by("rank")[:limit]
         )
 

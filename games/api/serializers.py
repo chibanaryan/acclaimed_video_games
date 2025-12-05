@@ -48,10 +48,32 @@ class GameSummarySerializer(serializers.ModelSerializer):
     developers = IdNameSerializer(many=True)
     genres = IdNameSerializer(many=True)
     platforms = IdCodeNameSerializer(many=True)
+    # Delegate to primary_igdb_game_data
+    igdb_artwork_id = serializers.SerializerMethodField()
+    igdb_url = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Game
         fields = game_fields
+
+    def get_igdb_artwork_id(self, obj):
+        """Get artwork_id from primary IGDBGameData record."""
+        if obj.primary_igdb_game_data:
+            return obj.primary_igdb_game_data.artwork_id
+        return None
+
+    def get_igdb_url(self, obj):
+        """Get URL from primary IGDBGameData record."""
+        if obj.primary_igdb_game_data:
+            return obj.primary_igdb_game_data.url
+        return None
+
+    def get_description(self, obj):
+        """Get description from primary IGDBGameData record."""
+        if obj.primary_igdb_game_data:
+            return obj.primary_igdb_game_data.description
+        return None
 
 
 class GameDetailSerializer(GameSummarySerializer):

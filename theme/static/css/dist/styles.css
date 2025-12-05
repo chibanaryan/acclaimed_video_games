@@ -4517,15 +4517,13 @@
 .show-dark {
   display: none;
 }
-[data-theme="forest"] .show-dark,
-[data-theme="night"] .show-dark {
+[data-theme="forest"] .show-dark {
   display: block;
 }
 .show-light {
   display: block;
 }
-[data-theme="forest"] .show-light,
-[data-theme="night"] .show-light {
+[data-theme="forest"] .show-light {
   display: none;
 }
 .prose {

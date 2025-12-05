@@ -219,10 +219,38 @@ class Command(BaseCommand):
 
                 # Update database if requested
                 if save_to_db and result.source != GenreSource.FAILED:
+                    # Use the new get_wikipedia_data method to create
+                    # WikipediaGameData records
+                    from games.models import WikipediaGameData
+
+                    # First, unset is_primary on any existing records for this game
+                    # to avoid UNIQUE constraint violation
+                    WikipediaGameData.objects.filter(game=game, is_primary=True).update(
+                        is_primary=False
+                    )
+
+                    # Create or update WikipediaGameData record
+                    wiki_game_data, created = (
+                        WikipediaGameData.objects.update_or_create(
+                            game=game,
+                            page_title=result.game_name,
+                            defaults={
+                                "primary_genre": result.primary_genre,
+                                "all_genres": result.all_genres_str,
+                                "lookup_source": result.source_url,
+                                "is_primary": True,
+                            },
+                        )
+                    )
+
+                    # Set primary relationship
+                    game.primary_wikipedia_game_data = wiki_game_data
+                    # Update deprecated fields for backward compatibility
                     game.wikipedia_primary_genre = result.primary_genre
                     game.wikipedia_all_genres = result.all_genres_str
                     game.save(
                         update_fields=[
+                            "primary_wikipedia_game_data",
                             "wikipedia_primary_genre",
                             "wikipedia_all_genres",
                         ]

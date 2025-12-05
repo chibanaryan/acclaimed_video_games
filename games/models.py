@@ -122,6 +122,174 @@ class Genre(models.Model):
         return self.name
 
 
+class IGDBGameData(models.Model):
+    """
+    Supplemental IGDB game data.
+    Multiple records per game supported (e.g., Pokémon Red/Blue/Yellow).
+    One record marked as primary for default display.
+    """
+
+    game = models.ForeignKey(
+        "Game", on_delete=models.CASCADE, related_name="igdb_game_data_set"
+    )
+    igdb_id = models.IntegerField(
+        db_index=True, help_text="IGDB game ID for this specific version/entry"
+    )
+    artwork_id = models.CharField(
+        max_length=100, db_index=True, help_text="IGDB cover art hash (e.g., 'co1234')"
+    )
+    url = models.URLField(help_text="IGDB game detail page URL")
+    description = models.TextField(null=True, blank=True)
+    is_primary = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Primary IGDB record for display (only one per game)",
+    )
+    fetched_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "games_igdbgamedata"
+        verbose_name = "IGDB Game Data"
+        verbose_name_plural = "IGDB Game Data"
+        indexes = [
+            models.Index(fields=["game", "is_primary"]),
+            models.Index(fields=["igdb_id"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["game"],
+                condition=models.Q(is_primary=True),
+                name="unique_primary_igdb_per_game",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"IGDB data for {self.game.name} (ID: {self.igdb_id})"
+
+    @cached_property
+    def thumbnail(self) -> Optional[str]:
+        """Get thumbnail URL (90x128) for cover art."""
+        if self.artwork_id:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_cover_small/{self.artwork_id}"
+        return None
+
+    @cached_property
+    def thumbnail_2x(self) -> Optional[str]:
+        """Get 2x thumbnail URL (180x256) for retina displays."""
+        if self.artwork_id:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_cover_small_2x/{self.artwork_id}"
+        return None
+
+    @cached_property
+    def image(self) -> Optional[str]:
+        """Get full-size image URL (264x352) for cover art."""
+        if self.artwork_id:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_cover_big/{self.artwork_id}"
+        return None
+
+    @cached_property
+    def image_2x(self) -> Optional[str]:
+        """Get 2x retina URL (528x704) for cover art."""
+        if self.artwork_id:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_cover_big_2x/{self.artwork_id}"
+        return None
+
+    @cached_property
+    def homepage_thumb_small(self) -> Optional[str]:
+        """Get smallest homepage thumbnail - t_cover_small (90x128)."""
+        if self.artwork_id:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_cover_small/{self.artwork_id}"
+        return None
+
+    @cached_property
+    def homepage_thumb(self) -> Optional[str]:
+        """Get homepage thumbnail - t_cover_small_2x (180x256)."""
+        if self.artwork_id:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_cover_small_2x/{self.artwork_id}"
+        return None
+
+    @cached_property
+    def homepage_thumb_2x(self) -> Optional[str]:
+        """Get homepage 2x thumbnail - t_cover_big (264x352)."""
+        if self.artwork_id:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_cover_big/{self.artwork_id}"
+        return None
+
+    @cached_property
+    def thumbnail_square(self) -> Optional[str]:
+        """Get square thumbnail for mobile cards - t_thumb (90x90)."""
+        if self.artwork_id:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_thumb/{self.artwork_id}"
+        return None
+
+
+class WikipediaGameData(models.Model):
+    """
+    Supplemental Wikipedia/Wikidata game data.
+    Multiple records per game supported (e.g., different language editions).
+    One record marked as primary for default display.
+    """
+
+    game = models.ForeignKey(
+        "Game", on_delete=models.CASCADE, related_name="wikipedia_game_data_set"
+    )
+    wikidata_id = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Wikidata entity ID (e.g., 'Q12345')",
+    )
+    page_title = models.CharField(
+        max_length=300, db_index=True, help_text="Wikipedia page title"
+    )
+    primary_genre = models.CharField(max_length=200, null=True, blank=True)
+    all_genres = models.TextField(null=True, blank=True)
+    lookup_source = models.CharField(max_length=50, null=True, blank=True)
+    is_primary = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Primary Wikipedia record for display (only one per game)",
+    )
+    fetched_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "games_wikipediagamedata"
+        verbose_name = "Wikipedia Game Data"
+        verbose_name_plural = "Wikipedia Game Data"
+        indexes = [
+            models.Index(fields=["game", "is_primary"]),
+            models.Index(fields=["wikidata_id"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["game"],
+                condition=models.Q(is_primary=True),
+                name="unique_primary_wikipedia_per_game",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"Wikipedia data for {self.game.name}"
+
+    @property
+    def wikipedia_url(self) -> Optional[str]:
+        """Generate Wikipedia article URL from page title."""
+        if self.page_title:
+            return f"https://en.wikipedia.org/wiki/{self.page_title.replace(' ', '_')}"
+        return None
+
+
 class GameQuerySet(models.QuerySet):
     """Custom QuerySet for Game model with common prefetch patterns."""
 
@@ -132,6 +300,9 @@ class GameQuerySet(models.QuerySet):
             "developers__developer",
             "platforms",
             "genres",
+        ).select_related(
+            "primary_igdb_game_data",
+            "primary_wikipedia_game_data",
         )
 
 
@@ -160,13 +331,31 @@ class Game(models.Model):
     )
     modified = models.DateTimeField(auto_now=True, db_index=True)
     igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
+
+    # Fast access to primary records (OneToOne for performance)
+    primary_igdb_game_data = models.OneToOneField(
+        "IGDBGameData",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="primary_game",
+        help_text="Primary IGDB game data for display",
+    )
+    primary_wikipedia_game_data = models.OneToOneField(
+        "WikipediaGameData",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="primary_game",
+        help_text="Primary Wikipedia game data for display",
+    )
+
+    # DEPRECATED FIELDS - Will be removed in future release
     igdb_artwork_id = models.CharField(max_length=100, null=True, blank=True)
     igdb_url = models.URLField(null=True, blank=True)
     year_rank = models.IntegerField(null=True, blank=True, db_index=True)
     decade_rank = models.IntegerField(null=True, blank=True, db_index=True)
-    # Wikipedia genre data (separate from IGDB genres)
-    # primary_genre is the first genre in the ordered list (for sorting)
-    # all_genres is pipe-separated for display/filtering
+    # DEPRECATED FIELDS - Wikipedia data moved to WikipediaData model
     wikipedia_primary_genre = models.CharField(max_length=200, null=True, blank=True)
     wikipedia_all_genres = models.TextField(null=True, blank=True)
     wikidata_id = models.CharField(max_length=20, null=True, blank=True)
@@ -197,188 +386,395 @@ class Game(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
-        Save the game, calculating normalized name.
+        Save the game, calculating normalized name and ensuring data records exist.
         """
         # Save the normalized version of the name
         normalized = unidecode(self.name)
         if self.name != normalized:
             self.name_normalized = normalized
 
+        # Call parent save first to ensure we have a primary key
+        is_new = self.pk is None
         super().save(*args, **kwargs)
 
+        # Create empty IGDB and Wikipedia game data records if they don't exist
+        # This ensures every game has at least one record in each table
+        if is_new:
+            # Create empty IGDB game data if we have an igdb_id and no existing record
+            if self.igdb_id and not IGDBGameData.objects.filter(game=self).exists():
+                # Copy deprecated fields if they exist for backward compatibility
+                igdb_data = IGDBGameData.objects.create(
+                    game=self,
+                    igdb_id=self.igdb_id,
+                    artwork_id=self.igdb_artwork_id or "",
+                    url=self.igdb_url or "",
+                    description=self.description or "",
+                    is_primary=True,
+                )
+                self.primary_igdb_game_data = igdb_data
+                # Save again to update the FK relationship
+                super().save(update_fields=["primary_igdb_game_data"])
+
+            # Create empty Wikipedia game data only if no existing record
+            if not WikipediaGameData.objects.filter(game=self).exists():
+                # Copy deprecated fields if they exist for backward compatibility
+                wiki_data = WikipediaGameData.objects.create(
+                    game=self,
+                    page_title=self.wikipedia_page_title or "",
+                    primary_genre=self.wikipedia_primary_genre or "",
+                    all_genres=self.wikipedia_all_genres or "",
+                    lookup_source=self.wikipedia_lookup_source or "",
+                    is_primary=True,
+                )
+                self.primary_wikipedia_game_data = wiki_data
+                # Save again to update the FK relationship
+                super().save(update_fields=["primary_wikipedia_game_data"])
+
     def get_igdb_data(
-        self, cache_results: bool = True, api_client=None, data: dict = None
+        self,
+        igdb_ids=None,
+        cache_results: bool = True,
+        api_client=None,
+        data: dict = None,
     ) -> None:
         """
         Fetch and populate game data from IGDB API.
 
         Args:
+            igdb_ids: String of comma-separated IGDB IDs (e.g., "1234,5678")
+                      or single int. Defaults to self.igdb_id.
             cache_results: Whether to cache the API results
             api_client: Optional API client for dependency injection
             data: Optional pre-fetched game data from IGDB API.
                   If provided, skips API call and uses this data directly.
+                  Only used when igdb_ids is None or single ID.
 
         Returns:
-            None. Updates the model instance fields in-place.
+            None. Creates IGDBData records for each ID. First ID becomes primary.
         """
-        if not self.igdb_id:
+        # Parse IGDB IDs
+        if data is not None:
+            # Legacy mode: using pre-fetched data for single ID
+            ids_to_fetch = [self.igdb_id] if self.igdb_id else []
+        elif igdb_ids is None:
+            if not self.igdb_id:
+                return
+            ids_to_fetch = [self.igdb_id]
+        elif isinstance(igdb_ids, str):
+            ids_to_fetch = [int(x.strip()) for x in igdb_ids.split(",") if x.strip()]
+        else:
+            ids_to_fetch = [int(igdb_ids)]
+
+        if not ids_to_fetch:
             return
 
-        # Use pre-fetched data if provided, otherwise fetch from API
-        if data is None:
-            # Allow dependency injection for tests while preventing reuse of a global
-            # API client that can accumulate cached responses across requests.
-            api_client = api_client or igdb.get_api()
+        # Update primary igdb_id reference
+        if not self.igdb_id:
+            self.igdb_id = ids_to_fetch[0]
 
-            if not api_client:
-                logger.warning("IGDB API unavailable; skipping update for %s", self)
-                return
+        api_client = api_client or igdb.get_api()
 
-            data = api_client.get_game_info_by_id(self.igdb_id, cache_results)
-        self.slug = slugify(data.get("slug"))
-        self.igdb_url = data.get("url")
-        self.igdb_artwork_id = data.get("cover")
-        self.description = "\n\n".join(
-            [x for x in [data.get("storyline"), data.get("summary")] if x]
-        )
+        if not api_client and data is None:
+            logger.warning("IGDB API unavailable; skipping update for %s", self)
+            return
 
-        developer_aliases = []
-        for d in data["developers"]:
-
-            # This developer is a parent
-            if not d.get("parent"):
-                developer, created = Developer.objects.update_or_create(
-                    name=d["name"],
-                    defaults={
-                        "slug": d["slug"],
-                        "igdb_id": d["id"],
-                    },
+        # Fetch and create records for each ID
+        for idx, igdb_id_to_fetch in enumerate(ids_to_fetch):
+            # Use pre-fetched data for legacy single-ID mode
+            if data is not None and idx == 0:
+                game_data = data
+            else:
+                game_data = api_client.get_game_info_by_id(
+                    igdb_id_to_fetch, cache_results
                 )
 
-            # This developer has a parent
+            if not game_data:
+                continue
+
+            # Update slug from first record
+            if idx == 0:
+                self.slug = slugify(game_data.get("slug"))
+                # Unset is_primary to avoid UNIQUE constraint violation
+                IGDBGameData.objects.filter(game=self, is_primary=True).update(
+                    is_primary=False
+                )
+
+            # Create or update IGDBGameData
+            igdb_game_data, created = IGDBGameData.objects.update_or_create(
+                game=self,
+                igdb_id=igdb_id_to_fetch,
+                defaults={
+                    "artwork_id": game_data.get("cover", ""),
+                    "url": game_data.get("url", ""),
+                    "description": "\n\n".join(
+                        [
+                            x
+                            for x in [
+                                game_data.get("storyline"),
+                                game_data.get("summary"),
+                            ]
+                            if x
+                        ]
+                    ),
+                    "is_primary": (idx == 0),  # First record is primary
+                },
+            )
+
+            # Set as primary on game
+            if idx == 0:
+                self.primary_igdb_game_data = igdb_game_data
+
+                # Update deprecated fields for backward compatibility
+                self.igdb_url = game_data.get("url")
+                self.igdb_artwork_id = game_data.get("cover")
+                self.description = "\n\n".join(
+                    [
+                        x
+                        for x in [
+                            game_data.get("storyline"),
+                            game_data.get("summary"),
+                        ]
+                        if x
+                    ]
+                )
+
+        # Update developers and genres only from first record
+        if ids_to_fetch and (data is not None or api_client):
+            # Get first record data for developers/genres
+            if data is not None:
+                first_data = data
             else:
-                parent_obj = d.get("parent")
-                if parent_obj:
+                first_data = api_client.get_game_info_by_id(
+                    ids_to_fetch[0], cache_results
+                )
+
+            developer_aliases = []
+            for d in first_data["developers"]:
+                # This developer is a parent
+                if not d.get("parent"):
                     developer, created = Developer.objects.update_or_create(
-                        name=parent_obj["name"],
+                        name=d["name"],
                         defaults={
-                            "slug": parent_obj["slug"],
-                            "igdb_id": parent_obj["id"],
+                            "slug": d["slug"],
+                            "igdb_id": d["id"],
                         },
                     )
 
-                    # Ensure parent has an alias too (prevents orphaned developers)
-                    try:
-                        DeveloperAlias.objects.update_or_create(
-                            developer=developer,
+                # This developer has a parent
+                else:
+                    parent_obj = d.get("parent")
+                    if parent_obj:
+                        developer, created = Developer.objects.update_or_create(
                             name=parent_obj["name"],
                             defaults={
+                                "slug": parent_obj["slug"],
                                 "igdb_id": parent_obj["id"],
                             },
                         )
-                    except IntegrityError:
-                        # Parent alias already exists linked to another developer
-                        pass
 
-            try:
-                developer_alias, created = DeveloperAlias.objects.update_or_create(
-                    developer=developer,
-                    name=d["name"],
-                    defaults={
-                        "igdb_id": d["id"],
-                    },
+                        # Ensure parent has an alias too (prevents orphaned developers)
+                        try:
+                            DeveloperAlias.objects.update_or_create(
+                                developer=developer,
+                                name=parent_obj["name"],
+                                defaults={
+                                    "igdb_id": parent_obj["id"],
+                                },
+                            )
+                        except IntegrityError:
+                            # Parent alias already exists linked to another developer
+                            pass
+
+                try:
+                    developer_alias, created = DeveloperAlias.objects.update_or_create(
+                        developer=developer,
+                        name=d["name"],
+                        defaults={
+                            "igdb_id": d["id"],
+                        },
+                    )
+                except IntegrityError:
+                    developer_alias = DeveloperAlias.objects.get(name=d["name"])
+
+                developer_aliases.append(developer_alias)
+
+            self.developers.set(developer_aliases)
+
+            genres = []
+            for genre_name in first_data.get("genres"):
+                genre, created = Genre.objects.get_or_create(name=genre_name)
+                genres.append(genre)
+            self.genres.set(genres)
+
+    def get_wikipedia_data(self, page_titles=None, wikidata_ids=None, year=None):
+        """
+        Fetch and save Wikipedia/Wikidata data for this game.
+
+        Supports multiple page titles or Wikidata IDs (comma-separated):
+        - First entry becomes primary (is_primary=True)
+        - Additional entries stored as alternate records
+        - Each record stores genre data from its Wikipedia page
+
+        Args:
+            page_titles: Comma-separated page titles
+                (e.g., "Pokémon Red and Blue,Pokémon Red")
+            wikidata_ids: Comma-separated Wikidata IDs
+                (e.g., "Q12345,Q67890") - not implemented
+            year: Optional year for disambiguation
+
+        Usage:
+            # Single page title
+            game.get_wikipedia_data(page_titles="The Legend of Zelda")
+
+            # Multiple page titles (first becomes primary)
+            game.get_wikipedia_data(
+                page_titles="Pokémon Red and Blue,Pokémon Red,Pokémon Blue"
+            )
+
+            # Use game name if no titles provided
+            game.get_wikipedia_data()
+        """
+        from games.services.wiki_genre_service import WikiGenreService
+
+        # Parse page titles - comma-separated string
+        if page_titles is None:
+            if not self.name:  # pragma: no cover
+                return  # pragma: no cover
+            titles_to_fetch = [self.name]
+        elif isinstance(page_titles, str):
+            titles_to_fetch = [t.strip() for t in page_titles.split(",") if t.strip()]
+        else:
+            titles_to_fetch = [str(page_titles)]
+
+        # TODO: Add Wikidata ID support if wikidata_ids is provided
+        # This would require querying Wikidata API to resolve IDs to page titles
+        if wikidata_ids:  # pragma: no cover
+            logger.warning(
+                "Wikidata ID support not yet implemented"
+            )  # pragma: no cover
+
+        # Initialize service
+        service = WikiGenreService()
+
+        # Fetch and create records for each page title
+        for idx, page_title in enumerate(titles_to_fetch):
+            # Fetch genre data from Wikipedia
+            result = service.get_genre(page_title, year=year or self.year_of_release)
+
+            # Skip failed lookups
+            if result.source.value == "Failed":  # pragma: no cover
+                logger.warning(  # pragma: no cover
+                    "Failed to fetch Wikipedia data for %s: %s",
+                    page_title,
+                    result.error_message,
                 )
-            except IntegrityError:
-                developer_alias = DeveloperAlias.objects.get(name=d["name"])
+                continue  # pragma: no cover
 
-            developer_aliases.append(developer_alias)
+            # Extract Wikidata ID from URL if available
+            wikidata_id_extracted = None
+            if result.source_url:
+                # Wikipedia URLs might link to Wikidata - for now just store None
+                # TODO: Add Wikidata ID extraction from Wikipedia page
+                pass
 
-        self.developers.set(developer_aliases)
+            # For the first entry (primary), unset is_primary on any existing records
+            # to avoid UNIQUE constraint violation
+            if idx == 0:
+                WikipediaGameData.objects.filter(game=self, is_primary=True).update(
+                    is_primary=False
+                )
 
-        genres = []
-        for genre_name in data.get("genres"):
-            genre, created = Genre.objects.get_or_create(name=genre_name)
-            genres.append(genre)
-        self.genres.set(genres)
+            # Create or update WikipediaGameData record
+            wiki_game_data, created = WikipediaGameData.objects.update_or_create(
+                game=self,
+                page_title=page_title,
+                defaults={
+                    "wikidata_id": wikidata_id_extracted,
+                    "primary_genre": result.primary_genre,
+                    "all_genres": result.all_genres_str,
+                    "lookup_source": result.source_url,
+                    "is_primary": idx == 0,  # First entry becomes primary
+                },
+            )
 
+            # Set primary relationship for first entry
+            if idx == 0:
+                self.primary_wikipedia_game_data = wiki_game_data
+                # Update deprecated fields for backward compatibility
+                self.wikipedia_primary_genre = result.primary_genre
+                self.wikipedia_all_genres = result.all_genres_str
+                self.save(
+                    update_fields=[
+                        "primary_wikipedia_game_data",
+                        "wikipedia_primary_genre",
+                        "wikipedia_all_genres",
+                    ]
+                )
+
+            action = "Created" if created else "Updated"
+            logger.info(
+                "%s WikipediaGameData for %s (page: %s, primary: %s)",
+                action,
+                self.name,
+                page_title,
+                idx == 0,
+            )
+
+    # Delegation properties for IGDB image URLs (backward compatibility)
     @cached_property
     def thumbnail(self) -> Optional[str]:
-        """Get the thumbnail URL for the game's cover art (90x128) (cached)."""
-        if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_small/"
-                f"{self.igdb_artwork_id}"
-            )
+        """Get thumbnail URL (90x128) from primary IGDB data."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.thumbnail
         return None
 
     @cached_property
     def thumbnail_2x(self) -> Optional[str]:
-        """Get the 2x thumbnail URL for retina displays (180x256) (cached)."""
-        if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_small_2x/"
-                f"{self.igdb_artwork_id}"
-            )
+        """Get 2x thumbnail URL (180x256) from primary IGDB data."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.thumbnail_2x
         return None
 
     @cached_property
     def image(self) -> Optional[str]:
-        """Get the full-size image URL for the game's cover art (264x352) (cached)."""
-        if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/"
-                f"{self.igdb_artwork_id}"
-            )
+        """Get full-size image URL (264x352) from primary IGDB data."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.image
         return None
 
     @cached_property
     def image_2x(self) -> Optional[str]:
-        """Get the 2x retina URL for the game's cover art (528x704) (cached)."""
-        if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/"
-                f"{self.igdb_artwork_id}"
-            )
+        """Get 2x retina URL (528x704) from primary IGDB data."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.image_2x
         return None
 
     @cached_property
     def homepage_thumb_small(self) -> Optional[str]:
-        """Get smallest homepage thumbnail - t_cover_small (90x128) for mobile."""
-        if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_small/"
-                f"{self.igdb_artwork_id}"
-            )
+        """Get smallest homepage thumbnail (90x128) from primary IGDB data."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.homepage_thumb_small
         return None
 
     @cached_property
     def homepage_thumb(self) -> Optional[str]:
-        """Get homepage thumbnail - t_cover_small_2x (180x256) avoids upscaling blur."""
-        if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_small_2x/"
-                f"{self.igdb_artwork_id}"
-            )
+        """Get homepage thumbnail (180x256) from primary IGDB data."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.homepage_thumb
         return None
 
     @cached_property
     def homepage_thumb_2x(self) -> Optional[str]:
-        """Get homepage 2x thumbnail - t_cover_big (264x352) for retina quality."""
-        if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/"
-                f"{self.igdb_artwork_id}"
-            )
+        """Get homepage 2x thumbnail (264x352) from primary IGDB data."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.homepage_thumb_2x
         return None
 
     @cached_property
     def thumbnail_square(self) -> Optional[str]:
-        """Get square thumbnail for mobile cards - t_thumb (90x90) (cached)."""
-        if self.igdb_artwork_id:
-            return (
-                "https://images.igdb.com/igdb/image/upload/t_thumb/"
-                f"{self.igdb_artwork_id}"
-            )
+        """Get square thumbnail (90x90) from primary IGDB data."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.thumbnail_square
         return None
 
     @cached_property

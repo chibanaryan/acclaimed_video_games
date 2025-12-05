@@ -35,6 +35,8 @@
 - Theme now auto-detects system preference when localStorage contains invalid values (like 'auto')
 - Restricted DaisyUI configuration to only load lofi and forest themes (prevents "auto" theme from being available)
 - Removed stale 'night' theme references from theme toggle logic (fixes theme switching issues)
+- Changed Open Graph image from light logo to dark logo (affects social media previews)
+- Removed old theme references (night, nord, synthwave) from CSS and template toggles to prevent theme confusion
 
 ## 2025-12-03
 

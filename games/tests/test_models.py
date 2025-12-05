@@ -378,6 +378,98 @@ class GameIgdbTests(TestCase):
         self.assertEqual(orphaned_devs.count(), 0)
 
 
+class GameWikipediaTests(TestCase):
+    """Tests for Game.get_wikipedia_data() method."""
+
+    @mock.patch("games.services.wiki_genre_service.WikiGenreService")
+    def test_get_wikipedia_data_populates_fields(self, mock_service_class):
+        """Test get_wikipedia_data() populates WikipediaGameData fields."""
+        from games.services.wiki_genre_service import GenreResult, GenreSource
+
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, year_of_release=2020
+        )
+
+        # Mock WikiGenreService.get_genre() to return successful result
+        mock_service = mock_service_class.return_value
+        mock_result = GenreResult(
+            game_name="Test Game",
+            source=GenreSource.WIKIPEDIA,
+            primary_genre="Action",
+            all_genres=["Action", "Adventure"],
+            source_url="https://en.wikipedia.org/wiki/Test_Game",
+        )
+        mock_service.get_genre.return_value = mock_result
+
+        # Call get_wikipedia_data
+        game.get_wikipedia_data(page_titles="Test Game")
+
+        # Verify WikipediaGameData was created/updated
+        wiki_data = models.WikipediaGameData.objects.get(game=game, is_primary=True)
+        self.assertEqual(wiki_data.page_title, "Test Game")
+        self.assertEqual(wiki_data.primary_genre, "Action")
+        self.assertEqual(wiki_data.all_genres, "Action | Adventure")
+        self.assertEqual(
+            wiki_data.lookup_source, "https://en.wikipedia.org/wiki/Test_Game"
+        )
+        self.assertTrue(wiki_data.is_primary)
+
+        # Verify deprecated fields updated
+        game.refresh_from_db()
+        self.assertEqual(game.wikipedia_primary_genre, "Action")
+        self.assertEqual(game.wikipedia_all_genres, "Action | Adventure")
+
+    @mock.patch("games.services.wiki_genre_service.WikiGenreService")
+    def test_get_wikipedia_data_comma_separated_titles(self, mock_service_class):
+        """Test get_wikipedia_data() with comma-separated page titles."""
+        from games.services.wiki_genre_service import GenreResult, GenreSource
+
+        game = models.Game.objects.create(
+            name="Pokémon Red", rank=1, year_of_release=1996
+        )
+
+        # Mock WikiGenreService to return different results for each title
+        mock_service = mock_service_class.return_value
+        mock_service.get_genre.side_effect = [
+            GenreResult(
+                game_name="Pokémon Red and Blue",
+                source=GenreSource.WIKIPEDIA,
+                primary_genre="RPG",
+                all_genres=["RPG"],
+                source_url="https://en.wikipedia.org/wiki/Pokemon_Red_and_Blue",
+            ),
+            GenreResult(
+                game_name="Pokémon Red",
+                source=GenreSource.WIKIPEDIA,
+                primary_genre="Role-playing",
+                all_genres=["Role-playing"],
+                source_url="https://en.wikipedia.org/wiki/Pokemon_Red",
+            ),
+        ]
+
+        # Call with comma-separated titles
+        game.get_wikipedia_data(page_titles="Pokémon Red and Blue,Pokémon Red")
+
+        # Verify records created (includes auto-created empty record from Game.save())
+        wiki_records = models.WikipediaGameData.objects.filter(game=game)
+        self.assertEqual(wiki_records.count(), 3)  # 2 from API + 1 auto-created
+
+        # First API record should be primary
+        primary = models.WikipediaGameData.objects.get(game=game, is_primary=True)
+        self.assertEqual(primary.page_title, "Pokémon Red and Blue")
+        self.assertEqual(primary.primary_genre, "RPG")
+
+        # Second API record should not be primary
+        secondary = models.WikipediaGameData.objects.get(
+            game=game, page_title="Pokémon Red"
+        )
+        self.assertFalse(secondary.is_primary)
+
+        # Auto-created record should exist but not be primary
+        auto_created = models.WikipediaGameData.objects.get(game=game, page_title="")
+        self.assertFalse(auto_created.is_primary)
+
+
 class ModelHelpersTests(TestCase):
 
     def test_snippet_str_and_slugify(self):
@@ -512,3 +604,147 @@ class ModelHelpersTests(TestCase):
         """Test SiteMetadata.__str__ returns correct format."""
         metadata = models.SiteMetadata.get_instance()
         self.assertEqual(str(metadata), "Site Metadata (default)")
+
+
+class IGDBGameDataTests(TestCase):
+    """Tests for IGDBGameData model."""
+
+    def setUp(self):
+        """Create a test game with IGDB data."""
+        self.game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        # Get the auto-created IGDBGameData
+        self.igdb_data = models.IGDBGameData.objects.get(game=self.game)
+        self.igdb_data.artwork_id = "test_artwork_id"
+        self.igdb_data.url = "https://www.igdb.com/games/test-game"
+        self.igdb_data.description = "Test description"
+        self.igdb_data.save()
+
+    def test_str(self):
+        """Test __str__ returns correct format."""
+        self.assertEqual(str(self.igdb_data), "IGDB data for Test Game (ID: 123)")
+
+    def test_thumbnail(self):
+        """Test thumbnail property returns correct URL."""
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_small/test_artwork_id"
+        )
+        self.assertEqual(self.igdb_data.thumbnail, expected)
+
+    def test_thumbnail_2x(self):
+        """Test thumbnail_2x property returns correct URL."""
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_small_2x/test_artwork_id"
+        )
+        self.assertEqual(self.igdb_data.thumbnail_2x, expected)
+
+    def test_image(self):
+        """Test image property returns correct URL."""
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_big/test_artwork_id"
+        )
+        self.assertEqual(self.igdb_data.image, expected)
+
+    def test_image_2x(self):
+        """Test image_2x property returns correct URL."""
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/test_artwork_id"
+        )
+        self.assertEqual(self.igdb_data.image_2x, expected)
+
+    def test_homepage_thumb_small(self):
+        """Test homepage_thumb_small property returns correct URL."""
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_small/test_artwork_id"
+        )
+        self.assertEqual(self.igdb_data.homepage_thumb_small, expected)
+
+    def test_homepage_thumb(self):
+        """Test homepage_thumb property returns correct URL."""
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_small_2x/test_artwork_id"
+        )
+        self.assertEqual(self.igdb_data.homepage_thumb, expected)
+
+    def test_homepage_thumb_2x(self):
+        """Test homepage_thumb_2x property returns correct URL."""
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_big/test_artwork_id"
+        )
+        self.assertEqual(self.igdb_data.homepage_thumb_2x, expected)
+
+    def test_thumbnail_square(self):
+        """Test thumbnail_square property returns correct URL."""
+        expected = "https://images.igdb.com/igdb/image/upload/t_thumb/test_artwork_id"
+        self.assertEqual(self.igdb_data.thumbnail_square, expected)
+
+    def test_image_properties_without_artwork_id(self):
+        """Test image properties return None when no artwork_id."""
+        self.igdb_data.artwork_id = ""
+        self.igdb_data.save()
+        self.igdb_data.refresh_from_db()
+        # Clear cached_property cache
+        for attr in [
+            "thumbnail",
+            "thumbnail_2x",
+            "image",
+            "image_2x",
+            "homepage_thumb_small",
+            "homepage_thumb",
+            "homepage_thumb_2x",
+            "thumbnail_square",
+        ]:
+            if attr in self.igdb_data.__dict__:
+                del self.igdb_data.__dict__[attr]
+
+        self.assertIsNone(self.igdb_data.thumbnail)
+        self.assertIsNone(self.igdb_data.thumbnail_2x)
+        self.assertIsNone(self.igdb_data.image)
+        self.assertIsNone(self.igdb_data.image_2x)
+        self.assertIsNone(self.igdb_data.homepage_thumb_small)
+        self.assertIsNone(self.igdb_data.homepage_thumb)
+        self.assertIsNone(self.igdb_data.homepage_thumb_2x)
+        self.assertIsNone(self.igdb_data.thumbnail_square)
+
+
+class WikipediaGameDataTests(TestCase):
+    """Tests for WikipediaGameData model."""
+
+    def setUp(self):
+        """Create a test game with Wikipedia data."""
+        self.game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        # Get the auto-created WikipediaGameData
+        self.wiki_data = models.WikipediaGameData.objects.get(game=self.game)
+        self.wiki_data.page_title = "Test_Game_(video_game)"
+        self.wiki_data.wikidata_id = "Q12345"
+        self.wiki_data.primary_genre = "Action"
+        self.wiki_data.all_genres = "Action, Adventure"
+        self.wiki_data.save()
+
+    def test_str(self):
+        """Test __str__ returns correct format."""
+        self.assertEqual(str(self.wiki_data), "Wikipedia data for Test Game")
+
+    def test_wikipedia_url(self):
+        """Test wikipedia_url property returns correct URL."""
+        expected = "https://en.wikipedia.org/wiki/Test_Game_(video_game)"
+        self.assertEqual(self.wiki_data.wikipedia_url, expected)
+
+    def test_wikipedia_url_with_spaces(self):
+        """Test wikipedia_url property handles spaces correctly."""
+        self.wiki_data.page_title = "Test Game"
+        expected = "https://en.wikipedia.org/wiki/Test_Game"
+        self.assertEqual(self.wiki_data.wikipedia_url, expected)
+
+    def test_wikipedia_url_without_page_title(self):
+        """Test wikipedia_url property returns None when no page title."""
+        self.wiki_data.page_title = ""
+        self.assertIsNone(self.wiki_data.wikipedia_url)

@@ -106,21 +106,19 @@
 }
 
 /* Theme-aware visibility utilities for DaisyUI data-theme system */
-/* Show only in dark themes (forest, night) */
+/* Show only in dark theme (forest) */
 .show-dark {
   display: none;
 }
-[data-theme="forest"] .show-dark,
-[data-theme="night"] .show-dark {
+[data-theme="forest"] .show-dark {
   display: block;
 }
 
-/* Show only in light themes (lofi, nord, etc.) */
+/* Show only in light theme (lofi) */
 .show-light {
   display: block;
 }
-[data-theme="forest"] .show-light,
-[data-theme="night"] .show-light {
+[data-theme="forest"] .show-light {
   display: none;
 }
 
