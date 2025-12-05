@@ -154,7 +154,7 @@ def _build_genre_subtitle(selected_genre_ids, option, genres):
     genre_names = [name_lookup.get(str(gid), str(gid)) for gid in selected_genre_ids]
     if not genre_names:
         return ""
-    connector = " AND " if option == "L" else " OR "
+    connector = " AND " if option == "all" else " OR "
     return f"Genre: {connector.join(genre_names)}"
 
 

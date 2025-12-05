@@ -1,5 +1,10 @@
 # Developer Log
 
+## 2025-12-05
+
+- Removed game description section from game detail pages (simplified UI)
+- Fixed genre subtitle to show "AND" when "Match All" is selected instead of always showing "OR"
+
 ## 2025-12-04
 
 - Removed Game of the Day feature (model fields, service, templates, views, tests)

@@ -74,16 +74,6 @@
         {% endif %}
     </div>
 
-    {# Game Description #}
-    {% if game.description %}
-    <div class="mb-8">
-        <h2 class="text-xl font-bold mb-4">Description</h2>
-        <p class="text-base text-base-content/90 leading-relaxed">
-            {{ game.description }}
-        </p>
-    </div>
-    {% endif %}
-
     {# Game Quotes #}
     {% if game.quotes.all %}
     <div class="mb-8">
