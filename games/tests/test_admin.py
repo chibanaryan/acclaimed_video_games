@@ -39,8 +39,15 @@ class GameAdminTests(TestCase):
             year_of_release=2020,
         )
         # Create IGDBGameData with artwork_id
-        models.IGDBGameData.objects.filter(game=game).update(artwork_id="test_art_id")
-        game.refresh_from_db()
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            artwork_id="test_art_id",
+            is_primary=True,
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save(update_fields=["primary_igdb_game_data"])
+
         value = self.admin._igdb_artwork_id(game)
         self.assertEqual(value, "test_art_id")
 
@@ -63,10 +70,15 @@ class GameAdminTests(TestCase):
             year_of_release=2020,
         )
         # Create IGDBGameData with URL
-        models.IGDBGameData.objects.filter(game=game).update(
-            url="https://www.igdb.com/games/test-game"
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            url="https://www.igdb.com/games/test-game",
+            is_primary=True,
         )
-        game.refresh_from_db()
+        game.primary_igdb_game_data = igdb_data
+        game.save(update_fields=["primary_igdb_game_data"])
+
         value = self.admin._igdb_url(game)
         self.assertIn("https://www.igdb.com/games/test-game", value)
         self.assertIn("<a href=", value)
@@ -88,10 +100,14 @@ class GameAdminTests(TestCase):
             rank=1,
             year_of_release=2020,
         )
-        # Update the auto-created WikipediaGameData with page title
-        wiki_data = models.WikipediaGameData.objects.get(game=game)
-        wiki_data.page_title = "Test_Game_(video_game)"
-        wiki_data.save()
+        # Create WikipediaGameData manually
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            page_title="Test_Game_(video_game)",
+            is_primary=True,
+        )
+        game.primary_wikipedia_game_data = wiki_data
+        game.save()
         game.refresh_from_db()
         value = self.admin._wikipedia_page_title(game)
         self.assertEqual(value, "Test_Game_(video_game)")
@@ -103,10 +119,7 @@ class GameAdminTests(TestCase):
             rank=1,
             year_of_release=2020,
         )
-        # Remove auto-created Wikipedia data
-        models.WikipediaGameData.objects.filter(game=game).delete()
-        game.primary_wikipedia_game_data = None
-        game.save()
+        # Game has no Wikipedia data
         value = self.admin._wikipedia_page_title(game)
         self.assertEqual(value, "-")
 
@@ -117,10 +130,14 @@ class GameAdminTests(TestCase):
             rank=1,
             year_of_release=2020,
         )
-        # Update WikipediaGameData with page title
-        models.WikipediaGameData.objects.filter(game=game).update(
-            page_title="Test_Game_(video_game)"
+        # Create WikipediaGameData with page title
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            page_title="Test_Game_(video_game)",
+            is_primary=True,
         )
+        game.primary_wikipedia_game_data = wiki_data
+        game.save()
         game.refresh_from_db()
         value = self.admin._wikipedia_url(game)
         self.assertIn("Test_Game_(video_game)", value)
@@ -133,9 +150,7 @@ class GameAdminTests(TestCase):
             rank=1,
             year_of_release=2020,
         )
-        # Remove page title
-        models.WikipediaGameData.objects.filter(game=game).update(page_title="")
-        game.refresh_from_db()
+        # Game has no Wikipedia data
         value = self.admin._wikipedia_url(game)
         self.assertEqual(value, "-")
 
@@ -183,9 +198,14 @@ class IGDBGameDataAdminTests(TestCase):
             igdb_id=123,
             year_of_release=2020,
         )
-        igdb_data = models.IGDBGameData.objects.get(game=game)
-        igdb_data.url = "https://www.igdb.com/games/test-game"
-        igdb_data.save()
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            url="https://www.igdb.com/games/test-game",
+            is_primary=True,
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save(update_fields=["primary_igdb_game_data"])
 
         value = self.admin._url_link(igdb_data)
         self.assertIn("https://www.igdb.com/games/test-game", value)
@@ -199,9 +219,14 @@ class IGDBGameDataAdminTests(TestCase):
             igdb_id=123,
             year_of_release=2020,
         )
-        igdb_data = models.IGDBGameData.objects.get(game=game)
-        igdb_data.url = ""
-        igdb_data.save()
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            url="",
+            is_primary=True,
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save(update_fields=["primary_igdb_game_data"])
 
         value = self.admin._url_link(igdb_data)
         self.assertEqual(value, "-")
@@ -221,9 +246,11 @@ class WikipediaGameDataAdminTests(TestCase):
             rank=1,
             year_of_release=2020,
         )
-        wiki_data = models.WikipediaGameData.objects.get(game=game)
-        wiki_data.page_title = "Test_Game_(video_game)"
-        wiki_data.save()
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            page_title="Test_Game_(video_game)",
+            is_primary=True,
+        )
 
         value = self.admin._wikipedia_link(wiki_data)
         self.assertIn("Test_Game_(video_game)", value)
@@ -236,9 +263,11 @@ class WikipediaGameDataAdminTests(TestCase):
             rank=1,
             year_of_release=2020,
         )
-        wiki_data = models.WikipediaGameData.objects.get(game=game)
-        wiki_data.page_title = ""
-        wiki_data.save()
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            page_title="",
+            is_primary=True,
+        )
 
         value = self.admin._wikipedia_link(wiki_data)
         self.assertEqual(value, "-")

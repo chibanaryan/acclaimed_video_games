@@ -1244,10 +1244,14 @@ class ImportView(LoginRequiredMixin, FormView):
         # Get all counts in a single aggregation query (optimized)
         game_counts = models.Game.objects.aggregate(
             total=Count("id"),
-            with_igdb=Count("id", filter=Q(igdb_artwork_id__isnull=False)),
-            without_igdb=Count("id", filter=Q(igdb_artwork_id__isnull=True)),
-            with_wikipedia=Count("id", filter=Q(wikipedia_page_title__isnull=False)),
-            without_wikipedia=Count("id", filter=Q(wikipedia_page_title__isnull=True)),
+            with_igdb=Count("id", filter=Q(primary_igdb_game_data__isnull=False)),
+            without_igdb=Count("id", filter=Q(primary_igdb_game_data__isnull=True)),
+            with_wikipedia=Count(
+                "id", filter=Q(primary_wikipedia_game_data__isnull=False)
+            ),
+            without_wikipedia=Count(
+                "id", filter=Q(primary_wikipedia_game_data__isnull=True)
+            ),
         )
         total_games = game_counts["total"]
         games_with_igdb = game_counts["with_igdb"]

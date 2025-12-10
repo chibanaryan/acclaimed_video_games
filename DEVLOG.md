@@ -1,5 +1,10 @@
 # Developer Log
 
+## 2025-12-10
+
+- Changed IGDB and Wikipedia metadata to persist when games are deleted (SET_NULL instead of CASCADE)
+- Metadata automatically reconnects when games are re-imported (avoids re-fetching from APIs)
+
 ## 2025-12-09
 
 - Completed Developer/DeveloperAlias to Company/Studio refactor (clearer naming for parent companies vs game studios)

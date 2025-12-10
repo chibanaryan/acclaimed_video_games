@@ -303,7 +303,6 @@ class GameSearchAPIView(APIView):
                 "slug",
                 "year_of_release",
                 "rank",
-                "igdb_artwork_id",
                 "primary_igdb_game_data__artwork_id",
             )
             .order_by("rank")[:limit]

@@ -54,11 +54,11 @@
             {% for genre in game.genres.all %}<a href="{% url 'games-list' %}?genres={{ genre.id }}&highlight={{ game.id }}" class="link link-primary">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
         </span>
     </div>
-    {% if game.igdb_url %}
+    {% if game.primary_igdb_game_data.url %}
     <div>
         <span class="text-base-content/85 font-semibold">IGDB Link:</span>
         <span class="ml-2">
-            <a href="{{ game.igdb_url }}" target="_blank" class="link link-primary inline-flex items-center gap-1">
+            <a href="{{ game.primary_igdb_game_data.url }}" target="_blank" class="link link-primary inline-flex items-center gap-1">
                 IGDB <span class="mdi mdi-open-in-new"></span>
             </a>
         </span>

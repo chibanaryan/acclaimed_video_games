@@ -118,6 +118,188 @@ class ImportGamesTests(TestCase):
         game = models.Game.objects.get()
         self.assertEqual(game.wikidata_id, "Q17185964")
 
+    def test_import_games_reconnects_to_existing_metadata(self):
+        """Test that re-importing games reconnects to orphaned IGDB/Wikipedia metadata.
+
+        This simulates the case where metadata exists but primary relationship was
+        cleared (e.g., during a data migration or manual database update).
+        """
+        # First import: Create game
+        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964\r\n"
+        success, message = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        game = models.Game.objects.get()
+
+        # Create IGDB metadata for this game
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=12345,
+            artwork_id="test_artwork",
+            url="https://www.igdb.com/games/test",
+            description="Test description",
+            is_primary=True,
+        )
+
+        # Create Wikipedia metadata for this game
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            page_title="Test_Game",
+            wikidata_id="Q17185964",
+            primary_genre="Action",
+            all_genres="Action, Adventure",
+            lookup_source="https://en.wikipedia.org/wiki/Test_Game",
+            is_primary=True,
+        )
+
+        # Store the IDs of the metadata records
+        igdb_data_id = igdb_data.id
+        wiki_data_id = wiki_data.id
+
+        # Clear primary relationships (simulate orphaned metadata)
+        game.primary_igdb_game_data = None
+        game.primary_wikipedia_game_data = None
+        game.save(
+            update_fields=["primary_igdb_game_data", "primary_wikipedia_game_data"]
+        )
+
+        # Verify metadata still exists but isn't connected
+        self.assertIsNone(game.primary_igdb_game_data)
+        self.assertIsNone(game.primary_wikipedia_game_data)
+        self.assertTrue(models.IGDBGameData.objects.filter(id=igdb_data_id).exists())
+        self.assertTrue(
+            models.WikipediaGameData.objects.filter(id=wiki_data_id).exists()
+        )
+
+        # Re-import the same game
+        success, message = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        # Verify game was reconnected to existing metadata
+        game.refresh_from_db()
+        self.assertIsNotNone(game.primary_igdb_game_data)
+        self.assertEqual(game.primary_igdb_game_data.id, igdb_data_id)
+        self.assertEqual(game.primary_igdb_game_data.artwork_id, "test_artwork")
+
+        self.assertIsNotNone(game.primary_wikipedia_game_data)
+        self.assertEqual(game.primary_wikipedia_game_data.id, wiki_data_id)
+        self.assertEqual(game.primary_wikipedia_game_data.primary_genre, "Action")
+
+    def test_import_games_reconnects_after_deletion(self):
+        """Test that metadata persists when game is deleted and reconnects
+        on re-import."""
+        # First import: Create game
+        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964\r\n"
+        success, message = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        game = models.Game.objects.get()
+
+        # Create IGDB metadata for this game
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=12345,
+            artwork_id="test_artwork",
+            url="https://www.igdb.com/games/test",
+            description="Test description",
+            is_primary=True,
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save(update_fields=["primary_igdb_game_data"])
+
+        # Create Wikipedia metadata for this game
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            page_title="Test_Game",
+            wikidata_id="Q17185964",
+            primary_genre="Action",
+            all_genres="Action, Adventure",
+            lookup_source="https://en.wikipedia.org/wiki/Test_Game",
+            is_primary=True,
+        )
+        game.primary_wikipedia_game_data = wiki_data
+        game.save(update_fields=["primary_wikipedia_game_data"])
+
+        # Store the IDs of the metadata records
+        igdb_data_id = igdb_data.id
+        wiki_data_id = wiki_data.id
+
+        # Delete the game (metadata should persist with SET_NULL)
+        game.delete()
+
+        # Verify game is gone but metadata still exists (orphaned)
+        self.assertEqual(models.Game.objects.count(), 0)
+        self.assertTrue(models.IGDBGameData.objects.filter(id=igdb_data_id).exists())
+        self.assertTrue(
+            models.WikipediaGameData.objects.filter(id=wiki_data_id).exists()
+        )
+
+        # Verify metadata is orphaned (game=None)
+        igdb_data.refresh_from_db()
+        wiki_data.refresh_from_db()
+        self.assertIsNone(igdb_data.game)
+        self.assertIsNone(wiki_data.game)
+
+        # Re-import the game
+        success, message = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        # Verify game was recreated and reconnected to existing metadata
+        game = models.Game.objects.get()
+        self.assertIsNotNone(game.primary_igdb_game_data)
+        self.assertEqual(game.primary_igdb_game_data.id, igdb_data_id)
+        self.assertEqual(game.primary_igdb_game_data.artwork_id, "test_artwork")
+
+        self.assertIsNotNone(game.primary_wikipedia_game_data)
+        self.assertEqual(game.primary_wikipedia_game_data.id, wiki_data_id)
+        self.assertEqual(game.primary_wikipedia_game_data.primary_genre, "Action")
+
+        # Verify metadata is no longer orphaned
+        igdb_data.refresh_from_db()
+        wiki_data.refresh_from_db()
+        self.assertEqual(igdb_data.game, game)
+        self.assertEqual(wiki_data.game, game)
+
+    def test_import_games_skips_reconnection_if_already_connected(self):
+        """Test that import doesn't overwrite existing metadata connections."""
+        # Create game with IGDB metadata
+        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964\r\n"
+        success, message = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        game = models.Game.objects.get()
+
+        # Create two IGDB metadata records - one primary, one secondary
+        igdb_primary = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=12345,
+            artwork_id="primary_artwork",
+            url="https://www.igdb.com/games/primary",
+            description="Primary description",
+            is_primary=True,
+        )
+        game.primary_igdb_game_data = igdb_primary
+        game.save(update_fields=["primary_igdb_game_data"])
+
+        # Create secondary IGDB record (not primary)
+        models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=12345,
+            artwork_id="secondary_artwork",
+            url="https://www.igdb.com/games/secondary",
+            description="Secondary description",
+            is_primary=False,
+        )
+
+        # Re-import with same data
+        success, message = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        # Verify game still connected to primary, not secondary
+        game.refresh_from_db()
+        self.assertEqual(game.primary_igdb_game_data.id, igdb_primary.id)
+        self.assertEqual(game.primary_igdb_game_data.artwork_id, "primary_artwork")
+
 
 class ImportPlatformsTests(TestCase):
 

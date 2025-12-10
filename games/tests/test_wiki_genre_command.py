@@ -8,7 +8,7 @@ from unittest import mock
 from django.core.management import call_command
 from django.test import TestCase
 
-from games.models import Game
+from games.models import Game, WikipediaGameData
 from games.services.wiki_genre_service import GenreResult, GenreSource
 
 
@@ -137,10 +137,12 @@ class GetWikiGenresCommandTests(TestCase):
                 stdout=out,
             )
 
-        # Refresh from database
+        # Refresh from database and check WikipediaGameData was created
         self.game1.refresh_from_db()
-        self.assertEqual(self.game1.wikipedia_primary_genre, "Action")
-        self.assertEqual(self.game1.wikipedia_all_genres, "Action | Adventure | RPG")
+        self.assertIsNotNone(self.game1.primary_wikipedia_game_data)
+        wiki_data = self.game1.primary_wikipedia_game_data
+        self.assertEqual(wiki_data.primary_genre, "Action")
+        self.assertEqual(wiki_data.all_genres, "Action | Adventure | RPG")
 
     def test_command_does_not_save_failed_results(self):
         """Test command does not save failed results to database."""
@@ -167,12 +169,18 @@ class GetWikiGenresCommandTests(TestCase):
 
         # Refresh from database - should not be updated
         self.game1.refresh_from_db()
-        self.assertIsNone(self.game1.wikipedia_primary_genre)
+        self.assertIsNone(self.game1.primary_wikipedia_game_data)
 
     def test_command_skips_existing_when_flag_set(self):
         """Test command skips games with existing data when --skip-existing is set."""
         # Set existing data on game1
-        self.game1.wikipedia_primary_genre = "Existing Genre"
+        wiki_data = WikipediaGameData.objects.create(
+            game=self.game1,
+            page_title="Test Game 1",
+            primary_genre="Existing Genre",
+            is_primary=True,
+        )
+        self.game1.primary_wikipedia_game_data = wiki_data
         self.game1.save()
 
         out = StringIO()
@@ -342,9 +350,22 @@ class GetWikiGenresCommandTests(TestCase):
     def test_command_no_games_to_process_with_skip_existing(self):
         """Test command message when all games already have data."""
         # Set existing data on both games
-        self.game1.wikipedia_primary_genre = "Genre 1"
+        wiki_data1 = WikipediaGameData.objects.create(
+            game=self.game1,
+            page_title="Test Game 1",
+            primary_genre="Genre 1",
+            is_primary=True,
+        )
+        self.game1.primary_wikipedia_game_data = wiki_data1
         self.game1.save()
-        self.game2.wikipedia_primary_genre = "Genre 2"
+
+        wiki_data2 = WikipediaGameData.objects.create(
+            game=self.game2,
+            page_title="Test Game 2",
+            primary_genre="Genre 2",
+            is_primary=True,
+        )
+        self.game2.primary_wikipedia_game_data = wiki_data2
         self.game2.save()
 
         out = StringIO()

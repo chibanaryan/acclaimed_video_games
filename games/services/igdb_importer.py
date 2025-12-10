@@ -278,9 +278,7 @@ class IGDBImportService:
         """
         try:
             game.get_igdb_data()
-            game.save(
-                update_fields=["slug", "igdb_url", "igdb_artwork_id", "description"]
-            )
+            game.save(update_fields=["slug", "description"])
             with self.lock:
                 self.processed_count += 1
             return (True, game, None)
@@ -337,14 +335,7 @@ class IGDBImportService:
                         )
 
                         # Save the updated game
-                        game.save(
-                            update_fields=[
-                                "slug",
-                                "igdb_url",
-                                "igdb_artwork_id",
-                                "description",
-                            ]
-                        )
+                        game.save(update_fields=["slug", "description"])
 
                         local_processed += 1
                         results.append((True, game, None))

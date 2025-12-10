@@ -89,8 +89,11 @@ class GameIgdbTests(TestCase):
         game.get_igdb_data(api_client=fake_api)
 
         self.assertEqual(game.slug, "sample-game")
-        self.assertEqual(game.igdb_url, "https://example.com/sample")
-        self.assertEqual(game.igdb_artwork_id, "cover_hash")
+        # Check IGDB data is in IGDBGameData record
+        game.refresh_from_db()
+        self.assertIsNotNone(game.primary_igdb_game_data)
+        self.assertEqual(game.primary_igdb_game_data.url, "https://example.com/sample")
+        self.assertEqual(game.primary_igdb_game_data.artwork_id, "cover_hash")
         self.assertIn("Story", game.description)
         self.assertEqual(game.genres.get().name, "Action")
         self.assertEqual(game.studios.get().name, "Foo Dev")
@@ -406,11 +409,6 @@ class GameWikipediaTests(TestCase):
         )
         self.assertTrue(wiki_data.is_primary)
 
-        # Verify deprecated fields updated
-        game.refresh_from_db()
-        self.assertEqual(game.wikipedia_primary_genre, "Action")
-        self.assertEqual(game.wikipedia_all_genres, "Action | Adventure")
-
     @mock.patch("games.services.wiki_genre_service.WikiGenreService")
     def test_get_wikipedia_data_comma_separated_titles(self, mock_service_class):
         """Test get_wikipedia_data() with comma-separated page titles."""
@@ -442,9 +440,9 @@ class GameWikipediaTests(TestCase):
         # Call with comma-separated titles
         game.get_wikipedia_data(page_titles="Pokémon Red and Blue,Pokémon Red")
 
-        # Verify records created (includes auto-created empty record from Game.save())
+        # Verify 2 records created from API call
         wiki_records = models.WikipediaGameData.objects.filter(game=game)
-        self.assertEqual(wiki_records.count(), 3)  # 2 from API + 1 auto-created
+        self.assertEqual(wiki_records.count(), 2)
 
         # First API record should be primary
         primary = models.WikipediaGameData.objects.get(game=game, is_primary=True)
@@ -456,10 +454,6 @@ class GameWikipediaTests(TestCase):
             game=game, page_title="Pokémon Red"
         )
         self.assertFalse(secondary.is_primary)
-
-        # Auto-created record should exist but not be primary
-        auto_created = models.WikipediaGameData.objects.get(game=game, page_title="")
-        self.assertFalse(auto_created.is_primary)
 
 
 class ModelHelpersTests(TestCase):
@@ -503,8 +497,19 @@ class ModelHelpersTests(TestCase):
             rank=1,
             igdb_id=20,
             year_of_release=2001,
-            igdb_artwork_id="art123",
         )
+        # Create IGDB data with artwork
+        igdb_data, _ = models.IGDBGameData.objects.update_or_create(
+            game=game,
+            igdb_id=20,
+            defaults={
+                "artwork_id": "art123",
+                "url": "https://example.com",
+                "is_primary": True,
+            },
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save()
         self.assertIn("t_cover_small/art123", game.thumbnail)
         self.assertIn("t_cover_small_2x/art123", game.thumbnail_2x)
         self.assertIn("t_cover_big/art123", game.image)
@@ -603,12 +608,17 @@ class IGDBGameDataTests(TestCase):
             igdb_id=123,
             year_of_release=2020,
         )
-        # Get the auto-created IGDBGameData
-        self.igdb_data = models.IGDBGameData.objects.get(game=self.game)
-        self.igdb_data.artwork_id = "test_artwork_id"
-        self.igdb_data.url = "https://www.igdb.com/games/test-game"
-        self.igdb_data.description = "Test description"
-        self.igdb_data.save()
+        # Manually create IGDBGameData record
+        self.igdb_data = models.IGDBGameData.objects.create(
+            game=self.game,
+            igdb_id=123,
+            artwork_id="test_artwork_id",
+            url="https://www.igdb.com/games/test-game",
+            description="Test description",
+            is_primary=True,
+        )
+        self.game.primary_igdb_game_data = self.igdb_data
+        self.game.save(update_fields=["primary_igdb_game_data"])
 
     def test_str(self):
         """Test __str__ returns correct format."""
@@ -707,13 +717,17 @@ class WikipediaGameDataTests(TestCase):
             rank=1,
             year_of_release=2020,
         )
-        # Get the auto-created WikipediaGameData
-        self.wiki_data = models.WikipediaGameData.objects.get(game=self.game)
-        self.wiki_data.page_title = "Test_Game_(video_game)"
-        self.wiki_data.wikidata_id = "Q12345"
-        self.wiki_data.primary_genre = "Action"
-        self.wiki_data.all_genres = "Action, Adventure"
-        self.wiki_data.save()
+        # Create WikipediaGameData manually
+        self.wiki_data = models.WikipediaGameData.objects.create(
+            game=self.game,
+            page_title="Test_Game_(video_game)",
+            wikidata_id="Q12345",
+            primary_genre="Action",
+            all_genres="Action, Adventure",
+            is_primary=True,
+        )
+        self.game.primary_wikipedia_game_data = self.wiki_data
+        self.game.save()
 
     def test_str(self):
         """Test __str__ returns correct format."""

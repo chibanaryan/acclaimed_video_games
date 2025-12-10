@@ -102,7 +102,7 @@ class Command(BaseCommand):
         if force:
             games = Game.objects.exclude(igdb_id__isnull=True)
         else:
-            games = Game.objects.filter(igdb_artwork_id__isnull=True)
+            games = Game.objects.filter(primary_igdb_game_data__isnull=True)
 
         total_games = games.count()
 
@@ -177,7 +177,7 @@ class Command(BaseCommand):
                 )
                 return
 
-            if game.igdb_artwork_id and not force:
+            if game.primary_igdb_game_data and not force:
                 self.stdout.write(
                     self.style.WARNING(
                         f"Game '{game.name}' already has IGDB data. "
@@ -187,9 +187,7 @@ class Command(BaseCommand):
                 return
 
             game.get_igdb_data()
-            game.save(
-                update_fields=["slug", "igdb_url", "igdb_artwork_id", "description"]
-            )
+            game.save(update_fields=["slug", "description"])
             self.stdout.write(self.style.SUCCESS(f"Successfully updated '{game.name}'"))
 
         except Game.DoesNotExist:

@@ -16,6 +16,7 @@ from io import TextIOWrapper
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from django.db import connection, transaction
+from django.db.models import Q
 
 from games import config, constants, models
 
@@ -111,9 +112,9 @@ def import_igdb_with_progress():
         )
 
         # Get games (only those without IGDB data)
-        games = models.Game.objects.filter(igdb_artwork_id__isnull=True).order_by(
-            "rank"
-        )
+        games = models.Game.objects.filter(
+            primary_igdb_game_data__isnull=True
+        ).order_by("rank")
 
         # Run import in a thread to avoid blocking the generator
         def run_import():
@@ -213,7 +214,7 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
         else:
             # Only process games without Wikipedia page data
             games_queryset = models.Game.objects.filter(
-                wikipedia_page_title__isnull=True
+                primary_wikipedia_game_data__isnull=True
             ).order_by("rank")
 
         # Extract needed fields
@@ -238,10 +239,30 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
 
                     # Save to database if successful
                     if result.success:
-                        models.Game.objects.filter(id=game_id).update(
-                            wikipedia_page_title=result.page_title,
-                            wikipedia_lookup_source=result.lookup_source,
+                        # Get the game object
+                        game = models.Game.objects.get(id=game_id)
+
+                        # First, unset is_primary on any existing records for this game
+                        # to avoid UNIQUE constraint violation
+                        models.WikipediaGameData.objects.filter(
+                            game=game, is_primary=True
+                        ).update(is_primary=False)
+
+                        # Create or update WikipediaGameData record
+                        wiki_game_data, created = (
+                            models.WikipediaGameData.objects.update_or_create(
+                                game=game,
+                                page_title=result.page_title,
+                                defaults={
+                                    "lookup_source": result.lookup_source,
+                                    "is_primary": True,
+                                },
+                            )
                         )
+
+                        # Set primary relationship
+                        game.primary_wikipedia_game_data = wiki_game_data
+                        game.save(update_fields=["primary_wikipedia_game_data"])
 
                         # Emit progress event
                         progress_callback(
@@ -814,6 +835,50 @@ def import_games(
                 },
             )
             game.platforms.set(platform_objs)
+
+            # Reconnect to existing IGDB/Wikipedia metadata if not already connected
+            # This handles both orphaned metadata (game=None) and metadata still
+            # linked to this game but not set as primary
+            needs_save = False
+            update_fields = []
+
+            # Reconnect IGDB data if available and not already linked
+            if igdb_id and not game.primary_igdb_game_data:
+                # Look for orphaned metadata (game=None) or metadata for this game
+                igdb_data = (
+                    models.IGDBGameData.objects.filter(igdb_id=igdb_id, is_primary=True)
+                    .filter(Q(game__isnull=True) | Q(game=game))
+                    .first()
+                )
+                if igdb_data:
+                    # Reconnect to game
+                    igdb_data.game = game
+                    igdb_data.save(update_fields=["game"])
+                    game.primary_igdb_game_data = igdb_data
+                    update_fields.append("primary_igdb_game_data")
+                    needs_save = True
+
+            # Reconnect Wikipedia data if available and not already linked
+            if wikidata_value and not game.primary_wikipedia_game_data:
+                # Look for orphaned metadata (game=None) or metadata for this game
+                wiki_data = (
+                    models.WikipediaGameData.objects.filter(
+                        wikidata_id=wikidata_value, is_primary=True
+                    )
+                    .filter(Q(game__isnull=True) | Q(game=game))
+                    .first()
+                )
+                if wiki_data:
+                    # Reconnect to game
+                    wiki_data.game = game
+                    wiki_data.save(update_fields=["game"])
+                    game.primary_wikipedia_game_data = wiki_data
+                    update_fields.append("primary_wikipedia_game_data")
+                    needs_save = True
+
+            # Save if we reconnected any metadata
+            if needs_save:
+                game.save(update_fields=update_fields)
 
             if created:
                 count += 1

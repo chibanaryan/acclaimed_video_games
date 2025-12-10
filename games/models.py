@@ -222,10 +222,17 @@ class IGDBGameData(models.Model):
     Supplemental IGDB game data.
     Multiple records per game supported (e.g., Pokémon Red/Blue/Yellow).
     One record marked as primary for default display.
+
+    Metadata persists when games are deleted (SET_NULL) to allow reconnection
+    when games are re-imported.
     """
 
     game = models.ForeignKey(
-        "Game", on_delete=models.CASCADE, related_name="igdb_game_data_set"
+        "Game",
+        on_delete=models.SET_NULL,
+        related_name="igdb_game_data_set",
+        null=True,
+        blank=True,
     )
     igdb_id = models.IntegerField(
         db_index=True, help_text="IGDB game ID for this specific version/entry"
@@ -254,13 +261,15 @@ class IGDBGameData(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["game"],
-                condition=models.Q(is_primary=True),
+                condition=models.Q(is_primary=True) & models.Q(game__isnull=False),
                 name="unique_primary_igdb_per_game",
             )
         ]
 
     def __str__(self) -> str:
-        return f"IGDB data for {self.game.name} (ID: {self.igdb_id})"
+        if self.game:
+            return f"IGDB data for {self.game.name} (ID: {self.igdb_id})"
+        return f"Orphaned IGDB data (ID: {self.igdb_id})"
 
     @cached_property
     def thumbnail(self) -> Optional[str]:
@@ -332,10 +341,17 @@ class WikipediaGameData(models.Model):
     Supplemental Wikipedia/Wikidata game data.
     Multiple records per game supported (e.g., different language editions).
     One record marked as primary for default display.
+
+    Metadata persists when games are deleted (SET_NULL) to allow reconnection
+    when games are re-imported.
     """
 
     game = models.ForeignKey(
-        "Game", on_delete=models.CASCADE, related_name="wikipedia_game_data_set"
+        "Game",
+        on_delete=models.SET_NULL,
+        related_name="wikipedia_game_data_set",
+        null=True,
+        blank=True,
     )
     wikidata_id = models.CharField(
         max_length=20,
@@ -369,13 +385,15 @@ class WikipediaGameData(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["game"],
-                condition=models.Q(is_primary=True),
+                condition=models.Q(is_primary=True) & models.Q(game__isnull=False),
                 name="unique_primary_wikipedia_per_game",
             )
         ]
 
     def __str__(self) -> str:
-        return f"Wikipedia data for {self.game.name}"
+        if self.game:
+            return f"Wikipedia data for {self.game.name}"
+        return f"Orphaned Wikipedia data (Wikidata: {self.wikidata_id or 'unknown'})"
 
     @property
     def wikipedia_url(self) -> Optional[str]:
@@ -451,28 +469,18 @@ class Game(models.Model):
         help_text="Primary Wikipedia game data for display",
     )
 
-    # DEPRECATED FIELDS - Will be removed in future release
-    igdb_artwork_id = models.CharField(max_length=100, null=True, blank=True)
-    igdb_url = models.URLField(null=True, blank=True)
-    year_rank = models.IntegerField(null=True, blank=True, db_index=True)
-    decade_rank = models.IntegerField(null=True, blank=True, db_index=True)
-    # DEPRECATED FIELDS - Wikipedia data moved to WikipediaData model
-    wikipedia_primary_genre = models.CharField(max_length=200, null=True, blank=True)
-    wikipedia_all_genres = models.TextField(null=True, blank=True)
-    wikidata_id = models.CharField(max_length=20, null=True, blank=True)
-    wikipedia_page_title = models.CharField(
-        max_length=300,
+    # Wikidata ID for linking to Wikipedia/Wikidata
+    wikidata_id = models.CharField(
+        max_length=20,
         null=True,
         blank=True,
         db_index=True,
-        help_text="Wikipedia page title (e.g., 'Zelda: Breath of the Wild')",
+        help_text="Wikidata entity ID (e.g., 'Q12345')",
     )
-    wikipedia_lookup_source = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        help_text="Lookup method: wikidata, opensearch_year, etc.",
-    )
+
+    # Calculated ranking fields
+    year_rank = models.IntegerField(null=True, blank=True, db_index=True)
+    decade_rank = models.IntegerField(null=True, blank=True, db_index=True)
 
     objects = GameQuerySet.as_manager()
 
@@ -494,42 +502,8 @@ class Game(models.Model):
         if self.name != normalized:
             self.name_normalized = normalized
 
-        # Call parent save first to ensure we have a primary key
-        is_new = self.pk is None
+        # Call parent save
         super().save(*args, **kwargs)
-
-        # Create empty IGDB and Wikipedia game data records if they don't exist
-        # This ensures every game has at least one record in each table
-        if is_new:
-            # Create empty IGDB game data if we have an igdb_id and no existing record
-            if self.igdb_id and not IGDBGameData.objects.filter(game=self).exists():
-                # Copy deprecated fields if they exist for backward compatibility
-                igdb_data = IGDBGameData.objects.create(
-                    game=self,
-                    igdb_id=self.igdb_id,
-                    artwork_id=self.igdb_artwork_id or "",
-                    url=self.igdb_url or "",
-                    description=self.description or "",
-                    is_primary=True,
-                )
-                self.primary_igdb_game_data = igdb_data
-                # Save again to update the FK relationship
-                super().save(update_fields=["primary_igdb_game_data"])
-
-            # Create empty Wikipedia game data only if no existing record
-            if not WikipediaGameData.objects.filter(game=self).exists():
-                # Copy deprecated fields if they exist for backward compatibility
-                wiki_data = WikipediaGameData.objects.create(
-                    game=self,
-                    page_title=self.wikipedia_page_title or "",
-                    primary_genre=self.wikipedia_primary_genre or "",
-                    all_genres=self.wikipedia_all_genres or "",
-                    lookup_source=self.wikipedia_lookup_source or "",
-                    is_primary=True,
-                )
-                self.primary_wikipedia_game_data = wiki_data
-                # Save again to update the FK relationship
-                super().save(update_fields=["primary_wikipedia_game_data"])
 
     def get_igdb_data(
         self,
@@ -625,9 +599,7 @@ class Game(models.Model):
             if idx == 0:
                 self.primary_igdb_game_data = igdb_game_data
 
-                # Update deprecated fields for backward compatibility
-                self.igdb_url = game_data.get("url")
-                self.igdb_artwork_id = game_data.get("cover")
+                # Update description field
                 self.description = "\n\n".join(
                     [
                         x
@@ -693,6 +665,9 @@ class Game(models.Model):
                 genre, created = Genre.objects.get_or_create(name=genre_name)
                 genres.append(genre)
             self.genres.set(genres)
+
+        # Save only specific fields to avoid updating modified timestamp
+        self.save(update_fields=["slug", "primary_igdb_game_data", "description"])
 
     def get_wikipedia_data(self, page_titles=None, wikidata_ids=None, year=None):
         """
@@ -788,16 +763,7 @@ class Game(models.Model):
             # Set primary relationship for first entry
             if idx == 0:
                 self.primary_wikipedia_game_data = wiki_game_data
-                # Update deprecated fields for backward compatibility
-                self.wikipedia_primary_genre = result.primary_genre
-                self.wikipedia_all_genres = result.all_genres_str
-                self.save(
-                    update_fields=[
-                        "primary_wikipedia_game_data",
-                        "wikipedia_primary_genre",
-                        "wikipedia_all_genres",
-                    ]
-                )
+                self.save(update_fields=["primary_wikipedia_game_data"])
 
             action = "Created" if created else "Updated"
             logger.info(

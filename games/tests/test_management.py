@@ -74,10 +74,8 @@ class GetIgdbCommandTests(TestCase):
 
         # Mock get_igdb_data to set some fields
         def mock_get_igdb(cache_results=True):
-            # Simulate what get_igdb_data does
+            # Simulate what get_igdb_data does (sets slug and description)
             game.slug = "halo-2-updated"
-            game.igdb_url = "https://igdb.com/games/halo-2"
-            game.igdb_artwork_id = "co1234"
             game.description = "A test game"
 
         with mock.patch.object(models.Game, "get_igdb_data", side_effect=mock_get_igdb):
@@ -121,14 +119,25 @@ class GetIgdbCommandTests(TestCase):
         mock_get.assert_called_once_with()
 
     def test_force_update_game_with_existing_artwork(self):
-        """Test using --force flag to update game that already has artwork"""
+        """Test using --force flag to update game that already has IGDB data"""
         game = models.Game.objects.create(
             name="Halo 2",
             rank=1,
             igdb_id=1,
-            igdb_artwork_id="co1x77.jpg",
             year_of_release=2004,
         )
+        # Create IGDB data to simulate game already having data
+        igdb_data, _ = models.IGDBGameData.objects.update_or_create(
+            game=game,
+            igdb_id=1,
+            defaults={
+                "artwork_id": "co1x77.jpg",
+                "url": "https://example.com",
+                "is_primary": True,
+            },
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save()
 
         with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
             call_command("get_igdb", id=game.id, force=True)
@@ -136,14 +145,25 @@ class GetIgdbCommandTests(TestCase):
         mock_get.assert_called_once_with()
 
     def test_warns_when_game_has_artwork_without_force(self):
-        """Test that command warns when game already has artwork without --force"""
-        models.Game.objects.create(
+        """Test that command warns when game already has IGDB data without --force"""
+        game = models.Game.objects.create(
             name="Halo 2",
             rank=1,
             igdb_id=1,
-            igdb_artwork_id="co1x77.jpg",
             year_of_release=2004,
         )
+        # Create IGDB data to simulate game already having data
+        igdb_data, _ = models.IGDBGameData.objects.update_or_create(
+            game=game,
+            igdb_id=1,
+            defaults={
+                "artwork_id": "co1x77.jpg",
+                "url": "https://example.com",
+                "is_primary": True,
+            },
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save()
 
         from io import StringIO
 
@@ -182,20 +202,31 @@ class GetIgdbCommandTests(TestCase):
 
     def test_batch_update_with_force_flag(self):
         """Test batch update with --force flag updates all games with IGDB IDs"""
-        models.Game.objects.create(
+        game1 = models.Game.objects.create(
             name="Game 1",
             rank=1,
             igdb_id=1,
-            igdb_artwork_id="co1.jpg",
             year_of_release=2000,
         )
-        models.Game.objects.create(
+        game2 = models.Game.objects.create(
             name="Game 2",
             rank=2,
             igdb_id=2,
-            igdb_artwork_id="co2.jpg",
             year_of_release=2001,
         )
+        # Create IGDB data to simulate games already having data
+        for game in [game1, game2]:
+            igdb_data, _ = models.IGDBGameData.objects.update_or_create(
+                game=game,
+                igdb_id=game.igdb_id,
+                defaults={
+                    "artwork_id": f"co{game.igdb_id}.jpg",
+                    "url": "https://example.com",
+                    "is_primary": True,
+                },
+            )
+            game.primary_igdb_game_data = igdb_data
+            game.save()
 
         with mock.patch.object(models.Game, "get_igdb_data") as mock_get:
             # Disable batch mode to use sequential processing
@@ -312,15 +343,25 @@ class GetIgdbCommandTests(TestCase):
             self.assertIn("Error updating game", output)
 
     def test_no_games_to_fetch_message(self):
-        """Test message when all games already have IGDB data (lines 110-115)."""
-        # Create games that all have igdb_artwork_id
-        models.Game.objects.create(
+        """Test message when all games already have IGDB data."""
+        # Create game with IGDB data
+        game = models.Game.objects.create(
             name="Game With Art",
             rank=1,
             igdb_id=1,
-            igdb_artwork_id="co1.jpg",
             year_of_release=2000,
         )
+        igdb_data, _ = models.IGDBGameData.objects.update_or_create(
+            game=game,
+            igdb_id=1,
+            defaults={
+                "artwork_id": "co1.jpg",
+                "url": "https://example.com",
+                "is_primary": True,
+            },
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save()
 
         from io import StringIO
 

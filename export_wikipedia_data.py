@@ -14,7 +14,7 @@ django.setup()
 from games.models import Game  # noqa: E402
 
 # Query games with Wikipedia data
-games = Game.objects.filter(wikipedia_page_title__isnull=False).order_by("rank")
+games = Game.objects.filter(primary_wikipedia_game_data__isnull=False).order_by("rank")
 
 # Generate output filename
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -35,8 +35,9 @@ with open(output_file, "w", newline="", encoding="utf-8") as f:
     )
 
     for game in games:
-        if game.wikipedia_page_title:
-            title = game.wikipedia_page_title.replace(" ", "_")
+        wiki_data = game.primary_wikipedia_game_data
+        if wiki_data and wiki_data.page_title:
+            title = wiki_data.page_title.replace(" ", "_")
             wikipedia_url = f"https://en.wikipedia.org/wiki/{title}"
         else:
             wikipedia_url = ""
@@ -45,8 +46,8 @@ with open(output_file, "w", newline="", encoding="utf-8") as f:
                 game.name,
                 game.year_of_release or "",
                 game.wikidata_id or "",
-                game.wikipedia_page_title or "",
-                game.wikipedia_lookup_source or "",
+                wiki_data.page_title if wiki_data else "",
+                wiki_data.lookup_source if wiki_data else "",
                 wikipedia_url,
             ]
         )

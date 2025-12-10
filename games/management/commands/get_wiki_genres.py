@@ -128,7 +128,7 @@ class Command(BaseCommand):
             # Batch mode
             games = Game.objects.all()
             if skip_existing:
-                games = games.filter(wikipedia_primary_genre__isnull=True)
+                games = games.filter(primary_wikipedia_game_data__isnull=True)
             games = games.order_by("rank")
             # Apply offset and limit
             if limit:
@@ -245,16 +245,7 @@ class Command(BaseCommand):
 
                     # Set primary relationship
                     game.primary_wikipedia_game_data = wiki_game_data
-                    # Update deprecated fields for backward compatibility
-                    game.wikipedia_primary_genre = result.primary_genre
-                    game.wikipedia_all_genres = result.all_genres_str
-                    game.save(
-                        update_fields=[
-                            "primary_wikipedia_game_data",
-                            "wikipedia_primary_genre",
-                            "wikipedia_all_genres",
-                        ]
-                    )
+                    game.save(update_fields=["primary_wikipedia_game_data"])
 
                 # Write to CSV immediately (incremental save)
                 if csv_writer:

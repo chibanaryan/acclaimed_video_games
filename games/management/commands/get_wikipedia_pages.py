@@ -161,14 +161,29 @@ class Command(BaseCommand):
 
                     # Save to database if requested
                     if options.get("save"):
-                        game.wikipedia_page_title = result.page_title
-                        game.wikipedia_lookup_source = result.lookup_source
-                        game.save(
-                            update_fields=[
-                                "wikipedia_page_title",
-                                "wikipedia_lookup_source",
-                            ]
+                        from games.models import WikipediaGameData
+
+                        # First, unset is_primary on any existing records for this game
+                        # to avoid UNIQUE constraint violation
+                        WikipediaGameData.objects.filter(
+                            game=game, is_primary=True
+                        ).update(is_primary=False)
+
+                        # Create or update WikipediaGameData record
+                        wiki_game_data, created = (
+                            WikipediaGameData.objects.update_or_create(
+                                game=game,
+                                page_title=result.page_title,
+                                defaults={
+                                    "lookup_source": result.lookup_source,
+                                    "is_primary": True,
+                                },
+                            )
                         )
+
+                        # Set primary relationship
+                        game.primary_wikipedia_game_data = wiki_game_data
+                        game.save(update_fields=["primary_wikipedia_game_data"])
                 else:
                     failure_count += 1
                     self.stdout.write(
@@ -229,10 +244,10 @@ class Command(BaseCommand):
 
         # Skip existing (unless force)
         if options.get("skip_existing") and not options.get("force"):
-            games = games.filter(wikipedia_page_title__isnull=True)
+            games = games.filter(primary_wikipedia_game_data__isnull=True)
         elif not options.get("force"):
             # Default: only process games without Wikipedia data
-            games = games.filter(wikipedia_page_title__isnull=True)
+            games = games.filter(primary_wikipedia_game_data__isnull=True)
 
         # Apply offset
         if options.get("offset"):
