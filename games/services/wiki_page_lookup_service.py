@@ -114,7 +114,7 @@ class WikiPageLookupService:
         self, url: str, params: Optional[Dict] = None, use_auth: bool = False
     ) -> Optional[requests.Response]:
         """
-        Make rate-limited request with error handling.
+        Make rate-limited request with error handling and retry logic.
 
         Args:
             url: URL to fetch
@@ -124,31 +124,59 @@ class WikiPageLookupService:
         Returns:
             Response object, or None on error
         """
-        self._wait_for_rate_limit()
+        max_retries = 3
+        retry_delay = 1.0  # Start with 1 second
 
-        headers = {}
-        if use_auth and self.access_token:
-            # Wikimedia Bot Password format: username@botname:password
-            # Use HTTP Basic Auth
-            auth = (
-                tuple(self.access_token.split(":", 1))
-                if ":" in self.access_token
-                else None
-            )
-            if not auth:
-                logger.warning("Invalid token format, falling back to unauthenticated")
-        else:
-            auth = None
+        for attempt in range(max_retries):
+            self._wait_for_rate_limit()
 
-        try:
-            response = self.session.get(
-                url, params=params, headers=headers, auth=auth, timeout=30
-            )
-            response.raise_for_status()
-            return response
-        except requests.RequestException as e:
-            logger.warning("Request failed: %s", e)
-            return None
+            headers = {}
+            if use_auth and self.access_token:
+                # Wikimedia Bot Password format: username@botname:password
+                # Use HTTP Basic Auth
+                auth = (
+                    tuple(self.access_token.split(":", 1))
+                    if ":" in self.access_token
+                    else None
+                )
+                if not auth:
+                    logger.warning(
+                        "Invalid token format, falling back to unauthenticated"
+                    )
+            else:
+                auth = None
+
+            try:
+                response = self.session.get(
+                    url, params=params, headers=headers, auth=auth, timeout=30
+                )
+                response.raise_for_status()
+                return response
+            except (
+                requests.ConnectionError,
+                requests.Timeout,
+                requests.exceptions.ChunkedEncodingError,
+            ) as e:
+                # Transient errors - retry with backoff
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        "Connection error on attempt %d/%d: %s. Retrying in %.1fs...",
+                        attempt + 1,
+                        max_retries,
+                        e,
+                        retry_delay,
+                    )
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logger.error("Request failed after %d attempts: %s", max_retries, e)
+                    return None
+            except requests.RequestException as e:
+                # Non-transient errors - don't retry
+                logger.warning("Request failed (non-retryable): %s", e)
+                return None
+
+        return None
 
     def _lookup_via_wikidata(self, wikidata_id: str) -> Optional[str]:
         """
@@ -233,7 +261,8 @@ class WikiPageLookupService:
                 page_title = urllib.parse.unquote(page_title).replace("_", " ")
 
                 # Determine source based on search success
-                # This is approximate - WikiGenreService doesn't expose which variant succeeded
+                # This is approximate - WikiGenreService doesn't expose
+                # which variant succeeded
                 if year:
                     source = config.WIKI_LOOKUP_SOURCE_OPENSEARCH_YEAR
                 else:

@@ -669,6 +669,83 @@ class Game(models.Model):
         # Save only specific fields to avoid updating modified timestamp
         self.save(update_fields=["slug", "primary_igdb_game_data", "description"])
 
+    def update_igdb_relationships(self, api_client=None) -> bool:
+        """
+        Update Company/Studio/Genre relationships from IGDB API without
+        modifying IGDBGameData records.
+
+        Used when games are re-imported after deletion - the IGDBGameData
+        is preserved as orphaned records, but M2M relationships need to be
+        recreated.
+
+        Args:
+            api_client: Optional API client for dependency injection
+
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.igdb_id:
+            return False
+
+        api_client = api_client or igdb.get_api()
+        if not api_client:
+            logger.warning("IGDB API unavailable; skipping update for %s", self)
+            return False
+
+        # Fetch game data from API
+        game_data = api_client.get_game_info_by_id(self.igdb_id, cache_results=True)
+        if not game_data:
+            return False
+
+        # Update studios
+        studios = []
+        for d in game_data["studios"]:
+            # This company is independent (no parent)
+            if not d.get("parent"):
+                company, created = Company.objects.update_or_create(
+                    name=d["name"],
+                    defaults={
+                        "slug": d["slug"],
+                        "igdb_id": d["id"],
+                    },
+                )
+
+            # This studio has a parent company
+            else:
+                parent_obj = d.get("parent")
+                if parent_obj:
+                    company, created = Company.objects.update_or_create(
+                        name=parent_obj["name"],
+                        defaults={
+                            "slug": parent_obj["slug"],
+                            "igdb_id": parent_obj["id"],
+                        },
+                    )
+
+            try:
+                studio, created = Studio.objects.update_or_create(
+                    name=d["name"],
+                    defaults={
+                        "igdb_id": d["id"],
+                        "company": company,
+                    },
+                )
+            except IntegrityError:
+                studio = Studio.objects.get(name=d["name"])
+
+            studios.append(studio)
+
+        self.studios.set(studios)
+
+        # Update genres
+        genres = []
+        for genre_name in game_data.get("genres"):
+            genre, created = Genre.objects.get_or_create(name=genre_name)
+            genres.append(genre)
+        self.genres.set(genres)
+
+        return True
+
     def get_wikipedia_data(self, page_titles=None, wikidata_ids=None, year=None):
         """
         Fetch and save Wikipedia/Wikidata data for this game.

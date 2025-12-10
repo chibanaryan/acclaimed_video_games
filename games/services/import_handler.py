@@ -37,7 +37,7 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
             for f in ["platforms_file", "lists_file", "games_file", "memberships_file"]
         ]
     ):
-        success, message, _ = import_batch(data)
+        success, message = import_batch(data)
         return (success, message)
 
     # Legacy single-file import
@@ -72,7 +72,7 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
             return (False, f"Could not process uploaded file: {e}")
 
 
-def import_igdb_with_progress():
+def import_igdb_with_progress(update_relationships: bool = False):
     """
     Fetch IGDB data for all games with progress updates.
     Yields JSON progress events for streaming to SSE client in real-time.
@@ -81,11 +81,17 @@ def import_igdb_with_progress():
     - Default: batch_size=50 (free tier) or 500 (Pro tier)
     - Default: concurrency=8 workers
     - Performance: ~100 games/sec (25-500x faster than sequential)
+
+    Args:
+        update_relationships: If True, update Company/Studio/Genre relationships
+            for games that already have IGDB metadata, without modifying the
+            metadata records. Used after re-importing games.
     """
     import json
     import queue
     import threading
 
+    from games import igdb
     from games.services.igdb_importer import IGDBImportService
 
     # Use a queue to pass events from callback to generator in real-time
@@ -103,31 +109,111 @@ def import_igdb_with_progress():
         event_queue.put(json.dumps(data))
 
     try:
-        # Create service with optimizations enabled
-        service = IGDBImportService(
-            concurrency=8,  # Use 8 concurrent workers for speed
-            batch_size=None,  # Auto-detect from tier (50 free, 500 Pro)
-            use_pro_tier=None,  # Auto-detect from settings
-            progress_callback=progress_callback,
-        )
+        if update_relationships:
+            # Update relationships for games with existing IGDB data
+            games = models.Game.objects.filter(
+                primary_igdb_game_data__isnull=False
+            ).order_by("rank")
 
-        # Get games (only those without IGDB data)
-        games = models.Game.objects.filter(
-            primary_igdb_game_data__isnull=True
-        ).order_by("rank")
-
-        # Run import in a thread to avoid blocking the generator
-        def run_import():
-            try:
-                service.import_games(games)
-            except Exception as e:
-                event_queue.put(json.dumps({"event": "error", "error": str(e)}))
-            finally:
-                # Signal that we're done
+            total_games = games.count()
+            if total_games == 0:
+                event_queue.put(
+                    json.dumps(
+                        {"event": "error", "error": "No games with IGDB data found"}
+                    )
+                )
                 event_queue.put(None)
+            else:
+                # Run relationship update in a thread
+                def run_update():
+                    try:
+                        api_client = igdb.get_api()
+                        if not api_client:
+                            event_queue.put(
+                                json.dumps(
+                                    {
+                                        "event": "error",
+                                        "error": "IGDB API unavailable",
+                                    }
+                                )
+                            )
+                            return
 
-        import_thread = threading.Thread(target=run_import, daemon=True)
-        import_thread.start()
+                        progress_callback("start", {"total": total_games})
+
+                        success_count = 0
+                        error_count = 0
+
+                        for idx, game in enumerate(games, start=1):
+                            try:
+                                if game.update_igdb_relationships(
+                                    api_client=api_client
+                                ):
+                                    success_count += 1
+                                else:
+                                    error_count += 1
+
+                                progress_callback(
+                                    "progress",
+                                    {
+                                        "current": idx,
+                                        "total": total_games,
+                                        "game": game.name,
+                                        "successful": success_count,
+                                        "failed": error_count,
+                                    },
+                                )
+                            except Exception as game_error:
+                                error_count += 1
+                                logging.getLogger(__name__).error(
+                                    "Error updating relationships for '%s': %s",
+                                    game.name,
+                                    game_error,
+                                    exc_info=True,
+                                )
+
+                        progress_callback(
+                            "complete",
+                            {
+                                "total": total_games,
+                                "successful": success_count,
+                                "failed": error_count,
+                            },
+                        )
+                    except Exception as e:
+                        event_queue.put(json.dumps({"event": "error", "error": str(e)}))
+                    finally:
+                        event_queue.put(None)
+
+                import_thread = threading.Thread(target=run_update, daemon=True)
+                import_thread.start()
+        else:
+            # Standard IGDB data import
+            # Create service with optimizations enabled
+            service = IGDBImportService(
+                concurrency=8,  # Use 8 concurrent workers for speed
+                batch_size=None,  # Auto-detect from tier (50 free, 500 Pro)
+                use_pro_tier=None,  # Auto-detect from settings
+                progress_callback=progress_callback,
+            )
+
+            # Get games (only those without IGDB data)
+            games = models.Game.objects.filter(
+                primary_igdb_game_data__isnull=True
+            ).order_by("rank")
+
+            # Run import in a thread to avoid blocking the generator
+            def run_import():
+                try:
+                    service.import_games(games)
+                except Exception as e:
+                    event_queue.put(json.dumps({"event": "error", "error": str(e)}))
+                finally:
+                    # Signal that we're done
+                    event_queue.put(None)
+
+            import_thread = threading.Thread(target=run_import, daemon=True)
+            import_thread.start()
 
         # Stream events as they come in from the queue
         try:
@@ -213,8 +299,10 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
             games_queryset = models.Game.objects.all().order_by("rank")
         else:
             # Only process games without Wikipedia page data
+            # Matches the same filter used in views.py for consistency
             games_queryset = models.Game.objects.filter(
-                primary_wikipedia_game_data__isnull=True
+                Q(primary_wikipedia_game_data__isnull=True)
+                | Q(primary_wikipedia_game_data__page_title="")
             ).order_by("rank")
 
         # Extract needed fields
@@ -228,67 +316,112 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
                 total = len(games_data)
                 progress_callback("start", {"total": total})
 
+                successful_count = 0
+                failed_count = 0
+
                 for idx, (game_id, game_name, wikidata_id, year) in enumerate(
                     games_data, start=1
                 ):
                     if stop_event.is_set():
                         break
 
-                    # Perform lookup
-                    result = service.lookup_page(game_name, wikidata_id, year)
+                    # Wrap individual game lookup in try/except to prevent one failure
+                    # from stopping the entire batch
+                    try:
+                        # Perform lookup
+                        result = service.lookup_page(game_name, wikidata_id, year)
 
-                    # Save to database if successful
-                    if result.success:
-                        # Get the game object
-                        game = models.Game.objects.get(id=game_id)
+                        # Save to database if successful
+                        if result.success:
+                            # Get the game object
+                            game = models.Game.objects.get(id=game_id)
 
-                        # First, unset is_primary on any existing records for this game
-                        # to avoid UNIQUE constraint violation
-                        models.WikipediaGameData.objects.filter(
-                            game=game, is_primary=True
-                        ).update(is_primary=False)
+                            # First, unset is_primary on any existing records
+                            # to avoid UNIQUE constraint violation
+                            models.WikipediaGameData.objects.filter(
+                                game=game, is_primary=True
+                            ).update(is_primary=False)
 
-                        # Create or update WikipediaGameData record
-                        wiki_game_data, created = (
-                            models.WikipediaGameData.objects.update_or_create(
-                                game=game,
-                                page_title=result.page_title,
-                                defaults={
+                            # Create or update WikipediaGameData record
+                            wiki_game_data, created = (
+                                models.WikipediaGameData.objects.update_or_create(
+                                    game=game,
+                                    page_title=result.page_title,
+                                    defaults={
+                                        "lookup_source": result.lookup_source,
+                                        "is_primary": True,
+                                    },
+                                )
+                            )
+
+                            # Set primary relationship
+                            game.primary_wikipedia_game_data = wiki_game_data
+                            game.save(update_fields=["primary_wikipedia_game_data"])
+
+                            successful_count += 1
+
+                            # Emit progress event
+                            progress_callback(
+                                "progress",
+                                {
+                                    "current": idx,
+                                    "total": total,
+                                    "game_name": game_name,
+                                    "page_title": result.page_title,
                                     "lookup_source": result.lookup_source,
-                                    "is_primary": True,
+                                    "successful": successful_count,
+                                    "failed": failed_count,
                                 },
                             )
+                        else:
+                            failed_count += 1
+                            # Emit progress event with failure info
+                            progress_callback(
+                                "progress",
+                                {
+                                    "current": idx,
+                                    "total": total,
+                                    "game_name": game_name,
+                                    "error": result.error_message,
+                                    "successful": successful_count,
+                                    "failed": failed_count,
+                                },
+                            )
+
+                    except Exception as game_error:
+                        # Log the error and continue to next game
+                        failed_count += 1
+                        import logging
+
+                        logging.getLogger(__name__).error(
+                            "Unexpected error processing game '%s': %s",
+                            game_name,
+                            game_error,
+                            exc_info=True,
                         )
 
-                        # Set primary relationship
-                        game.primary_wikipedia_game_data = wiki_game_data
-                        game.save(update_fields=["primary_wikipedia_game_data"])
-
-                        # Emit progress event
+                        # Emit progress event with error
                         progress_callback(
                             "progress",
                             {
                                 "current": idx,
                                 "total": total,
                                 "game_name": game_name,
-                                "page_title": result.page_title,
-                                "lookup_source": result.lookup_source,
-                            },
-                        )
-                    else:
-                        # Emit error event
-                        progress_callback(
-                            "error",
-                            {
-                                "current": idx,
-                                "total": total,
-                                "game_name": game_name,
-                                "message": result.error_message,
+                                "error": f"Unexpected error: {str(game_error)}",
+                                "successful": successful_count,
+                                "failed": failed_count,
                             },
                         )
 
-                # Emit complete event
-                progress_callback("complete", {"total": total})
+                # Emit complete event with summary
+                progress_callback(
+                    "complete",
+                    {
+                        "total": total,
+                        "successful": successful_count,
+                        "failed": failed_count,
+                    },
+                )
 
             except Exception as e:
                 event_queue.put(json.dumps({"event": "error", "error": str(e)}))
@@ -489,7 +622,7 @@ def import_batch_with_progress(data: Dict[str, Any]):
         yield f"data: {json.dumps({'event': 'error', 'message': str(e)})}\n\n"
 
 
-def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
+def import_batch(data: Dict[str, Any]) -> Tuple[bool, str]:
     """
     Import multiple files in the correct order with transaction safety.
 
@@ -502,8 +635,7 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
     If any import fails, the entire transaction is rolled back.
 
     Returns:
-        Tuple of (success, message, trigger_igdb) where trigger_igdb indicates
-        whether IGDB data should be fetched after successful import.
+        Tuple of (success, message)
     """
     results = []
     import_sequence = [
@@ -529,7 +661,7 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
                 # Validate prerequisites
                 validation_error = _validate_prerequisites(import_type)
                 if validation_error:
-                    return validation_error + (False,)
+                    return validation_error
 
                 # Import the file
                 try:
@@ -540,11 +672,11 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
                     if field_name == "games_file":
                         games_file_imported = True
                 except Exception as e:
-                    return (False, f"{display_name} import failed: {e}", False)
+                    return (False, f"{display_name} import failed: {e}")
 
         # If we get here, all imports succeeded
         if not results:
-            return (False, "No files were selected for import.", False)
+            return (False, "No files were selected for import.")
 
         # Update last_full_update if games file was imported
         if games_file_imported:
@@ -555,16 +687,19 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str, bool]:
             metadata.save()
 
         summary = "\n".join(results)
-        # Return IGDB trigger flag if checkbox was checked
-        trigger_igdb = data.get("igdb", False)
-        return (True, summary, trigger_igdb)
+        return (True, summary)
 
     except Exception as e:
-        return (False, f"Import transaction failed: {e}", False)
+        return (False, f"Import transaction failed: {e}")
 
 
 def delete_existing_data() -> Tuple[bool, str]:
-    """Delete all game-related data from the database."""
+    """
+    Delete all game-related data from the database.
+
+    Preserves IGDBGameData and WikipediaGameData for reconnection when games
+    are re-imported.
+    """
     models_to_delete = [
         models.Platform,
         models.List,
@@ -577,6 +712,11 @@ def delete_existing_data() -> Tuple[bool, str]:
     ]
 
     with transaction.atomic():
+        # Orphan metadata records before deleting games
+        # This preserves IGDB and Wikipedia data for reconnection on re-import
+        models.IGDBGameData.objects.all().update(game=None)
+        models.WikipediaGameData.objects.all().update(game=None)
+
         # Delete objects
         total = 0
         for model in models_to_delete:

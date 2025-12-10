@@ -2,19 +2,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script nonce="{{ csp_nonce }}">
-        // CRITICAL: Set theme immediately to prevent FOUC - keep minimal
-        (function() {
-            var t = localStorage.getItem('theme');
-            // Only allow valid themes: lofi (light) or forest (dark)
-            if (t !== 'lofi' && t !== 'forest') {
-                // Invalid or missing theme - detect system preference
-                t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'forest' : 'lofi';
-                localStorage.setItem('theme', t);
-            }
-            document.documentElement.setAttribute('data-theme', t);
-        })();
+    {# Include centralized theme initialization script - MUST be first to prevent FOUC #}
+    {% include 'includes/_theme_script.html' %}
 
+    <script nonce="{{ csp_nonce }}">
         // Non-critical theme functions - will execute after HTML parse
         function setTheme(t) {
             localStorage.setItem('theme', t);

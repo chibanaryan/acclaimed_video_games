@@ -843,58 +843,22 @@ class ImportBatchTests(TestCase):
         data = {
             "platforms_file": platforms_file,
             "games_file": games_file,
-            "igdb": True,
         }
 
-        success, message, trigger_igdb = utils.import_batch(data)
+        success, message = utils.import_batch(data)
 
         self.assertTrue(success)
-        self.assertTrue(trigger_igdb)
         self.assertIn("Platforms", message)
         self.assertIn("Games", message)
-
-    def test_import_batch_without_igdb_flag(self):
-        """Test that import_batch returns False for IGDB trigger when unchecked."""
-        platforms_file = SimpleUploadedFile(
-            "PlatformDB.txt", b"PC\tPersonal Computer\r\n"
-        )
-
-        data = {
-            "platforms_file": platforms_file,
-            "igdb": False,
-        }
-
-        success, message, trigger_igdb = utils.import_batch(data)
-
-        self.assertTrue(success)
-        self.assertFalse(trigger_igdb)
 
     def test_import_batch_no_files(self):
         """Test import_batch with no files returns error."""
         data = {}
 
-        success, message, trigger_igdb = utils.import_batch(data)
+        success, message = utils.import_batch(data)
 
         self.assertFalse(success)
         self.assertIn("No files were selected", message)
-        self.assertFalse(trigger_igdb)
-
-    def test_import_batch_failure_returns_false_trigger(self):
-        """Test that failed import returns False for IGDB trigger."""
-        # Invalid file that will cause import to fail
-        invalid_file = SimpleUploadedFile(
-            "PlatformDB.txt", b"invalid\tdata\ttoo\tmany\tcolumns\r\n"
-        )
-
-        data = {
-            "platforms_file": invalid_file,
-            "igdb": True,
-        }
-
-        success, message, trigger_igdb = utils.import_batch(data)
-
-        self.assertFalse(success)
-        self.assertFalse(trigger_igdb)
 
 
 class ImportDataTests(TestCase):
@@ -924,12 +888,11 @@ class ImportDataTests(TestCase):
         # Clear platforms
         models.Platform.objects.all().delete()
 
-        success, message, trigger_igdb = utils.import_batch(data)
+        success, message = utils.import_batch(data)
 
-        # Should fail with validation error (line 355 returns error + (False,))
+        # Should fail with validation error (line 355 returns error)
         self.assertFalse(success)
         self.assertIn("platforms", message.lower())
-        self.assertFalse(trigger_igdb)
 
     def test_import_batch_exception_return(self):
         """Test import_batch exception handling return (lines 374-375)."""
@@ -939,12 +902,11 @@ class ImportDataTests(TestCase):
         )
         data = {"platforms_file": invalid_file}
 
-        success, message, trigger_igdb = utils.import_batch(data)
+        success, message = utils.import_batch(data)
 
         # Should fail with exception message (lines 374-375)
         self.assertFalse(success)
         self.assertIn("failed", message.lower())
-        self.assertFalse(trigger_igdb)
 
     def test_import_batch_exception_in_transaction(self):
         """Test import_batch exception in transaction block (lines 374-375)."""
@@ -961,12 +923,11 @@ class ImportDataTests(TestCase):
         bad_file = BadFile()
         data = {"platforms_file": bad_file}
 
-        success, message, trigger_igdb = utils.import_batch(data)
+        success, message = utils.import_batch(data)
 
         # Should fail with exception message (lines 374-375)
         self.assertFalse(success)
         self.assertIn("failed", message.lower())
-        self.assertFalse(trigger_igdb)
 
     @mock.patch("games.utils.transaction.atomic")
     def test_import_batch_exception_transaction_atomic(self, mock_atomic):
@@ -977,12 +938,11 @@ class ImportDataTests(TestCase):
         platform_file = SimpleUploadedFile("PlatformDB.txt", b"PC\tPC\r\n")
         data = {"platforms_file": platform_file}
 
-        success, message, trigger_igdb = utils.import_batch(data)
+        success, message = utils.import_batch(data)
 
         # Should fail with exception message (lines 374-375)
         self.assertFalse(success)
         self.assertIn("failed", message.lower())
-        self.assertFalse(trigger_igdb)
 
     def test_import_data_with_delete(self):
         """Test import_data with delete flag."""
@@ -1199,4 +1159,68 @@ class ImportIGDBWithProgressTests(TestCase):
         # Verify callback was captured and tested
         self.assertGreater(
             len(captured_callback), 0, "Callback should have been captured"
+        )
+
+    def test_import_igdb_with_progress_update_relationships(self):
+        """Test import_igdb_with_progress with update_relationships=True."""
+        # Create a game with existing IGDBGameData
+        platform, _ = models.Platform.objects.get_or_create(
+            code="PC", defaults={"name": "PC"}
+        )
+        game = models.Game.objects.create(
+            rank=1, name="Test Game", year_of_release=2024, igdb_id=123
+        )
+        game.platforms.add(platform)
+
+        models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            artwork_id="cover_hash",
+            url="https://example.com/test",
+            description="Test description",
+            is_primary=True,
+        )
+
+        # Mock API
+        with mock.patch("games.igdb.get_api") as mock_get_api:
+            fake_api = mock.Mock()
+            fake_api.get_game_info_by_id.return_value = {
+                "genres": ["Action"],
+                "studios": [
+                    {
+                        "id": 1,
+                        "name": "Test Studio",
+                        "slug": "test-studio",
+                    }
+                ],
+            }
+            mock_get_api.return_value = fake_api
+
+            # Get generator with update_relationships=True
+            generator = utils.import_igdb_with_progress(update_relationships=True)
+
+            # Consume events - this triggers the update path
+            events = list(generator)
+
+            # Verify generator returned events (update path was executed)
+            self.assertGreater(len(events), 0)
+
+    @mock.patch("games.igdb.get_api")
+    def test_import_igdb_with_progress_update_relationships_no_games(
+        self, mock_get_api
+    ):
+        """Test update_relationships=True with no games having IGDB data."""
+        # Don't create any games with IGDB data
+        generator = utils.import_igdb_with_progress(update_relationships=True)
+
+        # Consume events
+        events = []
+        for event in generator:
+            events.append(event)
+
+        # Should get error about no games found
+        self.assertGreater(len(events), 0)
+        error_events = [e for e in events if "No games" in str(e)]
+        self.assertGreater(
+            len(error_events), 0, f"Expected error about no games, got: {events}"
         )

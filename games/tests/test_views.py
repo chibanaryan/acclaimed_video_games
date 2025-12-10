@@ -20,7 +20,7 @@ class ImportViewIntegrationTests(TestCase):
         response = self.client.get(reverse("import"))
         self.assertEqual(response.status_code, 302)
 
-    @mock.patch("games.views.utils.import_batch", return_value=(True, "Done", False))
+    @mock.patch("games.views.utils.import_batch", return_value=(True, "Done"))
     def test_successful_data_import(self, mock_import):
         """Test batch import with a single file."""
         self.client.login(username="tester", password="pass")
@@ -64,7 +64,7 @@ class ImportViewIntegrationTests(TestCase):
         self.assertEqual(response.wsgi_request.session.get("import_success"), "IGDB")
         mock_import.assert_called_once()
 
-    @mock.patch("games.views.utils.import_batch", return_value=(False, "Failed", False))
+    @mock.patch("games.views.utils.import_batch", return_value=(False, "Failed"))
     def test_failed_data_import_sets_error_message(self, mock_import):
         self.client.login(username="tester", password="pass")
         fake_file = SimpleUploadedFile("PlatformDB.txt", b"PC\tPersonal Computer")
@@ -94,23 +94,6 @@ class ImportViewIntegrationTests(TestCase):
             response.wsgi_request.session.get("import_errors"), ["Error message"]
         )
 
-    @mock.patch("games.views.utils.import_batch", return_value=(True, "Done", True))
-    def test_successful_import_with_igdb_trigger(self, mock_import):
-        """Test that successful import with IGDB checkbox sets trigger flag."""
-        self.client.login(username="tester", password="pass")
-        fake_file = SimpleUploadedFile("PlatformDB.txt", b"PC\tPersonal Computer")
-        response = self.client.post(
-            reverse("import"),
-            {
-                "platforms_file": fake_file,
-                "igdb": True,
-            },
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.wsgi_request.session.get("import_success"), "Done")
-        self.assertTrue(response.wsgi_request.session.get("trigger_igdb"))
-        mock_import.assert_called_once()
-
     def test_get_context_data_includes_counts(self):
         """Test that get_context_data includes database counts."""
         self.client.login(username="tester", password="pass")
@@ -128,7 +111,6 @@ class ImportViewIntegrationTests(TestCase):
         session = self.client.session
         session["import_success"] = "Test success"
         session["import_errors"] = ["Test error"]
-        session["trigger_igdb"] = True
         session.save()
 
         response = self.client.get(reverse("import"))
@@ -136,16 +118,14 @@ class ImportViewIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["import_success_message"], "Test success")
         self.assertEqual(response.context["import_errors"], ["Test error"])
-        self.assertTrue(response.context["trigger_igdb"])
 
         # Session data should be consumed (popped)
         self.client.session.save()
         response2 = self.client.get(reverse("import"))
         self.assertIsNone(response2.context.get("import_success_message"))
         self.assertIsNone(response2.context.get("import_errors"))
-        self.assertFalse(response2.context.get("trigger_igdb", False))
 
-    @mock.patch("games.views.utils.import_batch", return_value=(True, "Loaded", False))
+    @mock.patch("games.views.utils.import_batch", return_value=(True, "Loaded"))
     @mock.patch("builtins.open", new_callable=mock_open, read_data=b"test data")
     @mock.patch("games.views.Path")
     def test_seed_test_data_success(self, mock_path, mock_file, mock_import):
@@ -169,28 +149,6 @@ class ImportViewIntegrationTests(TestCase):
             "Loaded bundled test data",
             response.wsgi_request.session.get("import_success"),
         )
-        mock_import.assert_called_once()
-
-    @mock.patch("games.views.utils.import_batch", return_value=(True, "Loaded", True))
-    @mock.patch("builtins.open", new_callable=mock_open, read_data=b"test data")
-    @mock.patch("games.views.Path")
-    def test_seed_test_data_with_igdb_trigger(self, mock_path, mock_file, mock_import):
-        """Test seed_test_data sets trigger_igdb when import_batch returns True."""
-        self.client.login(username="tester", password="pass")
-
-        mock_path_obj = MagicMock()
-        mock_path.return_value = mock_path_obj
-        mock_path_obj.__truediv__ = lambda self, other: mock_path_obj
-
-        response = self.client.post(
-            reverse("import"),
-            {
-                "seed_test_data": True,
-            },
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.wsgi_request.session.get("trigger_igdb"))
         mock_import.assert_called_once()
 
     @mock.patch("builtins.open", side_effect=FileNotFoundError)

@@ -1,0 +1,34 @@
+{% comment %}
+Centralized theme initialization script for consistent theming across all pages.
+This script MUST be placed in <head> before any content to prevent FOUC (Flash of Unstyled Content).
+
+Validates and enforces only 'lofi' (light) and 'forest' (dark) themes.
+Clears any invalid theme values from previous configurations.
+{% endcomment %}
+<script nonce="{{ csp_nonce }}">
+    // CRITICAL: Set theme immediately to prevent FOUC - keep minimal and fast
+    (function() {
+        // Clear Django admin theme if it exists (conflicts with DaisyUI themes)
+        if (localStorage.getItem('admin-theme')) {
+            localStorage.removeItem('admin-theme');
+        }
+
+        var t = localStorage.getItem('theme');
+
+        // Only allow valid themes: lofi (light) or forest (dark)
+        // ANY other value is invalid and will be reset
+        if (t !== 'lofi' && t !== 'forest') {
+            // Invalid or missing theme - detect system preference
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'forest' : 'lofi';
+            localStorage.setItem('theme', t);
+
+            // Log cleanup for debugging (only in console, not visible to user)
+            if (t !== null && t !== 'lofi' && t !== 'forest') {
+                console.info('[Theme] Cleared invalid theme value:', t);
+            }
+        }
+
+        // Apply theme to document immediately
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+</script>

@@ -2,17 +2,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script nonce="{{ csp_nonce }}">
-        // CRITICAL: Set theme immediately to prevent FOUC
-        (function() {
-            var t = localStorage.getItem('theme');
-            if (t !== 'lofi' && t !== 'forest') {
-                t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'forest' : 'lofi';
-                localStorage.setItem('theme', t);
-            }
-            document.documentElement.setAttribute('data-theme', t);
-        })();
-    </script>
+    {# Include centralized theme initialization script - MUST be first to prevent FOUC #}
+    {% include 'includes/_theme_script.html' %}
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Import | Acclaimed Video Games</title>
@@ -363,16 +355,16 @@
                     <div class="value">{{ counts.genres }}</div>
                 </div>
                 <div class="igdb-status-card">
-                    <div class="label">IGDB Data Status</div>
-                    <div class="value">{{ igdb_counts.with_igdb }}/{{ igdb_counts.total }}</div>
-                    <div class="percentage">{{ igdb_counts.percentage }}% complete</div>
-                    <div class="percentage">{{ igdb_counts.without_igdb }} game{{ igdb_counts.without_igdb|pluralize }} need data</div>
+                    <div class="label">IGDB Metadata Records</div>
+                    <div class="value">{{ igdb_counts.total }} record{{ igdb_counts.total|pluralize }}</div>
+                    <div class="percentage">{{ igdb_counts.connected }} connected, {{ igdb_counts.orphaned }} orphaned</div>
+                    <div class="percentage">{{ igdb_counts.games_needing }} game{{ igdb_counts.games_needing|pluralize }} need data</div>
                 </div>
                 <div class="igdb-status-card">
-                    <div class="label">Wikipedia Pages</div>
-                    <div class="value">{{ wikipedia_counts.with_wikipedia }}/{{ wikipedia_counts.total }}</div>
-                    <div class="percentage">{{ wikipedia_counts.percentage }}% complete</div>
-                    <div class="percentage">{{ wikipedia_counts.without_wikipedia }} game{{ wikipedia_counts.without_wikipedia|pluralize }} need page{{ wikipedia_counts.without_wikipedia|pluralize }}</div>
+                    <div class="label">Wikipedia Metadata Records</div>
+                    <div class="value">{{ wikipedia_counts.total }} record{{ wikipedia_counts.total|pluralize }}</div>
+                    <div class="percentage">{{ wikipedia_counts.connected }} connected, {{ wikipedia_counts.orphaned }} orphaned</div>
+                    <div class="percentage">{{ wikipedia_counts.games_needing }} game{{ wikipedia_counts.games_needing|pluralize }} need page{{ wikipedia_counts.games_needing|pluralize }}</div>
                 </div>
             </div>
         </div>
@@ -386,9 +378,9 @@
                 <form method="POST" action="." class="inline-block">
                     {% csrf_token %}
                     <input type="hidden" name="delete" value="true">
-                    <button class="btn btn-error" onclick="return confirm('⚠️ This will delete ALL existing data. Are you sure?');">
+                    <button class="btn btn-error" onclick="return confirm('⚠️ This will delete games, lists, and platforms (preserves IGDB/Wikipedia metadata). Are you sure?');">
                         <span class="mdi mdi-delete"></span>
-                        Delete All Data
+                        Delete Game Data
                     </button>
                 </form>
 
@@ -403,16 +395,24 @@
                 </form>
                 {% endif %}
 
-                <div class="flex flex-col gap-1">
-                    <button id="fetch-igdb-btn" class="btn btn-info">
-                        <span class="mdi mdi-refresh"></span>
-                        Fetch IGDB Data
-                    </button>
-                    {% if igdb_counts.without_igdb > 0 %}
-                        <span class="text-xs opacity-70 ml-1">
-                            Estimated time: {{ igdb_counts.estimate_seconds|format_duration }}
-                        </span>
-                    {% endif %}
+                <div class="flex flex-col gap-2">
+                    <div class="flex flex-col gap-1">
+                        <button id="fetch-igdb-btn" class="btn btn-info">
+                            <span class="mdi mdi-refresh"></span>
+                            Fetch IGDB Data
+                        </button>
+                        {% if igdb_counts.games_needing > 0 %}
+                            <span class="text-xs opacity-70 ml-1">
+                                Estimated time: {{ igdb_counts.estimate_seconds|format_duration }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="form-control">
+                        <label class="label cursor-pointer justify-start gap-2 py-1">
+                            <input type="checkbox" id="igdb-update-relationships" class="checkbox checkbox-sm">
+                            <span class="label-text text-xs">Update developers/genres from existing metadata (no API calls)</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="flex flex-col gap-2">
@@ -421,7 +421,7 @@
                             <span class="mdi mdi-wikipedia"></span>
                             Fetch Wikipedia Pages
                         </button>
-                        {% if wikipedia_counts.without_wikipedia > 0 %}
+                        {% if wikipedia_counts.games_needing > 0 %}
                             <span class="text-xs opacity-70 ml-1">
                                 Estimated time: {{ wikipedia_counts.estimate_seconds|format_duration }}
                                 {% if not wikipedia_counts.has_auth %}
@@ -548,15 +548,6 @@
 
                 <!-- Options -->
                 <div class="divider"></div>
-                <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Options</h3>
-                    <div class="form-control">
-                        <label class="label cursor-pointer justify-start gap-4">
-                            <input type="checkbox" name="igdb" id="auto-fetch-igdb" class="checkbox checkbox-primary">
-                            <span class="label-text">Automatically fetch IGDB data after import (cover art, descriptions, genres)</span>
-                        </label>
-                    </div>
-                </div>
 
                 <div class="flex gap-3">
                     <button class="btn btn-primary" type="submit" id="import-submit">
@@ -675,6 +666,7 @@
 
             const progressContainer = document.getElementById('progress-container')
             const progressText = document.getElementById('progress-text')
+            const updateRelationships = document.getElementById('igdb-update-relationships').checked
 
             // Close existing EventSource if any
             if (activeEventSource) {
@@ -686,9 +678,10 @@
             progressContainer.style.display = 'flex'
             progressText.textContent = 'Starting...'
 
-            // Connect to SSE endpoint
-            console.log('Connecting to SSE endpoint...')
-            activeEventSource = new EventSource('{% url "igdb-progress" %}')
+            // Connect to SSE endpoint with update_relationships parameter
+            const url = '{% url "igdb-progress" %}' + (updateRelationships ? '?update_relationships=true' : '')
+            console.log('Connecting to SSE endpoint:', url)
+            activeEventSource = new EventSource(url)
 
             activeEventSource.onopen = (event) => {
                 console.log('SSE connection opened successfully')
@@ -800,18 +793,24 @@
                         progressText.textContent = `Processing 0 / ${data.total} games...`
                     } else if (data.event === 'progress') {
                         console.log(`Progress: ${data.current}/${data.total} - ${data.game_name}`)
-                        progressText.textContent = `Processing ${data.current} / ${data.total} games...`
+                        // Show success/failure counts if available
+                        const successInfo = data.successful !== undefined ? ` (${data.successful} found, ${data.failed} failed)` : ''
+                        progressText.textContent = `Processing ${data.current} / ${data.total} games${successInfo}...`
                     } else if (data.event === 'complete') {
-                        progressText.textContent = `Complete! Processed ${data.total} games.`
+                        const successInfo = data.successful !== undefined ? ` (${data.successful} found, ${data.failed} failed)` : ''
+                        progressText.textContent = `Complete! Processed ${data.total} games${successInfo}.`
 
                         activeEventSource.close()
                         activeEventSource = null
                         setTimeout(() => {
                             const alert = document.createElement('div')
                             alert.className = 'alert alert-success shadow-lg fixed top-4 right-4 w-96 z-50'
+                            const summaryText = data.successful !== undefined
+                                ? `Found ${data.successful} pages, ${data.failed} failed`
+                                : `Found pages for ${data.total} games`
                             alert.innerHTML = `
                                 <span class="mdi mdi-check-circle"></span>
-                                <span>Wikipedia page lookup completed! Found pages for ${data.total} games.</span>
+                                <span>Wikipedia page lookup completed! ${summaryText}.</span>
                             `
                             document.body.appendChild(alert)
                             setTimeout(() => {
@@ -869,17 +868,6 @@
         return `${minutes}m ${secs}s`
     }
 
-    // Auto-trigger IGDB fetch after successful batch import
-    {% if trigger_igdb %}
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            const fetchButton = document.getElementById('fetch-igdb-btn')
-            if (fetchButton) {
-                fetchButton.click()
-            }
-        }, 1000)
-    })
-    {% endif %}
 </script>
 </body>
 </html>

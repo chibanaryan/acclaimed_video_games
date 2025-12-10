@@ -1242,26 +1242,28 @@ class ImportView(LoginRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
 
         # Get all counts in a single aggregation query (optimized)
-        game_counts = models.Game.objects.aggregate(
-            total=Count("id"),
-            with_igdb=Count("id", filter=Q(primary_igdb_game_data__isnull=False)),
-            without_igdb=Count("id", filter=Q(primary_igdb_game_data__isnull=True)),
-            with_wikipedia=Count(
-                "id",
-                filter=Q(primary_wikipedia_game_data__isnull=False)
-                & Q(primary_wikipedia_game_data__page_title__gt=""),
-            ),
-            without_wikipedia=Count(
-                "id",
-                filter=Q(primary_wikipedia_game_data__isnull=True)
-                | Q(primary_wikipedia_game_data__page_title=""),
-            ),
-        )
-        total_games = game_counts["total"]
-        games_with_igdb = game_counts["with_igdb"]
-        games_without_igdb = game_counts["without_igdb"]
-        games_with_wikipedia = game_counts["with_wikipedia"]
-        games_without_wikipedia = game_counts["without_wikipedia"]
+        total_games = models.Game.objects.count()
+
+        # Count metadata records (not games)
+        # This persists when games are deleted (metadata is orphaned)
+        total_igdb_metadata = models.IGDBGameData.objects.count()
+        orphaned_igdb = models.IGDBGameData.objects.filter(game__isnull=True).count()
+        connected_igdb = total_igdb_metadata - orphaned_igdb
+
+        total_wikipedia_metadata = models.WikipediaGameData.objects.count()
+        orphaned_wikipedia = models.WikipediaGameData.objects.filter(
+            game__isnull=True
+        ).count()
+        connected_wikipedia = total_wikipedia_metadata - orphaned_wikipedia
+
+        # Count games that need metadata (for fetch button)
+        games_needing_igdb = models.Game.objects.filter(
+            primary_igdb_game_data__isnull=True
+        ).count()
+        games_needing_wikipedia = models.Game.objects.filter(
+            Q(primary_wikipedia_game_data__isnull=True)
+            | Q(primary_wikipedia_game_data__page_title="")
+        ).count()
 
         context["counts"] = {
             "platforms": models.Platform.objects.count(),
@@ -1273,10 +1275,10 @@ class ImportView(LoginRequiredMixin, FormView):
             "studios": models.Studio.objects.count(),
             "genres": models.Genre.objects.count(),
         }
-        # Calculate time estimates
+        # Calculate time estimates for fetching metadata
         # IGDB: ~8-10 games/sec with default settings
         igdb_estimate_seconds = (
-            int(games_without_igdb / 9) if games_without_igdb > 0 else 0
+            int(games_needing_igdb / 9) if games_needing_igdb > 0 else 0
         )
 
         # Wikipedia: depends on authentication
@@ -1286,26 +1288,32 @@ class ImportView(LoginRequiredMixin, FormView):
         has_wikidata_auth = bool(getattr(settings, "WIKIDATA_ACCESS_TOKEN", None))
         wiki_games_per_sec = 1.3 if has_wikidata_auth else 0.5
         wiki_estimate_seconds = (
-            int(games_without_wikipedia / wiki_games_per_sec)
-            if games_without_wikipedia > 0
+            int(games_needing_wikipedia / wiki_games_per_sec)
+            if games_needing_wikipedia > 0
             else 0
         )
 
         context["igdb_counts"] = {
-            "total": total_games,
-            "with_igdb": games_with_igdb,
-            "without_igdb": games_without_igdb,
+            "total": total_igdb_metadata,
+            "connected": connected_igdb,
+            "orphaned": orphaned_igdb,
+            "games_needing": games_needing_igdb,
             "percentage": int(
-                (games_with_igdb / total_games * 100) if total_games > 0 else 0
+                (connected_igdb / total_igdb_metadata * 100)
+                if total_igdb_metadata > 0
+                else 0
             ),
             "estimate_seconds": igdb_estimate_seconds,
         }
         context["wikipedia_counts"] = {
-            "total": total_games,
-            "with_wikipedia": games_with_wikipedia,
-            "without_wikipedia": games_without_wikipedia,
+            "total": total_wikipedia_metadata,
+            "connected": connected_wikipedia,
+            "orphaned": orphaned_wikipedia,
+            "games_needing": games_needing_wikipedia,
             "percentage": int(
-                (games_with_wikipedia / total_games * 100) if total_games > 0 else 0
+                (connected_wikipedia / total_wikipedia_metadata * 100)
+                if total_wikipedia_metadata > 0
+                else 0
             ),
             "estimate_seconds": wiki_estimate_seconds,
             "has_auth": has_wikidata_auth,
@@ -1314,10 +1322,8 @@ class ImportView(LoginRequiredMixin, FormView):
         # Get persistent errors from session
         import_errors = self.request.session.pop("import_errors", None)
         import_success_message = self.request.session.pop("import_success", None)
-        trigger_igdb = self.request.session.pop("trigger_igdb", False)
         context["import_errors"] = import_errors
         context["import_success_message"] = import_success_message
-        context["trigger_igdb"] = trigger_igdb
 
         return context
 
@@ -1342,15 +1348,14 @@ class ImportView(LoginRequiredMixin, FormView):
                     opened_files[field] = open(path, "rb")
 
                 seed_payload = {**import_data, **opened_files}
-                res, message, trigger_igdb = utils.import_batch(seed_payload)
+                res, message = utils.import_batch(seed_payload)
             except FileNotFoundError:
-                res, message, trigger_igdb = (
+                res, message = (
                     False,
                     (
                         "Bundled test data files not found in "
                         "acclaimedgames/test_input_files."
                     ),
-                    False,
                 )
             finally:
                 for fh in opened_files.values():
@@ -1360,8 +1365,6 @@ class ImportView(LoginRequiredMixin, FormView):
                 self.request.session["import_success"] = (
                     "Loaded bundled test data.\n" + message
                 )
-                if trigger_igdb:
-                    self.request.session["trigger_igdb"] = True
             else:
                 self.request.session["import_errors"] = [message]
 
@@ -1380,14 +1383,11 @@ class ImportView(LoginRequiredMixin, FormView):
 
         # If batch files are provided, process them directly
         if has_batch_files and not import_data.get("delete"):
-            # Process batch import immediately (handles IGDB flag internally)
-            res, message, trigger_igdb = utils.import_batch(import_data)
+            # Process batch import immediately
+            res, message = utils.import_batch(import_data)
             if res:
                 # Store success message in session (persist across redirect)
                 self.request.session["import_success"] = message
-                # Store IGDB trigger flag if import succeeded and checkbox was checked
-                if trigger_igdb:
-                    self.request.session["trigger_igdb"] = True
             else:
                 # Store error message in session as a list for persistent display
                 self.request.session["import_errors"] = [message]
@@ -1417,8 +1417,11 @@ class IGDBProgressView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Stream IGDB fetch progress as SSE events."""
+        update_relationships = (
+            request.GET.get("update_relationships", "false").lower() == "true"
+        )
         return StreamingHttpResponse(
-            utils.import_igdb_with_progress(),
+            utils.import_igdb_with_progress(update_relationships=update_relationships),
             content_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",

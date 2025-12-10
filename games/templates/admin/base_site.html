@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %}
+{% load static tailwind_tags %}
+
+{% comment %}
+Custom Django admin base template that applies our DaisyUI theme system.
+This overrides Django's default admin/base_site.html to ensure consistent theming.
+{% endcomment %}
+
+{% block extrahead %}
+{{ block.super }}
+
+{# Include our centralized theme script #}
+{% include 'includes/_theme_script.html' %}
+
+{# Load Tailwind CSS + DaisyUI for consistent styling #}
+{% tailwind_css %}
+
+{# Custom styles to make Django admin work with DaisyUI themes #}
+<style nonce="{{ csp_nonce }}">
+    /* Ensure admin interface respects theme colors */
+    #header {
+        background: oklch(var(--b1));
+        border-bottom: 1px solid oklch(var(--bc) / 0.1);
+    }
+
+    #branding h1, #branding h1 a:link, #branding h1 a:visited {
+        color: oklch(var(--bc));
+    }
+
+    #user-tools a {
+        color: oklch(var(--bc) / 0.7);
+    }
+
+    #user-tools a:hover {
+        color: oklch(var(--bc));
+    }
+
+    /* Ensure form fields work with themes */
+    .module, .form-row {
+        background: oklch(var(--b1));
+        color: oklch(var(--bc));
+    }
+
+    /* Make Django admin color theme toggle hidden since we use our own theme system */
+    #color-theme-toggle-container {
+        display: none !important;
+    }
+</style>
+{% endblock %}

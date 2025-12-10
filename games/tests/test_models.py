@@ -372,6 +372,81 @@ class GameIgdbTests(TestCase):
         )
         self.assertEqual(parent_studios.count(), 0)  # No auto-created parent Studio
 
+    def test_update_igdb_relationships_success(self):
+        """Test update_igdb_relationships updates M2M relationships."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=123, year_of_release=2020
+        )
+
+        # Create existing IGDBGameData
+        models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            artwork_id="cover_hash",
+            url="https://example.com/test",
+            description="Test description",
+            is_primary=True,
+        )
+
+        # Mock API response
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "genres": ["Action", "Adventure"],
+            "studios": [
+                {
+                    "id": 1,
+                    "name": "Test Studio",
+                    "slug": "test-studio",
+                }
+            ],
+        }
+
+        # Update relationships
+        result = game.update_igdb_relationships(api_client=fake_api)
+
+        # Verify success
+        self.assertTrue(result)
+
+        # Verify relationships were created
+        self.assertEqual(game.genres.count(), 2)
+        self.assertIn("Action", [g.name for g in game.genres.all()])
+        self.assertIn("Adventure", [g.name for g in game.genres.all()])
+        self.assertEqual(game.studios.count(), 1)
+        self.assertEqual(game.studios.first().name, "Test Studio")
+
+        # Verify IGDBGameData was NOT modified
+        igdb_data = models.IGDBGameData.objects.get(game=game)
+        self.assertEqual(igdb_data.artwork_id, "cover_hash")
+        self.assertEqual(igdb_data.description, "Test description")
+
+    def test_update_igdb_relationships_no_igdb_id(self):
+        """Test update_igdb_relationships returns False without igdb_id."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, year_of_release=2020
+        )
+        result = game.update_igdb_relationships()
+        self.assertFalse(result)
+
+    def test_update_igdb_relationships_api_unavailable(self):
+        """Test update_igdb_relationships handles missing API."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=123, year_of_release=2020
+        )
+        with mock.patch("games.models.igdb.get_api", return_value=None):
+            with self.assertLogs("games.models", level="WARNING"):
+                result = game.update_igdb_relationships()
+        self.assertFalse(result)
+
+    def test_update_igdb_relationships_no_game_data(self):
+        """Test update_igdb_relationships handles API returning None."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=123, year_of_release=2020
+        )
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = None
+        result = game.update_igdb_relationships(api_client=fake_api)
+        self.assertFalse(result)
+
 
 class GameWikipediaTests(TestCase):
     """Tests for Game.get_wikipedia_data() method."""
