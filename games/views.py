@@ -1247,10 +1247,14 @@ class ImportView(LoginRequiredMixin, FormView):
             with_igdb=Count("id", filter=Q(primary_igdb_game_data__isnull=False)),
             without_igdb=Count("id", filter=Q(primary_igdb_game_data__isnull=True)),
             with_wikipedia=Count(
-                "id", filter=Q(primary_wikipedia_game_data__isnull=False)
+                "id",
+                filter=Q(primary_wikipedia_game_data__isnull=False)
+                & Q(primary_wikipedia_game_data__page_title__gt=""),
             ),
             without_wikipedia=Count(
-                "id", filter=Q(primary_wikipedia_game_data__isnull=True)
+                "id",
+                filter=Q(primary_wikipedia_game_data__isnull=True)
+                | Q(primary_wikipedia_game_data__page_title=""),
             ),
         )
         total_games = game_counts["total"]

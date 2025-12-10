@@ -8,6 +8,7 @@ omit =
     */services/llm_quote_service.py
     */management/commands/get_wiki_genres.py
     */management/commands/get_wikipedia_pages.py
+    */management/commands/cleanup_empty_metadata.py
     */services/wiki_page_lookup_service.py
 
 [report]
