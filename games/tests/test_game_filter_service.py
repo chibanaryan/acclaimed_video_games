@@ -29,7 +29,7 @@ class GameFiltersFromRequestTests(TestCase):
         self.assertIsNone(filters.end)
         self.assertIsNone(filters.decade)
         self.assertIsNone(filters.year)
-        self.assertIsNone(filters.developer_igdb_id)
+        self.assertIsNone(filters.company_igdb_id)
 
     def test_parses_search_query(self):
         """Should parse q parameter and strip whitespace."""
@@ -75,10 +75,10 @@ class GameFiltersFromRequestTests(TestCase):
         self.assertEqual(filters.year, "1998")
 
     def test_parses_developer(self):
-        """Should parse developer parameter."""
+        """Should parse legacy developer parameter (maps to company)."""
         request = self.factory.get("/games/", {"developer": "12345"})
         filters = GameFilters.from_request(request)
-        self.assertEqual(filters.developer_igdb_id, 12345)
+        self.assertEqual(filters.company_igdb_id, 12345)
 
     def test_invalid_genres_ignored(self):
         """Invalid genre values should be ignored."""
@@ -100,10 +100,10 @@ class GameFiltersFromRequestTests(TestCase):
         self.assertIsNone(filters.end)
 
     def test_invalid_developer_ignored(self):
-        """Invalid developer value should be ignored."""
-        request = self.factory.get("/games/", {"developer": "invalid"})
+        """Invalid company value should be ignored."""
+        request = self.factory.get("/games/", {"company": "invalid"})
         filters = GameFilters.from_request(request)
-        self.assertIsNone(filters.developer_igdb_id)
+        self.assertIsNone(filters.company_igdb_id)
 
 
 class GameFiltersPropertiesTests(TestCase):
@@ -155,8 +155,8 @@ class GameFiltersPropertiesTests(TestCase):
         self.assertTrue(filters.is_filtered)
 
     def test_is_filtered_with_developer(self):
-        """Filter with developer should return is_filtered=True."""
-        filters = GameFilters(developer_igdb_id=123)
+        """Filter with company should return is_filtered=True."""
+        filters = GameFilters(company_igdb_id=123)
         self.assertTrue(filters.is_filtered)
 
 
@@ -172,10 +172,10 @@ class ApplyGameFiltersTests(TestCase):
             code="PS5", name="PlayStation 5"
         )
 
-        # Create developer
-        self.developer = models.Developer.objects.create(name="TestDev", igdb_id=999)
-        self.dev_alias = models.DeveloperAlias.objects.create(
-            developer=self.developer, name="TestDev", igdb_id=999
+        # Create company and studio
+        self.company = models.Company.objects.create(name="TestDev", igdb_id=999)
+        self.dev_alias = models.Studio.objects.create(
+            company=self.company, name="TestDev", igdb_id=999
         )
 
         # Create games
@@ -184,7 +184,7 @@ class ApplyGameFiltersTests(TestCase):
         )
         self.game1.genres.add(self.genre_action)
         self.game1.platforms.add(self.platform_pc)
-        self.game1.developers.add(self.dev_alias)
+        self.game1.studios.add(self.dev_alias)
 
         self.game2 = models.Game.objects.create(
             name="Final Fantasy", rank=2, year_of_release=1997, igdb_id=2
@@ -270,7 +270,7 @@ class ApplyGameFiltersTests(TestCase):
 
     def test_developer_filter(self):
         """Developer filter should work."""
-        filters = GameFilters(developer_igdb_id=999)
+        filters = GameFilters(company_igdb_id=999)
         qs = models.Game.objects.all()
         result = apply_game_filters(qs, filters)
         self.assertEqual(result.count(), 1)

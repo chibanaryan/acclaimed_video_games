@@ -10,8 +10,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from games.models import (
-    Developer,
-    DeveloperAlias,
+    Company,
+    Studio,
     Game,
     Genre,
     List,
@@ -664,25 +664,21 @@ class DeveloperListViewTest(TestCase):
 
     def setUp(self):
         # Create developers with aliases
-        dev1 = Developer.objects.create(name="Nintendo", slug="nintendo")
-        dev2 = Developer.objects.create(name="Capcom", slug="capcom")
+        dev1 = Company.objects.create(name="Nintendo", slug="nintendo")
+        dev2 = Company.objects.create(name="Capcom", slug="capcom")
 
-        self.alias1 = DeveloperAlias.objects.create(
-            name="Nintendo", developer=dev1, igdb_id=1
-        )
-        self.alias2 = DeveloperAlias.objects.create(
-            name="Capcom", developer=dev2, igdb_id=2
-        )
+        self.alias1 = Studio.objects.create(name="Nintendo", company=dev1, igdb_id=1)
+        self.alias2 = Studio.objects.create(name="Capcom", company=dev2, igdb_id=2)
 
         # Create games for the aliases
         game1 = Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
-        game1.developers.add(self.alias1)
+        game1.studios.add(self.alias1)
 
     def test_developer_list_loads(self):
         """Test that developer list page loads."""
         response = self.client.get(reverse("developers-list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "developers/developer_list.html")
+        self.assertTemplateUsed(response, "developers/company_list.html")
 
     def test_only_shows_developers_with_games(self):
         """Test that only developers with games are shown."""
@@ -704,7 +700,7 @@ class DeveloperListViewTest(TestCase):
         response = self.client.get(reverse("developers-list"), HTTP_HX_REQUEST="true")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
-            response, "developers/includes/_developer_list_content.html"
+            response, "developers/includes/_company_list_content.html"
         )
 
     def test_invalid_page_defaults_to_first(self):
@@ -722,57 +718,63 @@ class DeveloperDetailViewTest(TestCase):
     """Test the developer detail view."""
 
     def setUp(self):
-        self.developer = Developer.objects.create(name="Nintendo", slug="nintendo")
-        self.alias = DeveloperAlias.objects.create(
-            name="Nintendo", developer=self.developer, igdb_id=1
+        self.company = Company.objects.create(name="Nintendo", slug="nintendo")
+        self.alias = Studio.objects.create(
+            name="Nintendo", company=self.company, igdb_id=1
         )
 
         # Create games for this developer
         self.game1 = Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
         self.game2 = Game.objects.create(name="Game 2", rank=2, year_of_release=2021)
-        self.game1.developers.add(self.alias)
-        self.game2.developers.add(self.alias)
+        self.game1.studios.add(self.alias)
+        self.game2.studios.add(self.alias)
 
     def test_developer_detail_loads(self):
         """Test that developer detail page loads."""
         response = self.client.get(
-            reverse("developer-detail", kwargs={"slug": self.developer.slug})
+            reverse("developer-detail", kwargs={"slug": self.company.slug})
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "developers/developer_detail.html")
+        self.assertTemplateUsed(response, "developers/company_detail.html")
 
     def test_context_contains_developer(self):
         """Test that context includes the developer."""
         response = self.client.get(
-            reverse("developer-detail", kwargs={"slug": self.developer.slug})
+            reverse("developer-detail", kwargs={"slug": self.company.slug})
         )
-        self.assertEqual(response.context["developer"], self.developer)
+        self.assertEqual(response.context["developer"], self.company)
 
     def test_context_contains_games(self):
         """Test that context includes developer's games."""
         response = self.client.get(
-            reverse("developer-detail", kwargs={"slug": self.developer.slug})
+            reverse("developer-detail", kwargs={"slug": self.company.slug})
         )
-        games = list(response.context["games"])
-        self.assertEqual(len(games), 2)
-        self.assertIn(self.game1, games)
-        self.assertIn(self.game2, games)
+        studios_with_games = response.context["studios_with_games"]
+        # Extract all games from all studios
+        all_games = []
+        for studio_data in studios_with_games:
+            all_games.extend(studio_data["games"])
+        self.assertEqual(len(all_games), 2)
+        self.assertIn(self.game1, all_games)
+        self.assertIn(self.game2, all_games)
 
     def test_context_contains_aliases_data(self):
-        """Test that context includes aliases data for Alpine.js."""
+        """Test that context includes studios with games data."""
         response = self.client.get(
-            reverse("developer-detail", kwargs={"slug": self.developer.slug})
+            reverse("developer-detail", kwargs={"slug": self.company.slug})
         )
-        self.assertIn("aliases_data", response.context)
-        self.assertTrue(len(response.context["aliases_data"]) > 0)
+        self.assertIn("studios_with_games", response.context)
+        self.assertTrue(len(response.context["studios_with_games"]) > 0)
 
     def test_context_contains_games_data(self):
-        """Test that context includes games data for Alpine.js."""
+        """Test that context includes games data grouped by studio."""
         response = self.client.get(
-            reverse("developer-detail", kwargs={"slug": self.developer.slug})
+            reverse("developer-detail", kwargs={"slug": self.company.slug})
         )
-        self.assertIn("games_data", response.context)
-        self.assertEqual(len(response.context["games_data"]), 2)
+        studios_with_games = response.context["studios_with_games"]
+        # Count all games across all studios
+        total_games = sum(len(s["games"]) for s in studios_with_games)
+        self.assertEqual(total_games, 2)
 
     def test_invalid_slug_returns_404(self):
         """Test that invalid slug returns 404."""
@@ -781,14 +783,143 @@ class DeveloperDetailViewTest(TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
+    def test_unique_game_count_with_sibling_studios(self):
+        """
+        Test that games attributed to multiple sibling studios
+        are only counted once in the total count.
+        """
+        # Create a parent company with two sibling studios
+        parent = Company.objects.create(
+            name="Sony Interactive Entertainment", slug="sie"
+        )
+        studio_a = Studio.objects.create(
+            name="Sony Studio A", company=parent, igdb_id=100
+        )
+        studio_b = Studio.objects.create(
+            name="Sony Studio B", company=parent, igdb_id=101
+        )
+
+        # Create a game attributed to both sibling studios
+        shared_game = Game.objects.create(
+            name="Shared Game", rank=1, year_of_release=2020
+        )
+        shared_game.studios.add(studio_a, studio_b)
+
+        # Create games unique to each studio
+        game_a_only = Game.objects.create(
+            name="Game A Only", rank=2, year_of_release=2021
+        )
+        game_a_only.studios.add(studio_a)
+
+        game_b_only = Game.objects.create(
+            name="Game B Only", rank=3, year_of_release=2022
+        )
+        game_b_only.studios.add(studio_b)
+
+        # Fetch the company detail page
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": parent.slug})
+        )
+
+        # The total_games count should be 3 (not 4)
+        # shared_game appears in both studios but should only be counted once
+        self.assertEqual(response.context["total_games"], 3)
+
+        # Verify individual studio counts
+        studios_with_games = response.context["studios_with_games"]
+        studio_a_data = next(
+            s for s in studios_with_games if s["studio"].id == studio_a.id
+        )
+        studio_b_data = next(
+            s for s in studios_with_games if s["studio"].id == studio_b.id
+        )
+
+        # Each studio shows both games (including shared)
+        self.assertEqual(studio_a_data["games_count"], 2)
+        self.assertEqual(studio_b_data["games_count"], 2)
+
+        # total_games_count for each studio includes only that studio + its sub-studios
+        # (not sibling studios). Both have no sub-studios, so count is their own games.
+        self.assertEqual(studio_a_data["total_games_count"], 2)
+        self.assertEqual(studio_b_data["total_games_count"], 2)
+
+    def test_nested_studio_hierarchy(self):
+        """
+        Test that nested studio hierarchies work correctly.
+        When a studio also exists as a company with sub-studios,
+        games from sub-studios should be filtered out from parent's list.
+        """
+        # Use Nintendo company from setUp (already created)
+        nintendo = self.company
+
+        # Create Nintendo EPD studio and company
+        nintendo_epd_studio = Studio.objects.create(
+            name="Nintendo EPD", company=nintendo, igdb_id=200
+        )
+        nintendo_epd_company = Company.objects.create(
+            name="Nintendo EPD", slug="nintendo-epd"
+        )
+
+        # Create Nintendo EPD Production Group No. 3 (sub-studio)
+        epd_group_3 = Studio.objects.create(
+            name="Nintendo EPD Production Group No. 3",
+            company=nintendo_epd_company,
+            igdb_id=300,
+        )
+
+        # Create games
+        # Game 1: Attributed to BOTH Nintendo EPD AND EPD Group 3
+        # (should only show at deepest level - Group 3)
+        game1 = Game.objects.create(name="Zelda BOTW", rank=1, year_of_release=2017)
+        game1.studios.add(nintendo_epd_studio, epd_group_3)
+
+        # Game 2: Attributed to Nintendo EPD only (should show at EPD level)
+        game2 = Game.objects.create(name="Splatoon", rank=2, year_of_release=2015)
+        game2.studios.add(nintendo_epd_studio)
+
+        # Fetch the Nintendo company detail page
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": nintendo.slug})
+        )
+
+        # Verify the hierarchy is correct
+        studios_with_games = response.context["studios_with_games"]
+        # Should have 2 studios: "Nintendo" (from setUp) and
+        # "Nintendo EPD" (from this test)
+        self.assertEqual(len(studios_with_games), 2)
+
+        # Find the Nintendo EPD studio (should be second alphabetically)
+        epd_data = None
+        for studio_data in studios_with_games:
+            if studio_data["studio"].name == "Nintendo EPD":
+                epd_data = studio_data
+                break
+
+        self.assertIsNotNone(epd_data, "Nintendo EPD studio should be in the list")
+
+        # EPD should have 1 direct game (Splatoon) - Zelda should be filtered out
+        self.assertEqual(epd_data["games_count"], 1)
+        self.assertEqual(epd_data["games"][0].name, "Splatoon")
+
+        # EPD should have 1 sub-studio
+        self.assertEqual(len(epd_data["sub_studios"]), 1)
+
+        # Check the sub-studio
+        group3_data = epd_data["sub_studios"][0]
+        self.assertEqual(
+            group3_data["studio"].name, "Nintendo EPD Production Group No. 3"
+        )
+        self.assertEqual(group3_data["games_count"], 1)
+        self.assertEqual(group3_data["games"][0].name, "Zelda BOTW")
+
 
 class DeveloperAliasRedirectViewTest(TestCase):
     """Test the developer alias redirect view."""
 
     def setUp(self):
-        self.developer = Developer.objects.create(name="Nintendo", slug="nintendo")
-        self.alias = DeveloperAlias.objects.create(
-            name="Nintendo", developer=self.developer, igdb_id=1
+        self.company = Company.objects.create(name="Nintendo", slug="nintendo")
+        self.alias = Studio.objects.create(
+            name="Nintendo", company=self.company, igdb_id=1
         )
 
     def test_redirects_to_developer_detail(self):
@@ -799,7 +930,7 @@ class DeveloperAliasRedirectViewTest(TestCase):
         self.assertEqual(response.status_code, 301)  # Permanent redirect
         self.assertRedirects(
             response,
-            reverse("developer-detail", kwargs={"slug": self.developer.slug}),
+            reverse("developer-detail", kwargs={"slug": self.company.slug}),
             status_code=301,
         )
 
@@ -1174,15 +1305,13 @@ class GameDownloadCSVTest(TestCase):
         # Create test games with related data
         self.genre = Genre.objects.create(name="Action")
         self.platform = Platform.objects.create(name="PC", code="PC")
-        dev = Developer.objects.create(name="Test Dev", slug="test-dev")
-        self.dev_alias = DeveloperAlias.objects.create(
-            name="Test Dev", developer=dev, igdb_id=1
-        )
+        dev = Company.objects.create(name="Test Dev", slug="test-dev")
+        self.dev_alias = Studio.objects.create(name="Test Dev", company=dev, igdb_id=1)
 
         self.game1 = Game.objects.create(name="Game 1", rank=1, year_of_release=1995)
         self.game1.genres.add(self.genre)
         self.game1.platforms.add(self.platform)
-        self.game1.developers.add(self.dev_alias)
+        self.game1.studios.add(self.dev_alias)
 
         self.game2 = Game.objects.create(name="Game 2", rank=2, year_of_release=2005)
 
@@ -1282,7 +1411,7 @@ class SitemapViewTest(TestCase):
         )
 
         # Create test developers
-        self.dev = Developer.objects.create(name="Test Dev", slug="test-dev")
+        self.dev = Company.objects.create(name="Test Dev", slug="test-dev")
 
     def test_sitemap_returns_200(self):
         """Test that sitemap.xml returns 200 status."""

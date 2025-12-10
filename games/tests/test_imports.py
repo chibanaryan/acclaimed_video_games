@@ -354,9 +354,9 @@ class ImportDevelopersTests(TestCase):
 
         self.assertTrue(success)
         self.assertEqual(message, "Developers: 2 created, 0 updated")
-        self.assertEqual(models.Developer.objects.count(), 2)
-        foo = models.Developer.objects.get(name="Foo Studio")
-        self.assertEqual(foo.aliases.count(), 2)
+        self.assertEqual(models.Company.objects.count(), 2)
+        foo = models.Company.objects.get(name="Foo Studio")
+        self.assertEqual(foo.studios.count(), 2)
 
 
 class ValidatePrerequisitesTests(TestCase):

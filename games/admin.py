@@ -7,8 +7,8 @@ from django.utils.text import Truncator
 from . import models
 
 
-class DeveloperAliasInlineAdmin(admin.TabularInline):
-    model = models.DeveloperAlias
+class StudioInlineAdmin(admin.TabularInline):
+    model = models.Studio
     extra = 0
 
 
@@ -17,15 +17,15 @@ class PlatformAdmin(admin.ModelAdmin):
     list_display = ["name", "code"]
 
 
-@admin.register(models.Developer)
-class DeveloperAdmin(admin.ModelAdmin):
+@admin.register(models.Company)
+class CompanyAdmin(admin.ModelAdmin):
     list_display = ["__str__", "slug"]
     search_fields = ["name"]
-    inlines = [DeveloperAliasInlineAdmin]
+    inlines = [StudioInlineAdmin]
 
 
-@admin.register(models.DeveloperAlias)
-class DeveloperAliasAdmin(admin.ModelAdmin):
+@admin.register(models.Studio)
+class StudioAdmin(admin.ModelAdmin):
     list_display = ["__str__", "igdb_id"]
     search_fields = ["name"]
 
@@ -56,7 +56,7 @@ class GameAdmin(admin.ModelAdmin):
     ]
     list_filter = ["year_of_release"]
     search_fields = ["name"]
-    filter_horizontal = ["developers", "platforms", "genres"]
+    filter_horizontal = ["studios", "platforms", "genres"]
     inlines = [GameQuoteInline]
 
     def get_queryset(self, request: HttpRequest):

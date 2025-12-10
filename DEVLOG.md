@@ -1,5 +1,16 @@
 # Developer Log
 
+## 2025-12-09
+
+- Completed Developer/DeveloperAlias to Company/Studio refactor (clearer naming for parent companies vs game studios)
+- Fixed game count double-counting across sibling studios (now counts unique games only)
+- Removed auto-creation of 0-game parent Studios during IGDB import (prevents database bloat)
+- Fixed studio expansion animation to wait for DOM settling (prevents layout jank)
+- Fixed deep hierarchy navigation to find and highlight games at any nesting level
+- Updated Import page to show separate counts for Companies and Studios
+- Added alphabetical sorting for studios at all hierarchy levels in company detail view
+- Fixed recursive parent fetching in IGDB integration to capture entire company hierarchy
+
 ## 2025-12-05
 
 - Removed game description section from game detail pages (simplified UI)

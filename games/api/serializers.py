@@ -29,7 +29,7 @@ game_fields = [
     "id",
     "decade_rank",
     "description",
-    "developers",
+    "studios",
     "genres",
     "igdb_artwork_id",
     "igdb_url",
@@ -45,7 +45,7 @@ game_fields = [
 
 class GameSummarySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source="igdb_id")
-    developers = IdNameSerializer(many=True)
+    studios = IdNameSerializer(many=True)
     genres = IdNameSerializer(many=True)
     platforms = IdCodeNameSerializer(many=True)
     # Delegate to primary_igdb_game_data
@@ -97,31 +97,31 @@ class GameDetailSerializer(GameSummarySerializer):
         )
 
 
-class DeveloperSerializer(serializers.ModelSerializer):
+class CompanySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source="igdb_id")
-    aliases = IdNameSerializer(many=True)
+    studios = IdNameSerializer(many=True)
 
     class Meta:
-        model = models.Developer
+        model = models.Company
         fields = [
             "id",
             "name",
             "slug",
-            "aliases",
+            "studios",
         ]
 
 
-class DeveloperAliasSerializer(serializers.ModelSerializer):
+class StudioSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source="igdb_id")
     games_count = serializers.IntegerField()
-    developer = IdSlugNameSerializer()
+    company = IdSlugNameSerializer()
 
     class Meta:
-        model = models.DeveloperAlias
+        model = models.Studio
         fields = [
             "id",
             "name",
-            "developer",
+            "company",
             "games_count",
         ]
 

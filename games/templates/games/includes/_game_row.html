@@ -3,7 +3,7 @@
 {% load game_filters %}
 {% load static %}
 {# Desktop view - responsive grid that hides columns on narrow screens #}
-<div class="game-row desktop hidden md:grid py-1.5 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr; --tw-grid-template-columns: auto 1fr;" data-grid-cols="2">
+<div class="game-row desktop hidden md:grid py-1.5 px-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr; --tw-grid-template-columns: auto 1fr;" data-grid-cols="2">
     {# Rank + Thumbnail #}
     <div class="flex items-center gap-3 flex-shrink-0">
         {% if show_rank == 'alltime' or show_rank == 'filtered' %}
@@ -30,9 +30,9 @@
         </div>
         {# Hover row: Global Rank and Developer - hidden by default, shown on hover #}
         <div class="game-row-details text-sm text-base-content/85 mt-1">
-            {% if show_rank == 'filtered' %}<span class="mr-3">Global Rank: {{ game.rank }}</span>{% endif %}
-            {% with developers=game.developers.all %}
-            <span>Dev: {% for developer in developers %}{% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}" class="link link-hover">{{ developer.name }}</a>{% else %}{{ developer.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+            {% if show_rank == 'filtered' or show_rank_in_details %}<span class="mr-3">Global Rank: {{ game.rank }}</span>{% endif %}
+            {% with studios=game.studios.all %}
+            <span>Dev: {% for studio in studios %}{% if studio.root_company.slug %}<a href="{% url 'developer-detail' slug=studio.root_company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-hover">{{ studio.name }}</a>{% elif studio.company.slug %}<a href="{% url 'developer-detail' slug=studio.company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-hover">{{ studio.name }}</a>{% else %}{{ studio.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
             {% endwith %}
         </div>
     </div>

@@ -910,6 +910,132 @@
   .pointer-events-none {
     pointer-events: none;
   }
+  .collapse:not(td, tr, colgroup) {
+    visibility: revert-layer;
+  }
+  @layer daisyui.l1.l2.l3 {
+    .collapse {
+      display: grid;
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-box, 1rem);
+      width: 100%;
+      grid-template-rows: max-content 0fr;
+      grid-template-columns: minmax(0, 1fr);
+      isolation: isolate;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .collapse {
+        transition: grid-template-rows 0.2s;
+      }
+    }
+    .collapse > input:is([type="checkbox"], [type="radio"]) {
+      grid-column-start: 1;
+      grid-row-start: 1;
+      appearance: none;
+      opacity: 0;
+      z-index: 1;
+      width: 100%;
+      padding: 1rem;
+      padding-inline-end: 3rem;
+      min-height: 1lh;
+      transition: background-color 0.2s ease-out;
+    }
+    .collapse:is( [open], [tabindex]:focus:not(.collapse-close), [tabindex]:focus-within:not(.collapse-close) ), .collapse:not(.collapse-close):has(> input:is([type="checkbox"], [type="radio"]):checked) {
+      grid-template-rows: max-content 1fr;
+    }
+    .collapse:is( [open], [tabindex]:focus:not(.collapse-close), [tabindex]:focus-within:not(.collapse-close) ) > .collapse-content, .collapse:not(.collapse-close) > :where(input:is([type="checkbox"], [type="radio"]):checked ~ .collapse-content) {
+      content-visibility: visible;
+      min-height: fit-content;
+    }
+    @supports not (content-visibility: visible) {
+      .collapse:is( [open], [tabindex]:focus:not(.collapse-close), [tabindex]:focus-within:not(.collapse-close) ) > .collapse-content, .collapse:not(.collapse-close) > :where(input:is([type="checkbox"], [type="radio"]):checked ~ .collapse-content) {
+        visibility: visible;
+      }
+    }
+    .collapse:focus-visible, .collapse:has(> input:is([type="checkbox"], [type="radio"]):focus-visible), .collapse:has(summary:focus-visible) {
+      outline-color: var(--color-base-content);
+      outline-style: solid;
+      outline-width: 2px;
+      outline-offset: 2px;
+    }
+    .collapse:not(.collapse-close) > input[type="checkbox"], .collapse:not(.collapse-close) > input[type="radio"]:not(:checked), .collapse:not(.collapse-close) > .collapse-title {
+      cursor: pointer;
+    }
+    .collapse[tabindex]:focus:not(.collapse-close, .collapse[open]) > .collapse-title, .collapse[tabindex]:focus-within:not(.collapse-close, .collapse[open]) > .collapse-title {
+      cursor: unset;
+    }
+    .collapse:is( [open], [tabindex]:focus:not(.collapse-close), [tabindex]:focus-within:not(.collapse-close) ) > :where(.collapse-content), .collapse:not(.collapse-close) > :where(input:is([type="checkbox"], [type="radio"]):checked ~ .collapse-content) {
+      padding-bottom: 1rem;
+    }
+  }
+  @layer daisyui.l1.l2 {
+    @media (prefers-reduced-motion: no-preference) {
+      .collapse:is([open]).collapse-arrow > .collapse-title:after {
+        transform: translateY(-50%) rotate(225deg);
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .collapse.collapse-open.collapse-arrow > .collapse-title:after {
+        transform: translateY(-50%) rotate(225deg);
+      }
+    }
+    .collapse.collapse-open.collapse-plus > .collapse-title:after {
+      --tw-content: "−";
+      content: var(--tw-content);
+    }
+    .collapse[tabindex].collapse-arrow:focus:not(.collapse-close) > .collapse-title:after, .collapse.collapse-arrow[tabindex]:focus-within:not(.collapse-close) > .collapse-title:after {
+      transform: translateY(-50%) rotate(225deg);
+    }
+    .collapse.collapse-arrow:not(.collapse-close) > input:is([type="checkbox"], [type="radio"]):checked ~ .collapse-title:after {
+      transform: translateY(-50%) rotate(225deg);
+    }
+    .collapse[open].collapse-plus > .collapse-title:after {
+      --tw-content: "−";
+      content: var(--tw-content);
+    }
+    .collapse[tabindex].collapse-plus:focus:not(.collapse-close) > .collapse-title:after {
+      --tw-content: "−";
+      content: var(--tw-content);
+    }
+    .collapse.collapse-plus:not(.collapse-close) > input:is([type="checkbox"], [type="radio"]):checked ~ .collapse-title:after {
+      --tw-content: "−";
+      content: var(--tw-content);
+    }
+  }
+  @layer daisyui.l1.l2.l3 {
+    .collapse:is(details) {
+      width: 100%;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .collapse:is(details)::details-content {
+        transition: content-visibility 0.2s allow-discrete, visibility 0.2s allow-discrete, padding 0.2s ease-out, background-color 0.2s ease-out, height 0.2s;
+        height: 0;
+        interpolate-size: allow-keywords;
+      }
+      .collapse:is(details):where([open])::details-content {
+        height: auto;
+      }
+    }
+    .collapse:is(details) summary {
+      position: relative;
+      display: block;
+    }
+    .collapse:is(details) summary::-webkit-details-marker {
+      display: none;
+    }
+    .collapse:is(details) > .collapse-content {
+      content-visibility: visible;
+    }
+  }
+  @layer daisyui.l1.l2.l3 {
+    .collapse:is(details) summary {
+      outline: none;
+    }
+  }
+  .collapse {
+    visibility: collapse;
+  }
   .visible {
     visibility: visible;
   }
@@ -2993,6 +3119,9 @@
   .ml-4 {
     margin-left: calc(var(--spacing) * 4);
   }
+  .ml-6 {
+    margin-left: calc(var(--spacing) * 6);
+  }
   .ml-auto {
     margin-left: auto;
   }
@@ -3539,6 +3668,9 @@
     --tw-scale-z: 100%;
     scale: var(--tw-scale-x) var(--tw-scale-y);
   }
+  .rotate-90 {
+    rotate: 90deg;
+  }
   .rotate-180 {
     rotate: 180deg;
   }
@@ -3567,6 +3699,9 @@
   }
   .cursor-pointer {
     cursor: pointer;
+  }
+  .scroll-mt-4 {
+    scroll-margin-top: calc(var(--spacing) * 4);
   }
   .list-decimal {
     list-style-type: decimal;
@@ -3731,6 +3866,10 @@
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
   }
+  .border-l-2 {
+    border-left-style: var(--tw-border-style);
+    border-left-width: 2px;
+  }
   .border-l-4 {
     border-left-style: var(--tw-border-style);
     border-left-width: 4px;
@@ -3800,6 +3939,14 @@
   }
   .bg-primary {
     background-color: var(--color-primary);
+  }
+  .bg-primary\/10 {
+    background-color: var(--color-primary);
+  }
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-primary\/10 {
+      background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
+    }
   }
   .bg-transparent {
     background-color: transparent;
@@ -3936,6 +4083,9 @@
   }
   .pl-4 {
     padding-left: calc(var(--spacing) * 4);
+  }
+  .pl-6 {
+    padding-left: calc(var(--spacing) * 6);
   }
   .pl-9 {
     padding-left: calc(var(--spacing) * 9);
@@ -4260,6 +4410,10 @@
   .duration-100 {
     --tw-duration: 100ms;
     transition-duration: 100ms;
+  }
+  .duration-150 {
+    --tw-duration: 150ms;
+    transition-duration: 150ms;
   }
   .duration-200 {
     --tw-duration: 200ms;

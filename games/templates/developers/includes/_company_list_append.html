@@ -5,12 +5,16 @@
 {% for alias in developers %}
 <tr class="developer-row">
     <td>
-        {% if alias.developer.slug %}
-            <a href="{% url 'developer-detail' slug=alias.developer.slug %}" class="link link-primary">
-                {{ alias.name }} ({{ alias.developer.name }})
+        {% if alias.root_company.slug %}
+            <a href="{% url 'developer-detail' slug=alias.root_company.slug %}#studio-{{ alias.id }}" class="link link-primary">
+                {{ alias.name }} ({{ alias.root_company.name }})
+            </a>
+        {% elif alias.company.slug %}
+            <a href="{% url 'developer-detail' slug=alias.company.slug %}#studio-{{ alias.id }}" class="link link-primary">
+                {{ alias.name }} ({{ alias.company.name }})
             </a>
         {% else %}
-            <span>{{ alias.name }} ({{ alias.developer.name }})</span>
+            <span>{{ alias.name }}</span>
         {% endif %}
     </td>
     <td>{{ alias.games_count }}</td>
@@ -25,12 +29,16 @@
 <div class="developer-row card bg-base-200 p-3">
     <div class="flex items-center justify-between gap-2">
         <div class="flex-1">
-            {% if alias.developer.slug %}
-                <a href="{% url 'developer-detail' slug=alias.developer.slug %}" class="link link-primary font-bold">
-                    {{ alias.name }} ({{ alias.developer.name }})
+            {% if alias.root_company.slug %}
+                <a href="{% url 'developer-detail' slug=alias.root_company.slug %}#studio-{{ alias.id }}" class="link link-primary font-bold">
+                    {{ alias.name }} ({{ alias.root_company.name }})
+                </a>
+            {% elif alias.company.slug %}
+                <a href="{% url 'developer-detail' slug=alias.company.slug %}#studio-{{ alias.id }}" class="link link-primary font-bold">
+                    {{ alias.name }} ({{ alias.company.name }})
                 </a>
             {% else %}
-                <span class="font-bold">{{ alias.name }} ({{ alias.developer.name }})</span>
+                <span class="font-bold">{{ alias.name }}</span>
             {% endif %}
         </div>
         <div class="badge badge-ghost">{{ alias.games_count }} game{{ alias.games_count|pluralize }}</div>

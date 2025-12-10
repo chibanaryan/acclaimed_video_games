@@ -45,8 +45,8 @@ class ImportHelpersTests(TestCase):
             publisher=pub, name="Top", year=2020, type=constants.LIST_EOY, order=1
         )
         models.Platform.objects.create(code="PCX", name="PCX")
-        developer = models.Developer.objects.create(name="Studio")
-        models.DeveloperAlias.objects.create(developer=developer, name="Studio Alias")
+        developer = models.Company.objects.create(name="Studio")
+        models.Studio.objects.create(company=developer, name="Studio Alias")
         game = models.Game.objects.create(
             name="Alpha",
             rank=1,
@@ -101,7 +101,7 @@ class ImportHelpersTests(TestCase):
         self.assertIn("1 created", message)
 
     def test_import_developers_counts_updates(self):
-        models.Developer.objects.create(name="Canonical")
+        models.Company.objects.create(name="Canonical")
         stream = StringIO("Alias\tCanonical\r\n")
         success, message = utils.import_developers(stream)
         self.assertTrue(success)
@@ -112,11 +112,11 @@ class ImportHelpersTests(TestCase):
         success, message = utils.import_developers(stream)
         self.assertTrue(success)
         self.assertIn("1 created", message)
-        self.assertEqual(models.Developer.objects.count(), 1)
-        self.assertEqual(models.DeveloperAlias.objects.count(), 2)
-        developer = models.Developer.objects.first()
+        self.assertEqual(models.Company.objects.count(), 1)
+        self.assertEqual(models.Studio.objects.count(), 2)
+        developer = models.Company.objects.first()
         self.assertEqual(developer.name, "Canonical")
-        alias_names = list(models.DeveloperAlias.objects.values_list("name", flat=True))
+        alias_names = list(models.Studio.objects.values_list("name", flat=True))
         self.assertIn("Alias1", alias_names)
         self.assertIn("Alias2", alias_names)
 

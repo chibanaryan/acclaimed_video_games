@@ -15,9 +15,9 @@ class GameListApiTests(TestCase):
         self.genre_action = models.Genre.objects.create(name="Action")
         self.genre_adventure = models.Genre.objects.create(name="Adventure")
 
-        developer = models.Developer.objects.create(name="Studio", igdb_id=10)
-        self.alias = models.DeveloperAlias.objects.create(
-            developer=developer, name="Studio Alias", igdb_id=11
+        developer = models.Company.objects.create(name="Studio", igdb_id=10)
+        self.alias = models.Studio.objects.create(
+            company=developer, name="Studio Alias", igdb_id=11
         )
 
         self.game1 = models.Game.objects.create(
@@ -29,7 +29,7 @@ class GameListApiTests(TestCase):
         )
         self.game1.platforms.add(self.platform_pc)
         self.game1.genres.add(self.genre_action)
-        self.game1.developers.add(self.alias)
+        self.game1.studios.add(self.alias)
 
         self.game2 = models.Game.objects.create(
             name="Beta Saga",
@@ -60,7 +60,7 @@ class GameListApiTests(TestCase):
         self.assertEqual(names, ["Alpha Quest"])
 
     def test_filter_by_developer(self):
-        names = self._get_game_names(developer=str(self.alias.developer.igdb_id))
+        names = self._get_game_names(developer=str(self.alias.company.igdb_id))
         self.assertEqual(names, ["Alpha Quest"])
 
     def test_filter_by_genres_any_option(self):
@@ -86,7 +86,7 @@ class ApiSmokeTests(TestCase):
             year=2020,
             type="E",
         )
-        self.developer = models.Developer.objects.create(name="Studio", slug="studio")
+        self.company = models.Company.objects.create(name="Studio", slug="studio")
         self.post = models.Post.objects.create(title="News", text="Hello", active=True)
         models.Snippet.objects.create(slug="about", text="About text")
         models.Snippet.objects.create(slug="donate", text="Donate info")
@@ -96,10 +96,10 @@ class ApiSmokeTests(TestCase):
             igdb_id=1234,
             year_of_release=2000,
         )
-        self.alias = models.DeveloperAlias.objects.create(
-            developer=self.developer, name="Studio Alias", igdb_id=200
+        self.alias = models.Studio.objects.create(
+            company=self.company, name="Studio Alias", igdb_id=200
         )
-        self.game.developers.add(self.alias)
+        self.game.studios.add(self.alias)
         self.flatpage = FlatPage.objects.create(
             url="/faq/", title="FAQ", content="**Docs**"
         )
@@ -110,7 +110,7 @@ class ApiSmokeTests(TestCase):
         self.assertGreaterEqual(resp.json()["count"], 1)
 
     def test_developer_detail_endpoint(self):
-        resp = self.client.get(f"/api/developers/{self.developer.slug}/")
+        resp = self.client.get(f"/api/developers/{self.company.slug}/")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["name"], "Studio")
 
@@ -233,9 +233,9 @@ class GameSearchAPIViewTests(TestCase):
         self.client = APIClient()
 
         # Create test games
-        developer = models.Developer.objects.create(name="Test Dev", igdb_id=10)
-        alias = models.DeveloperAlias.objects.create(
-            developer=developer, name="Test Developer", igdb_id=11
+        developer = models.Company.objects.create(name="Test Dev", igdb_id=10)
+        alias = models.Studio.objects.create(
+            company=developer, name="Test Developer", igdb_id=11
         )
 
         self.game1 = models.Game.objects.create(
@@ -244,7 +244,7 @@ class GameSearchAPIViewTests(TestCase):
             year_of_release=1986,
             slug="zelda",
         )
-        self.game1.developers.add(alias)
+        self.game1.studios.add(alias)
 
         self.game2 = models.Game.objects.create(
             name="Zelda II: The Adventure of Link",
@@ -252,7 +252,7 @@ class GameSearchAPIViewTests(TestCase):
             year_of_release=1987,
             slug="zelda-2",
         )
-        self.game2.developers.add(alias)
+        self.game2.studios.add(alias)
 
         self.game3 = models.Game.objects.create(
             name="Super Mario Bros",

@@ -386,7 +386,7 @@ class SyncFromProdCommandTests(TestCase):
         # Create some local data that will be cleared
         self.platform = models.Platform.objects.create(name="PC", code="PC")
         self.genre = models.Genre.objects.create(name="Action")
-        self.developer = models.Developer.objects.create(name="Test Dev")
+        self.company = models.Company.objects.create(name="Test Dev")
         self.game = models.Game.objects.create(
             name="Local Game", rank=1, year_of_release=2020
         )
@@ -563,7 +563,7 @@ class SyncFromProdCommandTests(TestCase):
         self.assertEqual(models.Game.objects.count(), 0)
         self.assertEqual(models.Platform.objects.count(), 0)
         self.assertEqual(models.Genre.objects.count(), 0)
-        self.assertEqual(models.Developer.objects.count(), 0)
+        self.assertEqual(models.Company.objects.count(), 0)
 
     @mock.patch("subprocess.run")
     def test_heroku_command_error(self, mock_subprocess):

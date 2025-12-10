@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load game_filters %}
+
+{% block title %}{{ developer.name }} - Acclaimed Games{% endblock %}
+
+{% block content %}
+{% if developer %}
+    <h1 class="text-3xl font-bold mb-4">{{ developer.name }}</h1>
+
+    {% if total_games %}
+    <p class="text-base-content/70 mb-6">
+        {% if developer.studios.count > 1 %}
+            {{ total_games }} game{{ total_games|pluralize }} across {{ studios_count }} studio{{ studios_count|pluralize }}:
+        {% else %}
+            {{ total_games }} game{{ total_games|pluralize }}:
+        {% endif %}
+    </p>
+    {% endif %}
+
+    {# Use recursive template to display studios with unlimited nesting #}
+    {% include 'developers/includes/_studio_section.html' with studios=studios_with_games level=0 show_studio_names=studios_count|divisibleby:1 %}
+{% else %}
+    <div class="alert alert-error">
+        <span class="mdi mdi-alert-circle"></span>
+        <div>
+            <p class="font-bold">Error: Developer not found</p>
+            <p>The developer you're looking for could not be found or there was a problem loading it.</p>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

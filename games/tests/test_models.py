@@ -72,7 +72,7 @@ class GameIgdbTests(TestCase):
             "storyline": "Story",
             "summary": "Summary",
             "genres": ["Action"],
-            "developers": [
+            "studios": [
                 {
                     "id": 1,
                     "name": "Foo Dev",
@@ -93,7 +93,7 @@ class GameIgdbTests(TestCase):
         self.assertEqual(game.igdb_artwork_id, "cover_hash")
         self.assertIn("Story", game.description)
         self.assertEqual(game.genres.get().name, "Action")
-        self.assertEqual(game.developers.get().name, "Foo Dev")
+        self.assertEqual(game.studios.get().name, "Foo Dev")
 
     def test_get_igdb_data_handles_missing_api(self):
         game = models.Game.objects.create(
@@ -116,8 +116,8 @@ class GameIgdbTests(TestCase):
         game = models.Game.objects.create(
             name="Sample", rank=1, igdb_id=555, year_of_release=1990
         )
-        alias = models.DeveloperAlias.objects.create(
-            developer=models.Developer.objects.create(name="Existing Dev"),
+        alias = models.Studio.objects.create(
+            company=models.Company.objects.create(name="Existing Dev"),
             name="Existing Alias",
         )
         fake_api = mock.Mock()
@@ -128,7 +128,7 @@ class GameIgdbTests(TestCase):
             "storyline": "",
             "summary": "",
             "genres": [],
-            "developers": [
+            "studios": [
                 {
                     "id": 1,
                     "name": "Existing Alias",
@@ -140,14 +140,14 @@ class GameIgdbTests(TestCase):
         with mock.patch(
             "games.models.igdb.get_api", return_value=fake_api
         ), mock.patch.object(
-            models.DeveloperAlias.objects,
+            models.Studio.objects,
             "update_or_create",
             side_effect=IntegrityError,
         ), mock.patch.object(
-            models.DeveloperAlias.objects, "get", return_value=alias
+            models.Studio.objects, "get", return_value=alias
         ):
             game.get_igdb_data()
-        self.assertIn(alias, game.developers.all())
+        self.assertIn(alias, game.studios.all())
 
     def test_get_igdb_data_creates_alias_for_standalone_developer(self):
         """Test that standalone developers (no parent) get a matching DeveloperAlias"""
@@ -163,7 +163,7 @@ class GameIgdbTests(TestCase):
             "storyline": "",
             "summary": "",
             "genres": [],
-            "developers": [
+            "studios": [
                 {
                     "id": 123,
                     "name": "Indie Studio",
@@ -178,19 +178,19 @@ class GameIgdbTests(TestCase):
             game.save()
 
         # Verify Developer was created
-        developer = models.Developer.objects.get(name="Indie Studio")
+        developer = models.Company.objects.get(name="Indie Studio")
         self.assertEqual(developer.igdb_id, 123)
 
         # Verify matching DeveloperAlias was created
-        alias = models.DeveloperAlias.objects.get(name="Indie Studio")
-        self.assertEqual(alias.developer, developer)
+        alias = models.Studio.objects.get(name="Indie Studio")
+        self.assertEqual(alias.company, developer)
         self.assertEqual(alias.igdb_id, 123)
 
         # Verify game is linked to the alias
-        self.assertIn(alias, game.developers.all())
+        self.assertIn(alias, game.studios.all())
 
         # Verify no orphaned developers
-        orphaned_devs = models.Developer.objects.filter(aliases__isnull=True)
+        orphaned_devs = models.Company.objects.filter(studios__isnull=True)
         self.assertEqual(orphaned_devs.count(), 0)
 
     def test_get_igdb_data_creates_alias_for_parent_company(self):
@@ -207,7 +207,7 @@ class GameIgdbTests(TestCase):
             "storyline": "",
             "summary": "",
             "genres": [],
-            "developers": [
+            "studios": [
                 {
                     "id": 456,
                     "name": "Nintendo EPD",
@@ -225,27 +225,23 @@ class GameIgdbTests(TestCase):
             game.get_igdb_data()
             game.save()
 
-        # Verify parent Developer was created
-        parent_dev = models.Developer.objects.get(name="Nintendo")
+        # Verify parent Company was created
+        parent_dev = models.Company.objects.get(name="Nintendo")
         self.assertEqual(parent_dev.igdb_id, 789)
 
-        # Verify parent has its own DeveloperAlias (this prevents orphans!)
-        parent_alias = models.DeveloperAlias.objects.get(
-            developer=parent_dev, name="Nintendo"
-        )
-        self.assertEqual(parent_alias.igdb_id, 789)
-
-        # Verify child alias exists and is linked to parent Developer
-        child_alias = models.DeveloperAlias.objects.get(name="Nintendo EPD")
-        self.assertEqual(child_alias.developer, parent_dev)
+        # Verify child Studio exists and is linked to parent Company
+        child_alias = models.Studio.objects.get(name="Nintendo EPD")
+        self.assertEqual(child_alias.company, parent_dev)
         self.assertEqual(child_alias.igdb_id, 456)
 
-        # Verify game is linked to the child alias
-        self.assertIn(child_alias, game.developers.all())
+        # Verify game is linked to the child Studio
+        self.assertIn(child_alias, game.studios.all())
 
-        # Verify no orphaned developers
-        orphaned_devs = models.Developer.objects.filter(aliases__isnull=True)
-        self.assertEqual(orphaned_devs.count(), 0)
+        # Parent companies can exist without Studios (not orphaned)
+        parent_studios = models.Studio.objects.filter(
+            company=parent_dev, name="Nintendo"
+        )
+        self.assertEqual(parent_studios.count(), 0)  # No auto-created parent Studio
 
     def test_get_igdb_data_multiple_imports_idempotent(self):
         """Test that importing the same game multiple times doesn't create duplicates"""
@@ -261,7 +257,7 @@ class GameIgdbTests(TestCase):
             "storyline": "",
             "summary": "",
             "genres": [],
-            "developers": [
+            "studios": [
                 {
                     "id": 111,
                     "name": "Studio One",
@@ -276,19 +272,19 @@ class GameIgdbTests(TestCase):
             game.get_igdb_data()
             game.save()
 
-            initial_dev_count = models.Developer.objects.count()
-            initial_alias_count = models.DeveloperAlias.objects.count()
+            initial_dev_count = models.Company.objects.count()
+            initial_alias_count = models.Studio.objects.count()
 
             # Import again
             game.get_igdb_data()
             game.save()
 
             # Should not create duplicates
-            self.assertEqual(models.Developer.objects.count(), initial_dev_count)
-            self.assertEqual(models.DeveloperAlias.objects.count(), initial_alias_count)
+            self.assertEqual(models.Company.objects.count(), initial_dev_count)
+            self.assertEqual(models.Studio.objects.count(), initial_alias_count)
 
             # Verify no orphaned developers
-            orphaned_devs = models.Developer.objects.filter(aliases__isnull=True)
+            orphaned_devs = models.Company.objects.filter(studios__isnull=True)
             self.assertEqual(orphaned_devs.count(), 0)
 
     def test_get_igdb_data_multiple_games_same_parent(self):
@@ -311,7 +307,7 @@ class GameIgdbTests(TestCase):
                     "storyline": "",
                     "summary": "",
                     "genres": [],
-                    "developers": [
+                    "studios": [
                         {
                             "id": 501,
                             "name": "Sony Studio A",
@@ -332,7 +328,7 @@ class GameIgdbTests(TestCase):
                     "storyline": "",
                     "summary": "",
                     "genres": [],
-                    "developers": [
+                    "studios": [
                         {
                             "id": 502,
                             "name": "Sony Studio B",
@@ -354,28 +350,24 @@ class GameIgdbTests(TestCase):
             game2.get_igdb_data()
             game2.save()
 
-        # Verify only ONE parent Developer was created (shared)
-        parent_devs = models.Developer.objects.filter(
+        # Verify only ONE parent Company was created (shared)
+        parent_devs = models.Company.objects.filter(
             name="Sony Interactive Entertainment"
         )
         self.assertEqual(parent_devs.count(), 1)
         parent_dev = parent_devs.first()
 
-        # Verify parent has its own alias
-        parent_alias = models.DeveloperAlias.objects.get(
-            developer=parent_dev, name="Sony Interactive Entertainment"
+        # Verify both child Studios are linked to the same parent Company
+        studio_a_alias = models.Studio.objects.get(name="Sony Studio A")
+        studio_b_alias = models.Studio.objects.get(name="Sony Studio B")
+        self.assertEqual(studio_a_alias.company, parent_dev)
+        self.assertEqual(studio_b_alias.company, parent_dev)
+
+        # Parent company exists without its own Studio (expected behavior)
+        parent_studios = models.Studio.objects.filter(
+            company=parent_dev, name="Sony Interactive Entertainment"
         )
-        self.assertEqual(parent_alias.igdb_id, 600)
-
-        # Verify both child studios have aliases linked to the same parent
-        studio_a_alias = models.DeveloperAlias.objects.get(name="Sony Studio A")
-        studio_b_alias = models.DeveloperAlias.objects.get(name="Sony Studio B")
-        self.assertEqual(studio_a_alias.developer, parent_dev)
-        self.assertEqual(studio_b_alias.developer, parent_dev)
-
-        # Verify no orphaned developers
-        orphaned_devs = models.Developer.objects.filter(aliases__isnull=True)
-        self.assertEqual(orphaned_devs.count(), 0)
+        self.assertEqual(parent_studios.count(), 0)  # No auto-created parent Studio
 
 
 class GameWikipediaTests(TestCase):
@@ -481,22 +473,16 @@ class ModelHelpersTests(TestCase):
         self.assertEqual(str(platform), "Personal Computer")
 
     def test_developer_str_and_other_aliases(self):
-        developer = models.Developer.objects.create(name="Studio")
-        models.DeveloperAlias.objects.create(developer=developer, name="Studio")
-        other = models.DeveloperAlias.objects.create(
-            developer=developer, name="Alt Studio"
-        )
+        developer = models.Company.objects.create(name="Studio")
+        models.Studio.objects.create(company=developer, name="Studio")
+        other = models.Studio.objects.create(company=developer, name="Alt Studio")
         self.assertEqual(str(developer), "Studio")
-        self.assertEqual(list(developer.other_aliases), [other])
+        self.assertEqual(list(developer.subsidiary_studios), [other])
 
     def test_developer_alias_str_variants(self):
-        developer = models.Developer.objects.create(name="Studio")
-        alias_same = models.DeveloperAlias.objects.create(
-            developer=developer, name="Studio"
-        )
-        alias_other = models.DeveloperAlias.objects.create(
-            developer=developer, name="Studio Alt"
-        )
+        developer = models.Company.objects.create(name="Studio")
+        alias_same = models.Studio.objects.create(company=developer, name="Studio")
+        alias_other = models.Studio.objects.create(company=developer, name="Studio Alt")
         self.assertEqual(str(alias_same), "Studio")
         self.assertEqual(str(alias_other), "Studio Alt (Studio)")
 

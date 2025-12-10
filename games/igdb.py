@@ -368,7 +368,7 @@ class IgbdApi:
         self, company_id: int, cache_results: bool = True
     ) -> Optional[Dict[str, Any]]:
         """
-        Fetch company (developer/publisher) data from IGDB API by company ID.
+        Fetch company (studio/publisher) data from IGDB API by company ID.
 
         Thread-safe implementation with cache locking.
 
@@ -532,7 +532,7 @@ class IgbdApi:
         Returns:
             Dict mapping game IDs to game data dicts with keys:
                 - cover: Cover art filename
-                - developers: List of developer dicts with id, name, slug, parent
+                - studios: List of studio dicts with id, name, slug, parent
                 - genres: List of genre names (combination of genres and themes)
                 - storyline: Game storyline text
                 - summary: Game summary text
@@ -594,12 +594,31 @@ class IgbdApi:
         # Batch fetch all companies
         companies = self.get_companies_by_ids(list(all_company_ids), cache_results)
 
+        # Recursively fetch all parent companies up the chain
+        max_depth = 10  # Prevent infinite loops
+        depth = 0
+        while depth < max_depth:
+            # Collect parent IDs that need fetching
+            parent_ids = [
+                c.get("parent")
+                for c in companies.values()
+                if c.get("parent") and c.get("parent") not in companies
+            ]
+
+            if not parent_ids:
+                break  # No more parents to fetch
+
+            # Batch fetch parent companies
+            parent_data = self.get_companies_by_ids(parent_ids, cache_results)
+            companies.update(parent_data)
+            depth += 1
+
         # Process each game
         for data in results:
             game_id = data["id"]
 
-            # Process developers
-            developers = []
+            # Process studios (companies marked as developers in IGDB)
+            studios = []
             porters = []
             supporters = []
             publishers = []
@@ -610,7 +629,7 @@ class IgbdApi:
                     continue
 
                 if involved_company_dict.get("developer"):
-                    developers.append(company_id)
+                    studios.append(company_id)
                 if involved_company_dict.get("supporting"):
                     supporters.append(company_id)
                 if involved_company_dict.get("publisher"):
@@ -619,8 +638,8 @@ class IgbdApi:
                     porters.append(company_id)
 
             company_ids = []
-            if developers:
-                company_ids += developers
+            if studios:
+                company_ids += studios
             else:
                 if supporters:
                     company_ids += supporters
@@ -629,7 +648,7 @@ class IgbdApi:
                 elif porters:
                     company_ids += porters
 
-            developer_objs = []
+            studio_objs = []
             for company_id in company_ids:
                 company_obj = companies.get(company_id)
                 if not company_obj:
@@ -638,7 +657,7 @@ class IgbdApi:
                 parent_id = company_obj.get("parent")
                 parent_obj = companies.get(parent_id) if parent_id else None
 
-                developer_objs.append(
+                studio_objs.append(
                     {
                         "id": company_id,
                         "name": company_obj["name"],
@@ -669,7 +688,7 @@ class IgbdApi:
 
             game_data = {
                 "cover": cover_filename,
-                "developers": developer_objs,
+                "studios": studio_objs,
                 "genres": genres,
                 "storyline": data.get("storyline"),
                 "summary": data.get("summary"),
@@ -691,8 +710,8 @@ class IgbdApi:
         Fetch comprehensive game information from IGDB API by game ID.
 
         Thread-safe implementation with cache locking. This method retrieves game
-        data including cover art, developers, genres, and metadata. It intelligently
-        selects developers from involved companies, preferring actual developers
+        data including cover art, studios, genres, and metadata. It intelligently
+        selects studios from involved companies, preferring actual developers
         over supporters, publishers, and porters in that order.
 
         Args:
@@ -702,7 +721,7 @@ class IgbdApi:
         Returns:
             Dict containing game data with keys:
                 - cover: Cover art filename
-                - developers: List of developer dicts with id, name, slug, parent
+                - studios: List of studio dicts with id, name, slug, parent
                 - genres: List of genre names (combination of genres and themes)
                 - storyline: Game storyline text
                 - summary: Game summary text
@@ -743,8 +762,8 @@ class IgbdApi:
         assert len(results) == 1
         data = results[0]
 
-        # Get developer information
-        developers = []
+        # Get studio information (companies marked as developers in IGDB)
+        studios = []
         porters = []
         supporters = []
         publishers = []
@@ -753,7 +772,7 @@ class IgbdApi:
             company_id = involved_company_dict["company"]
 
             if involved_company_dict["developer"]:
-                developers.append(company_id)
+                studios.append(company_id)
 
             if involved_company_dict["supporting"]:
                 supporters.append(company_id)
@@ -766,8 +785,8 @@ class IgbdApi:
 
         company_ids = []
 
-        if developers:
-            company_ids += developers
+        if studios:
+            company_ids += studios
         else:
             if supporters:
                 company_ids += supporters
@@ -779,20 +798,27 @@ class IgbdApi:
         # Batch fetch all companies at once instead of sequential calls
         companies_data = self.get_companies_by_ids(company_ids, cache_results)
 
-        # Collect parent IDs that need fetching
-        parent_ids = [
-            c.get("parent")
-            for c in companies_data.values()
-            if c.get("parent") and c.get("parent") not in companies_data
-        ]
+        # Recursively fetch all parent companies up the chain
+        max_depth = 10  # Prevent infinite loops
+        depth = 0
+        while depth < max_depth:
+            # Collect parent IDs that need fetching
+            parent_ids = [
+                c.get("parent")
+                for c in companies_data.values()
+                if c.get("parent") and c.get("parent") not in companies_data
+            ]
 
-        # Batch fetch parent companies
-        if parent_ids:
+            if not parent_ids:
+                break  # No more parents to fetch
+
+            # Batch fetch parent companies
             parent_data = self.get_companies_by_ids(parent_ids, cache_results)
             companies_data.update(parent_data)
+            depth += 1
 
-        # Build developer objects using fetched data
-        developer_objs = []
+        # Build studio objects using fetched data
+        studio_objs = []
         for company_id in company_ids:
             company_obj = companies_data.get(company_id)
             if not company_obj:
@@ -801,7 +827,7 @@ class IgbdApi:
             parent_id = company_obj.get("parent")
             parent_obj = companies_data.get(parent_id) if parent_id else None
 
-            developer_objs.append(
+            studio_objs.append(
                 {
                     "id": company_id,
                     "name": company_obj["name"],
@@ -833,7 +859,7 @@ class IgbdApi:
 
         game_data = {
             "cover": cover_filename,
-            "developers": developer_objs,
+            "studios": studio_objs,
             "genres": genres,
             "storyline": data.get("storyline"),
             "summary": data.get("summary"),

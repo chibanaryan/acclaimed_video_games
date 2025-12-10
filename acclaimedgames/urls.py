@@ -81,15 +81,15 @@ urlpatterns = [
         name="games-search",
     ),
     path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
-    path("developers/", views.DeveloperListView.as_view(), name="developers-list"),
+    path("developers/", views.StudioListView.as_view(), name="developers-list"),
     path(
         "developers/<slug:slug>/",
-        views.DeveloperDetailView.as_view(),
+        views.CompanyDetailView.as_view(),
         name="developer-detail",
     ),
     path(
         "developer-alias/<int:id>/",
-        views.DeveloperAliasRedirectView.as_view(),
+        views.StudioRedirectView.as_view(),
         name="developer-alias-redirect",
     ),
     path("lists/", views.ListListView.as_view(), name="list-list"),

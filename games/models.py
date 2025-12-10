@@ -65,46 +65,141 @@ class Platform(models.Model):
         return self.name
 
 
-class Developer(models.Model):
+class Company(models.Model):
     """
-    A company or organization that produces video games
+    A parent company that owns game development studios.
+
+    In IGDB's data model, this corresponds to a "company" record that appears
+    as the "parent" field of other companies. Examples: Nintendo (parent of
+    Nintendo EAD, Nintendo EPD), Activision Blizzard (parent of Activision,
+    Blizzard Entertainment).
+
+    Note: Some companies both own studios AND develop games directly. In that
+    case, the company will have a Studio record with the same name (e.g., both
+    a Company "Valve" and a Studio "Valve").
+
+    This model is primarily used for:
+    - Organizing studios hierarchically on developer detail pages
+    - Tracking corporate ownership relationships
+    - Providing company-level slugs for URL routing (/developers/<slug>/)
+
+    Games are linked to Studio records, not Company records directly.
     """
 
     name = models.CharField(max_length=100, db_index=True)
     slug = models.SlugField(max_length=100, null=True, blank=True, db_index=True)
-    igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
+    igdb_id = models.IntegerField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="IGDB company ID (from companies endpoint)",
+    )
 
     class Meta:
         ordering = ["name"]
+        verbose_name_plural = "Companies"
 
     def __str__(self) -> str:
         return self.name
 
     @property
-    def other_aliases(self) -> models.QuerySet:
-        return self.aliases.exclude(name=self.name)
+    def subsidiary_studios(self) -> models.QuerySet:
+        """Returns only subsidiary studios (excludes self-named studio)."""
+        return self.studios.exclude(name=self.name)
 
 
-class DeveloperAlias(models.Model):
+class Studio(models.Model):
     """
-    A different name that a developer may use
+    A game development studio that creates games.
+
+    In IGDB's data model, this corresponds to a "company" record that appears
+    in a game's "involved_companies" list with developer=True. Studios can be:
+
+    1. **Independent**: No parent company (company=None)
+       Examples: Independent studios, self-published developers
+
+    2. **Subsidiary**: Owned by a parent company (company=Company)
+       Examples: Nintendo EAD (company=Nintendo), Respawn (company=EA)
+
+    3. **Primary studio**: Same name as parent (company=Company, name=company.name)
+       Examples: Valve (both company and studio), FromSoftware
+
+    Games are linked to Studios via the Game.studios M2M field. This allows
+    proper attribution when a parent company develops games directly (e.g.,
+    Activision games show on the Activision company page).
+
+    Note: User-facing pages refer to these as "developers" for familiarity,
+    but internally they represent the actual development studios.
     """
 
-    developer = models.ForeignKey(
-        "Developer", on_delete=models.CASCADE, related_name="aliases"
+    company = models.ForeignKey(
+        "Company",
+        on_delete=models.CASCADE,
+        related_name="studios",
+        null=True,
+        blank=True,
+        help_text=(
+            "Parent company that owns this studio " "(optional for independent studios)"
+        ),
     )
     name = models.CharField(max_length=100, unique=True)
-    igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
+    igdb_id = models.IntegerField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="IGDB company ID (from companies endpoint)",
+    )
 
     class Meta:
         ordering = ["name"]
-        verbose_name_plural = "Developer aliases"
+        verbose_name_plural = "Studios"
 
     def __str__(self) -> str:
-        if self.name != self.developer.name:
-            return f"{self.name} ({self.developer})"
+        if self.company and self.name != self.company.name:
+            return f"{self.name} ({self.company})"
         else:
             return self.name
+
+    @property
+    def is_primary_studio(self) -> bool:
+        """True if this studio has the same name as its parent company."""
+        return self.company is not None and self.name == self.company.name
+
+    @property
+    def is_independent(self) -> bool:
+        """True if this studio has no parent company."""
+        return self.company is None
+
+    @property
+    def root_company(self):
+        """
+        Returns the root (topmost) company in the ownership hierarchy.
+
+        For nested studios like BioWare Edmonton → BioWare → EA,
+        this returns the ultimate parent (EA).
+        """
+        if not self.company:
+            return None
+
+        current = self.company
+        visited = {current.id}  # Prevent infinite loops
+
+        # Traverse up the hierarchy
+        while True:
+            # Check if this company also exists as a studio with a parent
+            matching_studio = (
+                Studio.objects.filter(name=current.name, company__isnull=False)
+                .select_related("company")
+                .first()
+            )
+
+            if matching_studio and matching_studio.company_id not in visited:
+                visited.add(matching_studio.company_id)
+                current = matching_studio.company
+            else:
+                break
+
+        return current
 
 
 class Genre(models.Model):
@@ -296,8 +391,8 @@ class GameQuerySet(models.QuerySet):
     def with_relations(self):
         """Prefetch common relations for game lists and search results."""
         return self.prefetch_related(
-            "developers",
-            "developers__developer",
+            "studios",
+            "studios__company",
             "platforms",
             "genres",
         ).select_related(
@@ -322,8 +417,14 @@ class Game(models.Model):
     year_of_release = models.PositiveSmallIntegerField(
         null=True, blank=True, db_index=True
     )
-    developers = models.ManyToManyField(
-        "DeveloperAlias", blank=True, related_name="games"
+    studios = models.ManyToManyField(
+        "Studio",
+        blank=True,
+        related_name="games",
+        help_text=(
+            "Game development studios that created this game "
+            "(from IGDB involved_companies)"
+        ),
     )
     platforms = models.ManyToManyField("Platform", blank=True, related_name="games")
     created = models.DateTimeField(
@@ -538,9 +639,9 @@ class Game(models.Model):
                     ]
                 )
 
-        # Update developers and genres only from first record
+        # Update studios and genres only from first record
         if ids_to_fetch and (data is not None or api_client):
-            # Get first record data for developers/genres
+            # Get first record data for studios/genres
             if data is not None:
                 first_data = data
             else:
@@ -548,11 +649,11 @@ class Game(models.Model):
                     ids_to_fetch[0], cache_results
                 )
 
-            developer_aliases = []
-            for d in first_data["developers"]:
-                # This developer is a parent
+            studios = []
+            for d in first_data["studios"]:
+                # This company is independent (no parent)
                 if not d.get("parent"):
-                    developer, created = Developer.objects.update_or_create(
+                    company, created = Company.objects.update_or_create(
                         name=d["name"],
                         defaults={
                             "slug": d["slug"],
@@ -560,11 +661,11 @@ class Game(models.Model):
                         },
                     )
 
-                # This developer has a parent
+                # This studio has a parent company
                 else:
                     parent_obj = d.get("parent")
                     if parent_obj:
-                        developer, created = Developer.objects.update_or_create(
+                        company, created = Company.objects.update_or_create(
                             name=parent_obj["name"],
                             defaults={
                                 "slug": parent_obj["slug"],
@@ -572,33 +673,20 @@ class Game(models.Model):
                             },
                         )
 
-                        # Ensure parent has an alias too (prevents orphaned developers)
-                        try:
-                            DeveloperAlias.objects.update_or_create(
-                                developer=developer,
-                                name=parent_obj["name"],
-                                defaults={
-                                    "igdb_id": parent_obj["id"],
-                                },
-                            )
-                        except IntegrityError:
-                            # Parent alias already exists linked to another developer
-                            pass
-
                 try:
-                    developer_alias, created = DeveloperAlias.objects.update_or_create(
-                        developer=developer,
+                    studio, created = Studio.objects.update_or_create(
                         name=d["name"],
                         defaults={
                             "igdb_id": d["id"],
+                            "company": company,
                         },
                     )
                 except IntegrityError:
-                    developer_alias = DeveloperAlias.objects.get(name=d["name"])
+                    studio = Studio.objects.get(name=d["name"])
 
-                developer_aliases.append(developer_alias)
+                studios.append(studio)
 
-            self.developers.set(developer_aliases)
+            self.studios.set(studios)
 
             genres = []
             for genre_name in first_data.get("genres"):

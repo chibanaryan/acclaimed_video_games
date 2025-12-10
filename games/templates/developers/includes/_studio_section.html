@@ -1,0 +1,111 @@
+{# Recursive template for displaying studio sections with nested sub-studios #}
+{% load game_filters %}
+
+{% for studio_data in studios %}
+    <div id="studio-{{ studio_data.studio.id }}"
+         class="mb-8 {% if level > 0 %}ml-6 border-l-2 border-base-content/20 pl-6{% endif %} scroll-mt-4"
+         x-data="{
+             expanded: false,
+             init() {
+                 // Parse hash to get studio and optionally game ID
+                 const hash = window.location.hash;
+
+                 // Check for pattern: #studio-123-game-456 or #studio-123
+                 const match = hash.match(/^#studio-(\d+)(?:-game-(\d+))?$/);
+                 if (match) {
+                     const targetStudioId = match[1];
+                     const gameId = match[2];
+
+                     // Check if this is the target studio OR contains the target studio as a descendant
+                     const isTargetStudio = '{{ studio_data.studio.id }}' === targetStudioId;
+                     const containsTargetStudio = this.$el.querySelector('#studio-' + targetStudioId) !== null;
+
+                     // If gameId is provided, also check if this section contains the game
+                     const containsTargetGame = gameId ? this.$el.querySelector('#game-' + gameId) !== null : false;
+
+                     if (isTargetStudio || containsTargetStudio || containsTargetGame) {
+                         // Wait for DOM to settle before expanding (prevents layout shift during animation)
+                         this.$nextTick(() => {
+                             setTimeout(() => {
+                                 this.expanded = true;
+
+                                 // Handle scrolling and highlighting after expansion animation
+                                 if (gameId) {
+                                     // Game targeted - find and highlight it (search globally if not in target studio)
+                                     setTimeout(() => {
+                                         // First try to find game in current section
+                                         let gameRow = this.$el.querySelector('#game-' + gameId);
+
+                                         // If not found in current section, search globally
+                                         if (!gameRow) {
+                                             gameRow = document.getElementById('game-' + gameId);
+                                         }
+
+                                         if (gameRow) {
+                                             gameRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                             gameRow.classList.add('bg-primary/10', 'rounded-lg', 'transition-colors', 'duration-300');
+                                             setTimeout(() => {
+                                                 gameRow.classList.remove('bg-primary/10');
+                                             }, 2000);
+                                         }
+                                     }, 300); // Wait for collapse animation to complete
+                                 } else if (isTargetStudio) {
+                                     // Just studio targeted (no game) - scroll to studio
+                                     setTimeout(() => {
+                                         this.$el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                     }, 300); // Wait for collapse animation to complete
+                                 }
+                             }, 10); // Small delay to let DOM settle before starting animation
+                         });
+                     }
+                 }
+             }
+         }">
+
+        {# Always show studio name if it differs from parent or if there are multiple studios at this level #}
+        {% if show_studio_names or studios|length > 1 or studio_data.sub_studios %}
+        <div class="flex items-center gap-2 mb-3">
+            <button @click="expanded = !expanded"
+                    class="btn btn-ghost btn-sm btn-circle"
+                    :class="{ 'rotate-90': expanded }"
+                    aria-label="Toggle studio section">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+            <h2 class="{% if level == 0 %}text-xl{% else %}text-lg{% endif %} font-semibold cursor-pointer"
+                @click="expanded = !expanded">
+                {{ studio_data.studio.name }}
+                <span class="text-sm font-normal text-base-content/60">
+                    {% if studio_data.sub_studios %}
+                        ({{ studio_data.total_games_count }} total game{{ studio_data.total_games_count|pluralize }}, {{ studio_data.total_studios_count }} studio{{ studio_data.total_studios_count|pluralize }})
+                    {% else %}
+                        ({{ studio_data.games_count }} game{{ studio_data.games_count|pluralize }})
+                    {% endif %}
+                </span>
+            </h2>
+        </div>
+        {% endif %}
+
+        {# Collapsible content #}
+        <div x-show="expanded"
+             x-collapse
+             x-cloak>
+            {# Display games for this studio #}
+            {% if studio_data.games %}
+            <div class="mb-4 pl-4">
+                {% for game in studio_data.games %}
+                    <div id="game-{{ game.id }}">
+                        {% include 'games/includes/_game_row.html' with game=game show_rank=False show_rank_in_details=True %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {# Recursively display sub-studios #}
+            {% if studio_data.sub_studios %}
+                {% include 'developers/includes/_studio_section.html' with studios=studio_data.sub_studios level=level|add:1 show_studio_names=True %}
+            {% endif %}
+        </div>
+    </div>
+{% endfor %}

@@ -9,17 +9,17 @@ urlpatterns = [
     path("games/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
     path(
         "developers/<slug:slug>/",
-        views.DeveloperDetailView.as_view(),
+        views.CompanyDetailView.as_view(),
         name="developer-detail",
     ),
     path(
         "developer-aliases/",
-        views.DeveloperAliasListView.as_view(),
+        views.StudioListView.as_view(),
         name="developeralias-list",
     ),
     path(
         "developer-aliases/<int:igdb_id>/",
-        views.DeveloperAliasDetailView.as_view(),
+        views.StudioDetailView.as_view(),
         name="developeralias-detail",
     ),
     path("lists/", views.ListListView.as_view(), name="list-list"),

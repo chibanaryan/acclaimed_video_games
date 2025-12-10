@@ -227,12 +227,12 @@ class IGDBImportServiceTests(TestCase):
 
         # Return game data with developer that has a parent
         # The data structure needs to match what _process_game_batch expects
-        # It looks for "developers" key, not "involved_companies"
+        # It looks for "studios" key, not "involved_companies"
         mock_api.get_games_info_by_ids.return_value = {
             self.game.igdb_id: {
                 "slug": "test-game",
                 "cover": "//cover.jpg",
-                "developers": [
+                "studios": [
                     {
                         "id": 100,
                         "name": "Child Studio",
@@ -254,7 +254,7 @@ class IGDBImportServiceTests(TestCase):
         # Should process successfully and create parent developer (lines 339-360)
         self.assertEqual(len(results), 1)
         # Check that parent developer was created
-        parent_dev = models.Developer.objects.filter(name="Parent Corp").first()
+        parent_dev = models.Company.objects.filter(name="Parent Corp").first()
         self.assertIsNotNone(parent_dev)
 
     @mock.patch("games.services.igdb_importer.get_api")
@@ -267,13 +267,13 @@ class IGDBImportServiceTests(TestCase):
         mock_get_api.return_value = mock_api
 
         # Return game data with developer that has parent
-        # Use "developers" key as that's what _process_game_batch expects
+        # Use "studios" key as that's what _process_game_batch expects
         parent_name = "Parent Corp"
         mock_api.get_games_info_by_ids.return_value = {
             self.game.igdb_id: {
                 "slug": "test-game",
                 "cover": "//cover.jpg",
-                "developers": [
+                "studios": [
                     {
                         "id": 100,
                         "name": "Child Studio",
@@ -291,9 +291,9 @@ class IGDBImportServiceTests(TestCase):
         # Create a DeveloperAlias with the same name but different developer
         # This will cause IntegrityError when trying to create parent alias
         # because name has unique constraint
-        other_dev = models.Developer.objects.create(name="Other Dev")
-        models.DeveloperAlias.objects.create(
-            developer=other_dev,
+        other_dev = models.Company.objects.create(name="Other Dev")
+        models.Studio.objects.create(
+            company=other_dev,
             name=parent_name,  # Same name, different dev - causes IntegrityError
         )
 
@@ -302,7 +302,7 @@ class IGDBImportServiceTests(TestCase):
         # Mock update_or_create to raise IntegrityError on parent alias (lines 359-360)
         # Simulates a race condition where the alias already exists
         call_count = [0]
-        original_update = models.DeveloperAlias.objects.update_or_create
+        original_update = models.Studio.objects.update_or_create
 
         def mock_update_or_create(*args, **kwargs):
             call_count[0] += 1
@@ -313,7 +313,7 @@ class IGDBImportServiceTests(TestCase):
             return original_update(*args, **kwargs)
 
         with mock.patch(
-            "games.models.DeveloperAlias.objects.update_or_create",
+            "games.models.Studio.objects.update_or_create",
             side_effect=mock_update_or_create,
         ):
             results = service._process_game_batch([self.game])
@@ -331,12 +331,12 @@ class IGDBImportServiceTests(TestCase):
         mock_get_api.return_value = mock_api
 
         # Return game data with developer
-        # Use "developers" key as that's what _process_game_batch expects
+        # Use "studios" key as that's what _process_game_batch expects
         mock_api.get_games_info_by_ids.return_value = {
             self.game.igdb_id: {
                 "slug": "test-game",
                 "cover": "//cover.jpg",
-                "developers": [{"id": 100, "name": "Test Dev", "slug": "test-dev"}],
+                "studios": [{"id": 100, "name": "Test Dev", "slug": "test-dev"}],
             }
         }
 
@@ -344,7 +344,7 @@ class IGDBImportServiceTests(TestCase):
 
         # Mock update_or_create to raise IntegrityError on alias (lines 372-373)
         call_count = [0]
-        original_update = models.DeveloperAlias.objects.update_or_create
+        original_update = models.Studio.objects.update_or_create
 
         def mock_update_or_create(*args, **kwargs):
             call_count[0] += 1
@@ -355,16 +355,14 @@ class IGDBImportServiceTests(TestCase):
 
         # Create a mock alias to return from get()
         mock_alias = mock.MagicMock()
-        mock_alias.developer = models.Developer.objects.create(
-            name="Test Dev", igdb_id=100
-        )
+        mock_alias.company = models.Company.objects.create(name="Test Dev", igdb_id=100)
 
         with mock.patch(
-            "games.models.DeveloperAlias.objects.update_or_create",
+            "games.models.Studio.objects.update_or_create",
             side_effect=mock_update_or_create,
         ):
             with mock.patch(
-                "games.models.DeveloperAlias.objects.get",
+                "games.models.Studio.objects.get",
                 return_value=mock_alias,
             ):
                 results = service._process_game_batch([self.game])

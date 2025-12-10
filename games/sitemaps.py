@@ -39,14 +39,14 @@ class GameSitemap(Sitemap):
         return obj.updated_at if hasattr(obj, "updated_at") else None
 
 
-class DeveloperSitemap(Sitemap):
-    """Sitemap for developer pages."""
+class CompanySitemap(Sitemap):
+    """Sitemap for company/developer pages."""
 
     changefreq = "monthly"
     priority = 0.6
 
     def items(self):
-        return models.Developer.objects.all()
+        return models.Company.objects.all()
 
     def location(self, obj):
         return reverse("developer-detail", kwargs={"slug": obj.slug})
@@ -56,5 +56,5 @@ class DeveloperSitemap(Sitemap):
 sitemaps = {
     "static": StaticViewSitemap,
     "games": GameSitemap,
-    "developers": DeveloperSitemap,
+    "developers": CompanySitemap,
 }

@@ -31,7 +31,7 @@
     <div>
         <span class="text-base-content/85 font-semibold">Developers:</span>
         <span class="ml-2">
-            {% for developer in game.developers.all %}{% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}" class="link link-primary">{{ developer.name }}</a>{% else %}<span>{{ developer.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+            {% for studio in game.studios.all %}{% if studio.root_company.slug %}<a href="{% url 'developer-detail' slug=studio.root_company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-primary">{{ studio.name }}</a>{% elif studio.company.slug %}<a href="{% url 'developer-detail' slug=studio.company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-primary">{{ studio.name }}</a>{% else %}<span>{{ studio.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
         </span>
     </div>
     <div>

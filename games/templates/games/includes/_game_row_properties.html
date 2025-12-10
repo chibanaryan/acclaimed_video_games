@@ -9,10 +9,10 @@
     </div>
     {% endif %}
 
-    {% with developers=game.developers.all %}
+    {% with studios=game.studios.all %}
     <div class="game-property">
         <span>Dev:</span>
-        <span>{% for developer in developers %}{% if developer.developer.slug %}<a href="{% url 'developer-detail' slug=developer.developer.slug %}">{{ developer.name }}</a>{% else %}{{ developer.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+        <span>{% for studio in studios %}{% if studio.root_company.slug %}<a href="{% url 'developer-detail' slug=studio.root_company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}">{{ studio.name }}</a>{% elif studio.company.slug %}<a href="{% url 'developer-detail' slug=studio.company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}">{{ studio.name }}</a>{% else %}{{ studio.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
     </div>
     {% endwith %}
 

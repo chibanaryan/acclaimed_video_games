@@ -6,8 +6,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 from games.models import (
-    Developer,
-    DeveloperAlias,
+    Company,
     Game,
     Genre,
     List,
@@ -17,6 +16,7 @@ from games.models import (
     Publication,
     SiteMetadata,
     Snippet,
+    Studio,
 )
 
 
@@ -134,8 +134,8 @@ class Command(BaseCommand):
         List.objects.all().delete()
         Publication.objects.all().delete()
         Game.objects.all().delete()
-        DeveloperAlias.objects.all().delete()
-        Developer.objects.all().delete()
+        Studio.objects.all().delete()
+        Company.objects.all().delete()
         Genre.objects.all().delete()
         Platform.objects.all().delete()
         Post.objects.all().delete()

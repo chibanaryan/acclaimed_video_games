@@ -141,7 +141,8 @@ def import_igdb_with_progress():
                         break
 
                     # Yield the event in SSE format with padding to force flush
-                    # Adding whitespace ensures the web server doesn't buffer the response
+                    # Adding whitespace ensures the web server doesn't
+                    # buffer the response
                     yield f"data: {event_json}\n\n" + (" " * 2048) + "\n"
                 except queue.Empty:
                     # Timeout waiting for events
@@ -174,7 +175,8 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
     Yields JSON progress events for streaming to SSE client in real-time.
 
     Args:
-        force_refresh: If True, process all games. If False, only process games without page titles.
+        force_refresh: If True, process all games. If False, only process
+            games without page titles.
 
     Yields:
         SSE-formatted events with progress data
@@ -288,7 +290,8 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
                         break
 
                     # Yield the event in SSE format with padding to force flush
-                    # Adding whitespace ensures the web server doesn't buffer the response
+                    # Adding whitespace ensures the web server doesn't
+                    # buffer the response
                     yield f"data: {event_json}\n\n" + (" " * 2048) + "\n"
                 except queue.Empty:
                     # Timeout waiting for events
@@ -546,8 +549,8 @@ def delete_existing_data() -> Tuple[bool, str]:
         models.List,
         models.Publication,
         models.ListMembership,
-        models.Developer,
-        models.DeveloperAlias,
+        models.Company,
+        models.Studio,
         models.Game,
         models.Genre,
     ]
@@ -951,7 +954,7 @@ def import_developers(f: TextIOWrapper) -> Tuple[bool, str]:
         if len(bits) == 3:
             alias2 = bits[2]
 
-        developer, created = models.Developer.objects.get_or_create(
+        company, created = models.Company.objects.get_or_create(
             name=canonical,
         )
 
@@ -959,10 +962,10 @@ def import_developers(f: TextIOWrapper) -> Tuple[bool, str]:
             if not alias:
                 continue
 
-            models.DeveloperAlias.objects.get_or_create(
+            models.Studio.objects.get_or_create(
                 name=alias,
                 defaults={
-                    "developer": developer,
+                    "company": company,
                 },
             )
 

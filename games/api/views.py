@@ -31,7 +31,7 @@ class GameListView(ListAPIView):
             fields=search_fields,
         ),
         utils.Filter(
-            param="developer", fields=["developers__developer__igdb_id"], coerce=int
+            param="developer", fields=["studios__company__igdb_id"], coerce=int
         ),
         utils.Filter(param="start", fields=["year_of_release__gte"], coerce=int),
         utils.Filter(param="end", fields=["year_of_release__lte"], coerce=int),
@@ -81,15 +81,15 @@ class GameDetailView(RetrieveAPIView):
     )
 
 
-class DeveloperDetailView(RetrieveAPIView):
+class CompanyDetailView(RetrieveAPIView):
     lookup_field = "slug"
-    serializer_class = serializers.DeveloperSerializer
-    queryset = models.Developer.objects.prefetch_related("aliases")
+    serializer_class = serializers.CompanySerializer
+    queryset = models.Company.objects.prefetch_related("studios")
 
 
-class DeveloperAliasListView(ListAPIView):
+class StudioListView(ListAPIView):
 
-    serializer_class = serializers.DeveloperAliasSerializer
+    serializer_class = serializers.StudioSerializer
     search_fields = ["name__icontains"]
     if connection.vendor == "postgresql":
         search_fields = ["name__search"] + search_fields
@@ -102,10 +102,10 @@ class DeveloperAliasListView(ListAPIView):
 
     def get_queryset(self):
         qs = (
-            models.DeveloperAlias.objects.annotate(
+            models.Studio.objects.annotate(
                 games_count=Count("games"),
             )
-            .filter(games_count__gt=0)  # Only show aliases with games
+            .filter(games_count__gt=0)  # Only show studios with games
             .order_by(Lower("name"))
             .distinct()  # Ensure correct count for pagination
         )
@@ -117,10 +117,10 @@ class DeveloperAliasListView(ListAPIView):
         return qs
 
 
-class DeveloperAliasDetailView(RetrieveAPIView):
+class StudioDetailView(RetrieveAPIView):
     lookup_field = "igdb_id"
-    serializer_class = serializers.DeveloperAliasSerializer
-    queryset = models.DeveloperAlias.objects.annotate(
+    serializer_class = serializers.StudioSerializer
+    queryset = models.Studio.objects.annotate(
         games_count=Count("games"),
     ).order_by(Lower("name"))
 
