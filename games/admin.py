@@ -48,10 +48,9 @@ class GameAdmin(admin.ModelAdmin):
         "decade_rank",
         "year_of_release",
         "igdb_id",
-        "_igdb_artwork_id",
-        "_igdb_url",
-        "_wikipedia_page_title",
-        "_wikipedia_url",
+        "wikidata_id",
+        "_igdb_data_link",
+        "_wikipedia_data_link",
         "_genres",
     ]
     list_filter = ["year_of_release"]
@@ -80,43 +79,26 @@ class GameAdmin(admin.ModelAdmin):
         # Use prefetched genres instead of values_list to avoid extra query
         return ", ".join(genre.name for genre in obj.genres.all())
 
-    def _igdb_artwork_id(self, obj: models.Game) -> str:
-        """Display artwork ID from primary IGDB data."""
+    def _igdb_data_link(self, obj: models.Game) -> str:
+        """Display link to IGDB data admin page."""
         if obj.primary_igdb_game_data:
-            return obj.primary_igdb_game_data.artwork_id or "-"
+            url = f"/admin/games/igdbgamedata/{obj.primary_igdb_game_data.id}/change/"
+            return format_html('<a href="{}">View IGDB Data</a>', url)
         return "-"
 
-    _igdb_artwork_id.short_description = "IGDB Artwork ID"
+    _igdb_data_link.short_description = "IGDB Data"
 
-    def _igdb_url(self, obj: models.Game) -> str:
-        """Display clickable IGDB URL from primary IGDB data."""
-        if obj.primary_igdb_game_data and obj.primary_igdb_game_data.url:
-            url = obj.primary_igdb_game_data.url
-            return format_html('<a href="{}" target="_blank">IGDB</a>', url)
-        return "-"
-
-    _igdb_url.short_description = "IGDB URL"
-
-    def _wikipedia_page_title(self, obj: models.Game) -> str:
-        """Display Wikipedia page title from primary Wikipedia data."""
+    def _wikipedia_data_link(self, obj: models.Game) -> str:
+        """Display link to Wikipedia data admin page."""
         if obj.primary_wikipedia_game_data:
-            return obj.primary_wikipedia_game_data.page_title or "-"
+            url = (
+                f"/admin/games/wikipediagamedata/"
+                f"{obj.primary_wikipedia_game_data.id}/change/"
+            )
+            return format_html('<a href="{}">View Wikipedia Data</a>', url)
         return "-"
 
-    _wikipedia_page_title.short_description = "Wikipedia Page"
-
-    def _wikipedia_url(self, obj: models.Game) -> str:
-        """Display clickable Wikipedia URL from primary Wikipedia data."""
-        if (
-            obj.primary_wikipedia_game_data
-            and obj.primary_wikipedia_game_data.page_title
-        ):
-            page_title = obj.primary_wikipedia_game_data.page_title
-            url = f"https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}"
-            return format_html('<a href="{}" target="_blank">Wikipedia</a>', url)
-        return "-"
-
-    _wikipedia_url.short_description = "Wikipedia URL"
+    _wikipedia_data_link.short_description = "Wikipedia Data"
 
 
 @admin.register(models.IGDBGameData)
@@ -128,12 +110,13 @@ class IGDBGameDataAdmin(admin.ModelAdmin):
         "igdb_id",
         "artwork_id",
         "_url_link",
+        "_description_preview",
         "is_primary",
         "fetched_at",
         "updated_at",
     ]
     list_filter = ["is_primary", "fetched_at", "updated_at"]
-    search_fields = ["game__name", "igdb_id", "artwork_id"]
+    search_fields = ["game__name", "igdb_id", "artwork_id", "description"]
     raw_id_fields = ["game"]
     readonly_fields = ["fetched_at", "updated_at"]
 
@@ -145,6 +128,14 @@ class IGDBGameDataAdmin(admin.ModelAdmin):
 
     _url_link.short_description = "IGDB URL"
 
+    def _description_preview(self, obj: models.IGDBGameData) -> str:
+        """Display truncated description."""
+        if obj.description:
+            return Truncator(obj.description).words(10)
+        return "-"
+
+    _description_preview.short_description = "Description"
+
 
 @admin.register(models.WikipediaGameData)
 class WikipediaGameDataAdmin(admin.ModelAdmin):
@@ -155,13 +146,20 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
         "page_title",
         "wikidata_id",
         "primary_genre",
+        "lookup_source",
         "_wikipedia_link",
         "is_primary",
         "fetched_at",
         "updated_at",
     ]
-    list_filter = ["is_primary", "fetched_at", "updated_at"]
-    search_fields = ["game__name", "page_title", "wikidata_id", "primary_genre"]
+    list_filter = ["is_primary", "lookup_source", "fetched_at", "updated_at"]
+    search_fields = [
+        "game__name",
+        "page_title",
+        "wikidata_id",
+        "primary_genre",
+        "lookup_source",
+    ]
     raw_id_fields = ["game"]
     readonly_fields = ["fetched_at", "updated_at"]
 

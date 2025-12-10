@@ -30,15 +30,15 @@ class GameAdminTests(TestCase):
         value = self.admin._genres(game)
         self.assertEqual(value, "Action")
 
-    def test_igdb_artwork_id_with_data(self):
-        """Test _igdb_artwork_id displays artwork ID from primary IGDB data."""
+    def test_igdb_data_link_with_data(self):
+        """Test _igdb_data_link displays admin link to IGDB data."""
         game = models.Game.objects.create(
             name="Test Game",
             rank=1,
             igdb_id=123,
             year_of_release=2020,
         )
-        # Create IGDBGameData with artwork_id
+        # Create IGDBGameData
         igdb_data = models.IGDBGameData.objects.create(
             game=game,
             igdb_id=123,
@@ -48,110 +48,50 @@ class GameAdminTests(TestCase):
         game.primary_igdb_game_data = igdb_data
         game.save(update_fields=["primary_igdb_game_data"])
 
-        value = self.admin._igdb_artwork_id(game)
-        self.assertEqual(value, "test_art_id")
-
-    def test_igdb_artwork_id_without_data(self):
-        """Test _igdb_artwork_id returns '-' when no IGDB data."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            year_of_release=2020,
-        )
-        value = self.admin._igdb_artwork_id(game)
-        self.assertEqual(value, "-")
-
-    def test_igdb_url_with_data(self):
-        """Test _igdb_url displays clickable link from primary IGDB data."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            igdb_id=123,
-            year_of_release=2020,
-        )
-        # Create IGDBGameData with URL
-        igdb_data = models.IGDBGameData.objects.create(
-            game=game,
-            igdb_id=123,
-            url="https://www.igdb.com/games/test-game",
-            is_primary=True,
-        )
-        game.primary_igdb_game_data = igdb_data
-        game.save(update_fields=["primary_igdb_game_data"])
-
-        value = self.admin._igdb_url(game)
-        self.assertIn("https://www.igdb.com/games/test-game", value)
+        value = self.admin._igdb_data_link(game)
+        self.assertIn(f"/admin/games/igdbgamedata/{igdb_data.id}/change/", value)
+        self.assertIn("View IGDB Data", value)
         self.assertIn("<a href=", value)
 
-    def test_igdb_url_without_data(self):
-        """Test _igdb_url returns '-' when no IGDB data."""
+    def test_igdb_data_link_without_data(self):
+        """Test _igdb_data_link returns '-' when no IGDB data."""
         game = models.Game.objects.create(
             name="Test Game",
             rank=1,
             year_of_release=2020,
         )
-        value = self.admin._igdb_url(game)
+        value = self.admin._igdb_data_link(game)
         self.assertEqual(value, "-")
 
-    def test_wikipedia_page_title_with_data(self):
-        """Test _wikipedia_page_title displays page title from primary data."""
+    def test_wikipedia_data_link_with_data(self):
+        """Test _wikipedia_data_link displays admin link to Wikipedia data."""
         game = models.Game.objects.create(
             name="Test Game",
             rank=1,
             year_of_release=2020,
         )
-        # Create WikipediaGameData manually
+        # Create WikipediaGameData
         wiki_data = models.WikipediaGameData.objects.create(
             game=game,
             page_title="Test_Game_(video_game)",
             is_primary=True,
         )
         game.primary_wikipedia_game_data = wiki_data
-        game.save()
-        game.refresh_from_db()
-        value = self.admin._wikipedia_page_title(game)
-        self.assertEqual(value, "Test_Game_(video_game)")
+        game.save(update_fields=["primary_wikipedia_game_data"])
 
-    def test_wikipedia_page_title_without_data(self):
-        """Test _wikipedia_page_title returns '-' when no Wikipedia data."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            year_of_release=2020,
-        )
-        # Game has no Wikipedia data
-        value = self.admin._wikipedia_page_title(game)
-        self.assertEqual(value, "-")
-
-    def test_wikipedia_url_with_data(self):
-        """Test _wikipedia_url displays clickable link from primary Wikipedia data."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            year_of_release=2020,
-        )
-        # Create WikipediaGameData with page title
-        wiki_data = models.WikipediaGameData.objects.create(
-            game=game,
-            page_title="Test_Game_(video_game)",
-            is_primary=True,
-        )
-        game.primary_wikipedia_game_data = wiki_data
-        game.save()
-        game.refresh_from_db()
-        value = self.admin._wikipedia_url(game)
-        self.assertIn("Test_Game_(video_game)", value)
+        value = self.admin._wikipedia_data_link(game)
+        self.assertIn(f"/admin/games/wikipediagamedata/{wiki_data.id}/change/", value)
+        self.assertIn("View Wikipedia Data", value)
         self.assertIn("<a href=", value)
 
-    def test_wikipedia_url_without_data(self):
-        """Test _wikipedia_url returns '-' when no Wikipedia data."""
+    def test_wikipedia_data_link_without_data(self):
+        """Test _wikipedia_data_link returns '-' when no Wikipedia data."""
         game = models.Game.objects.create(
             name="Test Game",
             rank=1,
             year_of_release=2020,
         )
-        # Game has no Wikipedia data
-        value = self.admin._wikipedia_url(game)
+        value = self.admin._wikipedia_data_link(game)
         self.assertEqual(value, "-")
 
 
@@ -229,6 +169,45 @@ class IGDBGameDataAdminTests(TestCase):
         game.save(update_fields=["primary_igdb_game_data"])
 
         value = self.admin._url_link(igdb_data)
+        self.assertEqual(value, "-")
+
+    def test_description_preview_with_description(self):
+        """Test _description_preview displays truncated description."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        long_description = "This is a very long description " * 10
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            description=long_description,
+            is_primary=True,
+        )
+
+        value = self.admin._description_preview(igdb_data)
+        # Should be truncated to 10 words
+        self.assertIn("This is a very", value)
+        self.assertLess(len(value), len(long_description))
+
+    def test_description_preview_without_description(self):
+        """Test _description_preview returns '-' when no description."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            description="",
+            is_primary=True,
+        )
+
+        value = self.admin._description_preview(igdb_data)
         self.assertEqual(value, "-")
 
 
