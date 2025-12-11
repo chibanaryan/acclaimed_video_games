@@ -1,26 +1,9 @@
-{% load static tailwind_tags game_filters %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    {# Include centralized theme initialization script - MUST be first to prevent FOUC #}
-    {% include 'includes/_theme_script.html' %}
+{% extends 'base.html' %}
+{% load static game_filters %}
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Import | Acclaimed Video Games</title>
-    <link rel="icon" type="image/x-icon" href="{% static 'games/avg_logo_small.png' %}">
+{% block title %}Import | Acclaimed Video Games{% endblock %}
 
-    {# Tailwind CSS + DaisyUI #}
-    {% tailwind_css %}
-
-    {# Material Design Icons - Inline subset #}
-    <style nonce="{{ csp_nonce }}">
-@font-face{font-family:"Material Design Icons";src:url("{% static 'games/fonts/materialdesignicons-webfont.woff2' %}") format("woff2");font-weight:normal;font-style:normal;font-display:swap}
-.mdi::before,.mdi-set{display:inline-block;font:normal normal normal 24px/1 "Material Design Icons";font-size:inherit;text-rendering:auto;line-height:inherit;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-.mdi-18px::before{font-size:18px}.mdi-24px::before{font-size:24px}.mdi-36px::before{font-size:36px}.mdi-48px::before{font-size:48px}
-.mdi-check-circle::before{content:"\F0135"}.mdi-alert-circle::before{content:"\F0029"}.mdi-upload::before{content:"\F054F"}.mdi-delete::before{content:"\F01B4"}.mdi-refresh::before{content:"\F0450"}.mdi-package::before{content:"\F03D7"}.mdi-file-document::before{content:"\F0219"}
-    </style>
-
+{% block extra_head %}
     {# Custom styles for import page #}
     <style nonce="{{ csp_nonce }}">
         /* Progress bar animations */
@@ -219,7 +202,513 @@
             margin-top: 0.25rem;
         }
     </style>
+{% endblock %}
 
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-4xl font-bold mb-2">Import Game Data</h1>
+    <p class="text-base-content/70">Import and manage your game database</p>
+</div>
+
+<!-- Success Messages -->
+{% if import_success_message %}
+<div class="alert alert-success mb-6 shadow-lg">
+    <span class="mdi mdi-check-circle text-2xl"></span>
+    <span>{{ import_success_message }}</span>
+</div>
+{% endif %}
+
+<!-- Error Messages -->
+{% if import_errors %}
+<div class="alert alert-error mb-6 shadow-lg" id="error-container">
+    <div class="flex-1">
+        <span class="mdi mdi-alert-circle text-2xl"></span>
+        <div>
+            <h3 class="font-bold">Import Errors</h3>
+            <ul class="text-sm mt-2 ml-4 list-disc">
+                {% for error in import_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <button type="button" class="btn btn-sm btn-ghost" onclick="dismissErrorContainer()">Dismiss</button>
+</div>
+<script nonce="{{ csp_nonce }}">
+    localStorage.removeItem('importErrorsDismissed');
+    function dismissErrorContainer() {
+        const container = document.getElementById('error-container');
+        if (container) {
+            localStorage.setItem('importErrorsDismissed', 'true');
+            container.remove();
+        }
+    }
+</script>
+{% endif %}
+
+<!-- Database Status Section -->
+<div class="card bg-base-200 shadow-xl mb-6">
+    <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">Database Status</h2>
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="label">Platforms</div>
+                <div class="value">{{ counts.platforms }}</div>
+            </div>
+            <div class="status-card">
+                <div class="label">Publications</div>
+                <div class="value">{{ counts.publications }}</div>
+            </div>
+            <div class="status-card">
+                <div class="label">Source Lists</div>
+                <div class="value">{{ counts.lists }}</div>
+            </div>
+            <div class="status-card">
+                <div class="label">Games</div>
+                <div class="value">{{ counts.games }}</div>
+            </div>
+            <div class="status-card">
+                <div class="label">Positions</div>
+                <div class="value">{{ counts.memberships }}</div>
+            </div>
+            <div class="status-card">
+                <div class="label">Companies</div>
+                <div class="value">{{ counts.companies }}</div>
+            </div>
+            <div class="status-card">
+                <div class="label">Studios</div>
+                <div class="value">{{ counts.studios }}</div>
+            </div>
+            <div class="status-card">
+                <div class="label">IGDB Genres</div>
+                <div class="value">{{ counts.igdb_genres }}</div>
+            </div>
+            <div class="status-card">
+                <div class="label">Wikipedia Genres</div>
+                <div class="value">{{ counts.wikipedia_genres }}</div>
+            </div>
+            <div class="igdb-status-card">
+                <div class="label">IGDB Metadata Records</div>
+                <div class="value">{{ igdb_counts.total }} record{{ igdb_counts.total|pluralize }}</div>
+                <div class="percentage">{{ igdb_counts.connected }} connected, {{ igdb_counts.orphaned }} orphaned</div>
+                <div class="percentage">{{ igdb_counts.games_needing }} game{{ igdb_counts.games_needing|pluralize }} need data</div>
+            </div>
+            <div class="igdb-status-card">
+                <div class="label">Wikipedia Metadata Records</div>
+                <div class="value">{{ wikipedia_counts.total }} record{{ wikipedia_counts.total|pluralize }}</div>
+                <div class="percentage">{{ wikipedia_counts.connected }} connected, {{ wikipedia_counts.orphaned }} orphaned</div>
+                <div class="percentage">{{ wikipedia_counts.games_needing }} game{{ wikipedia_counts.games_needing|pluralize }} need page{{ wikipedia_counts.games_needing|pluralize }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Import Section -->
+<!-- This is the primary workflow - run every time you update rankings -->
+<div class="card bg-base-200 shadow-xl mb-6">
+    <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">
+            <span class="mdi mdi-upload"></span>
+            Regular Import
+        </h2>
+        <p class="text-sm opacity-70 mb-4">Run every time you update game rankings or list data</p>
+
+        <div class="alert alert-info mb-6">
+            <span class="mdi mdi-file-document"></span>
+            <div>
+                <h3 class="font-bold">Import Order</h3>
+                <p class="text-sm mt-2"><strong>Files are imported in the correct order:</strong></p>
+                <ol class="text-sm mt-2 ml-4 list-decimal">
+                    <li><strong>Platforms</strong> - Gaming platforms (PC, PS5, etc.)</li>
+                    <li><strong>Source Lists</strong> - Critic rankings and publications</li>
+                    <li><strong>Games</strong> - Game database with rank, year, platforms</li>
+                    <li><strong>Game Positions</strong> - Where each game appears in each list</li>
+                </ol>
+                <p class="text-sm mt-2 opacity-70">⚠️ Import may fail if prerequisites are missing</p>
+            </div>
+        </div>
+
+        <form method="POST" action="." enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Platforms File -->
+            <div class="import-step{% if counts.platforms > 0 %} completed{% endif %}" data-step="1">
+                <h3>Platforms (PlatformDB.txt)</h3>
+                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">CODE&lt;tab&gt;Name</code></p>
+                <div class="form-control">
+                    <label class="input input-bordered flex items-center gap-2 cursor-pointer">
+                        <input type="file" name="platforms_file" id="id_platforms_file" accept=".txt" class="hidden">
+                        <span class="mdi mdi-file-document"></span>
+                        <span class="file-label-text flex-1 text-base-content/50">No file selected</span>
+                    </label>
+                </div>
+                {% if form.platforms_file.errors %}
+                    <p class="text-error text-sm mt-2">{{ form.platforms_file.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Source Lists File -->
+            <div class="import-step{% if counts.lists > 0 %} completed{% endif %}" data-step="2">
+                <h3>Source Lists (SourceLists.txt)</h3>
+                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">Publisher&lt;tab&gt;Year&lt;tab&gt;Type&lt;tab&gt;Name&lt;tab&gt;URL</code></p>
+                <div class="form-control">
+                    <label class="input input-bordered flex items-center gap-2 cursor-pointer">
+                        <input type="file" name="lists_file" id="id_lists_file" accept=".txt" class="hidden">
+                        <span class="mdi mdi-file-document"></span>
+                        <span class="file-label-text flex-1 text-base-content/50">No file selected</span>
+                    </label>
+                </div>
+                {% if form.lists_file.errors %}
+                    <p class="text-error text-sm mt-2">{{ form.lists_file.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Games File -->
+            <div class="import-step{% if counts.games > 0 %} completed{% endif %}" data-step="3">
+                <h3>Games (Top1000.txt)</h3>
+                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">Rank&lt;tab&gt;Name&lt;tab&gt;Year&lt;tab&gt;Platforms&lt;tab&gt;IGDB_ID&lt;tab&gt;Wikidata_ID</code></p>
+                <div class="form-control">
+                    <label class="input input-bordered flex items-center gap-2 cursor-pointer">
+                        <input type="file" name="games_file" id="id_games_file" accept=".txt" class="hidden">
+                        <span class="mdi mdi-file-document"></span>
+                        <span class="file-label-text flex-1 text-base-content/50">No file selected</span>
+                    </label>
+                </div>
+                {% if form.games_file.errors %}
+                    <p class="text-error text-sm mt-2">{{ form.games_file.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Game Positions File -->
+            <div class="import-step{% if counts.memberships > 0 %} completed{% endif %}" data-step="4">
+                <h3>Game Positions (GamePositions.txt)</h3>
+                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">ListID:Position&lt;tab&gt;ListID:Position&lt;tab&gt;...</code></p>
+                <div class="form-control">
+                    <label class="input input-bordered flex items-center gap-2 cursor-pointer">
+                        <input type="file" name="memberships_file" id="id_memberships_file" accept=".txt" class="hidden">
+                        <span class="mdi mdi-file-document"></span>
+                        <span class="file-label-text flex-1 text-base-content/50">No file selected</span>
+                    </label>
+                </div>
+                {% if form.memberships_file.errors %}
+                    <p class="text-error text-sm mt-2">{{ form.memberships_file.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Options -->
+            <div class="divider"></div>
+
+            <div class="flex gap-3">
+                <button class="btn btn-primary" type="submit" id="import-submit">
+                    <span class="mdi mdi-upload"></span>
+                    Import Files
+                </button>
+                <button class="btn btn-ghost" type="reset">Clear</button>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <span class="mdi mdi-information"></span>
+                <span class="text-sm">
+                    After importing games, IGDB metadata is automatically fetched for new games and reconnected for existing games. Developer/Studio/Genre relationships are preserved across imports.
+                </span>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error mt-6">
+                    <span class="mdi mdi-alert-circle"></span>
+                    <span>{{ form.non_field_errors }}</span>
+                </div>
+            {% endif %}
+        </form>
+
+        <!-- Batch Import Progress Container -->
+        <div id="batch-progress-container" class="batch-progress-container">
+            <h3 class="text-lg font-bold mb-4">Importing Files...</h3>
+
+            <!-- Platforms Progress -->
+            <div id="platforms-progress-item" class="file-progress-item" style="display: none;">
+                <div class="file-progress-header">
+                    <span class="file-progress-name">Platforms</span>
+                    <span id="platforms-status" class="file-progress-status">Waiting…</span>
+                </div>
+                <div class="file-progress-bar-wrapper">
+                    <div id="platforms-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
+                        <span id="platforms-percentage">0%</span>
+                    </div>
+                </div>
+                <div class="file-progress-details">
+                    <div>Processing: <span id="platforms-current">0</span> / <span id="platforms-total">0</span></div>
+                </div>
+            </div>
+
+            <!-- Source Lists Progress -->
+            <div id="lists-progress-item" class="file-progress-item" style="display: none;">
+                <div class="file-progress-header">
+                    <span class="file-progress-name">Source Lists</span>
+                    <span id="lists-status" class="file-progress-status">Waiting…</span>
+                </div>
+                <div class="file-progress-bar-wrapper">
+                    <div id="lists-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
+                        <span id="lists-percentage">0%</span>
+                    </div>
+                </div>
+                <div class="file-progress-details">
+                    <div>Processing: <span id="lists-current">0</span> / <span id="lists-total">0</span></div>
+                </div>
+            </div>
+
+            <!-- Games Progress -->
+            <div id="games-progress-item" class="file-progress-item" style="display: none;">
+                <div class="file-progress-header">
+                    <span class="file-progress-name">Games</span>
+                    <span id="games-status" class="file-progress-status">Waiting…</span>
+                </div>
+                <div class="file-progress-bar-wrapper">
+                    <div id="games-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
+                        <span id="games-percentage">0%</span>
+                    </div>
+                </div>
+                <div class="file-progress-details">
+                    <div>Processing: <span id="games-current">0</span> / <span id="games-total">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game Positions Progress -->
+            <div id="memberships-progress-item" class="file-progress-item" style="display: none;">
+                <div class="file-progress-header">
+                    <span class="file-progress-name">Game Positions</span>
+                    <span id="memberships-status" class="file-progress-status">Waiting…</span>
+                </div>
+                <div class="file-progress-bar-wrapper">
+                    <div id="memberships-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
+                        <span id="memberships-percentage">0%</span>
+                    </div>
+                </div>
+                <div class="file-progress-details">
+                    <div>Processing: <span id="memberships-current">0</span> / <span id="memberships-total">0</span></div>
+                </div>
+            </div>
+
+            <!-- Errors during import -->
+            <div id="batch-errors" style="display: none;">
+                <div class="alert alert-error mt-4">
+                    <span class="mdi mdi-alert-circle"></span>
+                    <div>
+                        <strong>Errors encountered:</strong>
+                        <div id="batch-error-list" class="text-sm mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metadata Operations Section -->
+<div class="card bg-base-200 shadow-xl mb-6">
+    <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">
+            <span class="mdi mdi-database"></span>
+            Metadata Operations
+        </h2>
+        <p class="text-sm opacity-70 mb-4">Run once when first importing games, or when adding new games that need enrichment</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Fetch IGDB Data -->
+            <div class="card bg-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">
+                        <span class="mdi mdi-refresh"></span>
+                        Fetch IGDB Data
+                    </h3>
+                    <p class="text-sm opacity-70 mb-3">
+                        Fetches cover art, descriptions, developers, and genres from IGDB for games without metadata
+                    </p>
+                    <div class="flex flex-col gap-2">
+                        <button id="fetch-igdb-btn" class="btn btn-info btn-sm">
+                            <span class="mdi mdi-refresh"></span>
+                            Fetch for {{ igdb_counts.games_needing }} game{{ igdb_counts.games_needing|pluralize }}
+                        </button>
+                        {% if igdb_counts.games_needing > 0 %}
+                            <span class="text-xs opacity-70">
+                                Estimated time: {{ igdb_counts.estimate_seconds|format_duration }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fetch Wikipedia Pages -->
+            <div class="card bg-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">
+                        <span class="mdi mdi-wikipedia"></span>
+                        Fetch Wikipedia Pages
+                    </h3>
+                    <p class="text-sm opacity-70 mb-3">
+                        Finds Wikipedia articles for games to enable genre data and additional info
+                    </p>
+                    <div class="flex flex-col gap-2">
+                        <button id="fetch-wikipedia-btn" class="btn btn-info btn-sm">
+                            <span class="mdi mdi-wikipedia"></span>
+                            Fetch for {{ wikipedia_counts.games_needing }} game{{ wikipedia_counts.games_needing|pluralize }}
+                        </button>
+                        {% if wikipedia_counts.games_needing > 0 %}
+                            <span class="text-xs opacity-70">
+                                Estimated time: {{ wikipedia_counts.estimate_seconds|format_duration }}
+                                {% if not wikipedia_counts.has_auth %}
+                                    <span class="tooltip tooltip-right" data-tip="Add WIKIDATA_ACCESS_TOKEN for 2.5x faster processing">(unauthenticated)</span>
+                                {% endif %}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Force Refresh Options -->
+            <div class="card bg-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">
+                        <span class="mdi mdi-reload"></span>
+                        Force Refresh
+                    </h3>
+                    <p class="text-sm opacity-70 mb-3">
+                        Re-fetch metadata for ALL games, including those with existing data (rarely needed)
+                    </p>
+                    <div class="flex flex-col gap-2">
+                        <button id="fetch-wikipedia-force-btn" class="btn btn-warning btn-sm">
+                            <span class="mdi mdi-reload"></span>
+                            Refresh All Wikipedia Pages
+                        </button>
+                        <span class="text-xs opacity-70">
+                            Processes all {{ counts.games }} games
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Indicators -->
+        <!-- IGDB Loading (initially hidden) -->
+        <div id="progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-300 rounded-lg">
+            <span class="loading loading-spinner loading-md text-primary"></span>
+            <div>
+                <div class="font-semibold">Processing IGDB Data...</div>
+                <div id="progress-text" class="text-sm opacity-70">Starting...</div>
+            </div>
+        </div>
+
+        <!-- Wikipedia Loading (initially hidden) -->
+        <div id="wikipedia-progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-300 rounded-lg">
+            <span class="loading loading-spinner loading-md text-secondary"></span>
+            <div>
+                <div class="font-semibold">Fetching Wikipedia Pages...</div>
+                <div id="wikipedia-progress-text" class="text-sm opacity-70">Starting...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Maintenance & Cleanup Section -->
+<div class="card bg-base-200 shadow-xl mb-6">
+    <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">
+            <span class="mdi mdi-tools"></span>
+            Maintenance & Cleanup
+        </h2>
+        <p class="text-sm opacity-70 mb-4">Advanced operations for database maintenance</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Delete Game Data -->
+            <div class="card bg-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">
+                        <span class="mdi mdi-delete"></span>
+                        Delete Game Data
+                    </h3>
+                    <p class="text-sm opacity-70 mb-3">
+                        Deletes all games, lists, and platforms. Preserves IGDB/Wikipedia metadata and Developer/Studio/Genre objects for reconnection.
+                    </p>
+                    <form method="POST" action=".">
+                        {% csrf_token %}
+                        <input type="hidden" name="delete" value="true">
+                        <button class="btn btn-error btn-sm" onclick="return confirm('⚠️ This will delete games, lists, and platforms (preserves metadata). Are you sure?');">
+                            <span class="mdi mdi-delete"></span>
+                            Delete Game Data
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Clear IGDB Metadata -->
+            <div class="card bg-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">
+                        <span class="mdi mdi-database-remove"></span>
+                        Clear IGDB Metadata
+                    </h3>
+                    <p class="text-sm opacity-70 mb-3">
+                        Deletes all IGDB records ({{ igdb_counts.total }} total, {{ igdb_counts.orphaned }} orphaned) and derived data (Companies, Studios, Genres).
+                    </p>
+                    <form method="POST" action=".">
+                        {% csrf_token %}
+                        <input type="hidden" name="clear_igdb_metadata" value="true">
+                        <button class="btn btn-warning btn-sm" onclick="return confirm('⚠️ This will delete ALL IGDB metadata including orphaned records. You will need to re-fetch IGDB data after this. Are you sure?');">
+                            <span class="mdi mdi-database-remove"></span>
+                            Clear IGDB Metadata
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Clear Wikipedia Metadata -->
+            <div class="card bg-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">
+                        <span class="mdi mdi-wikipedia"></span>
+                        Clear Wikipedia Metadata
+                    </h3>
+                    <p class="text-sm opacity-70 mb-3">
+                        Deletes all Wikipedia records ({{ wikipedia_counts.total }} total, {{ wikipedia_counts.orphaned }} orphaned) and derived data (Wikipedia Genres).
+                    </p>
+                    <form method="POST" action=".">
+                        {% csrf_token %}
+                        <input type="hidden" name="clear_wikipedia_metadata" value="true">
+                        <button class="btn btn-warning btn-sm" onclick="return confirm('⚠️ This will delete ALL Wikipedia metadata including orphaned records. You will need to re-fetch Wikipedia data after this. Are you sure?');">
+                            <span class="mdi mdi-wikipedia"></span>
+                            Clear Wikipedia Metadata
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if debug %}
+            <!-- Load Test Data (Dev Only) -->
+            <div class="card bg-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">
+                        <span class="mdi mdi-package"></span>
+                        Load Test Data
+                    </h3>
+                    <p class="text-sm opacity-70 mb-3">
+                        Development only - loads bundled test files from the repository.
+                    </p>
+                    <form method="POST" action="." id="seed-data-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="seed_test_data" value="true">
+                        <button class="btn btn-success btn-sm" id="seed-data-btn">
+                            <span class="mdi mdi-package"></span>
+                            Load Test Data
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 <script nonce="{{ csp_nonce }}">
     document.addEventListener('DOMContentLoaded', () => {
         // File input handling
@@ -272,512 +761,6 @@
         }
     })
 </script>
-</head>
-
-<body class="bg-base-100 min-h-screen">
-<div class="container mx-auto px-4 py-8 max-w-6xl">
-    <div class="mb-8">
-        <h1 class="text-4xl font-bold mb-2">Import Game Data</h1>
-        <p class="text-base-content/70">Import and manage your game database</p>
-    </div>
-
-    <!-- Success Messages -->
-    {% if import_success_message %}
-    <div class="alert alert-success mb-6 shadow-lg">
-        <span class="mdi mdi-check-circle text-2xl"></span>
-        <span>{{ import_success_message }}</span>
-    </div>
-    {% endif %}
-
-    <!-- Error Messages -->
-    {% if import_errors %}
-    <div class="alert alert-error mb-6 shadow-lg" id="error-container">
-        <div class="flex-1">
-            <span class="mdi mdi-alert-circle text-2xl"></span>
-            <div>
-                <h3 class="font-bold">Import Errors</h3>
-                <ul class="text-sm mt-2 ml-4 list-disc">
-                    {% for error in import_errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        <button type="button" class="btn btn-sm btn-ghost" onclick="dismissErrorContainer()">Dismiss</button>
-    </div>
-    <script nonce="{{ csp_nonce }}">
-        localStorage.removeItem('importErrorsDismissed');
-        function dismissErrorContainer() {
-            const container = document.getElementById('error-container');
-            if (container) {
-                localStorage.setItem('importErrorsDismissed', 'true');
-                container.remove();
-            }
-        }
-    </script>
-    {% endif %}
-
-    <!-- Database Status Section -->
-    <div class="card bg-base-200 shadow-xl mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">Database Status</h2>
-            <div class="status-grid">
-                <div class="status-card">
-                    <div class="label">Platforms</div>
-                    <div class="value">{{ counts.platforms }}</div>
-                </div>
-                <div class="status-card">
-                    <div class="label">Publications</div>
-                    <div class="value">{{ counts.publications }}</div>
-                </div>
-                <div class="status-card">
-                    <div class="label">Source Lists</div>
-                    <div class="value">{{ counts.lists }}</div>
-                </div>
-                <div class="status-card">
-                    <div class="label">Games</div>
-                    <div class="value">{{ counts.games }}</div>
-                </div>
-                <div class="status-card">
-                    <div class="label">Positions</div>
-                    <div class="value">{{ counts.memberships }}</div>
-                </div>
-                <div class="status-card">
-                    <div class="label">Companies</div>
-                    <div class="value">{{ counts.companies }}</div>
-                </div>
-                <div class="status-card">
-                    <div class="label">Studios</div>
-                    <div class="value">{{ counts.studios }}</div>
-                </div>
-                <div class="status-card">
-                    <div class="label">IGDB Genres</div>
-                    <div class="value">{{ counts.igdb_genres }}</div>
-                </div>
-                <div class="status-card">
-                    <div class="label">Wikipedia Genres</div>
-                    <div class="value">{{ counts.wikipedia_genres }}</div>
-                </div>
-                <div class="igdb-status-card">
-                    <div class="label">IGDB Metadata Records</div>
-                    <div class="value">{{ igdb_counts.total }} record{{ igdb_counts.total|pluralize }}</div>
-                    <div class="percentage">{{ igdb_counts.connected }} connected, {{ igdb_counts.orphaned }} orphaned</div>
-                    <div class="percentage">{{ igdb_counts.games_needing }} game{{ igdb_counts.games_needing|pluralize }} need data</div>
-                </div>
-                <div class="igdb-status-card">
-                    <div class="label">Wikipedia Metadata Records</div>
-                    <div class="value">{{ wikipedia_counts.total }} record{{ wikipedia_counts.total|pluralize }}</div>
-                    <div class="percentage">{{ wikipedia_counts.connected }} connected, {{ wikipedia_counts.orphaned }} orphaned</div>
-                    <div class="percentage">{{ wikipedia_counts.games_needing }} game{{ wikipedia_counts.games_needing|pluralize }} need page{{ wikipedia_counts.games_needing|pluralize }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Batch Import Section -->
-    <!-- This is the primary workflow - run every time you update rankings -->
-    <div class="card bg-base-200 shadow-xl mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-                <span class="mdi mdi-upload"></span>
-                Regular Import
-            </h2>
-            <p class="text-sm opacity-70 mb-4">Run every time you update game rankings or list data</p>
-
-            <div class="alert alert-info mb-6">
-                <span class="mdi mdi-file-document"></span>
-                <div>
-                    <h3 class="font-bold">Import Order</h3>
-                    <p class="text-sm mt-2"><strong>Files are imported in the correct order:</strong></p>
-                    <ol class="text-sm mt-2 ml-4 list-decimal">
-                        <li><strong>Platforms</strong> - Gaming platforms (PC, PS5, etc.)</li>
-                        <li><strong>Source Lists</strong> - Critic rankings and publications</li>
-                        <li><strong>Games</strong> - Game database with rank, year, platforms</li>
-                        <li><strong>Game Positions</strong> - Where each game appears in each list</li>
-                    </ol>
-                    <p class="text-sm mt-2 opacity-70">⚠️ Import may fail if prerequisites are missing</p>
-                </div>
-            </div>
-
-            <form method="POST" action="." enctype="multipart/form-data">
-                {% csrf_token %}
-
-                <!-- Platforms File -->
-                <div class="import-step{% if counts.platforms > 0 %} completed{% endif %}" data-step="1">
-                    <h3>Platforms (PlatformDB.txt)</h3>
-                    <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">CODE&lt;tab&gt;Name</code></p>
-                    <div class="form-control">
-                        <label class="input input-bordered flex items-center gap-2 cursor-pointer">
-                            <input type="file" name="platforms_file" id="id_platforms_file" accept=".txt" class="hidden">
-                            <span class="mdi mdi-file-document"></span>
-                            <span class="file-label-text flex-1 text-base-content/50">No file selected</span>
-                        </label>
-                    </div>
-                    {% if form.platforms_file.errors %}
-                        <p class="text-error text-sm mt-2">{{ form.platforms_file.errors }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Source Lists File -->
-                <div class="import-step{% if counts.lists > 0 %} completed{% endif %}" data-step="2">
-                    <h3>Source Lists (SourceLists.txt)</h3>
-                    <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">Publisher&lt;tab&gt;Year&lt;tab&gt;Type&lt;tab&gt;Name&lt;tab&gt;URL</code></p>
-                    <div class="form-control">
-                        <label class="input input-bordered flex items-center gap-2 cursor-pointer">
-                            <input type="file" name="lists_file" id="id_lists_file" accept=".txt" class="hidden">
-                            <span class="mdi mdi-file-document"></span>
-                            <span class="file-label-text flex-1 text-base-content/50">No file selected</span>
-                        </label>
-                    </div>
-                    {% if form.lists_file.errors %}
-                        <p class="text-error text-sm mt-2">{{ form.lists_file.errors }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Games File -->
-                <div class="import-step{% if counts.games > 0 %} completed{% endif %}" data-step="3">
-                    <h3>Games (Top1000.txt)</h3>
-                    <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">Rank&lt;tab&gt;Name&lt;tab&gt;Year&lt;tab&gt;Platforms&lt;tab&gt;IGDB_ID&lt;tab&gt;Wikidata_ID</code></p>
-                    <div class="form-control">
-                        <label class="input input-bordered flex items-center gap-2 cursor-pointer">
-                            <input type="file" name="games_file" id="id_games_file" accept=".txt" class="hidden">
-                            <span class="mdi mdi-file-document"></span>
-                            <span class="file-label-text flex-1 text-base-content/50">No file selected</span>
-                        </label>
-                    </div>
-                    {% if form.games_file.errors %}
-                        <p class="text-error text-sm mt-2">{{ form.games_file.errors }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Game Positions File -->
-                <div class="import-step{% if counts.memberships > 0 %} completed{% endif %}" data-step="4">
-                    <h3>Game Positions (GamePositions.txt)</h3>
-                    <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">ListID:Position&lt;tab&gt;ListID:Position&lt;tab&gt;...</code></p>
-                    <div class="form-control">
-                        <label class="input input-bordered flex items-center gap-2 cursor-pointer">
-                            <input type="file" name="memberships_file" id="id_memberships_file" accept=".txt" class="hidden">
-                            <span class="mdi mdi-file-document"></span>
-                            <span class="file-label-text flex-1 text-base-content/50">No file selected</span>
-                        </label>
-                    </div>
-                    {% if form.memberships_file.errors %}
-                        <p class="text-error text-sm mt-2">{{ form.memberships_file.errors }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Options -->
-                <div class="divider"></div>
-
-                <div class="flex gap-3">
-                    <button class="btn btn-primary" type="submit" id="import-submit">
-                        <span class="mdi mdi-upload"></span>
-                        Import Files
-                    </button>
-                    <button class="btn btn-ghost" type="reset">Clear</button>
-                </div>
-
-                <div class="alert alert-info mt-4">
-                    <span class="mdi mdi-information"></span>
-                    <span class="text-sm">
-                        After importing games, IGDB metadata is automatically fetched for new games and reconnected for existing games. Developer/Studio/Genre relationships are preserved across imports.
-                    </span>
-                </div>
-
-                {% if form.non_field_errors %}
-                    <div class="alert alert-error mt-6">
-                        <span class="mdi mdi-alert-circle"></span>
-                        <span>{{ form.non_field_errors }}</span>
-                    </div>
-                {% endif %}
-            </form>
-
-            <!-- Batch Import Progress Container -->
-            <div id="batch-progress-container" class="batch-progress-container">
-                <h3 class="text-lg font-bold mb-4">Importing Files...</h3>
-
-                <!-- Platforms Progress -->
-                <div id="platforms-progress-item" class="file-progress-item" style="display: none;">
-                    <div class="file-progress-header">
-                        <span class="file-progress-name">Platforms</span>
-                        <span id="platforms-status" class="file-progress-status">Waiting…</span>
-                    </div>
-                    <div class="file-progress-bar-wrapper">
-                        <div id="platforms-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
-                            <span id="platforms-percentage">0%</span>
-                        </div>
-                    </div>
-                    <div class="file-progress-details">
-                        <div>Processing: <span id="platforms-current">0</span> / <span id="platforms-total">0</span></div>
-                    </div>
-                </div>
-
-                <!-- Source Lists Progress -->
-                <div id="lists-progress-item" class="file-progress-item" style="display: none;">
-                    <div class="file-progress-header">
-                        <span class="file-progress-name">Source Lists</span>
-                        <span id="lists-status" class="file-progress-status">Waiting…</span>
-                    </div>
-                    <div class="file-progress-bar-wrapper">
-                        <div id="lists-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
-                            <span id="lists-percentage">0%</span>
-                        </div>
-                    </div>
-                    <div class="file-progress-details">
-                        <div>Processing: <span id="lists-current">0</span> / <span id="lists-total">0</span></div>
-                    </div>
-                </div>
-
-                <!-- Games Progress -->
-                <div id="games-progress-item" class="file-progress-item" style="display: none;">
-                    <div class="file-progress-header">
-                        <span class="file-progress-name">Games</span>
-                        <span id="games-status" class="file-progress-status">Waiting…</span>
-                    </div>
-                    <div class="file-progress-bar-wrapper">
-                        <div id="games-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
-                            <span id="games-percentage">0%</span>
-                        </div>
-                    </div>
-                    <div class="file-progress-details">
-                        <div>Processing: <span id="games-current">0</span> / <span id="games-total">0</span></div>
-                    </div>
-                </div>
-
-                <!-- Game Positions Progress -->
-                <div id="memberships-progress-item" class="file-progress-item" style="display: none;">
-                    <div class="file-progress-header">
-                        <span class="file-progress-name">Game Positions</span>
-                        <span id="memberships-status" class="file-progress-status">Waiting…</span>
-                    </div>
-                    <div class="file-progress-bar-wrapper">
-                        <div id="memberships-progress-bar" class="file-progress-bar-fill" style="width: 0%;">
-                            <span id="memberships-percentage">0%</span>
-                        </div>
-                    </div>
-                    <div class="file-progress-details">
-                        <div>Processing: <span id="memberships-current">0</span> / <span id="memberships-total">0</span></div>
-                    </div>
-                </div>
-
-                <!-- Errors during import -->
-                <div id="batch-errors" style="display: none;">
-                    <div class="alert alert-error mt-4">
-                        <span class="mdi mdi-alert-circle"></span>
-                        <div>
-                            <strong>Errors encountered:</strong>
-                            <div id="batch-error-list" class="text-sm mt-2"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Metadata Operations Section -->
-    <div class="card bg-base-200 shadow-xl mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-                <span class="mdi mdi-database"></span>
-                Metadata Operations
-            </h2>
-            <p class="text-sm opacity-70 mb-4">Run once when first importing games, or when adding new games that need enrichment</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Fetch IGDB Data -->
-                <div class="card bg-base-300">
-                    <div class="card-body">
-                        <h3 class="card-title text-lg">
-                            <span class="mdi mdi-refresh"></span>
-                            Fetch IGDB Data
-                        </h3>
-                        <p class="text-sm opacity-70 mb-3">
-                            Fetches cover art, descriptions, developers, and genres from IGDB for games without metadata
-                        </p>
-                        <div class="flex flex-col gap-2">
-                            <button id="fetch-igdb-btn" class="btn btn-info btn-sm">
-                                <span class="mdi mdi-refresh"></span>
-                                Fetch for {{ igdb_counts.games_needing }} game{{ igdb_counts.games_needing|pluralize }}
-                            </button>
-                            {% if igdb_counts.games_needing > 0 %}
-                                <span class="text-xs opacity-70">
-                                    Estimated time: {{ igdb_counts.estimate_seconds|format_duration }}
-                                </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Fetch Wikipedia Pages -->
-                <div class="card bg-base-300">
-                    <div class="card-body">
-                        <h3 class="card-title text-lg">
-                            <span class="mdi mdi-wikipedia"></span>
-                            Fetch Wikipedia Pages
-                        </h3>
-                        <p class="text-sm opacity-70 mb-3">
-                            Finds Wikipedia articles for games to enable genre data and additional info
-                        </p>
-                        <div class="flex flex-col gap-2">
-                            <button id="fetch-wikipedia-btn" class="btn btn-info btn-sm">
-                                <span class="mdi mdi-wikipedia"></span>
-                                Fetch for {{ wikipedia_counts.games_needing }} game{{ wikipedia_counts.games_needing|pluralize }}
-                            </button>
-                            {% if wikipedia_counts.games_needing > 0 %}
-                                <span class="text-xs opacity-70">
-                                    Estimated time: {{ wikipedia_counts.estimate_seconds|format_duration }}
-                                    {% if not wikipedia_counts.has_auth %}
-                                        <span class="tooltip tooltip-right" data-tip="Add WIKIDATA_ACCESS_TOKEN for 2.5x faster processing">(unauthenticated)</span>
-                                    {% endif %}
-                                </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Force Refresh Options -->
-                <div class="card bg-base-300">
-                    <div class="card-body">
-                        <h3 class="card-title text-lg">
-                            <span class="mdi mdi-reload"></span>
-                            Force Refresh
-                        </h3>
-                        <p class="text-sm opacity-70 mb-3">
-                            Re-fetch metadata for ALL games, including those with existing data (rarely needed)
-                        </p>
-                        <div class="flex flex-col gap-2">
-                            <button id="fetch-wikipedia-force-btn" class="btn btn-warning btn-sm">
-                                <span class="mdi mdi-reload"></span>
-                                Refresh All Wikipedia Pages
-                            </button>
-                            <span class="text-xs opacity-70">
-                                Processes all {{ counts.games }} games
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Progress Indicators -->
-            <!-- IGDB Loading (initially hidden) -->
-            <div id="progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-300 rounded-lg">
-                <span class="loading loading-spinner loading-md text-primary"></span>
-                <div>
-                    <div class="font-semibold">Processing IGDB Data...</div>
-                    <div id="progress-text" class="text-sm opacity-70">Starting...</div>
-                </div>
-            </div>
-
-            <!-- Wikipedia Loading (initially hidden) -->
-            <div id="wikipedia-progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-300 rounded-lg">
-                <span class="loading loading-spinner loading-md text-secondary"></span>
-                <div>
-                    <div class="font-semibold">Fetching Wikipedia Pages...</div>
-                    <div id="wikipedia-progress-text" class="text-sm opacity-70">Starting...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Maintenance & Cleanup Section -->
-    <div class="card bg-base-200 shadow-xl mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-                <span class="mdi mdi-tools"></span>
-                Maintenance & Cleanup
-            </h2>
-            <p class="text-sm opacity-70 mb-4">Advanced operations for database maintenance</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Delete Game Data -->
-                <div class="card bg-base-300">
-                    <div class="card-body">
-                        <h3 class="card-title text-lg">
-                            <span class="mdi mdi-delete"></span>
-                            Delete Game Data
-                        </h3>
-                        <p class="text-sm opacity-70 mb-3">
-                            Deletes all games, lists, and platforms. Preserves IGDB/Wikipedia metadata and Developer/Studio/Genre objects for reconnection.
-                        </p>
-                        <form method="POST" action=".">
-                            {% csrf_token %}
-                            <input type="hidden" name="delete" value="true">
-                            <button class="btn btn-error btn-sm" onclick="return confirm('⚠️ This will delete games, lists, and platforms (preserves metadata). Are you sure?');">
-                                <span class="mdi mdi-delete"></span>
-                                Delete Game Data
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Clear IGDB Metadata -->
-                <div class="card bg-base-300">
-                    <div class="card-body">
-                        <h3 class="card-title text-lg">
-                            <span class="mdi mdi-database-remove"></span>
-                            Clear IGDB Metadata
-                        </h3>
-                        <p class="text-sm opacity-70 mb-3">
-                            Deletes all IGDB records ({{ igdb_counts.total }} total, {{ igdb_counts.orphaned }} orphaned) and derived data (Companies, Studios, Genres).
-                        </p>
-                        <form method="POST" action=".">
-                            {% csrf_token %}
-                            <input type="hidden" name="clear_igdb_metadata" value="true">
-                            <button class="btn btn-warning btn-sm" onclick="return confirm('⚠️ This will delete ALL IGDB metadata including orphaned records. You will need to re-fetch IGDB data after this. Are you sure?');">
-                                <span class="mdi mdi-database-remove"></span>
-                                Clear IGDB Metadata
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Clear Wikipedia Metadata -->
-                <div class="card bg-base-300">
-                    <div class="card-body">
-                        <h3 class="card-title text-lg">
-                            <span class="mdi mdi-wikipedia"></span>
-                            Clear Wikipedia Metadata
-                        </h3>
-                        <p class="text-sm opacity-70 mb-3">
-                            Deletes all Wikipedia records ({{ wikipedia_counts.total }} total, {{ wikipedia_counts.orphaned }} orphaned) and derived data (Wikipedia Genres).
-                        </p>
-                        <form method="POST" action=".">
-                            {% csrf_token %}
-                            <input type="hidden" name="clear_wikipedia_metadata" value="true">
-                            <button class="btn btn-warning btn-sm" onclick="return confirm('⚠️ This will delete ALL Wikipedia metadata including orphaned records. You will need to re-fetch Wikipedia data after this. Are you sure?');">
-                                <span class="mdi mdi-wikipedia"></span>
-                                Clear Wikipedia Metadata
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                {% if debug %}
-                <!-- Load Test Data (Dev Only) -->
-                <div class="card bg-base-300">
-                    <div class="card-body">
-                        <h3 class="card-title text-lg">
-                            <span class="mdi mdi-package"></span>
-                            Load Test Data
-                        </h3>
-                        <p class="text-sm opacity-70 mb-3">
-                            Development only - loads bundled test files from the repository.
-                        </p>
-                        <form method="POST" action="." id="seed-data-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="seed_test_data" value="true">
-                            <button class="btn btn-success btn-sm" id="seed-data-btn">
-                                <span class="mdi mdi-package"></span>
-                                Load Test Data
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
 
 <script nonce="{{ csp_nonce }}">
     // Track active EventSource for cleanup
@@ -1093,5 +1076,4 @@
     }
 
 </script>
-</body>
-</html>
+{% endblock %}
