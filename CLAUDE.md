@@ -92,7 +92,27 @@ python3 manage.py sync_from_prod
 ```
 Downloads all game data from production Heroku and loads it into local SQLite. Auth users are excluded - create a local superuser after syncing with `python3 manage.py createsuperuser`.
 
-**Fetch primary genre from Wikipedia/Wikidata:**
+**Fetch complete Wikipedia metadata (pages + genres):**
+```bash
+# Fetch Wikipedia pages and genres for all games needing data (recommended)
+python3 manage.py fetch_wikipedia_metadata --save --skip-existing
+
+# Process all games (force refresh)
+python3 manage.py fetch_wikipedia_metadata --save --force
+
+# Process with limit
+python3 manage.py fetch_wikipedia_metadata --save --limit 100
+
+# Process single game (for testing)
+python3 manage.py fetch_wikipedia_metadata --game "The Legend of Zelda" --save
+```
+This command combines two operations in one (equivalent to the "Fetch Wikipedia Pages" button):
+1. Looks up Wikipedia page titles using Wikidata IDs (fast) with fallback to OpenSearch API
+2. Scrapes genre data from those Wikipedia pages (primary genre and all genres)
+
+Results are stored in `WikipediaGameData` records (page titles) and `WikipediaGenre` objects (genres). This is the **recommended command** for fetching Wikipedia data in production.
+
+**Fetch primary genre from Wikipedia/Wikidata (standalone):**
 ```bash
 # Process all games (outputs to CSV)
 python3 manage.py get_wiki_genres
@@ -110,6 +130,8 @@ python3 manage.py get_wiki_genres --limit 100
 python3 manage.py get_wiki_genres --skip-existing --save
 ```
 Uses a cascade approach: first queries Wikidata P136 (Genre) property, then falls back to scraping Wikipedia infobox if Wikidata fails. Results are stored separately from IGDB genres in `Game.wikipedia_primary_genre` and `Game.wikidata_id` fields.
+
+**Note:** Use `fetch_wikipedia_metadata` instead if you also need Wikipedia page titles. The `get_wiki_genres` command is only for genre data.
 
 **Run tests:**
 ```bash

@@ -2,16 +2,14 @@
 
 ## 2025-12-10
 
+- Added fetch_wikipedia_metadata management command (combines page lookup + genre scraping in one command)
+- Command replicates "Fetch Wikipedia Pages" button functionality for production CLI use
 - Changed IGDB and Wikipedia metadata to persist when games are deleted (SET_NULL instead of CASCADE)
 - Metadata automatically reconnects when games are re-imported (avoids re-fetching from APIs)
 - Optimized Wikipedia genre fetching to eliminate duplicate page searches (60-67% faster throughput)
 - Fixed Wikipedia genre capitalization to preserve original casing (e.g., "RPG" stays "RPG", not "Rpg")
 - Refactored import page to use site-wide theme and navigation (extends base.html for consistency)
 - Temporarily disabled CSP middleware due to nonce mismatch in production (header nonce ≠ HTML nonce)
-- Fixed unreachable console.info in theme validation script (now properly logs invalid theme values)
-- Fixed Wikipedia fetch early termination by adding SSE keepalive mechanism (sends pings every 15s to prevent Heroku timeouts)
-- Increased overall timeout from 2 minutes to 30 minutes with no progress before giving up
-- Removed sidebar logo preload hints (eliminated browser warnings about unused preloaded resources)
 
 ## 2025-12-09
 
