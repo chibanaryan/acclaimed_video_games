@@ -44,13 +44,6 @@
     {# CRITICAL: Early preload for LCP images - must be before other resources #}
     {% block early_preload %}{% endblock %}
 
-    {# Preload sidebar logos for LCP optimization on desktop only (hidden on mobile) #}
-    {# Positioned here to start loading ASAP before CSS/fonts - eliminates 1000ms+ resource load delay #}
-    {# Preload both theme variants since we can't predict user's theme from localStorage #}
-    {# Browser will only download the one that matches the active theme (show-dark vs show-light) #}
-    <link rel="preload" href="{% static 'games/avg_logo_dark_160w.webp' %}" as="image" type="image/webp" fetchpriority="high" media="(min-width: 1024px)">
-    <link rel="preload" href="{% static 'games/avg_logo_160w.webp' %}" as="image" type="image/webp" fetchpriority="high" media="(min-width: 1024px)">
-
     {# Open Graph Tags for social sharing #}
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:title" content="{% block og_title %}Acclaimed Games{% endblock %}">

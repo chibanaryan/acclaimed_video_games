@@ -575,8 +575,10 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
         try:
             while True:
                 try:
-                    # Wait for event with timeout
-                    event_json = event_queue.get(timeout=120)
+                    # Wait for event with timeout (10 minutes per game lookup)
+                    # Longer timeout allows for slow Wikipedia/Wikidata API responses
+                    # and genre scraping without terminating the entire batch
+                    event_json = event_queue.get(timeout=600)
 
                     # None signals the end of the lookup
                     if event_json is None:
@@ -588,7 +590,7 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
                     yield f"data: {event_json}\n\n" + (" " * 2048) + "\n"
                 except queue.Empty:
                     # Timeout waiting for events
-                    error_msg = "Lookup timeout - no progress for 120 seconds"
+                    error_msg = "Lookup timeout - no progress for 10 minutes"
                     error_data = json.dumps({"event": "error", "error": error_msg})
                     yield f"data: {error_data}\n\n"
                     break
