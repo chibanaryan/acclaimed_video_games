@@ -76,7 +76,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Must be after SecurityMiddleware
     "django.middleware.gzip.GZipMiddleware",  # Compress HTML responses (48 KiB savings)
-    "games.csp_middleware.CSPMiddleware",  # CSP with nonces + CORS for fonts
+    # "games.csp_middleware.CSPMiddleware",  # Disabled: nonce mismatch
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -234,7 +234,8 @@ IGDB_CLIENT_SECRET = env("IGDB_CLIENT_SECRET", default="XXX")
 IGDB_USE_PRO_TIER = env.bool("IGDB_USE_PRO_TIER", default=False)
 
 # Wikidata API authentication (optional - for 10x faster rate limits)
-# Format: username@botname:password (from https://meta.wikimedia.org/wiki/Special:BotPasswords)
+# Format: username@botname:password
+# (from https://meta.wikimedia.org/wiki/Special:BotPasswords)
 WIKIDATA_ACCESS_TOKEN = env("WIKIDATA_ACCESS_TOKEN", default=None)
 
 # Email configuration (Brevo SMTP)
