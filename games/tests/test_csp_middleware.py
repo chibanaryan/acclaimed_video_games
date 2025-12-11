@@ -51,14 +51,6 @@ class CSPMiddlewareTest(TestCase):
         csp_header = response["Content-Security-Policy"]
         self.assertIn("object-src 'none'", csp_header)
 
-    def test_csp_includes_strict_dynamic(self):
-        """Test that strict-dynamic is included."""
-        request = self.factory.get("/")
-        response = self.middleware(request)
-
-        csp_header = response["Content-Security-Policy"]
-        self.assertIn("'strict-dynamic'", csp_header)
-
     def test_csp_allows_unsafe_eval(self):
         """Test that unsafe-eval is allowed (required for Alpine.js)."""
         request = self.factory.get("/")

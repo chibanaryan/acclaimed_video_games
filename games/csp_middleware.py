@@ -44,7 +44,7 @@ class CSPMiddleware:
         # - 'unsafe-inline' for @click and other event handlers
         csp_policy = (
             f"default-src 'self'; "
-            f"script-src 'self' 'nonce-{nonce}' 'strict-dynamic' "
+            f"script-src 'self' 'nonce-{nonce}' "
             f"'unsafe-eval' 'unsafe-inline' "
             f"https://unpkg.com https://cdn.jsdelivr.net "
             f"https://www.googletagmanager.com; "
