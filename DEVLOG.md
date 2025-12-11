@@ -6,6 +6,7 @@
 - Metadata automatically reconnects when games are re-imported (avoids re-fetching from APIs)
 - Optimized Wikipedia genre fetching to eliminate duplicate page searches (60-67% faster throughput)
 - Fixed Wikipedia genre capitalization to preserve original casing (e.g., "RPG" stays "RPG", not "Rpg")
+- Refactored import page to use site-wide theme and navigation (extends base.html for consistency)
 
 ## 2025-12-09
 
