@@ -38,5 +38,10 @@ urlpatterns = [
     path("pages/<slug:url>/", views.PageDetailView.as_view(), name="page-detail"),
     path("meta/", views.MetaView.as_view(), name="meta"),
     path("genres/", views.GenreListView.as_view(), name="genre-list"),
+    path(
+        "wikipedia-genres/",
+        views.WikipediaGenreListView.as_view(),
+        name="wikipedia-genre-list",
+    ),
     path("platforms/", views.PlatformListView.as_view(), name="platform-list"),
 ]

@@ -4,6 +4,8 @@
 
 - Changed IGDB and Wikipedia metadata to persist when games are deleted (SET_NULL instead of CASCADE)
 - Metadata automatically reconnects when games are re-imported (avoids re-fetching from APIs)
+- Optimized Wikipedia genre fetching to eliminate duplicate page searches (60-67% faster throughput)
+- Fixed Wikipedia genre capitalization to preserve original casing (e.g., "RPG" stays "RPG", not "Rpg")
 
 ## 2025-12-09
 

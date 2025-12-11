@@ -145,6 +145,14 @@ class ImportForm(forms.Form):
             "(PlatformDB, SourceLists, Top1000, GamePositions)"
         ),
     )
+    clear_igdb_metadata = forms.BooleanField(
+        required=False,
+        label="Clear all IGDB metadata (including orphaned records)",
+    )
+    clear_wikipedia_metadata = forms.BooleanField(
+        required=False,
+        label="Clear all Wikipedia metadata (including orphaned records)",
+    )
 
     def _validate_tsv_file(self, file_obj, expected_columns):
         """
@@ -255,11 +263,13 @@ class ImportForm(forms.Form):
         """Validate that at least one file is provided for batch imports."""
         cleaned_data = super().clean()
 
-        # Special operations (delete/igdb/seed_test_data) don't require files
+        # Special operations don't require files
         if (
             cleaned_data.get("delete")
             or cleaned_data.get("igdb")
             or cleaned_data.get("seed_test_data")
+            or cleaned_data.get("clear_igdb_metadata")
+            or cleaned_data.get("clear_wikipedia_metadata")
         ):
             return cleaned_data
 

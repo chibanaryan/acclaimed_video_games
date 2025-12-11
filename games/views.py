@@ -278,7 +278,7 @@ def download_games_csv(request):
     min_year, max_year = _get_year_bounds()
     genres_lookup = utils.get_or_set_cache(
         "search_genres_list_with_counts",
-        models.Genre.objects.annotate(game_count=Count("game")),
+        models.IGDBGenre.objects.annotate(game_count=Count("game")),
         ["id", "name", "game_count"],
         order_by="name",
         transform_id=True,
@@ -480,7 +480,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             end=self.request.GET.get("end"),
         )
 
-        # Genre filtering
+        # IGDB Genre filtering
         genre_option = self.request.GET.get("genre_option", "all")
         genres = self.request.GET.get("genres")
         if genres:
@@ -499,12 +499,12 @@ class GameSearchView(RobustPaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Get genres and platforms for AdvancedFilters (cached for 24 hours)
+        # Get IGDB genres and platforms for AdvancedFilters (cached for 24 hours)
         # Convert IDs to strings for proper Alpine.js binding
         # Includes game_count for heatmap visualization
         genres = utils.get_or_set_cache(
             "search_genres_list_with_counts",
-            models.Genre.objects.annotate(game_count=Count("game")),
+            models.IGDBGenre.objects.annotate(game_count=Count("game")),
             ["id", "name", "game_count"],
             order_by="name",
             transform_id=True,
@@ -649,10 +649,10 @@ class GameSearchView(RobustPaginationMixin, ListView):
 
         context["year_counts"] = all_years_with_counts
 
-        # FACETED COUNTS FOR GENRES
-        # For "Match Any": apply all filters EXCEPT genres (standard faceted filtering)
-        # For "Match All": INCLUDE genre filter (shows intersection - how many games
-        #                 have ALL selected genres AND this additional genre)
+        # FACETED COUNTS FOR IGDB GENRES
+        # For "Match Any": apply all filters EXCEPT IGDB genres (standard faceting)
+        # For "Match All": INCLUDE IGDB genre filter (shows intersection)
+        #                  how many games have ALL selected + this IGDB genre
         genre_facet_qs = models.Game.objects.all()
         if q:
             genre_facet_qs = genre_facet_qs.filter(name__icontains=q)
@@ -667,17 +667,17 @@ class GameSearchView(RobustPaginationMixin, ListView):
             platform_ids = [int(x) for x in platforms_param.split(",")]
             genre_facet_qs = utils.apply_platform_filter(genre_facet_qs, platform_ids)
 
-        # For Match All mode, use subquery approach to get all genres on matching games
-        # This shows "how many games have all selected genres AND this genre"
+        # For Match All mode, use subquery to get all IGDB genres on matches
+        # This shows "how many games have all selected IGDB genres AND this IGDB genre"
         # Note: We must use a subquery because Django ORM reuses JOINs, which would
-        # otherwise limit results to only the filtered genre IDs
+        # otherwise limit results to only the filtered IGDB genre IDs
         if genres_param and genre_option == "all":
             genre_ids = [int(x) for x in genres_param.split(",")]
-            # First, get IDs of games that have ALL selected genres
+            # First, get IDs of games that have ALL selected IGDB genres
             filtered_game_ids = utils.apply_genre_filter(
                 genre_facet_qs, genre_ids, match_all=True
             ).values_list("id", flat=True)
-            # Then count genres on those games (fresh queryset avoids JOIN reuse)
+            # Then count IGDB genres on those games (fresh queryset avoids JOIN reuse)
             genre_counts = dict(
                 models.Game.objects.filter(id__in=list(filtered_game_ids))
                 .values("genres__id")
@@ -686,7 +686,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
                 .values_list("genres__id", "count")
             )
         else:
-            # For Match Any mode or no genre filter, standard faceted counting
+            # For Match Any mode or no IGDB genre filter, standard faceted counting
             genre_counts = dict(
                 genre_facet_qs.values("genres__id")
                 .exclude(genres__id__isnull=True)
@@ -695,7 +695,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             )
 
         # FACETED COUNTS FOR PLATFORMS
-        # Base: apply all filters EXCEPT platforms (q, year, genres)
+        # Base: apply all filters EXCEPT platforms (q, year, IGDB genres)
         platform_facet_qs = models.Game.objects.all()
         if q:
             platform_facet_qs = platform_facet_qs.filter(name__icontains=q)
@@ -721,7 +721,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             .values_list("platforms__id", "count")
         )
 
-        # Merge filtered counts into genres/platforms lists
+        # Merge filtered counts into IGDB genres/platforms lists
         genres_with_filtered = [
             {**g, "filtered_count": genre_counts.get(int(g["id"]), 0)} for g in genres
         ]
@@ -1273,7 +1273,8 @@ class ImportView(LoginRequiredMixin, FormView):
             "memberships": models.ListMembership.objects.count(),
             "companies": models.Company.objects.count(),
             "studios": models.Studio.objects.count(),
-            "genres": models.Genre.objects.count(),
+            "igdb_genres": models.IGDBGenre.objects.count(),
+            "wikipedia_genres": models.WikipediaGenre.objects.count(),
         }
         # Calculate time estimates for fetching metadata
         # IGDB: ~8-10 games/sec with default settings
@@ -1282,11 +1283,12 @@ class ImportView(LoginRequiredMixin, FormView):
         )
 
         # Wikipedia: depends on authentication
-        # Authenticated: ~1.3 games/sec, Unauthenticated: ~0.5 games/sec
+        # Optimized to reuse page URLs from lookup (2 network requests per game)
+        # Authenticated: ~1.0 games/sec, Unauthenticated: ~0.4 games/sec
         from django.conf import settings
 
         has_wikidata_auth = bool(getattr(settings, "WIKIDATA_ACCESS_TOKEN", None))
-        wiki_games_per_sec = 1.3 if has_wikidata_auth else 0.5
+        wiki_games_per_sec = 1.0 if has_wikidata_auth else 0.4
         wiki_estimate_seconds = (
             int(games_needing_wikipedia / wiki_games_per_sec)
             if games_needing_wikipedia > 0

@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from games.models import (
     Company,
     Game,
-    Genre,
+    IGDBGenre,
     List,
     ListMembership,
     Platform,
@@ -136,7 +136,7 @@ class Command(BaseCommand):
         Game.objects.all().delete()
         Studio.objects.all().delete()
         Company.objects.all().delete()
-        Genre.objects.all().delete()
+        IGDBGenre.objects.all().delete()
         Platform.objects.all().delete()
         Post.objects.all().delete()
         Snippet.objects.all().delete()

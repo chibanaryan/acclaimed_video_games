@@ -76,7 +76,9 @@ class ImportFormTests(TestCase):
     def test_clean_games_file_valid(self):
         """Test clean_games_file with valid file."""
         form = ImportForm()
-        file_obj = SimpleUploadedFile("Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ12345")
+        file_obj = SimpleUploadedFile(
+            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ12345"
+        )
         form.cleaned_data = {"games_file": file_obj}
 
         result = form.clean_games_file()
@@ -130,6 +132,22 @@ class ImportFormTests(TestCase):
         """Test clean() with IGDB operation (no files required)."""
         form = ImportForm()
         form.cleaned_data = {"igdb": True}
+
+        result = form.clean()
+        self.assertEqual(result, form.cleaned_data)
+
+    def test_clean_with_clear_igdb_metadata(self):
+        """Test clean() with clear IGDB metadata operation (no files required)."""
+        form = ImportForm()
+        form.cleaned_data = {"clear_igdb_metadata": True}
+
+        result = form.clean()
+        self.assertEqual(result, form.cleaned_data)
+
+    def test_clean_with_clear_wikipedia_metadata(self):
+        """Test clean() with clear Wikipedia metadata operation (no files required)."""
+        form = ImportForm()
+        form.cleaned_data = {"clear_wikipedia_metadata": True}
 
         result = form.clean()
         self.assertEqual(result, form.cleaned_data)

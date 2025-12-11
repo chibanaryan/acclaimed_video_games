@@ -30,6 +30,12 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
     if data.get("delete"):
         return delete_existing_data()
 
+    if data.get("clear_igdb_metadata"):
+        return clear_igdb_metadata()
+
+    if data.get("clear_wikipedia_metadata"):
+        return clear_wikipedia_metadata()
+
     # Check if this is a batch import (new form format)
     if any(
         [
@@ -143,33 +149,70 @@ def import_igdb_with_progress(update_relationships: bool = False):
 
                         success_count = 0
                         error_count = 0
+                        processed_count = 0
 
-                        for idx, game in enumerate(games, start=1):
-                            try:
-                                if game.update_igdb_relationships(
-                                    api_client=api_client
-                                ):
-                                    success_count += 1
-                                else:
+                        # Use batch API calls like regular IGDB import for speed
+                        # Process in batches based on tier (50 free, 500 Pro)
+                        batch_size = api_client.max_batch_size
+                        game_list = list(games)
+
+                        for batch_start in range(0, len(game_list), batch_size):
+                            batch_games = game_list[
+                                batch_start : batch_start + batch_size
+                            ]
+
+                            # Collect IGDB IDs for this batch
+                            igdb_ids = [g.igdb_id for g in batch_games if g.igdb_id]
+                            if not igdb_ids:
+                                continue
+
+                            # Fetch all games in batch (single API call)
+                            games_data = api_client.get_games_info_by_ids(
+                                igdb_ids, cache_results=True
+                            )
+
+                            # Update relationships for each game in batch
+                            for game in batch_games:
+                                processed_count += 1
+
+                                if not game.igdb_id or game.igdb_id not in games_data:
                                     error_count += 1
+                                    progress_callback(
+                                        "progress",
+                                        {
+                                            "current": processed_count,
+                                            "total": total_games,
+                                            "game": game.name,
+                                            "successful": success_count,
+                                            "failed": error_count,
+                                        },
+                                    )
+                                    continue
 
+                                try:
+                                    # Update relationships using pre-fetched data
+                                    game_data = games_data[game.igdb_id]
+                                    game._update_relationships_from_data(game_data)
+                                    success_count += 1
+                                except Exception as game_error:
+                                    error_count += 1
+                                    logging.getLogger(__name__).error(
+                                        "Error updating relationships for '%s': %s",
+                                        game.name,
+                                        game_error,
+                                        exc_info=True,
+                                    )
+
+                                # Send progress update
                                 progress_callback(
                                     "progress",
                                     {
-                                        "current": idx,
+                                        "current": processed_count,
                                         "total": total_games,
                                         "game": game.name,
                                         "successful": success_count,
                                         "failed": error_count,
                                     },
-                                )
-                            except Exception as game_error:
-                                error_count += 1
-                                logging.getLogger(__name__).error(
-                                    "Error updating relationships for '%s': %s",
-                                    game.name,
-                                    game_error,
-                                    exc_info=True,
                                 )
 
                         progress_callback(
@@ -273,6 +316,7 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
     import threading
 
     from games.services.wiki_page_lookup_service import WikiPageLookupService
+    from games.services.wiki_genre_service import WikiGenreService
 
     # Use a queue to pass events from callback to generator in real-time
     event_queue = queue.Queue()
@@ -290,8 +334,9 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
         event_queue.put(json.dumps(data))
 
     try:
-        # Create service
+        # Create services
         service = WikiPageLookupService(progress_callback=progress_callback)
+        genre_service = WikiGenreService()
 
         # Get games to process
         if force_refresh:
@@ -336,23 +381,117 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
                             # Get the game object
                             game = models.Game.objects.get(id=game_id)
 
-                            # First, unset is_primary on any existing records
-                            # to avoid UNIQUE constraint violation
-                            models.WikipediaGameData.objects.filter(
-                                game=game, is_primary=True
-                            ).update(is_primary=False)
+                            # First, check for orphaned record with same page_title
+                            orphaned_record = models.WikipediaGameData.objects.filter(
+                                page_title=result.page_title,
+                                game__isnull=True,
+                                is_primary=True,
+                            ).first()
 
-                            # Create or update WikipediaGameData record
-                            wiki_game_data, created = (
-                                models.WikipediaGameData.objects.update_or_create(
-                                    game=game,
-                                    page_title=result.page_title,
-                                    defaults={
-                                        "lookup_source": result.lookup_source,
-                                        "is_primary": True,
-                                    },
+                            if orphaned_record:
+                                # Reconnect orphaned record
+                                # Unset is_primary on any existing records for this game
+                                models.WikipediaGameData.objects.filter(
+                                    game=game, is_primary=True
+                                ).update(is_primary=False)
+
+                                # Reconnect the orphaned record
+                                orphaned_record.game = game
+                                orphaned_record.lookup_source = result.lookup_source
+                                # Update wikidata_id if available
+                                if wikidata_id:
+                                    orphaned_record.wikidata_id = wikidata_id
+                                orphaned_record.save(
+                                    update_fields=[
+                                        "game",
+                                        "lookup_source",
+                                        "wikidata_id",
+                                    ]
                                 )
-                            )
+                                wiki_game_data = orphaned_record
+                            else:
+                                # No orphaned record found, create or update
+                                # Unset is_primary on any existing records
+                                models.WikipediaGameData.objects.filter(
+                                    game=game, is_primary=True
+                                ).update(is_primary=False)
+
+                                # Create or update WikipediaGameData record
+                                defaults = {
+                                    "lookup_source": result.lookup_source,
+                                    "is_primary": True,
+                                }
+                                if wikidata_id:
+                                    defaults["wikidata_id"] = wikidata_id
+
+                                wiki_game_data, created = (
+                                    models.WikipediaGameData.objects.update_or_create(
+                                        game=game,
+                                        page_title=result.page_title,
+                                        defaults=defaults,
+                                    )
+                                )
+
+                            # Scrape genres from the Wikipedia page
+                            # Use the URL we already found to avoid duplicate searches
+                            try:
+                                # Construct Wikipedia URL from page title
+                                wikipedia_url = (
+                                    f"https://en.wikipedia.org/wiki/"
+                                    f"{result.page_title.replace(' ', '_')}"
+                                )
+                                genre_result = genre_service.get_genre_from_url(
+                                    game_name, wikipedia_url
+                                )
+                                if genre_result.primary_genre:
+                                    # Capitalize first letter if lowercase
+                                    def capitalize_first(name):
+                                        return (
+                                            name[0].upper() + name[1:]
+                                            if name and name[0].islower()
+                                            else name
+                                        )
+
+                                    # Capitalize all genre names
+                                    capitalized_primary = capitalize_first(
+                                        genre_result.primary_genre
+                                    )
+                                    capitalized_all = [
+                                        capitalize_first(g)
+                                        for g in genre_result.all_genres
+                                    ]
+
+                                    # Update the WikipediaGameData with genres
+                                    wiki_game_data.primary_genre = capitalized_primary
+                                    # Store all genres as pipe-separated string
+                                    if capitalized_all:
+                                        wiki_game_data.all_genres = " | ".join(
+                                            capitalized_all
+                                        )
+                                    wiki_game_data.save(
+                                        update_fields=["primary_genre", "all_genres"]
+                                    )
+
+                                    # Create WikipediaGenre objects and link to game
+                                    if capitalized_all:
+                                        wikipedia_genres = []
+                                        for genre_name in capitalized_all:
+                                            genre, _ = (
+                                                models.WikipediaGenre.objects.get_or_create(
+                                                    name=genre_name
+                                                )
+                                            )
+                                            wikipedia_genres.append(genre)
+                                        game.wikipedia_genres.set(wikipedia_genres)
+                            except Exception as genre_error:
+                                # Log genre errors but don't fail page lookup
+                                import logging
+
+                                logging.getLogger(__name__).warning(
+                                    "Failed to scrape genres for '%s': %s",
+                                    game_name,
+                                    genre_error,
+                                )
 
                             # Set primary relationship
                             game.primary_wikipedia_game_data = wiki_game_data
@@ -687,6 +826,108 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str]:
             metadata.save()
 
         summary = "\n".join(results)
+
+        # Automatically fetch IGDB data and update relationships after importing games
+        if games_file_imported:
+            import logging
+
+            logger = logging.getLogger(__name__)
+
+            # Count games needing IGDB data
+            games_needing_fetch = models.Game.objects.filter(
+                primary_igdb_game_data__isnull=True
+            ).count()
+
+            # Count games with metadata that need relationship updates
+            games_needing_relationships = models.Game.objects.filter(
+                primary_igdb_game_data__isnull=False
+            ).count()
+
+            logger.info(
+                f"Automatic IGDB processing: {games_needing_fetch} games need fetch, "
+                f"{games_needing_relationships} games have metadata"
+            )
+
+            if games_needing_fetch > 0 or games_needing_relationships > 0:
+                summary += "\n\nAutomatically fetching IGDB data and reconnecting relationships..."
+
+                try:
+                    from games import igdb
+
+                    api_client = igdb.get_api()
+                    if not api_client:
+                        summary += "\n⚠ IGDB API unavailable - skipping metadata fetch"
+                    else:
+                        # Step 1: Fetch IGDB data for games without metadata
+                        if games_needing_fetch > 0:
+                            from games.services.igdb_importer import IGDBImportService
+
+                            summary += f"\n→ Fetching IGDB data for {games_needing_fetch} games..."
+                            service = IGDBImportService(
+                                concurrency=8,
+                                batch_size=None,  # Auto-detect from tier
+                                use_pro_tier=None,  # Auto-detect from settings
+                            )
+                            games_to_fetch = models.Game.objects.filter(
+                                primary_igdb_game_data__isnull=True
+                            ).order_by("rank")
+
+                            processed, errors, _ = service.import_games(games_to_fetch)
+                            summary += (
+                                f"\n  ✓ Fetched {processed} games ({errors} errors)"
+                            )
+
+                        # Step 2: Update relationships for games with reconnected metadata
+                        # Refresh the count after fetch (some may have been fetched)
+                        games_with_metadata = models.Game.objects.filter(
+                            primary_igdb_game_data__isnull=False
+                        )
+
+                        # Only update relationships for games that have no studios/IGDB genres
+                        # (reconnected metadata with cleared M2M relationships)
+                        games_needing_relationships = [
+                            g for g in games_with_metadata if not g.studios.exists()
+                        ]
+
+                        if games_needing_relationships:
+                            summary += f"\n→ Reconnecting relationships for {len(games_needing_relationships)} games..."
+                            updated_count = 0
+                            error_count = 0
+                            batch_size = api_client.max_batch_size
+
+                            for batch_start in range(
+                                0, len(games_needing_relationships), batch_size
+                            ):
+                                batch_games = games_needing_relationships[
+                                    batch_start : batch_start + batch_size
+                                ]
+
+                                # Collect IGDB IDs for this batch
+                                igdb_ids = [g.igdb_id for g in batch_games if g.igdb_id]
+                                if not igdb_ids:
+                                    continue
+
+                                # Fetch all games in batch (single API call)
+                                games_data = api_client.get_games_info_by_ids(
+                                    igdb_ids, cache_results=True
+                                )
+
+                                # Update relationships for each game
+                                for game in batch_games:
+                                    if game.igdb_id and game.igdb_id in games_data:
+                                        try:
+                                            game._update_relationships_from_data(
+                                                games_data[game.igdb_id]
+                                            )
+                                            updated_count += 1
+                                        except Exception:
+                                            error_count += 1
+
+                            summary += f"\n  ✓ Reconnected {updated_count} relationships ({error_count} errors)"
+
+                except Exception as e:
+                    summary += f"\n⚠ Error during automatic IGDB processing: {e}"
+
         return (True, summary)
 
     except Exception as e:
@@ -697,18 +938,15 @@ def delete_existing_data() -> Tuple[bool, str]:
     """
     Delete all game-related data from the database.
 
-    Preserves IGDBGameData and WikipediaGameData for reconnection when games
-    are re-imported.
+    Preserves IGDBGameData, WikipediaGameData, Company, Studio, and Genre
+    for reconnection when games are re-imported.
     """
     models_to_delete = [
         models.Platform,
         models.List,
         models.Publication,
         models.ListMembership,
-        models.Company,
-        models.Studio,
         models.Game,
-        models.Genre,
     ]
 
     with transaction.atomic():
@@ -741,6 +979,77 @@ def delete_existing_data() -> Tuple[bool, str]:
                     )
 
     return (True, f"{total} objects deleted")
+
+
+def clear_igdb_metadata() -> Tuple[bool, str]:
+    """
+    Delete all IGDB metadata records (both connected and orphaned).
+
+    This clears all IGDBGameData records and removes Company, Studio, and IGDBGenre
+    objects since they are derived from IGDB data.
+
+    Returns:
+        Tuple of (success, message)
+    """
+    with transaction.atomic():
+        # Count records before deletion
+        igdb_count = models.IGDBGameData.objects.count()
+        company_count = models.Company.objects.count()
+        studio_count = models.Studio.objects.count()
+        genre_count = models.IGDBGenre.objects.count()
+
+        # Clear primary relationships on games
+        models.Game.objects.update(primary_igdb_game_data=None)
+
+        # Clear M2M relationships before deleting objects
+        # Use through model to delete efficiently without loading all games
+        models.Game.studios.through.objects.all().delete()
+        models.Game.genres.through.objects.all().delete()
+
+        # Delete all IGDB metadata
+        models.IGDBGameData.objects.all().delete()
+
+        # Delete derived data (Company, Studio, IGDBGenre)
+        models.Company.objects.all().delete()
+        models.Studio.objects.all().delete()
+        models.IGDBGenre.objects.all().delete()
+
+    return (
+        True,
+        f"Cleared {igdb_count} IGDB records, {company_count} companies, "
+        f"{studio_count} studios, {genre_count} genres",
+    )
+
+
+def clear_wikipedia_metadata() -> Tuple[bool, str]:
+    """
+    Delete all Wikipedia metadata records and derived data (both connected and orphaned).
+
+    Returns:
+        Tuple of (success, message)
+    """
+    with transaction.atomic():
+        # Count records before deletion
+        wiki_count = models.WikipediaGameData.objects.count()
+        genre_count = models.WikipediaGenre.objects.count()
+
+        # Clear primary relationships on games
+        models.Game.objects.update(primary_wikipedia_game_data=None)
+
+        # Clear M2M relationships before deleting objects
+        # Use through model to delete efficiently without loading all games
+        models.Game.wikipedia_genres.through.objects.all().delete()
+
+        # Delete all Wikipedia metadata
+        models.WikipediaGameData.objects.all().delete()
+
+        # Delete derived data (WikipediaGenre)
+        models.WikipediaGenre.objects.all().delete()
+
+    return (
+        True,
+        f"Cleared {wiki_count} Wikipedia records, {genre_count} genres",
+    )
 
 
 def import_lists(

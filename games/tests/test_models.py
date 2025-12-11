@@ -556,7 +556,7 @@ class ModelHelpersTests(TestCase):
         self.assertEqual(str(alias_other), "Studio Alt (Studio)")
 
     def test_genre_str(self):
-        genre = models.Genre.objects.create(name="Action")
+        genre = models.IGDBGenre.objects.create(name="Action")
         self.assertEqual(str(genre), "Action")
 
     def test_game_save_normalizes_name(self):

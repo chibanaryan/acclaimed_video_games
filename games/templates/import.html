@@ -351,8 +351,12 @@
                     <div class="value">{{ counts.studios }}</div>
                 </div>
                 <div class="status-card">
-                    <div class="label">Genres</div>
-                    <div class="value">{{ counts.genres }}</div>
+                    <div class="label">IGDB Genres</div>
+                    <div class="value">{{ counts.igdb_genres }}</div>
+                </div>
+                <div class="status-card">
+                    <div class="label">Wikipedia Genres</div>
+                    <div class="value">{{ counts.wikipedia_genres }}</div>
                 </div>
                 <div class="igdb-status-card">
                     <div class="label">IGDB Metadata Records</div>
@@ -370,99 +374,15 @@
         </div>
     </div>
 
-    <!-- Quick Actions Section -->
-    <div class="card bg-base-200 shadow-xl mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">Quick Actions</h2>
-            <div class="flex flex-wrap gap-3">
-                <form method="POST" action="." class="inline-block">
-                    {% csrf_token %}
-                    <input type="hidden" name="delete" value="true">
-                    <button class="btn btn-error" onclick="return confirm('⚠️ This will delete games, lists, and platforms (preserves IGDB/Wikipedia metadata). Are you sure?');">
-                        <span class="mdi mdi-delete"></span>
-                        Delete Game Data
-                    </button>
-                </form>
-
-                {% if debug %}
-                <form method="POST" action="." class="inline-block" id="seed-data-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="seed_test_data" value="true">
-                    <button class="btn btn-success" id="seed-data-btn" title="Development only - loads bundled test files">
-                        <span class="mdi mdi-package"></span>
-                        Load Test Data (Dev)
-                    </button>
-                </form>
-                {% endif %}
-
-                <div class="flex flex-col gap-2">
-                    <div class="flex flex-col gap-1">
-                        <button id="fetch-igdb-btn" class="btn btn-info">
-                            <span class="mdi mdi-refresh"></span>
-                            Fetch IGDB Data
-                        </button>
-                        {% if igdb_counts.games_needing > 0 %}
-                            <span class="text-xs opacity-70 ml-1">
-                                Estimated time: {{ igdb_counts.estimate_seconds|format_duration }}
-                            </span>
-                        {% endif %}
-                    </div>
-                    <div class="form-control">
-                        <label class="label cursor-pointer justify-start gap-2 py-1">
-                            <input type="checkbox" id="igdb-update-relationships" class="checkbox checkbox-sm">
-                            <span class="label-text text-xs">Update developers/genres from existing metadata (no API calls)</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <div class="flex flex-col gap-1">
-                        <button id="fetch-wikipedia-btn" class="btn btn-info">
-                            <span class="mdi mdi-wikipedia"></span>
-                            Fetch Wikipedia Pages
-                        </button>
-                        {% if wikipedia_counts.games_needing > 0 %}
-                            <span class="text-xs opacity-70 ml-1">
-                                Estimated time: {{ wikipedia_counts.estimate_seconds|format_duration }}
-                                {% if not wikipedia_counts.has_auth %}
-                                    <span class="tooltip tooltip-right" data-tip="Add WIKIDATA_ACCESS_TOKEN for 2.5x faster processing">(unauthenticated)</span>
-                                {% endif %}
-                            </span>
-                        {% endif %}
-                    </div>
-                    <div class="form-control">
-                        <label class="label cursor-pointer justify-start gap-2 py-1">
-                            <input type="checkbox" id="wikipedia-force-refresh" class="checkbox checkbox-sm">
-                            <span class="label-text text-xs">Include games with existing data (force refresh)</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- IGDB Loading (initially hidden) -->
-            <div id="progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-200 rounded-lg">
-                <span class="loading loading-spinner loading-md text-primary"></span>
-                <div>
-                    <div class="font-semibold">Fetching IGDB Data...</div>
-                    <div id="progress-text" class="text-sm opacity-70">Starting...</div>
-                </div>
-            </div>
-
-            <!-- Wikipedia Loading (initially hidden) -->
-            <div id="wikipedia-progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-200 rounded-lg">
-                <span class="loading loading-spinner loading-md text-secondary"></span>
-                <div>
-                    <div class="font-semibold">Fetching Wikipedia Pages...</div>
-                    <div id="wikipedia-progress-text" class="text-sm opacity-70">Starting...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Batch Import Section -->
+    <!-- This is the primary workflow - run every time you update rankings -->
     <div class="card bg-base-200 shadow-xl mb-6">
         <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">Batch Import Files</h2>
+            <h2 class="card-title text-2xl mb-4">
+                <span class="mdi mdi-upload"></span>
+                Regular Import
+            </h2>
+            <p class="text-sm opacity-70 mb-4">Run every time you update game rankings or list data</p>
 
             <div class="alert alert-info mb-6">
                 <span class="mdi mdi-file-document"></span>
@@ -557,6 +477,13 @@
                     <button class="btn btn-ghost" type="reset">Clear</button>
                 </div>
 
+                <div class="alert alert-info mt-4">
+                    <span class="mdi mdi-information"></span>
+                    <span class="text-sm">
+                        After importing games, IGDB metadata is automatically fetched for new games and reconnected for existing games. Developer/Studio/Genre relationships are preserved across imports.
+                    </span>
+                </div>
+
                 {% if form.non_field_errors %}
                     <div class="alert alert-error mt-6">
                         <span class="mdi mdi-alert-circle"></span>
@@ -646,6 +573,210 @@
             </div>
         </div>
     </div>
+
+    <!-- Metadata Operations Section -->
+    <div class="card bg-base-200 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-4">
+                <span class="mdi mdi-database"></span>
+                Metadata Operations
+            </h2>
+            <p class="text-sm opacity-70 mb-4">Run once when first importing games, or when adding new games that need enrichment</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Fetch IGDB Data -->
+                <div class="card bg-base-300">
+                    <div class="card-body">
+                        <h3 class="card-title text-lg">
+                            <span class="mdi mdi-refresh"></span>
+                            Fetch IGDB Data
+                        </h3>
+                        <p class="text-sm opacity-70 mb-3">
+                            Fetches cover art, descriptions, developers, and genres from IGDB for games without metadata
+                        </p>
+                        <div class="flex flex-col gap-2">
+                            <button id="fetch-igdb-btn" class="btn btn-info btn-sm">
+                                <span class="mdi mdi-refresh"></span>
+                                Fetch for {{ igdb_counts.games_needing }} game{{ igdb_counts.games_needing|pluralize }}
+                            </button>
+                            {% if igdb_counts.games_needing > 0 %}
+                                <span class="text-xs opacity-70">
+                                    Estimated time: {{ igdb_counts.estimate_seconds|format_duration }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fetch Wikipedia Pages -->
+                <div class="card bg-base-300">
+                    <div class="card-body">
+                        <h3 class="card-title text-lg">
+                            <span class="mdi mdi-wikipedia"></span>
+                            Fetch Wikipedia Pages
+                        </h3>
+                        <p class="text-sm opacity-70 mb-3">
+                            Finds Wikipedia articles for games to enable genre data and additional info
+                        </p>
+                        <div class="flex flex-col gap-2">
+                            <button id="fetch-wikipedia-btn" class="btn btn-info btn-sm">
+                                <span class="mdi mdi-wikipedia"></span>
+                                Fetch for {{ wikipedia_counts.games_needing }} game{{ wikipedia_counts.games_needing|pluralize }}
+                            </button>
+                            {% if wikipedia_counts.games_needing > 0 %}
+                                <span class="text-xs opacity-70">
+                                    Estimated time: {{ wikipedia_counts.estimate_seconds|format_duration }}
+                                    {% if not wikipedia_counts.has_auth %}
+                                        <span class="tooltip tooltip-right" data-tip="Add WIKIDATA_ACCESS_TOKEN for 2.5x faster processing">(unauthenticated)</span>
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Force Refresh Options -->
+                <div class="card bg-base-300">
+                    <div class="card-body">
+                        <h3 class="card-title text-lg">
+                            <span class="mdi mdi-reload"></span>
+                            Force Refresh
+                        </h3>
+                        <p class="text-sm opacity-70 mb-3">
+                            Re-fetch metadata for ALL games, including those with existing data (rarely needed)
+                        </p>
+                        <div class="flex flex-col gap-2">
+                            <button id="fetch-wikipedia-force-btn" class="btn btn-warning btn-sm">
+                                <span class="mdi mdi-reload"></span>
+                                Refresh All Wikipedia Pages
+                            </button>
+                            <span class="text-xs opacity-70">
+                                Processes all {{ counts.games }} games
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Indicators -->
+            <!-- IGDB Loading (initially hidden) -->
+            <div id="progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-300 rounded-lg">
+                <span class="loading loading-spinner loading-md text-primary"></span>
+                <div>
+                    <div class="font-semibold">Processing IGDB Data...</div>
+                    <div id="progress-text" class="text-sm opacity-70">Starting...</div>
+                </div>
+            </div>
+
+            <!-- Wikipedia Loading (initially hidden) -->
+            <div id="wikipedia-progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-300 rounded-lg">
+                <span class="loading loading-spinner loading-md text-secondary"></span>
+                <div>
+                    <div class="font-semibold">Fetching Wikipedia Pages...</div>
+                    <div id="wikipedia-progress-text" class="text-sm opacity-70">Starting...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance & Cleanup Section -->
+    <div class="card bg-base-200 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-4">
+                <span class="mdi mdi-tools"></span>
+                Maintenance & Cleanup
+            </h2>
+            <p class="text-sm opacity-70 mb-4">Advanced operations for database maintenance</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Delete Game Data -->
+                <div class="card bg-base-300">
+                    <div class="card-body">
+                        <h3 class="card-title text-lg">
+                            <span class="mdi mdi-delete"></span>
+                            Delete Game Data
+                        </h3>
+                        <p class="text-sm opacity-70 mb-3">
+                            Deletes all games, lists, and platforms. Preserves IGDB/Wikipedia metadata and Developer/Studio/Genre objects for reconnection.
+                        </p>
+                        <form method="POST" action=".">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete" value="true">
+                            <button class="btn btn-error btn-sm" onclick="return confirm('⚠️ This will delete games, lists, and platforms (preserves metadata). Are you sure?');">
+                                <span class="mdi mdi-delete"></span>
+                                Delete Game Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Clear IGDB Metadata -->
+                <div class="card bg-base-300">
+                    <div class="card-body">
+                        <h3 class="card-title text-lg">
+                            <span class="mdi mdi-database-remove"></span>
+                            Clear IGDB Metadata
+                        </h3>
+                        <p class="text-sm opacity-70 mb-3">
+                            Deletes all IGDB records ({{ igdb_counts.total }} total, {{ igdb_counts.orphaned }} orphaned) and derived data (Companies, Studios, Genres).
+                        </p>
+                        <form method="POST" action=".">
+                            {% csrf_token %}
+                            <input type="hidden" name="clear_igdb_metadata" value="true">
+                            <button class="btn btn-warning btn-sm" onclick="return confirm('⚠️ This will delete ALL IGDB metadata including orphaned records. You will need to re-fetch IGDB data after this. Are you sure?');">
+                                <span class="mdi mdi-database-remove"></span>
+                                Clear IGDB Metadata
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Clear Wikipedia Metadata -->
+                <div class="card bg-base-300">
+                    <div class="card-body">
+                        <h3 class="card-title text-lg">
+                            <span class="mdi mdi-wikipedia"></span>
+                            Clear Wikipedia Metadata
+                        </h3>
+                        <p class="text-sm opacity-70 mb-3">
+                            Deletes all Wikipedia records ({{ wikipedia_counts.total }} total, {{ wikipedia_counts.orphaned }} orphaned) and derived data (Wikipedia Genres).
+                        </p>
+                        <form method="POST" action=".">
+                            {% csrf_token %}
+                            <input type="hidden" name="clear_wikipedia_metadata" value="true">
+                            <button class="btn btn-warning btn-sm" onclick="return confirm('⚠️ This will delete ALL Wikipedia metadata including orphaned records. You will need to re-fetch Wikipedia data after this. Are you sure?');">
+                                <span class="mdi mdi-wikipedia"></span>
+                                Clear Wikipedia Metadata
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {% if debug %}
+                <!-- Load Test Data (Dev Only) -->
+                <div class="card bg-base-300">
+                    <div class="card-body">
+                        <h3 class="card-title text-lg">
+                            <span class="mdi mdi-package"></span>
+                            Load Test Data
+                        </h3>
+                        <p class="text-sm opacity-70 mb-3">
+                            Development only - loads bundled test files from the repository.
+                        </p>
+                        <form method="POST" action="." id="seed-data-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="seed_test_data" value="true">
+                            <button class="btn btn-success btn-sm" id="seed-data-btn">
+                                <span class="mdi mdi-package"></span>
+                                Load Test Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 
 <script nonce="{{ csp_nonce }}">
@@ -666,7 +797,6 @@
 
             const progressContainer = document.getElementById('progress-container')
             const progressText = document.getElementById('progress-text')
-            const updateRelationships = document.getElementById('igdb-update-relationships').checked
 
             // Close existing EventSource if any
             if (activeEventSource) {
@@ -678,8 +808,8 @@
             progressContainer.style.display = 'flex'
             progressText.textContent = 'Starting...'
 
-            // Connect to SSE endpoint with update_relationships parameter
-            const url = '{% url "igdb-progress" %}' + (updateRelationships ? '?update_relationships=true' : '')
+            // Connect to SSE endpoint (fetch new data only)
+            const url = '{% url "igdb-progress" %}'
             console.log('Connecting to SSE endpoint:', url)
             activeEventSource = new EventSource(url)
 
@@ -761,7 +891,6 @@
 
             const progressContainer = document.getElementById('wikipedia-progress-container')
             const progressText = document.getElementById('wikipedia-progress-text')
-            const forceRefresh = document.getElementById('wikipedia-force-refresh').checked
 
             // Close existing EventSource if any
             if (activeEventSource) {
@@ -773,8 +902,8 @@
             progressContainer.style.display = 'flex'
             progressText.textContent = 'Starting...'
 
-            // Connect to SSE endpoint with force parameter
-            const url = '{% url "wikipedia-page-progress" %}' + (forceRefresh ? '?force=true' : '')
+            // Connect to SSE endpoint (fetch new data only)
+            const url = '{% url "wikipedia-page-progress" %}'
             console.log('Connecting to Wikipedia SSE endpoint:', url)
             activeEventSource = new EventSource(url)
 
@@ -849,6 +978,101 @@
                 progressContainer.style.display = 'none'
             }
         })  // End of Wikipedia button click handler
+
+        // Force Refresh All Wikipedia Pages button
+        const fetchWikipediaForceButton = document.getElementById('fetch-wikipedia-force-btn')
+        if (fetchWikipediaForceButton) {
+            fetchWikipediaForceButton.addEventListener('click', (e) => {
+                e.preventDefault()
+
+                const progressContainer = document.getElementById('wikipedia-progress-container')
+                const progressText = document.getElementById('wikipedia-progress-text')
+
+                // Close existing EventSource if any
+                if (activeEventSource) {
+                    activeEventSource.close()
+                    activeEventSource = null
+                }
+
+                // Show progress container
+                progressContainer.style.display = 'flex'
+                progressText.textContent = 'Starting Wikipedia page refresh (force mode)...'
+
+                // Start the Wikipedia fetch with force=true
+                const url = '{% url "wikipedia-page-progress" %}?force=true'
+                activeEventSource = new EventSource(url)
+
+                activeEventSource.onopen = (event) => {
+                    console.log('Wikipedia force refresh SSE connection opened successfully')
+                }
+
+                activeEventSource.onmessage = (event) => {
+                    console.log('Wikipedia force refresh SSE message received:', event.data)
+                    try {
+                        const data = JSON.parse(event.data)
+                        console.log('Parsed data:', data)
+
+                        if (data.event === 'start') {
+                            console.log(`Starting Wikipedia force refresh for ${data.total} games`)
+                            progressText.textContent = `Processing 0 / ${data.total} games (force refresh)...`
+                        } else if (data.event === 'progress') {
+                            console.log(`Progress: ${data.current}/${data.total} - ${data.game_name}`)
+                            const successInfo = data.successful !== undefined ? ` (${data.successful} found, ${data.failed} failed)` : ''
+                            progressText.textContent = `Processing ${data.current} / ${data.total} games (force refresh)${successInfo}...`
+                        } else if (data.event === 'complete') {
+                            const successInfo = data.successful !== undefined ? ` (${data.successful} found, ${data.failed} failed)` : ''
+                            progressText.textContent = `Complete! Force refreshed ${data.total} games${successInfo}.`
+
+                            activeEventSource.close()
+                            activeEventSource = null
+                            setTimeout(() => {
+                                const alert = document.createElement('div')
+                                alert.className = 'alert alert-success shadow-lg fixed top-4 right-4 w-96 z-50'
+                                const summaryText = data.successful !== undefined
+                                    ? `Found ${data.successful} pages, ${data.failed} failed`
+                                    : `Refreshed pages for ${data.total} games`
+                                alert.innerHTML = `
+                                    <span class="mdi mdi-check-circle"></span>
+                                    <span>Wikipedia force refresh completed! ${summaryText}.</span>
+                                `
+                                document.body.appendChild(alert)
+                                setTimeout(() => {
+                                    window.location.reload()
+                                }, 2000)
+                            }, 500)
+                        } else if (data.error) {
+                            activeEventSource.close()
+                            activeEventSource = null
+                            const alert = document.createElement('div')
+                            alert.className = 'alert alert-error shadow-lg fixed top-4 right-4 w-96 z-50'
+                            alert.innerHTML = `
+                                <span class="mdi mdi-alert-circle"></span>
+                                <span>Error: ${data.error}</span>
+                            `
+                            document.body.appendChild(alert)
+                            progressContainer.style.display = 'none'
+                        }
+                    } catch (e) {
+                        console.error('Error parsing Wikipedia force refresh SSE data:', e)
+                    }
+                }
+
+                activeEventSource.onerror = (error) => {
+                    console.error('Wikipedia force refresh SSE connection error:', error)
+                    activeEventSource.close()
+                    activeEventSource = null
+
+                    const alert = document.createElement('div')
+                    alert.className = 'alert alert-error shadow-lg fixed top-4 right-4 w-96 z-50'
+                    alert.innerHTML = `
+                        <span class="mdi mdi-alert-circle"></span>
+                        <span>Connection error. Check that games exist in the database.</span>
+                    `
+                    document.body.appendChild(alert)
+                    progressContainer.style.display = 'none'
+                }
+            })  // End of Wikipedia force refresh button click handler
+        }
     })  // End of DOMContentLoaded
 
     // Cleanup EventSource when user navigates away

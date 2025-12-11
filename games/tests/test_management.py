@@ -426,7 +426,7 @@ class SyncFromProdCommandTests(TestCase):
     def setUp(self):
         # Create some local data that will be cleared
         self.platform = models.Platform.objects.create(name="PC", code="PC")
-        self.genre = models.Genre.objects.create(name="Action")
+        self.genre = models.IGDBGenre.objects.create(name="Action")
         self.company = models.Company.objects.create(name="Test Dev")
         self.game = models.Game.objects.create(
             name="Local Game", rank=1, year_of_release=2020
@@ -603,7 +603,7 @@ class SyncFromProdCommandTests(TestCase):
         # Verify data was cleared (loaddata is mocked so no new data loaded)
         self.assertEqual(models.Game.objects.count(), 0)
         self.assertEqual(models.Platform.objects.count(), 0)
-        self.assertEqual(models.Genre.objects.count(), 0)
+        self.assertEqual(models.IGDBGenre.objects.count(), 0)
         self.assertEqual(models.Company.objects.count(), 0)
 
     @mock.patch("subprocess.run")

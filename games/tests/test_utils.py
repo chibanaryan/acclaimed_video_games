@@ -144,9 +144,9 @@ class ApplyGenreFilterTests(TestCase):
     """Tests for apply_genre_filter utility function."""
 
     def setUp(self):
-        self.genre_action = models.Genre.objects.create(name="Action")
-        self.genre_rpg = models.Genre.objects.create(name="RPG")
-        self.genre_puzzle = models.Genre.objects.create(name="Puzzle")
+        self.genre_action = models.IGDBGenre.objects.create(name="Action")
+        self.genre_rpg = models.IGDBGenre.objects.create(name="RPG")
+        self.genre_puzzle = models.IGDBGenre.objects.create(name="Puzzle")
 
         self.game_action = models.Game.objects.create(name="Action Game", rank=1)
         self.game_action.genres.add(self.genre_action)
@@ -398,15 +398,15 @@ class GetOrSetCacheTests(TestCase):
 
     def setUp(self):
         """Create test genres."""
-        models.Genre.objects.create(name="Action")
-        models.Genre.objects.create(name="RPG")
-        models.Genre.objects.create(name="Adventure")
+        models.IGDBGenre.objects.create(name="Action")
+        models.IGDBGenre.objects.create(name="RPG")
+        models.IGDBGenre.objects.create(name="Adventure")
 
     def test_returns_list_from_queryset(self):
         """Test that function returns list of dicts from queryset."""
         result = utils.get_or_set_cache(
             "test_genres",
-            models.Genre.objects.all(),
+            models.IGDBGenre.objects.all(),
             ["id", "name"],
             order_by="name",
         )
@@ -417,7 +417,7 @@ class GetOrSetCacheTests(TestCase):
         """Test that transform_id converts id to string."""
         result = utils.get_or_set_cache(
             "test_genres_str",
-            models.Genre.objects.all(),
+            models.IGDBGenre.objects.all(),
             ["id", "name"],
             transform_id=True,
         )
@@ -432,14 +432,14 @@ class GetOrSetCacheTests(TestCase):
         # First call should query database
         result1 = utils.get_or_set_cache(
             "test_cache_key",
-            models.Genre.objects.all(),
+            models.IGDBGenre.objects.all(),
             ["id", "name"],
         )
 
         # Second call should return cached result
         result2 = utils.get_or_set_cache(
             "test_cache_key",
-            models.Genre.objects.none(),  # Different queryset
+            models.IGDBGenre.objects.none(),  # Different queryset
             ["id", "name"],
         )
 

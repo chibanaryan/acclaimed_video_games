@@ -46,7 +46,7 @@ game_fields = [
 class GameSummarySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source="igdb_id")
     studios = IdNameSerializer(many=True)
-    genres = IdNameSerializer(many=True)
+    genres = IdNameSerializer(many=True)  # IGDB genres (not Wikipedia genres)
     platforms = IdCodeNameSerializer(many=True)
     # Delegate to primary_igdb_game_data
     igdb_artwork_id = serializers.SerializerMethodField()
@@ -191,10 +191,24 @@ class PageSerializer(serializers.ModelSerializer):
         return markdown.markdown(obj.content)
 
 
-class GenreSerializer(serializers.ModelSerializer):
+class IGDBGenreSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.Genre
+        model = models.IGDBGenre
+        fields = [
+            "id",
+            "name",
+        ]
+
+
+# Backward compatibility alias
+GenreSerializer = IGDBGenreSerializer
+
+
+class WikipediaGenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.WikipediaGenre
         fields = [
             "id",
             "name",

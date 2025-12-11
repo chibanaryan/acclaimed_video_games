@@ -664,6 +664,39 @@ class WikiGenreService:
             source_url=url,
         )
 
+    def get_genre_from_url(self, game_name: str, wikipedia_url: str) -> GenreResult:
+        """
+        Get ordered genre list from a known Wikipedia URL.
+
+        This method is optimized for use when the Wikipedia page URL is already known
+        (e.g., from WikiPageLookupService), avoiding duplicate page searches.
+
+        Args:
+            game_name: Name of the video game
+            wikipedia_url: Wikipedia article URL (e.g., "https://en.wikipedia.org/...")
+
+        Returns:
+            GenreResult with ordered genre list
+        """
+        # Scrape infobox genres from the provided URL
+        genres = self._scrape_infobox_genres(wikipedia_url)
+
+        if not genres:
+            return GenreResult(
+                game_name=game_name,
+                source=GenreSource.FAILED,
+                source_url=wikipedia_url,
+                error_message="No genre found in Wikipedia infobox",
+            )
+
+        return GenreResult(
+            game_name=game_name,
+            source=GenreSource.WIKIPEDIA,
+            primary_genre=genres[0],
+            all_genres=genres,
+            source_url=wikipedia_url,
+        )
+
     def process_games(
         self, game_names: List[str]
     ) -> tuple[List[GenreResult], int, int]:

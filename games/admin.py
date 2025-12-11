@@ -17,6 +17,18 @@ class PlatformAdmin(admin.ModelAdmin):
     list_display = ["name", "code"]
 
 
+@admin.register(models.IGDBGenre)
+class IGDBGenreAdmin(admin.ModelAdmin):
+    list_display = ["name"]
+    search_fields = ["name"]
+
+
+@admin.register(models.WikipediaGenre)
+class WikipediaGenreAdmin(admin.ModelAdmin):
+    list_display = ["name"]
+    search_fields = ["name"]
+
+
 @admin.register(models.Company)
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ["__str__", "slug"]
@@ -51,11 +63,12 @@ class GameAdmin(admin.ModelAdmin):
         "wikidata_id",
         "_igdb_data_link",
         "_wikipedia_data_link",
-        "_genres",
+        "_igdb_genres",
+        "_wikipedia_genres",
     ]
     list_filter = ["year_of_release"]
     search_fields = ["name"]
-    filter_horizontal = ["studios", "platforms", "genres"]
+    filter_horizontal = ["studios", "platforms", "genres", "wikipedia_genres"]
     inlines = [GameQuoteInline]
 
     def get_queryset(self, request: HttpRequest):
@@ -64,7 +77,7 @@ class GameAdmin(admin.ModelAdmin):
             super()
             .get_queryset(request)
             .select_related("primary_igdb_game_data", "primary_wikipedia_game_data")
-            .prefetch_related("genres")
+            .prefetch_related("genres", "wikipedia_genres")
         )
 
     def save_model(
@@ -74,10 +87,21 @@ class GameAdmin(admin.ModelAdmin):
         obj.get_igdb_data(cache_results=False)
         obj.save()
 
-    def _genres(self, obj: models.Game) -> str:
-        """Display comma-separated list of genres for the game."""
+    def _igdb_genres(self, obj: models.Game) -> str:
+        """Display comma-separated list of IGDB genres for the game."""
         # Use prefetched genres instead of values_list to avoid extra query
-        return ", ".join(genre.name for genre in obj.genres.all())
+        genres = [genre.name for genre in obj.genres.all()]
+        return ", ".join(genres) if genres else "-"
+
+    _igdb_genres.short_description = "IGDB Genres"
+
+    def _wikipedia_genres(self, obj: models.Game) -> str:
+        """Display comma-separated list of Wikipedia genres for the game."""
+        # Use prefetched genres instead of values_list to avoid extra query
+        genres = [genre.name for genre in obj.wikipedia_genres.all()]
+        return ", ".join(genres) if genres else "-"
+
+    _wikipedia_genres.short_description = "Wikipedia Genres"
 
     def _igdb_data_link(self, obj: models.Game) -> str:
         """Display link to IGDB data admin page."""
@@ -146,6 +170,7 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
         "page_title",
         "wikidata_id",
         "primary_genre",
+        "_all_genres_preview",
         "lookup_source",
         "_wikipedia_link",
         "is_primary",
@@ -162,6 +187,14 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
     ]
     raw_id_fields = ["game"]
     readonly_fields = ["fetched_at", "updated_at"]
+
+    def _all_genres_preview(self, obj: models.WikipediaGameData) -> str:
+        """Display all genres from Wikipedia."""
+        if obj.all_genres:
+            return obj.all_genres
+        return "-"
+
+    _all_genres_preview.short_description = "All Genres"
 
     def _wikipedia_link(self, obj: models.WikipediaGameData) -> str:
         """Display clickable Wikipedia URL."""

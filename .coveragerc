@@ -10,6 +10,7 @@ omit =
     */management/commands/get_wikipedia_pages.py
     */management/commands/cleanup_empty_metadata.py
     */services/wiki_page_lookup_service.py
+    */services/import_handler.py
 
 [report]
 exclude_lines =

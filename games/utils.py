@@ -26,6 +26,8 @@ from games.services.import_handler import (  # noqa: F401
     import_batch_with_progress,
     import_batch,
     delete_existing_data,
+    clear_igdb_metadata,
+    clear_wikipedia_metadata,
     import_lists,
     import_listmemberships,
     import_games,

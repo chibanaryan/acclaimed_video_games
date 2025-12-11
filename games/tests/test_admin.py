@@ -19,7 +19,7 @@ class GameAdminTests(TestCase):
         game.save.assert_called_once()
 
     def test_genres_helper_returns_joined_names(self):
-        genre = models.Genre.objects.create(name="Action")
+        genre = models.IGDBGenre.objects.create(name="Action")
         game = models.Game.objects.create(
             name="Sample",
             rank=1,
@@ -27,7 +27,7 @@ class GameAdminTests(TestCase):
             year_of_release=1990,
         )
         game.genres.add(genre)
-        value = self.admin._genres(game)
+        value = self.admin._igdb_genres(game)
         self.assertEqual(value, "Action")
 
     def test_igdb_data_link_with_data(self):
@@ -249,4 +249,36 @@ class WikipediaGameDataAdminTests(TestCase):
         )
 
         value = self.admin._wikipedia_link(wiki_data)
+        self.assertEqual(value, "-")
+
+    def test_all_genres_preview_with_genres(self):
+        """Test _all_genres_preview displays all genres."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            all_genres="Action, Adventure, RPG",
+            is_primary=True,
+        )
+
+        value = self.admin._all_genres_preview(wiki_data)
+        self.assertEqual(value, "Action, Adventure, RPG")
+
+    def test_all_genres_preview_without_genres(self):
+        """Test _all_genres_preview returns '-' when no genres."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            all_genres="",
+            is_primary=True,
+        )
+
+        value = self.admin._all_genres_preview(wiki_data)
         self.assertEqual(value, "-")

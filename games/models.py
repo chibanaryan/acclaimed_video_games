@@ -202,13 +202,33 @@ class Studio(models.Model):
         return current
 
 
-class Genre(models.Model):
-    """A video game genre"""
+class IGDBGenre(models.Model):
+    """A video game genre from IGDB"""
+
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        db_table = "games_igdbgenre"
+        ordering = ["name"]
+        verbose_name = "IGDB Genre"
+        verbose_name_plural = "IGDB Genres"
+        indexes = [
+            models.Index(fields=["name"]),
+        ]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class WikipediaGenre(models.Model):
+    """A video game genre from Wikipedia"""
 
     name = models.CharField(max_length=100, unique=True)
 
     class Meta:
         ordering = ["name"]
+        verbose_name = "Wikipedia Genre"
+        verbose_name_plural = "Wikipedia Genres"
         indexes = [
             models.Index(fields=["name"]),
         ]
@@ -429,7 +449,12 @@ class Game(models.Model):
         max_length=100, null=True, blank=True, db_index=True
     )
     slug = models.SlugField(max_length=100, null=True, blank=True, db_index=True)
-    genres = models.ManyToManyField("Genre", blank=True)
+    genres = models.ManyToManyField("IGDBGenre", blank=True)
+    wikipedia_genres = models.ManyToManyField(
+        "WikipediaGenre",
+        blank=True,
+        related_name="games_with_wikipedia_genre",
+    )
     description = models.TextField(null=True, blank=True)
     rank = models.IntegerField(db_index=True)
     year_of_release = models.PositiveSmallIntegerField(
@@ -574,26 +599,62 @@ class Game(models.Model):
                     is_primary=False
                 )
 
-            # Create or update IGDBGameData
-            igdb_game_data, created = IGDBGameData.objects.update_or_create(
-                game=self,
+            # First, check for orphaned record with same igdb_id
+            orphaned_record = IGDBGameData.objects.filter(
                 igdb_id=igdb_id_to_fetch,
-                defaults={
-                    "artwork_id": game_data.get("cover", ""),
-                    "url": game_data.get("url", ""),
-                    "description": "\n\n".join(
-                        [
-                            x
-                            for x in [
-                                game_data.get("storyline"),
-                                game_data.get("summary"),
-                            ]
-                            if x
+                game__isnull=True,
+                is_primary=True,
+            ).first()
+
+            if orphaned_record:
+                # Reconnect orphaned record
+                # (is_primary already unset above at line 573-575)
+                orphaned_record.game = self
+                orphaned_record.artwork_id = game_data.get("cover", "")
+                orphaned_record.url = game_data.get("url", "")
+                orphaned_record.description = "\n\n".join(
+                    [
+                        x
+                        for x in [
+                            game_data.get("storyline"),
+                            game_data.get("summary"),
                         ]
-                    ),
-                    "is_primary": (idx == 0),  # First record is primary
-                },
-            )
+                        if x
+                    ]
+                )
+                orphaned_record.is_primary = idx == 0  # First record is primary
+                orphaned_record.save(
+                    update_fields=[
+                        "game",
+                        "artwork_id",
+                        "url",
+                        "description",
+                        "is_primary",
+                    ]
+                )
+                igdb_game_data = orphaned_record
+                created = False
+            else:
+                # No orphaned record found, create or update
+                igdb_game_data, created = IGDBGameData.objects.update_or_create(
+                    game=self,
+                    igdb_id=igdb_id_to_fetch,
+                    defaults={
+                        "artwork_id": game_data.get("cover", ""),
+                        "url": game_data.get("url", ""),
+                        "description": "\n\n".join(
+                            [
+                                x
+                                for x in [
+                                    game_data.get("storyline"),
+                                    game_data.get("summary"),
+                                ]
+                                if x
+                            ]
+                        ),
+                        "is_primary": (idx == 0),  # First record is primary
+                    },
+                )
 
             # Set as primary on game
             if idx == 0:
@@ -611,9 +672,9 @@ class Game(models.Model):
                     ]
                 )
 
-        # Update studios and genres only from first record
+        # Update studios and IGDB genres only from first record
         if ids_to_fetch and (data is not None or api_client):
-            # Get first record data for studios/genres
+            # Get first record data for studios/IGDB genres
             if data is not None:
                 first_data = data
             else:
@@ -662,44 +723,26 @@ class Game(models.Model):
 
             genres = []
             for genre_name in first_data.get("genres"):
-                genre, created = Genre.objects.get_or_create(name=genre_name)
+                genre, created = IGDBGenre.objects.get_or_create(name=genre_name)
                 genres.append(genre)
             self.genres.set(genres)
 
         # Save only specific fields to avoid updating modified timestamp
         self.save(update_fields=["slug", "primary_igdb_game_data", "description"])
 
-    def update_igdb_relationships(self, api_client=None) -> bool:
+    def _update_relationships_from_data(self, game_data: dict) -> None:
         """
-        Update Company/Studio/Genre relationships from IGDB API without
-        modifying IGDBGameData records.
+        Update Company/Studio/IGDB Genre relationships from IGDB game data dict.
 
-        Used when games are re-imported after deletion - the IGDBGameData
-        is preserved as orphaned records, but M2M relationships need to be
-        recreated.
+        Helper method that updates M2M relationships from pre-fetched data.
+        Does not modify IGDBGameData records.
 
         Args:
-            api_client: Optional API client for dependency injection
-
-        Returns:
-            True if successful, False otherwise
+            game_data: Dict from IGDB API with studios and IGDB genres keys
         """
-        if not self.igdb_id:
-            return False
-
-        api_client = api_client or igdb.get_api()
-        if not api_client:
-            logger.warning("IGDB API unavailable; skipping update for %s", self)
-            return False
-
-        # Fetch game data from API
-        game_data = api_client.get_game_info_by_id(self.igdb_id, cache_results=True)
-        if not game_data:
-            return False
-
         # Update studios
         studios = []
-        for d in game_data["studios"]:
+        for d in game_data.get("studios", []):
             # This company is independent (no parent)
             if not d.get("parent"):
                 company, created = Company.objects.update_or_create(
@@ -737,13 +780,43 @@ class Game(models.Model):
 
         self.studios.set(studios)
 
-        # Update genres
+        # Update IGDB genres
         genres = []
-        for genre_name in game_data.get("genres"):
-            genre, created = Genre.objects.get_or_create(name=genre_name)
+        for genre_name in game_data.get("genres", []):
+            genre, created = IGDBGenre.objects.get_or_create(name=genre_name)
             genres.append(genre)
         self.genres.set(genres)
 
+    def update_igdb_relationships(self, api_client=None) -> bool:
+        """
+        Update Company/Studio/IGDB Genre relationships from IGDB API without
+        modifying IGDBGameData records.
+
+        Used when games are re-imported after deletion - the IGDBGameData
+        is preserved as orphaned records, but M2M relationships need to be
+        recreated.
+
+        Args:
+            api_client: Optional API client for dependency injection
+
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.igdb_id:
+            return False
+
+        api_client = api_client or igdb.get_api()
+        if not api_client:
+            logger.warning("IGDB API unavailable; skipping update for %s", self)
+            return False
+
+        # Fetch game data from API
+        game_data = api_client.get_game_info_by_id(self.igdb_id, cache_results=True)
+        if not game_data:
+            return False
+
+        # Update relationships from fetched data
+        self._update_relationships_from_data(game_data)
         return True
 
     def get_wikipedia_data(self, page_titles=None, wikidata_ids=None, year=None):
@@ -824,14 +897,31 @@ class Game(models.Model):
                     is_primary=False
                 )
 
+            # Capitalize first letter if lowercase, preserve rest
+            def capitalize_first(name):
+                return (
+                    name[0].upper() + name[1:] if name and name[0].islower() else name
+                )
+
+            # Capitalize genre names before storing
+            capitalized_primary = (
+                capitalize_first(result.primary_genre) if result.primary_genre else None
+            )
+            capitalized_all = (
+                [capitalize_first(g) for g in result.all_genres]
+                if result.all_genres
+                else []
+            )
+            capitalized_all_str = " | ".join(capitalized_all) if capitalized_all else ""
+
             # Create or update WikipediaGameData record
             wiki_game_data, created = WikipediaGameData.objects.update_or_create(
                 game=self,
                 page_title=page_title,
                 defaults={
                     "wikidata_id": wikidata_id_extracted,
-                    "primary_genre": result.primary_genre,
-                    "all_genres": result.all_genres_str,
+                    "primary_genre": capitalized_primary,
+                    "all_genres": capitalized_all_str,
                     "lookup_source": result.source_url,
                     "is_primary": idx == 0,  # First entry becomes primary
                 },
@@ -841,6 +931,14 @@ class Game(models.Model):
             if idx == 0:
                 self.primary_wikipedia_game_data = wiki_game_data
                 self.save(update_fields=["primary_wikipedia_game_data"])
+
+                # Create WikipediaGenre objects and link to game (only for primary)
+                if capitalized_all:
+                    wikipedia_genres = []
+                    for genre_name in capitalized_all:
+                        genre, _ = WikipediaGenre.objects.get_or_create(name=genre_name)
+                        wikipedia_genres.append(genre)
+                    self.wikipedia_genres.set(wikipedia_genres)
 
             action = "Created" if created else "Updated"
             logger.info(

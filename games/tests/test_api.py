@@ -12,8 +12,8 @@ class GameListApiTests(TestCase):
         self.client = APIClient()
         self.platform_pc = models.Platform.objects.create(code="PC", name="PC")
         self.platform_ps = models.Platform.objects.create(code="PS", name="PlayStation")
-        self.genre_action = models.Genre.objects.create(name="Action")
-        self.genre_adventure = models.Genre.objects.create(name="Adventure")
+        self.genre_action = models.IGDBGenre.objects.create(name="Action")
+        self.genre_adventure = models.IGDBGenre.objects.create(name="Adventure")
 
         developer = models.Company.objects.create(name="Studio", igdb_id=10)
         self.alias = models.Studio.objects.create(

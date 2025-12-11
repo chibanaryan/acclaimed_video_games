@@ -268,8 +268,18 @@ class PageDetailView(RetrieveAPIView):
 
 @method_decorator(cache_page(config.CACHE_TIMEOUT_24_HOURS), name="dispatch")
 class GenreListView(ListAPIView):
+    """List IGDB genres (backward compatible endpoint)"""
+
     serializer_class = serializers.GenreSerializer
-    queryset = models.Genre.objects.all()
+    queryset = models.IGDBGenre.objects.all()
+
+
+@method_decorator(cache_page(config.CACHE_TIMEOUT_24_HOURS), name="dispatch")
+class WikipediaGenreListView(ListAPIView):
+    """List Wikipedia genres"""
+
+    serializer_class = serializers.WikipediaGenreSerializer
+    queryset = models.WikipediaGenre.objects.all()
 
 
 @method_decorator(cache_page(config.CACHE_TIMEOUT_24_HOURS), name="dispatch")

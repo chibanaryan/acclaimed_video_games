@@ -13,7 +13,7 @@ from games.models import (
     Company,
     Studio,
     Game,
-    Genre,
+    IGDBGenre,
     List,
     ListMembership,
     Platform,
@@ -254,14 +254,13 @@ class GameListViewTest(TestCase):
     def test_year_counts_reflects_genre_filter(self):
         """Test that year counts reflect genre filter."""
         from django.core.cache import cache
-        from games.models import Genre
 
         # Clear only year-related caches to avoid affecting other tests
         cache.delete("game_year_stats")
         cache.delete("game_list_meta")
 
-        action = Genre.objects.create(name="ActionTest")
-        rpg = Genre.objects.create(name="RPGTest")
+        action = IGDBGenre.objects.create(name="ActionTest")
+        rpg = IGDBGenre.objects.create(name="RPGTest")
 
         # Create games with specific genres and years
         # Use years covered by setUp (1990-2019 range)
@@ -417,8 +416,8 @@ class GameSearchViewTest(TestCase):
         )
 
         # Create genres and platforms
-        self.action_genre = Genre.objects.create(name="Action")
-        self.rpg_genre = Genre.objects.create(name="RPG")
+        self.action_genre = IGDBGenre.objects.create(name="Action")
+        self.rpg_genre = IGDBGenre.objects.create(name="RPG")
         self.nes_platform = Platform.objects.create(name="NES", code="NES")
 
         self.game1.genres.add(self.action_genre, self.rpg_genre)
@@ -1303,7 +1302,7 @@ class GameDownloadCSVTest(TestCase):
 
     def setUp(self):
         # Create test games with related data
-        self.genre = Genre.objects.create(name="Action")
+        self.genre = IGDBGenre.objects.create(name="Action")
         self.platform = Platform.objects.create(name="PC", code="PC")
         dev = Company.objects.create(name="Test Dev", slug="test-dev")
         self.dev_alias = Studio.objects.create(name="Test Dev", company=dev, igdb_id=1)

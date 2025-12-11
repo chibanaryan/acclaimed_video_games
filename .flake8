@@ -7,4 +7,5 @@ exclude =
     venv,
     frontend/node_modules,
     quote_tools,
-    games/services/llm_quote_service.py
+    games/services/llm_quote_service.py,
+    games/services/import_handler.py

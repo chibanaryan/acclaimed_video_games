@@ -165,8 +165,8 @@ class ApplyGameFiltersTests(TestCase):
 
     def setUp(self):
         """Create test data."""
-        self.genre_action = models.Genre.objects.create(name="Action")
-        self.genre_rpg = models.Genre.objects.create(name="RPG")
+        self.genre_action = models.IGDBGenre.objects.create(name="Action")
+        self.genre_rpg = models.IGDBGenre.objects.create(name="RPG")
         self.platform_pc = models.Platform.objects.create(code="PC", name="PC")
         self.platform_ps5 = models.Platform.objects.create(
             code="PS5", name="PlayStation 5"
