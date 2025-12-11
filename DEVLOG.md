@@ -9,7 +9,8 @@
 - Refactored import page to use site-wide theme and navigation (extends base.html for consistency)
 - Temporarily disabled CSP middleware due to nonce mismatch in production (header nonce ≠ HTML nonce)
 - Fixed unreachable console.info in theme validation script (now properly logs invalid theme values)
-- Increased Wikipedia fetch timeout from 2 minutes to 10 minutes (prevents early termination on slow API responses)
+- Fixed Wikipedia fetch early termination by adding SSE keepalive mechanism (sends pings every 15s to prevent Heroku timeouts)
+- Increased overall timeout from 2 minutes to 30 minutes with no progress before giving up
 - Removed sidebar logo preload hints (eliminated browser warnings about unused preloaded resources)
 
 ## 2025-12-09

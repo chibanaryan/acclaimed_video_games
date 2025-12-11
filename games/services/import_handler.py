@@ -573,27 +573,40 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
 
         # Stream events as they come in from the queue
         try:
+            no_progress_count = 0
+            max_no_progress = 120  # 120 * 15s = 30 minutes max idle time
+
             while True:
                 try:
-                    # Wait for event with timeout (10 minutes per game lookup)
-                    # Longer timeout allows for slow Wikipedia/Wikidata API responses
-                    # and genre scraping without terminating the entire batch
-                    event_json = event_queue.get(timeout=600)
+                    # Wait for event with 15-second timeout for keepalive
+                    # Send keepalive pings to prevent Heroku from closing idle connections
+                    event_json = event_queue.get(timeout=15)
 
                     # None signals the end of the lookup
                     if event_json is None:
                         break
+
+                    # Reset no-progress counter on successful event
+                    no_progress_count = 0
 
                     # Yield the event in SSE format with padding to force flush
                     # Adding whitespace ensures the web server doesn't
                     # buffer the response
                     yield f"data: {event_json}\n\n" + (" " * 2048) + "\n"
                 except queue.Empty:
-                    # Timeout waiting for events
-                    error_msg = "Lookup timeout - no progress for 10 minutes"
-                    error_data = json.dumps({"event": "error", "error": error_msg})
-                    yield f"data: {error_data}\n\n"
-                    break
+                    # No event in 15 seconds - send keepalive ping
+                    no_progress_count += 1
+
+                    if no_progress_count >= max_no_progress:
+                        # 30 minutes with no progress - likely stalled
+                        error_msg = "Lookup timeout - no progress for 30 minutes"
+                        error_data = json.dumps({"event": "error", "error": error_msg})
+                        yield f"data: {error_data}\n\n"
+                        break
+
+                    # Send keepalive comment to prevent connection timeout
+                    # SSE comments (lines starting with :) are ignored by client
+                    yield ": keepalive\n\n"
         except GeneratorExit:  # pragma: no cover
             # Client disconnected - signal the lookup thread to stop
             stop_event.set()
