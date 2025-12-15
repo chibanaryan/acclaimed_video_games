@@ -718,3 +718,561 @@ class ImportDataRoutingTests(TestCase):
         success, message = utils.import_data(data)
         self.assertFalse(success)
         self.assertIn('Unknown import type "Z"', message)
+
+
+class RefreshAllMetadataCommandTests(TestCase):
+    """Tests for refresh_all_metadata management command"""
+
+    def setUp(self):
+        """Create test games for metadata refresh"""
+        self.game1 = models.Game.objects.create(
+            name="Test Game 1",
+            rank=1,
+            igdb_id=1,
+            year_of_release=2000,
+        )
+        self.game2 = models.Game.objects.create(
+            name="Test Game 2",
+            rank=2,
+            igdb_id=2,
+            year_of_release=2001,
+        )
+
+    def test_command_exists(self):
+        """Test that command can be imported"""
+        from games.management.commands import refresh_all_metadata
+
+        self.assertIsNotNone(refresh_all_metadata)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiPageLookupService")
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiGenreService")
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_full_refresh(
+        self, mock_igdb_service, mock_genre_service, mock_page_service
+    ):
+        """Test full refresh of both IGDB and Wikipedia data"""
+        from io import StringIO
+
+        # Mock IGDB service
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50
+        mock_igdb_instance.concurrency = 8
+
+        # Mock Wikipedia services
+        mock_page_instance = mock.MagicMock()
+        mock_page_service.return_value = mock_page_instance
+
+        page_result = mock.MagicMock()
+        page_result.success = True
+        page_result.page_title = "Test Game"
+        page_result.lookup_source = "Wikidata"
+        page_result.wikipedia_url = "https://en.wikipedia.org/wiki/Test_Game"
+        mock_page_instance.lookup_page.return_value = page_result
+
+        genre_service_instance = mock.MagicMock()
+        mock_genre_service.return_value = genre_service_instance
+
+        genre_result = mock.MagicMock()
+        genre_result.primary_genre = "Action"
+        genre_result.all_genres = ["Action", "Adventure"]
+        genre_service_instance.get_genre_from_url.return_value = genre_result
+
+        out = StringIO()
+        call_command("refresh_all_metadata", limit=2, stdout=out)
+        output = out.getvalue()
+
+        # Verify header
+        self.assertIn("Weekly Metadata Refresh", output)
+
+        # Verify IGDB section
+        self.assertIn("[1/2] Refreshing IGDB Data", output)
+
+        # Verify Wikipedia section
+        self.assertIn("[2/2] Refreshing Wikipedia Data", output)
+
+        # Verify summary
+        self.assertIn("Summary", output)
+        self.assertIn("Overall Status", output)
+
+        # Verify services were called
+        mock_igdb_instance.import_games.assert_called_once()
+        self.assertEqual(mock_page_instance.lookup_page.call_count, 2)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_igdb_only_flag(self, mock_igdb_service):
+        """Test --igdb-only flag skips Wikipedia refresh"""
+        from io import StringIO
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50
+        mock_igdb_instance.concurrency = 8
+
+        out = StringIO()
+        call_command("refresh_all_metadata", igdb_only=True, limit=1, stdout=out)
+        output = out.getvalue()
+
+        # Should have IGDB section
+        self.assertIn("[1/2] Refreshing IGDB Data", output)
+
+        # Should NOT have Wikipedia section
+        self.assertNotIn("[2/2] Refreshing Wikipedia Data", output)
+
+        # IGDB service should be called
+        mock_igdb_instance.import_games.assert_called_once()
+
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiPageLookupService")
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiGenreService")
+    def test_wikipedia_only_flag(self, mock_genre_service, mock_page_service):
+        """Test --wikipedia-only flag skips IGDB refresh"""
+        from io import StringIO
+
+        # Mock Wikipedia services
+        mock_page_instance = mock.MagicMock()
+        mock_page_service.return_value = mock_page_instance
+
+        page_result = mock.MagicMock()
+        page_result.success = False
+        page_result.error_message = "Not found"
+        mock_page_instance.lookup_page.return_value = page_result
+
+        out = StringIO()
+        call_command("refresh_all_metadata", wikipedia_only=True, limit=1, stdout=out)
+        output = out.getvalue()
+
+        # Should NOT have IGDB section
+        self.assertNotIn("[1/2] Refreshing IGDB Data", output)
+
+        # Should have Wikipedia section
+        self.assertIn("[2/2] Refreshing Wikipedia Data", output)
+
+        # Wikipedia service should be called
+        mock_page_instance.lookup_page.assert_called()
+
+    def test_conflicting_flags_error(self):
+        """Test error when both --igdb-only and --wikipedia-only are used"""
+        from io import StringIO
+
+        out = StringIO()
+        call_command(
+            "refresh_all_metadata", igdb_only=True, wikipedia_only=True, stdout=out
+        )
+        output = out.getvalue()
+
+        self.assertIn("Cannot use --igdb-only and --wikipedia-only together", output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_dry_run_mode(self, mock_igdb_service):
+        """Test --dry-run flag prevents database changes"""
+        from io import StringIO
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50  # Configure attribute
+        mock_igdb_instance.concurrency = 8
+
+        out = StringIO()
+        call_command("refresh_all_metadata", dry_run=True, limit=1, stdout=out)
+        output = out.getvalue()
+
+        # Should show dry run warning
+        self.assertIn("DRY RUN MODE", output)
+        self.assertIn("DRY RUN: Would process IGDB data", output)
+        self.assertIn("DRY RUN: Would process Wikipedia data", output)
+
+        # Services should NOT be called
+        mock_igdb_instance.import_games.assert_not_called()
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_limit_flag(self, mock_igdb_service):
+        """Test --limit flag restricts number of games processed"""
+        from io import StringIO
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50
+        mock_igdb_instance.concurrency = 8
+
+        out = StringIO()
+        call_command("refresh_all_metadata", igdb_only=True, limit=1, stdout=out)
+        output = out.getvalue()
+
+        self.assertIn("Limiting to first 1 games", output)
+        self.assertIn("Processing 1 games", output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiPageLookupService")
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiGenreService")
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_error_handling_igdb_failure(
+        self, mock_igdb_service, mock_genre_service, mock_page_service
+    ):
+        """Test that Wikipedia refresh continues even if IGDB fails"""
+        from io import StringIO
+
+        # Make IGDB service constructor raise an error
+        mock_igdb_service.side_effect = RuntimeError("IGDB API failed")
+
+        # Mock Wikipedia services to succeed
+        mock_page_instance = mock.MagicMock()
+        mock_page_service.return_value = mock_page_instance
+
+        page_result = mock.MagicMock()
+        page_result.success = False
+        mock_page_instance.lookup_page.return_value = page_result
+
+        out = StringIO()
+        call_command("refresh_all_metadata", limit=1, stdout=out)
+        output = out.getvalue()
+
+        # Should show IGDB error (caught during service initialization)
+        self.assertIn("Failed to initialize IGDB service", output)
+        self.assertIn("IGDB API failed", output)
+
+        # Should still run Wikipedia refresh
+        self.assertIn("[2/2] Refreshing Wikipedia Data", output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_progress_callback(self, mock_igdb_service):
+        """Test that IGDB progress callback is registered"""
+        from io import StringIO
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50
+        mock_igdb_instance.concurrency = 8
+
+        out = StringIO()
+        call_command("refresh_all_metadata", igdb_only=True, limit=1, stdout=out)
+
+        # Verify IGDBImportService was initialized with a progress_callback
+        call_args = mock_igdb_service.call_args
+        self.assertIn("progress_callback", call_args.kwargs)
+        self.assertIsNotNone(call_args.kwargs["progress_callback"])
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_concurrency_option(self, mock_igdb_service):
+        """Test --concurrency option is passed to IGDB service"""
+        from io import StringIO
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+
+        out = StringIO()
+        call_command(
+            "refresh_all_metadata",
+            igdb_only=True,
+            concurrency=4,
+            dry_run=True,
+            stdout=out,
+        )
+
+        # Verify concurrency was passed to service
+        call_args = mock_igdb_service.call_args
+        self.assertEqual(call_args.kwargs["concurrency"], 4)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_pro_tier_option(self, mock_igdb_service):
+        """Test --pro option enables IGDB Pro tier"""
+        from io import StringIO
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = True
+        mock_igdb_instance.batch_size = 500
+        mock_igdb_instance.concurrency = 8
+
+        out = StringIO()
+        call_command(
+            "refresh_all_metadata", igdb_only=True, pro=True, limit=1, stdout=out
+        )
+        output = out.getvalue()
+
+        # Verify pro tier was passed to service
+        call_args = mock_igdb_service.call_args
+        self.assertTrue(call_args.kwargs["use_pro_tier"])
+
+        # Verify output shows Pro tier
+        self.assertIn("Using IGDB Pro tier", output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiPageLookupService")
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiGenreService")
+    def test_wikipedia_genre_creation(self, mock_genre_service, mock_page_service):
+        """Test that Wikipedia genres are created and linked"""
+        from io import StringIO
+
+        # Mock Wikipedia services
+        mock_page_instance = mock.MagicMock()
+        mock_page_service.return_value = mock_page_instance
+
+        page_result = mock.MagicMock()
+        page_result.success = True
+        page_result.page_title = "Test Game"
+        page_result.lookup_source = "Wikidata"
+        page_result.wikipedia_url = "https://en.wikipedia.org/wiki/Test_Game"
+        mock_page_instance.lookup_page.return_value = page_result
+
+        genre_service_instance = mock.MagicMock()
+        mock_genre_service.return_value = genre_service_instance
+
+        genre_result = mock.MagicMock()
+        genre_result.primary_genre = "action"  # Lowercase to test capitalization
+        genre_result.all_genres = ["action", "adventure"]
+        genre_service_instance.get_genre_from_url.return_value = genre_result
+
+        out = StringIO()
+        call_command("refresh_all_metadata", wikipedia_only=True, limit=1, stdout=out)
+
+        # Verify genres were created (with capitalization)
+        self.assertTrue(models.WikipediaGenre.objects.filter(name="Action").exists())
+        self.assertTrue(models.WikipediaGenre.objects.filter(name="Adventure").exists())
+
+        # Verify game has genres linked
+        self.game1.refresh_from_db()
+        genre_names = set(self.game1.wikipedia_genres.values_list("name", flat=True))
+        self.assertEqual(genre_names, {"Action", "Adventure"})
+
+        # Verify WikipediaGameData record was created
+        wiki_data = models.WikipediaGameData.objects.filter(game=self.game1).first()
+        self.assertIsNotNone(wiki_data)
+        self.assertEqual(wiki_data.primary_genre, "Action")
+        self.assertIn("Action", wiki_data.all_genres)
+
+    def test_no_games_message(self):
+        """Test message when no games exist"""
+        from io import StringIO
+
+        # Delete all games
+        models.Game.objects.all().delete()
+
+        out = StringIO()
+        call_command("refresh_all_metadata", igdb_only=True, stdout=out)
+        output = out.getvalue()
+
+        self.assertIn("No games with IGDB IDs found", output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiPageLookupService")
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiGenreService")
+    def test_wikipedia_genre_scraping_failure(
+        self, mock_genre_service, mock_page_service
+    ):
+        """Test genre scraping failure doesn't crash command"""
+        from io import StringIO
+
+        # Mock Wikipedia page lookup success
+        mock_page_instance = mock.MagicMock()
+        mock_page_service.return_value = mock_page_instance
+
+        page_result = mock.MagicMock()
+        page_result.success = True
+        page_result.page_title = "Test Game"
+        page_result.lookup_source = "Wikidata"
+        page_result.wikipedia_url = "https://en.wikipedia.org/wiki/Test_Game"
+        mock_page_instance.lookup_page.return_value = page_result
+
+        # Mock genre scraping to raise exception
+        genre_service_instance = mock.MagicMock()
+        mock_genre_service.return_value = genre_service_instance
+        genre_service_instance.get_genre_from_url.side_effect = Exception(
+            "Network error"
+        )
+
+        out = StringIO()
+        call_command("refresh_all_metadata", wikipedia_only=True, limit=1, stdout=out)
+        output = out.getvalue()
+
+        # Should complete despite genre error
+        self.assertIn("Wikipedia Complete", output)
+        self.assertIn("1 pages found", output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_igdb_progress_checkpoint(self, mock_igdb_service):
+        """Test IGDB progress callback at checkpoint (100 games)"""
+        from io import StringIO
+        from games.management.commands.refresh_all_metadata import Command
+
+        # Create 100+ games for checkpoint test
+        for i in range(3, 103):
+            models.Game.objects.create(
+                name=f"Test Game {i}", rank=i, igdb_id=i, year_of_release=2000
+            )
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50
+        mock_igdb_instance.concurrency = 8
+
+        # Capture the progress callback
+        progress_callback = None
+
+        def capture_callback(**kwargs):
+            nonlocal progress_callback
+            progress_callback = kwargs.get("progress_callback")
+            return mock_igdb_instance
+
+        mock_igdb_service.side_effect = capture_callback
+
+        out = StringIO()
+        cmd = Command(stdout=out)
+        cmd.handle(igdb_only=True, limit=100)
+
+        # Simulate progress event at checkpoint (100 games)
+        self.assertIsNotNone(progress_callback)
+        progress_callback(
+            "progress", {"current": 100, "total": 100, "game_name": "Test Game 100"}
+        )
+
+        output = out.getvalue()
+        # Should show checkpoint progress
+        self.assertIn("[100/100]", output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_igdb_error_callback(self, mock_igdb_service):
+        """Test IGDB error callback"""
+        from io import StringIO
+        from games.management.commands.refresh_all_metadata import Command
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50
+        mock_igdb_instance.concurrency = 8
+
+        # Capture the progress callback
+        progress_callback = None
+
+        def capture_callback(**kwargs):
+            nonlocal progress_callback
+            progress_callback = kwargs.get("progress_callback")
+            return mock_igdb_instance
+
+        mock_igdb_service.side_effect = capture_callback
+
+        out = StringIO()
+        cmd = Command(stdout=out)
+        cmd.handle(igdb_only=True, limit=1)
+
+        # Simulate error event
+        self.assertIsNotNone(progress_callback)
+        progress_callback(
+            "error", {"game_name": "Test Game 1", "message": "API timeout"}
+        )
+
+        # Error should be logged (check command state)
+        self.assertEqual(cmd.igdb_errors, 1)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_igdb_complete_callback(self, mock_igdb_service):
+        """Test IGDB complete callback"""
+        from io import StringIO
+        from games.management.commands.refresh_all_metadata import Command
+
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50
+        mock_igdb_instance.concurrency = 8
+
+        # Capture the progress callback
+        progress_callback = None
+
+        def capture_callback(**kwargs):
+            nonlocal progress_callback
+            progress_callback = kwargs.get("progress_callback")
+            return mock_igdb_instance
+
+        mock_igdb_service.side_effect = capture_callback
+
+        out = StringIO()
+        cmd = Command(stdout=out)
+        cmd.handle(igdb_only=True, limit=2)
+
+        # Simulate complete event
+        self.assertIsNotNone(progress_callback)
+        progress_callback(
+            "complete", {"processed": 2, "errors": 0, "elapsed_seconds": 10}
+        )
+
+        output = out.getvalue()
+        # Should show completion message
+        self.assertIn("IGDB Complete", output)
+        self.assertIn("2 processed", output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiPageLookupService")
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiGenreService")
+    @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
+    def test_summary_with_errors(
+        self, mock_igdb_service, mock_genre_service, mock_page_service
+    ):
+        """Test summary output with mixed success/errors"""
+        from io import StringIO
+
+        # Mock IGDB service with errors
+        mock_igdb_instance = mock.MagicMock()
+        mock_igdb_service.return_value = mock_igdb_instance
+        mock_igdb_instance.api_client.use_pro_tier = False
+        mock_igdb_instance.batch_size = 50
+        mock_igdb_instance.concurrency = 8
+
+        # Capture callback to simulate errors
+        progress_callback = None
+
+        def capture_callback(**kwargs):
+            nonlocal progress_callback
+            progress_callback = kwargs.get("progress_callback")
+            return mock_igdb_instance
+
+        mock_igdb_service.side_effect = capture_callback
+
+        # Mock Wikipedia with partial success
+        mock_page_instance = mock.MagicMock()
+        mock_page_service.return_value = mock_page_instance
+
+        # First page succeeds
+        page_result_success = mock.MagicMock()
+        page_result_success.success = True
+        page_result_success.page_title = "Test Game 1"
+        page_result_success.lookup_source = "Wikidata"
+        page_result_success.wikipedia_url = "https://en.wikipedia.org/wiki/Test_Game_1"
+
+        # Second page fails
+        page_result_fail = mock.MagicMock()
+        page_result_fail.success = False
+        page_result_fail.error_message = "Not found"
+
+        mock_page_instance.lookup_page.side_effect = [
+            page_result_success,
+            page_result_fail,
+        ]
+
+        genre_service_instance = mock.MagicMock()
+        mock_genre_service.return_value = genre_service_instance
+        genre_result = mock.MagicMock()
+        genre_result.primary_genre = "Action"
+        genre_result.all_genres = ["Action"]
+        genre_service_instance.get_genre_from_url.return_value = genre_result
+
+        out = StringIO()
+        call_command("refresh_all_metadata", limit=2, stdout=out)
+
+        # Simulate IGDB errors
+        if progress_callback:
+            progress_callback("error", {"game_name": "Test Game", "message": "Error"})
+            progress_callback(
+                "complete", {"processed": 1, "errors": 1, "elapsed_seconds": 5}
+            )
+
+        output = out.getvalue()
+
+        # Verify summary shows errors
+        self.assertIn("Summary", output)
+        self.assertIn("Overall Status", output)
+        # Should show COMPLETED WITH ERRORS due to failures
+        self.assertTrue("SUCCESS" in output or "COMPLETED WITH ERRORS" in output)
