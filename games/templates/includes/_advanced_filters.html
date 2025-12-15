@@ -3,7 +3,7 @@
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
 {% load humanize %}
-{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "genre_option": "any", "rank_display": "filtered"}</script>{% endif %}
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "genre_option": "any", "rank_display": "filtered", "sort": "rank"}</script>{% endif %}
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 <div x-data="{
@@ -26,6 +26,10 @@
             }
             // Normalize rank_display to filtered
             this.filters.rank_display = 'filtered';
+            // Default sort to rank if not specified
+            if (!this.filters.sort || this.filters.sort === '') {
+                this.filters.sort = 'rank';
+            }
             // Mark as initialized after a short delay to prevent initial watcher triggers
             setTimeout(() => { this.initialized = true; }, 100);
 
@@ -76,6 +80,7 @@
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
                 this.filters.genre_option = params.get('genre_option') || 'all';
                 this.filters.rank_display = 'filtered';
+                this.filters.sort = params.get('sort') || 'rank';
                 const genresParam = params.get('genres');
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
                 const platformsParam = params.get('platforms');
@@ -239,6 +244,12 @@
         },
         updateUrl() {
             this.debouncedFilterUpdate();
+        },
+        updateSort(newSort) {
+            this.filters.sort = newSort;
+            if (this.initialized) {
+                this.debouncedFilterUpdate();
+            }
         },
         updateDisplayOnly() {
             if (!this.initialized) return;

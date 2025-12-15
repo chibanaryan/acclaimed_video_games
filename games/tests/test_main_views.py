@@ -559,6 +559,64 @@ class GameSearchViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context["highlight"])
 
+    def test_sort_by_rank_default(self):
+        """Test that default sort is by rank."""
+        response = self.client.get(reverse("games-list"))
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should be sorted by rank (1, 2, 50)
+        self.assertEqual(games[0], self.game1)  # rank 1
+        self.assertEqual(games[1], self.game3)  # rank 2
+        self.assertEqual(games[2], self.game2)  # rank 50
+
+    def test_sort_by_year(self):
+        """Test sorting by year of release."""
+        response = self.client.get(reverse("games-list") + "?sort=year")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should be sorted by year (1985, 1986, 1987)
+        self.assertEqual(games[0], self.game3)  # 1985
+        self.assertEqual(games[1], self.game1)  # 1986
+        self.assertEqual(games[2], self.game2)  # 1987
+
+    def test_sort_by_name(self):
+        """Test sorting alphabetically by name."""
+        response = self.client.get(reverse("games-list") + "?sort=name")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should be sorted alphabetically
+        self.assertEqual(games[0], self.game3)  # Super Mario Bros
+        self.assertEqual(games[1], self.game1)  # The Legend of Zelda
+        self.assertEqual(games[2], self.game2)  # Zelda II
+
+    def test_sort_with_filters(self):
+        """Test that sort persists with genre and platform filters."""
+        response = self.client.get(
+            reverse("games-list")
+            + f"?sort=year&genres={self.rpg_genre.id}&platforms={self.nes_platform.id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should find game1 (has both RPG genre and NES platform)
+        self.assertIn(self.game1, games)
+        # Verify sort parameter is in context
+        self.assertEqual(response.context["filters"]["sort"], "year")
+
+    def test_sort_parameter_in_context(self):
+        """Test that sort parameter is passed to template context."""
+        response = self.client.get(reverse("games-list") + "?sort=year")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["filters"]["sort"], "year")
+
+    def test_sort_defaults_to_rank_when_invalid(self):
+        """Test that invalid sort value falls back to rank."""
+        response = self.client.get(reverse("games-list") + "?sort=invalid")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should fall back to rank sorting
+        self.assertEqual(games[0], self.game1)  # rank 1
+        self.assertEqual(games[1], self.game3)  # rank 2
+
 
 class GameSearchLoadMoreTest(TestCase):
     """Test the Load More functionality in game search."""

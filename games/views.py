@@ -494,7 +494,16 @@ class GameSearchView(RobustPaginationMixin, ListView):
             platform_ids = [int(x) for x in platforms.split(",")]
             qs = utils.apply_platform_filter(qs, platform_ids)
 
-        return qs.distinct().order_by("rank")
+        # Sort order
+        sort = self.request.GET.get("sort", "rank")
+
+        # Apply sorting
+        if sort == "year":
+            return qs.distinct().order_by("year_of_release", "rank")
+        elif sort == "name":
+            return qs.distinct().order_by("name")
+        else:  # Default to rank
+            return qs.distinct().order_by("rank")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -551,6 +560,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             "platforms": [],
             "genre_option": self.request.GET.get("genre_option", "all"),
             "rank_display": "filtered",
+            "sort": self.request.GET.get("sort", "rank"),
             # Keep legacy params for context
             "year": year_param,
             "decade": decade_param,
@@ -587,6 +597,12 @@ class GameSearchView(RobustPaginationMixin, ListView):
                 **(
                     {"genre_option": filters["genre_option"]}
                     if self.request.GET.get("genre_option")
+                    else {}
+                ),
+                **(
+                    {"sort": filters["sort"]}
+                    if self.request.GET.get("sort")
+                    and self.request.GET.get("sort") != "rank"
                     else {}
                 ),
             }

@@ -219,6 +219,7 @@ function buildFilterParams(filters, options = {}) {
         if (platformIds.length > 0) params.set('platforms', platformIds.join(','));
     }
     if (filters.genre_option) params.set('genre_option', filters.genre_option);
+    if (filters.sort && filters.sort !== 'rank') params.set('sort', filters.sort);
 
     return params;
 }

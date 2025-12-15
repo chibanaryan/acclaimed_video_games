@@ -1,5 +1,12 @@
 # Developer Log
 
+## 2025-12-15
+
+- Added sorting options (Rank, Release Year, Alphabetical) to Rankings page
+- Server-side implementation with URL parameter state management for persistence
+- Responsive layout with separate mobile/tablet/desktop dropdown positions
+- Added comprehensive test coverage for all sorting modes and filter combinations
+
 ## 2025-12-14
 
 - Fixed critical bug where metadata refresh cleared game slugs (997 games affected)
