@@ -79,10 +79,28 @@ class Command(BaseCommand):
             action="store_true",
             help="Use IGDB Pro tier (3000 req/sec vs 4 req/sec)",
         )
+        parser.add_argument(
+            "--weekly",
+            action="store_true",
+            help=(
+                "Only run on Sundays (for daily Heroku Scheduler jobs). "
+                "Exits silently on other days."
+            ),
+        )
 
     def handle(self, *args, **options):
         """Main command handler - orchestrates IGDB and Wikipedia refreshes."""
         self.start_time = time.time()
+
+        # Check if weekly flag is set and today is not Sunday
+        if options.get("weekly"):
+            # 6 = Sunday in Python's weekday() (0=Monday, 6=Sunday)
+            if datetime.now().weekday() != 6:
+                self.stdout.write(
+                    f"Skipping: Today is {datetime.now().strftime('%A')} "
+                    "(weekly mode only runs on Sunday)"
+                )
+                return
 
         # Validate flags
         if options.get("igdb_only") and options.get("wikipedia_only"):
