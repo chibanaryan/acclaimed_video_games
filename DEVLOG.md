@@ -7,6 +7,7 @@
 - Added regression tests to prevent future slug clearing during IGDB updates
 - Updated favicon to black outline version (32x32 square) to prevent squishing in browser tabs
 - Fixed social media link preview to use white background (better contrast on dark-themed platforms)
+- Fixed studio filter data structure to map only direct games (not descendants) for proper hierarchical filtering
 
 ## 2025-12-10
 

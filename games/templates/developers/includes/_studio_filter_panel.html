@@ -27,8 +27,10 @@
         {% for studio in studios_flat %}
         <label class="studio-tree-item" style="--level: {{ studio.level }};">
             <input type="checkbox"
+                   data-studio-id="{{ studio.id }}"
                    :checked="selectedStudioIds.has({{ studio.id }})"
                    @change="toggleStudio({{ studio.id }}, {{ studio.child_ids|safe }})"
+                   x-effect="$el.indeterminate = isIndeterminate({{ studio.id }}, {{ studio.child_ids|safe }})"
                    class="checkbox checkbox-sm checkbox-primary flex-shrink-0">
             <span class="text-sm flex-1">{{ studio.name }}</span>
             <span class="text-xs text-base-content/50">{{ studio.game_ids|length }}</span>

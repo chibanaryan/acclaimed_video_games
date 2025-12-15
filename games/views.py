@@ -998,25 +998,11 @@ class CompanyDetailView(DetailView):
         context["all_games"] = all_games
 
         # Build studio -> game IDs mapping for Alpine.js
+        # Each studio maps to ONLY its direct games (not descendants)
+        # JavaScript handles hierarchical selection by checking/unchecking children
         studio_game_map = {}
         for studio in studios_flat:
-            # Collect game IDs from this studio and all descendants
-            def collect_studio_game_ids(studio_id, studios_flat_list):
-                ids = set()
-                for s in studios_flat_list:
-                    if s["id"] == studio_id:
-                        ids.update(s["game_ids"])
-                        # Add games from all children recursively
-                        for child_id in s["child_ids"]:
-                            ids.update(
-                                collect_studio_game_ids(child_id, studios_flat_list)
-                            )
-                        break
-                return list(ids)
-
-            studio_game_map[studio["id"]] = collect_studio_game_ids(
-                studio["id"], studios_flat
-            )
+            studio_game_map[studio["id"]] = studio["game_ids"]
 
         # Build studio -> child IDs mapping for Alpine.js
         studio_child_map = {s["id"]: s["child_ids"] for s in studios_flat}

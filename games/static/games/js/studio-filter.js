@@ -92,13 +92,18 @@ function studioFilter() {
             // Create a new Set to trigger Alpine reactivity
             const newSelection = new Set(this.selectedStudioIds);
             const isSelected = newSelection.has(studioId);
+            const isIndeterminate = !isSelected && this.isIndeterminate(studioId, childIds);
 
             if (isSelected) {
-                // Uncheck studio + all children recursively
+                // Checked → Unchecked: Uncheck studio + all children recursively
                 newSelection.delete(studioId);
                 this.uncheckChildrenInSet(newSelection, childIds);
+            } else if (isIndeterminate) {
+                // Indeterminate → Checked: Check studio + all children recursively
+                newSelection.add(studioId);
+                this.checkChildrenInSet(newSelection, childIds);
             } else {
-                // Check studio + all children recursively
+                // Unchecked → Checked: Check studio + all children recursively
                 newSelection.add(studioId);
                 this.checkChildrenInSet(newSelection, childIds);
             }
@@ -106,6 +111,7 @@ function studioFilter() {
             // Assign new Set to trigger reactivity
             this.selectedStudioIds = newSelection;
             this.updateURL();
+            this.updateIndeterminateStates();
         },
 
         /**
@@ -141,6 +147,7 @@ function studioFilter() {
             });
             this.selectedStudioIds = allIds;
             this.updateURL();
+            this.updateIndeterminateStates();
         },
 
         /**
@@ -150,6 +157,49 @@ function studioFilter() {
             // Create a new empty Set to trigger Alpine reactivity
             this.selectedStudioIds = new Set();
             this.updateURL();
+            this.updateIndeterminateStates();
+        },
+
+        /**
+         * Check if a studio should be in indeterminate state
+         * Returns true if some (but not all) descendants are selected
+         */
+        isIndeterminate(studioId, childIds) {
+            if (childIds.length === 0) return false;
+
+            // Get all descendant IDs (children + their descendants recursively)
+            const getAllDescendants = (ids) => {
+                const descendants = new Set();
+                ids.forEach(id => {
+                    descendants.add(id);
+                    const grandchildIds = this.studioChildMap[id] || [];
+                    getAllDescendants(grandchildIds).forEach(d => descendants.add(d));
+                });
+                return descendants;
+            };
+
+            const allDescendants = getAllDescendants(childIds);
+            if (allDescendants.size === 0) return false;
+
+            // Count how many descendants are selected
+            let selectedCount = 0;
+            allDescendants.forEach(id => {
+                if (this.selectedStudioIds.has(id)) {
+                    selectedCount++;
+                }
+            });
+
+            // Indeterminate if some (but not all) descendants are selected
+            return selectedCount > 0 && selectedCount < allDescendants.size;
+        },
+
+        /**
+         * Update indeterminate states for all checkboxes
+         * Note: With x-effect in the template, this is now handled reactively by Alpine.js
+         * Keeping this method for backwards compatibility but it's no longer needed
+         */
+        updateIndeterminateStates() {
+            // No-op: Alpine.js x-effect handles this now
         },
 
         /**
@@ -190,8 +240,11 @@ function studioFilter() {
                     const studioId = parseInt(match[1]);
                     const gameId = match[2] ? parseInt(match[2]) : null;
 
-                    // Select the studio
-                    this.selectedStudioIds = new Set([studioId]);
+                    // Select the studio and all its children (same as manual click)
+                    const newSelection = new Set([studioId]);
+                    const childIds = this.studioChildMap[studioId] || [];
+                    this.checkChildrenInSet(newSelection, childIds);
+                    this.selectedStudioIds = newSelection;
 
                     // If game ID is present, scroll to and highlight it
                     if (gameId) {
@@ -222,11 +275,13 @@ function studioFilter() {
                 } else {
                     this.selectedStudioIds = new Set();
                 }
+                this.updateIndeterminateStates();
             });
 
             // Sort games on initial load
             this.$nextTick(() => {
                 this.sortGames();
+                this.updateIndeterminateStates();
             });
         }
     };
