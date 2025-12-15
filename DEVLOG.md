@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2025-12-14
+
+- Updated favicon to black outline version (32x32 square) to prevent squishing in browser tabs
+
 ## 2025-12-10
 
 - Added fetch_wikipedia_metadata management command (combines page lookup + genre scraping in one command)
