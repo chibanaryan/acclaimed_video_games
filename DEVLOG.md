@@ -3,6 +3,7 @@
 ## 2025-12-14
 
 - Updated favicon to black outline version (32x32 square) to prevent squishing in browser tabs
+- Fixed social media link preview to use white background (better contrast on dark-themed platforms)
 
 ## 2025-12-10
 
