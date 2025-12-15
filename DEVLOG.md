@@ -2,6 +2,9 @@
 
 ## 2025-12-14
 
+- Fixed critical bug where metadata refresh cleared game slugs (997 games affected)
+- Updated slug generation logic to preserve existing slugs when IGDB returns None/empty
+- Added regression tests to prevent future slug clearing during IGDB updates
 - Updated favicon to black outline version (32x32 square) to prevent squishing in browser tabs
 - Fixed social media link preview to use white background (better contrast on dark-themed platforms)
 

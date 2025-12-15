@@ -1039,3 +1039,76 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* Studio Filter Panel Components - Vertical Tree in Right Sidebar */
+@layer components {
+  /* Vertical tree list container */
+  .studio-tree-list {
+    @apply flex flex-col gap-0.5 max-h-[70vh] overflow-y-auto pr-1;
+  }
+
+  /* Individual tree item with hierarchical indentation and borders */
+  .studio-tree-item {
+    @apply flex items-center gap-2 py-2 px-2 hover:bg-base-300 rounded cursor-pointer transition-colors relative;
+    /* Use CSS custom property for level-based indentation */
+    padding-left: calc(0.5rem + (var(--level, 0) * 1.25rem));
+  }
+
+  /* Add visual hierarchy with left border for nested items */
+  .studio-tree-item[style*="--level: 1"]::before,
+  .studio-tree-item[style*="--level: 2"]::before,
+  .studio-tree-item[style*="--level: 3"]::before {
+    content: '';
+    position: absolute;
+    left: calc(0.5rem + (var(--level) * 1.25rem) - 0.75rem);
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--fallback-bc, oklch(var(--bc) / 0.1));
+  }
+
+  /* Add connecting line to parent for nested items */
+  .studio-tree-item[style*="--level: 1"]::after,
+  .studio-tree-item[style*="--level: 2"]::after,
+  .studio-tree-item[style*="--level: 3"]::after {
+    content: '';
+    position: absolute;
+    left: calc(0.5rem + (var(--level) * 1.25rem) - 0.75rem);
+    top: 50%;
+    width: 0.5rem;
+    height: 2px;
+    background: var(--fallback-bc, oklch(var(--bc) / 0.1));
+  }
+
+  .studio-tree-item input[type="checkbox"] {
+    @apply checkbox checkbox-sm checkbox-primary flex-shrink-0;
+  }
+
+  /* Filtered game list container */
+  .filtered-game-list {
+    @apply space-y-1;
+  }
+
+  /* Scrollbar styling for tree list */
+  .studio-tree-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .studio-tree-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .studio-tree-list::-webkit-scrollbar-thumb {
+    background: var(--fallback-bc, oklch(var(--bc) / 0.2));
+    border-radius: 3px;
+  }
+
+  .studio-tree-list::-webkit-scrollbar-thumb:hover {
+    background: var(--fallback-bc, oklch(var(--bc) / 0.3));
+  }
+
+  /* Hide elements with x-cloak until Alpine.js initializes */
+  [x-cloak] {
+    display: none !important;
+  }
+}
+

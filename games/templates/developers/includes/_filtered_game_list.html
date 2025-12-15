@@ -1,0 +1,48 @@
+{# Filtered Game List - Pre-rendered games with visibility toggling #}
+<div class="filtered-game-list">
+    {# Sort dropdown #}
+    <div class="mb-4">
+        <div class="flex items-center gap-3 mb-3">
+            <label for="sort-select" class="text-sm font-medium text-base-content/70 whitespace-nowrap">Sort by:</label>
+            <select id="sort-select" x-model="sortBy" @change="sortGames()" class="select select-sm select-bordered min-w-[180px]">
+                <option value="year">Release Year</option>
+                <option value="rank">Global Rank</option>
+                <option value="name">Alphabetical</option>
+            </select>
+        </div>
+
+        {# Info message when no studios selected #}
+        <div x-show="selectedStudioIds.size === 0" class="alert alert-info py-2 px-3 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Select studios to filter</span>
+        </div>
+    </div>
+
+    {# Game list container #}
+    <div id="games-container" class="space-y-1">
+        {% for game in all_games %}
+        <div x-show="gameIsVisible({{ game.id }})"
+             data-year="{{ game.year_of_release }}"
+             data-rank="{{ game.rank }}"
+             data-name="{{ game.name }}">
+            {% include 'games/includes/_game_row.html' with game=game %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {# Results count #}
+    <div class="mt-4 text-sm text-base-content/60 text-center">
+        <template x-if="selectedStudioIds.size === 0">
+            <span>Showing all {{ all_games|length }} games</span>
+        </template>
+        <template x-if="selectedStudioIds.size > 0">
+            <span x-text="`Showing ${countVisibleGames()} of {{ all_games|length }} games`"></span>
+        </template>
+    </div>
+
+    {# Empty state when no games match filter #}
+    <div x-show="selectedStudioIds.size > 0 && countVisibleGames() === 0" class="alert alert-warning mt-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <span>No games found for selected studios.</span>
+    </div>
+</div>

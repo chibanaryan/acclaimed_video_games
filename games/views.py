@@ -832,6 +832,31 @@ class CompanyDetailView(DetailView):
             Prefetch("studios__games", queryset=games_queryset),
         )
 
+    def flatten_studios(self, studios_data, parent_id=None, level=0):
+        """Flatten recursive studio structure for checkbox tree."""
+        flat = []
+        for studio_data in studios_data:
+            child_ids = [s["studio"].id for s in studio_data["sub_studios"]]
+            flat.append(
+                {
+                    "id": studio_data["studio"].id,
+                    "name": studio_data["studio"].name,
+                    "game_ids": [g.id for g in studio_data["games"]],
+                    "parent_id": parent_id,
+                    "level": level,
+                    "child_ids": child_ids,
+                }
+            )
+            # Recursively flatten sub-studios
+            flat.extend(
+                self.flatten_studios(
+                    studio_data["sub_studios"],
+                    parent_id=studio_data["studio"].id,
+                    level=level + 1,
+                )
+            )
+        return flat
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         company = context["developer"]
@@ -958,6 +983,55 @@ class CompanyDetailView(DetailView):
         context["studios_with_games"] = studios_with_games
         context["total_games"] = total_games
         context["studios_count"] = studios_count
+
+        # Add flattened studio data for filter UI
+        studios_flat = self.flatten_studios(studios_with_games)
+        context["studios_flat"] = studios_flat
+
+        # Collect all unique games for filter view
+        all_game_ids = collect_unique_game_ids(studios_with_games)
+        all_games = list(
+            models.Game.objects.filter(id__in=all_game_ids)
+            .prefetch_related("studios", "platforms", "genres")
+            .order_by("year_of_release")
+        )
+        context["all_games"] = all_games
+
+        # Build studio -> game IDs mapping for Alpine.js
+        studio_game_map = {}
+        for studio in studios_flat:
+            # Collect game IDs from this studio and all descendants
+            def collect_studio_game_ids(studio_id, studios_flat_list):
+                ids = set()
+                for s in studios_flat_list:
+                    if s["id"] == studio_id:
+                        ids.update(s["game_ids"])
+                        # Add games from all children recursively
+                        for child_id in s["child_ids"]:
+                            ids.update(
+                                collect_studio_game_ids(child_id, studios_flat_list)
+                            )
+                        break
+                return list(ids)
+
+            studio_game_map[studio["id"]] = collect_studio_game_ids(
+                studio["id"], studios_flat
+            )
+
+        # Build studio -> child IDs mapping for Alpine.js
+        studio_child_map = {s["id"]: s["child_ids"] for s in studios_flat}
+
+        # Serialize to JSON for Alpine.js
+        import json
+        from django.core.serializers.json import DjangoJSONEncoder
+
+        context["studio_game_map_json"] = json.dumps(
+            studio_game_map, cls=DjangoJSONEncoder
+        )
+        context["studio_child_map_json"] = json.dumps(
+            studio_child_map, cls=DjangoJSONEncoder
+        )
+
         return context
 
 

@@ -196,6 +196,61 @@ class GameIgdbTests(TestCase):
         orphaned_devs = models.Company.objects.filter(studios__isnull=True)
         self.assertEqual(orphaned_devs.count(), 0)
 
+    def test_get_igdb_data_preserves_slug_when_igdb_returns_empty(self):
+        """Test that existing slugs are preserved when IGDB returns None/empty slug."""
+        # Create game with an existing slug
+        game = models.Game.objects.create(
+            name="The Legend of Zelda",
+            slug="the-legend-of-zelda",
+            rank=1,
+            igdb_id=999,
+            year_of_release=1986,
+        )
+
+        # Mock IGDB API returning None for slug
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": None,  # IGDB returns None
+            "url": "https://example.com/zelda",
+            "cover": "cover_hash",
+            "storyline": "Story",
+            "summary": "Summary",
+            "genres": [],
+            "studios": [],
+        }
+
+        game.get_igdb_data(api_client=fake_api)
+
+        # Verify slug is preserved
+        self.assertEqual(game.slug, "the-legend-of-zelda")
+
+    def test_get_igdb_data_generates_slug_when_none_exists(self):
+        """Test that slug is generated from name when game has no slug."""
+        # Create game without a slug
+        game = models.Game.objects.create(
+            name="Super Mario Bros",
+            rank=1,
+            igdb_id=999,
+            year_of_release=1985,
+        )
+
+        # Mock IGDB API returning None for slug
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": None,
+            "url": "https://example.com/mario",
+            "cover": "cover_hash",
+            "storyline": "",
+            "summary": "",
+            "genres": [],
+            "studios": [],
+        }
+
+        game.get_igdb_data(api_client=fake_api)
+
+        # Verify slug was generated from name
+        self.assertEqual(game.slug, "super-mario-bros")
+
     def test_get_igdb_data_creates_alias_for_parent_company(self):
         """Test that parent companies get their own DeveloperAlias (prevents orphans)"""
         game = models.Game.objects.create(

@@ -593,7 +593,16 @@ class Game(models.Model):
 
             # Update slug from first record
             if idx == 0:
-                self.slug = slugify(game_data.get("slug"))
+                # Generate slug from IGDB or game name
+                igdb_slug = game_data.get("slug")
+                if igdb_slug:
+                    # IGDB provides a slug - use it (whether we have one or not)
+                    self.slug = slugify(igdb_slug)
+                elif not self.slug:
+                    # No slug yet and IGDB doesn't provide one - generate from game name
+                    self.slug = slugify(self.name)
+                # else: Keep existing slug if IGDB doesn't provide one
+
                 # Unset is_primary to avoid UNIQUE constraint violation
                 IGDBGameData.objects.filter(game=self, is_primary=True).update(
                     is_primary=False
