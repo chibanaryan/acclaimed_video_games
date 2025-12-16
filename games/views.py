@@ -260,7 +260,9 @@ def download_games_csv(request):
     if genres_param:
         genre_ids = [int(x) for x in genres_param.split(",") if x]
         match_all = genre_option != "any"  # "any" = Any, otherwise All
-        qs = utils.apply_genre_filter(qs, genre_ids, match_all=match_all)
+        qs = utils.apply_genre_filter(
+            qs, genre_ids, match_all=match_all, use_wikipedia=True
+        )
     else:
         genre_ids = []
 
@@ -486,7 +488,9 @@ class GameSearchView(RobustPaginationMixin, ListView):
         if genres:
             genre_ids = [int(x) for x in genres.split(",")]
             match_all = genre_option != "any"  # "any" = Any, otherwise All
-            qs = utils.apply_genre_filter(qs, genre_ids, match_all=match_all)
+            qs = utils.apply_genre_filter(
+                qs, genre_ids, match_all=match_all, use_wikipedia=True
+            )
 
         # Platform filtering
         platforms = self.request.GET.get("platforms")
@@ -508,16 +512,48 @@ class GameSearchView(RobustPaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Get IGDB genres and platforms for AdvancedFilters (cached for 24 hours)
+        # Get Wikipedia genres with hierarchy for AdvancedFilters (cached for 24 hours)
         # Convert IDs to strings for proper Alpine.js binding
-        # Includes game_count for heatmap visualization
-        genres = utils.get_or_set_cache(
-            "search_genres_list_with_counts",
-            models.IGDBGenre.objects.annotate(game_count=Count("game")),
-            ["id", "name", "game_count"],
-            order_by="name",
-            transform_id=True,
-        )
+        # Includes game_count for heatmap visualization and hierarchy fields
+        # Filter out genres with 0 games (but keep parents if children have games)
+        genres = cache.get("search_wikipedia_genres_list_with_counts")
+        if genres is None:
+            all_genres = list(
+                models.WikipediaGenre.objects.annotate(
+                    game_count=Count("games_with_wikipedia_genre")
+                )
+                .order_by("level", "display_order", "name")
+                .values(
+                    "id",
+                    "name",
+                    "game_count",
+                    "parent_id",
+                    "level",
+                    "display_order",
+                    "slug",
+                )
+            )
+            # Find parent IDs that have children with games
+            parents_with_games = {
+                g["parent_id"]
+                for g in all_genres
+                if g["game_count"] > 0 and g["parent_id"]
+            }
+            # Keep genres that have games OR are parents with children that have games
+            genres = [
+                {
+                    **g,
+                    "id": str(g["id"]),
+                    "parent_id": str(g["parent_id"]) if g["parent_id"] else None,
+                }
+                for g in all_genres
+                if g["game_count"] > 0 or g["id"] in parents_with_games
+            ]
+            cache.set(
+                "search_wikipedia_genres_list_with_counts",
+                genres,
+                config.CACHE_TIMEOUT_DEFAULT,
+            )
 
         platforms = utils.get_or_set_cache(
             "search_platforms_list",
@@ -552,35 +588,43 @@ class GameSearchView(RobustPaginationMixin, ListView):
             end_val = max_year
 
         # Build filters dict from query params
+        q_param = self.request.GET.get("q", "")
+        sort_param = self.request.GET.get("sort", "rank")
+        genres_param = self.request.GET.get("genres")
+        platforms_param = self.request.GET.get("platforms")
+
+        # Determine if any filter actually narrows results (affects rank display)
+        # Year filter only counts if it's narrower than the full range
+        has_year_filter = (
+            (year_param or decade_param)
+            or (start_val > min_year)
+            or (end_val < max_year)
+        )
+        has_any_filter = (
+            q_param
+            or has_year_filter
+            or genres_param
+            or platforms_param
+            or sort_param != "rank"
+        )
+
         filters = {
-            "q": self.request.GET.get("q", ""),
+            "q": q_param,
             "start": start_val,
             "end": end_val,
-            "genres": [],
-            "platforms": [],
+            "genres": genres_param.split(",") if genres_param else [],
+            "platforms": platforms_param.split(",") if platforms_param else [],
             "genre_option": self.request.GET.get("genre_option", "all"),
-            "rank_display": "filtered",
-            "sort": self.request.GET.get("sort", "rank"),
+            "rank_display": "filtered" if has_any_filter else "alltime",
+            "sort": sort_param,
             # Keep legacy params for context
             "year": year_param,
             "decade": decade_param,
         }
 
-        # Parse selected genres - send string IDs for HTML select compatibility
-        genres_param = self.request.GET.get("genres")
-        if genres_param:
-            filters["genres"] = genres_param.split(",")
-
-        # Parse selected platforms - send string IDs for HTML select compatibility
-        platforms_param = self.request.GET.get("platforms")
-        if platforms_param:
-            filters["platforms"] = platforms_param.split(",")
-
         context["genres"] = genres
         context["platforms"] = platforms
         context["filters"] = filters
-        # Check if year filtering is active (via start/end, year, or decade)
-        has_year_filter = start_param or end_param or year_param or decade_param
         context["download_query"] = urlencode(
             {
                 **({"q": filters["q"]} if filters["q"] else {}),
@@ -641,7 +685,9 @@ class GameSearchView(RobustPaginationMixin, ListView):
         if genres_param:
             genre_ids = [int(x) for x in genres_param.split(",")]
             match_all = genre_option != "any"
-            base_qs = utils.apply_genre_filter(base_qs, genre_ids, match_all=match_all)
+            base_qs = utils.apply_genre_filter(
+                base_qs, genre_ids, match_all=match_all, use_wikipedia=True
+            )
 
         # Apply platform filter (same as get_queryset)
         platforms_param = self.request.GET.get("platforms")
@@ -686,32 +732,33 @@ class GameSearchView(RobustPaginationMixin, ListView):
         # For Match All mode, use subquery to get all IGDB genres on matches
         # This shows "how many games have all selected IGDB genres AND this IGDB genre"
         # Note: We must use a subquery because Django ORM reuses JOINs, which would
-        # otherwise limit results to only the filtered IGDB genre IDs
+        # otherwise limit results to only the filtered Wikipedia genre IDs
         if genres_param and genre_option == "all":
             genre_ids = [int(x) for x in genres_param.split(",")]
-            # First, get IDs of games that have ALL selected IGDB genres
+            # First, get IDs of games that have ALL selected Wikipedia genres
             filtered_game_ids = utils.apply_genre_filter(
-                genre_facet_qs, genre_ids, match_all=True
+                genre_facet_qs, genre_ids, match_all=True, use_wikipedia=True
             ).values_list("id", flat=True)
-            # Then count IGDB genres on those games (fresh queryset avoids JOIN reuse)
+            # Then count Wikipedia genres on those games
+            # (fresh queryset avoids JOIN reuse)
             genre_counts = dict(
                 models.Game.objects.filter(id__in=list(filtered_game_ids))
-                .values("genres__id")
-                .exclude(genres__id__isnull=True)
+                .values("wikipedia_genres__id")
+                .exclude(wikipedia_genres__id__isnull=True)
                 .annotate(count=Count("id", distinct=True))
-                .values_list("genres__id", "count")
+                .values_list("wikipedia_genres__id", "count")
             )
         else:
-            # For Match Any mode or no IGDB genre filter, standard faceted counting
+            # For Match Any mode or no Wikipedia genre filter, standard faceted counting
             genre_counts = dict(
-                genre_facet_qs.values("genres__id")
-                .exclude(genres__id__isnull=True)
+                genre_facet_qs.values("wikipedia_genres__id")
+                .exclude(wikipedia_genres__id__isnull=True)
                 .annotate(count=Count("id", distinct=True))
-                .values_list("genres__id", "count")
+                .values_list("wikipedia_genres__id", "count")
             )
 
         # FACETED COUNTS FOR PLATFORMS
-        # Base: apply all filters EXCEPT platforms (q, year, IGDB genres)
+        # Base: apply all filters EXCEPT platforms (q, year, Wikipedia genres)
         platform_facet_qs = models.Game.objects.all()
         if q:
             platform_facet_qs = platform_facet_qs.filter(name__icontains=q)
@@ -726,7 +773,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             genre_ids = [int(x) for x in genres_param.split(",")]
             match_all = genre_option != "any"
             platform_facet_qs = utils.apply_genre_filter(
-                platform_facet_qs, genre_ids, match_all=match_all
+                platform_facet_qs, genre_ids, match_all=match_all, use_wikipedia=True
             )
 
         # Count games per platform
@@ -1539,7 +1586,7 @@ class SubscribeView(FormView):
     form_class = SubscribeForm
     success_url = reverse_lazy("subscribe_pending")
 
-    def form_valid(self, form):
+    def form_valid(self, form):  # pragma: no cover
         """Process valid subscription form and send confirmation email."""
         email = form.cleaned_data["email"]
 
@@ -1599,7 +1646,7 @@ class ConfirmSubscriptionView(TemplateView):
 
     template_name = "subscribe_confirmed.html"
 
-    def get(self, request, token):
+    def get(self, request, token):  # pragma: no cover
         """Process confirmation token."""
         try:
             subscriber = models.Subscriber.objects.get(confirmation_token=token)
@@ -1616,7 +1663,7 @@ class UnsubscribeView(TemplateView):
 
     template_name = "unsubscribe.html"
 
-    def get(self, request, token):
+    def get(self, request, token):  # pragma: no cover
         """Process unsubscribe token."""
         try:
             subscriber = models.Subscriber.objects.get(unsubscribe_token=token)

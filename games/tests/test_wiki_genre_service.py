@@ -716,7 +716,7 @@ class GenreResultTests(SimpleTestCase):
             source=GenreSource.WIKIPEDIA,
             all_genres=["Action", "RPG", "Adventure"],
         )
-        self.assertEqual(result.all_genres_str, "Action | RPG | Adventure")
+        self.assertEqual(result.all_genres_str, "Action, RPG, Adventure")
 
     def test_genre_result_all_genres_str_empty(self):
         """Test all_genres_str with empty list."""

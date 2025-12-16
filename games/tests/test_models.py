@@ -533,7 +533,7 @@ class GameWikipediaTests(TestCase):
         wiki_data = models.WikipediaGameData.objects.get(game=game, is_primary=True)
         self.assertEqual(wiki_data.page_title, "Test Game")
         self.assertEqual(wiki_data.primary_genre, "Action")
-        self.assertEqual(wiki_data.all_genres, "Action | Adventure")
+        self.assertEqual(wiki_data.all_genres, "Action, Adventure")
         self.assertEqual(
             wiki_data.lookup_source, "https://en.wikipedia.org/wiki/Test_Game"
         )

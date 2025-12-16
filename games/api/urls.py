@@ -43,5 +43,10 @@ urlpatterns = [
         views.WikipediaGenreListView.as_view(),
         name="wikipedia-genre-list",
     ),
+    path(
+        "wikipedia-genres/tree/",
+        views.WikipediaGenreTreeView.as_view(),
+        name="wikipedia-genre-tree",
+    ),
     path("platforms/", views.PlatformListView.as_view(), name="platform-list"),
 ]

@@ -6,6 +6,10 @@
 - Server-side implementation with URL parameter state management for persistence
 - Responsive layout with separate mobile/tablet/desktop dropdown positions
 - Added comprehensive test coverage for all sorting modes and filter combinations
+- Implemented Wikipedia genre hierarchy with multi-level filtering (replaces IGDB genres)
+- Added genre normalization service to consolidate variant names (e.g., "MMORPG" variants → "MMORPG")
+- Redesigned game row hover: square thumbnails, Global Rank on title row, smoother transitions
+- Filter dropdown now excludes genres with 0 games while preserving parent categories
 
 ## 2025-12-14
 

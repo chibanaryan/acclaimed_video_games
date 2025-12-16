@@ -42,8 +42,8 @@ class GenreResult:
 
     @property
     def all_genres_str(self) -> str:
-        """Return all genres as pipe-separated string for CSV."""
-        return " | ".join(self.all_genres) if self.all_genres else ""
+        """Return all genres as comma-separated string."""
+        return ", ".join(self.all_genres) if self.all_genres else ""
 
     # Backwards compatibility
     @property

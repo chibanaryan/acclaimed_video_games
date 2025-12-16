@@ -1,90 +1,65 @@
-{# Mobile Genre Filter - Chip Grid with Progressive Disclosure #}
+{# Mobile Genre Filter - Hierarchical Tree with Wikipedia Genres #}
 {# Assumes parent has filters.genres (array), filters.genre_option, and genres (list) from main Alpine.js state #}
 {% load static %}
 
 <div x-data="{
         expanded: true,
-        expandedGroups: [],
+        expandedCategories: {},
 
-        // Genre groupings by gameplay 'vibe' (matches desktop)
-        genreGroups: {
-            combat: {
-                name: 'Combat',
-                genres: ['Action', 'Shooter', 'Fighting', 'Hack and slash/Beat \'em up', 'MOBA', 'Stealth', 'Horror']
-            },
-            brain: {
-                name: 'Brain',
-                genres: ['Puzzle', 'Strategy', 'Real Time Strategy (RTS)', 'Turn-based strategy (TBS)', '4X (explore, expand, exploit, and exterminate)', 'Tactical']
-            },
-            world: {
-                name: 'World',
-                genres: ['Adventure', 'Role-playing (RPG)', 'Open world', 'Sandbox', 'Platform', 'Survival', 'Visual Novel', 'Point-and-click']
-            },
-            sim: {
-                name: 'Sim & Sports',
-                genres: ['Racing', 'Sport', 'Simulator', 'Pinball']
-            },
-            arcade: {
-                name: 'Arcade & Social',
-                genres: ['Arcade', 'Party', 'Music', 'Quiz/Trivia', 'Card & Board Game', 'Indie']
-            }
+        // Get root categories (level 0), sorted by total game count (descending)
+        get rootCategories() {
+            return genres.filter(g => g.level === 0).sort((a, b) => {
+                // Sort by total game count of children (descending)
+                const aCount = this.getCategoryTotalGameCount(a.id);
+                const bCount = this.getCategoryTotalGameCount(b.id);
+                return bCount - aCount;
+            });
         },
 
-        // Genre icon mapping
-        genreIcons: {
-            'Action': 'genre-action',
-            'Shooter': 'genre-shooter',
-            'Fighting': 'genre-fighting',
-            'Hack and slash/Beat \u0027em up': 'genre-hackslash',
-            'MOBA': 'genre-moba',
-            'Stealth': 'genre-stealth',
-            'Horror': 'genre-horror',
-            'Puzzle': 'genre-puzzle',
-            'Strategy': 'genre-strategy',
-            'Real Time Strategy (RTS)': 'genre-rts',
-            'Turn-based strategy (TBS)': 'genre-tbs',
-            '4X (explore, expand, exploit, and exterminate)': 'genre-4x',
-            'Tactical': 'genre-tactical',
-            'Adventure': 'genre-adventure',
-            'Role-playing (RPG)': 'genre-rpg',
-            'Open world': 'genre-openworld',
-            'Sandbox': 'genre-sandbox',
-            'Platform': 'genre-platform',
-            'Survival': 'genre-survival',
-            'Visual Novel': 'genre-visualnovel',
-            'Point-and-click': 'genre-pointclick',
-            'Racing': 'genre-racing',
-            'Sport': 'genre-sport',
-            'Simulator': 'genre-simulator',
-            'Pinball': 'genre-pinball',
-            'Arcade': 'genre-arcade',
-            'Party': 'genre-party',
-            'Music': 'genre-music',
-            'Quiz/Trivia': 'genre-quiz',
-            'Card & Board Game': 'genre-cardboard',
-            'Indie': 'genre-indie'
+        // Get total game count for a category (sum of all children's game_count)
+        getCategoryTotalGameCount(categoryId) {
+            const children = genres.filter(g => String(g.parent_id) === String(categoryId));
+            return children.reduce((sum, c) => sum + (c.game_count || 0), 0);
         },
 
-        // Short names for long genre names
-        shortNames: {
-            'Hack and slash/Beat \u0027em up': 'Beat \u0027em up',
-            'Real Time Strategy (RTS)': 'RTS',
-            'Turn-based strategy (TBS)': 'TBS',
-            '4X (explore, expand, exploit, and exterminate)': '4X',
-            'Role-playing (RPG)': 'RPG',
-            'Card & Board Game': 'Board Games'
+        // Get child genres for a parent, sorted by game count (descending)
+        getChildren(parentId) {
+            return genres.filter(g => String(g.parent_id) === String(parentId)).sort((a, b) => {
+                // Sort by game_count (descending)
+                return (b.game_count || 0) - (a.game_count || 0);
+            });
         },
 
-        getShortName(name) {
-            return this.shortNames[name] || name;
+        // Get total filtered count for a category (sum of all children's effective count)
+        getCategoryTotalCount(categoryId) {
+            const children = this.getChildren(categoryId);
+            return children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
         },
 
-        getIcon(name) {
-            return this.genreIcons[name] || 'genre-arcade';
+        // Category icons mapping
+        categoryIcons: {
+            'Action': 'mdi-sword-cross',
+            'Adventure': 'mdi-compass',
+            'Role-Playing': 'mdi-wizard-hat',
+            'Strategy': 'mdi-chess-knight',
+            'Simulation': 'mdi-airplane',
+            'Sports': 'mdi-basketball',
+            'Puzzle': 'mdi-puzzle',
+            'Party & Casual': 'mdi-party-popper',
+            'Hybrid & Specialized': 'mdi-star-four-points'
+        },
+
+        getCategoryIcon(name) {
+            return this.categoryIcons[name] || 'mdi-gamepad-variant';
         },
 
         isGenreSelected(genreId) {
             return filters.genres.includes(String(genreId));
+        },
+
+        // Check if the category itself is selected (parent level)
+        isCategorySelected(categoryId) {
+            return filters.genres.includes(String(categoryId));
         },
 
         toggleGenre(genreId) {
@@ -97,6 +72,19 @@
             }
         },
 
+        // Toggle parent category selection (selects category ID itself)
+        toggleCategorySelection(categoryId) {
+            const id = String(categoryId);
+            const idx = filters.genres.indexOf(id);
+            if (idx > -1) {
+                filters.genres.splice(idx, 1);
+            } else {
+                filters.genres.push(id);
+                // Expand the category when selecting
+                this.expandedCategories[categoryId] = true;
+            }
+        },
+
         selectedCount() {
             return filters.genres.length;
         },
@@ -106,63 +94,33 @@
             filters.genre_option = 'any';
         },
 
-        // Group management functions
-        isGroupExpanded(groupKey) {
-            return this.expandedGroups.includes(groupKey);
-        },
-
-        toggleGroupExpansion(groupKey) {
-            const idx = this.expandedGroups.indexOf(groupKey);
-            if (idx > -1) {
-                this.expandedGroups.splice(idx, 1);
-            } else {
-                this.expandedGroups.push(groupKey);
+        // Category management
+        isCategoryExpanded(categoryId) {
+            // Default to expanded if category or any child selected
+            if (this.expandedCategories[categoryId] === undefined) {
+                return this.isCategorySelected(categoryId) || this.hasSelectedChildren(categoryId);
             }
+            return this.expandedCategories[categoryId];
         },
 
-        getGenresInGroup(groupKey) {
-            const group = this.genreGroups[groupKey];
-            if (!group) return [];
-            return genres
-                .filter(g => group.genres.includes(g.name))
-                .sort((a, b) => (b.game_count || 0) - (a.game_count || 0));
+        toggleCategoryExpansion(categoryId) {
+            this.expandedCategories[categoryId] = !this.isCategoryExpanded(categoryId);
         },
 
-        selectGroup(groupKey) {
-            const groupGenres = this.getGenresInGroup(groupKey);
-            const groupIds = groupGenres.map(g => String(g.id));
-            const allSelected = groupIds.every(id => filters.genres.includes(id));
-
-            if (allSelected) {
-                // Deselect all
-                groupIds.forEach(id => {
-                    const idx = filters.genres.indexOf(id);
-                    if (idx > -1) filters.genres.splice(idx, 1);
-                });
-            } else {
-                // Select all
-                groupIds.forEach(id => {
-                    if (!filters.genres.includes(id)) {
-                        filters.genres.push(id);
-                    }
-                });
-                // Auto-switch to Match Any when selecting a category
-                filters.genre_option = 'any';
-            }
+        // Check if any child of a category is selected
+        hasSelectedChildren(categoryId) {
+            const children = this.getChildren(categoryId);
+            const childIds = children.map(c => String(c.id));
+            return childIds.some(id => filters.genres.includes(id));
         },
 
-        isGroupSelected(groupKey) {
-            const groupGenres = this.getGenresInGroup(groupKey);
-            if (groupGenres.length === 0) return false;
-            const groupIds = groupGenres.map(g => String(g.id));
-            return groupIds.length > 0 && groupIds.every(id => filters.genres.includes(id));
+        // Check if category or any children selected (for visual indication)
+        hasCategoryOrChildrenSelected(categoryId) {
+            return this.isCategorySelected(categoryId) || this.hasSelectedChildren(categoryId);
         },
 
-        isGroupPartial(groupKey) {
-            const groupGenres = this.getGenresInGroup(groupKey);
-            const groupIds = groupGenres.map(g => String(g.id));
-            const selectedCount = groupIds.filter(id => filters.genres.includes(id)).length;
-            return selectedCount > 0 && selectedCount < groupIds.length;
+        getEffectiveCount(genre) {
+            return genre.filtered_count !== undefined ? genre.filtered_count : genre.game_count;
         }
      }"
      @genres-reset.window="filters.genres = []; filters.genre_option = 'any';"
@@ -216,50 +174,68 @@
             </button>
         </div>
 
-        {# Genre Categories #}
+        {# Genre Categories - Hierarchical #}
         <div class="space-y-3">
-            <template x-for="(group, key) in genreGroups" :key="key">
+            <template x-for="category in rootCategories" :key="category.id">
                 <div class="space-y-2">
-                    <div class="flex items-center gap-2">
-                        {# Checkbox to select/deselect entire group #}
+                    <div class="flex items-center gap-2 py-1 px-2 rounded-lg"
+                         :class="{
+                             'bg-primary/10': hasCategoryOrChildrenSelected(category.id)
+                         }">
+                        {# Checkbox to select category (selects category ID itself) #}
                         <label class="cursor-pointer" @click.stop>
                             <input type="checkbox"
-                                   :checked="isGroupSelected(key)"
-                                   :indeterminate="isGroupPartial(key)"
-                                   @change="selectGroup(key); debouncedFilterUpdate();"
+                                   :checked="isCategorySelected(category.id)"
+                                   @change="toggleCategorySelection(category.id); debouncedFilterUpdate();"
                                    class="checkbox checkbox-sm checkbox-primary">
                         </label>
 
-                        {# Button to expand/collapse group #}
+                        {# Button to expand/collapse category #}
                         <button type="button"
-                                @click="toggleGroupExpansion(key)"
-                                class="btn btn-sm gap-1 flex-1 justify-between btn-ghost">
-                            <span x-text="group.name" class="text-xs"></span>
-                            <svg :class="{ 'rotate-180': isGroupExpanded(key) }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                @click="toggleCategoryExpansion(category.id)"
+                                class="flex items-center gap-2 flex-1">
+                            <span class="mdi" :class="getCategoryIcon(category.name)"></span>
+                            <span x-text="category.name" class="text-sm font-medium"></span>
+                        </button>
+
+                        {# Game count #}
+                        <span class="text-xs opacity-50 tabular-nums" x-text="getCategoryTotalCount(category.id)"></span>
+
+                        {# Expand/collapse arrow #}
+                        <button type="button"
+                                @click="toggleCategoryExpansion(category.id)"
+                                class="p-1">
+                            <svg :class="{ 'rotate-180': isCategoryExpanded(category.id) }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
+
+                        {# Selected indicator #}
+                        <template x-if="isCategorySelected(category.id)">
+                            <span class="badge badge-primary badge-xs">All</span>
+                        </template>
+                        <template x-if="!isCategorySelected(category.id) && hasSelectedChildren(category.id)">
+                            <span class="badge badge-primary badge-xs">
+                                <span x-text="getChildren(category.id).filter(c => isGenreSelected(c.id)).length"></span>
+                            </span>
+                        </template>
                     </div>
 
-                    {# Individual genres for this group #}
-                    <div x-show="isGroupExpanded(key)"
+                    {# Child genres for this category #}
+                    <div x-show="isCategoryExpanded(category.id)"
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 -translate-y-1"
                          x-transition:enter-end="opacity-100 translate-y-0"
-                         class="pl-4 flex flex-wrap gap-2">
-                        <template x-for="genre in getGenresInGroup(key)" :key="genre.id">
-                            <label class="cursor-pointer">
+                         class="pl-6 space-y-1">
+                        <template x-for="genre in getChildren(category.id)" :key="genre.id">
+                            <label class="flex items-center gap-2 py-1 cursor-pointer">
                                 <input type="checkbox"
                                        :value="genre.id"
                                        :checked="isGenreSelected(genre.id)"
                                        @change="toggleGenre(genre.id); debouncedFilterUpdate();"
-                                       class="hidden peer">
-                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
-                                    <svg class="w-4 h-4 shrink-0" aria-hidden="true">
-                                        <use :href="'{% static 'games/images/genre-icons.svg' %}#' + getIcon(genre.name)"></use>
-                                    </svg>
-                                    <span x-text="getShortName(genre.name)"></span>
-                                </span>
+                                       class="checkbox checkbox-xs checkbox-primary">
+                                <span class="text-sm flex-1" x-text="genre.name"></span>
+                                <span class="text-xs opacity-50 tabular-nums" x-text="getEffectiveCount(genre)"></span>
                             </label>
                         </template>
                     </div>

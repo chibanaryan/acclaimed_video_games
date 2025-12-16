@@ -276,10 +276,52 @@ class GenreListView(ListAPIView):
 
 @method_decorator(cache_page(config.CACHE_TIMEOUT_24_HOURS), name="dispatch")
 class WikipediaGenreListView(ListAPIView):
-    """List Wikipedia genres"""
+    """
+    List all Wikipedia genres (flat list with hierarchy metadata).
+
+    Returns genres ordered by level and display_order for consistent rendering.
+    Includes parent_id for client-side tree building if needed.
+    """
 
     serializer_class = serializers.WikipediaGenreSerializer
-    queryset = models.WikipediaGenre.objects.all()
+    queryset = models.WikipediaGenre.objects.all().order_by(
+        "level", "display_order", "name"
+    )
+
+
+@method_decorator(cache_page(config.CACHE_TIMEOUT_24_HOURS), name="dispatch")
+class WikipediaGenreTreeView(ListAPIView):
+    """
+    List Wikipedia genres as hierarchical tree structure.
+
+    Returns only root categories (level=0), with children nested recursively.
+    Includes game counts for each genre.
+
+    Response format:
+    [
+        {
+            "id": 1,
+            "name": "Action",
+            "slug": "action",
+            "level": 0,
+            "game_count": 1234,
+            "children": [
+                {"id": 2, "name": "Shooter", "level": 1,
+                 "game_count": 456, "children": []},
+                ...
+            ]
+        },
+        ...
+    ]
+    """
+
+    serializer_class = serializers.WikipediaGenreTreeSerializer
+
+    def get_queryset(self):
+        """Return only root categories (parent=None) for tree building."""
+        return models.WikipediaGenre.objects.filter(parent=None).order_by(
+            "display_order", "name"
+        )
 
 
 @method_decorator(cache_page(config.CACHE_TIMEOUT_24_HOURS), name="dispatch")

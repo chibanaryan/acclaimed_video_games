@@ -221,20 +221,174 @@ class IGDBGenre(models.Model):
 
 
 class WikipediaGenre(models.Model):
-    """A video game genre from Wikipedia"""
+    """
+    A video game genre from Wikipedia with hierarchical structure.
+
+    Supports multi-level hierarchy with parent-child relationships:
+    - Level 0: Root categories (e.g., "Action", "Adventure")
+    - Level 1+: Child genres (e.g., "First-Person Shooter" under "Action")
+
+    The hierarchy enables:
+    - Tree-based filtering in UI
+    - Multi-level selection (select parent = select all children)
+    - Organized genre navigation
+    """
 
     name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(
+        max_length=110,
+        unique=True,
+        null=True,  # Allow null initially for migration
+        blank=True,
+        db_index=True,
+        help_text="URL-friendly identifier",
+    )
+
+    # Hierarchy fields
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="children",
+        db_index=True,
+        help_text="Parent genre (NULL for root categories)",
+    )
+    level = models.PositiveSmallIntegerField(
+        default=0,
+        db_index=True,
+        help_text="Hierarchy depth: 0=root, 1=category, 2+=subgenre",
+    )
+    display_order = models.PositiveSmallIntegerField(
+        default=0,
+        db_index=True,
+        help_text="Manual ordering within parent category",
+    )
+
+    # Denormalized path for efficient queries and display
+    path = models.CharField(
+        max_length=300,
+        blank=True,
+        db_index=True,
+        help_text="Full hierarchy path (e.g., 'Action > Shooter > FPS')",
+    )
+
+    # Optional metadata
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the genre",
+    )
+    icon_name = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Icon identifier for UI (e.g., 'genre-action')",
+    )
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["level", "display_order", "name"]
         verbose_name = "Wikipedia Genre"
         verbose_name_plural = "Wikipedia Genres"
         indexes = [
             models.Index(fields=["name"]),
+            models.Index(fields=["parent", "level"]),
+            models.Index(fields=["level", "display_order"]),
         ]
 
     def __str__(self) -> str:
-        return self.name
+        return self.path if self.path else self.name
+
+    def save(self, *args, **kwargs):
+        from django.utils.text import slugify
+
+        # Auto-generate slug from name if not set
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        # Calculate level from parent chain
+        if self.parent:
+            self.level = self.parent.level + 1
+        else:
+            self.level = 0
+
+        # Build hierarchical path
+        if self.parent:
+            self.path = f"{self.parent.path} > {self.name}"
+        else:
+            self.path = self.name
+
+        super().save(*args, **kwargs)
+
+    def get_descendants(self, include_self=False):
+        """
+        Get all descendant genres recursively.
+
+        Args:
+            include_self: If True, include this genre in results
+
+        Returns:
+            List of WikipediaGenre objects (descendants)
+        """
+        descendants = []
+        if include_self:
+            descendants.append(self)
+
+        for child in self.children.all():
+            descendants.append(child)
+            descendants.extend(child.get_descendants(include_self=False))
+
+        return descendants
+
+    def get_descendant_ids(self, include_self=False):
+        """
+        Get IDs of all descendant genres (optimized for filtering).
+
+        Args:
+            include_self: If True, include this genre's ID
+
+        Returns:
+            List of genre IDs
+        """
+        ids = []
+        if include_self:
+            ids.append(self.id)
+
+        for child in self.children.all():
+            ids.append(child.id)
+            ids.extend(child.get_descendant_ids(include_self=False))
+
+        return ids
+
+    def get_ancestors(self, include_self=False):
+        """
+        Get all ancestor genres up to root.
+
+        Args:
+            include_self: If True, include this genre in results
+
+        Returns:
+            List of WikipediaGenre objects (ancestors, root first)
+        """
+        ancestors = []
+        current = self.parent
+
+        while current:
+            ancestors.insert(0, current)
+            current = current.parent
+
+        if include_self:
+            ancestors.append(self)
+
+        return ancestors
+
+    @property
+    def is_root(self):
+        """Check if this is a root category (no parent)."""
+        return self.parent is None
+
+    @property
+    def is_leaf(self):
+        """Check if this is a leaf genre (no children)."""
+        return not self.children.exists()
 
 
 class IGDBGameData(models.Model):
@@ -921,7 +1075,7 @@ class Game(models.Model):
                 if result.all_genres
                 else []
             )
-            capitalized_all_str = " | ".join(capitalized_all) if capitalized_all else ""
+            capitalized_all_str = ", ".join(capitalized_all) if capitalized_all else ""
 
             # Create or update WikipediaGameData record
             wiki_game_data, created = WikipediaGameData.objects.update_or_create(
@@ -942,11 +1096,30 @@ class Game(models.Model):
                 self.save(update_fields=["primary_wikipedia_game_data"])
 
                 # Create WikipediaGenre objects and link to game (only for primary)
+                # Use normalization to map scraped genres to canonical names
                 if capitalized_all:
+                    from games.services.genre_normalizer import normalize_genre
+
                     wikipedia_genres = []
+                    seen_genres = set()  # Track seen genres to avoid duplicates
+
                     for genre_name in capitalized_all:
-                        genre, _ = WikipediaGenre.objects.get_or_create(name=genre_name)
+                        # Normalize the genre name to canonical form
+                        normalized_name = normalize_genre(genre_name)
+
+                        # Skip None (invalid genres) and duplicates
+                        if normalized_name is None:
+                            continue
+                        if normalized_name in seen_genres:
+                            continue
+                        seen_genres.add(normalized_name)
+
+                        # Get or create the normalized genre
+                        genre, _ = WikipediaGenre.objects.get_or_create(
+                            name=normalized_name
+                        )
                         wikipedia_genres.append(genre)
+
                     self.wikipedia_genres.set(wikipedia_genres)
 
             action = "Created" if created else "Updated"

@@ -206,13 +206,76 @@ GenreSerializer = IGDBGenreSerializer
 
 
 class WikipediaGenreSerializer(serializers.ModelSerializer):
+    """Basic Wikipedia genre serializer with hierarchy fields."""
+
+    parent_id = serializers.IntegerField(source="parent.id", allow_null=True)
 
     class Meta:
         model = models.WikipediaGenre
         fields = [
             "id",
             "name",
+            "slug",
+            "level",
+            "display_order",
+            "path",
+            "parent_id",
+            "icon_name",
         ]
+
+
+class WikipediaGenreTreeSerializer(serializers.ModelSerializer):
+    """
+    Wikipedia genre serializer with nested children for tree structure.
+
+    Returns genres in a hierarchical format suitable for tree-based UI:
+    {
+        "id": 1,
+        "name": "Action",
+        "slug": "action",
+        "level": 0,
+        "children": [
+            {"id": 2, "name": "Shooter", "slug": "shooter", "level": 1, "children": []},
+            ...
+        ]
+    }
+    """
+
+    children = serializers.SerializerMethodField()
+    game_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.WikipediaGenre
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "level",
+            "display_order",
+            "path",
+            "icon_name",
+            "children",
+            "game_count",
+        ]
+
+    def get_children(self, obj):
+        """Recursively serialize child genres."""
+        children = obj.children.all().order_by("display_order", "name")
+        return WikipediaGenreTreeSerializer(children, many=True).data
+
+    def get_game_count(self, obj):
+        """
+        Get count of games with this genre.
+
+        Note: For root categories, this includes games tagged with any
+        descendant genre.
+        """
+        # Check if count was annotated on the queryset
+        if hasattr(obj, "game_count_annotated"):
+            return obj.game_count_annotated
+
+        # Fallback to actual count
+        return obj.games_with_wikipedia_genre.count()
 
 
 class PlatformSerializer(serializers.ModelSerializer):

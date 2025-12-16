@@ -14,15 +14,29 @@ from games import config
 
 
 def apply_genre_filter(
-    queryset: QuerySet, genre_ids: List[int], match_all: bool = True
+    queryset: QuerySet,
+    genre_ids: List[int],
+    match_all: bool = True,
+    use_wikipedia: bool = False,  # Default False for backward compatibility
+    expand_hierarchy: bool = True,
 ) -> QuerySet:
     """
     Filter queryset by genres with any/all matching.
 
+    Supports both IGDB genres (legacy) and Wikipedia genres (hierarchical).
+    When using Wikipedia genres with hierarchy expansion, selecting a parent
+    genre will automatically include all games tagged with child genres.
+
     Args:
         queryset: The queryset to filter
         genre_ids: List of genre IDs to filter by
-        match_all: If True, games must have ALL genres. If False, ANY genre matches.
+        match_all: If True, games must match ALL selected genres (each can be
+                   satisfied by itself or any descendant). If False, ANY match.
+        use_wikipedia: If True, filter by wikipedia_genres. If False, filter by
+                       IGDB genres (legacy behavior).
+        expand_hierarchy: If True and use_wikipedia, expand parent genres to
+                          include all descendants. If False, filter by exact
+                          genre IDs only.
 
     Returns:
         Filtered queryset
@@ -30,16 +44,137 @@ def apply_genre_filter(
     if not genre_ids:
         return queryset
 
-    if match_all:
-        for genre_id in genre_ids:
-            queryset = queryset.filter(genres=genre_id)
-    else:
-        q = Q()
-        for genre_id in genre_ids:
-            q |= Q(genres=genre_id)
-        queryset = queryset.filter(q)
+    # Determine the M2M field to use
+    genre_field = "wikipedia_genres" if use_wikipedia else "genres"
 
-    return queryset
+    # For non-Wikipedia genres (IGDB), use simple filtering
+    if not use_wikipedia:
+        if match_all:
+            for genre_id in genre_ids:
+                queryset = queryset.filter(**{genre_field: genre_id})
+        else:
+            q = Q()
+            for genre_id in genre_ids:
+                q |= Q(**{genre_field: genre_id})
+            queryset = queryset.filter(q)
+        return queryset
+
+    # For Wikipedia genres with hierarchy expansion
+    # Each selected genre expands to include its descendants
+    # match_all: game must have at least one from EACH expanded group
+    # match_any: game must have at least one from ANY expanded group
+    if expand_hierarchy:
+        expanded_groups = []
+        for genre_id in genre_ids:
+            # Get this genre plus all its descendants
+            group = _expand_single_genre_with_descendants(genre_id)
+            expanded_groups.append(group)
+
+        if match_all:
+            # Game must have at least one genre from EACH group
+            for group in expanded_groups:
+                q = Q()
+                for gid in group:
+                    q |= Q(**{genre_field: gid})
+                queryset = queryset.filter(q)
+        else:
+            # Game must have at least one genre from ANY group
+            q = Q()
+            for group in expanded_groups:
+                for gid in group:
+                    q |= Q(**{genre_field: gid})
+            queryset = queryset.filter(q)
+    else:
+        # No hierarchy expansion - exact matching
+        if match_all:
+            for genre_id in genre_ids:
+                queryset = queryset.filter(**{genre_field: genre_id})
+        else:
+            q = Q()
+            for genre_id in genre_ids:
+                q |= Q(**{genre_field: genre_id})
+            queryset = queryset.filter(q)
+
+    # Use distinct() to avoid duplicate rows from M2M joins
+    return queryset.distinct()
+
+
+def _expand_single_genre_with_descendants(genre_id: int) -> List[int]:
+    """
+    Expand a single genre ID to include itself and all descendant IDs.
+
+    Args:
+        genre_id: A single genre ID to expand
+
+    Returns:
+        List containing the genre ID and all its descendant IDs
+    """
+    from games.models import WikipediaGenre
+
+    try:
+        genre = WikipediaGenre.objects.get(id=genre_id)
+        # Get this genre plus all descendants
+        return genre.get_descendant_ids(include_self=True)
+    except WikipediaGenre.DoesNotExist:
+        return [genre_id]
+
+
+def _expand_genre_ids_with_descendants(genre_ids: List[int]) -> List[int]:
+    """
+    Expand a list of genre IDs to include all descendant IDs.
+
+    This enables hierarchical filtering: selecting a parent genre
+    automatically includes games tagged with any child genre.
+
+    Args:
+        genre_ids: List of genre IDs to expand
+
+    Returns:
+        List of genre IDs including all descendants
+    """
+    from games.models import WikipediaGenre
+
+    expanded_ids = set(genre_ids)
+
+    for genre_id in genre_ids:
+        try:
+            genre = WikipediaGenre.objects.get(id=genre_id)
+            # Add all descendant IDs
+            descendant_ids = genre.get_descendant_ids(include_self=False)
+            expanded_ids.update(descendant_ids)
+        except WikipediaGenre.DoesNotExist:
+            continue
+
+    return list(expanded_ids)
+
+
+def apply_wikipedia_genre_filter(
+    queryset: QuerySet,
+    genre_ids: List[int],
+    match_all: bool = True,
+    expand_hierarchy: bool = True,
+) -> QuerySet:
+    """
+    Filter queryset by Wikipedia genres with hierarchical support.
+
+    This is a convenience wrapper around apply_genre_filter for Wikipedia genres.
+
+    Args:
+        queryset: The queryset to filter
+        genre_ids: List of Wikipedia genre IDs to filter by
+        match_all: If True, games must have ALL genres. If False, ANY genre matches.
+        expand_hierarchy: If True, expand parent genres to include all descendants.
+
+    Returns:
+        Filtered queryset
+    """
+    return apply_genre_filter(
+        queryset,
+        genre_ids,
+        match_all=match_all,
+        use_wikipedia=True,
+        expand_hierarchy=expand_hierarchy,
+    )
 
 
 def apply_platform_filter(queryset: QuerySet, platform_ids: List[int]) -> QuerySet:

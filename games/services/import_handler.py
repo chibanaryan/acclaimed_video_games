@@ -463,9 +463,9 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
 
                                     # Update the WikipediaGameData with genres
                                     wiki_game_data.primary_genre = capitalized_primary
-                                    # Store all genres as pipe-separated string
+                                    # Store all genres as comma-separated string
                                     if capitalized_all:
-                                        wiki_game_data.all_genres = " | ".join(
+                                        wiki_game_data.all_genres = ", ".join(
                                             capitalized_all
                                         )
                                     wiki_game_data.save(

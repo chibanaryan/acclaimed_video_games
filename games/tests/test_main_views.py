@@ -6,6 +6,7 @@ Comprehensive test coverage for all user-facing views.
 
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 
@@ -20,6 +21,7 @@ from games.models import (
     Post,
     Publication,
     SiteMetadata,
+    WikipediaGenre,
 )
 
 
@@ -259,20 +261,25 @@ class GameListViewTest(TestCase):
         cache.delete("game_year_stats")
         cache.delete("game_list_meta")
 
-        action = IGDBGenre.objects.create(name="ActionTest")
-        rpg = IGDBGenre.objects.create(name="RPGTest")
+        # Use WikipediaGenre for filtering (views now use Wikipedia genres)
+        action, _ = WikipediaGenre.objects.get_or_create(
+            name="ActionTestGenre", defaults={"slug": "actiontest"}
+        )
+        rpg, _ = WikipediaGenre.objects.get_or_create(
+            name="RPGTestGenre", defaults={"slug": "rpgtest"}
+        )
 
         # Create games with specific genres and years
         # Use years covered by setUp (1990-2019 range)
         game1 = Game.objects.create(
             name="Action Game 2010", slug="action-2010", rank=200, year_of_release=2010
         )
-        game1.genres.add(action)
+        game1.wikipedia_genres.add(action)
 
         game2 = Game.objects.create(
             name="RPG Game 2015", slug="rpg-2015", rank=201, year_of_release=2015
         )
-        game2.genres.add(rpg)
+        game2.wikipedia_genres.add(rpg)
 
         # Without filter, both years should have counts
         response = self.client.get(reverse("games-list"))
@@ -415,15 +422,22 @@ class GameSearchViewTest(TestCase):
             name="Super Mario Bros", rank=2, year_of_release=1985
         )
 
-        # Create genres and platforms
-        self.action_genre = IGDBGenre.objects.create(name="Action")
-        self.rpg_genre = IGDBGenre.objects.create(name="RPG")
+        # Create genres and platforms (using WikipediaGenre for filtering)
+        self.action_genre, _ = WikipediaGenre.objects.get_or_create(
+            name="Action", defaults={"slug": "action"}
+        )
+        self.rpg_genre, _ = WikipediaGenre.objects.get_or_create(
+            name="Role-Playing", defaults={"slug": "role-playing"}
+        )
         self.nes_platform = Platform.objects.create(name="NES", code="NES")
 
-        self.game1.genres.add(self.action_genre, self.rpg_genre)
+        self.game1.wikipedia_genres.add(self.action_genre, self.rpg_genre)
         self.game1.platforms.add(self.nes_platform)
-        self.game2.genres.add(self.rpg_genre)
-        self.game3.genres.add(self.action_genre)
+        self.game2.wikipedia_genres.add(self.rpg_genre)
+        self.game3.wikipedia_genres.add(self.action_genre)
+
+        # Clear genre cache to ensure fresh data for each test
+        cache.delete("search_wikipedia_genres_list_with_counts")
 
     def test_search_page_loads(self):
         """Test that search page loads."""

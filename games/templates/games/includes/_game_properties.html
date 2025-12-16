@@ -4,62 +4,76 @@
 
 <div class="text-base space-y-3">
     <div>
-        <span class="text-base-content/85 font-semibold">All time rank:</span>
+        <span class="text-base-content/70 font-semibold">All time rank:</span>
         <span class="ml-2">
             {% game_rank_url game.rank game.id as rank_url %}
-            <a href="{{ rank_url }}" class="link link-primary">{{ game.rank }}</a>
+            <a href="{{ rank_url }}" class="link link-primary font-medium">{{ game.rank }}</a>
         </span>
     </div>
     {% if game.decade_rank %}
     <div>
-        <span class="text-base-content/85 font-semibold">{{ game.decade }}s rank:</span>
+        <span class="text-base-content/70 font-semibold">{{ game.decade }}s rank:</span>
         <span class="ml-2">
             {% game_rank_url game.decade_rank game.id game.decade game.decade|add:9 as decade_url %}
-            <a href="{{ decade_url }}" class="link link-primary">{{ game.decade_rank }}</a>
+            <a href="{{ decade_url }}" class="link link-primary font-medium">{{ game.decade_rank }}</a>
         </span>
     </div>
     {% endif %}
     {% if game.year_rank %}
     <div>
-        <span class="text-base-content/85 font-semibold">{{ game.year_of_release }} rank:</span>
+        <span class="text-base-content/70 font-semibold">{{ game.year_of_release }} rank:</span>
         <span class="ml-2">
             {% game_rank_url game.year_rank game.id game.year_of_release game.year_of_release as year_url %}
-            <a href="{{ year_url }}" class="link link-primary">{{ game.year_rank }}</a>
+            <a href="{{ year_url }}" class="link link-primary font-medium">{{ game.year_rank }}</a>
         </span>
     </div>
     {% endif %}
+    {% with studios=game.studios.all %}
     <div>
-        <span class="text-base-content/85 font-semibold">Developers:</span>
+        <span class="text-base-content/70 font-semibold">{% if studios|length == 1 %}Developer{% else %}Developers{% endif %}:</span>
         <span class="ml-2">
-            {% for studio in game.studios.all %}{% if studio.root_company.slug %}<a href="{% url 'developer-detail' slug=studio.root_company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-primary">{{ studio.name }}</a>{% elif studio.company.slug %}<a href="{% url 'developer-detail' slug=studio.company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-primary">{{ studio.name }}</a>{% else %}<span>{{ studio.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+            {% for studio in studios %}{% if studio.root_company.slug %}<a href="{% url 'developer-detail' slug=studio.root_company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-primary">{{ studio.name }}</a>{% elif studio.company.slug %}<a href="{% url 'developer-detail' slug=studio.company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-primary">{{ studio.name }}</a>{% else %}<span>{{ studio.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
         </span>
     </div>
-    <div>
-        <span class="text-base-content/85 font-semibold">Platforms:</span>
-        <span class="ml-2">
-            {% for platform in game.platforms.all %}<a href="{% url 'games-list' %}?platforms={{ platform.id }}&highlight={{ game.id }}" class="link link-primary">{{ platform.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
-        </span>
+    {% endwith %}
+    {% with platforms=game.platforms.all %}
+    <div class="flex items-center flex-wrap gap-1">
+        <span class="text-base-content/70 font-semibold mr-1">{% if platforms|length == 1 %}Platform{% else %}Platforms{% endif %}:</span>
+        {% for platform in platforms %}<a href="{% url 'games-list' %}?platforms={{ platform.id }}&highlight={{ game.id }}" class="badge badge-outline hover:badge-primary transition-colors">{{ platform.name }}</a>{% endfor %}
     </div>
+    {% endwith %}
     <div>
-        <span class="text-base-content/85 font-semibold">Year of release:</span>
+        <span class="text-base-content/70 font-semibold">Year:</span>
         <span class="ml-2">
-            <a href="{% url 'games-list' %}?start={{ game.year_of_release }}&end={{ game.year_of_release }}&highlight={{ game.id }}" class="link link-primary">
+            <a href="{% url 'games-list' %}?start={{ game.year_of_release }}&end={{ game.year_of_release }}&highlight={{ game.id }}" class="link link-primary font-medium">
                 {{ game.year_of_release }}
             </a>
         </span>
     </div>
+    {% with genres=game.wikipedia_genres.all %}
+    {% if genres %}
+    <div class="flex items-center flex-wrap gap-1">
+        <span class="text-base-content/70 font-semibold mr-1">{% if genres|length == 1 %}Genre{% else %}Genres{% endif %}:</span>
+        {% for genre in genres %}<a href="{% url 'games-list' %}?genres={{ genre.id }}&highlight={{ game.id }}" class="badge badge-outline hover:badge-primary transition-colors">{{ genre.name }}</a>{% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% if game.primary_wikipedia_game_data.wikipedia_url %}
     <div>
-        <span class="text-base-content/85 font-semibold">Genres:</span>
+        <span class="text-base-content/70 font-semibold">Wikipedia:</span>
         <span class="ml-2">
-            {% for genre in game.genres.all %}<a href="{% url 'games-list' %}?genres={{ genre.id }}&highlight={{ game.id }}" class="link link-primary">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+            <a href="{{ game.primary_wikipedia_game_data.wikipedia_url }}" target="_blank" class="link link-primary inline-flex items-center gap-1">
+                Wikipedia <span class="mdi mdi-open-in-new text-sm"></span>
+            </a>
         </span>
     </div>
+    {% endif %}
     {% if game.primary_igdb_game_data.url %}
     <div>
-        <span class="text-base-content/85 font-semibold">IGDB Link:</span>
+        <span class="text-base-content/70 font-semibold">IGDB:</span>
         <span class="ml-2">
             <a href="{{ game.primary_igdb_game_data.url }}" target="_blank" class="link link-primary inline-flex items-center gap-1">
-                IGDB <span class="mdi mdi-open-in-new"></span>
+                IGDB <span class="mdi mdi-open-in-new text-sm"></span>
             </a>
         </span>
     </div>

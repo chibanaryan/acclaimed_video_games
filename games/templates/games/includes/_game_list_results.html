@@ -34,7 +34,7 @@
     </div>
     {# Sort dropdown - Center (hidden on medium, shown on large) #}
     <div class="hidden lg:flex items-center gap-3 flex-shrink-0">
-        <label for="sort-select" class="text-sm font-medium text-base-content/70 whitespace-nowrap">Sort by:</label>
+        <span class="text-base-content/60 whitespace-nowrap">Sort by:</span>
         <select id="sort-select"
                 @change="updateSort($event.target.value)"
                 :value="filters.sort"
@@ -52,7 +52,7 @@
 
 {# Mobile + Tablet: Sort dropdown (hidden on large screens where inline sort shows) #}
 <div class="lg:hidden flex items-center gap-3 mb-2">
-    <label for="sort-select-mobile" class="text-sm font-medium text-base-content/70 whitespace-nowrap">Sort by:</label>
+    <span class="text-base-content/60 whitespace-nowrap">Sort by:</span>
     <select id="sort-select-mobile"
             @change="updateSort($event.target.value)"
             :value="filters.sort"

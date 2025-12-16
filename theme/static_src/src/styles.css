@@ -823,31 +823,51 @@
 
 @layer components {
 
-  /* Desktop: Circular game cover thumbnails - expand on hover */
+  /* Desktop: Game row expands on hover to fit thumbnail */
+  .game-row.desktop {
+    min-height: 68px;
+    transition: min-height 0.25s ease;
+  }
+
+  .game-row.desktop:hover {
+    min-height: 116px;
+  }
+
+  /* Desktop: Square game cover thumbnails - expand on hover */
   .game-row.desktop .game-thumb-link {
-    @apply block overflow-hidden flex-shrink-0;
-    border-radius: 50%;
+    @apply block flex-shrink-0;
     width: 56px;
     height: 56px;
-    transition: border-radius 0.25s ease, width 0.25s ease, height 0.25s ease;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: width 0.25s ease, height 0.25s ease;
   }
 
   .game-row.desktop:hover .game-thumb-link {
-    border-radius: 4px;
-    width: 56px;
-    height: 80px;
+    width: 72px;
+    height: calc(72px * 128 / 90);
   }
 
   .game-row.desktop .game-thumb {
-    width: 56px;
-    height: 80px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     object-position: center top;
-    transition: transform 0.2s ease;
+    transition: object-fit 0.25s ease;
   }
 
   .game-row.desktop:hover .game-thumb {
-    transform: scale(1.02);
+    object-fit: fill;
+  }
+
+  /* Desktop: Global rank hidden by default, shown on hover */
+  .game-row.desktop .game-row-global-rank {
+    @apply opacity-0;
+    transition: opacity 0.2s ease;
+  }
+
+  .game-row.desktop:hover .game-row-global-rank {
+    @apply opacity-100;
   }
 
   /* Desktop: Details row hidden by default, shown on hover */

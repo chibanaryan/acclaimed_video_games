@@ -124,7 +124,7 @@ class FetchWikipediaMetadataCommandTests(TestCase):
         self.assertEqual(wiki_data.page_title, "Test Game 1")
         self.assertEqual(wiki_data.lookup_source, "wikidata")
         self.assertEqual(wiki_data.primary_genre, "Action")
-        self.assertEqual(wiki_data.all_genres, "Action | Adventure | RPG")
+        self.assertEqual(wiki_data.all_genres, "Action, Adventure, RPG")
 
         # Check WikipediaGenre objects were created
         self.assertEqual(self.game1.wikipedia_genres.count(), 3)
@@ -397,7 +397,7 @@ class FetchWikipediaMetadataCommandTests(TestCase):
         self.game1.refresh_from_db()
         wiki_data = self.game1.primary_wikipedia_game_data
         self.assertEqual(wiki_data.primary_genre, "Action-adventure")
-        self.assertEqual(wiki_data.all_genres, "Action-adventure | Rpg")
+        self.assertEqual(wiki_data.all_genres, "Action-adventure, Rpg")
 
     def test_command_handles_genre_scraping_exception(self):
         """Test command handles exceptions during genre scraping."""

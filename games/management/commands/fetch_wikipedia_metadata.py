@@ -214,7 +214,7 @@ class Command(BaseCommand):
                                 ]
 
                                 primary_genre = capitalized_primary
-                                all_genres = " | ".join(capitalized_all)
+                                all_genres = ", ".join(capitalized_all)
 
                                 # Update WikipediaGameData with genres
                                 wiki_game_data.primary_genre = capitalized_primary

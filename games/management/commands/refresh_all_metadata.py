@@ -324,7 +324,7 @@ class Command(BaseCommand):
                     capitalized_all = [
                         capitalize_first(g) for g in genre_result.all_genres
                     ]
-                    capitalized_all_str = " | ".join(capitalized_all)
+                    capitalized_all_str = ", ".join(capitalized_all)
 
                     # Update WikipediaGameData with genres
                     wiki_game_data.primary_genre = capitalized_primary

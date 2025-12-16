@@ -142,7 +142,7 @@ class GetWikiGenresCommandTests(TestCase):
         self.assertIsNotNone(self.game1.primary_wikipedia_game_data)
         wiki_data = self.game1.primary_wikipedia_game_data
         self.assertEqual(wiki_data.primary_genre, "Action")
-        self.assertEqual(wiki_data.all_genres, "Action | Adventure | RPG")
+        self.assertEqual(wiki_data.all_genres, "Action, Adventure, RPG")
 
     def test_command_does_not_save_failed_results(self):
         """Test command does not save failed results to database."""
@@ -240,7 +240,7 @@ class GetWikiGenresCommandTests(TestCase):
             self.assertIn("Source URL", content)
             self.assertIn("Test Game 1", content)
             self.assertIn("Action", content)
-            self.assertIn("Action | Adventure", content)
+            self.assertIn("Action, Adventure", content)
 
         finally:
             if os.path.exists(output_path):
