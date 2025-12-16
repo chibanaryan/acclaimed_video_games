@@ -10,6 +10,10 @@
 - Added genre normalization service to consolidate variant names (e.g., "MMORPG" variants → "MMORPG")
 - Redesigned game row hover: square thumbnails, Global Rank on title row, smoother transitions
 - Filter dropdown now excludes genres with 0 games while preserving parent categories
+- Fixed Global Rank display on developer detail pages (now shows on filtered game lists)
+- Made platform and genre badges clickable to filter games (resets other filters for simplicity)
+- Added game highlighting when filtering via badges (scrolls to game, fades after 4 seconds)
+- Badge clicks now trigger HTMX filter updates with smooth transitions
 
 ## 2025-12-14
 

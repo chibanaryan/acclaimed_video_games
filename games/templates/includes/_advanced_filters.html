@@ -112,6 +112,10 @@
             this.$watch('filters', () => {
                 this.$dispatch('filters-updated');
             }, { deep: true });
+
+            // Listen for add-platform and add-genre events from game rows
+            document.addEventListener('add-platform', (e) => this.addPlatform(e.detail));
+            document.addEventListener('add-genre', (e) => this.addGenre(e.detail));
         },
         handleFilterChange(type, items) {
             const itemIds = items.map(item => {
@@ -153,6 +157,38 @@
             this.$dispatch('genres-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
+        addPlatform(data) {
+            const { platformId, gameId } = data;
+            const id = String(platformId);
+            // Reset all filters and show just this platform
+            this.filters.q = '';
+            this.filters.start = {{ min_year }};
+            this.filters.end = {{ max_year }};
+            this.filters.genres = [];
+            this.filters.platforms = [id];
+            this.filters.genre_option = 'any';
+            this.filters.highlight = gameId;
+            // Dispatch reset events to update filter UI
+            this.$dispatch('genres-reset');
+            this.$dispatch('year-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
+        addGenre(data) {
+            const { genreId, gameId } = data;
+            const id = String(genreId);
+            // Reset all filters and show just this genre
+            this.filters.q = '';
+            this.filters.start = {{ min_year }};
+            this.filters.end = {{ max_year }};
+            this.filters.genres = [id];
+            this.filters.platforms = [];
+            this.filters.genre_option = 'any';
+            this.filters.highlight = gameId;
+            // Dispatch reset events to update filter UI
+            this.$dispatch('platforms-reset');
+            this.$dispatch('year-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
         async performUpdate(options = {}) {
             const { partial = false, historyMethod = 'pushState', preservePage = false } = options;
 
@@ -174,6 +210,41 @@
                     updateDomElements(content);
                     // Reinitialize Load More button after DOM update
                     if (typeof initLoadMore === 'function') initLoadMore();
+
+                    // Handle game highlight if present (from clicking platform/genre badges)
+                    const urlParams = new URLSearchParams(params.toString());
+                    const highlightId = urlParams.get('highlight');
+                    if (highlightId) {
+                        setTimeout(() => {
+                            const desktopElement = document.getElementById('game-' + highlightId);
+                            const mobileElement = document.getElementById('game-' + highlightId + '-mobile');
+                            const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+                            const element = isDesktop ? desktopElement : mobileElement;
+
+                            if (element) {
+                                // Scroll to position the game at the top of the viewport
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                                // Fade out highlight after 4 seconds (longer duration for better visibility)
+                                const fadeTimeout = setTimeout(() => {
+                                    if (desktopElement) desktopElement.classList.add('fade-out');
+                                    if (mobileElement) mobileElement.classList.add('fade-out');
+                                }, 4000);
+
+                                // Also fade out if user hovers over any other game row
+                                const gameRows = document.querySelectorAll('.game-row');
+                                gameRows.forEach((row) => {
+                                    if (row !== desktopElement && row !== mobileElement) {
+                                        row.addEventListener('mouseenter', () => {
+                                            clearTimeout(fadeTimeout);
+                                            if (desktopElement) desktopElement.classList.add('fade-out');
+                                            if (mobileElement) mobileElement.classList.add('fade-out');
+                                        }, { once: true });
+                                    }
+                                });
+                            }
+                        }, 300);
+                    }
 
                     // Update year grid heatmap with filtered counts
                     const yearCountsEl = document.getElementById('year-counts-update');
@@ -222,6 +293,10 @@
             } finally {
                 this.isLoading = false;
                 clearLoading('game-results-container');
+                // Clear highlight after update so it doesn't persist
+                if (this.filters.highlight) {
+                    delete this.filters.highlight;
+                }
             }
         },
         updateResults() {

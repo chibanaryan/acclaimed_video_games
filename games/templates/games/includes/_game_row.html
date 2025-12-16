@@ -28,7 +28,7 @@
                     ({{ game.year_of_release }})
                 </a>
             </div>
-            {% if show_rank == 'filtered' %}
+            {% if show_rank == 'filtered' or show_rank_in_details %}
             <span class="game-row-global-rank text-sm text-base-content/70 whitespace-nowrap">Global Rank: <span class="font-medium text-base-content">{{ game.rank }}</span></span>
             {% endif %}
         </div>
@@ -41,13 +41,13 @@
             {# Platforms #}
             {% with platforms=game.platforms.all|slice:":6" total_platforms=game.platforms.count %}
             {% if platforms %}
-            <div class="flex items-center gap-1 text-base-content/70">{% if total_platforms == 1 %}Platform{% else %}Platforms{% endif %}: {% for platform in platforms %}<span class="badge badge-xs badge-outline">{{ platform.code }}</span>{% endfor %}{% if total_platforms > 6 %}<span class="text-xs text-base-content/50 ml-1">+{{ total_platforms|add:"-6" }}</span>{% endif %}</div>
+            <div class="flex items-center gap-1 text-base-content/70">{% if total_platforms == 1 %}Platform{% else %}Platforms{% endif %}: {% for platform in platforms %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '{{ platform.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ platform.name }}">{{ platform.code }}</button>{% endfor %}{% if total_platforms > 6 %}<span class="text-xs text-base-content/50 ml-1">+{{ total_platforms|add:"-6" }}</span>{% endif %}</div>
             {% endif %}
             {% endwith %}
             {# Genres #}
             {% with genres=game.wikipedia_genres.all|slice:":3" total_genres=game.wikipedia_genres.count %}
             {% if genres %}
-            <div class="flex items-center gap-1 text-base-content/70">{% if total_genres == 1 %}Genre{% else %}Genres{% endif %}: {% for genre in genres %}<span class="badge badge-xs badge-outline">{{ genre.name }}</span>{% endfor %}{% if total_genres > 3 %}<span class="text-xs text-base-content/50 ml-1">+{{ total_genres|add:"-3" }}</span>{% endif %}</div>
+            <div class="flex items-center gap-1 text-base-content/70">{% if total_genres == 1 %}Genre{% else %}Genres{% endif %}: {% for genre in genres %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '{{ genre.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ genre.name }}">{{ genre.name }}</button>{% endfor %}{% if total_genres > 3 %}<span class="text-xs text-base-content/50 ml-1">+{{ total_genres|add:"-3" }}</span>{% endif %}</div>
             {% endif %}
             {% endwith %}
         </div>
@@ -81,7 +81,7 @@
         <div class="flex items-center flex-wrap gap-1 text-sm text-base-content/60">
             <span class="mr-1" data-year="{{ game.year_of_release }}">{{ game.year_of_release }}</span>
             {# Platform codes (top 4) #}
-            {% for platform in game.platforms.all|slice:":4" %}<span class="badge badge-xs badge-outline">{{ platform.code }}</span>{% endfor %}{% if game.platforms.count > 4 %}<span class="text-xs text-base-content/50">+{{ game.platforms.count|add:"-4" }}</span>{% endif %}
+            {% for platform in game.platforms.all|slice:":4" %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); event.preventDefault(); document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '{{ platform.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ platform.name }}">{{ platform.code }}</button>{% endfor %}{% if game.platforms.count > 4 %}<span class="text-xs text-base-content/50">+{{ game.platforms.count|add:"-4" }}</span>{% endif %}
         </div>
     </div>
 
