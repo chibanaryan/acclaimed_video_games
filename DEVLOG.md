@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2025-12-16
+
+- Fixed CSV download to use Wikipedia genres instead of IGDB genres (now matches genre display on site)
+
 ## 2025-12-15
 
 - Added sorting options (Rank, Release Year, Alphabetical) to Rankings page

@@ -365,7 +365,7 @@ def download_games_csv(request):
     for index, game in enumerate(qs, start=1):
         developers = ", ".join(d.name for d in game.studios.all())
         platforms = ", ".join(p.name for p in game.platforms.all())
-        genres = ", ".join(g.name for g in game.genres.all())
+        genres = ", ".join(g.name for g in game.wikipedia_genres.all())
         filtered_rank = index if use_filtered_rank else game.rank
         writer.writerow(
             [

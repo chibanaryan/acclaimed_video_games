@@ -1375,12 +1375,14 @@ class GameDownloadCSVTest(TestCase):
     def setUp(self):
         # Create test games with related data
         self.genre = IGDBGenre.objects.create(name="Action")
+        self.wiki_genre, _ = WikipediaGenre.objects.get_or_create(name="Action")
         self.platform = Platform.objects.create(name="PC", code="PC")
         dev = Company.objects.create(name="Test Dev", slug="test-dev")
         self.dev_alias = Studio.objects.create(name="Test Dev", company=dev, igdb_id=1)
 
         self.game1 = Game.objects.create(name="Game 1", rank=1, year_of_release=1995)
         self.game1.genres.add(self.genre)
+        self.game1.wikipedia_genres.add(self.wiki_genre)
         self.game1.platforms.add(self.platform)
         self.game1.studios.add(self.dev_alias)
 
