@@ -295,6 +295,13 @@
                      detail: { active: true, start: min, end: max }
                  }));
              }
+         },
+
+         // Get total game count for a decade
+         getDecadeCount(decade) {
+             return decade.cells
+                 .filter(c => c && c.year && !c.hidden)
+                 .reduce((sum, c) => sum + (c.count || 0), 0);
          }
      }"
      @mouseleave="cancelDrag()"
@@ -310,7 +317,7 @@
                      @mousedown="startDragDecade(decade.start, $event)"
                      @mouseenter="updateDragDecade(decade.start)"
                      @click.stop="if (!isDragging || (dragStart === decade.start && dragEnd === decade.start + 9)) selectDecade(decade.start, $event)"
-                     :title="decade.label">
+                     :title="decade.label + ': ' + getDecadeCount(decade) + ' games'">
                     <span x-text="decade.label"></span>
                 </div>
 

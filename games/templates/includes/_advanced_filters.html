@@ -187,7 +187,7 @@
             if (!start || !end) return '';
             if (start <= minYear && end >= maxYear) return 'All Time';
             if (start === end) return String(start);
-            if (start % 10 === 0 && end === start + 9) return 'the ' + start + '\u0027s';
+            if (start % 10 === 0 && end === start + 9) return 'the ' + start + 's';
             return start + '-' + end;
         },
         _buildPlatformSegment() {
@@ -629,7 +629,7 @@
                 if (!start || !end) return '';
                 if (start <= minYear && end >= maxYear) return 'All Time';
                 if (start === end) return String(start);
-                if (start % 10 === 0 && end === start + 9) return 'the ' + start + '\u0027s';
+                if (start % 10 === 0 && end === start + 9) return 'the ' + start + 's';
                 return start + '-' + end;
             },
 
