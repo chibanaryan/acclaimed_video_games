@@ -2,6 +2,7 @@
 
 ## 2025-12-27
 
+- Changed badge filter behavior: scroll to top instead of highlighting clicked game (cleaner UX)
 - Fixed genre normalization bug: management commands now normalize Wikipedia genres consistently
 - Added --cleanup-orphans flag to fetch_wikipedia_metadata to remove orphan WikipediaGenre records
 - Simplified genre filtering from multi-select to single-select for better UX

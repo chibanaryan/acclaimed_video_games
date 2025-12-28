@@ -283,11 +283,12 @@
             this.filters.end = {{ max_year }};
             this.filters.genres = [];
             this.filters.platforms = [id];
-            this.filters.highlight = gameId;
             // Dispatch reset events to update filter UI
             this.$dispatch('genres-reset');
             this.$dispatch('year-reset');
             if (this.initialized) this.debouncedFilterUpdate();
+            // Scroll to top to see filtered results
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         },
         addGenre(data) {
             const { genreId, gameId } = data;
@@ -298,11 +299,12 @@
             this.filters.end = {{ max_year }};
             this.filters.genres = [id];
             this.filters.platforms = [];
-            this.filters.highlight = gameId;
             // Dispatch reset events to update filter UI
             this.$dispatch('platforms-reset');
             this.$dispatch('year-reset');
             if (this.initialized) this.debouncedFilterUpdate();
+            // Scroll to top to see filtered results
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         },
         async performUpdate(options = {}) {
             const { partial = false, historyMethod = 'pushState', preservePage = false } = options;
