@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2025-12-28
+
+- Added "Report incorrect data" link to game detail pages (opens contact modal with pre-filled category and game name)
+
 ## 2025-12-27
 
 - Changed badge filter behavior: scroll to top instead of highlighting clicked game (cleaner UX)

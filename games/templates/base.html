@@ -232,8 +232,23 @@
             if (modal) {
                 // Handle contact modal trigger clicks
                 document.addEventListener('click', function(e) {
-                    if (e.target.closest('.contact-modal-trigger')) {
+                    const trigger = e.target.closest('.contact-modal-trigger');
+                    if (trigger) {
                         e.preventDefault();
+
+                        // Pre-fill form fields from data attributes
+                        const category = trigger.dataset.category;
+                        const message = trigger.dataset.message;
+
+                        if (category) {
+                            const categorySelect = document.getElementById('id_category');
+                            if (categorySelect) categorySelect.value = category;
+                        }
+                        if (message) {
+                            const messageField = document.getElementById('id_message');
+                            if (messageField) messageField.value = message;
+                        }
+
                         modal.showModal();
 
                         // Close mobile menu if open
