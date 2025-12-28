@@ -83,11 +83,12 @@
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
                 const platformsParam = params.get('platforms');
                 this.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
-                // Use client-side filtering if ready, otherwise reload
+                // Use client-side filtering if ready, otherwise show loading state
                 if (this.clientFilterReady) {
                     this.performClientUpdate();
                 } else {
-                    window.location.reload();
+                    // Show loading state - will render when client-side is ready
+                    setLoading('game-results-container');
                 }
             });
 
@@ -146,23 +147,9 @@
                         onLoadComplete: () => {
                             console.log('[CSF] Game data loaded, client filtering ready');
                             this.clientFilterReady = true;
-                            // Run initial filter to get all counts
-                            const initialResult = this._csf.applyFilters(this.filters);
-                            if (initialResult && initialResult.facets) {
-                                // Dispatch genre counts
-                                if (initialResult.facets.genres) {
-                                    window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: initialResult.facets.genres }));
-                                }
-                                // Dispatch platform counts
-                                if (initialResult.facets.platforms) {
-                                    window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: initialResult.facets.platforms }));
-                                }
-                                // Dispatch platform group counts (deduplicated)
-                                if (initialResult.facets.platformGroups) {
-                                    this.platformGroupCounts = initialResult.facets.platformGroups;
-                                    window.dispatchEvent(new CustomEvent('platform-group-counts-update', { detail: initialResult.facets.platformGroups }));
-                                }
-                            }
+                            // Render initial results with current filters
+                            // This also dispatches all facet count updates
+                            this.performClientUpdate({ historyMethod: 'replaceState' });
                         }
                     });
                 } catch (e) {
@@ -251,6 +238,24 @@
             this.$dispatch('genres-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
+        resetAllFilters() {
+            this.filters.q = '';
+            this.filters.start = {{ min_year }};
+            this.filters.end = {{ max_year }};
+            this.filters.genres = [];
+            this.filters.platforms = [];
+            this.filters.sort = 'rank';
+            // Dispatch reset events to update filter UI components AND reset expanded states
+            // These events trigger handleReset() in each component which:
+            // - Genre: clears expandedCategories, removes from localStorage
+            // - Platform: clears expandedManufacturers/expandedFormFactors, removes from localStorage
+            // - Year: clears lastClicked for shift+click ranges
+            this.$dispatch('platforms-reset');
+            this.$dispatch('genres-reset');
+            this.$dispatch('year-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
         addPlatform(data) {
             const { platformId, gameId } = data;
             const id = String(platformId);
@@ -286,11 +291,20 @@
         async performUpdate(options = {}) {
             const { partial = false, historyMethod = 'pushState', preservePage = false } = options;
 
-            // Use client-side filtering if available and partial update
-            if (this.clientFilterReady && partial) {
+            // Use client-side filtering if available
+            if (this.clientFilterReady) {
                 return this.performClientUpdate({ historyMethod });
             }
 
+            // Client-side not ready yet - show/maintain loading state
+            // Content will be rendered when client-side filtering initializes
+            if (partial) {
+                this.isLoading = true;
+                setLoading('game-results-container');
+                return;
+            }
+
+            // Full page load - let server handle it
             const signal = this.fetchManager.newRequest();
             this.isLoading = true;
             setLoading('game-results-container');
@@ -666,12 +680,13 @@
                             <span class="mdi mdi-download"></span>
                             <span>Download CSV</span>
                         </a>
-                        <a href="{% url 'games-list' %}"
+                        <button type="button"
+                           @click="resetAllFilters()"
                            class="btn btn-ghost btn-xs text-base-content/70 hover:text-error"
                            title="Clear all filters">
                             <span class="mdi mdi-close text-xs"></span>
                             <span>Clear All</span>
-                        </a>
+                        </button>
                     </div>
                 </div>
 

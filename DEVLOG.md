@@ -20,6 +20,10 @@
 - Added genre mappings: Bullet hell→Shooter, Roguelite→Roguelike, Minigame→Interactive Drama
 - Fixed orphan genre bug: new genres now created with proper hierarchy (parent, level, path)
 - Enhanced WikipediaGenreAdmin with hierarchy info display (parent, level, path, game count)
+- Fixed year heatmap not updating correctly when clearing filter sections (year counts now exclude year filters)
+- Converted "Clear All" button to client-side reset (no page reload, collapses filter dropdowns)
+- Removed server-side filtering fallback (pure client-side filtering for all filter operations)
+- Fixed mobile filter clear buttons to collapse expanded dropdowns
 
 ## 2025-12-27
 

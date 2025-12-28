@@ -155,7 +155,7 @@
         <button type="button"
                 x-show="selectedCount() > 0"
                 x-cloak
-                @click.stop="clearGenres(); debouncedFilterUpdate();"
+                @click.stop="clearGenres(); resetExpanded(); debouncedFilterUpdate();"
                 class="btn btn-ghost btn-xs ml-2">
             <span class="mdi mdi-close text-xs"></span>
             Clear Genre Filter

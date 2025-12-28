@@ -37,7 +37,7 @@
         <h2 class="text-xl font-bold">Filters</h2>
         <div class="flex items-center gap-2">
             <button type="button"
-                    @click="resetSearch(); resetYears(); resetPlatforms(); resetGenres(); debouncedFilterUpdate();"
+                    @click="resetAllFilters()"
                     class="btn btn-ghost btn-sm">
                 Clear All Filters
             </button>

@@ -253,7 +253,7 @@ class GameFilterEngine {
         results = this._sortGames(results, sort);
 
         // Calculate faceted counts
-        const facets = this._calculateFacets(results, filters);
+        const facets = this._calculateFacets(filters);
 
         return {
             games: results,
@@ -294,7 +294,7 @@ class GameFilterEngine {
      * Calculate faceted counts for genres, platforms, and years
      * @private
      */
-    _calculateFacets(filteredGames, currentFilters) {
+    _calculateFacets(currentFilters) {
         const genreCounts = new Map();
         const platformCounts = new Map();
         const yearCounts = new Map();
@@ -445,8 +445,55 @@ class GameFilterEngine {
             }
         }
 
-        // Calculate year counts from filtered games
-        for (const game of filteredGames) {
+        // Calculate year counts (apply all filters EXCEPT year filters)
+        // This allows the heatmap to show which years have games given other filters
+        for (const game of this.games) {
+            // Apply search filter only (no year filter)
+            const normalizedQuery = (q || '').toLowerCase().trim();
+            if (normalizedQuery && !game.n.toLowerCase().includes(normalizedQuery)) {
+                continue;
+            }
+
+            // Apply platform filter
+            if (platformSet.size > 0) {
+                if (!game.p.some(pid => platformSet.has(pid))) continue;
+            }
+
+            // Apply genre filter
+            if (genreIds.length > 0) {
+                const gameGenreSet = new Set(game.g);
+                if (matchAll) {
+                    let matchesAll = true;
+                    for (const expandedSet of expandedGenreSets) {
+                        let hasMatch = false;
+                        for (const gid of gameGenreSet) {
+                            if (expandedSet.has(gid)) {
+                                hasMatch = true;
+                                break;
+                            }
+                        }
+                        if (!hasMatch) {
+                            matchesAll = false;
+                            break;
+                        }
+                    }
+                    if (!matchesAll) continue;
+                } else {
+                    let hasAnyMatch = false;
+                    for (const expandedSet of expandedGenreSets) {
+                        for (const gid of gameGenreSet) {
+                            if (expandedSet.has(gid)) {
+                                hasAnyMatch = true;
+                                break;
+                            }
+                        }
+                        if (hasAnyMatch) break;
+                    }
+                    if (!hasAnyMatch) continue;
+                }
+            }
+
+            // Count this game's year
             if (game.y !== null) {
                 yearCounts.set(game.y, (yearCounts.get(game.y) || 0) + 1);
             }
