@@ -105,7 +105,7 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 game_name="Test Game 1",
                 source=GenreSource.WIKIPEDIA,
                 primary_genre="Action",
-                all_genres=["Action", "Adventure", "RPG"],
+                all_genres=["Action", "Adventure", "Puzzle"],
             )
 
             call_command(
@@ -124,12 +124,12 @@ class FetchWikipediaMetadataCommandTests(TestCase):
         self.assertEqual(wiki_data.page_title, "Test Game 1")
         self.assertEqual(wiki_data.lookup_source, "wikidata")
         self.assertEqual(wiki_data.primary_genre, "Action")
-        self.assertEqual(wiki_data.all_genres, "Action, Adventure, RPG")
+        self.assertEqual(wiki_data.all_genres, "Action, Adventure, Puzzle")
 
         # Check WikipediaGenre objects were created
         self.assertEqual(self.game1.wikipedia_genres.count(), 3)
         genre_names = set(self.game1.wikipedia_genres.values_list("name", flat=True))
-        self.assertEqual(genre_names, {"Action", "Adventure", "RPG"})
+        self.assertEqual(genre_names, {"Action", "Adventure", "Puzzle"})
 
     def test_command_handles_page_lookup_failure(self):
         """Test command handles page lookup failures gracefully."""
@@ -453,3 +453,203 @@ class FetchWikipediaMetadataCommandTests(TestCase):
 
         output = out.getvalue()
         self.assertIn("No games found to process", output)
+
+    def test_command_normalizes_genres(self):
+        """Test command normalizes genre names to canonical forms."""
+        from games.models import WikipediaGenre
+
+        out = StringIO()
+
+        with mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiPageLookupService"
+        ) as mock_page_service_class, mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiGenreService"
+        ) as mock_genre_service_class:
+            mock_page_service = mock_page_service_class.return_value
+            mock_page_service.lookup_page.return_value = PageLookupResult(
+                game_name="Test Game 1",
+                page_title="Test Game 1",
+                lookup_source="wikidata",
+            )
+
+            # Service returns non-canonical genres
+            mock_genre_service = mock_genre_service_class.return_value
+            mock_genre_service.get_genre_from_url.return_value = GenreResult(
+                game_name="Test Game 1",
+                source=GenreSource.WIKIPEDIA,
+                primary_genre="Survival horror",
+                all_genres=["Survival horror", "First-person shooter", "Action"],
+            )
+
+            call_command(
+                "fetch_wikipedia_metadata",
+                "--game",
+                "Test Game 1",
+                "--save",
+                "--no-output",
+                stdout=out,
+            )
+
+        # Check genres were normalized
+        self.game1.refresh_from_db()
+        genre_names = set(self.game1.wikipedia_genres.values_list("name", flat=True))
+        # "Survival horror" should normalize to "Horror"
+        # "First-person shooter" should normalize to "First-Person Shooter"
+        # "Action" stays as "Action"
+        self.assertEqual(genre_names, {"Horror", "First-Person Shooter", "Action"})
+
+        # Ensure only canonical genres exist in database
+        self.assertFalse(WikipediaGenre.objects.filter(name="Survival horror").exists())
+        self.assertTrue(WikipediaGenre.objects.filter(name="Horror").exists())
+
+    def test_command_removes_duplicate_normalized_genres(self):
+        """Test command removes duplicates after normalization."""
+        out = StringIO()
+
+        with mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiPageLookupService"
+        ) as mock_page_service_class, mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiGenreService"
+        ) as mock_genre_service_class:
+            mock_page_service = mock_page_service_class.return_value
+            mock_page_service.lookup_page.return_value = PageLookupResult(
+                game_name="Test Game 1",
+                page_title="Test Game 1",
+                lookup_source="wikidata",
+            )
+
+            # Service returns genres that normalize to the same value
+            mock_genre_service = mock_genre_service_class.return_value
+            mock_genre_service.get_genre_from_url.return_value = GenreResult(
+                game_name="Test Game 1",
+                source=GenreSource.WIKIPEDIA,
+                primary_genre="Platform",
+                all_genres=["Platform", "Platformer", "Platform game"],
+            )
+
+            call_command(
+                "fetch_wikipedia_metadata",
+                "--game",
+                "Test Game 1",
+                "--save",
+                "--no-output",
+                stdout=out,
+            )
+
+        # All three should normalize to "Platform" - only one genre should be linked
+        self.game1.refresh_from_db()
+        self.assertEqual(self.game1.wikipedia_genres.count(), 1)
+        self.assertEqual(self.game1.wikipedia_genres.first().name, "Platform")
+
+    def test_command_skips_invalid_genres(self):
+        """Test command skips genres that map to None (invalid)."""
+        out = StringIO()
+
+        with mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiPageLookupService"
+        ) as mock_page_service_class, mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiGenreService"
+        ) as mock_genre_service_class:
+            mock_page_service = mock_page_service_class.return_value
+            mock_page_service.lookup_page.return_value = PageLookupResult(
+                game_name="Test Game 1",
+                page_title="Test Game 1",
+                lookup_source="wikidata",
+            )
+
+            # Service returns genres including invalid ones
+            mock_genre_service = mock_genre_service_class.return_value
+            mock_genre_service.get_genre_from_url.return_value = GenreResult(
+                game_name="Test Game 1",
+                source=GenreSource.WIKIPEDIA,
+                primary_genre="Action",
+                all_genres=["Action", "(minigame)", "Various"],
+            )
+
+            call_command(
+                "fetch_wikipedia_metadata",
+                "--game",
+                "Test Game 1",
+                "--save",
+                "--no-output",
+                stdout=out,
+            )
+
+        # Invalid genres should be skipped
+        self.game1.refresh_from_db()
+        self.assertEqual(self.game1.wikipedia_genres.count(), 1)
+        self.assertEqual(self.game1.wikipedia_genres.first().name, "Action")
+
+    def test_cleanup_orphans_flag_deletes_unlinked_genres(self):
+        """Test --cleanup-orphans flag deletes WikipediaGenre records with no games."""
+        from games.models import WikipediaGenre
+
+        # Clear all pre-existing genres first
+        WikipediaGenre.objects.all().delete()
+
+        # Create orphan genres (not linked to any game)
+        WikipediaGenre.objects.create(name="Orphan Genre 1")
+        WikipediaGenre.objects.create(name="Orphan Genre 2")
+        linked_genre = WikipediaGenre.objects.create(name="Linked Genre")
+        self.game1.wikipedia_genres.add(linked_genre)
+
+        out = StringIO()
+
+        with mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiPageLookupService"
+        ) as mock_page_service_class:
+            mock_page_service = mock_page_service_class.return_value
+            mock_page_service.lookup_page.return_value = PageLookupResult(
+                game_name="Test Game 1",
+                page_title=None,
+                error_message="Not found",
+            )
+
+            call_command(
+                "fetch_wikipedia_metadata",
+                "--game",
+                "Test Game 1",
+                "--cleanup-orphans",
+                "--no-output",
+                stdout=out,
+            )
+
+        output = out.getvalue()
+
+        # Should delete orphan genres
+        self.assertIn("Deleted 2 orphan WikipediaGenre records", output)
+        self.assertFalse(WikipediaGenre.objects.filter(name="Orphan Genre 1").exists())
+        self.assertFalse(WikipediaGenre.objects.filter(name="Orphan Genre 2").exists())
+        # Linked genre should still exist
+        self.assertTrue(WikipediaGenre.objects.filter(name="Linked Genre").exists())
+
+    def test_cleanup_orphans_no_orphans_message(self):
+        """Test --cleanup-orphans shows message when no orphans exist."""
+        from games.models import WikipediaGenre
+
+        # Clear all pre-existing genres first
+        WikipediaGenre.objects.all().delete()
+
+        out = StringIO()
+
+        with mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiPageLookupService"
+        ) as mock_page_service_class:
+            mock_page_service = mock_page_service_class.return_value
+            mock_page_service.lookup_page.return_value = PageLookupResult(
+                game_name="Test Game 1",
+                page_title=None,
+                error_message="Not found",
+            )
+
+            call_command(
+                "fetch_wikipedia_metadata",
+                "--game",
+                "Test Game 1",
+                "--cleanup-orphans",
+                "--no-output",
+                stdout=out,
+            )
+
+        output = out.getvalue()
+        self.assertIn("No orphan WikipediaGenre records found", output)

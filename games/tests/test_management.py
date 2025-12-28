@@ -1276,3 +1276,47 @@ class RefreshAllMetadataCommandTests(TestCase):
         self.assertIn("Overall Status", output)
         # Should show COMPLETED WITH ERRORS due to failures
         self.assertTrue("SUCCESS" in output or "COMPLETED WITH ERRORS" in output)
+
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiPageLookupService")
+    @mock.patch("games.management.commands.refresh_all_metadata.WikiGenreService")
+    def test_wikipedia_genre_normalization(self, mock_genre_service, mock_page_service):
+        """Test that Wikipedia genres are normalized to canonical forms."""
+        from io import StringIO
+
+        # Mock Wikipedia services
+        mock_page_instance = mock.MagicMock()
+        mock_page_service.return_value = mock_page_instance
+
+        page_result = mock.MagicMock()
+        page_result.success = True
+        page_result.page_title = "Test Game"
+        page_result.lookup_source = "Wikidata"
+        page_result.wikipedia_url = "https://en.wikipedia.org/wiki/Test_Game"
+        mock_page_instance.lookup_page.return_value = page_result
+
+        genre_service_instance = mock.MagicMock()
+        mock_genre_service.return_value = genre_service_instance
+
+        # Return non-canonical genres that should be normalized
+        genre_result = mock.MagicMock()
+        genre_result.primary_genre = "survival horror"  # Should normalize to "Horror"
+        genre_result.all_genres = ["survival horror", "first-person shooter"]
+        genre_service_instance.get_genre_from_url.return_value = genre_result
+
+        out = StringIO()
+        call_command("refresh_all_metadata", wikipedia_only=True, limit=1, stdout=out)
+
+        # Verify genres were normalized (with capitalization)
+        self.assertTrue(models.WikipediaGenre.objects.filter(name="Horror").exists())
+        self.assertTrue(
+            models.WikipediaGenre.objects.filter(name="First-Person Shooter").exists()
+        )
+        # Ensure non-canonical form was NOT created
+        self.assertFalse(
+            models.WikipediaGenre.objects.filter(name="Survival horror").exists()
+        )
+
+        # Verify game has normalized genres linked
+        self.game1.refresh_from_db()
+        genre_names = set(self.game1.wikipedia_genres.values_list("name", flat=True))
+        self.assertEqual(genre_names, {"Horror", "First-Person Shooter"})

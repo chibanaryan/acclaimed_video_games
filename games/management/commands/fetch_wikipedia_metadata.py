@@ -21,6 +21,7 @@ from django.db.models import Q
 
 from games import config
 from games.models import Game, WikipediaGameData, WikipediaGenre
+from games.services.genre_normalizer import normalize_genre
 from games.services.wiki_page_lookup_service import WikiPageLookupService
 from games.services.wiki_genre_service import WikiGenreService
 
@@ -93,6 +94,11 @@ class Command(BaseCommand):
             "--force",
             action="store_true",
             help="Force refresh all games (ignore existing data)",
+        )
+        parser.add_argument(
+            "--cleanup-orphans",
+            action="store_true",
+            help="Delete WikipediaGenre records with no linked games after processing",
         )
 
     def handle(self, *args, **options):
@@ -227,9 +233,22 @@ class Command(BaseCommand):
                                 # Create WikipediaGenre objects and link to game
                                 if capitalized_all:
                                     wikipedia_genres = []
+                                    seen_genres = set()
+
                                     for genre_name in capitalized_all:
+                                        # Normalize the genre name to canonical form
+                                        normalized_name = normalize_genre(genre_name)
+
+                                        # Skip None (invalid genres) and duplicates
+                                        if normalized_name is None:
+                                            continue
+                                        if normalized_name in seen_genres:
+                                            continue
+                                        seen_genres.add(normalized_name)
+
+                                        # Get or create the normalized genre
                                         genre, _ = WikipediaGenre.objects.get_or_create(
-                                            name=genre_name
+                                            name=normalized_name
                                         )
                                         wikipedia_genres.append(genre)
                                     game.wikipedia_genres.set(wikipedia_genres)
@@ -313,6 +332,25 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("\n✓ Results saved to database"))
         elif not options.get("no_output"):
             self.stdout.write(f"\n✓ Results written to {csv_path}")
+
+        # Cleanup orphan WikipediaGenre records if requested
+        if options.get("cleanup_orphans"):
+            orphan_genres = WikipediaGenre.objects.filter(
+                games_with_wikipedia_genre__isnull=True
+            )
+            orphan_count = orphan_genres.count()
+            if orphan_count > 0:
+                orphan_names = list(orphan_genres.values_list("name", flat=True)[:10])
+                orphan_genres.delete()
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"\n✓ Deleted {orphan_count} orphan WikipediaGenre records"
+                    )
+                )
+                if orphan_names:
+                    self.stdout.write(f"  Examples: {', '.join(orphan_names)}")
+            else:
+                self.stdout.write("\n✓ No orphan WikipediaGenre records found")
 
     def _get_games(self, options):
         """Get queryset of games to process based on options."""

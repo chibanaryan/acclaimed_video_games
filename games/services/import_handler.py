@@ -19,6 +19,7 @@ from django.db import connection, transaction
 from django.db.models import Q
 
 from games import config, constants, models
+from games.services.genre_normalizer import normalize_genre
 
 
 def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
@@ -475,10 +476,25 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
                                     # Create WikipediaGenre objects and link to game
                                     if capitalized_all:
                                         wikipedia_genres = []
+                                        seen_genres = set()
+
                                         for genre_name in capitalized_all:
+                                            # Normalize the genre name to canonical form
+                                            normalized_name = normalize_genre(
+                                                genre_name
+                                            )
+
+                                            # Skip None (invalid genres) and duplicates
+                                            if normalized_name is None:
+                                                continue
+                                            if normalized_name in seen_genres:
+                                                continue
+                                            seen_genres.add(normalized_name)
+
+                                            # Get or create the normalized genre
                                             genre, _ = (
                                                 models.WikipediaGenre.objects.get_or_create(
-                                                    name=genre_name
+                                                    name=normalized_name
                                                 )
                                             )
                                             wikipedia_genres.append(genre)
