@@ -6,24 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Acclaimed Games is a video game ranking and aggregation website that combines data from multiple sources to create comprehensive rankings. The application uses Django with server-side rendering, HTMX for dynamic interactions, and Alpine.js for client-side reactivity. It integrates with the IGDB (Internet Game Database) API.
 
-## Instructions for Claude
+## Available Skills
 
-**When the user asks to "commit and push" (WITHOUT deploying):**
-
-Follow the **Commit and Push Workflow** (steps 1-5 only, NO Heroku deployment):
-1. Updating DEVLOG.md (if changes warrant documentation - see DEVLOG guidelines below)
-2. Building Tailwind CSS for production
-3. Collecting static files
-4. Committing all changes
-5. Pushing to main branch
-
-**IMPORTANT:** Do NOT deploy to Heroku unless explicitly asked to "deploy" or push to "production/heroku".
-
-**When the user asks to "deploy" or mentions "production/heroku":**
-
-Follow the **Complete Deployment Workflow** which includes all steps above PLUS deploying to Heroku.
-
-Do not skip any steps. The user should not have to remind you to build Tailwind CSS or collect static files.
+Use these skills for common workflows:
+- `/commit` - Commit and push to git (builds CSS, collects static, pushes to main)
+- `/deploy` - Deploy to Heroku production (all commit steps + push to Heroku)
+- `/igdb` - Import IGDB game data
+- `/wikipedia` - Fetch Wikipedia metadata and genres
+- `/refresh-metadata` - Weekly metadata refresh (IGDB + Wikipedia)
+- `/test` - Run tests with coverage
 
 ## Development Commands
 
@@ -57,282 +48,16 @@ python3 manage.py makemigrations
 python3 manage.py createsuperuser
 ```
 
-**Import IGDB data:**
-```bash
-# Default command uses maximum throughput (concurrency=8, tier-aware batching)
-# Free tier: batch=50, Pro tier: batch=500
-python3 manage.py get_igdb
-```
-
-**Import IGDB data with custom settings:**
-```bash
-# Conservative mode (slower but safer)
-python3 manage.py get_igdb --concurrency 4 --batch-games 20
-
-# Sequential mode (disable optimizations)
-python3 manage.py get_igdb --concurrency 1 --batch-games 0
-
-# Pro tier (requires subscription - 750x faster rate limit + 10x batch size)
-python3 manage.py get_igdb --pro
-```
-
-**Performance Metrics:**
-- Free tier defaults: ~100 games/sec (batch=50, concurrency=8)
-- Pro tier defaults: ~1000+ games/sec (batch=500, concurrency=8)
-- 1000 games: ~10 seconds (free) vs ~1 second (pro)
-
-**Collect static files (before deployment):**
-```bash
-python3 manage.py collectstatic
-```
-
 **Sync production database to local SQLite:**
 ```bash
 python3 manage.py sync_from_prod
 ```
 Downloads all game data from production Heroku and loads it into local SQLite. Auth users are excluded - create a local superuser after syncing with `python3 manage.py createsuperuser`.
 
-**Fetch complete Wikipedia metadata (pages + genres):**
+**Collect static files (before deployment):**
 ```bash
-# Fetch Wikipedia pages and genres for all games needing data (recommended)
-python3 manage.py fetch_wikipedia_metadata --save --skip-existing
-
-# Process all games (force refresh)
-python3 manage.py fetch_wikipedia_metadata --save --force
-
-# Process with limit
-python3 manage.py fetch_wikipedia_metadata --save --limit 100
-
-# Process single game (for testing)
-python3 manage.py fetch_wikipedia_metadata --game "The Legend of Zelda" --save
+python3 manage.py collectstatic
 ```
-This command combines two operations in one (equivalent to the "Fetch Wikipedia Pages" button):
-1. Looks up Wikipedia page titles using Wikidata IDs (fast) with fallback to OpenSearch API
-2. Scrapes genre data from those Wikipedia pages (primary genre and all genres)
-
-Results are stored in `WikipediaGameData` records (page titles) and `WikipediaGenre` objects (genres). This is the **recommended command** for fetching Wikipedia data in production.
-
-**Weekly metadata refresh (IGDB + Wikipedia):**
-```bash
-# Full refresh (weekly maintenance) - updates all games
-python3 manage.py refresh_all_metadata
-
-# IGDB only
-python3 manage.py refresh_all_metadata --igdb-only
-
-# Wikipedia only
-python3 manage.py refresh_all_metadata --wikipedia-only
-
-# Test with limited games
-python3 manage.py refresh_all_metadata --limit 100
-
-# Dry-run (preview without database changes)
-python3 manage.py refresh_all_metadata --dry-run
-
-# With IGDB Pro tier
-python3 manage.py refresh_all_metadata --pro
-```
-This command combines `get_igdb --force` and `fetch_wikipedia_metadata --force --save` into one unified operation, designed for weekly scheduled execution via Heroku Scheduler. It performs a complete force-refresh of both IGDB and Wikipedia data for all games.
-
-**Performance:**
-- Full refresh: ~40 minutes (3000+ games, authenticated)
-- IGDB only: ~30 seconds (free tier) or ~3 seconds (pro tier)
-- Wikipedia only: ~38 minutes (authenticated)
-
-**Heroku Scheduler Setup:**
-```bash
-# Add Heroku Scheduler add-on
-heroku addons:create scheduler:standard
-
-# Configure in Heroku Dashboard (https://dashboard.heroku.com):
-# - Command: python3 manage.py refresh_all_metadata
-# - Schedule: Weekly (Sunday 2:00 AM UTC recommended)
-# - Dyno: Performance-M (recommended for 40-minute job)
-# - Duration: ~40 minutes
-```
-
-**Required Environment Variables:**
-- `IGDB_CLIENT_ID` - IGDB API client ID
-- `IGDB_CLIENT_SECRET` - IGDB API secret
-- `WIKIDATA_ACCESS_TOKEN` - Highly recommended (2.5x faster Wikipedia processing)
-- `IGDB_USE_PRO_TIER=True` - Optional (enables Pro tier, 750x faster IGDB)
-
-**Command Options:**
-- `--igdb-only` - Only refresh IGDB data (skip Wikipedia)
-- `--wikipedia-only` - Only refresh Wikipedia data (skip IGDB)
-- `--limit N` - Process only first N games (for testing)
-- `--dry-run` - Preview operations without database changes
-- `--concurrency N` - Override IGDB concurrency (default: 8)
-- `--pro` - Use IGDB Pro tier
-
-**Fetch primary genre from Wikipedia/Wikidata (standalone):**
-```bash
-# Process all games (outputs to CSV)
-python3 manage.py get_wiki_genres
-
-# Process all games and save to database
-python3 manage.py get_wiki_genres --save
-
-# Process single game (for testing)
-python3 manage.py get_wiki_genres --game "The Legend of Zelda"
-
-# Process with limit
-python3 manage.py get_wiki_genres --limit 100
-
-# Skip games that already have Wikipedia genre data
-python3 manage.py get_wiki_genres --skip-existing --save
-```
-Uses a cascade approach: first queries Wikidata P136 (Genre) property, then falls back to scraping Wikipedia infobox if Wikidata fails. Results are stored separately from IGDB genres in `Game.wikipedia_primary_genre` and `Game.wikidata_id` fields.
-
-**Note:** Use `fetch_wikipedia_metadata` instead if you also need Wikipedia page titles. The `get_wiki_genres` command is only for genre data.
-
-**Run tests:**
-```bash
-python3 manage.py test games.tests
-```
-
-**Run tests with coverage:**
-```bash
-coverage run --source=games manage.py test games.tests
-coverage report
-```
-
-### Deployment
-
-**Production URL:** https://www.acclaimedvideogames.com/
-
-The project is deployed to Heroku.
-
-**Commit and Push Workflow (NO deployment):**
-
-Use this when you want to save changes to the repository WITHOUT deploying to production:
-
-```bash
-# 0. Update DEVLOG.md if changes warrant documentation (see DEVLOG section)
-#    Only if: bug fixes, features, optimizations, or breaking changes
-#    Keep to 8 bullet points max per day
-
-# 1. Build Tailwind CSS for production
-python3 manage.py tailwind build
-
-# 2. Collect static files
-python3 manage.py collectstatic --noinput
-
-# 3. Stage all changes
-git add -A
-
-# 4. Commit with descriptive message
-git commit -m "Your commit message here"
-
-# 5. Push to main branch
-git push origin main
-
-# STOP HERE - Do NOT push to Heroku unless explicitly asked to deploy
-```
-
-**Complete Deployment Workflow:**
-
-When making changes that need to be deployed to production, follow this complete workflow:
-
-```bash
-# 0. Update DEVLOG.md if changes warrant documentation (see DEVLOG section)
-#    Only if: bug fixes, features, optimizations, or breaking changes
-#    Keep to 8 bullet points max per day
-
-# 1. Build Tailwind CSS for production
-python3 manage.py tailwind build
-
-# 2. Collect static files
-python3 manage.py collectstatic --noinput
-
-# 3. Stage all changes
-git add -A
-
-# 4. Commit with descriptive message
-git commit -m "Your commit message here"
-
-# 5. Push to main branch
-git push origin main
-
-# 6. Deploy to Heroku (ONLY when user explicitly asks to deploy)
-git push heroku main
-```
-
-**Important Notes:**
-- Update DEVLOG.md for significant changes (see Development Log section below for guidelines)
-- Pre-commit hooks will run tests and enforce code quality before allowing the commit
-- **If pre-commit hooks fail**: Fix issues immediately, do NOT skip or work around them
-  - Coverage failures: Add tests or proper exclusions (not workarounds)
-  - Linting failures: Fix the code to comply with standards
-  - Test failures: Fix the failing tests or broken code
-
-## Testing and Code Quality
-
-### Backend Testing
-
-The Django backend has comprehensive test coverage in the `games/tests/` directory:
-
-- **test_api.py** - API endpoint tests including filtering, serialization, and pagination
-- **test_models.py** - Model behavior, IGDB integration, and ranking utilities
-- **test_igdb.py** - IGDB API integration with extensive mocking
-- **test_igdb_importer.py** - IGDB importer logic and batch processing tests
-- **test_imports.py** - Data import functionality and file parsing tests
-- **test_views.py** - Import view integration tests
-- **test_main_views.py** - Main application views (game list, detail, search, developers, etc.)
-- **test_admin.py** - Django admin functionality tests
-- **test_management.py** - Custom management command tests (get_igdb, cleanup, etc.)
-- **test_cleanup_command.py** - Database cleanup command tests
-- **test_forms.py** - Form validation and processing tests
-- **test_middleware.py** - HTMXPushURLMiddleware and other middleware tests
-- **test_template_tags.py** - Custom template filter and tag tests
-- **test_utils.py** - Utility function tests
-
-**Coverage Requirements:**
-- Minimum 95% test coverage enforced by pre-commit hooks (excludes migrations and database vendor-specific code)
-- Run coverage check: `coverage run --source=games manage.py test games.tests && coverage report --fail-under=95`
-- Configuration: `.coveragerc` excludes migrations and PostgreSQL-specific optimizations
-- Current coverage: 100% (exceeds minimum requirement)
-
-### Pre-commit Hooks
-
-The project uses pre-commit hooks (`.pre-commit-config.yaml`) to enforce code quality:
-
-1. **Black Formatter** - Automatically formats Python code
-2. **Flake8 Linter** - Lints Python code (configuration in `.flake8` - max line length 88)
-3. **Django Coverage** - Enforces 95% test coverage threshold (excluding migrations)
-4. **Django Test Suite** - Runs full test suite via `scripts/run_tests.sh`
-
-**Note:** Commits will be blocked if any tests fail, coverage drops below 95%, or linting fails.
-
-## Development Log (DEVLOG)
-
-The `DEVLOG.md` file tracks significant changes and improvements to the project. Agents should update it when making changes worthy of documentation.
-
-**When to Update:**
-- Bug fixes that resolve user-reported issues or known problems
-- Performance improvements or optimizations
-- New features or functionality additions
-- Significant refactoring or architectural changes
-- API or database schema modifications
-- Deployment issues or critical fixes
-
-**When NOT to Update:**
-- Minor style or formatting changes
-- Documentation-only updates (unless substantive)
-- Test-only commits with no production changes
-- Dependency version bumps without notable behavior changes
-
-**Format Guidelines:**
-- Keep entries concise - 8 bullet points maximum per day
-- Use brief, imperative language (e.g., "Fix double-load on first search character")
-- Group changes by date (one date header per day of work)
-- Include affected components/features for context
-- Link to related files if relevant (e.g., `games/templates/developers/developer_list.html`)
-- Example:
-  ```
-  ## 2025-11-22
-  - Fixed double-load on first search character in developer list (debounce trailing edge)
-  ```
 
 ## Architecture
 
@@ -546,34 +271,9 @@ The `games/igdb.py` module handles IGDB API integration with multiple optimizati
 
 **Thread-Safe**: All caching and rate limiting is thread-safe for concurrent processing.
 
-### Usage
-
-- `Game.get_igdb_data()` - Fetches and saves IGDB data for a single game
-- `python3 manage.py get_igdb` - Batch import IGDB data for all games
-- `python3 manage.py get_igdb --concurrency 4` - Use concurrent processing
-- `python3 manage.py get_igdb --batch-games 20` - Use multi-query batching
-- `python3 manage.py get_igdb --pro` - Enable Pro tier (requires subscription)
-
-### Command Options
-
-- `--concurrency N` - Number of concurrent requests (1-8, default: 4)
-- `--batch-games N` - Batch size for multi-query (0-500, default: 10)
-- `--delay SECONDS` - Additional delay between games (default: 0.0)
-- `--batch-size N` - Progress checkpoint interval (default: 50)
-- `--pro` - Use IGDB Pro tier (or set IGDB_USE_PRO_TIER=True in .env)
-- `--force` - Force refresh even if game already has IGDB data
-- `--game NAME` - Update specific game by name
-- `--slug SLUG` - Update specific game by slug
-- `--id ID` - Update specific game by database ID
-
-### Performance
-
-Default settings (concurrency=4, batch-games=10): ~8-10 games/sec (480-600 games/min)
-Sequential mode (--concurrency 1 --batch-games 0): ~2 games/sec (120 games/min)
-Aggressive settings (concurrency=6, batch-games=20): ~15-20 games/sec (900-1200 games/min)
-With Pro tier (--pro): ~100-500 games/sec (6,000-30,000 games/min)
-
 IGDB provides cover art, descriptions, developer information, and genres.
+
+For detailed command usage, run `/igdb`.
 
 ## Configuration
 
@@ -585,6 +285,7 @@ Environment variables are managed via django-environ (`.env` file):
 - `IGDB_CLIENT_ID` - IGDB API client ID
 - `IGDB_CLIENT_SECRET` - IGDB API client secret
 - `IGDB_USE_PRO_TIER` - Enable IGDB Pro tier (default: False)
+- `WIKIDATA_ACCESS_TOKEN` - For faster Wikipedia processing (2.5x speedup)
 
 ### Configuration Files
 
