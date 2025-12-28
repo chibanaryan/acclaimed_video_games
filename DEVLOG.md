@@ -6,6 +6,7 @@
 - Removed "Match All" / "Match Any" toggle (no longer needed with single-select)
 - Added clear (×) buttons next to selected genres for easy deselection
 - Updated desktop and mobile genre filter components with new single-select behavior
+- Added client-side filtering with IndexedDB caching for Rankings page (instant filter updates)
 
 ## 2025-12-16
 
