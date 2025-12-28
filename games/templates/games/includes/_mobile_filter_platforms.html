@@ -499,17 +499,10 @@
                     {# Manufacturer Header - Expandable and Selectable #}
                     <div class="flex items-center gap-1 py-1.5 px-2 rounded-lg transition-colors"
                          :class="{
-                             'bg-primary/10': hasManufacturerOrChildrenSelected(mfrKey),
-                             'text-primary': hasManufacturerOrChildrenSelected(mfrKey),
-                             'hover:bg-base-300/50': !hasManufacturerOrChildrenSelected(mfrKey)
+                             'bg-primary text-primary-content': isManufacturerSelected(mfrKey),
+                             'bg-primary/10 text-primary': !isManufacturerSelected(mfrKey) && hasManufacturerOrChildrenSelected(mfrKey),
+                             'hover:bg-base-300/50': !isManufacturerSelected(mfrKey)
                          }">
-                        {# Checkbox for manufacturer selection #}
-                        <button type="button"
-                                class="p-0.5 rounded hover:bg-base-300/50"
-                                @click.stop="toggleManufacturerSelection(mfrKey); debouncedFilterUpdate();">
-                            <span class="mdi text-base"
-                                  :class="isManufacturerSelected(mfrKey) ? 'mdi-checkbox-marked text-primary' : 'mdi-checkbox-blank-outline'"></span>
-                        </button>
                         {# Expand/Collapse Arrow #}
                         <button type="button"
                                 class="p-0.5 rounded hover:bg-base-300/50"
@@ -550,17 +543,10 @@
                                         {# Form Factor Header #}
                                         <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors"
                                              :class="{
-                                                 'bg-primary/10': hasFormFactorSelection(mfrKey, ffKey),
-                                                 'text-primary': hasFormFactorSelection(mfrKey, ffKey),
-                                                 'hover:bg-base-300/50': !hasFormFactorSelection(mfrKey, ffKey)
+                                                 'bg-primary text-primary-content': isFormFactorSelected(mfrKey, ffKey),
+                                                 'bg-primary/10 text-primary': !isFormFactorSelected(mfrKey, ffKey) && hasFormFactorSelection(mfrKey, ffKey),
+                                                 'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey)
                                              }">
-                                            {# Checkbox for form factor selection #}
-                                            <button type="button"
-                                                    class="p-0.5 rounded hover:bg-base-300/50"
-                                                    @click.stop="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();">
-                                                <span class="mdi text-sm"
-                                                      :class="isFormFactorSelected(mfrKey, ffKey) ? 'mdi-checkbox-marked text-primary' : 'mdi-checkbox-blank-outline'"></span>
-                                            </button>
                                             {# Expand/Collapse Arrow #}
                                             <button type="button"
                                                     class="p-0.5 rounded hover:bg-base-300/50"
@@ -587,11 +573,10 @@
                                                 <div class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors"
                                                      :class="{
                                                          'bg-primary text-primary-content': isPlatformSelected(platform.id),
-                                                         'hover:bg-base-300/50': !isPlatformSelected(platform.id)
+                                                         'hover:bg-base-300/50': !isPlatformSelected(platform.id),
+                                                         'opacity-40': !isPlatformAvailable(platform.id) && !isPlatformSelected(platform.id)
                                                      }"
                                                      @click="togglePlatform(platform.id); debouncedFilterUpdate();">
-                                                    <span class="mdi text-base"
-                                                          :class="isPlatformSelected(platform.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
                                                     <span class="text-sm flex-1" x-text="formatPlatformName(platform)"></span>
                                                     <span class="text-xs opacity-60 tabular-nums" x-text="getEffectiveCount(platform)"></span>
                                                 </div>
@@ -609,11 +594,10 @@
                                     <div class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors"
                                          :class="{
                                              'bg-primary text-primary-content': isPlatformSelected(platform.id),
-                                             'hover:bg-base-300/50': !isPlatformSelected(platform.id)
+                                             'hover:bg-base-300/50': !isPlatformSelected(platform.id),
+                                             'opacity-40': !isPlatformAvailable(platform.id) && !isPlatformSelected(platform.id)
                                          }"
                                          @click="togglePlatform(platform.id); debouncedFilterUpdate();">
-                                        <span class="mdi text-base"
-                                              :class="isPlatformSelected(platform.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
                                         <span class="text-sm flex-1" x-text="formatPlatformName(platform)"></span>
                                         <span class="text-xs opacity-60 tabular-nums" x-text="getEffectiveCount(platform)"></span>
                                     </div>

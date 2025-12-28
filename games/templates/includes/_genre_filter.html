@@ -165,6 +165,10 @@
          // Toggle parent category selection (single-select)
          toggleCategorySelection(categoryId) {
              const id = String(categoryId);
+             // Preserve current expansion state before selection changes
+             if (this.expandedCategories[id] === undefined) {
+                 this.expandedCategories[id] = this.hasCategoryOrChildrenSelected(id);
+             }
              if (filters.genres.includes(id)) {
                  filters.genres = [];  // Deselect
              } else {
@@ -186,15 +190,15 @@
 
          // Category icons mapping
          categoryIcons: {
-             'Action': 'mdi-sword-cross',
-             'Adventure': 'mdi-compass',
+             'Action': 'mdi-bullseye-arrow',
+             'Adventure': 'mdi-image-filter-hdr',
              'Role-Playing': 'mdi-wizard-hat',
              'Strategy': 'mdi-chess-knight',
-             'Simulation': 'mdi-airplane',
+             'Simulation': 'mdi-airplane-takeoff',
              'Sports': 'mdi-basketball',
              'Puzzle': 'mdi-puzzle',
              'Party & Casual': 'mdi-party-popper',
-             'Hybrid & Specialized': 'mdi-star-four-points'
+             'Hybrid & Specialized': 'mdi-layers'
          },
 
          getCategoryIcon(name) {
@@ -225,19 +229,11 @@
                 {# Category Header - Selectable and Expandable #}
                 <div class="flex items-center gap-1 py-1.5 px-2 rounded-lg transition-colors"
                      :class="{
-                         'bg-primary/10': hasCategoryOrChildrenSelected(category.id),
-                         'text-primary': hasCategoryOrChildrenSelected(category.id),
+                         'bg-primary text-primary-content': isCategorySelected(category.id),
+                         'bg-primary/10 text-primary': !isCategorySelected(category.id) && hasSelectedChildren(category.id),
                          'hover:bg-base-300/50': !isCategorySelected(category.id),
                          'opacity-50': !isCategoryAvailable(category.id) && !hasCategoryOrChildrenSelected(category.id)
                      }">
-                    {# Checkbox for category selection #}
-                    <button type="button"
-                            class="p-0.5 rounded hover:bg-base-300/50"
-                            @click.stop="toggleCategorySelection(category.id)"
-                            :title="isCategorySelected(category.id) ? 'Deselect ' + category.name : 'Select all ' + category.name + ' genres'">
-                        <span class="mdi text-base"
-                              :class="isCategorySelected(category.id) ? 'mdi-checkbox-marked text-primary' : 'mdi-checkbox-blank-outline'"></span>
-                    </button>
                     {# Expand/Collapse Arrow #}
                     <button type="button"
                             class="p-0.5 rounded hover:bg-base-300/50"
@@ -271,9 +267,6 @@
                              }"
                              @click="toggleGenre(genre.id)"
                              :title="genre.name + ' - ' + getEffectiveCount(genre) + ' games'">
-                            {# Checkbox #}
-                            <span class="mdi text-base"
-                                  :class="isGenreSelected(genre.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
                             {# Genre Name #}
                             <span class="flex-1 truncate" x-text="genre.name"></span>
                             {# Game Count #}

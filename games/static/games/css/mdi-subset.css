@@ -104,3 +104,14 @@
 .mdi-newspaper::before { content: "\F0870"; }
 .mdi-information::before { content: "\F02FC"; }
 .mdi-heart::before { content: "\F02D1"; }
+
+/* Genre category icons */
+.mdi-bullseye-arrow::before { content: "\F08C9"; }
+.mdi-image-filter-hdr::before { content: "\F02F5"; }
+.mdi-wizard-hat::before { content: "\F1477"; }
+.mdi-chess-knight::before { content: "\F0857"; }
+.mdi-airplane-takeoff::before { content: "\F05D5"; }
+.mdi-basketball::before { content: "\F0806"; }
+.mdi-puzzle::before { content: "\F0431"; }
+.mdi-party-popper::before { content: "\F1056"; }
+.mdi-layers::before { content: "\F0328"; }

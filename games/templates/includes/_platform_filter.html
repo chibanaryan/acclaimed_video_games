@@ -516,6 +516,10 @@
 
          // Toggle manufacturer selection (select all platforms if not all selected, clear if all selected)
          toggleManufacturerSelection(mfrKey) {
+             // Preserve current expansion state before selection changes
+             if (this.expandedManufacturers[mfrKey] === undefined) {
+                 this.expandedManufacturers[mfrKey] = this.hasManufacturerOrChildrenSelected(mfrKey);
+             }
              const platformIds = this.getAllPlatformIdsForManufacturer(mfrKey);
              if (this.isManufacturerSelected(mfrKey)) {
                  filters.platforms = [];  // Deselect all
@@ -526,6 +530,11 @@
 
          // Toggle form factor selection (select all platforms if not all selected, clear if all selected)
          toggleFormFactorSelection(mfrKey, ffKey) {
+             const key = mfrKey + '_' + ffKey;
+             // Preserve current expansion state before selection changes
+             if (this.expandedFormFactors[key] === undefined) {
+                 this.expandedFormFactors[key] = this.hasFormFactorSelection(mfrKey, ffKey);
+             }
              const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
              // If manufacturer is fully selected, clicking form factor selects just that form factor
              if (this.isManufacturerSelected(mfrKey)) {
@@ -575,19 +584,11 @@
                 {# Manufacturer Header - Expandable and Selectable #}
                 <div class="flex items-center gap-1 py-1.5 px-2 rounded-lg transition-colors"
                      :class="{
-                         'bg-primary/10': hasManufacturerOrChildrenSelected(mfrKey),
-                         'text-primary': hasManufacturerOrChildrenSelected(mfrKey),
-                         'hover:bg-base-300/50': !hasManufacturerOrChildrenSelected(mfrKey),
+                         'bg-primary text-primary-content': isManufacturerSelected(mfrKey),
+                         'bg-primary/10 text-primary': !isManufacturerSelected(mfrKey) && hasManufacturerOrChildrenSelected(mfrKey),
+                         'hover:bg-base-300/50': !isManufacturerSelected(mfrKey),
                          'opacity-40': !isManufacturerAvailable(mfrKey) && !hasManufacturerOrChildrenSelected(mfrKey)
                      }">
-                    {# Checkbox for manufacturer selection #}
-                    <button type="button"
-                            class="p-0.5 rounded hover:bg-base-300/50"
-                            @click.stop="toggleManufacturerSelection(mfrKey); debouncedFilterUpdate();"
-                            :title="isManufacturerSelected(mfrKey) ? 'Deselect ' + platformHierarchy[mfrKey].name : 'Select all ' + platformHierarchy[mfrKey].name + ' platforms'">
-                        <span class="mdi text-base"
-                              :class="isManufacturerSelected(mfrKey) ? 'mdi-checkbox-marked text-primary' : 'mdi-checkbox-blank-outline'"></span>
-                    </button>
                     {# Expand/Collapse Arrow #}
                     <button type="button"
                             class="p-0.5 rounded hover:bg-base-300/50"
@@ -626,19 +627,11 @@
                                     {# Form Factor Header #}
                                     <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors"
                                          :class="{
-                                             'bg-primary/10': hasFormFactorSelection(mfrKey, ffKey),
-                                             'text-primary': hasFormFactorSelection(mfrKey, ffKey),
-                                             'hover:bg-base-300/50': !hasFormFactorSelection(mfrKey, ffKey),
+                                             'bg-primary text-primary-content': isFormFactorSelected(mfrKey, ffKey),
+                                             'bg-primary/10 text-primary': !isFormFactorSelected(mfrKey, ffKey) && hasFormFactorSelection(mfrKey, ffKey),
+                                             'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey),
                                              'opacity-40': !isFormFactorAvailable(mfrKey, ffKey) && !hasFormFactorSelection(mfrKey, ffKey)
                                          }">
-                                        {# Checkbox for form factor selection #}
-                                        <button type="button"
-                                                class="p-0.5 rounded hover:bg-base-300/50"
-                                                @click.stop="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();"
-                                                :title="isFormFactorSelected(mfrKey, ffKey) ? 'Deselect ' + ff.name : 'Select all ' + ff.name + ' platforms'">
-                                            <span class="mdi text-sm"
-                                                  :class="isFormFactorSelected(mfrKey, ffKey) ? 'mdi-checkbox-marked text-primary' : 'mdi-checkbox-blank-outline'"></span>
-                                        </button>
                                         {# Expand/Collapse Arrow #}
                                         <button type="button"
                                                 class="p-0.5 rounded hover:bg-base-300/50"
@@ -648,7 +641,8 @@
                                         </button>
                                         {# Form Factor Name - click to toggle selection #}
                                         <button type="button"
-                                                class="text-xs font-medium opacity-80 flex-1 text-left"
+                                                class="text-xs font-medium flex-1 text-left"
+                                                :class="isFormFactorSelected(mfrKey, ffKey) ? '' : 'opacity-80'"
                                                 @click="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();"
                                                 x-text="ff.name"></button>
                                         {# Deduplicated form factor count #}
@@ -663,14 +657,10 @@
                                             <div class="platform-item"
                                                  :class="{
                                                      'is-selected': isPlatformSelected(platform.id),
-                                                     'is-unavailable': !isPlatformAvailable(platform.id),
-                                                     'has-zero-results': hasZeroResults(platform.id)
+                                                     'opacity-40': !isPlatformAvailable(platform.id) && !isPlatformSelected(platform.id)
                                                  }"
                                                  @click="togglePlatform(platform.id); debouncedFilterUpdate();"
                                                  :title="formatPlatformName(platform) + ' - ' + getEffectiveCount(platform) + ' games'">
-                                                {# Checkbox visual #}
-                                                <span class="mdi text-base"
-                                                      :class="isPlatformSelected(platform.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
                                                 {# Platform Name with Year Range #}
                                                 <span class="flex-1 truncate" x-text="formatPlatformName(platform)"></span>
                                                 {# Game Count #}
@@ -691,14 +681,10 @@
                                 <div class="platform-item"
                                      :class="{
                                          'is-selected': isPlatformSelected(platform.id),
-                                         'is-unavailable': !isPlatformAvailable(platform.id),
-                                         'has-zero-results': hasZeroResults(platform.id)
+                                         'opacity-40': !isPlatformAvailable(platform.id) && !isPlatformSelected(platform.id)
                                      }"
                                      @click="togglePlatform(platform.id); debouncedFilterUpdate();"
                                      :title="formatPlatformName(platform) + ' - ' + getEffectiveCount(platform) + ' games'">
-                                    {# Checkbox visual #}
-                                    <span class="mdi text-base"
-                                          :class="isPlatformSelected(platform.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
                                     {# Platform Name with Year Range #}
                                     <span class="flex-1 truncate" x-text="formatPlatformName(platform)"></span>
                                     {# Game Count #}

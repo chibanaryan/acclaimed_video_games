@@ -2,6 +2,10 @@
 
 ## 2025-12-28
 
+- Added MDI icons for genre categories (Action, Adventure, RPG, Strategy, Simulation, Sports, Puzzle, etc.)
+- Fixed filter category selection styling: manufacturer/genre category now uses strong highlight when fully selected
+- Removed checkboxes from platform and genre filters for cleaner appearance
+- Fixed unavailable platform greying in filter sidebar
 - Fixed platform group count double-counting (PC showed 817 instead of correct 548)
 - Filter sections now wait for client-side counts before displaying (shows loading skeleton)
 - Genre and platform sorting now uses client-side calculated counts
