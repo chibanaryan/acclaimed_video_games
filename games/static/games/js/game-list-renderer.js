@@ -112,7 +112,7 @@ class GameListRenderer {
             const separator = i < expanded.studios.length - 1 ? ', ' : '';
 
             if (companySlug) {
-                return `<a href="/developer/${companySlug}/#studio-${studio.id}-game-${game.id}" class="link link-hover text-base-content">${studio.name}</a>${separator}`;
+                return `<a href="/developers/${companySlug}/#studio-${studio.id}-game-${game.id}" class="link link-hover text-base-content">${studio.name}</a>${separator}`;
             }
             return `<span class="text-base-content">${studio.name}</span>${separator}`;
         }).join('');
