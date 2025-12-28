@@ -626,7 +626,7 @@
 
   /* Platform Accordions */
   .platform-accordions {
-    @apply flex flex-col gap-1 mt-2;
+    @apply flex flex-col gap-1;
     min-height: 124px;
   }
 

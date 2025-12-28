@@ -125,20 +125,27 @@
      class="space-y-3">
 
     {# Accordion Header #}
-    <button type="button"
-            @click="expanded = !expanded"
-            class="flex items-center justify-between w-full text-base font-semibold">
-        <span class="flex items-center gap-2">
+    <div class="flex items-center gap-3 w-full text-base font-semibold">
+        <button type="button"
+                @click="expanded = !expanded"
+                class="flex items-center gap-2">
             <span class="mdi mdi-gamepad-variant text-lg text-base-content/60"></span>
             Genres
-            <template x-if="selectedCount() > 0">
-                <span class="badge badge-primary badge-sm" x-text="selectedCount() + ' selected'"></span>
-            </template>
-        </span>
-        <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-    </button>
+            <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
+        </button>
+        <template x-if="selectedCount() > 0">
+            <span class="badge badge-primary badge-sm" x-text="selectedCount() + ' selected'"></span>
+        </template>
+        <div class="flex-1"></div>
+        <button type="button"
+                x-show="selectedCount() > 0"
+                x-cloak
+                @click.stop="clearGenres(); debouncedFilterUpdate();"
+                class="btn btn-ghost btn-xs ml-2">
+            <span class="mdi mdi-close text-xs"></span>
+            Clear Genre Filter
+        </button>
+    </div>
 
     {# Accordion Content #}
     <div x-show="expanded"
@@ -178,20 +185,8 @@
                         <button type="button"
                                 @click="toggleCategoryExpansion(category.id)"
                                 class="p-1">
-                            <svg :class="{ 'rotate-180': isCategoryExpanded(category.id) }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                            <span class="mdi mdi-chevron-right text-base transition-transform duration-200" :class="{ 'rotate-90': isCategoryExpanded(category.id) }"></span>
                         </button>
-
-                        {# Clear button when category or child is selected #}
-                        <template x-if="hasCategoryOrChildrenSelected(category.id)">
-                            <button type="button"
-                                    class="p-1 rounded hover:bg-base-300 text-base-content/60 hover:text-error"
-                                    @click.stop="clearGenres(); debouncedFilterUpdate();"
-                                    title="Clear selection">
-                                <span class="mdi mdi-close text-sm"></span>
-                            </button>
-                        </template>
                     </div>
 
                     {# Child genres for this category #}
@@ -211,18 +206,8 @@
                                        @change="toggleGenre(genre.id); debouncedFilterUpdate();"
                                        class="checkbox checkbox-xs checkbox-primary">
                                 <span class="text-sm flex-1" x-text="genre.name"></span>
-                                {# Game count (hidden when selected) #}
-                                <span class="text-xs opacity-50 tabular-nums"
-                                      x-show="!isGenreSelected(genre.id)"
-                                      x-text="getEffectiveCount(genre)"></span>
-                                {# Clear button (shown when selected) #}
-                                <button type="button"
-                                        x-show="isGenreSelected(genre.id)"
-                                        class="p-1 rounded hover:bg-base-300 text-base-content/60 hover:text-error"
-                                        @click.stop="clearGenres(); debouncedFilterUpdate();"
-                                        title="Clear selection">
-                                    <span class="mdi mdi-close text-sm"></span>
-                                </button>
+                                {# Game count #}
+                                <span class="text-xs opacity-50 tabular-nums" x-text="getEffectiveCount(genre)"></span>
                             </div>
                         </template>
                     </div>

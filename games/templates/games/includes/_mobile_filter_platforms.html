@@ -302,20 +302,27 @@
      class="space-y-3">
 
     {# Accordion Header #}
-    <button type="button"
-            @click="expanded = !expanded"
-            class="flex items-center justify-between w-full text-base font-semibold">
-        <span class="flex items-center gap-2">
+    <div class="flex items-center gap-3 w-full text-base font-semibold">
+        <button type="button"
+                @click="expanded = !expanded"
+                class="flex items-center gap-2">
             <span class="mdi mdi-controller text-lg text-base-content/60"></span>
             Platforms
-            <template x-if="selectedCount() > 0">
-                <span class="badge badge-primary badge-sm" x-text="selectedCount() + ' selected'"></span>
-            </template>
-        </span>
-        <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-    </button>
+            <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
+        </button>
+        <template x-if="selectedCount() > 0">
+            <span class="badge badge-primary badge-sm" x-text="selectedCount() + ' selected'"></span>
+        </template>
+        <div class="flex-1"></div>
+        <button type="button"
+                x-show="selectedCount() > 0"
+                x-cloak
+                @click.stop="clearPlatforms(); debouncedFilterUpdate();"
+                class="btn btn-ghost btn-xs ml-2">
+            <span class="mdi mdi-close text-xs"></span>
+            Clear Platform Filter
+        </button>
+    </div>
 
     {# Accordion Content #}
     <div x-show="expanded"
@@ -353,9 +360,7 @@
                                 </template>
                                 <span x-text="family.name" class="text-xs"></span>
                             </span>
-                            <svg :class="{ 'rotate-180': isFamilyExpanded(key) }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                            <span class="mdi mdi-chevron-right text-base transition-transform duration-200" :class="{ 'rotate-90': isFamilyExpanded(key) }"></span>
                         </button>
                     </div>
 
@@ -380,15 +385,6 @@
             </template>
         </div>
 
-        {# Clear button #}
-        <div class="flex justify-end" x-show="selectedCount() > 0">
-            <button type="button"
-                    @click="clearPlatforms(); debouncedFilterUpdate();"
-                    class="btn btn-ghost btn-xs">
-                Clear All
-            </button>
-        </div>
-
         {# Accordion Sections (Retro Consoles, Microcomputers) #}
         <div class="space-y-3">
             <template x-for="(section, key) in accordionSections" :key="key">
@@ -411,9 +407,7 @@
                                 <span :class="'mdi ' + section.icon" class="text-sm"></span>
                                 <span x-text="section.name" class="text-xs"></span>
                             </span>
-                            <svg :class="{ 'rotate-180': isFamilyExpanded(key) }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                            <span class="mdi mdi-chevron-right text-base transition-transform duration-200" :class="{ 'rotate-90': isFamilyExpanded(key) }"></span>
                         </button>
                     </div>
 
@@ -459,9 +453,7 @@
                             <span class="mdi mdi-controller text-sm"></span>
                             <span class="text-xs">Other</span>
                         </span>
-                        <svg :class="{ 'rotate-180': isFamilyExpanded('other') }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
+                        <span class="mdi mdi-chevron-right text-base transition-transform duration-200" :class="{ 'rotate-90': isFamilyExpanded('other') }"></span>
                     </button>
                 </div>
 

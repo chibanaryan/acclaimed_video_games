@@ -729,13 +729,13 @@
                                class="btn btn-ghost btn-xs text-base-content/70 hover:text-success"
                                title="Download CSV">
                                 <span class="mdi mdi-download"></span>
-                                <span>CSV</span>
+                                <span>Download CSV</span>
                             </a>
                             <a href="{% url 'games-list' %}"
                                class="btn btn-ghost btn-xs text-base-content/70 hover:text-error"
-                               title="Reset filters">
+                               title="Clear all filters">
                                 <span class="mdi mdi-close text-xs"></span>
-                                <span>Reset All</span>
+                                <span>Clear All Filters</span>
                             </a>
                         </div>
                     </div>
@@ -749,9 +749,9 @@
                     <div class="flex items-center gap-2 mb-3">
                         <span class="mdi mdi-calendar-range text-xl text-primary"></span>
                         <span class="font-bold text-base">Release Year</span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click="resetYears()" title="Reset years" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click="resetYears()" title="Clear year filter" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
                             <span class="mdi mdi-close text-xs"></span>
-                            <span class="text-xs">Reset</span>
+                            <span class="text-xs">Clear Year Filter</span>
                         </button>
                     </div>
                     <div>
@@ -771,9 +771,9 @@
                         <span class="font-bold text-base">Platforms</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="platformsExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetPlatforms()" title="Clear platform filter" x-cloak x-show="filters.platforms.length > 0">
                             <span class="mdi mdi-close text-xs"></span>
-                            <span class="text-xs">Reset</span>
+                            <span class="text-xs">Clear Platform Filter</span>
                         </button>
                     </div>
                     <div x-show="platformsExpanded"
@@ -796,9 +796,9 @@
                         <span class="font-bold text-base">Genres</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="genresExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetGenres()" title="Clear genre filter" x-cloak x-show="filters.genres.length > 0">
                             <span class="mdi mdi-close text-xs"></span>
-                            <span class="text-xs">Reset</span>
+                            <span class="text-xs">Clear Genre Filter</span>
                         </button>
                     </div>
                     <div x-show="genresExpanded"
