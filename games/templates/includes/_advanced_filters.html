@@ -340,7 +340,7 @@
                         setTimeout(() => {
                             const desktopElement = document.getElementById('game-' + highlightId);
                             const mobileElement = document.getElementById('game-' + highlightId + '-mobile');
-                            const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+                            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
                             const element = isDesktop ? desktopElement : mobileElement;
 
                             if (element) {

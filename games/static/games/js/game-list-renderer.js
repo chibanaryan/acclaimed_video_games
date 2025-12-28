@@ -144,7 +144,7 @@ class GameListRenderer {
             : '';
 
         return `
-<div class="game-row desktop hidden md:grid py-1.5 px-2 ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}" style="grid-template-columns: auto 1fr;">
+<div class="game-row desktop hidden lg:grid py-1.5 px-2 ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}" style="grid-template-columns: auto 1fr;">
     <div class="flex items-center gap-3 flex-shrink-0">
         ${showRank !== 'none' ? `<span class="text-2xl font-bold text-primary w-12 text-center">${displayRank}</span>` : ''}
         <a href="/game/${game.s}/" class="game-thumb-link">
@@ -197,7 +197,7 @@ class GameListRenderer {
 
         return `
 <a href="/game/${game.s}/"
-   class="game-row game-card-mobile md:hidden flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 ${isHighlighted ? 'is-highlighted' : ''}"
+   class="game-row game-card-mobile lg:hidden flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 ${isHighlighted ? 'is-highlighted' : ''}"
    id="game-${game.id}-mobile">
     ${showRank !== 'none' ? `<div class="text-2xl font-bold text-primary w-10 text-center shrink-0">${displayRank}</div>` : ''}
     <div class="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-base-300">
@@ -340,7 +340,7 @@ class GameListRenderer {
         setTimeout(() => {
             const desktopElement = document.getElementById(`game-${gameId}`);
             const mobileElement = document.getElementById(`game-${gameId}-mobile`);
-            const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
             const element = isDesktop ? desktopElement : mobileElement;
 
             if (element) {
