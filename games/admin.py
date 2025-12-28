@@ -25,8 +25,15 @@ class IGDBGenreAdmin(admin.ModelAdmin):
 
 @admin.register(models.WikipediaGenre)
 class WikipediaGenreAdmin(admin.ModelAdmin):
-    list_display = ["name"]
-    search_fields = ["name"]
+    list_display = ["name", "parent", "level", "path", "game_count", "display_order"]
+    list_filter = ["level", "parent"]
+    search_fields = ["name", "path"]
+    ordering = ["level", "display_order", "name"]
+    readonly_fields = ["game_count"]
+
+    @admin.display(description="Games")
+    def game_count(self, obj):
+        return obj.games_with_wikipedia_genre.count()
 
 
 @admin.register(models.Company)

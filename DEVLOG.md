@@ -7,6 +7,9 @@
 - Added "See all game/developer results" links to search dropdown
 - Fixed "No results found" bug in mobile search (getter vs method issue with object spread)
 - Added "Report incorrect data" link to game detail pages (opens contact modal with pre-filled category and game name)
+- Added genre mappings: Bullet hell→Shooter, Roguelite→Roguelike, Minigame→Interactive Drama
+- Fixed orphan genre bug: new genres now created with proper hierarchy (parent, level, path)
+- Enhanced WikipediaGenreAdmin with hierarchy info display (parent, level, path, game count)
 
 ## 2025-12-27
 

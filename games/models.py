@@ -1098,7 +1098,10 @@ class Game(models.Model):
                 # Create WikipediaGenre objects and link to game (only for primary)
                 # Use normalization to map scraped genres to canonical names
                 if capitalized_all:
-                    from games.services.genre_normalizer import normalize_genre
+                    from games.services.genre_normalizer import (
+                        get_or_create_genre,
+                        normalize_genre,
+                    )
 
                     wikipedia_genres = []
                     seen_genres = set()  # Track seen genres to avoid duplicates
@@ -1114,10 +1117,8 @@ class Game(models.Model):
                             continue
                         seen_genres.add(normalized_name)
 
-                        # Get or create the normalized genre
-                        genre, _ = WikipediaGenre.objects.get_or_create(
-                            name=normalized_name
-                        )
+                        # Get or create the normalized genre with hierarchy
+                        genre = get_or_create_genre(normalized_name)
                         wikipedia_genres.append(genre)
 
                     self.wikipedia_genres.set(wikipedia_genres)

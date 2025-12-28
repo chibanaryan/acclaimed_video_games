@@ -215,9 +215,11 @@ class GameListRenderer {
             ${platformsHtml}${platformExtraHtml}
         </div>
     </div>
-    <svg class="w-5 h-5 text-base-content/30 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    ${showRank === 'filtered'
+        ? `<span class="text-sm text-base-content/60 shrink-0 font-medium">#${game.r}</span>`
+        : `<svg class="w-5 h-5 text-base-content/30 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-    </svg>
+    </svg>`}
 </a>`;
     }
 

@@ -19,7 +19,7 @@ from django.db import connection, transaction
 from django.db.models import Q
 
 from games import config, constants, models
-from games.services.genre_normalizer import normalize_genre
+from games.services.genre_normalizer import get_or_create_genre, normalize_genre
 
 
 def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
@@ -491,12 +491,8 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
                                                 continue
                                             seen_genres.add(normalized_name)
 
-                                            # Get or create the normalized genre
-                                            genre, _ = (
-                                                models.WikipediaGenre.objects.get_or_create(
-                                                    name=normalized_name
-                                                )
-                                            )
+                                            # Get or create the normalized genre with hierarchy
+                                            genre = get_or_create_genre(normalized_name)
                                             wikipedia_genres.append(genre)
                                         game.wikipedia_genres.set(wikipedia_genres)
                             except Exception as genre_error:

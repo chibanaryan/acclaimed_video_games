@@ -200,6 +200,169 @@ GENRE_MAPPING = {
     "Artillery": None,  # Too specific
 }
 
+# Hierarchy structure: category -> list of child genres
+# Used to assign proper parent when creating new genres
+GENRE_HIERARCHY = {
+    "Action": [
+        "Action",
+        "Beat 'em Up",
+        "Fighting",
+        "First-Person Shooter",
+        "Third-Person Shooter",
+        "Light Gun Shooter",
+        "Shooter",
+        "Run and Gun",
+        "Stealth",
+        "Tactical Shooter",
+        "Battle Royale",
+        "MOBA",
+        "Vehicular Combat",
+    ],
+    "Adventure": [
+        "Action-Adventure",
+        "Adventure",
+        "Point-and-Click",
+        "Interactive Drama",
+        "Visual Novel",
+        "Walking Simulator",
+        "Escape Room",
+        "Metroidvania",
+        "Dungeon Crawler",
+        "Platform",
+        "Immersive Sim",
+    ],
+    "Role-Playing": [
+        "Role-Playing",
+        "Action RPG",
+        "Tactical RPG",
+        "MMORPG",
+        "Roguelike",
+        "Dungeon Management",
+    ],
+    "Strategy": [
+        "Strategy",
+        "Real-Time Strategy",
+        "Real-Time Tactics",
+        "Turn-Based Strategy",
+        "Turn-Based Tactics",
+        "4X Strategy",
+        "Grand Strategy",
+        "Tower Defense",
+        "Tactical",
+    ],
+    "Simulation": [
+        "Simulation",
+        "Life Simulation",
+        "Business Simulation",
+        "City Building",
+        "Construction & Management",
+        "Flight Simulation",
+        "Space Combat",
+        "Vehicle Simulation",
+        "Racing",
+        "Kart Racing",
+        "Pinball",
+        "God Game",
+    ],
+    "Sports": [
+        "Sports",
+        "Football (American)",
+        "Football (Association)",
+        "Basketball",
+        "Baseball",
+        "Ice Hockey",
+        "Boxing",
+        "Snowboarding",
+        "Sports Management",
+    ],
+    "Puzzle": [
+        "Puzzle",
+        "Match-Three",
+        "Block Breaker",
+        "Maze",
+        "Incremental",
+    ],
+    "Party & Casual": [
+        "Party",
+        "Music",
+        "Casual",
+        "Digital Card Game",
+        "Educational",
+        "Exercise",
+    ],
+    "Hybrid & Specialized": [
+        "Sandbox",
+        "Survival",
+        "Horror",
+        "Massively Multiplayer",
+        "Social Deduction",
+        "Location-Based",
+    ],
+}
+
+# Build reverse mapping: genre -> parent category
+_GENRE_TO_PARENT = {}
+for category, children in GENRE_HIERARCHY.items():
+    for child in children:
+        if child != category:  # Don't map category to itself
+            _GENRE_TO_PARENT[child] = category
+
+
+def get_genre_parent_name(genre_name: str) -> Optional[str]:
+    """
+    Get the parent category name for a genre.
+
+    Args:
+        genre_name: Canonical genre name
+
+    Returns:
+        Parent category name, or None if genre is a root category or unknown
+    """
+    return _GENRE_TO_PARENT.get(genre_name)
+
+
+def get_or_create_genre(genre_name: str):
+    """
+    Get or create a WikipediaGenre with proper hierarchy.
+
+    If the genre doesn't exist, creates it with the correct parent,
+    level, path, and slug based on GENRE_HIERARCHY.
+
+    Args:
+        genre_name: Canonical genre name
+
+    Returns:
+        WikipediaGenre instance
+    """
+    from django.utils.text import slugify
+    from games.models import WikipediaGenre
+
+    # Try to get existing genre first
+    try:
+        return WikipediaGenre.objects.get(name=genre_name)
+    except WikipediaGenre.DoesNotExist:
+        pass
+
+    # Genre doesn't exist, create with proper hierarchy
+    parent_name = get_genre_parent_name(genre_name)
+    parent = None
+    level = 0
+    path = genre_name
+
+    if parent_name:
+        # Recursively ensure parent exists
+        parent = get_or_create_genre(parent_name)
+        level = parent.level + 1
+        path = f"{parent.path} > {genre_name}"
+
+    return WikipediaGenre.objects.create(
+        name=genre_name,
+        slug=slugify(genre_name),
+        parent=parent,
+        level=level,
+        path=path,
+    )
+
 
 def normalize_genre(name: str) -> Optional[str]:
     """

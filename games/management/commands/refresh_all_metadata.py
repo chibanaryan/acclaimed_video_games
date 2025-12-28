@@ -19,8 +19,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from games import config
-from games.models import Game, WikipediaGameData, WikipediaGenre
-from games.services.genre_normalizer import normalize_genre
+from games.models import Game, WikipediaGameData
+from games.services.genre_normalizer import get_or_create_genre, normalize_genre
 from games.services.igdb_importer import IGDBImportService
 from games.services.wiki_genre_service import WikiGenreService
 from games.services.wiki_page_lookup_service import WikiPageLookupService
@@ -349,10 +349,8 @@ class Command(BaseCommand):
                                 continue
                             seen_genres.add(normalized_name)
 
-                            # Get or create the normalized genre
-                            genre, _ = WikipediaGenre.objects.get_or_create(
-                                name=normalized_name
-                            )
+                            # Get or create the normalized genre with hierarchy
+                            genre = get_or_create_genre(normalized_name)
                             wikipedia_genres.append(genre)
                         game.wikipedia_genres.set(wikipedia_genres)
                 else:
