@@ -1059,6 +1059,11 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* Add spacing between form labels and inputs */
+.form-control .label {
+  padding-bottom: 0.5rem;
+}
+
 /* Studio Filter Panel Components - Vertical Tree in Right Sidebar */
 @layer components {
   /* Vertical tree list container */
