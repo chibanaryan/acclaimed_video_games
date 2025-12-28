@@ -6,13 +6,17 @@
 <div class="genre-filter"
      x-data="{
          init() {
-             // Listen for filtered count updates from HTMX responses
+             // Listen for filtered count updates from client-side filtering
              window.addEventListener('genre-counts-update', (event) => {
                  this.updateFilteredCounts(event.detail);
+                 this.countsReady = true;
              });
              // Initialize expanded state from localStorage
              this.loadExpandedState();
          },
+
+         // Counts are only shown after client-side calculation
+         countsReady: false,
 
          // Expanded state for categories (stored in localStorage)
          expandedCategories: {},
@@ -62,17 +66,17 @@
              });
          },
 
-         // Get total game count for a category (sum of all children's game_count)
+         // Get total game count for a category (sum of all children's effective counts)
          getCategoryTotalGameCount(categoryId) {
              const children = genres.filter(g => String(g.parent_id) === String(categoryId));
-             return children.reduce((sum, c) => sum + (c.game_count || 0), 0);
+             return children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
          },
 
-         // Get child genres for a parent, sorted by game count (descending)
+         // Get child genres for a parent, sorted by effective count (descending)
          getChildren(parentId) {
              return genres.filter(g => String(g.parent_id) === String(parentId)).sort((a, b) => {
-                 // Sort by game_count (descending)
-                 return (b.game_count || 0) - (a.game_count || 0);
+                 // Sort by effective count (descending)
+                 return this.getEffectiveCount(b) - this.getEffectiveCount(a);
              });
          },
 
@@ -197,15 +201,25 @@
              return this.categoryIcons[name] || 'mdi-gamepad-variant';
          },
 
-         // Handle reset from parent
+         // Handle reset from parent (includes clearing expanded states)
          handleReset() {
-             // Nothing to reset - component reads from filters.genres
+             // Reset expanded states to defaults (collapsed)
+             this.expandedCategories = {};
+             localStorage.removeItem('genreCategoriesExpanded');
          }
      }"
      @genres-reset.window="handleReset()">
 
-    {# Hierarchical Genre Tree #}
-    <div class="genre-tree space-y-1">
+    {# Loading State - Show until client counts are ready #}
+    <div x-show="!countsReady" class="space-y-2 animate-pulse">
+        <div class="h-8 bg-base-300/50 rounded-lg"></div>
+        <div class="h-8 bg-base-300/50 rounded-lg"></div>
+        <div class="h-8 bg-base-300/50 rounded-lg"></div>
+        <div class="h-8 bg-base-300/50 rounded-lg"></div>
+    </div>
+
+    {# Hierarchical Genre Tree - Only show after counts are ready #}
+    <div class="genre-tree space-y-1" x-show="countsReady" x-cloak>
         <template x-for="category in rootCategories" :key="category.id">
             <div class="genre-category">
                 {# Category Header - Selectable and Expandable #}

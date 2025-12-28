@@ -1,293 +1,441 @@
-{# Mobile Platform Filter - Chip Grid with Progressive Disclosure #}
-{# Assumes parent has filters.platforms (array) and platforms (list) from main Alpine.js state #}
+{# Mobile Platform Filter - Hierarchical Tree with Form Factors #}
+{# Assumes parent has filters.platforms (array, single-select), and platforms (list) from main Alpine.js state #}
 {% load static %}
 
 <div x-data="{
         expanded: true,
-        expandedFamilies: [],
+        expandedManufacturers: {},
+        expandedFormFactors: {},
+        groupCounts: {},
+        countsReady: false,
 
-        // Platform family groupings (Big Six)
-        platformFamilies: {
-            nintendo: { name: 'Nintendo', icon: 'mdi-nintendo-switch', codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'] },
-            playstation: { name: 'PlayStation', icon: 'mdi-sony-playstation', codes: ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'] },
-            xbox: { name: 'Xbox', icon: 'mdi-microsoft-xbox', codes: ['Xbox', 'X360', 'XB1', 'XBXS'] },
-            sega: { name: 'Sega', svgIcon: 'platform-sega', codes: ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'] },
-            pc: { name: 'PC', icon: 'mdi-microsoft-windows', codes: ['WIN', 'DOS', 'LIN', 'MAC'] },
-            arcadeMobileVr: { name: 'Arcade+', icon: 'mdi-space-invaders', codes: ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR'] }
+        init() {
+            // Listen for platform count updates from client-side filtering
+            window.addEventListener('platform-counts-update', (event) => {
+                this.updateFilteredCounts(event.detail);
+                this.countsReady = true;
+            });
+            // Listen for group count updates (deduplicated manufacturer/form factor counts)
+            window.addEventListener('platform-group-counts-update', (event) => {
+                this.groupCounts = event.detail;
+                this.countsReady = true;
+            });
         },
 
-        // Secondary accordion sections
-        accordionSections: {
-            retro: { name: 'Retro Consoles', icon: 'mdi-gamepad-square', codes: ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS'] },
-            computers: { name: 'Microcomputers', icon: 'mdi-desktop-classic', codes: ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2'] }
+        // Update filtered counts on the platforms array
+        updateFilteredCounts(countMap) {
+            platforms.forEach(p => {
+                p.filtered_count = countMap[String(p.id)] || 0;
+            });
         },
 
-        // Platform release years for chronological sorting (earliest regional release)
+        // Platform hierarchy configuration (matches desktop)
+        platformHierarchy: {
+            nintendo: {
+                name: 'Nintendo',
+                icon: 'mdi-nintendo-switch',
+                formFactors: {
+                    home: { name: 'Home Consoles', platforms: ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW'] },
+                    handheld: { name: 'Handhelds', platforms: ['GB', 'GBC', 'GBA', 'DS', '3DS'] }
+                }
+            },
+            playstation: {
+                name: 'PlayStation',
+                icon: 'mdi-sony-playstation',
+                formFactors: {
+                    home: { name: 'Home Consoles', platforms: ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSVR'] },
+                    handheld: { name: 'Handhelds', platforms: ['PSP', 'PSV'] }
+                }
+            },
+            xbox: {
+                name: 'Xbox',
+                icon: 'mdi-microsoft-xbox',
+                platforms: ['Xbox', 'X360', 'XB1', 'XBXS']
+            },
+            sega: {
+                name: 'Sega',
+                svgIcon: 'platform-sega',
+                formFactors: {
+                    home: { name: 'Home Consoles', platforms: ['SMS', 'GEN', 'SCD', 'SAT', 'DC'] },
+                    handheld: { name: 'Handhelds', platforms: ['GG'] }
+                }
+            },
+            pc: {
+                name: 'PC',
+                icon: 'mdi-microsoft-windows',
+                platforms: ['WIN', 'DOS', 'LIN', 'MAC']
+            },
+            arcadePlus: {
+                name: 'Arcade+',
+                icon: 'mdi-space-invaders',
+                platforms: ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
+            },
+            retro: {
+                name: 'Retro Consoles',
+                icon: 'mdi-gamepad-square',
+                platforms: ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS']
+            },
+            computers: {
+                name: 'Microcomputers',
+                icon: 'mdi-desktop-classic',
+                platforms: ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2']
+            }
+        },
+
+        // Platform year ranges for display
+        platformYearRanges: {
+            'NES': { start: 1983, end: 1995 }, 'FDS': { start: 1986, end: 1992 },
+            'SNES': { start: 1990, end: 2003 }, 'N64': { start: 1996, end: 2002 },
+            'GC': { start: 2001, end: 2007 }, 'Wii': { start: 2006, end: 2013 },
+            'WiiU': { start: 2012, end: 2017 }, 'SW': { start: 2017, end: null },
+            'GB': { start: 1989, end: 2003 }, 'GBC': { start: 1998, end: 2003 },
+            'GBA': { start: 2001, end: 2010 }, 'DS': { start: 2004, end: 2013 },
+            '3DS': { start: 2011, end: 2020 },
+            'PS': { start: 1994, end: 2006 }, 'PS2': { start: 2000, end: 2013 },
+            'PS3': { start: 2006, end: 2017 }, 'PS4': { start: 2013, end: null },
+            'PS5': { start: 2020, end: null }, 'PSVR': { start: 2016, end: null },
+            'PSP': { start: 2004, end: 2014 }, 'PSV': { start: 2011, end: 2019 },
+            'Xbox': { start: 2001, end: 2009 }, 'X360': { start: 2005, end: 2016 },
+            'XB1': { start: 2013, end: null }, 'XBXS': { start: 2020, end: null },
+            'SMS': { start: 1985, end: 1996 }, 'GEN': { start: 1988, end: 1997 },
+            'SCD': { start: 1991, end: 1996 }, 'SAT': { start: 1994, end: 2000 },
+            'DC': { start: 1998, end: 2001 }, 'GG': { start: 1990, end: 1997 },
+            'DOS': { start: 1981, end: 2000 }, 'WIN': { start: 1985, end: null },
+            'MAC': { start: 1984, end: null }, 'LIN': { start: 1991, end: null },
+            'ARC': { start: 1970, end: null }, 'iOS': { start: 2007, end: null },
+            'AND': { start: 2008, end: null }, 'LMD': { start: 2000, end: null },
+            'VR': { start: 2016, end: null }, 'BR': { start: 1990, end: null },
+            'A26': { start: 1977, end: 1992 }, 'INTV': { start: 1979, end: 1991 },
+            'CV': { start: 1982, end: 1985 }, 'A52': { start: 1982, end: 1984 },
+            'A78': { start: 1986, end: 1992 }, 'TG16': { start: 1987, end: 1994 },
+            'NG': { start: 1990, end: 2004 }, 'LYNX': { start: 1989, end: 1995 },
+            '3DO': { start: 1993, end: 1996 }, 'JAG': { start: 1993, end: 1996 },
+            'NGP': { start: 1998, end: 2001 }, 'WS': { start: 1999, end: 2003 },
+            'A2': { start: 1977, end: 1993 }, 'A8': { start: 1979, end: 1992 },
+            'ZXS': { start: 1982, end: 1992 }, 'C64': { start: 1982, end: 1994 },
+            'CPC': { start: 1984, end: 1990 }, 'MSX': { start: 1983, end: 1995 },
+            'AMI': { start: 1985, end: 1996 }, 'AST': { start: 1985, end: 1993 },
+            'BBCM': { start: 1981, end: 1994 }, 'PC88': { start: 1981, end: 1998 },
+            'PC98': { start: 1982, end: 2000 }, 'FM7': { start: 1982, end: 1988 },
+            'FMT': { start: 1989, end: 1997 }, 'SX1': { start: 1984, end: 1986 },
+            'T80': { start: 1985, end: 1990 }, 'TCC': { start: 1983, end: 1986 },
+            'VC20': { start: 1980, end: 1985 }, 'CD32': { start: 1993, end: 1994 }
+        },
+
+        // Platform release years for chronological sorting
         platformReleaseYears: {
-            // Nintendo
             'NES': 1983, 'FDS': 1986, 'GB': 1989, 'SNES': 1990, 'GBC': 1998,
             'N64': 1996, 'GBA': 2001, 'GC': 2001, 'DS': 2004, 'Wii': 2006,
             '3DS': 2011, 'WiiU': 2012, 'SW': 2017,
-            // PlayStation
             'PS': 1994, 'PS2': 2000, 'PSP': 2004, 'PS3': 2006, 'PSV': 2011,
             'PS4': 2013, 'PSVR': 2016, 'PS5': 2020,
-            // Xbox
             'Xbox': 2001, 'X360': 2005, 'XB1': 2013, 'XBXS': 2020,
-            // Sega
             'SMS': 1985, 'GEN': 1988, 'GG': 1990, 'SCD': 1991, 'SAT': 1994, 'DC': 1998,
-            // PC
             'DOS': 1981, 'WIN': 1985, 'MAC': 1984, 'LIN': 1991,
-            // Arcade/Mobile/VR
             'ARC': 1970, 'iOS': 2007, 'AND': 2008, 'LMD': 2000, 'VR': 2016, 'BR': 1990,
-            // Retro
             'A26': 1977, 'INTV': 1979, 'CV': 1982, 'A52': 1982, 'A78': 1986,
             'TG16': 1987, 'NG': 1990, 'LYNX': 1989, '3DO': 1993, 'JAG': 1993,
             'NGP': 1998, 'WS': 1999,
-            // Microcomputers
             'A2': 1977, 'A8': 1979, 'ZXS': 1982, 'C64': 1982, 'CPC': 1984,
             'MSX': 1983, 'AMI': 1985, 'AST': 1985, 'BBCM': 1981,
             'PC88': 1981, 'PC98': 1982, 'FM7': 1982, 'FMT': 1989,
             'SX1': 1984, 'T80': 1985, 'TCC': 1983, 'VC20': 1980, 'CD32': 1993
         },
 
-        // Platform icons (matches desktop version)
-        platformIcons: {
-            'PS': 'mdi-sony-playstation', 'PS2': 'mdi-sony-playstation', 'PS3': 'mdi-sony-playstation',
-            'PS4': 'mdi-sony-playstation', 'PS5': 'mdi-sony-playstation', 'PSP': 'mdi-sony-playstation',
-            'PSV': 'mdi-sony-playstation', 'PSVR': 'mdi-sony-playstation',
-            'Xbox': 'mdi-microsoft-xbox', 'X360': 'mdi-microsoft-xbox', 'XB1': 'mdi-microsoft-xbox',
-            'XBXS': 'mdi-microsoft-xbox',
-            'SW': 'mdi-nintendo-switch', 'NES': 'mdi-nintendo-game-boy', 'SNES': 'mdi-nintendo-game-boy',
-            'N64': 'mdi-nintendo-game-boy', 'GC': 'mdi-nintendo-game-boy', 'Wii': 'mdi-nintendo-wii',
-            'WiiU': 'mdi-nintendo-wiiu', '3DS': 'mdi-nintendo-game-boy', 'DS': 'mdi-nintendo-game-boy',
-            'GB': 'mdi-nintendo-game-boy', 'GBA': 'mdi-nintendo-game-boy', 'GBC': 'mdi-nintendo-game-boy',
-            'FDS': 'mdi-nintendo-game-boy',
-            'WIN': 'mdi-microsoft-windows', 'DOS': 'mdi-floppy', 'MAC': 'mdi-apple',
-            'LIN': 'mdi-linux', 'A2': 'mdi-floppy',
-            'AND': 'mdi-android', 'iOS': 'mdi-apple-ios', 'LMD': 'mdi-cellphone',
-            'GEN': 'mdi-controller-classic', 'SMS': 'mdi-controller-classic', 'DC': 'mdi-controller-classic',
-            'SAT': 'mdi-controller-classic', 'GG': 'mdi-controller-classic', 'SCD': 'mdi-controller-classic',
-            'A26': 'mdi-gamepad-square', 'A52': 'mdi-gamepad-square', 'A78': 'mdi-gamepad-square',
-            'A8': 'mdi-gamepad-square', 'JAG': 'mdi-gamepad-square', 'LYNX': 'mdi-gamepad-square',
-            'AST': 'mdi-gamepad-square',
-            'TG16': 'mdi-gamepad', 'NG': 'mdi-gamepad', '3DO': 'mdi-gamepad',
-            'INTV': 'mdi-gamepad', 'CV': 'mdi-gamepad', 'NGP': 'mdi-gamepad', 'WS': 'mdi-gamepad',
-            'C64': 'mdi-floppy', 'AMI': 'mdi-floppy', 'CD32': 'mdi-floppy',
-            'MSX': 'mdi-floppy', 'CPC': 'mdi-floppy', 'ZXS': 'mdi-floppy',
-            'BBCM': 'mdi-floppy', 'PC88': 'mdi-floppy', 'PC98': 'mdi-floppy',
-            'FMT': 'mdi-floppy', 'FM7': 'mdi-floppy', 'SX1': 'mdi-floppy',
-            'T80': 'mdi-floppy', 'TCC': 'mdi-floppy', 'VC20': 'mdi-floppy',
-            'ARC': 'mdi-pac-man',
-            'BR': 'mdi-web', 'VR': 'mdi-virtual-reality'
+        // Get platform object by code
+        getPlatformByCode(code) {
+            return platforms.find(p => p.code === code);
         },
 
-        getIcon(code) {
-            return this.platformIcons[code] || 'mdi-gamepad-variant';
+        // Get the effective count for a platform
+        getEffectiveCount(platform) {
+            if (!platform) return 0;
+            return platform.filtered_count !== undefined ? platform.filtered_count : (platform.game_count || 0);
         },
 
-        isPlatformSelected(platformId) {
+        // Format year as 2-digit with apostrophe (e.g., 1991 -> '91)
+        formatYear(year) {
+            if (!year) return '';
+            return &quot;'&quot; + String(year).slice(-2);
+        },
+
+        // Format platform name with year range (short format)
+        formatPlatformName(platform) {
+            if (!platform) return '';
+            const range = this.platformYearRanges[platform.code];
+            if (!range) return platform.name;
+            const startYear = this.formatYear(range.start);
+            const endYear = range.end ? this.formatYear(range.end) : 'now';
+            return platform.name + ' (' + startYear + '-' + endYear + ')';
+        },
+
+        // Get sorted manufacturer keys by total game count
+        get sortedManufacturerKeys() {
+            return Object.keys(this.platformHierarchy).sort((a, b) => {
+                return this.getManufacturerTotalCount(b) - this.getManufacturerTotalCount(a);
+            });
+        },
+
+        // Get all platform codes for a manufacturer
+        getAllCodesForManufacturer(mfrKey) {
+            const mfr = this.platformHierarchy[mfrKey];
+            if (!mfr) return [];
+            if (mfr.formFactors) {
+                return Object.values(mfr.formFactors).flatMap(ff => ff.platforms);
+            }
+            return mfr.platforms || [];
+        },
+
+        // Get total game count for a manufacturer (deduplicated)
+        getManufacturerTotalCount(mfrKey) {
+            // Use deduplicated group counts if available
+            if (this.groupCounts && this.groupCounts[mfrKey]) {
+                return this.groupCounts[mfrKey].count || 0;
+            }
+            // Fallback: sum individual platforms (may have duplicates)
+            const codes = this.getAllCodesForManufacturer(mfrKey);
+            return codes.reduce((sum, code) => {
+                const p = this.getPlatformByCode(code);
+                return sum + this.getEffectiveCount(p);
+            }, 0);
+        },
+
+        // Get total game count for a form factor (deduplicated)
+        getFormFactorTotalCount(mfrKey, ffKey) {
+            // Use deduplicated group counts if available
+            if (this.groupCounts && this.groupCounts[mfrKey] && this.groupCounts[mfrKey].formFactors) {
+                return this.groupCounts[mfrKey].formFactors[ffKey] || 0;
+            }
+            // Fallback: sum individual platforms (may have duplicates)
+            const mfr = this.platformHierarchy[mfrKey];
+            if (!mfr || !mfr.formFactors || !mfr.formFactors[ffKey]) return 0;
+            return mfr.formFactors[ffKey].platforms.reduce((sum, code) => {
+                const p = this.getPlatformByCode(code);
+                return sum + this.getEffectiveCount(p);
+            }, 0);
+        },
+
+        // Get platforms for a form factor, sorted chronologically
+        getFormFactorPlatforms(mfrKey, ffKey) {
+            const mfr = this.platformHierarchy[mfrKey];
+            if (!mfr || !mfr.formFactors || !mfr.formFactors[ffKey]) return [];
+            return mfr.formFactors[ffKey].platforms
+                .map(code => this.getPlatformByCode(code))
+                .filter(p => p)
+                .sort((a, b) => {
+                    const yearA = this.platformReleaseYears[a.code] || 9999;
+                    const yearB = this.platformReleaseYears[b.code] || 9999;
+                    return yearA - yearB;
+                });
+        },
+
+        // Get flat platforms for a manufacturer (no form factors)
+        getFlatPlatforms(mfrKey) {
+            const mfr = this.platformHierarchy[mfrKey];
+            if (!mfr || !mfr.platforms) return [];
+            return mfr.platforms
+                .map(code => this.getPlatformByCode(code))
+                .filter(p => p)
+                .sort((a, b) => {
+                    const yearA = this.platformReleaseYears[a.code] || 9999;
+                    const yearB = this.platformReleaseYears[b.code] || 9999;
+                    return yearA - yearB;
+                });
+        },
+
+        // Check if platform is in the filters array (raw check)
+        isPlatformInFilter(platformId) {
             return filters.platforms.includes(String(platformId));
         },
 
+        // Find which manufacturer and form factor a platform belongs to
+        findPlatformParent(platformId) {
+            const id = String(platformId);
+            for (const mfrKey of Object.keys(this.platformHierarchy)) {
+                const mfr = this.platformHierarchy[mfrKey];
+                if (mfr.formFactors) {
+                    for (const [ffKey, ff] of Object.entries(mfr.formFactors)) {
+                        const platformIds = ff.platforms.map(code => {
+                            const p = this.getPlatformByCode(code);
+                            return p ? String(p.id) : null;
+                        }).filter(Boolean);
+                        if (platformIds.includes(id)) {
+                            return { mfrKey, ffKey };
+                        }
+                    }
+                } else if (mfr.platforms) {
+                    const platformIds = mfr.platforms.map(code => {
+                        const p = this.getPlatformByCode(code);
+                        return p ? String(p.id) : null;
+                    }).filter(Boolean);
+                    if (platformIds.includes(id)) {
+                        return { mfrKey, ffKey: null };
+                    }
+                }
+            }
+            return null;
+        },
+
+        // Check if all platforms in form factor are selected (without the manufacturer check)
+        _isFormFactorFullySelected(mfrKey, ffKey) {
+            const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
+            if (platformIds.length === 0) return false;
+            return platformIds.every(id => filters.platforms.includes(id));
+        },
+
+        // Check if platform checkbox should show as selected (hierarchical visual)
+        // Only shows checked if neither parent form factor nor manufacturer is fully selected
+        isPlatformSelected(platformId) {
+            if (!filters.platforms.includes(String(platformId))) return false;
+
+            // Find which manufacturer/form factor this platform belongs to
+            const parentInfo = this.findPlatformParent(platformId);
+            if (!parentInfo) return true;
+
+            // If manufacturer is fully selected, don't show individual checkbox
+            if (this.isManufacturerSelected(parentInfo.mfrKey)) return false;
+
+            // If form factor is fully selected (and has a form factor), don't show individual checkbox
+            if (parentInfo.ffKey && this._isFormFactorFullySelected(parentInfo.mfrKey, parentInfo.ffKey)) return false;
+
+            return true;
+        },
+
+        // SINGLE-SELECT: Toggle platform (replaces selection)
         togglePlatform(platformId) {
             const id = String(platformId);
-            const idx = filters.platforms.indexOf(id);
-            if (idx > -1) {
-                filters.platforms.splice(idx, 1);
+            // Check if this platform is part of a fully selected parent
+            const parentInfo = this.findPlatformParent(platformId);
+            const isPartOfFullSelection = parentInfo && (
+                this.isManufacturerSelected(parentInfo.mfrKey) ||
+                (parentInfo.ffKey && this._isFormFactorFullySelected(parentInfo.mfrKey, parentInfo.ffKey))
+            );
+
+            if (isPartOfFullSelection) {
+                // When clicking a platform within a fully selected group, select only that platform
+                filters.platforms = [id];
+            } else if (filters.platforms.length === 1 && filters.platforms.includes(id)) {
+                // Only deselect if this is the only selected platform
+                filters.platforms = [];
             } else {
-                filters.platforms.push(id);
+                // Otherwise select just this platform
+                filters.platforms = [id];
             }
         },
 
-        // Select all platforms in a family
-        selectFamily(familyKey) {
-            const family = this.platformFamilies[familyKey];
-            if (!family) return;
+        // Get all platform IDs for a manufacturer
+        getAllPlatformIdsForManufacturer(mfrKey) {
+            const codes = this.getAllCodesForManufacturer(mfrKey);
+            return codes.map(code => this.getPlatformByCode(code))
+                        .filter(p => p)
+                        .map(p => String(p.id));
+        },
 
-            const familyPlatformIds = platforms
-                .filter(p => family.codes.includes(p.code))
+        // Get all platform IDs for a form factor
+        getAllPlatformIdsForFormFactor(mfrKey, ffKey) {
+            const mfr = this.platformHierarchy[mfrKey];
+            if (!mfr || !mfr.formFactors || !mfr.formFactors[ffKey]) return [];
+            return mfr.formFactors[ffKey].platforms
+                .map(code => this.getPlatformByCode(code))
+                .filter(p => p)
                 .map(p => String(p.id));
+        },
 
-            // Check if all are already selected
-            const allSelected = familyPlatformIds.every(id => filters.platforms.includes(id));
+        // Check if manufacturer or any of its platforms is selected
+        hasManufacturerOrChildrenSelected(mfrKey) {
+            const platformIds = this.getAllPlatformIdsForManufacturer(mfrKey);
+            return platformIds.some(id => filters.platforms.includes(id));
+        },
 
-            if (allSelected) {
-                // Deselect all
-                familyPlatformIds.forEach(id => {
-                    const idx = filters.platforms.indexOf(id);
-                    if (idx > -1) filters.platforms.splice(idx, 1);
-                });
+        // Check if form factor or any of its platforms is selected
+        hasFormFactorSelection(mfrKey, ffKey) {
+            const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
+            return platformIds.some(id => filters.platforms.includes(id));
+        },
+
+        // Check if platform is available (has games in current filters or is selected)
+        isPlatformAvailable(platformId) {
+            const platform = platforms.find(p => String(p.id) === String(platformId));
+            if (!platform) return false;
+            const count = this.getEffectiveCount(platform);
+            return count > 0 || this.isPlatformInFilter(platformId);
+        },
+
+        // Check if ALL platforms for manufacturer are selected (checkbox shows checked)
+        isManufacturerSelected(mfrKey) {
+            const platformIds = this.getAllPlatformIdsForManufacturer(mfrKey);
+            if (platformIds.length === 0) return false;
+            return platformIds.every(id => filters.platforms.includes(id));
+        },
+
+        // Check if ALL platforms for form factor are selected (checkbox shows checked)
+        // Only shows checked if parent manufacturer is NOT fully selected (hierarchical visual)
+        isFormFactorSelected(mfrKey, ffKey) {
+            // If entire manufacturer is selected, form factor shouldn't show as checked
+            if (this.isManufacturerSelected(mfrKey)) return false;
+
+            const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
+            if (platformIds.length === 0) return false;
+            return platformIds.every(id => filters.platforms.includes(id));
+        },
+
+        // Toggle manufacturer selection (select all platforms if not all selected, clear if all selected)
+        toggleManufacturerSelection(mfrKey) {
+            const platformIds = this.getAllPlatformIdsForManufacturer(mfrKey);
+            if (this.isManufacturerSelected(mfrKey)) {
+                filters.platforms = [];  // Deselect all
             } else {
-                // Select all
-                familyPlatformIds.forEach(id => {
-                    if (!filters.platforms.includes(id)) {
-                        filters.platforms.push(id);
-                    }
-                });
+                filters.platforms = [...platformIds];  // Select all manufacturer platforms
             }
         },
 
-        isFamilySelected(familyKey) {
-            const family = this.platformFamilies[familyKey];
-            if (!family) return false;
-
-            const familyPlatformIds = platforms
-                .filter(p => family.codes.includes(p.code))
-                .map(p => String(p.id));
-
-            return familyPlatformIds.length > 0 && familyPlatformIds.every(id => filters.platforms.includes(id));
-        },
-
-        isFamilyPartial(familyKey) {
-            const family = this.platformFamilies[familyKey];
-            if (!family) return false;
-
-            const familyPlatformIds = platforms
-                .filter(p => family.codes.includes(p.code))
-                .map(p => String(p.id));
-
-            const selectedCount = familyPlatformIds.filter(id => filters.platforms.includes(id)).length;
-            return selectedCount > 0 && selectedCount < familyPlatformIds.length;
-        },
-
-        isFamilyExpanded(familyKey) {
-            return this.expandedFamilies.includes(familyKey);
-        },
-
-        toggleFamilyExpansion(familyKey) {
-            const idx = this.expandedFamilies.indexOf(familyKey);
-            if (idx > -1) {
-                this.expandedFamilies.splice(idx, 1);
+        // Toggle form factor selection (select all platforms if not all selected, clear if all selected)
+        toggleFormFactorSelection(mfrKey, ffKey) {
+            const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
+            // If manufacturer is fully selected, clicking form factor selects just that form factor
+            if (this.isManufacturerSelected(mfrKey)) {
+                filters.platforms = [...platformIds];
+            } else if (this._isFormFactorFullySelected(mfrKey, ffKey)) {
+                // Only deselect if this form factor is the only thing selected
+                const allFormFactorIds = new Set(platformIds);
+                const allSelected = filters.platforms.every(id => allFormFactorIds.has(id));
+                if (allSelected && filters.platforms.length === platformIds.length) {
+                    filters.platforms = [];  // Deselect all
+                } else {
+                    filters.platforms = [...platformIds];  // Select just this form factor
+                }
             } else {
-                this.expandedFamilies.push(familyKey);
+                filters.platforms = [...platformIds];  // Select all form factor platforms
             }
         },
 
-        getFamilyPlatforms(familyKey) {
-            const family = this.platformFamilies[familyKey];
-            if (!family) return [];
-            return platforms
-                .filter(p => family.codes.includes(p.code))
-                .sort((a, b) => {
-                    const yearA = this.platformReleaseYears[a.code] || 9999;
-                    const yearB = this.platformReleaseYears[b.code] || 9999;
-                    return yearA - yearB;
-                });
+        // Manufacturer expansion
+        isManufacturerExpanded(mfrKey) {
+            return this.expandedManufacturers[mfrKey] === true;
         },
 
-        // Generic section lookup (works with both platformFamilies and accordionSections)
-        getSection(key) {
-            return this.platformFamilies[key] || this.accordionSections[key];
-        },
-
-        // Generic section functions that work with both platformFamilies and accordionSections
-        selectSection(sectionKey) {
-            const section = this.getSection(sectionKey);
-            if (!section) return;
-
-            const sectionPlatformIds = platforms
-                .filter(p => section.codes.includes(p.code))
-                .map(p => String(p.id));
-
-            // Check if all are already selected
-            const allSelected = sectionPlatformIds.every(id => filters.platforms.includes(id));
-
-            if (allSelected) {
-                // Deselect all
-                sectionPlatformIds.forEach(id => {
-                    const idx = filters.platforms.indexOf(id);
-                    if (idx > -1) filters.platforms.splice(idx, 1);
-                });
-            } else {
-                // Select all
-                sectionPlatformIds.forEach(id => {
-                    if (!filters.platforms.includes(id)) {
-                        filters.platforms.push(id);
-                    }
-                });
-            }
-        },
-
-        isSectionSelected(sectionKey) {
-            const section = this.getSection(sectionKey);
-            if (!section) return false;
-
-            const sectionPlatformIds = platforms
-                .filter(p => section.codes.includes(p.code))
-                .map(p => String(p.id));
-
-            return sectionPlatformIds.length > 0 && sectionPlatformIds.every(id => filters.platforms.includes(id));
-        },
-
-        isSectionPartial(sectionKey) {
-            const section = this.getSection(sectionKey);
-            if (!section) return false;
-
-            const sectionPlatformIds = platforms
-                .filter(p => section.codes.includes(p.code))
-                .map(p => String(p.id));
-
-            const selectedCount = sectionPlatformIds.filter(id => filters.platforms.includes(id)).length;
-            return selectedCount > 0 && selectedCount < sectionPlatformIds.length;
-        },
-
-        getSectionPlatforms(sectionKey) {
-            const section = this.getSection(sectionKey);
-            if (!section) return [];
-            return platforms
-                .filter(p => section.codes.includes(p.code))
-                .sort((a, b) => {
-                    const yearA = this.platformReleaseYears[a.code] || 9999;
-                    const yearB = this.platformReleaseYears[b.code] || 9999;
-                    return yearA - yearB;
-                });
-        },
-
-        // Get ungrouped platforms (not in any defined group), sorted chronologically
-        getUngroupedPlatforms() {
-            const allGroupedCodes = [
-                ...Object.values(this.platformFamilies).flatMap(g => g.codes),
-                ...Object.values(this.accordionSections).flatMap(g => g.codes)
-            ];
-            return platforms
-                .filter(p => !allGroupedCodes.includes(p.code))
-                .sort((a, b) => {
-                    const yearA = this.platformReleaseYears[a.code] || 9999;
-                    const yearB = this.platformReleaseYears[b.code] || 9999;
-                    return yearA - yearB;
-                });
-        },
-
-        // Select/deselect all ungrouped platforms
-        selectUngrouped() {
-            const ungroupedIds = this.getUngroupedPlatforms().map(p => String(p.id));
-            const allSelected = ungroupedIds.every(id => filters.platforms.includes(id));
-
-            if (allSelected) {
-                // Deselect all
-                ungroupedIds.forEach(id => {
-                    const idx = filters.platforms.indexOf(id);
-                    if (idx > -1) filters.platforms.splice(idx, 1);
-                });
-            } else {
-                // Select all
-                ungroupedIds.forEach(id => {
-                    if (!filters.platforms.includes(id)) {
-                        filters.platforms.push(id);
-                    }
+        toggleManufacturerExpansion(mfrKey) {
+            const newState = !this.isManufacturerExpanded(mfrKey);
+            this.expandedManufacturers[mfrKey] = newState;
+            // Also expand/collapse all child form factors
+            const mfr = this.platformHierarchy[mfrKey];
+            if (mfr && mfr.formFactors) {
+                Object.keys(mfr.formFactors).forEach(ffKey => {
+                    const key = mfrKey + '_' + ffKey;
+                    this.expandedFormFactors[key] = newState;
                 });
             }
         },
 
-        isUngroupedSelected() {
-            const ungroupedIds = this.getUngroupedPlatforms().map(p => String(p.id));
-            return ungroupedIds.length > 0 && ungroupedIds.every(id => filters.platforms.includes(id));
+        // Form factor expansion
+        isFormFactorExpanded(mfrKey, ffKey) {
+            const key = mfrKey + '_' + ffKey;
+            return this.expandedFormFactors[key] === true;
         },
 
-        isUngroupedPartial() {
-            const ungroupedIds = this.getUngroupedPlatforms().map(p => String(p.id));
-            const selectedCount = ungroupedIds.filter(id => filters.platforms.includes(id)).length;
-            return selectedCount > 0 && selectedCount < ungroupedIds.length;
+        toggleFormFactorExpansion(mfrKey, ffKey) {
+            const key = mfrKey + '_' + ffKey;
+            this.expandedFormFactors[key] = !this.isFormFactorExpanded(mfrKey, ffKey);
         },
 
         selectedCount() {
@@ -296,9 +444,15 @@
 
         clearPlatforms() {
             filters.platforms = [];
+        },
+
+        // Reset expanded states (called on Clear All Filters)
+        resetExpanded() {
+            this.expandedManufacturers = {};
+            this.expandedFormFactors = {};
         }
      }"
-     @platforms-reset.window="filters.platforms = [];"
+     @platforms-reset.window="filters.platforms = []; resetExpanded();"
      class="space-y-3">
 
     {# Accordion Header #}
@@ -331,153 +485,144 @@
          x-transition:enter-end="opacity-100 translate-y-0"
          class="space-y-4">
 
-        {# Big Six Platform Families #}
-        <div class="space-y-3">
-            <template x-for="(family, key) in platformFamilies" :key="key">
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2">
-                        {# Checkbox to select/deselect entire family #}
-                        <label class="cursor-pointer" @click.stop>
-                            <input type="checkbox"
-                                   :checked="isFamilySelected(key)"
-                                   :indeterminate="isFamilyPartial(key)"
-                                   @change="selectFamily(key); debouncedFilterUpdate();"
-                                   class="checkbox checkbox-sm checkbox-primary">
-                        </label>
+        {# Loading State - Show until client counts are ready #}
+        <div x-show="!countsReady" class="space-y-2 animate-pulse">
+            <div class="h-8 bg-base-300/50 rounded-lg"></div>
+            <div class="h-8 bg-base-300/50 rounded-lg"></div>
+            <div class="h-8 bg-base-300/50 rounded-lg"></div>
+        </div>
 
-                        {# Button to expand/collapse family #}
+        {# Platform Hierarchy (only show after counts ready) #}
+        <div class="space-y-3" x-show="countsReady" x-cloak>
+            <template x-for="mfrKey in sortedManufacturerKeys" :key="mfrKey">
+                <div class="space-y-2">
+                    {# Manufacturer Header - Expandable and Selectable #}
+                    <div class="flex items-center gap-1 py-1.5 px-2 rounded-lg transition-colors"
+                         :class="{
+                             'bg-primary/10': hasManufacturerOrChildrenSelected(mfrKey),
+                             'text-primary': hasManufacturerOrChildrenSelected(mfrKey),
+                             'hover:bg-base-300/50': !hasManufacturerOrChildrenSelected(mfrKey)
+                         }">
+                        {# Checkbox for manufacturer selection #}
                         <button type="button"
-                                @click="toggleFamilyExpansion(key)"
-                                class="btn btn-sm gap-1 flex-1 justify-between btn-ghost">
-                            <span class="flex items-center gap-1">
-                                <template x-if="family.svgIcon">
-                                    <svg class="w-4 h-4">
-                                        <use :href="'{% static 'games/images/platform-icons.svg' %}#' + family.svgIcon"></use>
-                                    </svg>
-                                </template>
-                                <template x-if="!family.svgIcon && family.icon">
-                                    <span :class="'mdi ' + family.icon" class="text-sm"></span>
-                                </template>
-                                <span x-text="family.name" class="text-xs"></span>
-                            </span>
-                            <span class="mdi mdi-chevron-right text-base transition-transform duration-200" :class="{ 'rotate-90': isFamilyExpanded(key) }"></span>
+                                class="p-0.5 rounded hover:bg-base-300/50"
+                                @click.stop="toggleManufacturerSelection(mfrKey); debouncedFilterUpdate();">
+                            <span class="mdi text-base"
+                                  :class="isManufacturerSelected(mfrKey) ? 'mdi-checkbox-marked text-primary' : 'mdi-checkbox-blank-outline'"></span>
                         </button>
+                        {# Expand/Collapse Arrow #}
+                        <button type="button"
+                                class="p-0.5 rounded hover:bg-base-300/50"
+                                @click.stop="toggleManufacturerExpansion(mfrKey)">
+                            <span class="mdi text-base transition-transform duration-200"
+                                  :class="isManufacturerExpanded(mfrKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                        </button>
+                        {# Manufacturer Icon and Name - click to toggle selection #}
+                        <button type="button"
+                                class="flex items-center gap-2 flex-1 text-left"
+                                @click="toggleManufacturerSelection(mfrKey); debouncedFilterUpdate();">
+                            <template x-if="platformHierarchy[mfrKey].svgIcon">
+                                <svg class="w-5 h-5 fill-current" aria-hidden="true">
+                                    <use :href="'{% static 'games/images/platform-icons.svg' %}#' + platformHierarchy[mfrKey].svgIcon"></use>
+                                </svg>
+                            </template>
+                            <template x-if="platformHierarchy[mfrKey].icon">
+                                <span class="mdi text-lg" :class="platformHierarchy[mfrKey].icon"></span>
+                            </template>
+                            <span class="font-medium text-sm" x-text="platformHierarchy[mfrKey].name"></span>
+                        </button>
+                        {# Deduplicated manufacturer count #}
+                        <span class="text-xs opacity-60 tabular-nums" x-text="getManufacturerTotalCount(mfrKey)"></span>
                     </div>
 
-                    {# Individual platforms for this family #}
-                    <div x-show="isFamilyExpanded(key)"
+                    {# Manufacturer Content #}
+                    <div x-show="isManufacturerExpanded(mfrKey)"
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 -translate-y-1"
                          x-transition:enter-end="opacity-100 translate-y-0"
-                         class="pl-4 flex flex-wrap gap-2">
-                        <template x-for="platform in getFamilyPlatforms(key)" :key="platform.id">
-                            <label class="cursor-pointer">
-                                <input type="checkbox"
-                                       :value="platform.id"
-                                       :checked="isPlatformSelected(platform.id)"
-                                       @change="togglePlatform(platform.id); debouncedFilterUpdate();"
-                                       class="hidden peer">
-                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs" x-text="platform.name"></span>
-                            </label>
+                         class="pl-4 space-y-2">
+
+                        {# If has form factors #}
+                        <template x-if="platformHierarchy[mfrKey].formFactors">
+                            <div class="space-y-2">
+                                <template x-for="(ff, ffKey) in platformHierarchy[mfrKey].formFactors" :key="ffKey">
+                                    <div class="space-y-1">
+                                        {# Form Factor Header #}
+                                        <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors"
+                                             :class="{
+                                                 'bg-primary/10': hasFormFactorSelection(mfrKey, ffKey),
+                                                 'text-primary': hasFormFactorSelection(mfrKey, ffKey),
+                                                 'hover:bg-base-300/50': !hasFormFactorSelection(mfrKey, ffKey)
+                                             }">
+                                            {# Checkbox for form factor selection #}
+                                            <button type="button"
+                                                    class="p-0.5 rounded hover:bg-base-300/50"
+                                                    @click.stop="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();">
+                                                <span class="mdi text-sm"
+                                                      :class="isFormFactorSelected(mfrKey, ffKey) ? 'mdi-checkbox-marked text-primary' : 'mdi-checkbox-blank-outline'"></span>
+                                            </button>
+                                            {# Expand/Collapse Arrow #}
+                                            <button type="button"
+                                                    class="p-0.5 rounded hover:bg-base-300/50"
+                                                    @click.stop="toggleFormFactorExpansion(mfrKey, ffKey)">
+                                                <span class="mdi text-sm transition-transform duration-200"
+                                                      :class="isFormFactorExpanded(mfrKey, ffKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                                            </button>
+                                            {# Form Factor Name - click to toggle selection #}
+                                            <button type="button"
+                                                    class="text-xs font-medium opacity-80 flex-1 text-left"
+                                                    @click="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();"
+                                                    x-text="ff.name"></button>
+                                            {# Deduplicated form factor count #}
+                                            <span class="text-xs opacity-60 tabular-nums" x-text="getFormFactorTotalCount(mfrKey, ffKey)"></span>
+                                        </div>
+
+                                        {# Platforms in Form Factor #}
+                                        <div x-show="isFormFactorExpanded(mfrKey, ffKey)"
+                                             x-transition:enter="transition ease-out duration-200"
+                                             x-transition:enter-start="opacity-0 -translate-y-1"
+                                             x-transition:enter-end="opacity-100 translate-y-0"
+                                             class="ml-6 space-y-0.5">
+                                            <template x-for="platform in getFormFactorPlatforms(mfrKey, ffKey)" :key="platform.id">
+                                                <div class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors"
+                                                     :class="{
+                                                         'bg-primary text-primary-content': isPlatformSelected(platform.id),
+                                                         'hover:bg-base-300/50': !isPlatformSelected(platform.id)
+                                                     }"
+                                                     @click="togglePlatform(platform.id); debouncedFilterUpdate();">
+                                                    <span class="mdi text-base"
+                                                          :class="isPlatformSelected(platform.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
+                                                    <span class="text-sm flex-1" x-text="formatPlatformName(platform)"></span>
+                                                    <span class="text-xs opacity-60 tabular-nums" x-text="getEffectiveCount(platform)"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        {# If flat platforms (no form factors) #}
+                        <template x-if="platformHierarchy[mfrKey].platforms && !platformHierarchy[mfrKey].formFactors">
+                            <div class="ml-2 space-y-0.5">
+                                <template x-for="platform in getFlatPlatforms(mfrKey)" :key="platform.id">
+                                    <div class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors"
+                                         :class="{
+                                             'bg-primary text-primary-content': isPlatformSelected(platform.id),
+                                             'hover:bg-base-300/50': !isPlatformSelected(platform.id)
+                                         }"
+                                         @click="togglePlatform(platform.id); debouncedFilterUpdate();">
+                                        <span class="mdi text-base"
+                                              :class="isPlatformSelected(platform.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
+                                        <span class="text-sm flex-1" x-text="formatPlatformName(platform)"></span>
+                                        <span class="text-xs opacity-60 tabular-nums" x-text="getEffectiveCount(platform)"></span>
+                                    </div>
+                                </template>
+                            </div>
                         </template>
                     </div>
                 </div>
             </template>
         </div>
-
-        {# Accordion Sections (Retro Consoles, Microcomputers) #}
-        <div class="space-y-3">
-            <template x-for="(section, key) in accordionSections" :key="key">
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2">
-                        {# Checkbox to select/deselect entire section #}
-                        <label class="cursor-pointer" @click.stop>
-                            <input type="checkbox"
-                                   :checked="isSectionSelected(key)"
-                                   :indeterminate="isSectionPartial(key)"
-                                   @change="selectSection(key); debouncedFilterUpdate();"
-                                   class="checkbox checkbox-sm checkbox-primary">
-                        </label>
-
-                        {# Button to expand/collapse section #}
-                        <button type="button"
-                                @click="toggleFamilyExpansion(key)"
-                                class="btn btn-sm gap-1 flex-1 justify-between btn-ghost">
-                            <span class="flex items-center gap-1">
-                                <span :class="'mdi ' + section.icon" class="text-sm"></span>
-                                <span x-text="section.name" class="text-xs"></span>
-                            </span>
-                            <span class="mdi mdi-chevron-right text-base transition-transform duration-200" :class="{ 'rotate-90': isFamilyExpanded(key) }"></span>
-                        </button>
-                    </div>
-
-                    {# Individual platforms for this section #}
-                    <div x-show="isFamilyExpanded(key)"
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 -translate-y-1"
-                         x-transition:enter-end="opacity-100 translate-y-0"
-                         class="pl-4 flex flex-wrap gap-2">
-                        <template x-for="platform in getSectionPlatforms(key)" :key="platform.id">
-                            <label class="cursor-pointer">
-                                <input type="checkbox"
-                                       :value="platform.id"
-                                       :checked="isPlatformSelected(platform.id)"
-                                       @change="togglePlatform(platform.id); debouncedFilterUpdate();"
-                                       class="hidden peer">
-                                <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs" x-text="platform.name"></span>
-                            </label>
-                        </template>
-                    </div>
-                </div>
-            </template>
-        </div>
-
-        {# Other/Ungrouped Platforms Accordion (if any exist) #}
-        <template x-if="getUngroupedPlatforms().length > 0">
-            <div class="space-y-2">
-                <div class="flex items-center gap-2">
-                    {# Checkbox to select/deselect all ungrouped #}
-                    <label class="cursor-pointer" @click.stop>
-                        <input type="checkbox"
-                               :checked="isUngroupedSelected()"
-                               :indeterminate="isUngroupedPartial()"
-                               @change="selectUngrouped(); debouncedFilterUpdate();"
-                               class="checkbox checkbox-sm checkbox-primary">
-                    </label>
-
-                    {# Button to expand/collapse Other section #}
-                    <button type="button"
-                            @click="toggleFamilyExpansion('other')"
-                            class="btn btn-sm gap-1 flex-1 justify-between btn-ghost">
-                        <span class="flex items-center gap-1">
-                            <span class="mdi mdi-controller text-sm"></span>
-                            <span class="text-xs">Other</span>
-                        </span>
-                        <span class="mdi mdi-chevron-right text-base transition-transform duration-200" :class="{ 'rotate-90': isFamilyExpanded('other') }"></span>
-                    </button>
-                </div>
-
-                {# Individual ungrouped platforms #}
-                <div x-show="isFamilyExpanded('other')"
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 -translate-y-1"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     class="pl-4 flex flex-wrap gap-2">
-                    <template x-for="platform in getUngroupedPlatforms()" :key="platform.id">
-                        <label class="cursor-pointer">
-                            <input type="checkbox"
-                                   :value="platform.id"
-                                   :checked="isPlatformSelected(platform.id)"
-                                   @change="togglePlatform(platform.id); debouncedFilterUpdate();"
-                                   class="hidden peer">
-                            <span class="mobile-filter-chip peer-checked:mobile-filter-chip-selected text-xs">
-                                <span :class="'mdi ' + getIcon(platform.code)" class="text-sm shrink-0"></span>
-                                <span x-text="platform.name"></span>
-                            </span>
-                        </label>
-                    </template>
-                </div>
-            </div>
-        </template>
     </div>
 </div>

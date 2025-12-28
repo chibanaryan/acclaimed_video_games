@@ -5,28 +5,44 @@
 <div x-data="{
         expanded: true,
         expandedCategories: {},
+        countsReady: false,
+
+        init() {
+            // Listen for genre count updates from client-side filtering
+            window.addEventListener('genre-counts-update', (event) => {
+                this.updateFilteredCounts(event.detail);
+                this.countsReady = true;
+            });
+        },
+
+        // Update filtered counts on the genres array
+        updateFilteredCounts(countMap) {
+            genres.forEach(g => {
+                g.filtered_count = countMap[String(g.id)] || 0;
+            });
+        },
 
         // Get root categories (level 0), sorted by total game count (descending)
         get rootCategories() {
             return genres.filter(g => g.level === 0).sort((a, b) => {
-                // Sort by total game count of children (descending)
+                // Sort by total effective count of children (descending)
                 const aCount = this.getCategoryTotalGameCount(a.id);
                 const bCount = this.getCategoryTotalGameCount(b.id);
                 return bCount - aCount;
             });
         },
 
-        // Get total game count for a category (sum of all children's game_count)
+        // Get total game count for a category (sum of all children's effective counts)
         getCategoryTotalGameCount(categoryId) {
             const children = genres.filter(g => String(g.parent_id) === String(categoryId));
-            return children.reduce((sum, c) => sum + (c.game_count || 0), 0);
+            return children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
         },
 
-        // Get child genres for a parent, sorted by game count (descending)
+        // Get child genres for a parent, sorted by effective count (descending)
         getChildren(parentId) {
             return genres.filter(g => String(g.parent_id) === String(parentId)).sort((a, b) => {
-                // Sort by game_count (descending)
-                return (b.game_count || 0) - (a.game_count || 0);
+                // Sort by effective count (descending)
+                return this.getEffectiveCount(b) - this.getEffectiveCount(a);
             });
         },
 
@@ -113,9 +129,14 @@
 
         getEffectiveCount(genre) {
             return genre.filtered_count !== undefined ? genre.filtered_count : genre.game_count;
+        },
+
+        // Reset expanded states (called on Clear All Filters)
+        resetExpanded() {
+            this.expandedCategories = {};
         }
      }"
-     @genres-reset.window="filters.genres = [];"
+     @genres-reset.window="filters.genres = []; resetExpanded();"
      class="space-y-3">
 
     {# Accordion Header #}
@@ -148,8 +169,15 @@
          x-transition:enter-end="opacity-100 translate-y-0"
          class="space-y-4">
 
-        {# Genre Categories - Hierarchical #}
-        <div class="space-y-3">
+        {# Loading State - Show until client counts are ready #}
+        <div x-show="!countsReady" class="space-y-2 animate-pulse">
+            <div class="h-8 bg-base-300/50 rounded-lg"></div>
+            <div class="h-8 bg-base-300/50 rounded-lg"></div>
+            <div class="h-8 bg-base-300/50 rounded-lg"></div>
+        </div>
+
+        {# Genre Categories - Hierarchical (only show after counts ready) #}
+        <div class="space-y-3" x-show="countsReady" x-cloak>
             <template x-for="category in rootCategories" :key="category.id">
                 <div class="space-y-2">
                     <div class="flex items-center gap-1 py-1.5 px-2 rounded-lg transition-colors"

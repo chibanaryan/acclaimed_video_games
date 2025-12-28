@@ -1,7 +1,7 @@
 {# SelectableTagList component #}
 {# Props: filter_type (e.g., 'genres' or 'platforms') #}
 {# Uses Alpine.js for interactivity - accesses parent scope's filters #}
-{# Uses removeFilterItem() from utils.js to handle filter removal #}
+{# Uses removeFilterItem() from utils-base.js to handle filter removal #}
 {% load game_filters %}
 <div x-show="filters.{{ filter_type }} && filters.{{ filter_type }}.length > 0"
      class="tags mt-3">

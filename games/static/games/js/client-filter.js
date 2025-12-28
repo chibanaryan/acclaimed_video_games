@@ -6,6 +6,57 @@
  */
 
 /**
+ * Platform hierarchy for deduplicated group counting
+ * Maps manufacturer/form factor keys to platform codes
+ */
+const PLATFORM_HIERARCHY = {
+    nintendo: {
+        name: 'Nintendo',
+        codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
+        formFactors: {
+            home: { name: 'Home Consoles', codes: ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW'] },
+            handheld: { name: 'Handhelds', codes: ['GB', 'GBC', 'GBA', 'DS', '3DS'] }
+        }
+    },
+    playstation: {
+        name: 'PlayStation',
+        codes: ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'],
+        formFactors: {
+            home: { name: 'Home Consoles', codes: ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSVR'] },
+            handheld: { name: 'Handhelds', codes: ['PSP', 'PSV'] }
+        }
+    },
+    xbox: {
+        name: 'Xbox',
+        codes: ['Xbox', 'X360', 'XB1', 'XBXS']
+    },
+    sega: {
+        name: 'Sega',
+        codes: ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'],
+        formFactors: {
+            home: { name: 'Home Consoles', codes: ['SMS', 'GEN', 'SCD', 'SAT', 'DC'] },
+            handheld: { name: 'Handhelds', codes: ['GG'] }
+        }
+    },
+    pc: {
+        name: 'PC',
+        codes: ['WIN', 'DOS', 'LIN', 'MAC']
+    },
+    arcadePlus: {
+        name: 'Arcade+',
+        codes: ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
+    },
+    retro: {
+        name: 'Retro Consoles',
+        codes: ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS']
+    },
+    computers: {
+        name: 'Microcomputers',
+        codes: ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2']
+    }
+};
+
+/**
  * GameFilterEngine - Client-side game filtering
  *
  * Usage:
@@ -45,6 +96,55 @@ class GameFilterEngine {
             const descendantSet = new Set(genre.d || []);
             descendantSet.add(genre.id); // Include self for matching
             this._genreDescendants.set(genre.id, descendantSet);
+        }
+
+        // Build platform ID to group mapping for deduplicated group counts
+        // Maps platform ID -> { manufacturer: 'nintendo', formFactor: 'home' }
+        this._platformToGroups = new Map();
+        this._buildPlatformGroupMapping();
+    }
+
+    /**
+     * Build mapping from platform IDs to their manufacturer/form factor groups
+     * @private
+     */
+    _buildPlatformGroupMapping() {
+        // Build code -> ID lookup from platforms
+        const codeToId = new Map();
+        for (const [id, platform] of Object.entries(this.platforms)) {
+            if (platform.c) {
+                codeToId.set(platform.c, parseInt(id, 10));
+            }
+        }
+
+        // Map each platform ID to its groups
+        for (const [mfrKey, mfrData] of Object.entries(PLATFORM_HIERARCHY)) {
+            // Map manufacturer-level platforms
+            for (const code of mfrData.codes) {
+                const platformId = codeToId.get(code);
+                if (platformId !== undefined) {
+                    if (!this._platformToGroups.has(platformId)) {
+                        this._platformToGroups.set(platformId, { manufacturer: mfrKey });
+                    }
+                }
+            }
+
+            // Map form factor-level platforms
+            if (mfrData.formFactors) {
+                for (const [ffKey, ffData] of Object.entries(mfrData.formFactors)) {
+                    for (const code of ffData.codes) {
+                        const platformId = codeToId.get(code);
+                        if (platformId !== undefined) {
+                            const existing = this._platformToGroups.get(platformId) || {};
+                            this._platformToGroups.set(platformId, {
+                                ...existing,
+                                manufacturer: mfrKey,
+                                formFactor: ffKey
+                            });
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -264,6 +364,10 @@ class GameFilterEngine {
         const genreIds = (genres || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const expandedGenreSets = genreIds.map(id => this._genreDescendants.get(id) || new Set([id]));
 
+        // Track unique games per manufacturer and form factor for deduplicated counts
+        const manufacturerGameSets = new Map();  // mfrKey -> Set of game IDs
+        const formFactorGameSets = new Map();     // 'mfrKey_ffKey' -> Set of game IDs
+
         for (const game of this.games) {
             if (!passesBaseFilters(game)) continue;
 
@@ -301,9 +405,43 @@ class GameFilterEngine {
                 }
             }
 
-            // Count platforms for this game
+            // Count platforms for this game and track group membership
             for (const pid of game.p) {
                 platformCounts.set(pid, (platformCounts.get(pid) || 0) + 1);
+
+                // Track game for manufacturer/form factor group counts
+                const groupInfo = this._platformToGroups.get(pid);
+                if (groupInfo) {
+                    // Add to manufacturer set
+                    if (!manufacturerGameSets.has(groupInfo.manufacturer)) {
+                        manufacturerGameSets.set(groupInfo.manufacturer, new Set());
+                    }
+                    manufacturerGameSets.get(groupInfo.manufacturer).add(game.id);
+
+                    // Add to form factor set if applicable
+                    if (groupInfo.formFactor) {
+                        const ffKey = `${groupInfo.manufacturer}_${groupInfo.formFactor}`;
+                        if (!formFactorGameSets.has(ffKey)) {
+                            formFactorGameSets.set(ffKey, new Set());
+                        }
+                        formFactorGameSets.get(ffKey).add(game.id);
+                    }
+                }
+            }
+        }
+
+        // Build platform group counts from the sets
+        const platformGroupCounts = {};
+        for (const [mfrKey, gameSet] of manufacturerGameSets) {
+            platformGroupCounts[mfrKey] = {
+                count: gameSet.size,
+                formFactors: {}
+            };
+        }
+        for (const [ffFullKey, gameSet] of formFactorGameSets) {
+            const [mfrKey, ffKey] = ffFullKey.split('_');
+            if (platformGroupCounts[mfrKey]) {
+                platformGroupCounts[mfrKey].formFactors[ffKey] = gameSet.size;
             }
         }
 
@@ -317,6 +455,7 @@ class GameFilterEngine {
         return {
             genres: Object.fromEntries(genreCounts),
             platforms: Object.fromEntries(platformCounts),
+            platformGroups: platformGroupCounts,
             years: Object.fromEntries(yearCounts)
         };
     }

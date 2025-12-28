@@ -10,6 +10,7 @@
         filters: JSON.parse(document.getElementById('filters-data').textContent),
         genres: JSON.parse(document.getElementById('genres-data').textContent),
         platforms: JSON.parse(document.getElementById('platforms-data').textContent),
+        platformGroupCounts: {},  // Populated by client-side filtering
         initialized: false,
         isLoading: false,
         genresExpanded: localStorage.getItem('genresExpanded') === 'true',
@@ -31,7 +32,7 @@
             // Mark as initialized after a short delay to prevent initial watcher triggers
             setTimeout(() => { this.initialized = true; }, 100);
 
-            // Create timing-controlled handlers using utils.js
+            // Create timing-controlled handlers using utils-base.js
             this._debouncedUpdate = debounce(() => this.performUpdate({
                 partial: true, historyMethod: 'pushState'
             }), 300);
@@ -145,6 +146,23 @@
                         onLoadComplete: () => {
                             console.log('[CSF] Game data loaded, client filtering ready');
                             this.clientFilterReady = true;
+                            // Run initial filter to get all counts
+                            const initialResult = this._csf.applyFilters(this.filters);
+                            if (initialResult && initialResult.facets) {
+                                // Dispatch genre counts
+                                if (initialResult.facets.genres) {
+                                    window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: initialResult.facets.genres }));
+                                }
+                                // Dispatch platform counts
+                                if (initialResult.facets.platforms) {
+                                    window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: initialResult.facets.platforms }));
+                                }
+                                // Dispatch platform group counts (deduplicated)
+                                if (initialResult.facets.platformGroups) {
+                                    this.platformGroupCounts = initialResult.facets.platformGroups;
+                                    window.dispatchEvent(new CustomEvent('platform-group-counts-update', { detail: initialResult.facets.platformGroups }));
+                                }
+                            }
                         }
                     });
                 } catch (e) {
@@ -191,49 +209,8 @@
             return start + '-' + end;
         },
         _buildPlatformSegment() {
-            const allGroups = {
-                // Accordion categories (check these first)
-                'Retro Consoles': ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS'],
-                'Microcomputers': ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2'],
-                // Big Five groups
-                'Nintendo': ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
-                'PlayStation': ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'],
-                'Xbox': ['Xbox', 'X360', 'XB1', 'XBXS'],
-                'Sega': ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'],
-                'PC': ['WIN', 'DOS', 'LIN', 'MAC'],
-                'Arcade, Mobile \u0026 VR': ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
-            };
-
-            const selectedIds = new Set(this.filters.platforms.map(String));
-            const labels = [];
-            const consumedIds = new Set();
-
-            // Add group labels when entire group is selected
-            for (const [groupName, codes] of Object.entries(allGroups)) {
-                const groupPlatforms = this.platforms.filter(p => codes.includes(p.code));
-                const groupIds = groupPlatforms.map(p => String(p.id));
-                if (groupIds.length > 0 && groupIds.every(id => selectedIds.has(id))) {
-                    labels.push(groupName);
-                    groupIds.forEach(id => consumedIds.add(id));
-                }
-            }
-
-            // Add remaining platform names
-            for (const pid of selectedIds) {
-                if (!consumedIds.has(pid)) {
-                    const platform = this.platforms.find(p => String(p.id) === pid);
-                    if (platform) labels.push(platform.name);
-                }
-            }
-
-            if (labels.length === 0) return 'Video';
-            return this._joinNames(labels);
-        },
-        _joinNames(names) {
-            if (!names || names.length === 0) return '';
-            if (names.length === 1) return names[0];
-            if (names.length === 2) return names.join(' and ');
-            return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+            // Use helper function from utils-base.js to build platform segment
+            return buildPlatformSegment(this.platforms, this.filters.platforms);
         },
         handleFilterChange(type, items) {
             const itemIds = items.map(item => {
@@ -482,8 +459,14 @@
                 // Genre counts
                 window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: state.facets.genres }));
 
-                // Platform counts
+                // Platform counts (individual)
                 window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: state.facets.platforms }));
+
+                // Platform group counts (deduplicated manufacturer/form factor counts)
+                if (state.facets.platformGroups) {
+                    this.platformGroupCounts = state.facets.platformGroups;
+                    window.dispatchEvent(new CustomEvent('platform-group-counts-update', { detail: state.facets.platformGroups }));
+                }
             }
 
             // Update URL
@@ -634,50 +617,8 @@
             },
 
             buildPlatformSegment() {
-                const allGroups = {
-                    // Accordion categories (check these first)
-                    'Retro Consoles': ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS'],
-                    'Microcomputers': ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2'],
-                    // Big Five groups
-                    'Nintendo': ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
-                    'PlayStation': ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'],
-                    'Xbox': ['Xbox', 'X360', 'XB1', 'XBXS'],
-                    'Sega': ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'],
-                    'PC': ['WIN', 'DOS', 'LIN', 'MAC'],
-                    'Arcade, Mobile \u0026 VR': ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
-                };
-
-                const selectedIds = new Set(filters.platforms.map(String));
-                const labels = [];
-                const consumedIds = new Set();
-
-                // Add group labels when entire group is selected
-                for (const [groupName, codes] of Object.entries(allGroups)) {
-                    const groupPlatforms = platforms.filter(p => codes.includes(p.code));
-                    const groupIds = groupPlatforms.map(p => String(p.id));
-                    if (groupIds.length > 0 && groupIds.every(id => selectedIds.has(id))) {
-                        labels.push(groupName);
-                        groupIds.forEach(id => consumedIds.add(id));
-                    }
-                }
-
-                // Add remaining platform names
-                for (const pid of selectedIds) {
-                    if (!consumedIds.has(pid)) {
-                        const platform = platforms.find(p => String(p.id) === pid);
-                        if (platform) labels.push(platform.name);
-                    }
-                }
-
-                if (labels.length === 0) return 'Video';
-                return this.joinNames(labels);
-            },
-
-            joinNames(names) {
-                if (!names || names.length === 0) return '';
-                if (names.length === 1) return names[0];
-                if (names.length === 2) return names.join(' and ');
-                return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+                // Use helper function from utils-base.js to build platform segment
+                return buildPlatformSegment(platforms, filters.platforms);
             }
          }">
         <div class="relative z-10 bg-base-200 border-b border-base-content/10 py-3 mb-4 -mx-4 px-4 flex items-center justify-between gap-3">

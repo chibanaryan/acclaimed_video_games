@@ -454,358 +454,38 @@
   }
 }
 
-/* Platform Filter Component */
+/* Platform Filter Tree Component (new hierarchical style) */
 @layer components {
-  .platform-filter {
-    @apply flex flex-col gap-3;
-    min-height: 230px;
+  .platform-tree {
+    @apply space-y-1;
   }
 
-  .platform-brand-container {
-    @apply relative;
+  .platform-manufacturer {
+    /* Container for each manufacturer group */
   }
 
-  .platform-brand-groups {
-    @apply grid gap-2 items-start;
-    grid-template-columns: repeat(3, 1fr);
-    min-height: 130px;
+  .platform-item {
+    @apply flex items-center gap-2 w-full py-1.5 px-2 rounded-md text-left text-sm transition-colors cursor-pointer;
   }
 
-  .platform-brand-group {
-    @apply flex flex-col relative;
+  .platform-item.is-selected {
+    @apply bg-primary text-primary-content;
   }
 
-  .platform-brand-group.is-empty {
-    @apply visible opacity-50 pointer-events-auto;
+  .platform-item:hover:not(.is-selected) {
+    @apply bg-base-300/50;
   }
 
-  /* When an unavailable group is expanded, restore full opacity for proper z-index stacking */
-  .platform-brand-group.is-empty.is-expanded {
-    @apply opacity-100;
+  .platform-item.is-unavailable:not(.is-selected) {
+    @apply opacity-40;
   }
 
-  .platform-brand-wrapper {
-    @apply flex flex-col bg-base-300 border border-base-content/20 rounded-md overflow-visible;
+  .platform-item.has-zero-results {
+    @apply bg-error/20 text-error;
   }
 
-  .platform-brand-wrapper.is-expanded {
-    @apply border-base-content/60 rounded-b-none border-b-0 z-[101] relative;
-  }
-
-  .platform-brand-wrapper.is-expanded::after {
-    content: '';
-    @apply absolute bottom-[-1px] left-0 right-0 h-0.5 bg-base-300 z-[102];
-  }
-
-  .platform-brand-wrapper:has(.platform-brand-btn.is-active) {
-    @apply border-success;
-  }
-
-  .platform-brand-wrapper:has(.platform-brand-btn.is-partial) {
-    @apply border-info;
-  }
-
-  .platform-brand-btn-row {
-    @apply flex gap-0;
-  }
-
-  .platform-brand-expand {
-    @apply flex items-center justify-center px-1.5 bg-transparent border-0;
-    @apply border-r border-base-content/20 cursor-pointer transition-all duration-150;
-    @apply text-base-content/60 text-sm;
-  }
-
-  .platform-brand-expand:hover {
-    @apply bg-base-content/10 text-base-content;
-  }
-
-  .platform-brand-expand .mdi {
-    @apply transition-transform duration-200;
-  }
-
-  .platform-brand-expand .mdi.is-rotated {
-    @apply rotate-90;
-  }
-
-  .platform-brand-wrapper.is-expanded .platform-brand-expand {
-    @apply border-r-transparent;
-  }
-
-  .platform-brand-btn {
-    @apply flex flex-col items-center justify-center gap-1 py-2 px-1;
-    @apply bg-transparent border-0 cursor-pointer transition-all duration-150;
-    @apply relative flex-1;
-    min-height: 60px;
-  }
-
-  .platform-brand-btn:hover {
-    @apply bg-base-content/10;
-  }
-
-  .platform-brand-btn.is-active {
-    @apply bg-success/30;
-  }
-
-  .platform-brand-btn.is-partial {
-    @apply bg-base-content/10;
-  }
-
-  .platform-brand-btn.is-active.has-zero-results,
-  .platform-brand-btn.is-partial.has-zero-results {
-    @apply opacity-15;
-  }
-
-  .platform-brand-dropdown {
-    @apply absolute bg-base-300 border border-base-content/60;
-    @apply rounded-b-md py-2 flex flex-col gap-1 z-[100];
-    top: 100%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  }
-
-  .platform-brand-group[data-column="0"] .platform-brand-dropdown {
-    left: -1px;
-    right: calc(-200% - 1rem - 2px);
-  }
-
-  .platform-brand-group[data-column="1"] .platform-brand-dropdown {
-    left: calc(-100% - 0.5rem - 2px);
-    right: calc(-100% - 0.5rem - 2px);
-  }
-
-  .platform-brand-group[data-column="2"] .platform-brand-dropdown {
-    left: calc(-200% - 1rem - 2px);
-    right: -1px;
-  }
-
-  .platform-brand-icon {
-    @apply text-xl text-base-content/60 transition-colors duration-150 shrink-0;
-    width: 1.5rem;
-    height: 1.5rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .platform-brand-btn:hover .platform-brand-icon,
-  .platform-brand-btn.is-active .platform-brand-icon,
-  .platform-brand-btn.is-partial .platform-brand-icon {
-    @apply text-base-content;
-  }
-
-  .platform-svg-icon {
-    @apply fill-current align-middle shrink-0;
-    width: 1.5rem;
-    height: 1.5rem;
-    color: inherit;
-  }
-
-  .platform-brand-btn:hover .platform-svg-icon,
-  .platform-brand-btn.is-active .platform-svg-icon,
-  .platform-brand-btn.is-partial .platform-svg-icon {
-    @apply text-base-content;
-  }
-
-  .platform-brand-name {
-    @apply text-[0.7rem] font-semibold text-base-content/60 uppercase tracking-wide;
-  }
-
-  .platform-brand-btn:hover .platform-brand-name,
-  .platform-brand-btn.is-active .platform-brand-name,
-  .platform-brand-btn.is-partial .platform-brand-name {
-    @apply text-base-content;
-  }
-
-  .platform-brand-count {
-    @apply absolute top-1 right-1 bg-info text-white text-[0.6rem] font-semibold;
-    @apply py-0.5 px-1.5 rounded-full min-w-3.5 text-center;
-  }
-
-  .platform-brand-btn.is-active .platform-brand-count {
-    @apply bg-success;
-  }
-
-  /* Platform Accordions */
-  .platform-accordions {
-    @apply flex flex-col gap-1;
-    min-height: 124px;
-  }
-
-  .platform-accordion {
-    @apply relative bg-base-300 border border-base-content/20 rounded-md overflow-visible;
-    @apply transition-all duration-150;
-  }
-
-  .platform-accordion:hover {
-    @apply border-base-content/60;
-  }
-
-  .platform-accordion.is-expanded {
-    @apply border-base-content/60 z-[100] rounded-b-none border-b-transparent;
-  }
-
-  .platform-accordion.is-empty {
-    @apply visible opacity-50 pointer-events-auto;
-  }
-
-  /* When an unavailable accordion is expanded, restore full opacity for proper z-index stacking */
-  .platform-accordion.is-empty.is-expanded {
-    @apply opacity-100;
-  }
-
-  .platform-accordion:has(.platform-accordion-header.is-fully-selected) {
-    @apply border-success;
-  }
-
-  .platform-accordion:has(.platform-accordion-header.has-selection:not(.is-fully-selected)) {
-    @apply border-info;
-  }
-
-  .platform-accordion-header {
-    @apply flex items-stretch;
-    min-height: 36px;
-  }
-
-  .platform-accordion-header.has-zero-results {
-    @apply opacity-15;
-  }
-
-  .platform-accordion-expand {
-    @apply flex items-center justify-center px-2 bg-transparent border-0;
-    @apply border-r border-base-content/20 cursor-pointer transition-all duration-150;
-    @apply text-base-content/60 text-sm;
-  }
-
-  .platform-accordion-expand:hover {
-    @apply bg-base-content/10 text-base-content;
-  }
-
-  .platform-accordion-expand .mdi {
-    @apply transition-transform duration-200;
-  }
-
-  .platform-accordion-expand .mdi.is-rotated {
-    @apply rotate-90;
-  }
-
-  .platform-accordion-header.is-expanded .platform-accordion-expand {
-    @apply border-r-transparent;
-  }
-
-  .platform-accordion-btn {
-    @apply flex items-center flex-1 py-2 px-2.5 bg-transparent border-0;
-    @apply cursor-pointer gap-1.5 transition-colors duration-150 text-left;
-  }
-
-  .platform-accordion-btn:hover {
-    @apply bg-base-content/10;
-  }
-
-  .platform-accordion-header.has-selection .platform-accordion-btn {
-    @apply bg-info/10;
-  }
-
-  .platform-accordion-header.is-fully-selected .platform-accordion-btn {
-    @apply bg-success/30;
-  }
-
-  .platform-accordion-btn > .mdi {
-    @apply w-4 h-4 shrink-0 inline-flex items-center justify-center text-base-content/60;
-  }
-
-  .platform-accordion-btn:hover > .mdi,
-  .platform-accordion-header.has-selection .platform-accordion-btn > .mdi {
-    @apply text-base-content;
-  }
-
-  .platform-accordion-name {
-    @apply text-[0.7rem] font-semibold text-base-content/60 uppercase tracking-wide flex-1;
-  }
-
-  .platform-accordion-btn:hover .platform-accordion-name,
-  .platform-accordion-header.has-selection .platform-accordion-btn .platform-accordion-name {
-    @apply text-base-content;
-  }
-
-  .platform-accordion-count {
-    @apply hidden text-[0.6rem] font-semibold py-0.5 px-1.5 rounded-full;
-    @apply min-w-3.5 text-center bg-info text-white;
-  }
-
-  .platform-accordion-header.has-selection .platform-accordion-count {
-    @apply inline-block;
-  }
-
-  .platform-accordion-header.is-fully-selected .platform-accordion-count {
-    @apply bg-success;
-  }
-
-  .platform-accordion-content {
-    @apply absolute flex flex-col gap-1 bg-base-300;
-    @apply border border-base-content/60 border-t-0 rounded-b-md;
-    top: 100%;
-    left: -1px;
-    right: -1px;
-    padding: 0.25rem 0 0.5rem 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  }
-
-  /* Platform checkbox rows */
-  .platform-checkbox {
-    @apply flex items-center justify-between py-1.5 px-3 pl-6;
-    @apply cursor-pointer text-sm text-base-content/60 transition-all duration-150;
-  }
-
-  .platform-checkbox:hover {
-    @apply bg-base-content/10 text-base-content;
-  }
-
-  .platform-checkbox input[type="checkbox"] {
-    @apply absolute opacity-0 w-0 h-0 pointer-events-none;
-  }
-
-  .platform-checkbox:has(input:checked) {
-    @apply bg-info/15 text-info font-medium;
-  }
-
-  .platform-checkbox:has(input:checked)::after {
-    content: '\F012C';
-    font-family: 'Material Design Icons';
-    @apply text-base text-info;
-  }
-
-  .platform-checkbox:has(input:checked):hover {
-    @apply bg-info/25;
-  }
-
-  .platform-checkbox.has-zero-results {
-    @apply opacity-15;
-  }
-
-  .platform-checkbox.is-unavailable {
-    @apply visible opacity-50 pointer-events-auto cursor-pointer;
-  }
-
-  /* Mobile responsive */
-  @media (max-width: 768px) {
-    .platform-brand-groups {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .platform-brand-btn {
-      @apply py-1.5 px-1;
-    }
-
-    .platform-brand-expand {
-      @apply px-1;
-    }
-
-    .platform-brand-icon {
-      @apply text-lg;
-    }
-
-    .platform-brand-name {
-      @apply text-[0.65rem];
-    }
+  .form-factor-header {
+    @apply text-xs font-medium text-base-content/70 py-1 px-2;
   }
 }
 

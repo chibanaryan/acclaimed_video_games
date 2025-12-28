@@ -64,9 +64,150 @@ def _build_time_window(start_year, end_year, min_year, max_year):
 
 def _build_platform_segment(selected_platform_ids, platforms, include_games=True):
     """Return platform segment text like 'Nintendo Switch Games'."""
-    all_groups = {
-        # Accordion categories (check these first)
-        "Retro Consoles": [
+    # Groups are checked in order - broader manufacturer groups first, then form factors
+    # This ensures "Nintendo" is used when all Nintendo platforms are selected,
+    # but "Nintendo Handheld" when only handhelds are selected
+    all_groups = [
+        # Big manufacturer groups (checked first to collapse when all are selected)
+        (
+            "Nintendo",
+            [
+                "NES",
+                "SNES",
+                "N64",
+                "GC",
+                "Wii",
+                "WiiU",
+                "DS",
+                "3DS",
+                "SW",
+                "GB",
+                "GBA",
+                "GBC",
+                "FDS",
+            ],
+        ),
+        ("PlayStation", ["PS", "PS2", "PS3", "PS4", "PS5", "PSP", "PSV", "PSVR"]),
+        ("Sega", ["GEN", "SMS", "DC", "SAT", "GG", "SCD"]),
+        # Other manufacturer groups
+        ("Xbox", ["Xbox", "X360", "XB1", "XBXS"]),
+        ("PC", ["WIN", "DOS", "LIN", "MAC"]),
+        ("Arcade, Mobile & VR", ["ARC", "AND", "iOS", "LMD", "VR", "BR"]),
+        (
+            "Retro Consoles",
+            [
+                "A26",
+                "A52",
+                "A78",
+                "INTV",
+                "CV",
+                "TG16",
+                "3DO",
+                "NG",
+                "JAG",
+                "LYNX",
+                "NGP",
+                "WS",
+            ],
+        ),
+        (
+            "Microcomputers",
+            [
+                "C64",
+                "AMI",
+                "CD32",
+                "MSX",
+                "CPC",
+                "ZXS",
+                "AST",
+                "BBCM",
+                "PC88",
+                "PC98",
+                "FMT",
+                "FM7",
+                "SX1",
+                "T80",
+                "TCC",
+                "VC20",
+                "A8",
+                "A2",
+            ],
+        ),
+        # Form factor groups (checked after manufacturer groups)
+        ("Nintendo Handheld", ["GB", "GBC", "GBA", "DS", "3DS"]),
+        (
+            "Nintendo Home Console",
+            ["NES", "FDS", "SNES", "N64", "GC", "Wii", "WiiU", "SW"],
+        ),
+        ("PlayStation Handheld", ["PSP", "PSV"]),
+        ("PlayStation Home Console", ["PS", "PS2", "PS3", "PS4", "PS5", "PSVR"]),
+        ("Sega Handheld", ["GG"]),
+        ("Sega Home Console", ["SMS", "GEN", "SCD", "SAT", "DC"]),
+    ]
+
+    name_lookup = {str(p["id"]): p["name"] for p in platforms}
+    code_lookup = {str(p["id"]): p.get("code") for p in platforms}
+
+    selected_ids = {str(pid) for pid in selected_platform_ids}
+    labels = []
+    consumed_ids = set()
+
+    # Add group labels when entire group is selected (checking more specific first)
+    for group_name, codes in all_groups:
+        group_ids = [pid for pid, code in code_lookup.items() if code in codes]
+        # Only match if ALL platforms in group are selected, none consumed
+        unconsumed_group_ids = [gid for gid in group_ids if gid not in consumed_ids]
+        if unconsumed_group_ids and all(
+            gid in selected_ids for gid in unconsumed_group_ids
+        ):
+            # Check if this exact set matches (not a subset)
+            if set(unconsumed_group_ids) == set(group_ids):
+                labels.append(group_name)
+                consumed_ids.update(group_ids)
+
+    # Add remaining platform names
+    for pid in selected_ids - consumed_ids:
+        labels.append(name_lookup.get(pid, pid))
+
+    if not labels:
+        return "Video" + (" Games" if include_games else "")
+    return f"{_join_names(labels)}" + (" Games" if include_games else "")
+
+
+def _expand_platform_virtual_ids(platforms_param, platforms):
+    """Expand virtual IDs (mfr-nintendo, ff-nintendo-home) to actual platform IDs.
+
+    Returns a list of platform IDs (integers) that should be used for filtering.
+    If the param contains regular IDs, returns those directly.
+    Using - instead of : for URL-friendliness.
+    """
+    if not platforms_param:
+        return []
+
+    # Platform hierarchy - maps virtual IDs to platform codes
+    virtual_id_to_codes = {
+        # Manufacturer virtual IDs
+        "mfr-nintendo": [
+            "NES",
+            "FDS",
+            "SNES",
+            "N64",
+            "GC",
+            "Wii",
+            "WiiU",
+            "SW",
+            "GB",
+            "GBC",
+            "GBA",
+            "DS",
+            "3DS",
+        ],
+        "mfr-playstation": ["PS", "PS2", "PS3", "PS4", "PS5", "PSVR", "PSP", "PSV"],
+        "mfr-xbox": ["Xbox", "X360", "XB1", "XBXS"],
+        "mfr-sega": ["SMS", "GEN", "SCD", "SAT", "DC", "GG"],
+        "mfr-pc": ["WIN", "DOS", "LIN", "MAC"],
+        "mfr-arcadePlus": ["ARC", "AND", "iOS", "LMD", "VR", "BR"],
+        "mfr-retro": [
             "A26",
             "A52",
             "A78",
@@ -80,7 +221,7 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
             "NGP",
             "WS",
         ],
-        "Microcomputers": [
+        "mfr-computers": [
             "C64",
             "AMI",
             "CD32",
@@ -100,50 +241,35 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
             "A8",
             "A2",
         ],
-        # Big Five groups
-        "Nintendo": [
-            "NES",
-            "SNES",
-            "N64",
-            "GC",
-            "Wii",
-            "WiiU",
-            "DS",
-            "3DS",
-            "SW",
-            "GB",
-            "GBA",
-            "GBC",
-            "FDS",
-        ],
-        "PlayStation": ["PS", "PS2", "PS3", "PS4", "PS5", "PSP", "PSV", "PSVR"],
-        "Xbox": ["Xbox", "X360", "XB1", "XBXS"],
-        "Sega": ["GEN", "SMS", "DC", "SAT", "GG", "SCD"],
-        "PC": ["WIN", "DOS", "LIN", "MAC"],
-        "Arcade, Mobile & VR": ["ARC", "AND", "iOS", "LMD", "VR", "BR"],
+        # Form factor virtual IDs
+        "ff-nintendo-home": ["NES", "FDS", "SNES", "N64", "GC", "Wii", "WiiU", "SW"],
+        "ff-nintendo-handheld": ["GB", "GBC", "GBA", "DS", "3DS"],
+        "ff-playstation-home": ["PS", "PS2", "PS3", "PS4", "PS5", "PSVR"],
+        "ff-playstation-handheld": ["PSP", "PSV"],
+        "ff-sega-home": ["SMS", "GEN", "SCD", "SAT", "DC"],
+        "ff-sega-handheld": ["GG"],
     }
 
-    name_lookup = {str(p["id"]): p["name"] for p in platforms}
-    code_lookup = {str(p["id"]): p.get("code") for p in platforms}
+    # Build code -> ID lookup from platforms list (ensure int IDs)
+    code_to_id = {p.get("code"): int(p["id"]) for p in platforms if p.get("code")}
 
-    selected_ids = {str(pid) for pid in selected_platform_ids}
-    labels = []
-    consumed_ids = set()
+    platform_ids = []
+    for param in platforms_param.split(","):
+        param = param.strip()
+        if param in virtual_id_to_codes:
+            # Virtual ID - expand to all platform codes
+            codes = virtual_id_to_codes[param]
+            for code in codes:
+                if code in code_to_id:
+                    platform_ids.append(code_to_id[code])
+        else:
+            # Regular ID - try to parse as int
+            try:
+                platform_ids.append(int(param))
+            except ValueError:
+                pass  # Skip invalid IDs
 
-    # Add group labels when entire group is selected
-    for group_name, codes in all_groups.items():
-        group_ids = [pid for pid, code in code_lookup.items() if code in codes]
-        if group_ids and all(gid in selected_ids for gid in group_ids):
-            labels.append(group_name)
-            consumed_ids.update(group_ids)
-
-    # Add remaining platform names
-    for pid in selected_ids - consumed_ids:
-        labels.append(name_lookup.get(pid, pid))
-
-    if not labels:
-        return "Video" + (" Games" if include_games else "")
-    return f"{_join_names(labels)}" + (" Games" if include_games else "")
+    return platform_ids
 
 
 def _build_genre_subtitle(selected_genre_ids, option, genres):
@@ -264,8 +390,17 @@ def download_games_csv(request):
     else:
         genre_ids = []
 
+    # Get platforms list for virtual ID expansion
+    platforms_lookup = utils.get_or_set_cache(
+        "search_platforms_list",
+        models.Platform.objects.all(),
+        ["id", "name", "code"],
+        order_by="name",
+        transform_id=True,
+    )
+
     if platforms_param:
-        platform_ids = [int(x) for x in platforms_param.split(",") if x]
+        platform_ids = _expand_platform_virtual_ids(platforms_param, platforms_lookup)
         qs = utils.apply_platform_filter(qs, platform_ids)
     else:
         platform_ids = []
@@ -283,13 +418,7 @@ def download_games_csv(request):
         order_by="name",
         transform_id=True,
     )
-    platforms_lookup = utils.get_or_set_cache(
-        "search_platforms_list",
-        models.Platform.objects.all(),
-        ["id", "name", "code"],
-        order_by="name",
-        transform_id=True,
-    )
+    # platforms_lookup already defined above for virtual ID expansion
 
     def _safe_int(val, default):
         try:
@@ -487,10 +616,17 @@ class GameSearchView(RobustPaginationMixin, ListView):
                 qs, genre_ids, match_all=False, use_wikipedia=True
             )
 
-        # Platform filtering
-        platforms = self.request.GET.get("platforms")
-        if platforms:
-            platform_ids = [int(x) for x in platforms.split(",")]
+        # Platform filtering (with virtual ID expansion)
+        platforms_param = self.request.GET.get("platforms")
+        if platforms_param:
+            platforms_list = utils.get_or_set_cache(
+                "search_platforms_list",
+                models.Platform.objects.all(),
+                ["id", "name", "code"],
+                order_by="name",
+                transform_id=True,
+            )
+            platform_ids = _expand_platform_virtual_ids(platforms_param, platforms_list)
             qs = utils.apply_platform_filter(qs, platform_ids)
 
         # Sort order
@@ -671,10 +807,10 @@ class GameSearchView(RobustPaginationMixin, ListView):
                 base_qs, genre_ids, match_all=False, use_wikipedia=True
             )
 
-        # Apply platform filter (same as get_queryset)
+        # Apply platform filter (same as get_queryset, with virtual ID expansion)
         platforms_param = self.request.GET.get("platforms")
         if platforms_param:
-            platform_ids = [int(x) for x in platforms_param.split(",")]
+            platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
             base_qs = utils.apply_platform_filter(base_qs, platform_ids)
 
         # Calculate year counts from filtered base queryset
@@ -706,7 +842,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             end=end_param,
         )
         if platforms_param:
-            platform_ids = [int(x) for x in platforms_param.split(",")]
+            platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
             genre_facet_qs = utils.apply_platform_filter(genre_facet_qs, platform_ids)
 
         # Standard faceted counting (single-select mode)

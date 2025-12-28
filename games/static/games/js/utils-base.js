@@ -499,3 +499,127 @@ function handleYearPreview(event) {
         }
     });
 }
+
+// ============================================================
+// PLATFORM SEGMENT UTILITIES
+// ============================================================
+
+/**
+ * Platform groups for title generation
+ * Groups are checked in order - broader manufacturer groups first, then form factors
+ * This ensures "Nintendo" is used when all Nintendo platforms are selected,
+ * but "Nintendo Handheld" when only handhelds are selected
+ */
+var PLATFORM_GROUPS = [
+    // Big manufacturer groups (checked first to collapse when all are selected)
+    ['Nintendo', ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS']],
+    ['PlayStation', ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR']],
+    ['Sega', ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD']],
+    // Other manufacturer groups
+    ['Xbox', ['Xbox', 'X360', 'XB1', 'XBXS']],
+    ['PC', ['WIN', 'DOS', 'LIN', 'MAC']],
+    ['Arcade, Mobile & VR', ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']],
+    ['Retro Consoles', ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS']],
+    ['Microcomputers', ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2']],
+    // Form factor groups (checked after manufacturer groups)
+    ['Nintendo Handheld', ['GB', 'GBC', 'GBA', 'DS', '3DS']],
+    ['Nintendo Home Console', ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW']],
+    ['PlayStation Handheld', ['PSP', 'PSV']],
+    ['PlayStation Home Console', ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSVR']],
+    ['Sega Handheld', ['GG']],
+    ['Sega Home Console', ['SMS', 'GEN', 'SCD', 'SAT', 'DC']]
+];
+
+/**
+ * Builds platform segment for dynamic title generation
+ * Uses ES5 syntax to avoid HTML parsing issues with arrow functions
+ * @param {Array} platforms - Array of platform objects with id, code, and name
+ * @param {Array} selectedPlatformIds - Array of selected platform IDs (strings)
+ * @returns {string} Platform segment for title (e.g., "Nintendo", "PC", "Video")
+ */
+function buildPlatformSegment(platforms, selectedPlatformIds) {
+    var selectedIds = {};
+    var i, id;
+
+    // Build a set of selected IDs
+    for (i = 0; i < selectedPlatformIds.length; i++) {
+        id = String(selectedPlatformIds[i]);
+        selectedIds[id] = true;
+    }
+
+    var labels = [];
+    var consumedIds = {};
+
+    // Add group labels when entire group is selected
+    for (var gi = 0; gi < PLATFORM_GROUPS.length; gi++) {
+        var groupName = PLATFORM_GROUPS[gi][0];
+        var codes = PLATFORM_GROUPS[gi][1];
+
+        // Find platforms matching these codes
+        var groupPlatforms = [];
+        for (i = 0; i < platforms.length; i++) {
+            if (codes.indexOf(platforms[i].code) !== -1) {
+                groupPlatforms.push(platforms[i]);
+            }
+        }
+
+        // Get IDs for group platforms
+        var groupIds = [];
+        for (i = 0; i < groupPlatforms.length; i++) {
+            groupIds.push(String(groupPlatforms[i].id));
+        }
+
+        // Find unconsumed IDs in this group
+        var unconsumedGroupIds = [];
+        for (i = 0; i < groupIds.length; i++) {
+            if (!consumedIds[groupIds[i]]) {
+                unconsumedGroupIds.push(groupIds[i]);
+            }
+        }
+
+        // Only match if ALL platforms in group are selected AND none are already consumed
+        if (unconsumedGroupIds.length !== 0 && unconsumedGroupIds.length === groupIds.length) {
+            var allSelected = true;
+            for (i = 0; i < unconsumedGroupIds.length; i++) {
+                if (!selectedIds[unconsumedGroupIds[i]]) {
+                    allSelected = false;
+                    break;
+                }
+            }
+
+            if (allSelected) {
+                labels.push(groupName);
+                for (i = 0; i < groupIds.length; i++) {
+                    consumedIds[groupIds[i]] = true;
+                }
+            }
+        }
+    }
+
+    // Add remaining platform names
+    for (id in selectedIds) {
+        if (selectedIds.hasOwnProperty(id) && !consumedIds[id]) {
+            for (i = 0; i < platforms.length; i++) {
+                if (String(platforms[i].id) === id) {
+                    labels.push(platforms[i].name);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (labels.length === 0) return 'Video';
+    return joinNames(labels);
+}
+
+/**
+ * Joins an array of names with proper grammar (commas and "and")
+ * @param {Array} names - Array of names to join
+ * @returns {string} Joined string
+ */
+function joinNames(names) {
+    if (!names || names.length === 0) return '';
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return names.join(' and ');
+    return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+}
