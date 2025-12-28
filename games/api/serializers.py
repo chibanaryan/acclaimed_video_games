@@ -287,3 +287,19 @@ class PlatformSerializer(serializers.ModelSerializer):
             "code",
             "name",
         ]
+
+
+class DeveloperSearchSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for developer search results in nav dropdown."""
+
+    company_slug = serializers.CharField(source="company.slug", allow_null=True)
+    games_count = serializers.IntegerField()
+
+    class Meta:
+        model = models.Studio
+        fields = [
+            "id",
+            "name",
+            "company_slug",
+            "games_count",
+        ]

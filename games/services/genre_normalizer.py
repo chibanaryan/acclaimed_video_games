@@ -35,6 +35,7 @@ GENRE_MAPPING = {
     "Light gun shooter": "Light Gun Shooter",
     "Shooter": "Shooter",
     "Shoot 'em up": "Shooter",
+    "Bullet hell": "Shooter",
     "Scrolling shooter": "Shooter",
     "Side-scrolling shooter": "Shooter",
     "Multi-directional shooter": "Shooter",
@@ -87,6 +88,7 @@ GENRE_MAPPING = {
     "Massively multiplayer online role-playing": "MMORPG",
     "Massively multiplayer online role-playing game": "MMORPG",
     "Roguelike": "Roguelike",
+    "Roguelite": "Roguelike",
     "Roguelike deck-building": "Roguelike",
     "Dungeon management game": "Dungeon Management",
     # Strategy genres
@@ -188,6 +190,7 @@ GENRE_MAPPING = {
     "Exploration": "Walking Simulator",  # Exploration games
     # Invalid/removed entries (map to None)
     "(minigame)": None,
+    "Minigame": "Interactive Drama",
     "Minigames": None,
     "Various": None,  # Too vague (UFO 50)
     "Snake": None,  # Too specific (single game type)

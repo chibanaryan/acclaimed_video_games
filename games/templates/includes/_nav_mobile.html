@@ -11,10 +11,10 @@
         {# Search dropdown #}
         <div class="relative" x-data="{
                  showSearchDropdown: false,
-                 ...createSearchData('{% url 'api-games-search' %}', 5)
+                 ...createUnifiedSearchData('{% url 'api-unified-search' %}', 3, 5)
              }"
              x-init="window.addEventListener('reset-search-state', () => { reset(); showSearchDropdown = false; })"
-             @click.away="showSearchDropdown = false; q = ''; results = []; showMenu = false">
+             @click.away="showSearchDropdown = false; q = ''; developers = []; games = []; showMenu = false">
 
             {# Search button #}
             <button @click="showSearchDropdown = !showSearchDropdown; $nextTick(() => { if(showSearchDropdown) $refs.searchInputMobile.focus(); })"
@@ -33,7 +33,7 @@
                  class="fixed left-4 right-4 top-24 bg-base-200 rounded-box shadow-lg z-[99999]">
                 <div class="p-4">
                     <div class="relative">
-                        <label for="nav-search-mobile" class="sr-only">Search games</label>
+                        <label for="nav-search-mobile" class="sr-only">Search games and developers</label>
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -46,9 +46,9 @@
                                x-ref="searchInputMobile"
                                x-model="q"
                                @focus="showMenu = true"
-                               @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
+                               @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; loading = false; }"
                                @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
-                               placeholder="Search all games"
+                               placeholder="Search games & developers"
                                class="input input-bordered input-sm w-full pl-9 bg-base-100"
                                autocomplete="off">
                     </div>
@@ -59,10 +59,14 @@
                             <template x-if="!q || q.trim().length < 2">
                                 <li class="disabled"><span class="text-base-content/85 text-sm">Please enter two or more characters</span></li>
                             </template>
-                            <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
+                            <template x-if="q && q.trim().length >= 2 && !loading && !hasResults()">
                                 <li class="disabled"><span class="text-base-content/85 text-sm">No results found</span></li>
                             </template>
-                            <template x-for="result in results" :key="result.id">
+                            {# Games section #}
+                            <template x-if="hasGameResults()">
+                                <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-1 pb-0">Games</li>
+                            </template>
+                            <template x-for="result in games" :key="'game-' + result.id">
                                 <li>
                                     <a :href="'/game/' + result.slug + '/'" class="flex items-center gap-3">
                                         <img :src="result.thumbnail" :alt="result.name" width="32" height="32" class="w-8 h-8 rounded">
@@ -73,10 +77,32 @@
                                     </a>
                                 </li>
                             </template>
-                            <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
+                            <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
                                 <li>
                                     <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
-                                        See all results &hellip;
+                                        See all game results &hellip;
+                                    </a>
+                                </li>
+                            </template>
+                            {# Developers section #}
+                            <template x-if="hasDeveloperResults()">
+                                <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Developers</li>
+                            </template>
+                            <template x-for="dev in developers" :key="'dev-' + dev.id">
+                                <li>
+                                    <a :href="'/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-3">
+                                        <span class="mdi mdi-domain text-xl text-primary"></span>
+                                        <div>
+                                            <div class="font-semibold text-sm" x-text="dev.name"></div>
+                                            <div class="text-xs text-base-content/85" x-text="dev.games_count + ' games'"></div>
+                                        </div>
+                                    </a>
+                                </li>
+                            </template>
+                            <template x-if="q && q.trim().length >= 2 && !loading && hasDeveloperResults()">
+                                <li>
+                                    <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
+                                        See all developer results &hellip;
                                     </a>
                                 </li>
                             </template>

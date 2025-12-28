@@ -329,6 +329,138 @@ class GameSearchAPIViewTests(TestCase):
         self.assertEqual(data["results"][0]["name"], "Super Mario Bros")
 
 
+class UnifiedSearchViewTests(TestCase):
+    """Test the UnifiedSearchView for unified navbar search."""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Create test companies and studios
+        self.nintendo = models.Company.objects.create(
+            name="Nintendo", slug="nintendo", igdb_id=10
+        )
+        self.nintendo_ead = models.Studio.objects.create(
+            company=self.nintendo, name="Nintendo EAD", igdb_id=11
+        )
+
+        self.capcom = models.Company.objects.create(
+            name="Capcom", slug="capcom", igdb_id=20
+        )
+        self.capcom_studio = models.Studio.objects.create(
+            company=self.capcom, name="Capcom Production Studio 4", igdb_id=21
+        )
+
+        # Independent studio with no company
+        self.indie_studio = models.Studio.objects.create(
+            company=None, name="Indie Dev Studio", igdb_id=30
+        )
+
+        # Create test games
+        self.game1 = models.Game.objects.create(
+            name="The Legend of Zelda",
+            rank=1,
+            year_of_release=1986,
+            slug="zelda",
+        )
+        self.game1.studios.add(self.nintendo_ead)
+
+        self.game2 = models.Game.objects.create(
+            name="Super Mario Bros",
+            rank=2,
+            year_of_release=1985,
+            slug="mario",
+        )
+        self.game2.studios.add(self.nintendo_ead)
+
+        self.game3 = models.Game.objects.create(
+            name="Street Fighter II",
+            rank=5,
+            year_of_release=1991,
+            slug="sf2",
+        )
+        self.game3.studios.add(self.capcom_studio)
+
+    def test_unified_search_returns_both_developers_and_games(self):
+        """Test that unified search returns both developers and games."""
+        response = self.client.get("/api/unified-search/", {"q": "nintendo"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("developers", data)
+        self.assertIn("games", data)
+
+    def test_unified_search_developer_results_have_correct_fields(self):
+        """Test that developer results contain expected fields."""
+        response = self.client.get("/api/unified-search/", {"q": "nintendo"})
+        data = response.json()
+        self.assertGreater(len(data["developers"]), 0)
+        dev = data["developers"][0]
+        self.assertIn("id", dev)
+        self.assertIn("name", dev)
+        self.assertIn("company_slug", dev)
+        self.assertIn("games_count", dev)
+
+    def test_unified_search_game_results_have_correct_fields(self):
+        """Test that game results contain expected fields."""
+        response = self.client.get("/api/unified-search/", {"q": "zelda"})
+        data = response.json()
+        self.assertGreater(len(data["games"]), 0)
+        game = data["games"][0]
+        self.assertIn("id", game)
+        self.assertIn("name", game)
+        self.assertIn("slug", game)
+        self.assertIn("year_of_release", game)
+        self.assertIn("rank", game)
+        self.assertIn("thumbnail", game)
+
+    def test_unified_search_with_short_query_returns_empty(self):
+        """Test that queries less than 2 characters return empty results."""
+        response = self.client.get("/api/unified-search/", {"q": "n"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["developers"]), 0)
+        self.assertEqual(len(data["games"]), 0)
+
+    def test_unified_search_respects_limits(self):
+        """Test that developer_limit and game_limit parameters work."""
+        response = self.client.get(
+            "/api/unified-search/",
+            {"q": "nintendo", "developer_limit": 1, "game_limit": 1},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertLessEqual(len(data["developers"]), 1)
+        self.assertLessEqual(len(data["games"]), 1)
+
+    def test_unified_search_excludes_independent_studios(self):
+        """Test that studios without a parent company are not included."""
+        # Search for indie studio by name - should not appear in results
+        response = self.client.get("/api/unified-search/", {"q": "indie"})
+        data = response.json()
+        # The indie studio should not appear in developer results
+        for dev in data["developers"]:
+            self.assertNotEqual(dev["name"], "Indie Dev Studio")
+
+    def test_unified_search_developers_ordered_by_games_count(self):
+        """Test that developer results are ordered by games count descending."""
+        # Nintendo EAD has 2 games, Capcom has 1 game
+        response = self.client.get("/api/unified-search/", {"q": "studio"})
+        data = response.json()
+        if len(data["developers"]) > 1:
+            # First developer should have more or equal games than second
+            self.assertGreaterEqual(
+                data["developers"][0]["games_count"],
+                data["developers"][1]["games_count"],
+            )
+
+    def test_unified_search_games_ordered_by_rank(self):
+        """Test that game results are ordered by rank."""
+        response = self.client.get("/api/unified-search/", {"q": "the"})
+        data = response.json()
+        if len(data["games"]) > 1:
+            # First game should have lower rank (better) than second
+            self.assertLessEqual(data["games"][0]["rank"], data["games"][1]["rank"])
+
+
 class GameDataVersionViewTests(TestCase):
     """Test the GameDataVersionView endpoint."""
 

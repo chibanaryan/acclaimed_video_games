@@ -374,6 +374,84 @@ class GameSearchAPIView(APIView):
         return JsonResponse({"results": results, "count": len(results)})
 
 
+class UnifiedSearchView(APIView):
+    """
+    Unified search endpoint for navbar - returns both developers and games.
+    Used by unified search component in navbar for grouped dropdown results.
+    """
+
+    def get(self, request):
+        from django.http import JsonResponse
+
+        q = request.GET.get("q", "").strip()
+        game_limit = int(request.GET.get("game_limit", 5))
+        developer_limit = int(request.GET.get("developer_limit", 3))
+
+        if len(q) < 2:
+            return JsonResponse({"developers": [], "games": []})
+
+        # Search developers (Studios with parent Company that has a slug)
+        # Only include studios that have a parent company with a slug
+        developers = (
+            models.Studio.objects.filter(
+                name__icontains=q,
+                company__isnull=False,
+                company__slug__isnull=False,
+            )
+            .exclude(company__slug="")
+            .select_related("company")
+            .annotate(games_count=Count("games"))
+            .filter(games_count__gt=0)
+            .order_by("-games_count")[:developer_limit]
+        )
+
+        developer_results = []
+        for studio in developers:
+            developer_results.append(
+                {
+                    "id": studio.id,
+                    "name": studio.name,
+                    "company_slug": studio.company.slug,
+                    "games_count": studio.games_count,
+                }
+            )
+
+        # Search games by name (only fetch required fields for performance)
+        games = (
+            models.Game.objects.filter(name__icontains=q)
+            .select_related("primary_igdb_game_data")
+            .only(
+                "id",
+                "name",
+                "slug",
+                "year_of_release",
+                "rank",
+                "primary_igdb_game_data__artwork_id",
+            )
+            .order_by("rank")[:game_limit]
+        )
+
+        game_results = []
+        for game in games:
+            game_results.append(
+                {
+                    "id": game.id,
+                    "name": game.name,
+                    "slug": game.slug,
+                    "year_of_release": game.year_of_release,
+                    "rank": game.rank,
+                    "thumbnail": game.thumbnail,
+                }
+            )
+
+        return JsonResponse(
+            {
+                "developers": developer_results,
+                "games": game_results,
+            }
+        )
+
+
 def _compute_game_data_version():
     """
     Compute a version hash for cache invalidation.

@@ -78,11 +78,11 @@
 
         {# Search bar - positioned at bottom of top section #}
         <div class="relative"
-             x-data="createSearchData('{% url 'api-games-search' %}', 5)"
+             x-data="createUnifiedSearchData('{% url 'api-unified-search' %}', 3, 5)"
              x-init="window.addEventListener('reset-search-state', () => reset())"
              @click.away="showMenu = false">
             <div class="relative">
-                <label for="sidebar-search" class="sr-only">Search games</label>
+                <label for="sidebar-search" class="sr-only">Search games and developers</label>
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -92,15 +92,15 @@
                 <input type="text"
                        id="sidebar-search"
                        name="q"
-                       placeholder="Search all games..."
+                       placeholder="Search..."
                        class="input input-bordered input-sm w-full pl-9 bg-base-300 border-base-content/20"
                        x-model="q"
                        @focus="showMenu = true"
-                       @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { results = []; loading = false; }"
+                       @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; loading = false; }"
                        @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                        autocomplete="off">
                 <button x-show="q && q.trim()" x-cloak
-                        @click="q = ''; results = []; showMenu = false"
+                        @click="q = ''; developers = []; games = []; showMenu = false"
                         class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-circle"
                         aria-label="Clear search">
                     <span class="mdi mdi-close"></span>
@@ -113,10 +113,14 @@
                     <template x-if="!q || q.trim().length < 2">
                         <li class="disabled"><span class="text-base-content/85 text-sm">Enter 2+ characters</span></li>
                     </template>
-                    <template x-if="q && q.trim().length >= 2 && !loading && results.length == 0">
+                    <template x-if="q && q.trim().length >= 2 && !loading && !hasResults()">
                         <li class="disabled"><span class="text-base-content/85 text-sm">No results found</span></li>
                     </template>
-                    <template x-for="result in results" :key="result.id">
+                    {# Games section #}
+                    <template x-if="hasGameResults()">
+                        <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-1 pb-0">Games</li>
+                    </template>
+                    <template x-for="result in games" :key="'game-' + result.id">
                         <li>
                             <a :href="'/game/' + result.slug + '/'" class="flex items-center gap-2 py-2">
                                 <img :src="result.thumbnail" :alt="result.name" width="90" height="128" class="w-6 h-auto rounded">
@@ -127,14 +131,36 @@
                             </a>
                         </li>
                     </template>
+                    <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
+                        <li>
+                            <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
+                                See all game results...
+                            </a>
+                        </li>
+                    </template>
+                    {# Developers section #}
+                    <template x-if="hasDeveloperResults()">
+                        <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Developers</li>
+                    </template>
+                    <template x-for="dev in developers" :key="'dev-' + dev.id">
+                        <li>
+                            <a :href="'/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-2 py-2">
+                                <span class="mdi mdi-domain text-lg text-primary"></span>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-semibold text-sm truncate" x-text="dev.name"></div>
+                                    <div class="text-xs text-base-content/85" x-text="dev.games_count + ' games'"></div>
+                                </div>
+                            </a>
+                        </li>
+                    </template>
+                    <template x-if="q && q.trim().length >= 2 && !loading && hasDeveloperResults()">
+                        <li>
+                            <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
+                                See all developer results...
+                            </a>
+                        </li>
+                    </template>
                 </ul>
-                <template x-if="q && q.trim().length >= 2 && !loading && results.length > 0">
-                    <div class="border-t border-base-content/10 mt-2 pt-2 px-2">
-                        <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
-                            See all results...
-                        </a>
-                    </div>
-                </template>
             </div>
         </div>
     </div>

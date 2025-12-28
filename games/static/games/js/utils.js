@@ -408,6 +408,96 @@ function createSearchData(apiUrl, limit = 5) {
     };
 }
 
+/**
+ * Performs unified search API call for both developers and games
+ * @param {string} query - Search query
+ * @param {number} developerLimit - Max developer results
+ * @param {number} gameLimit - Max game results
+ * @param {string} apiUrl - API endpoint URL
+ * @returns {Promise<Object>} Search results with developers and games arrays
+ */
+async function searchUnified(query, developerLimit, gameLimit, apiUrl) {
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 2) {
+        return { developers: [], games: [] };
+    }
+
+    const response = await fetch(
+        `${apiUrl}?q=${encodeURIComponent(trimmedQuery)}&developer_limit=${developerLimit}&game_limit=${gameLimit}`
+    );
+
+    if (!response.ok) {
+        throw new Error('API request failed');
+    }
+
+    const data = await response.json();
+    return {
+        developers: data.developers || [],
+        games: data.games || []
+    };
+}
+
+/**
+ * Creates Alpine.js unified search component data (developers + games)
+ * @param {string} apiUrl - API endpoint for unified search
+ * @param {number} developerLimit - Max developer results (default 3)
+ * @param {number} gameLimit - Max game results (default 5)
+ * @returns {Object} Alpine component data
+ */
+function createUnifiedSearchData(apiUrl, developerLimit = 3, gameLimit = 5) {
+    return {
+        showMenu: false,
+        q: '',
+        developers: [],
+        games: [],
+        loading: false,
+
+        get hasResults() {
+            return this.developers.length > 0 || this.games.length > 0;
+        },
+
+        get hasDeveloperResults() {
+            return this.developers.length > 0;
+        },
+
+        get hasGameResults() {
+            return this.games.length > 0;
+        },
+
+        async loadResults() {
+            const trimmedQ = this.q.trim();
+            if (trimmedQ.length < 2) {
+                this.developers = [];
+                this.games = [];
+                this.loading = false;
+                return;
+            }
+            this.loading = true;
+            this.developers = [];
+            this.games = [];
+            try {
+                const results = await searchUnified(trimmedQ, developerLimit, gameLimit, apiUrl);
+                this.developers = results.developers;
+                this.games = results.games;
+            } catch (e) {
+                console.error('Search error:', e);
+                this.developers = [];
+                this.games = [];
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        reset() {
+            this.showMenu = false;
+            this.q = '';
+            this.developers = [];
+            this.games = [];
+            this.loading = false;
+        }
+    };
+}
+
 // ============================================================
 // LOAD MORE UTILITIES
 // ============================================================

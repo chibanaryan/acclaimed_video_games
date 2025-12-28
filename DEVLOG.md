@@ -2,6 +2,10 @@
 
 ## 2025-12-28
 
+- Added developer search to nav search bar (unified games + developers results)
+- Developer search results link to company page with studio pre-selected in filter
+- Added "See all game/developer results" links to search dropdown
+- Fixed "No results found" bug in mobile search (getter vs method issue with object spread)
 - Added "Report incorrect data" link to game detail pages (opens contact modal with pre-filled category and game name)
 
 ## 2025-12-27

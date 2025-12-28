@@ -28,6 +28,11 @@ urlpatterns = [
         api_views.GameSearchAPIView.as_view(),
         name="api-games-search",
     ),
+    path(
+        "api/unified-search/",
+        api_views.UnifiedSearchView.as_view(),
+        name="api-unified-search",
+    ),
     path("api/", include("games.api.urls", namespace="games-api")),
     path("admin/", admin.site.urls),
     path("import/", views.ImportView.as_view(), name="import"),
