@@ -2,6 +2,7 @@
 
 ## 2025-12-28
 
+- Fixed mobile rankings page flash (chevron→rank) by respecting actual filter state on initial load
 - Updated filter icons: Action→crosshairs, Simulation→car-sports, Retro Consoles→pac-man
 - Fixed Strategy icon showing crown instead of chess knight (wrong codepoint)
 - Fixed sidebar Home and News icons displaying wrong glyphs (updated codepoints and replaced subset font with full MDI font)

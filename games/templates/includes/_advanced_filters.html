@@ -23,8 +23,6 @@
         clientFilterReady: false,
         _csf: null,
         init() {
-            // Normalize rank_display to filtered
-            this.filters.rank_display = 'filtered';
             // Default sort to rank if not specified
             if (!this.filters.sort || this.filters.sort === '') {
                 this.filters.sort = 'rank';
@@ -77,7 +75,6 @@
                 this.filters.q = params.get('q') || '';
                 this.filters.start = params.get('start') ? parseInt(params.get('start')) : {{ min_year }};
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
-                this.filters.rank_display = 'filtered';
                 this.filters.sort = params.get('sort') || 'rank';
                 const genresParam = params.get('genres');
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
@@ -124,6 +121,14 @@
             // Initialize client-side filtering (if scripts are loaded)
             this.initClientFiltering();
         },
+        hasActiveFilters() {
+            return this.filters.q ||
+                   this.filters.genres.length > 0 ||
+                   this.filters.platforms.length > 0 ||
+                   this.filters.start !== {{ min_year }} ||
+                   this.filters.end !== {{ max_year }} ||
+                   this.filters.sort !== 'rank';
+        },
         async initClientFiltering() {
             // Wait for deferred scripts to load (retry up to 10 times, 100ms apart)
             let retries = 0;
@@ -147,9 +152,13 @@
                         onLoadComplete: () => {
                             console.log('[CSF] Game data loaded, client filtering ready');
                             this.clientFilterReady = true;
-                            // Render initial results with current filters
-                            // This also dispatches all facet count updates
-                            this.performClientUpdate({ historyMethod: 'replaceState' });
+                            // Only re-render if filters are active (prevents flash on default page)
+                            if (this.hasActiveFilters()) {
+                                this.performClientUpdate({ historyMethod: 'replaceState' });
+                            } else {
+                                // Just update faceted counts without re-rendering
+                                this.updateFacetCounts();
+                            }
                         }
                     });
                 } catch (e) {
@@ -441,7 +450,7 @@
             // Render results
             const state = this._csf.renderResults(result, gameListContainer, {
                 highlightId,
-                showRank: 'filtered'
+                showRank: this.hasActiveFilters() ? 'filtered' : 'alltime'
             });
 
             // Update count display
@@ -493,6 +502,30 @@
             // Clear highlight after update
             if (this.filters.highlight) {
                 delete this.filters.highlight;
+            }
+        },
+        updateFacetCounts() {
+            // Apply filters to get faceted counts without re-rendering the game list
+            const result = this._csf.applyFilters(this.filters);
+            if (!result || !result.facets) return;
+
+            // Year counts for heatmap
+            const yearCountsArray = [];
+            for (let y = {{ min_year }}; y <= {{ max_year }}; y++) {
+                yearCountsArray.push({ year: y, count: result.facets.years[y] || 0 });
+            }
+            window.dispatchEvent(new CustomEvent('year-counts-update', { detail: yearCountsArray }));
+
+            // Genre counts
+            window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: result.facets.genres }));
+
+            // Platform counts (individual)
+            window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: result.facets.platforms }));
+
+            // Platform group counts (deduplicated manufacturer/form factor counts)
+            if (result.facets.platformGroups) {
+                this.platformGroupCounts = result.facets.platformGroups;
+                window.dispatchEvent(new CustomEvent('platform-group-counts-update', { detail: result.facets.platformGroups }));
             }
         },
         _initClientLoadMore(loadMoreContainer, gameListContainer, countContainer) {
