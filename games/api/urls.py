@@ -6,6 +6,10 @@ app_name = "games-api"
 
 urlpatterns = [
     path("games/", views.GameListView.as_view(), name="game-list"),
+    path("games/all/", views.GameAllDataView.as_view(), name="game-all-data"),
+    path(
+        "games/version/", views.GameDataVersionView.as_view(), name="game-data-version"
+    ),
     path("games/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
     path(
         "developers/<slug:slug>/",

@@ -374,3 +374,161 @@ class GameSearchAPIView(APIView):
             )
 
         return JsonResponse({"results": results, "count": len(results)})
+
+
+def _compute_game_data_version():
+    """
+    Compute a version hash for cache invalidation.
+
+    Uses the max modified timestamp of games and genre hierarchy structure.
+    Returns a short hash string that changes when data is updated.
+    """
+    import hashlib
+
+    # Get latest game modification time
+    latest_game = models.Game.objects.order_by("-modified").first()
+    game_modified = latest_game.modified.isoformat() if latest_game else ""
+
+    # Get genre count and structure hash (changes if genres are added/modified)
+    genre_count = models.WikipediaGenre.objects.count()
+
+    # Combine into version string and hash it
+    version_string = f"{game_modified}:{genre_count}"
+    return hashlib.md5(version_string.encode()).hexdigest()[:12]
+
+
+@method_decorator(cache_page(config.CACHE_TIMEOUT_1_HOUR), name="dispatch")
+class GameDataVersionView(APIView):
+    """
+    Lightweight endpoint returning only the data version hash.
+
+    Used by client-side cache to validate if cached data is still current.
+    Response: {"version": "abc123def456"}
+    """
+
+    def get(self, request):
+        return Response({"version": _compute_game_data_version()})
+
+
+@method_decorator(cache_page(config.CACHE_TIMEOUT_1_HOUR), name="dispatch")
+class GameAllDataView(APIView):
+    """
+    Complete game data endpoint for client-side filtering.
+
+    Returns all games with minimal payload for efficient client-side filtering:
+    - Compressed field names to minimize payload size
+    - Reference data (studios, companies, platforms, genres) keyed by ID
+    - Genre hierarchy with descendant IDs for hierarchical filtering
+
+    Response format:
+    {
+        "version": "abc123def456",
+        "data": {
+            "games": [{id, n, s, r, y, a, st, p, g}, ...],
+            "studios": {id: {n, c}, ...},
+            "companies": {id: {n, s}, ...},
+            "platforms": {id: {n, c}, ...},
+            "genres": [{id, n, s, p, l, d}, ...]
+        }
+    }
+    """
+
+    def get(self, request):
+        version = _compute_game_data_version()
+
+        # Fetch all games with required relations
+        games = (
+            models.Game.objects.select_related("primary_igdb_game_data")
+            .prefetch_related(
+                "studios__company",
+                "platforms",
+                "wikipedia_genres",
+            )
+            .order_by("rank")
+        )
+
+        # Build games list with minimal field names
+        games_data = []
+        studios_dict = {}
+        companies_dict = {}
+        platforms_dict = {}
+
+        for game in games:
+            # Collect studio IDs and build studio/company reference data
+            studio_ids = []
+            for studio in game.studios.all():
+                studio_ids.append(studio.id)
+                if studio.id not in studios_dict:
+                    studios_dict[studio.id] = {
+                        "n": studio.name,
+                        "c": studio.company_id,
+                    }
+                    # Add company if exists
+                    if studio.company and studio.company.id not in companies_dict:
+                        companies_dict[studio.company.id] = {
+                            "n": studio.company.name,
+                            "s": studio.company.slug,
+                        }
+
+            # Collect platform IDs
+            platform_ids = []
+            for platform in game.platforms.all():
+                platform_ids.append(platform.id)
+                if platform.id not in platforms_dict:
+                    platforms_dict[platform.id] = {
+                        "n": platform.name,
+                        "c": platform.code,
+                    }
+
+            # Collect genre IDs
+            genre_ids = [g.id for g in game.wikipedia_genres.all()]
+
+            # Get artwork ID from primary IGDB data
+            artwork_id = None
+            if game.primary_igdb_game_data:
+                artwork_id = game.primary_igdb_game_data.artwork_id
+
+            games_data.append(
+                {
+                    "id": game.id,
+                    "n": game.name,
+                    "s": game.slug,
+                    "r": game.rank,
+                    "y": game.year_of_release,
+                    "a": artwork_id,
+                    "st": studio_ids,
+                    "p": platform_ids,
+                    "g": genre_ids,
+                }
+            )
+
+        # Build genre hierarchy with descendant IDs for client-side expansion
+        genres_data = []
+        all_genres = models.WikipediaGenre.objects.prefetch_related("children").all()
+
+        # Pre-compute descendant IDs for each genre
+        for genre in all_genres:
+            descendant_ids = genre.get_descendant_ids(include_self=False)
+            genres_data.append(
+                {
+                    "id": genre.id,
+                    "n": genre.name,
+                    "s": genre.slug,
+                    "p": genre.parent_id,
+                    "l": genre.level,
+                    "d": descendant_ids,
+                }
+            )
+
+        return Response(
+            {
+                "version": version,
+                "data": {
+                    "games": games_data,
+                    "studios": studios_dict,
+                    "companies": companies_dict,
+                    "platforms": platforms_dict,
+                    "genres": genres_data,
+                },
+            }
+        )

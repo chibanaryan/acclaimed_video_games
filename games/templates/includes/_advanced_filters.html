@@ -19,6 +19,8 @@
         _throttledSlider: null,
         _debouncedFilter: null,
         _debouncedDisplay: null,
+        clientFilterReady: false,
+        _csf: null,
         init() {
             // Ensure genre_option has a default value (any = Match Any)
             if (!this.filters.genre_option || this.filters.genre_option === '') {
@@ -85,7 +87,12 @@
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
                 const platformsParam = params.get('platforms');
                 this.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
-                window.location.reload();
+                // Use client-side filtering if ready, otherwise reload
+                if (this.clientFilterReady) {
+                    this.performClientUpdate();
+                } else {
+                    window.location.reload();
+                }
             });
 
             this.$watch('filters.q', val => {
@@ -116,6 +123,122 @@
             // Listen for add-platform and add-genre events from game rows
             document.addEventListener('add-platform', (e) => this.addPlatform(e.detail));
             document.addEventListener('add-genre', (e) => this.addGenre(e.detail));
+
+            // Initialize client-side filtering (if scripts are loaded)
+            this.initClientFiltering();
+        },
+        async initClientFiltering() {
+            // Wait for deferred scripts to load (retry up to 10 times, 100ms apart)
+            let retries = 0;
+            const maxRetries = 10;
+
+            const tryInit = async () => {
+                if (typeof getClientSideFiltering !== 'function') {
+                    retries++;
+                    if (retries < maxRetries) {
+                        setTimeout(tryInit, 100);
+                        return;
+                    }
+                    console.log('[CSF] Client-side filtering not available after retries');
+                    return;
+                }
+
+                this._csf = getClientSideFiltering();
+                try {
+                    await this._csf.init({
+                        onLoadStart: () => console.log('[CSF] Loading game data...'),
+                        onLoadComplete: () => {
+                            console.log('[CSF] Game data loaded, client filtering ready');
+                            this.clientFilterReady = true;
+                        }
+                    });
+                } catch (e) {
+                    console.error('[CSF] Failed to initialize:', e);
+                }
+            };
+
+            tryInit();
+        },
+        _buildDynamicTitle() {
+            // Build dynamic page title based on active filters
+            const timeWindow = this._buildTimeWindow();
+            const platformLabel = this._buildPlatformSegment();
+            let genreLabel = '';
+
+            // If exactly one genre is selected, fold it into the title
+            if (this.filters.genres && this.filters.genres.length === 1) {
+                const genre = this.genres.find(g => String(g.id) === String(this.filters.genres[0]));
+                if (genre) {
+                    genreLabel = ' ' + genre.name;
+                }
+            }
+
+            const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
+            let platform = platformLabel;
+
+            // Omit 'Video' prefix when genre is selected
+            if (genreLabel && platform === 'Video') {
+                platform = '';
+            }
+
+            return 'Most Acclaimed ' + platform + genreLabel + ' Games' + timeSuffix;
+        },
+        _buildTimeWindow() {
+            const start = this.filters.start;
+            const end = this.filters.end;
+            const minYear = {{ min_year }};
+            const maxYear = {{ max_year }};
+
+            if (!start || !end) return '';
+            if (start <= minYear && end >= maxYear) return 'All Time';
+            if (start === end) return String(start);
+            if (start % 10 === 0 && end === start + 9) return 'the ' + start + '\u0027s';
+            return start + '-' + end;
+        },
+        _buildPlatformSegment() {
+            const allGroups = {
+                // Accordion categories (check these first)
+                'Retro Consoles': ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS'],
+                'Microcomputers': ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2'],
+                // Big Five groups
+                'Nintendo': ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
+                'PlayStation': ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR'],
+                'Xbox': ['Xbox', 'X360', 'XB1', 'XBXS'],
+                'Sega': ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'],
+                'PC': ['WIN', 'DOS', 'LIN', 'MAC'],
+                'Arcade, Mobile \u0026 VR': ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
+            };
+
+            const selectedIds = new Set(this.filters.platforms.map(String));
+            const labels = [];
+            const consumedIds = new Set();
+
+            // Add group labels when entire group is selected
+            for (const [groupName, codes] of Object.entries(allGroups)) {
+                const groupPlatforms = this.platforms.filter(p => codes.includes(p.code));
+                const groupIds = groupPlatforms.map(p => String(p.id));
+                if (groupIds.length > 0 && groupIds.every(id => selectedIds.has(id))) {
+                    labels.push(groupName);
+                    groupIds.forEach(id => consumedIds.add(id));
+                }
+            }
+
+            // Add remaining platform names
+            for (const pid of selectedIds) {
+                if (!consumedIds.has(pid)) {
+                    const platform = this.platforms.find(p => String(p.id) === pid);
+                    if (platform) labels.push(platform.name);
+                }
+            }
+
+            if (labels.length === 0) return 'Video';
+            return this._joinNames(labels);
+        },
+        _joinNames(names) {
+            if (!names || names.length === 0) return '';
+            if (names.length === 1) return names[0];
+            if (names.length === 2) return names.join(' and ');
+            return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
         },
         handleFilterChange(type, items) {
             const itemIds = items.map(item => {
@@ -191,6 +314,11 @@
         },
         async performUpdate(options = {}) {
             const { partial = false, historyMethod = 'pushState', preservePage = false } = options;
+
+            // Use client-side filtering if available and partial update
+            if (this.clientFilterReady && partial) {
+                return this.performClientUpdate({ historyMethod });
+            }
 
             const signal = this.fetchManager.newRequest();
             this.isLoading = true;
@@ -298,6 +426,110 @@
                     delete this.filters.highlight;
                 }
             }
+        },
+        performClientUpdate(options = {}) {
+            const { historyMethod = 'pushState' } = options;
+
+            this.isLoading = true;
+
+            // Get highlight ID before clearing it
+            const highlightId = this.filters.highlight ? parseInt(this.filters.highlight) : null;
+
+            // Get container elements
+            const gameListContainer = document.getElementById('game-list-container');
+            const countContainer = document.querySelector('.result-count');
+            const loadMoreContainer = document.querySelector('.load-more-container');
+
+            if (!gameListContainer) {
+                console.error('[CSF] game-list-container not found');
+                this.isLoading = false;
+                return;
+            }
+
+            // Apply filters and render
+            const result = this._csf.applyFilters(this.filters);
+            if (!result) {
+                this.isLoading = false;
+                return;
+            }
+
+            // Render results
+            const state = this._csf.renderResults(result, gameListContainer, {
+                highlightId,
+                showRank: 'filtered'
+            });
+
+            // Update count display
+            if (countContainer) {
+                countContainer.innerHTML = this._csf.renderer.getResultSummaryHtml(state.loaded, state.total);
+            }
+
+            // Update Load More button
+            if (loadMoreContainer) {
+                loadMoreContainer.innerHTML = this._csf.renderer.getLoadMoreHtml(state);
+                this._initClientLoadMore(loadMoreContainer, gameListContainer, countContainer);
+            }
+
+            // Update page title (desktop)
+            const searchTitle = document.getElementById('search-title');
+            if (searchTitle) {
+                searchTitle.textContent = this._buildDynamicTitle();
+            }
+
+            // Update faceted counts
+            if (state.facets) {
+                // Year counts for heatmap
+                const yearCountsArray = [];
+                for (let y = {{ min_year }}; y <= {{ max_year }}; y++) {
+                    yearCountsArray.push({ year: y, count: state.facets.years[y] || 0 });
+                }
+                window.dispatchEvent(new CustomEvent('year-counts-update', { detail: yearCountsArray }));
+
+                // Genre counts
+                window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: state.facets.genres }));
+
+                // Platform counts
+                window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: state.facets.platforms }));
+            }
+
+            // Update URL
+            const params = buildFilterParams(this.filters);
+            const url = '{% url 'games-list' %}?' + normalizeUrl(params.toString());
+            window.history[historyMethod]({}, '', url);
+
+            this.isLoading = false;
+
+            // Clear highlight after update
+            if (this.filters.highlight) {
+                delete this.filters.highlight;
+            }
+        },
+        _initClientLoadMore(loadMoreContainer, gameListContainer, countContainer) {
+            const button = loadMoreContainer.querySelector('.load-more-button');
+            if (!button) return;
+
+            button.addEventListener('click', () => {
+                button.classList.add('loading');
+                button.disabled = true;
+
+                const state = this._csf.loadMore(gameListContainer);
+
+                // Update count
+                if (countContainer) {
+                    countContainer.innerHTML = this._csf.renderer.getResultSummaryHtml(state.loaded, state.total);
+                }
+
+                // Update or replace Load More button
+                loadMoreContainer.innerHTML = this._csf.renderer.getLoadMoreHtml({
+                    hasMore: state.hasMore,
+                    remaining: state.remaining,
+                    maxLoaded: state.loaded >= 1000
+                });
+
+                if (state.hasMore) {
+                    this._initClientLoadMore(loadMoreContainer, gameListContainer, countContainer);
+                }
+            });
         },
         updateResults() {
             if (!this.initialized) return;
@@ -418,7 +650,7 @@
                     'Xbox': ['Xbox', 'X360', 'XB1', 'XBXS'],
                     'Sega': ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD'],
                     'PC': ['WIN', 'DOS', 'LIN', 'MAC'],
-                    'Arcade, Mobile & VR': ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
+                    'Arcade, Mobile \u0026 VR': ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
                 };
 
                 const selectedIds = new Set(filters.platforms.map(String));

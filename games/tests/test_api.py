@@ -335,3 +335,155 @@ class GameSearchAPIViewTests(TestCase):
         data = response.json()
         self.assertEqual(data["count"], 1)
         self.assertEqual(data["results"][0]["name"], "Super Mario Bros")
+
+
+class GameDataVersionViewTests(TestCase):
+    """Test the GameDataVersionView endpoint."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+            slug="test-game",
+        )
+
+    def test_version_endpoint_returns_version(self):
+        """Test that version endpoint returns a version hash."""
+        response = self.client.get("/api/games/version/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("version", data)
+        self.assertIsInstance(data["version"], str)
+        self.assertEqual(len(data["version"]), 12)  # MD5 hash truncated to 12 chars
+
+
+class GameAllDataViewTests(TestCase):
+    """Test the GameAllDataView endpoint for client-side filtering."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.platform = models.Platform.objects.create(code="PC", name="PC")
+        self.company = models.Company.objects.create(
+            name="Test Company", slug="test-company", igdb_id=100
+        )
+        self.studio = models.Studio.objects.create(
+            company=self.company, name="Test Studio", igdb_id=101
+        )
+        self.genre = models.WikipediaGenre.objects.create(
+            name="Test Action", slug="test-action-unique", level=0
+        )
+        self.child_genre = models.WikipediaGenre.objects.create(
+            name="Test Shooter", slug="test-shooter-unique", parent=self.genre, level=1
+        )
+        self.game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+            slug="test-game",
+            igdb_id=1234,
+        )
+        self.game.platforms.add(self.platform)
+        self.game.studios.add(self.studio)
+        self.game.wikipedia_genres.add(self.genre)
+
+    def test_all_data_endpoint_returns_correct_structure(self):
+        """Test that all data endpoint returns correct structure."""
+        response = self.client.get("/api/games/all/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+
+        # Check top-level structure
+        self.assertIn("version", data)
+        self.assertIn("data", data)
+
+        # Check data structure
+        game_data = data["data"]
+        self.assertIn("games", game_data)
+        self.assertIn("studios", game_data)
+        self.assertIn("companies", game_data)
+        self.assertIn("platforms", game_data)
+        self.assertIn("genres", game_data)
+
+    def test_all_data_games_have_correct_fields(self):
+        """Test that games have correct compressed field names."""
+        response = self.client.get("/api/games/all/")
+        data = response.json()
+        games = data["data"]["games"]
+
+        self.assertEqual(len(games), 1)
+        game = games[0]
+
+        # Check compressed field names
+        self.assertIn("id", game)
+        self.assertIn("n", game)  # name
+        self.assertIn("s", game)  # slug
+        self.assertIn("r", game)  # rank
+        self.assertIn("y", game)  # year
+        self.assertIn("a", game)  # artwork_id
+        self.assertIn("st", game)  # studio IDs
+        self.assertIn("p", game)  # platform IDs
+        self.assertIn("g", game)  # genre IDs
+
+        # Check values
+        self.assertEqual(game["n"], "Test Game")
+        self.assertEqual(game["r"], 1)
+        self.assertEqual(game["y"], 2020)
+        self.assertIn(self.studio.id, game["st"])
+        self.assertIn(self.platform.id, game["p"])
+        self.assertIn(self.genre.id, game["g"])
+
+    def test_all_data_studios_reference_data(self):
+        """Test that studios reference data is correct."""
+        response = self.client.get("/api/games/all/")
+        data = response.json()
+        studios = data["data"]["studios"]
+
+        self.assertIn(str(self.studio.id), studios)
+        studio_data = studios[str(self.studio.id)]
+        self.assertEqual(studio_data["n"], "Test Studio")
+        self.assertEqual(studio_data["c"], self.company.id)
+
+    def test_all_data_companies_reference_data(self):
+        """Test that companies reference data is correct."""
+        response = self.client.get("/api/games/all/")
+        data = response.json()
+        companies = data["data"]["companies"]
+
+        self.assertIn(str(self.company.id), companies)
+        company_data = companies[str(self.company.id)]
+        self.assertEqual(company_data["n"], "Test Company")
+        self.assertEqual(company_data["s"], "test-company")
+
+    def test_all_data_genres_have_hierarchy(self):
+        """Test that genres include hierarchy information."""
+        response = self.client.get("/api/games/all/")
+        data = response.json()
+        genres = data["data"]["genres"]
+
+        # Find parent genre
+        parent_genre = next((g for g in genres if g["id"] == self.genre.id), None)
+        self.assertIsNotNone(parent_genre)
+        self.assertEqual(parent_genre["n"], "Test Action")
+        self.assertEqual(parent_genre["l"], 0)  # level
+        self.assertIsNone(parent_genre["p"])  # parent_id
+        self.assertIn(self.child_genre.id, parent_genre["d"])  # descendants
+
+        # Find child genre
+        child_genre = next((g for g in genres if g["id"] == self.child_genre.id), None)
+        self.assertIsNotNone(child_genre)
+        self.assertEqual(child_genre["n"], "Test Shooter")
+        self.assertEqual(child_genre["l"], 1)  # level
+        self.assertEqual(child_genre["p"], self.genre.id)  # parent_id
+
+    def test_all_data_platforms_reference_data(self):
+        """Test that platforms reference data is correct."""
+        response = self.client.get("/api/games/all/")
+        data = response.json()
+        platforms = data["data"]["platforms"]
+
+        self.assertIn(str(self.platform.id), platforms)
+        platform_data = platforms[str(self.platform.id)]
+        self.assertEqual(platform_data["n"], "PC")
+        self.assertEqual(platform_data["c"], "PC")

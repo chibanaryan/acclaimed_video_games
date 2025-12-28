@@ -45,7 +45,7 @@
         </select>
     </div>
     {# Result count - Right side #}
-    <div class="text-base-content/60 whitespace-nowrap flex-shrink-0">
+    <div class="result-count text-base-content/60 whitespace-nowrap flex-shrink-0">
         {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
     </div>
 </div>
@@ -73,7 +73,7 @@
 </div>
 
 {% if has_more and not max_loaded %}
-<div id="load-more-container" class="text-center my-6">
+<div id="load-more-container" class="load-more-container text-center my-6">
     <button type="button"
             class="btn btn-ghost load-more-button"
             data-next-page="{{ next_page }}"
@@ -84,7 +84,7 @@
     </button>
 </div>
 {% elif max_loaded %}
-<div id="load-more-container" class="text-center my-6">
+<div id="load-more-container" class="load-more-container text-center my-6">
     <div class="alert alert-info">
         <span class="mdi mdi-information-outline"></span>
         <span>Showing maximum of 1,000 results. Refine your filters to see more specific results.</span>

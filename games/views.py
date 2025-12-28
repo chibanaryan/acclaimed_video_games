@@ -817,6 +817,9 @@ class GameSearchView(RobustPaginationMixin, ListView):
             )
             context["max_loaded"] = page_obj.end_index() >= 1000
 
+        # Enable client-side filtering for fast subsequent interactions
+        context["enable_client_filtering"] = True
+
         return context
 
 
