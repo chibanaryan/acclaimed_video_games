@@ -2,35 +2,14 @@
 
 ## 2025-12-28
 
-- Fixed mobile rankings page flash (chevron→rank) by respecting actual filter state on initial load
-- Updated filter icons: Action→crosshairs, Simulation→car-sports, Retro Consoles→pac-man
-- Fixed Strategy icon showing crown instead of chess knight (wrong codepoint)
-- Fixed sidebar Home and News icons displaying wrong glyphs (updated codepoints and replaced subset font with full MDI font)
-- Fixed studio filter checkbox clipping at certain screen resolutions (increased size from sm to md)
-- Platform filters now display canonical year ranges (e.g., "NES (1983-1995)") with smaller/fainter styling
-- Platforms sorted by start year → end year → alphabetical for consistent ordering
-- Added MDI icons for genre categories (Action, Adventure, RPG, Strategy, Simulation, Sports, Puzzle, etc.)
-- Fixed filter category selection styling: manufacturer/genre category now uses strong highlight when fully selected
-- Removed checkboxes from platform and genre filters for cleaner appearance
-- Fixed unavailable platform greying in filter sidebar
-- Fixed platform group count double-counting (PC showed 817 instead of correct 548)
-- Filter sections now wait for client-side counts before displaying (shows loading skeleton)
-- Genre and platform sorting now uses client-side calculated counts
-- Changed filter visibility: unavailable options now dimmed instead of hidden (years, platforms, genres)
-- Year grid shows all years in decade as dimmed when no games match current filters
-- Platform groups and accordions show dimmed when all platforms unavailable
-- Added developer search to nav search bar (unified games + developers results)
-- Developer search results link to company page with studio pre-selected in filter
-- Added "See all game/developer results" links to search dropdown
-- Fixed "No results found" bug in mobile search (getter vs method issue with object spread)
-- Added "Report incorrect data" link to game detail pages (opens contact modal with pre-filled category and game name)
-- Added genre mappings: Bullet hell→Shooter, Roguelite→Roguelike, Minigame→Interactive Drama
-- Fixed orphan genre bug: new genres now created with proper hierarchy (parent, level, path)
-- Enhanced WikipediaGenreAdmin with hierarchy info display (parent, level, path, game count)
-- Fixed year heatmap not updating correctly when clearing filter sections (year counts now exclude year filters)
-- Converted "Clear All" button to client-side reset (no page reload, collapses filter dropdowns)
-- Removed server-side filtering fallback (pure client-side filtering for all filter operations)
-- Fixed mobile filter clear buttons to collapse expanded dropdowns
+- Fixed icon issues: updated filter icons (Action, Simulation, Retro, Strategy), sidebar icons, replaced MDI subset with full font
+- Platform filters: added canonical year ranges (e.g., "NES 1983-1995"), fixed count double-counting, improved sorting
+- Filter appearance: removed checkboxes, unavailable options now dimmed instead of hidden (years, platforms, genres)
+- Client-side filtering: loading skeleton for counts, client-side sorting, pure client-side filtering (removed server fallback)
+- Developer search: unified games + developers in nav search bar with "See all results" links
+- Added "Report incorrect data" link to game detail pages (opens contact modal with pre-filled info)
+- Genre system: added mappings (Bullet hell→Shooter, Roguelite→Roguelike), fixed orphan genre hierarchy bug
+- Bug fixes: mobile rankings flash, studio filter checkbox clipping, mobile search "No results" bug, year heatmap clearing
 
 ## 2025-12-27
 

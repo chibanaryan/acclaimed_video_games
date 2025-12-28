@@ -66,7 +66,7 @@
                 platforms: ['WIN', 'DOS', 'LIN', 'MAC']
             },
             arcadePlus: {
-                name: 'Arcade+',
+                name: 'Arcade, Mobile, & VR',
                 icon: 'mdi-space-invaders',
                 platforms: ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']
             },
@@ -513,7 +513,7 @@
                                 class="flex items-center gap-2 flex-1 text-left"
                                 @click="toggleManufacturerSelection(mfrKey); debouncedFilterUpdate();">
                             <template x-if="platformHierarchy[mfrKey].svgIcon">
-                                <svg class="w-5 h-5 fill-current" aria-hidden="true">
+                                <svg class="w-4 h-4 fill-current" aria-hidden="true">
                                     <use :href="'{% static 'games/images/platform-icons.svg' %}#' + platformHierarchy[mfrKey].svgIcon"></use>
                                 </svg>
                             </template>
