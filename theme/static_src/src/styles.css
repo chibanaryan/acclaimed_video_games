@@ -814,7 +814,7 @@ input[type="number"] {
   }
 
   .studio-tree-item input[type="checkbox"] {
-    @apply checkbox checkbox-sm checkbox-primary flex-shrink-0;
+    @apply checkbox checkbox-md checkbox-primary flex-shrink-0;
   }
 
   /* Filtered game list container */
