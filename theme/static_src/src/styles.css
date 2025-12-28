@@ -162,9 +162,14 @@
     @apply opacity-15;
   }
 
-  /* Unavailable/disabled filter option */
+  /* Unavailable/disabled filter option (completely hidden) */
   .is-unavailable {
     @apply invisible pointer-events-none;
+  }
+
+  /* Dimmed filter option - greyed out but still visible and clickable */
+  .is-dimmed {
+    @apply opacity-50 pointer-events-auto cursor-pointer;
   }
 
   /* Rotated state for chevron icons */
@@ -242,6 +247,16 @@
 
   .year-grid-cell-empty:hover {
     @apply outline-none;
+  }
+
+  /* Unavailable year cell - dimmed but still visible and clickable */
+  .year-grid-cell.is-unavailable {
+    --heatmap-opacity: 25% !important;
+    @apply visible opacity-50 cursor-pointer pointer-events-auto;
+  }
+
+  .year-grid-cell.is-unavailable:hover {
+    @apply opacity-80;
   }
 
   .year-grid-cell-hidden {
@@ -388,7 +403,7 @@
   }
 
   .genre-tile.is-unavailable {
-    @apply invisible pointer-events-none;
+    @apply visible opacity-50 pointer-events-auto cursor-pointer;
   }
 
   .genre-icon {
@@ -461,7 +476,12 @@
   }
 
   .platform-brand-group.is-empty {
-    @apply invisible pointer-events-none;
+    @apply visible opacity-50 pointer-events-auto;
+  }
+
+  /* When an unavailable group is expanded, restore full opacity for proper z-index stacking */
+  .platform-brand-group.is-empty.is-expanded {
+    @apply opacity-100;
   }
 
   .platform-brand-wrapper {
@@ -624,7 +644,12 @@
   }
 
   .platform-accordion.is-empty {
-    @apply invisible pointer-events-none;
+    @apply visible opacity-50 pointer-events-auto;
+  }
+
+  /* When an unavailable accordion is expanded, restore full opacity for proper z-index stacking */
+  .platform-accordion.is-empty.is-expanded {
+    @apply opacity-100;
   }
 
   .platform-accordion:has(.platform-accordion-header.is-fully-selected) {
@@ -757,7 +782,7 @@
   }
 
   .platform-checkbox.is-unavailable {
-    @apply invisible pointer-events-none;
+    @apply visible opacity-50 pointer-events-auto cursor-pointer;
   }
 
   /* Mobile responsive */

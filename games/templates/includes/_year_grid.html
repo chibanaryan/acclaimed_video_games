@@ -47,18 +47,21 @@
 
          buildDecades() {
              // Build structure from ORIGINAL data (decades always visible)
-             // but only show years that have games in current filtered results
+             // All years in a decade are shown (dimmed if 0 results in current filters)
              const currentCountMap = {};
              this.yearCounts.forEach(yc => {
                  currentCountMap[yc.year] = yc.count;
              });
 
+             // Build map of original counts for availability checking
+             const originalCountMap = {};
+             this.originalYearCounts.forEach(yc => {
+                 originalCountMap[yc.year] = yc.count;
+             });
+
              // Group years into decades from original data (newest first)
              const decadeMap = {};
              this.originalYearCounts.forEach(yc => {
-                 // Skip years with no games in original data
-                 if (yc.count === 0) return;
-
                  const decadeStart = Math.floor(yc.year / 10) * 10;
                  if (!decadeMap[decadeStart]) {
                      decadeMap[decadeStart] = {};
@@ -66,15 +69,16 @@
 
                  const position = yc.year % 10;
                  const currentCount = currentCountMap[yc.year] || 0;
+                 const originalCount = yc.count || 0;
 
-                 // Only show year if it has games in current filtered results
-                 if (currentCount > 0) {
-                     decadeMap[decadeStart][position] = {
-                         year: yc.year,
-                         count: currentCount
-                     };
-                 }
-                 // Always mark the position as existing to maintain decade structure
+                 // Always include years, track availability based on current filter results
+                 decadeMap[decadeStart][position] = {
+                     year: yc.year,
+                     count: currentCount,
+                     originalCount: originalCount,
+                     available: currentCount > 0  // Has games in current filters
+                 };
+                 // Track max position for decade width
                  if (!decadeMap[decadeStart].maxOriginalPos || position > decadeMap[decadeStart].maxOriginalPos) {
                      decadeMap[decadeStart].maxOriginalPos = position;
                  }
@@ -85,13 +89,23 @@
              this.decades = decadeStarts.map(ds => {
                  // Use original max position to maintain consistent decade width
                  const maxPos = decadeMap[ds].maxOriginalPos || 0;
-                 // Always create 10 cells, mark trailing ones as hidden
+                 // Create cells for all positions up to maxPos
                  const cells = [];
                  for (let i = 0; i < 10; i++) {
                      if (i > maxPos) {
-                         cells.push({ hidden: true });  // Invisible spacer
+                         cells.push({ hidden: true });  // Invisible spacer for future years
+                     } else if (decadeMap[ds][i]) {
+                         cells.push(decadeMap[ds][i]);  // Year with data
                      } else {
-                         cells.push(decadeMap[ds][i] || null);  // Data or empty (winks out)
+                         // Year with no games in original data - show as unavailable
+                         const year = ds + i;
+                         const currentCount = currentCountMap[year] || 0;
+                         cells.push({
+                             year: year,
+                             count: currentCount,
+                             originalCount: 0,
+                             available: false  // No games in original data
+                         });
                      }
                  }
                  return {
@@ -100,6 +114,12 @@
                      cells: cells
                  };
              });
+         },
+
+         // Check if a year is available (has games in current filters)
+         isYearAvailable(year) {
+             const yearData = this.yearCounts.find(yc => yc.year === year);
+             return yearData && yearData.count > 0;
          },
 
          getOpacity(count) {
@@ -297,7 +317,13 @@
                 {# Year cells - positioned by column (0-9) #}
                 <template x-for="(cell, idx) in decade.cells" :key="decade.start + '-' + idx">
                     <div class="year-grid-cell"
-                         :class="{ 'is-selected': cell && cell.year && isInRange(cell.year), 'is-dragging': cell && cell.year && isDragging && isInRange(cell.year), 'year-grid-cell-empty': !cell, 'year-grid-cell-hidden': cell && cell.hidden }"
+                         :class="{
+                             'is-selected': cell && cell.year && isInRange(cell.year),
+                             'is-dragging': cell && cell.year && isDragging && isInRange(cell.year),
+                             'year-grid-cell-empty': !cell,
+                             'year-grid-cell-hidden': cell && cell.hidden,
+                             'is-unavailable': cell && cell.year && !cell.available && !isInRange(cell.year)
+                         }"
                          :style="cell && cell.year ? '--heatmap-opacity: ' + getOpacity(cell.count) : ''"
                          :title="cell && cell.year ? cell.year + ': ' + cell.count + ' games' : ''"
                          @mousedown="cell && cell.year && startDrag(cell.year, $event)"

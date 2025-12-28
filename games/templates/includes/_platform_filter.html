@@ -430,9 +430,9 @@
         </template>
 
         {# Ungrouped platforms (if any) #}
-        <template x-if="getUngroupedPlatforms().some(p => isPlatformAvailable(p.id))">
+        <template x-if="getUngroupedPlatforms().length > 0">
             <div class="platform-accordion"
-                 :class="{ 'is-expanded': expandedGroups['other'] }">
+                 :class="{ 'is-empty': !getUngroupedPlatforms().some(p => isPlatformAvailable(p.id)), 'is-expanded': expandedGroups['other'] }">
                 <div class="platform-accordion-header"
                      :class="{
                          'has-selection': getUngroupedPlatforms().some(p => isPlatformSelected(p.id)),

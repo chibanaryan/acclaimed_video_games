@@ -2,6 +2,9 @@
 
 ## 2025-12-28
 
+- Changed filter visibility: unavailable options now dimmed instead of hidden (years, platforms, genres)
+- Year grid shows all years in decade as dimmed when no games match current filters
+- Platform groups and accordions show dimmed when all platforms unavailable
 - Added developer search to nav search bar (unified games + developers results)
 - Developer search results link to company page with studio pre-selected in filter
 - Added "See all game/developer results" links to search dropdown
