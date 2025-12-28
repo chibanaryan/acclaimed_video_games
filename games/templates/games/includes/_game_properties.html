@@ -42,14 +42,6 @@
         {% for platform in platforms %}<a href="{% url 'games-list' %}?platforms={{ platform.id }}&highlight={{ game.id }}" class="badge badge-outline hover:badge-primary transition-colors">{{ platform.name }}</a>{% endfor %}
     </div>
     {% endwith %}
-    <div>
-        <span class="text-base-content/70 font-semibold">Year:</span>
-        <span class="ml-2">
-            <a href="{% url 'games-list' %}?start={{ game.year_of_release }}&end={{ game.year_of_release }}&highlight={{ game.id }}" class="link link-primary font-medium">
-                {{ game.year_of_release }}
-            </a>
-        </span>
-    </div>
     {% with genres=game.wikipedia_genres.all %}
     {% if genres %}
     <div class="flex items-center flex-wrap gap-1">
