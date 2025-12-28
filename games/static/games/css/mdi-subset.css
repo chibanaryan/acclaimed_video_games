@@ -82,7 +82,7 @@
 .mdi-desktop-classic::before { content: "\F07C0"; }
 .mdi-cellphone::before { content: "\F011C"; }
 /* Other */
-.mdi-pac-man::before { content: "\F0BC5"; }
+.mdi-pac-man::before { content: "\F0BAF"; }
 .mdi-space-invaders::before { content: "\F0BC9"; }
 .mdi-web::before { content: "\F059F"; }
 .mdi-virtual-reality::before { content: "\F0895"; }
@@ -109,7 +109,9 @@
 .mdi-bullseye-arrow::before { content: "\F08C9"; }
 .mdi-image-filter-hdr::before { content: "\F02F5"; }
 .mdi-wizard-hat::before { content: "\F1477"; }
-.mdi-chess-knight::before { content: "\F0857"; }
+.mdi-chess-knight::before { content: "\F0858"; }
+.mdi-crosshairs::before { content: "\F01A3"; }
+.mdi-car-sports::before { content: "\F07AC"; }
 .mdi-airplane-takeoff::before { content: "\F05D5"; }
 .mdi-basketball::before { content: "\F0806"; }
 .mdi-puzzle::before { content: "\F0431"; }

@@ -2,6 +2,8 @@
 
 ## 2025-12-28
 
+- Updated filter icons: Action→crosshairs, Simulation→car-sports, Retro Consoles→pac-man
+- Fixed Strategy icon showing crown instead of chess knight (wrong codepoint)
 - Fixed sidebar Home and News icons displaying wrong glyphs (updated codepoints and replaced subset font with full MDI font)
 - Fixed studio filter checkbox clipping at certain screen resolutions (increased size from sm to md)
 - Platform filters now display canonical year ranges (e.g., "NES (1983-1995)") with smaller/fainter styling
