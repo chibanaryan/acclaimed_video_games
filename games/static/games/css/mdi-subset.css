@@ -93,7 +93,7 @@
 
 /* Navigation */
 .mdi-menu::before { content: "\F035C"; }
-.mdi-home::before { content: "\F0191"; }
+.mdi-home::before { content: "\F02DC"; }
 .mdi-palette::before { content: "\F03D8"; }
 
 /* Sidebar navigation icons */
@@ -101,7 +101,7 @@
 .mdi-medal::before { content: "\F0987"; }
 .mdi-podium::before { content: "\F0D25"; }
 .mdi-account-group::before { content: "\F0849"; }
-.mdi-newspaper::before { content: "\F0870"; }
+.mdi-newspaper::before { content: "\F0395"; }
 .mdi-information::before { content: "\F02FC"; }
 .mdi-heart::before { content: "\F02D1"; }
 
