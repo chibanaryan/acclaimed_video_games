@@ -10,16 +10,7 @@
             <span class="font-bold text-base">Filter by Studio</span>
         </div>
 
-        <p class="text-sm text-base-content/60 mb-3" x-text="selectedStudioIds.size > 0 ? `${selectedStudioIds.size} studio${selectedStudioIds.size !== 1 ? 's' : ''} selected` : 'All studios shown'"></p>
-
-        <div class="flex gap-2">
-            <button @click="selectAll()" class="btn btn-xs btn-outline flex-1">
-                Select All
-            </button>
-            <button @click="clearAll()" class="btn btn-xs btn-outline flex-1">
-                Clear All
-            </button>
-        </div>
+        <p class="text-sm text-base-content/60" x-text="selectedStudioIds.size > 0 ? `${selectedStudioIds.size} studio${selectedStudioIds.size !== 1 ? 's' : ''} selected` : 'All studios shown'"></p>
     </div>
 
     {# Checkbox tree - vertical list with indentation #}
@@ -28,7 +19,7 @@
         <label class="studio-tree-item" style="--level: {{ studio.level }};">
             <input type="checkbox"
                    data-studio-id="{{ studio.id }}"
-                   :checked="selectedStudioIds.has({{ studio.id }})"
+                   :checked="shouldBeChecked({{ studio.id }}, {{ studio.child_ids|safe }})"
                    @change="toggleStudio({{ studio.id }}, {{ studio.child_ids|safe }})"
                    x-effect="$el.indeterminate = isIndeterminate({{ studio.id }}, {{ studio.child_ids|safe }})"
                    class="checkbox checkbox-sm checkbox-primary flex-shrink-0">

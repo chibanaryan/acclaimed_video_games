@@ -91,20 +91,24 @@ function studioFilter() {
         toggleStudio(studioId, childIds) {
             // Create a new Set to trigger Alpine reactivity
             const newSelection = new Set(this.selectedStudioIds);
-            const isSelected = newSelection.has(studioId);
-            const isIndeterminate = !isSelected && this.isIndeterminate(studioId, childIds);
+            // Use shouldBeChecked to determine visual state (includes implicit selection)
+            const isChecked = this.shouldBeChecked(studioId, childIds);
+            const isIndeterminate = this.isIndeterminate(studioId, childIds);
 
-            if (isSelected) {
+            // Company (id: 0) is a virtual node - don't add it to selection
+            const isCompany = studioId === 0;
+
+            if (isChecked) {
                 // Checked → Unchecked: Uncheck studio + all children recursively
-                newSelection.delete(studioId);
+                if (!isCompany) newSelection.delete(studioId);
                 this.uncheckChildrenInSet(newSelection, childIds);
             } else if (isIndeterminate) {
                 // Indeterminate → Checked: Check studio + all children recursively
-                newSelection.add(studioId);
+                if (!isCompany) newSelection.add(studioId);
                 this.checkChildrenInSet(newSelection, childIds);
             } else {
                 // Unchecked → Checked: Check studio + all children recursively
-                newSelection.add(studioId);
+                if (!isCompany) newSelection.add(studioId);
                 this.checkChildrenInSet(newSelection, childIds);
             }
 
@@ -137,60 +141,72 @@ function studioFilter() {
         },
 
         /**
-         * Select all studios
+         * Get all descendant IDs for a set of child IDs
          */
-        selectAll() {
-            // Create a new Set to trigger Alpine reactivity
-            const allIds = new Set();
-            Object.keys(this.studioChildMap).forEach(id => {
-                allIds.add(parseInt(id));
+        getAllDescendants(childIds) {
+            const descendants = new Set();
+            childIds.forEach(id => {
+                descendants.add(id);
+                const grandchildIds = this.studioChildMap[id] || [];
+                this.getAllDescendants(grandchildIds).forEach(d => descendants.add(d));
             });
-            this.selectedStudioIds = allIds;
-            this.updateURL();
-            this.updateIndeterminateStates();
+            return descendants;
         },
 
         /**
-         * Clear all selections
+         * Check if a studio should appear checked
+         * Returns true if explicitly selected OR all children are checked (recursively)
          */
-        clearAll() {
-            // Create a new empty Set to trigger Alpine reactivity
-            this.selectedStudioIds = new Set();
-            this.updateURL();
-            this.updateIndeterminateStates();
+        shouldBeChecked(studioId, childIds) {
+            // If explicitly selected, it's checked
+            if (this.selectedStudioIds.has(studioId)) return true;
+
+            // If no children, not checked (would need to be explicit)
+            if (childIds.length === 0) return false;
+
+            // Check if ALL direct children are checked (recursively)
+            for (const childId of childIds) {
+                const grandchildIds = this.studioChildMap[childId] || [];
+                if (!this.shouldBeChecked(childId, grandchildIds)) {
+                    return false;
+                }
+            }
+            return true;
         },
 
         /**
          * Check if a studio should be in indeterminate state
-         * Returns true if some (but not all) descendants are selected
+         * Returns true if some (but not all) children are checked
          */
         isIndeterminate(studioId, childIds) {
             if (childIds.length === 0) return false;
 
-            // Get all descendant IDs (children + their descendants recursively)
-            const getAllDescendants = (ids) => {
-                const descendants = new Set();
-                ids.forEach(id => {
-                    descendants.add(id);
-                    const grandchildIds = this.studioChildMap[id] || [];
-                    getAllDescendants(grandchildIds).forEach(d => descendants.add(d));
-                });
-                return descendants;
-            };
-
-            const allDescendants = getAllDescendants(childIds);
-            if (allDescendants.size === 0) return false;
-
-            // Count how many descendants are selected
-            let selectedCount = 0;
-            allDescendants.forEach(id => {
-                if (this.selectedStudioIds.has(id)) {
-                    selectedCount++;
+            // Count how many direct children are checked (using recursive shouldBeChecked)
+            let checkedCount = 0;
+            for (const childId of childIds) {
+                const grandchildIds = this.studioChildMap[childId] || [];
+                if (this.shouldBeChecked(childId, grandchildIds)) {
+                    checkedCount++;
                 }
-            });
+            }
 
-            // Indeterminate if some (but not all) descendants are selected
-            return selectedCount > 0 && selectedCount < allDescendants.size;
+            // Indeterminate if some (but not all) children are checked
+            // Also indeterminate if no children are fully checked but some descendants are selected
+            if (checkedCount > 0 && checkedCount < childIds.length) {
+                return true;
+            }
+
+            // Check if any descendants are selected (for partial selection within a child)
+            if (checkedCount === 0) {
+                const allDescendants = this.getAllDescendants(childIds);
+                for (const id of allDescendants) {
+                    if (this.selectedStudioIds.has(id)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         },
 
         /**

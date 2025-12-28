@@ -10,6 +10,7 @@
 - Added clear (×) buttons next to selected genres for easy deselection
 - Updated desktop and mobile genre filter components with new single-select behavior
 - Added client-side filtering with IndexedDB caching for Rankings page (instant filter updates)
+- Replaced Select All/Clear All buttons with company checkbox at top of developer studio filter tree
 
 ## 2025-12-16
 

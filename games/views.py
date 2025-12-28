@@ -1011,6 +1011,25 @@ class CompanyDetailView(DetailView):
 
         # Add flattened studio data for filter UI
         studios_flat = self.flatten_studios(studios_with_games)
+
+        # Prepend company as root node for the checkbox tree
+        all_top_level_studio_ids = [s["id"] for s in studios_flat if s["level"] == 0]
+        company_game_ids = collect_unique_game_ids(studios_with_games)
+        company_entry = {
+            "id": 0,  # Special ID for company (DB IDs start at 1)
+            "name": company.name,
+            "game_ids": list(company_game_ids),
+            "level": 0,
+            "child_ids": all_top_level_studio_ids,
+        }
+
+        # Increment all studio levels by 1 (company is now level 0)
+        for studio in studios_flat:
+            studio["level"] += 1
+
+        # Insert company at the beginning
+        studios_flat.insert(0, company_entry)
+
         context["studios_flat"] = studios_flat
 
         # Collect all unique games for filter view
