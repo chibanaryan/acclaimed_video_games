@@ -193,8 +193,7 @@
         </button>
 
         {# Theme toggle #}
-        <div class="flex items-center justify-between px-3 py-2 mb-3 bg-base-200 rounded-lg">
-            <span class="text-base text-base-content/85">Theme</span>
+        <div class="flex items-center justify-center px-3 py-2 mb-2 bg-base-200 rounded-lg">
             <label class="flex cursor-pointer gap-2 items-center" for="theme-toggle">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="5" />
@@ -207,6 +206,22 @@
                 </svg>
             </label>
         </div>
+
+        {# Social links #}
+        <div class="flex justify-center gap-2">
+            <a href="https://x.com/AVGRankings" target="_blank" rel="noopener noreferrer"
+               class="btn btn-ghost btn-sm btn-square" title="Follow on X" aria-label="Follow on X">
+                <svg width="14" height="14" viewBox="0 0 1200 1227" fill="currentColor">
+                    <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/>
+                </svg>
+            </a>
+            <a href="https://bsky.app/profile/avgrankings.bsky.social" target="_blank" rel="noopener noreferrer"
+               class="btn btn-ghost btn-sm btn-square" title="Follow on Bluesky" aria-label="Follow on Bluesky">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5.202 2.857C7.954 4.922 10.913 9.11 12 11.358c1.087-2.247 4.046-6.436 6.798-8.501C20.783 1.366 24 .213 24 3.883c0 .732-.42 6.156-.667 7.037-.856 3.061-3.978 3.842-6.755 3.37 4.854.826 6.089 3.562 3.422 6.299-5.065 5.196-7.28-1.304-7.847-2.97-.104-.305-.152-.448-.153-.327 0-.121-.05.022-.153.327-.568 1.666-2.782 8.166-7.847 2.97-2.667-2.737-1.432-5.473 3.422-6.3-2.777.473-5.899-.308-6.755-3.369C.42 10.04 0 4.615 0 3.883c0-3.67 3.217-2.517 5.202-1.026"/>
+                </svg>
+            </a>
+        </div>
         <script nonce="{{ csp_nonce }}">
             // Initialize theme toggle immediately to prevent blink
             (function() {
@@ -217,24 +232,5 @@
                 }
             })();
         </script>
-
-        {# Social links #}
-        <div class="text-center">
-            <span class="text-sm text-base-content/85 block mb-2">Follow us</span>
-            <div class="flex justify-center gap-2">
-                <a href="https://x.com/AVGRankings" target="_blank" rel="noopener noreferrer"
-                   class="btn btn-ghost btn-sm btn-square" title="Follow on X" aria-label="Follow on X">
-                    <svg width="14" height="14" viewBox="0 0 1200 1227" fill="currentColor">
-                        <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/>
-                    </svg>
-                </a>
-                <a href="https://bsky.app/profile/avgrankings.bsky.social" target="_blank" rel="noopener noreferrer"
-                   class="btn btn-ghost btn-sm btn-square" title="Follow on Bluesky" aria-label="Follow on Bluesky">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M5.202 2.857C7.954 4.922 10.913 9.11 12 11.358c1.087-2.247 4.046-6.436 6.798-8.501C20.783 1.366 24 .213 24 3.883c0 .732-.42 6.156-.667 7.037-.856 3.061-3.978 3.842-6.755 3.37 4.854.826 6.089 3.562 3.422 6.299-5.065 5.196-7.28-1.304-7.847-2.97-.104-.305-.152-.448-.153-.327 0-.121-.05.022-.153.327-.568 1.666-2.782 8.166-7.847 2.97-2.667-2.737-1.432-5.473 3.422-6.3-2.777.473-5.899-.308-6.755-3.369C.42 10.04 0 4.615 0 3.883c0-3.67 3.217-2.517 5.202-1.026"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
     </div>
 </div>
