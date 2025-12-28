@@ -374,7 +374,7 @@ class GameListRenderer {
      * @returns {string} HTML string
      */
     getResultSummaryHtml(loaded, total) {
-        return `<span id="loaded-count">${loaded.toLocaleString()}</span> of ${total.toLocaleString()} games`;
+        return `<span id="loaded-count" class="loaded-count-value">${loaded.toLocaleString()}</span> of ${total.toLocaleString()} games`;
     }
 
     /**

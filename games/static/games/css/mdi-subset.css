@@ -96,6 +96,10 @@
 .mdi-home::before { content: "\F02DC"; }
 .mdi-palette::before { content: "\F03D8"; }
 
+/* Sorting */
+.mdi-sort::before { content: "\F04BA"; }
+.mdi-arrow-down::before { content: "\F0045"; }
+
 /* Sidebar navigation icons */
 .mdi-trophy::before { content: "\F0548"; }
 .mdi-medal::before { content: "\F0987"; }

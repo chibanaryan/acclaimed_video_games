@@ -605,7 +605,7 @@
      ">
 
     {# Page heading above the two-column layout - hidden on mobile (sticky header shows there) #}
-    <div id="search-heading" class="mb-4 hidden md:block">
+    <div id="search-heading" class="mb-4 hidden lg:block">
         <div class="flex justify-between items-center mb-1">
             <h1 class="text-2xl font-bold" id="search-title">
                 {{ filter_title|default:"Advanced Search" }}
@@ -618,8 +618,8 @@
         {% endif %}
     </div>
 
-    {# Mobile Sticky Header + Bottom Sheet (shown only on mobile) #}
-    <div class="md:hidden"
+    {# Mobile Sticky Header + Bottom Sheet (shown only on mobile/tablet) #}
+    <div class="lg:hidden"
          @filters-updated.window="$refs.mobileTitle.textContent = buildDynamicTitle()"
          x-data="{
             filterOpen: false,
@@ -687,7 +687,7 @@
     <div class="flex flex-col lg:flex-row gap-6">
         {# Left column - Results #}
         {# Max-width prevents column from taking full width during HTMX swap (desktop only) #}
-        <div class="flex-1 min-w-0 md:max-w-[calc(100%-444px)]" style="contain: layout;">
+        <div class="flex-1 min-w-0 lg:max-w-[calc(100%-444px)]" style="contain: layout;">
             <div id="game-results-container">
                 {% include 'games/includes/_game_list_results.html' %}
             </div>
@@ -695,7 +695,7 @@
 
         {# Right sidebar - Filters (hidden on mobile) #}
         {# Inline styles + CSS containment force browser to reserve space #}
-        <div class="hidden md:block w-full flex-shrink-0" style="width: 420px; min-width: 420px; contain: layout; will-change: contents;">
+        <div class="hidden lg:block w-full flex-shrink-0" style="width: 420px; min-width: 420px; contain: layout; will-change: contents;">
             <div style="min-height: 600px;">
                 {# Spacer to align with game list count #}
                 <div class="h-[calc(1rem+0.5rem)]"></div>

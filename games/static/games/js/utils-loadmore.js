@@ -311,10 +311,10 @@ function randomizeLoadMoreIcon(button) {
  * @param {number} total - Total number of items
  */
 function updateResultSummary(loaded, total) {
-    const loadedCountEl = document.getElementById('loaded-count');
-    if (loadedCountEl) {
-        loadedCountEl.textContent = loaded.toLocaleString();
-    }
+    // Update all loaded count elements (supports multiple instances for responsive layouts)
+    document.querySelectorAll('.loaded-count-value, #loaded-count').forEach(el => {
+        el.textContent = loaded.toLocaleString();
+    });
 }
 
 /**

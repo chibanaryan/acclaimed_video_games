@@ -1,14 +1,24 @@
 {# Filtered Game List - Pre-rendered games with visibility toggling #}
 <div class="filtered-game-list">
-    {# Sort dropdown #}
+    {# Compact sort dropdown #}
     <div class="mb-4">
         <div class="flex items-center gap-3 mb-3">
-            <label for="sort-select" class="text-sm font-medium text-base-content/70 whitespace-nowrap">Sort by:</label>
-            <select id="sort-select" x-model="sortBy" @change="sortGames()" class="select select-sm select-bordered min-w-[180px]">
-                <option value="year">Release Year</option>
-                <option value="rank">Global Rank</option>
-                <option value="name">Alphabetical</option>
-            </select>
+            <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+                <button type="button"
+                        class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                        @click="sortOpen = !sortOpen">
+                    <span class="mdi mdi-sort text-base"></span>
+                    <span class="text-sm" x-text="sortBy === 'rank' ? 'Rank' : sortBy === 'year' ? 'Year' : 'A-Z'"></span>
+                    <span class="mdi mdi-chevron-down text-xs"></span>
+                </button>
+                <ul x-show="sortOpen" x-cloak
+                    class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                    @click="sortOpen = false">
+                    <li><button type="button" @click="sortBy = 'year'; sortGames()" :class="sortBy === 'year' ? 'active' : ''">Year</button></li>
+                    <li><button type="button" @click="sortBy = 'rank'; sortGames()" :class="sortBy === 'rank' ? 'active' : ''">Rank</button></li>
+                    <li><button type="button" @click="sortBy = 'name'; sortGames()" :class="sortBy === 'name' ? 'active' : ''">A-Z</button></li>
+                </ul>
+            </div>
         </div>
 
         {# Info message when no studios selected #}

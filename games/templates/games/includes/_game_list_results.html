@@ -12,55 +12,70 @@
 <script type="application/json" id="platform-counts-update">{{ platform_counts_json|tojson }}</script>
 {% endif %}
 
-{# Desktop: Jump to rank + sort + result count #}
-<div class="hidden md:flex items-center justify-between gap-4 mb-2 text-sm">
+{# Desktop: Jump to rank + sort + result count (horizontal row at lg+) #}
+<div class="hidden lg:flex items-center justify-between gap-4 mb-2 text-sm">
     {# Jump to Rank - Left side #}
-    <div class="flex items-center gap-2 flex-shrink-0">
-        <span class="text-base-content/60 whitespace-nowrap">Jump to rank:</span>
+    <div class="flex items-center gap-1 flex-shrink-0">
         <input type="number"
                id="jump-to-rank-input"
                min="1"
                max="{{ total_count }}"
-               placeholder="#"
-               class="input input-xs input-bordered w-16 text-center"
+               placeholder="Rank #"
+               class="input input-xs input-bordered w-20 text-center"
                data-total="{{ total_count }}"
                data-loaded="{{ loaded_count }}"
                data-per-page="100">
         <button type="button"
                 id="jump-to-rank-btn"
-                class="btn btn-xs btn-primary">
-            Go
+                class="btn btn-xs btn-primary btn-square"
+                title="Jump to rank">
+            <span class="mdi mdi-arrow-down"></span>
         </button>
     </div>
-    {# Sort dropdown - Center (hidden on medium, shown on large) #}
-    <div class="hidden lg:flex items-center gap-3 flex-shrink-0">
-        <span class="text-base-content/60 whitespace-nowrap">Sort by:</span>
-        <select id="sort-select"
-                @change="updateSort($event.target.value)"
-                :value="filters.sort"
-                class="select select-sm select-bordered min-w-[180px]">
-            <option value="rank">Global Rank</option>
-            <option value="year">Release Year</option>
-            <option value="name">Alphabetical</option>
-        </select>
-    </div>
-    {# Result count - Right side #}
-    <div class="result-count text-base-content/60 whitespace-nowrap flex-shrink-0">
-        {% if total_count %}Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
+    {# Sort + Result count - Right side #}
+    <div class="flex items-center gap-4">
+        {# Compact sort dropdown #}
+        <div class="dropdown dropdown-end flex-shrink-0" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+            <button type="button"
+                    class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                    @click="sortOpen = !sortOpen">
+                <span class="mdi mdi-sort text-base"></span>
+                <span class="text-sm" x-text="filters.sort === 'rank' ? 'Rank' : filters.sort === 'year' ? 'Year' : 'A-Z'"></span>
+                <span class="mdi mdi-chevron-down text-xs"></span>
+            </button>
+            <ul x-show="sortOpen" x-cloak
+                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                @click="sortOpen = false">
+                <li><button type="button" @click="updateSort('rank')" :class="filters.sort === 'rank' ? 'active' : ''">Rank</button></li>
+                <li><button type="button" @click="updateSort('year')" :class="filters.sort === 'year' ? 'active' : ''">Year</button></li>
+                <li><button type="button" @click="updateSort('name')" :class="filters.sort === 'name' ? 'active' : ''">A-Z</button></li>
+            </ul>
+        </div>
+        {# Result count #}
+        <div class="result-count text-base-content/60 whitespace-nowrap flex-shrink-0">
+            {% if total_count %}Showing <span id="loaded-count" class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
+        </div>
     </div>
 </div>
 
-{# Mobile + Tablet: Sort dropdown (hidden on large screens where inline sort shows) #}
-<div class="lg:hidden flex items-center gap-3 mb-2">
-    <span class="text-base-content/60 whitespace-nowrap">Sort by:</span>
-    <select id="sort-select-mobile"
-            @change="updateSort($event.target.value)"
-            :value="filters.sort"
-            class="select select-sm select-bordered min-w-[180px]">
-        <option value="rank">Global Rank</option>
-        <option value="year">Release Year</option>
-        <option value="name">Alphabetical</option>
-    </select>
+{# Mobile: Compact sort dropdown (hidden at tablet+ where inline sort shows) #}
+<div class="lg:hidden flex items-center mb-2">
+    <div class="dropdown" x-data="{ sortOpenMobile: false }" @click.away="sortOpenMobile = false">
+        <button type="button"
+                class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                @click="sortOpenMobile = !sortOpenMobile">
+            <span class="mdi mdi-tune-variant text-base"></span>
+            <span class="text-sm" x-text="filters.sort === 'rank' ? 'Rank' : filters.sort === 'year' ? 'Year' : 'A-Z'"></span>
+            <span class="mdi mdi-chevron-down text-xs"></span>
+        </button>
+        <ul x-show="sortOpenMobile" x-cloak
+            class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+            @click="sortOpenMobile = false">
+            <li><button type="button" @click="updateSort('rank')" :class="filters.sort === 'rank' ? 'active' : ''">Rank</button></li>
+            <li><button type="button" @click="updateSort('year')" :class="filters.sort === 'year' ? 'active' : ''">Year</button></li>
+            <li><button type="button" @click="updateSort('name')" :class="filters.sort === 'name' ? 'active' : ''">A-Z</button></li>
+        </ul>
+    </div>
 </div>
 
 {% if games %}
