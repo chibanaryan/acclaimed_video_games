@@ -582,6 +582,29 @@ class GameFilterEngine {
             max: max === -Infinity ? new Date().getFullYear() : max
         };
     }
+
+    /**
+     * Get year ranges for each platform based on actual game data
+     * @returns {Object} Map of platformId -> { start: minYear, end: maxYear }
+     */
+    getPlatformYearRanges() {
+        const ranges = {};
+
+        for (const game of this.games) {
+            if (game.y === null) continue;
+
+            for (const pid of game.p) {
+                if (!ranges[pid]) {
+                    ranges[pid] = { start: game.y, end: game.y };
+                } else {
+                    if (game.y < ranges[pid].start) ranges[pid].start = game.y;
+                    if (game.y > ranges[pid].end) ranges[pid].end = game.y;
+                }
+            }
+        }
+
+        return ranges;
+    }
 }
 
 // Export for use in other modules

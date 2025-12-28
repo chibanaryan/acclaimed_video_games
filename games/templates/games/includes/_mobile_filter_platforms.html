@@ -82,64 +82,52 @@
             }
         },
 
-        // Platform year ranges for display
+        // Canonical platform year ranges (historical active years, not derived from game data)
         platformYearRanges: {
-            'NES': { start: 1983, end: 1995 }, 'FDS': { start: 1986, end: 1992 },
-            'SNES': { start: 1990, end: 2003 }, 'N64': { start: 1996, end: 2002 },
-            'GC': { start: 2001, end: 2007 }, 'Wii': { start: 2006, end: 2013 },
-            'WiiU': { start: 2012, end: 2017 }, 'SW': { start: 2017, end: null },
-            'GB': { start: 1989, end: 2003 }, 'GBC': { start: 1998, end: 2003 },
-            'GBA': { start: 2001, end: 2010 }, 'DS': { start: 2004, end: 2013 },
+            // Nintendo
+            NES: { start: 1983, end: 1995 }, FDS: { start: 1986, end: 1993 },
+            SNES: { start: 1990, end: 1999 }, N64: { start: 1996, end: 2002 },
+            GC: { start: 2001, end: 2007 }, Wii: { start: 2006, end: 2013 },
+            WiiU: { start: 2012, end: 2017 }, SW: { start: 2017, end: null },
+            GB: { start: 1989, end: 1999 }, GBC: { start: 1998, end: 2003 },
+            GBA: { start: 2001, end: 2008 }, DS: { start: 2004, end: 2014 },
             '3DS': { start: 2011, end: 2020 },
-            'PS': { start: 1994, end: 2006 }, 'PS2': { start: 2000, end: 2013 },
-            'PS3': { start: 2006, end: 2017 }, 'PS4': { start: 2013, end: null },
-            'PS5': { start: 2020, end: null }, 'PSVR': { start: 2016, end: null },
-            'PSP': { start: 2004, end: 2014 }, 'PSV': { start: 2011, end: 2019 },
-            'Xbox': { start: 2001, end: 2009 }, 'X360': { start: 2005, end: 2016 },
-            'XB1': { start: 2013, end: null }, 'XBXS': { start: 2020, end: null },
-            'SMS': { start: 1985, end: 1996 }, 'GEN': { start: 1988, end: 1997 },
-            'SCD': { start: 1991, end: 1996 }, 'SAT': { start: 1994, end: 2000 },
-            'DC': { start: 1998, end: 2001 }, 'GG': { start: 1990, end: 1997 },
-            'DOS': { start: 1981, end: 2000 }, 'WIN': { start: 1985, end: null },
-            'MAC': { start: 1984, end: null }, 'LIN': { start: 1991, end: null },
-            'ARC': { start: 1970, end: null }, 'iOS': { start: 2007, end: null },
-            'AND': { start: 2008, end: null }, 'LMD': { start: 2000, end: null },
-            'VR': { start: 2016, end: null }, 'BR': { start: 1990, end: null },
-            'A26': { start: 1977, end: 1992 }, 'INTV': { start: 1979, end: 1991 },
-            'CV': { start: 1982, end: 1985 }, 'A52': { start: 1982, end: 1984 },
-            'A78': { start: 1986, end: 1992 }, 'TG16': { start: 1987, end: 1994 },
-            'NG': { start: 1990, end: 2004 }, 'LYNX': { start: 1989, end: 1995 },
-            '3DO': { start: 1993, end: 1996 }, 'JAG': { start: 1993, end: 1996 },
-            'NGP': { start: 1998, end: 2001 }, 'WS': { start: 1999, end: 2003 },
-            'A2': { start: 1977, end: 1993 }, 'A8': { start: 1979, end: 1992 },
-            'ZXS': { start: 1982, end: 1992 }, 'C64': { start: 1982, end: 1994 },
-            'CPC': { start: 1984, end: 1990 }, 'MSX': { start: 1983, end: 1995 },
-            'AMI': { start: 1985, end: 1996 }, 'AST': { start: 1985, end: 1993 },
-            'BBCM': { start: 1981, end: 1994 }, 'PC88': { start: 1981, end: 1998 },
-            'PC98': { start: 1982, end: 2000 }, 'FM7': { start: 1982, end: 1988 },
-            'FMT': { start: 1989, end: 1997 }, 'SX1': { start: 1984, end: 1986 },
-            'T80': { start: 1985, end: 1990 }, 'TCC': { start: 1983, end: 1986 },
-            'VC20': { start: 1980, end: 1985 }, 'CD32': { start: 1993, end: 1994 }
-        },
-
-        // Platform release years for chronological sorting
-        platformReleaseYears: {
-            'NES': 1983, 'FDS': 1986, 'GB': 1989, 'SNES': 1990, 'GBC': 1998,
-            'N64': 1996, 'GBA': 2001, 'GC': 2001, 'DS': 2004, 'Wii': 2006,
-            '3DS': 2011, 'WiiU': 2012, 'SW': 2017,
-            'PS': 1994, 'PS2': 2000, 'PSP': 2004, 'PS3': 2006, 'PSV': 2011,
-            'PS4': 2013, 'PSVR': 2016, 'PS5': 2020,
-            'Xbox': 2001, 'X360': 2005, 'XB1': 2013, 'XBXS': 2020,
-            'SMS': 1985, 'GEN': 1988, 'GG': 1990, 'SCD': 1991, 'SAT': 1994, 'DC': 1998,
-            'DOS': 1981, 'WIN': 1985, 'MAC': 1984, 'LIN': 1991,
-            'ARC': 1970, 'iOS': 2007, 'AND': 2008, 'LMD': 2000, 'VR': 2016, 'BR': 1990,
-            'A26': 1977, 'INTV': 1979, 'CV': 1982, 'A52': 1982, 'A78': 1986,
-            'TG16': 1987, 'NG': 1990, 'LYNX': 1989, '3DO': 1993, 'JAG': 1993,
-            'NGP': 1998, 'WS': 1999,
-            'A2': 1977, 'A8': 1979, 'ZXS': 1982, 'C64': 1982, 'CPC': 1984,
-            'MSX': 1983, 'AMI': 1985, 'AST': 1985, 'BBCM': 1981,
-            'PC88': 1981, 'PC98': 1982, 'FM7': 1982, 'FMT': 1989,
-            'SX1': 1984, 'T80': 1985, 'TCC': 1983, 'VC20': 1980, 'CD32': 1993
+            // PlayStation
+            PS: { start: 1994, end: 2006 }, PS2: { start: 2000, end: 2013 },
+            PS3: { start: 2006, end: 2017 }, PS4: { start: 2013, end: null },
+            PS5: { start: 2020, end: null }, PSVR: { start: 2016, end: 2023 },
+            PSP: { start: 2004, end: 2014 }, PSV: { start: 2011, end: 2019 },
+            // Xbox
+            Xbox: { start: 2001, end: 2009 }, X360: { start: 2005, end: 2016 },
+            XB1: { start: 2013, end: 2020 }, XBXS: { start: 2020, end: null },
+            // Sega
+            SMS: { start: 1985, end: 1996 }, GEN: { start: 1988, end: 1997 },
+            SCD: { start: 1991, end: 1996 }, SAT: { start: 1994, end: 1998 },
+            DC: { start: 1998, end: 2001 }, GG: { start: 1990, end: 1997 },
+            // PC
+            WIN: { start: 1985, end: null }, DOS: { start: 1981, end: 2000 },
+            LIN: { start: 1991, end: null }, MAC: { start: 1984, end: null },
+            // Arcade+
+            ARC: { start: 1972, end: null }, AND: { start: 2008, end: null },
+            iOS: { start: 2007, end: null }, LMD: { start: 1997, end: 2012 },
+            VR: { start: 2016, end: null }, BR: { start: 2004, end: null },
+            // Retro Consoles
+            A26: { start: 1977, end: 1992 }, A52: { start: 1982, end: 1984 },
+            A78: { start: 1986, end: 1992 }, INTV: { start: 1979, end: 1990 },
+            CV: { start: 1982, end: 1985 }, TG16: { start: 1987, end: 1994 },
+            '3DO': { start: 1993, end: 1996 }, NG: { start: 1990, end: 2004 },
+            JAG: { start: 1993, end: 1996 }, LYNX: { start: 1989, end: 1995 },
+            NGP: { start: 1998, end: 2001 }, WS: { start: 1999, end: 2003 },
+            // Microcomputers
+            C64: { start: 1982, end: 1994 }, AMI: { start: 1985, end: 1996 },
+            CD32: { start: 1993, end: 1994 }, MSX: { start: 1983, end: 1995 },
+            CPC: { start: 1984, end: 1990 }, ZXS: { start: 1982, end: 1992 },
+            AST: { start: 1985, end: 1993 }, BBCM: { start: 1981, end: 1994 },
+            PC88: { start: 1981, end: 1991 }, PC98: { start: 1982, end: 2000 },
+            FMT: { start: 1989, end: 1997 }, FM7: { start: 1982, end: 1988 },
+            SX1: { start: 1982, end: 1988 }, T80: { start: 1977, end: 1981 },
+            TCC: { start: 1980, end: 1991 }, VC20: { start: 1980, end: 1985 },
+            A8: { start: 1979, end: 1992 }, A2: { start: 1977, end: 1993 }
         },
 
         // Get platform object by code
@@ -153,20 +141,22 @@
             return platform.filtered_count !== undefined ? platform.filtered_count : (platform.game_count || 0);
         },
 
-        // Format year as 2-digit with apostrophe (e.g., 1991 -> '91)
-        formatYear(year) {
-            if (!year) return '';
-            return &quot;'&quot; + String(year).slice(-2);
+        // Format platform years only (for display next to name)
+        formatPlatformYears(platform) {
+            if (!platform) return '';
+            const range = this.platformYearRanges[platform.code];
+            if (!range) return '';
+            const endYear = range.end ? range.end : 'now';
+            return '(' + range.start + '-' + endYear + ')';
         },
 
-        // Format platform name with year range (short format)
+        // Format platform name with year range (for tooltips)
         formatPlatformName(platform) {
             if (!platform) return '';
             const range = this.platformYearRanges[platform.code];
             if (!range) return platform.name;
-            const startYear = this.formatYear(range.start);
-            const endYear = range.end ? this.formatYear(range.end) : 'now';
-            return platform.name + ' (' + startYear + '-' + endYear + ')';
+            const endYear = range.end ? range.end : 'now';
+            return platform.name + ' (' + range.start + '-' + endYear + ')';
         },
 
         // Get sorted manufacturer keys by total game count
@@ -215,7 +205,7 @@
             }, 0);
         },
 
-        // Get platforms for a form factor, sorted chronologically
+        // Get platforms for a form factor, sorted chronologically (primary: start year, secondary: end year, tertiary: alphabetical)
         getFormFactorPlatforms(mfrKey, ffKey) {
             const mfr = this.platformHierarchy[mfrKey];
             if (!mfr || !mfr.formFactors || !mfr.formFactors[ffKey]) return [];
@@ -223,13 +213,17 @@
                 .map(code => this.getPlatformByCode(code))
                 .filter(p => p)
                 .sort((a, b) => {
-                    const yearA = this.platformReleaseYears[a.code] || 9999;
-                    const yearB = this.platformReleaseYears[b.code] || 9999;
-                    return yearA - yearB;
+                    const rangeA = this.platformYearRanges[a.code] || { start: 9999, end: 9999 };
+                    const rangeB = this.platformYearRanges[b.code] || { start: 9999, end: 9999 };
+                    if (rangeA.start !== rangeB.start) return rangeA.start - rangeB.start;
+                    const endA = rangeA.end || 9999;
+                    const endB = rangeB.end || 9999;
+                    if (endA !== endB) return endA - endB;
+                    return a.name.localeCompare(b.name);
                 });
         },
 
-        // Get flat platforms for a manufacturer (no form factors)
+        // Get flat platforms for a manufacturer (no form factors), sorted chronologically
         getFlatPlatforms(mfrKey) {
             const mfr = this.platformHierarchy[mfrKey];
             if (!mfr || !mfr.platforms) return [];
@@ -237,9 +231,13 @@
                 .map(code => this.getPlatformByCode(code))
                 .filter(p => p)
                 .sort((a, b) => {
-                    const yearA = this.platformReleaseYears[a.code] || 9999;
-                    const yearB = this.platformReleaseYears[b.code] || 9999;
-                    return yearA - yearB;
+                    const rangeA = this.platformYearRanges[a.code] || { start: 9999, end: 9999 };
+                    const rangeB = this.platformYearRanges[b.code] || { start: 9999, end: 9999 };
+                    if (rangeA.start !== rangeB.start) return rangeA.start - rangeB.start;
+                    const endA = rangeA.end || 9999;
+                    const endB = rangeB.end || 9999;
+                    if (endA !== endB) return endA - endB;
+                    return a.name.localeCompare(b.name);
                 });
         },
 
@@ -577,7 +575,10 @@
                                                          'opacity-40': !isPlatformAvailable(platform.id) && !isPlatformSelected(platform.id)
                                                      }"
                                                      @click="togglePlatform(platform.id); debouncedFilterUpdate();">
-                                                    <span class="text-sm flex-1" x-text="formatPlatformName(platform)"></span>
+                                                    <span class="text-sm flex-1 flex items-baseline gap-1 min-w-0">
+                                                        <span class="truncate" x-text="platform.name"></span>
+                                                        <span class="platform-years flex-shrink-0" x-text="formatPlatformYears(platform)"></span>
+                                                    </span>
                                                     <span class="text-xs opacity-60 tabular-nums" x-text="getEffectiveCount(platform)"></span>
                                                 </div>
                                             </template>
@@ -598,7 +599,10 @@
                                              'opacity-40': !isPlatformAvailable(platform.id) && !isPlatformSelected(platform.id)
                                          }"
                                          @click="togglePlatform(platform.id); debouncedFilterUpdate();">
-                                        <span class="text-sm flex-1" x-text="formatPlatformName(platform)"></span>
+                                        <span class="text-sm flex-1 flex items-baseline gap-1 min-w-0">
+                                            <span class="truncate" x-text="platform.name"></span>
+                                            <span class="platform-years flex-shrink-0" x-text="formatPlatformYears(platform)"></span>
+                                        </span>
                                         <span class="text-xs opacity-60 tabular-nums" x-text="getEffectiveCount(platform)"></span>
                                     </div>
                                 </template>

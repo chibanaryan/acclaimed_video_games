@@ -59,6 +59,21 @@ Downloads all game data from production Heroku and loads it into local SQLite. A
 python3 manage.py collectstatic
 ```
 
+### Heroku Commands
+
+**Important:** When running commands on Heroku, use `--` after `run` to separate Heroku flags from the command:
+
+```bash
+# Run Django shell with a command
+heroku run -- python manage.py shell -c "from games.models import Game; print(Game.objects.count())"
+
+# Run a management command
+heroku run -- python manage.py migrate
+
+# Open interactive shell
+heroku run -- python manage.py shell
+```
+
 ## Architecture
 
 ### Backend Structure

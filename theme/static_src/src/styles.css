@@ -487,6 +487,10 @@
   .form-factor-header {
     @apply text-xs font-medium text-base-content/70 py-1 px-2;
   }
+
+  .platform-years {
+    @apply text-xs opacity-60 ml-1;
+  }
 }
 
 /* Game Row Component - Desktop and Mobile */

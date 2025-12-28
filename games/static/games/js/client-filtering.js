@@ -63,6 +63,12 @@ class ClientSideFiltering {
 
                 if (options.onLoadComplete) options.onLoadComplete();
 
+                // Dispatch platform year ranges for filter display
+                const platformYearRanges = this.engine.getPlatformYearRanges();
+                window.dispatchEvent(new CustomEvent('platform-year-ranges-update', {
+                    detail: platformYearRanges
+                }));
+
                 console.log(`[CSF] Initialized with ${data.games.length} games`);
                 return true;
             } catch (e) {
