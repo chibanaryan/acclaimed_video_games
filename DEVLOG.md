@@ -10,7 +10,8 @@
 - Added "Report incorrect data" link to game detail pages (opens contact modal with pre-filled info)
 - Genre system: added mappings (Bullet hell→Shooter, Roguelite→Roguelike), fixed orphan genre hierarchy bug
 - Bug fixes: mobile rankings flash, studio filter checkbox clipping, mobile search "No results" bug, year heatmap clearing
-- Tablet layout: narrowed nav sidebar (256px→208px), compact sort/jump controls, fixed breakpoints at 1024px
+- Tablet layout: narrowed sidebar, compact controls, unified mobile/desktop rankings row layout
+- Jump-to-game: now works for all sort modes (position-based), fixed mobile scroll offset for fixed header
 
 ## 2025-12-27
 

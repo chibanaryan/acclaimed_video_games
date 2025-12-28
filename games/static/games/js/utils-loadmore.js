@@ -55,30 +55,35 @@ function initLoadMore() {
 }
 
 /**
- * Initializes Jump to Rank functionality
+ * Initializes Jump to Rank functionality for all instances (desktop + mobile)
  */
 function initJumpToRank() {
-    const input = document.getElementById('jump-to-rank-input');
-    const button = document.getElementById('jump-to-rank-btn');
+    const inputs = document.querySelectorAll('.jump-to-rank-input');
+    const buttons = document.querySelectorAll('.jump-to-rank-btn');
 
-    if (!input || !button) return;
+    if (!inputs.length || !buttons.length) return;
 
-    // Clone button to remove existing listeners (prevents duplicates after DOM updates)
-    const newButton = button.cloneNode(true);
-    button.parentNode.replaceChild(newButton, button);
+    // Initialize each input/button pair
+    inputs.forEach((input, index) => {
+        const button = buttons[index];
+        if (!button) return;
 
-    // Clone input to remove existing listeners
-    const newInput = input.cloneNode(true);
-    input.parentNode.replaceChild(newInput, input);
+        // Clone to remove existing listeners (prevents duplicates after DOM updates)
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
 
-    // Handle button click
-    newButton.addEventListener('click', () => handleJumpToRank(newInput));
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
 
-    // Handle Enter key in input
-    newInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleJumpToRank(newInput);
-        }
+        // Handle button click
+        newButton.addEventListener('click', () => handleJumpToRank(newInput));
+
+        // Handle Enter key in input
+        newInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleJumpToRank(newInput);
+            }
+        });
     });
 }
 
@@ -109,11 +114,11 @@ async function handleJumpToRank(input) {
     const targetPage = Math.ceil(targetRank / perPage);
     const currentPage = Math.ceil(loaded / perPage);
 
-    // Show loading state
-    const button = document.getElementById('jump-to-rank-btn');
-    button.classList.add('loading');
-    button.disabled = true;
-    input.disabled = true;
+    // Show loading state on all instances
+    const allButtons = document.querySelectorAll('.jump-to-rank-btn');
+    const allInputs = document.querySelectorAll('.jump-to-rank-input');
+    allButtons.forEach(btn => { btn.classList.add('loading'); btn.disabled = true; });
+    allInputs.forEach(inp => { inp.disabled = true; });
 
     try {
         // Load pages progressively to reach target
@@ -128,10 +133,8 @@ async function handleJumpToRank(input) {
     } catch (err) {
         console.error('Jump to rank error:', err);
     } finally {
-        button.classList.remove('loading');
-        button.disabled = false;
-        input.disabled = false;
-        input.value = ''; // Clear input
+        allButtons.forEach(btn => { btn.classList.remove('loading'); btn.disabled = false; });
+        allInputs.forEach(inp => { inp.disabled = false; inp.value = ''; });
     }
 }
 
@@ -178,11 +181,10 @@ async function loadPage(page) {
     if (meta) {
         updateResultSummary(meta.loadedCount, meta.totalCount);
 
-        // Update jump to rank input data
-        const input = document.getElementById('jump-to-rank-input');
-        if (input) {
+        // Update all jump to rank inputs data
+        document.querySelectorAll('.jump-to-rank-input').forEach(input => {
             input.dataset.loaded = meta.loadedCount;
-        }
+        });
 
         // Update or remove load more button
         const loadMoreButton = document.querySelector('.load-more-button');
@@ -193,34 +195,40 @@ async function loadPage(page) {
 }
 
 /**
- * Scrolls to and highlights a specific rank
- * @param {number} rank - The rank number to scroll to
+ * Scrolls to and highlights a specific position in the list
+ * @param {number} position - The 1-based position to scroll to (e.g., 50 = 50th game in list)
  */
-function scrollToAndHighlightRank(rank) {
-    // Find the game row by rank
-    const gameRows = document.querySelectorAll('.game-row');
-    let targetRow = null;
+function scrollToAndHighlightRank(position) {
+    // Get all game rows - desktop and mobile versions are separate elements
+    // Desktop rows have class 'desktop', mobile rows have class 'game-card-mobile'
+    const desktopRows = document.querySelectorAll('.game-row.desktop');
+    const mobileRows = document.querySelectorAll('.game-row.game-card-mobile');
 
-    for (const row of gameRows) {
-        const rankSpan = row.querySelector('.text-2xl.font-bold.text-primary');
-        if (rankSpan && parseInt(rankSpan.textContent.trim()) === rank) {
-            targetRow = row;
-            break;
-        }
-    }
+    // Position is 1-based, arrays are 0-based
+    const index = position - 1;
 
-    if (!targetRow) {
-        console.warn('Could not find rank:', rank);
+    const desktopRow = desktopRows[index];
+    const mobileRow = mobileRows[index];
+
+    if (!desktopRow && !mobileRow) {
+        console.warn('Could not find position:', position);
         return;
     }
 
-    // Scroll to the row with smooth scrolling
-    targetRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Find the visible row (desktop rows are hidden on mobile and vice versa)
+    const visibleRow = (desktopRow && desktopRow.offsetParent !== null) ? desktopRow :
+                       (mobileRow && mobileRow.offsetParent !== null) ? mobileRow :
+                       desktopRow || mobileRow;
 
-    // Add temporary highlight
-    targetRow.classList.add('is-highlighted');
+    // Scroll to the row with smooth scrolling
+    visibleRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Add temporary highlight to both rows (desktop and mobile)
+    if (desktopRow) desktopRow.classList.add('is-highlighted');
+    if (mobileRow) mobileRow.classList.add('is-highlighted');
     setTimeout(() => {
-        targetRow.classList.remove('is-highlighted');
+        if (desktopRow) desktopRow.classList.remove('is-highlighted');
+        if (mobileRow) mobileRow.classList.remove('is-highlighted');
     }, 3000); // Remove highlight after 3 seconds
 }
 
