@@ -79,8 +79,6 @@
                 filters.genres = [];  // Deselect
             } else {
                 filters.genres = [id];  // Replace with single selection
-                // Expand the category when selecting
-                this.expandedCategories[categoryId] = true;
             }
         },
 
@@ -94,11 +92,7 @@
 
         // Category management
         isCategoryExpanded(categoryId) {
-            // Default to expanded if category or any child selected
-            if (this.expandedCategories[categoryId] === undefined) {
-                return this.isCategorySelected(categoryId) || this.hasSelectedChildren(categoryId);
-            }
-            return this.expandedCategories[categoryId];
+            return this.expandedCategories[categoryId] === true;
         },
 
         toggleCategoryExpansion(categoryId) {
@@ -158,35 +152,35 @@
         <div class="space-y-3">
             <template x-for="category in rootCategories" :key="category.id">
                 <div class="space-y-2">
-                    <div class="flex items-center gap-2 py-1 px-2 rounded-lg"
+                    <div class="flex items-center gap-1 py-1.5 px-2 rounded-lg transition-colors"
                          :class="{
-                             'bg-primary/10': hasCategoryOrChildrenSelected(category.id)
+                             'bg-primary/10': hasCategoryOrChildrenSelected(category.id),
+                             'text-primary': hasCategoryOrChildrenSelected(category.id),
+                             'hover:bg-base-300/50': !isCategorySelected(category.id)
                          }">
-                        {# Checkbox to select category (selects category ID itself) #}
-                        <label class="cursor-pointer" @click.stop>
-                            <input type="checkbox"
-                                   :checked="isCategorySelected(category.id)"
-                                   @change="toggleCategorySelection(category.id); debouncedFilterUpdate();"
-                                   class="checkbox checkbox-sm checkbox-primary">
-                        </label>
-
-                        {# Button to expand/collapse category #}
+                        {# Checkbox to select category #}
                         <button type="button"
-                                @click="toggleCategoryExpansion(category.id)"
-                                class="flex items-center gap-2 flex-1">
-                            <span class="mdi" :class="getCategoryIcon(category.name)"></span>
+                                class="p-0.5 rounded hover:bg-base-300/50"
+                                @click.stop="toggleCategorySelection(category.id); debouncedFilterUpdate();">
+                            <span class="mdi text-base"
+                                  :class="isCategorySelected(category.id) ? 'mdi-checkbox-marked text-primary' : 'mdi-checkbox-blank-outline'"></span>
+                        </button>
+                        {# Expand/Collapse Arrow #}
+                        <button type="button"
+                                class="p-0.5 rounded hover:bg-base-300/50"
+                                @click.stop="toggleCategoryExpansion(category.id)">
+                            <span class="mdi text-base transition-transform duration-200"
+                                  :class="isCategoryExpanded(category.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                        </button>
+                        {# Category Icon and Name - clickable to select #}
+                        <button type="button"
+                                class="flex items-center gap-2 flex-1 text-left"
+                                @click="toggleCategorySelection(category.id); debouncedFilterUpdate();">
+                            <span class="mdi text-lg" :class="getCategoryIcon(category.name)"></span>
                             <span x-text="category.name" class="text-sm font-medium"></span>
                         </button>
-
                         {# Game count #}
-                        <span class="text-xs opacity-50 tabular-nums" x-text="getCategoryTotalCount(category.id)"></span>
-
-                        {# Expand/collapse arrow #}
-                        <button type="button"
-                                @click="toggleCategoryExpansion(category.id)"
-                                class="p-1">
-                            <span class="mdi mdi-chevron-right text-base transition-transform duration-200" :class="{ 'rotate-90': isCategoryExpanded(category.id) }"></span>
-                        </button>
+                        <span class="text-xs opacity-60 tabular-nums" x-text="getCategoryTotalCount(category.id)"></span>
                     </div>
 
                     {# Child genres for this category #}
@@ -196,18 +190,17 @@
                          x-transition:enter-end="opacity-100 translate-y-0"
                          class="pl-6 space-y-1">
                         <template x-for="genre in getChildren(category.id)" :key="genre.id">
-                            <div class="flex items-center gap-2 py-1 cursor-pointer"
-                                 :class="{ 'bg-primary/10 rounded-lg px-2 -mx-2': isGenreSelected(genre.id) }"
+                            <div class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors"
+                                 :class="{
+                                     'bg-primary text-primary-content': isGenreSelected(genre.id),
+                                     'hover:bg-base-300/50': !isGenreSelected(genre.id)
+                                 }"
                                  @click="toggleGenre(genre.id); debouncedFilterUpdate();">
-                                <input type="checkbox"
-                                       :value="genre.id"
-                                       :checked="isGenreSelected(genre.id)"
-                                       @click.stop
-                                       @change="toggleGenre(genre.id); debouncedFilterUpdate();"
-                                       class="checkbox checkbox-xs checkbox-primary">
+                                <span class="mdi text-base"
+                                      :class="isGenreSelected(genre.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
                                 <span class="text-sm flex-1" x-text="genre.name"></span>
                                 {# Game count #}
-                                <span class="text-xs opacity-50 tabular-nums" x-text="getEffectiveCount(genre)"></span>
+                                <span class="text-xs opacity-60 tabular-nums" x-text="getEffectiveCount(genre)"></span>
                             </div>
                         </template>
                     </div>

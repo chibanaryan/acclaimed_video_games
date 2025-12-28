@@ -165,9 +165,6 @@
                  filters.genres = [];  // Deselect
              } else {
                  filters.genres = [id];  // Replace with single selection
-                 // Expand the category when selecting
-                 this.expandedCategories[categoryId] = true;
-                 this.saveExpandedState();
              }
              this.dispatchFilterChange();
          },
