@@ -48,7 +48,7 @@
      class="space-y-3">
 
     {# Accordion Header #}
-    <div class="flex items-center gap-3 w-full text-base font-semibold">
+    <div class="flex items-center w-full text-base font-semibold">
         <button type="button"
                 @click="expanded = !expanded"
                 class="flex items-center gap-2">
@@ -57,7 +57,7 @@
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
         <template x-if="hasYearFilter()">
-            <span class="badge badge-primary badge-sm" x-text="filters.start === filters.end ? filters.start : filters.start + '-' + filters.end"></span>
+            <span class="badge badge-primary badge-sm ml-2" x-text="filters.start === filters.end ? filters.start : filters.start + '-' + filters.end"></span>
         </template>
         <div class="flex-1"></div>
         <button type="button"
