@@ -5,6 +5,7 @@
 {% block title %}Developers | Acclaimed Video Games{% endblock %}
 
 {% block content %}
+<div class="max-w-3xl mx-auto">
 <h1 class="text-3xl font-bold mb-4">Developers</h1>
 <h2 id="results-count" class="text-xl text-base-content/85 mb-4">
     {% if page_obj %}
@@ -51,6 +52,7 @@
 
 <div id="results-container">
     {% include 'developers/includes/_company_list_results.html' %}
+</div>
 </div>
 
 <script nonce="{{ csp_nonce }}">

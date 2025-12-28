@@ -653,32 +653,38 @@
                 {# Spacer to align with game list count #}
                 <div class="h-[calc(1rem+0.5rem)]"></div>
                 <div class="bg-base-200 rounded-lg p-4">
-                {# Search input with action buttons #}
-                <div class="mb-6 pb-4 border-b border-base-300">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="m21 21-4.3-4.3"></path>
-                                </g>
-                            </svg>
-                            <span class="font-bold text-base">Search</span>
-                        </div>
-                        <div class="flex gap-2">
-                            <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
-                               class="btn btn-ghost btn-xs text-base-content/70 hover:text-success"
-                               title="Download CSV">
-                                <span class="mdi mdi-download"></span>
-                                <span>Download CSV</span>
-                            </a>
-                            <a href="{% url 'games-list' %}"
-                               class="btn btn-ghost btn-xs text-base-content/70 hover:text-error"
-                               title="Clear all filters">
-                                <span class="mdi mdi-close text-xs"></span>
-                                <span>Clear All Filters</span>
-                            </a>
-                        </div>
+                {# Top-level Filters header with actions #}
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-base-300">
+                    <div class="flex items-center gap-2">
+                        <span class="mdi mdi-filter-variant text-xl text-primary"></span>
+                        <span class="font-bold text-base">Filters</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
+                           class="btn btn-ghost btn-xs text-base-content/70 hover:text-success"
+                           title="Download CSV">
+                            <span class="mdi mdi-download"></span>
+                            <span>Download CSV</span>
+                        </a>
+                        <a href="{% url 'games-list' %}"
+                           class="btn btn-ghost btn-xs text-base-content/70 hover:text-error"
+                           title="Clear all filters">
+                            <span class="mdi mdi-close text-xs"></span>
+                            <span>Clear All</span>
+                        </a>
+                    </div>
+                </div>
+
+                {# Search input #}
+                <div class="mb-4 pb-3 border-b border-base-300">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
+                            </g>
+                        </svg>
+                        <span class="font-bold text-base">Search</span>
                     </div>
                     <div>
                         {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
@@ -686,8 +692,8 @@
                 </div>
 
                 {# Year range heatmap grid #}
-                <div class="mb-6 pb-4 border-b border-base-300 min-h-[15rem]">
-                    <div class="flex items-center gap-2 mb-3">
+                <div class="mb-4 pb-3 border-b border-base-300 min-h-[15rem]">
+                    <div class="flex items-center gap-2 mb-2">
                         <span class="mdi mdi-calendar-range text-xl text-primary"></span>
                         <span class="font-bold text-base">Release Year</span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click="resetYears()" title="Clear year filter" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
@@ -706,8 +712,8 @@
 
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
-                <div :class="platformsExpanded ? 'mb-6 pb-4' : ''" class="mb-4 pb-2 border-b border-base-300 min-h-[4.5rem]">
-                    <div class="flex items-center gap-2 mb-3 cursor-pointer" @click="platformsExpanded = !platformsExpanded">
+                <div :class="platformsExpanded ? 'mb-4 pb-3' : 'mb-2 pb-1'" class="border-b border-base-300">
+                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="platformsExpanded = !platformsExpanded">
                         <span class="mdi mdi-controller text-xl text-primary"></span>
                         <span class="font-bold text-base">Platforms</span>
                         <span class="mdi text-base-content/60 ml-1"
@@ -731,8 +737,8 @@
 
                 {% if genres %}
                 {# Genres filter - Inventory Grid Style #}
-                <div :class="genresExpanded ? 'mb-4' : 'mb-2'" class="min-h-[4rem]">
-                    <div class="flex items-center gap-2 mb-3 cursor-pointer" @click="genresExpanded = !genresExpanded">
+                <div :class="genresExpanded ? 'mb-3' : 'mb-1'">
+                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="genresExpanded = !genresExpanded">
                         <span class="mdi mdi-gamepad-variant text-xl text-primary"></span>
                         <span class="font-bold text-base">Genres</span>
                         <span class="mdi text-base-content/60 ml-1"

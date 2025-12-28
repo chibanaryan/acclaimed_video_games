@@ -582,7 +582,7 @@
         <template x-for="mfrKey in sortedManufacturerKeys" :key="mfrKey">
             <div class="platform-manufacturer">
                 {# Manufacturer Header - Expandable and Selectable #}
-                <div class="flex items-center gap-1 py-1.5 px-2 rounded-lg transition-colors"
+                <div class="flex items-center gap-1 py-1 px-2 rounded-lg transition-colors"
                      :class="{
                          'bg-primary text-primary-content': isManufacturerSelected(mfrKey),
                          'bg-primary/10 text-primary': !isManufacturerSelected(mfrKey) && hasManufacturerOrChildrenSelected(mfrKey),

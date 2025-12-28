@@ -377,9 +377,9 @@
   /* Genre tile with heatmap brightness */
   .genre-tile {
     --brightness: 1;
-    @apply flex flex-col items-center justify-center gap-0.5 py-1.5 px-1;
+    @apply flex flex-col items-center justify-center gap-0.5 py-1 px-1;
     @apply rounded cursor-pointer transition-all duration-150;
-    min-height: 52px;
+    min-height: 44px;
     background: color-mix(in srgb, var(--group-color) calc(14% * var(--brightness)), oklch(var(--b3)));
     border: 1px solid color-mix(in srgb, var(--group-color) calc(32% * var(--brightness)), oklch(var(--b3)));
     filter: brightness(calc(0.75 + 0.25 * var(--brightness)));
@@ -465,7 +465,7 @@
   }
 
   .platform-item {
-    @apply flex items-center gap-2 w-full py-1.5 px-2 rounded-md text-left text-sm transition-colors cursor-pointer;
+    @apply flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer;
   }
 
   .platform-item.is-selected {

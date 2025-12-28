@@ -227,7 +227,7 @@
         <template x-for="category in rootCategories" :key="category.id">
             <div class="genre-category">
                 {# Category Header - Selectable and Expandable #}
-                <div class="flex items-center gap-1 py-1.5 px-2 rounded-lg transition-colors"
+                <div class="flex items-center gap-1 py-1 px-2 rounded-lg transition-colors"
                      :class="{
                          'bg-primary text-primary-content': isCategorySelected(category.id),
                          'bg-primary/10 text-primary': !isCategorySelected(category.id) && hasSelectedChildren(category.id),
@@ -258,7 +258,7 @@
                      x-show="isCategoryExpanded(category.id)"
                      x-collapse>
                     <template x-for="genre in getChildren(category.id)" :key="genre.id">
-                        <div class="genre-item flex items-center gap-2 w-full py-1.5 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
+                        <div class="genre-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
                              :class="{
                                  'bg-primary text-primary-content': isGenreSelected(genre.id),
                                  'hover:bg-base-300/50': !isGenreSelected(genre.id),

@@ -5,6 +5,7 @@
 {% block title %}Source Lists | Acclaimed Video Games{% endblock %}
 
 {% block content %}
+<div class="max-w-3xl mx-auto">
 <div id="content" x-data="{
     updateUrl(event) {
         // Get all current filter values from the form
@@ -35,6 +36,7 @@
     <div id="filter-results-wrapper">
         {% include 'lists/includes/_list_list_full.html' %}
     </div>
+</div>
 </div>
 
 <script nonce="{{ csp_nonce }}">
