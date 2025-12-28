@@ -24,7 +24,6 @@ class GameFiltersFromRequestTests(TestCase):
         self.assertIsNone(filters.q)
         self.assertEqual(filters.genres, [])
         self.assertEqual(filters.platforms, [])
-        self.assertEqual(filters.genre_option, "all")
         self.assertIsNone(filters.start)
         self.assertIsNone(filters.end)
         self.assertIsNone(filters.decade)
@@ -42,12 +41,6 @@ class GameFiltersFromRequestTests(TestCase):
         request = self.factory.get("/games/", {"genres": "1,2,3"})
         filters = GameFilters.from_request(request)
         self.assertEqual(filters.genres, [1, 2, 3])
-
-    def test_parses_genre_option(self):
-        """Should parse genre_option parameter."""
-        request = self.factory.get("/games/", {"genre_option": "any"})
-        filters = GameFilters.from_request(request)
-        self.assertEqual(filters.genre_option, "any")
 
     def test_parses_platforms(self):
         """Should parse comma-separated platform IDs."""
@@ -108,16 +101,6 @@ class GameFiltersFromRequestTests(TestCase):
 
 class GameFiltersPropertiesTests(TestCase):
     """Tests for GameFilters properties."""
-
-    def test_match_all_genres_default(self):
-        """Default genre_option 'all' should return match_all=True."""
-        filters = GameFilters()
-        self.assertTrue(filters.match_all_genres)
-
-    def test_match_all_genres_any(self):
-        """Genre option 'any' should return match_all=False."""
-        filters = GameFilters(genre_option="any")
-        self.assertFalse(filters.match_all_genres)
 
     def test_is_filtered_empty(self):
         """Empty filters should return is_filtered=False."""
@@ -214,30 +197,11 @@ class ApplyGameFiltersTests(TestCase):
         self.assertEqual(result.first().name, "Zelda")
 
     def test_genre_filter_single(self):
-        """Single genre filter should work."""
+        """Single genre filter should work (single-select mode)."""
         filters = GameFilters(genres=[self.genre_action.id])
         qs = models.Game.objects.all()
         result = apply_game_filters(qs, filters)
         self.assertEqual(result.count(), 2)  # Zelda and Action RPG
-
-    def test_genre_filter_match_all(self):
-        """Genre filter with match_all should require all genres."""
-        filters = GameFilters(
-            genres=[self.genre_action.id, self.genre_rpg.id], genre_option="all"
-        )
-        qs = models.Game.objects.all()
-        result = apply_game_filters(qs, filters)
-        self.assertEqual(result.count(), 1)  # Only Action RPG
-        self.assertEqual(result.first().name, "Action RPG")
-
-    def test_genre_filter_match_any(self):
-        """Genre filter with match_any should accept any genre."""
-        filters = GameFilters(
-            genres=[self.genre_action.id, self.genre_rpg.id], genre_option="any"
-        )
-        qs = models.Game.objects.all()
-        result = apply_game_filters(qs, filters)
-        self.assertEqual(result.count(), 3)  # All games
 
     def test_platform_filter(self):
         """Platform filter should work."""
@@ -302,7 +266,6 @@ class GetFilterContextTests(TestCase):
         self.assertEqual(context["end"], 2025)
         self.assertEqual(context["genres"], [])
         self.assertEqual(context["platforms"], [])
-        self.assertEqual(context["genre_option"], "all")
 
     def test_request_with_filters_populates_context(self):
         """Request with filters should populate context correctly."""
@@ -312,9 +275,8 @@ class GetFilterContextTests(TestCase):
                 "q": "zelda",
                 "start": "1990",
                 "end": "2000",
-                "genres": "1,2",
+                "genres": "1",
                 "platforms": "3",
-                "genre_option": "any",
             },
         )
         context = get_filter_context_from_request(request, min_year=1970, max_year=2025)
@@ -322,9 +284,8 @@ class GetFilterContextTests(TestCase):
         self.assertEqual(context["q"], "zelda")
         self.assertEqual(context["start"], 1990)
         self.assertEqual(context["end"], 2000)
-        self.assertEqual(context["genres"], ["1", "2"])  # Strings for HTML select
+        self.assertEqual(context["genres"], ["1"])  # Single-select mode
         self.assertEqual(context["platforms"], ["3"])  # Strings for HTML select
-        self.assertEqual(context["genre_option"], "any")
 
     def test_uses_current_year_as_default_max(self):
         """Should use current year as default max_year."""

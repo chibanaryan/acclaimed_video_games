@@ -1,6 +1,6 @@
 {# GenreFilter component - Hierarchical Tree Style with Wikipedia Genres #}
 {# Props: genres (list from parent with game_count, filtered_count, parent_id, level) #}
-{# Uses parent Alpine.js context for genres array and filters.genres/filters.genre_option #}
+{# Uses parent Alpine.js context for genres array and filters.genres (single-select) #}
 {% load static %}
 
 <div class="genre-filter"
@@ -141,24 +141,24 @@
              return children.every(c => filters.genres.includes(String(c.id)));
          },
 
-         // Toggle individual genre
+         // Toggle individual genre (single-select)
          toggleGenre(genreId) {
              const id = String(genreId);
              if (filters.genres.includes(id)) {
-                 filters.genres = filters.genres.filter(g => g !== id);
+                 filters.genres = [];  // Deselect
              } else {
-                 filters.genres = [...filters.genres, id];
+                 filters.genres = [id];  // Replace with single selection
              }
              this.dispatchFilterChange();
          },
 
-         // Toggle parent category selection (selects category ID itself, which expands to children in backend)
+         // Toggle parent category selection (single-select)
          toggleCategorySelection(categoryId) {
              const id = String(categoryId);
              if (filters.genres.includes(id)) {
-                 filters.genres = filters.genres.filter(g => g !== id);
+                 filters.genres = [];  // Deselect
              } else {
-                 filters.genres = [...filters.genres, id];
+                 filters.genres = [id];  // Replace with single selection
                  // Expand the category when selecting
                  this.expandedCategories[categoryId] = true;
                  this.saveExpandedState();
@@ -201,25 +201,6 @@
      }"
      @genres-reset.window="handleReset()">
 
-    {# Match All / Match Any Toggle #}
-    <div class="flex items-center gap-2 mb-3 px-1">
-        <button type="button"
-                class="btn btn-xs"
-                :class="filters.genre_option === 'all' ? 'btn-primary' : 'btn-ghost'"
-                @click="filters.genre_option = 'all'; if (filters.genres.length > 0) dispatchFilterChange()">
-            Match All
-        </button>
-        <button type="button"
-                class="btn btn-xs"
-                :class="filters.genre_option === 'any' ? 'btn-primary' : 'btn-ghost'"
-                @click="filters.genre_option = 'any'; if (filters.genres.length > 0) dispatchFilterChange()">
-            Match Any
-        </button>
-        <span class="text-xs text-base-content/50 ml-auto" x-show="getSelectedCount() > 0">
-            <span x-text="getSelectedCount()"></span> selected
-        </span>
-    </div>
-
     {# Hierarchical Genre Tree #}
     <div class="genre-tree space-y-1">
         <template x-for="category in rootCategories" :key="category.id">
@@ -256,14 +237,14 @@
                     {# Game count for category #}
                     <span class="text-xs opacity-60 tabular-nums"
                           x-text="getCategoryTotalCount(category.id)"></span>
-                    {# Selected indicator #}
-                    <template x-if="isCategorySelected(category.id)">
-                        <span class="badge badge-primary badge-xs">All</span>
-                    </template>
-                    <template x-if="!isCategorySelected(category.id) && hasSelectedChildren(category.id)">
-                        <span class="badge badge-primary badge-xs">
-                            <span x-text="getChildren(category.id).filter(c => isGenreSelected(c.id)).length"></span>
-                        </span>
+                    {# Clear button when category or child is selected #}
+                    <template x-if="hasCategoryOrChildrenSelected(category.id)">
+                        <button type="button"
+                                class="p-0.5 rounded hover:bg-base-300 text-base-content/60 hover:text-error"
+                                @click.stop="filters.genres = []; dispatchFilterChange();"
+                                title="Clear selection">
+                            <span class="mdi mdi-close text-sm"></span>
+                        </button>
                     </template>
                 </div>
 
@@ -272,25 +253,33 @@
                      x-show="isCategoryExpanded(category.id)"
                      x-collapse>
                     <template x-for="genre in getChildren(category.id)" :key="genre.id">
-                        <button type="button"
-                                class="genre-item flex items-center gap-2 w-full py-1.5 px-2 rounded-md text-left text-sm transition-colors"
-                                :class="{
-                                    'bg-primary text-primary-content': isGenreSelected(genre.id),
-                                    'hover:bg-base-300/50': !isGenreSelected(genre.id),
-                                    'opacity-40': !isGenreAvailable(genre.id) && !isGenreSelected(genre.id),
-                                    'bg-error/20 text-error': hasZeroResults(genre.id)
-                                }"
-                                @click="toggleGenre(genre.id)"
-                                :title="genre.name + ' - ' + getEffectiveCount(genre) + ' games'">
+                        <div class="genre-item flex items-center gap-2 w-full py-1.5 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
+                             :class="{
+                                 'bg-primary text-primary-content': isGenreSelected(genre.id),
+                                 'hover:bg-base-300/50': !isGenreSelected(genre.id),
+                                 'opacity-40': !isGenreAvailable(genre.id) && !isGenreSelected(genre.id),
+                                 'bg-error/20 text-error': hasZeroResults(genre.id)
+                             }"
+                             @click="toggleGenre(genre.id)"
+                             :title="genre.name + ' - ' + getEffectiveCount(genre) + ' games'">
                             {# Checkbox #}
                             <span class="mdi text-base"
                                   :class="isGenreSelected(genre.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
                             {# Genre Name #}
                             <span class="flex-1 truncate" x-text="genre.name"></span>
-                            {# Game Count #}
+                            {# Game Count (hidden when selected) #}
                             <span class="text-xs opacity-60 tabular-nums"
+                                  x-show="!isGenreSelected(genre.id)"
                                   x-text="getEffectiveCount(genre)"></span>
-                        </button>
+                            {# Clear button (shown when selected) #}
+                            <button type="button"
+                                    x-show="isGenreSelected(genre.id)"
+                                    class="p-0.5 rounded hover:bg-primary-focus"
+                                    @click.stop="filters.genres = []; dispatchFilterChange();"
+                                    title="Clear selection">
+                                <span class="mdi mdi-close text-sm"></span>
+                            </button>
+                        </div>
                     </template>
                 </div>
             </div>

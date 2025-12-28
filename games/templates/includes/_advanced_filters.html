@@ -1,9 +1,9 @@
 {# AdvancedFilters component - Sidebar layout #}
-{# Props: filters (dict with q, start, end, genres, platforms, genre_option, rank_display), genres (list), platforms (list) #}
+{# Props: filters (dict with q, start, end, genres, platforms, rank_display), genres (list), platforms (list) #}
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
 {% load humanize %}
-{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "genre_option": "any", "rank_display": "filtered", "sort": "rank"}</script>{% endif %}
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "rank_display": "filtered", "sort": "rank"}</script>{% endif %}
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 <div x-data="{
@@ -22,10 +22,6 @@
         clientFilterReady: false,
         _csf: null,
         init() {
-            // Ensure genre_option has a default value (any = Match Any)
-            if (!this.filters.genre_option || this.filters.genre_option === '') {
-                this.filters.genre_option = 'any';
-            }
             // Normalize rank_display to filtered
             this.filters.rank_display = 'filtered';
             // Default sort to rank if not specified
@@ -80,7 +76,6 @@
                 this.filters.q = params.get('q') || '';
                 this.filters.start = params.get('start') ? parseInt(params.get('start')) : {{ min_year }};
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
-                this.filters.genre_option = params.get('genre_option') || 'all';
                 this.filters.rank_display = 'filtered';
                 this.filters.sort = params.get('sort') || 'rank';
                 const genresParam = params.get('genres');
@@ -275,7 +270,6 @@
         },
         resetGenres() {
             this.filters.genres = [];
-            this.filters.genre_option = 'any';
             // Dispatch event to update the genre filter component
             this.$dispatch('genres-reset');
             if (this.initialized) this.debouncedFilterUpdate();
@@ -289,7 +283,6 @@
             this.filters.end = {{ max_year }};
             this.filters.genres = [];
             this.filters.platforms = [id];
-            this.filters.genre_option = 'any';
             this.filters.highlight = gameId;
             // Dispatch reset events to update filter UI
             this.$dispatch('genres-reset');
@@ -305,7 +298,6 @@
             this.filters.end = {{ max_year }};
             this.filters.genres = [id];
             this.filters.platforms = [];
-            this.filters.genre_option = 'any';
             this.filters.highlight = gameId;
             // Dispatch reset events to update filter UI
             this.$dispatch('platforms-reset');

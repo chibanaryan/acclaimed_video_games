@@ -52,23 +52,15 @@ class GameListApiTests(TestCase):
         names = self._get_game_names(platforms=str(self.platform_ps.id))
         self.assertEqual(names, ["Beta Saga"])
 
-    def test_filter_by_genres_all_option(self):
-        self.game1.genres.add(self.genre_adventure)
-        names = self._get_game_names(
-            genres=f"{self.genre_action.id},{self.genre_adventure.id}",
-        )
-        self.assertEqual(names, ["Alpha Quest"])
+    def test_filter_by_single_genre(self):
+        """Single genre filter should work (single-select mode)."""
+        self.game2.genres.add(self.genre_action)
+        names = self._get_game_names(genres=str(self.genre_action.id))
+        self.assertCountEqual(names, ["Alpha Quest", "Beta Saga"])
 
     def test_filter_by_developer(self):
         names = self._get_game_names(developer=str(self.alias.company.igdb_id))
         self.assertEqual(names, ["Alpha Quest"])
-
-    def test_filter_by_genres_any_option(self):
-        self.game2.genres.add(self.genre_action)
-        names = self._get_game_names(
-            genres=str(self.genre_action.id), genre_option="any"
-        )
-        self.assertCountEqual(names, ["Alpha Quest", "Beta Saga"])
 
     def test_order_by_parameter_applies(self):
         names = self._get_game_names(order_by="-year_of_release")

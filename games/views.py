@@ -249,7 +249,6 @@ def download_games_csv(request):
     start = request.GET.get("start")
     end = request.GET.get("end")
     genres_param = request.GET.get("genres")
-    genre_option = request.GET.get("genre_option", "all")
     platforms_param = request.GET.get("platforms")
 
     if q:
@@ -259,9 +258,8 @@ def download_games_csv(request):
 
     if genres_param:
         genre_ids = [int(x) for x in genres_param.split(",") if x]
-        match_all = genre_option != "any"  # "any" = Any, otherwise All
         qs = utils.apply_genre_filter(
-            qs, genre_ids, match_all=match_all, use_wikipedia=True
+            qs, genre_ids, match_all=False, use_wikipedia=True
         )
     else:
         genre_ids = []
@@ -331,7 +329,6 @@ def download_games_csv(request):
         "end": end_for_title,
         "genres": [str(gid) for gid in genre_ids],
         "platforms": [str(pid) for pid in platform_ids],
-        "genre_option": genre_option,
         "rank_display": "filtered",
     }
     filter_title = _build_filter_title(
@@ -482,14 +479,12 @@ class GameSearchView(RobustPaginationMixin, ListView):
             end=self.request.GET.get("end"),
         )
 
-        # IGDB Genre filtering
-        genre_option = self.request.GET.get("genre_option", "all")
+        # Genre filtering (single-select, so match_all doesn't matter)
         genres = self.request.GET.get("genres")
         if genres:
             genre_ids = [int(x) for x in genres.split(",")]
-            match_all = genre_option != "any"  # "any" = Any, otherwise All
             qs = utils.apply_genre_filter(
-                qs, genre_ids, match_all=match_all, use_wikipedia=True
+                qs, genre_ids, match_all=False, use_wikipedia=True
             )
 
         # Platform filtering
@@ -614,7 +609,6 @@ class GameSearchView(RobustPaginationMixin, ListView):
             "end": end_val,
             "genres": genres_param.split(",") if genres_param else [],
             "platforms": platforms_param.split(",") if platforms_param else [],
-            "genre_option": self.request.GET.get("genre_option", "all"),
             "rank_display": "filtered" if has_any_filter else "alltime",
             "sort": sort_param,
             # Keep legacy params for context
@@ -639,11 +633,6 @@ class GameSearchView(RobustPaginationMixin, ListView):
                     else {}
                 ),
                 **(
-                    {"genre_option": filters["genre_option"]}
-                    if self.request.GET.get("genre_option")
-                    else {}
-                ),
-                **(
                     {"sort": filters["sort"]}
                     if self.request.GET.get("sort")
                     and self.request.GET.get("sort") != "rank"
@@ -662,13 +651,8 @@ class GameSearchView(RobustPaginationMixin, ListView):
         context["filter_title"] = _build_filter_title(
             filters, genres, platforms, min_year, max_year
         )
-        # Only show subtitle when multiple genres are selected
-        if len(filters["genres"]) > 1:
-            context["genre_subtitle"] = _build_genre_subtitle(
-                filters["genres"], filters["genre_option"], genres
-            )
-        else:
-            context["genre_subtitle"] = ""
+        # Genre subtitle not needed for single-select mode
+        context["genre_subtitle"] = ""
 
         # Get year counts for heatmap grid based on current filters (excluding year)
         # This allows users to see which years have games given their other filters
@@ -679,14 +663,12 @@ class GameSearchView(RobustPaginationMixin, ListView):
         if q:
             base_qs = base_qs.filter(name__icontains=q)
 
-        # Apply genre filter (same as get_queryset)
-        genre_option = self.request.GET.get("genre_option", "all")
+        # Apply genre filter (single-select, so match_all doesn't matter)
         genres_param = self.request.GET.get("genres")
         if genres_param:
             genre_ids = [int(x) for x in genres_param.split(",")]
-            match_all = genre_option != "any"
             base_qs = utils.apply_genre_filter(
-                base_qs, genre_ids, match_all=match_all, use_wikipedia=True
+                base_qs, genre_ids, match_all=False, use_wikipedia=True
             )
 
         # Apply platform filter (same as get_queryset)
@@ -711,10 +693,8 @@ class GameSearchView(RobustPaginationMixin, ListView):
 
         context["year_counts"] = all_years_with_counts
 
-        # FACETED COUNTS FOR IGDB GENRES
-        # For "Match Any": apply all filters EXCEPT IGDB genres (standard faceting)
-        # For "Match All": INCLUDE IGDB genre filter (shows intersection)
-        #                  how many games have ALL selected + this IGDB genre
+        # FACETED COUNTS FOR GENRES
+        # Apply all filters EXCEPT genres (standard faceting for single-select)
         genre_facet_qs = models.Game.objects.all()
         if q:
             genre_facet_qs = genre_facet_qs.filter(name__icontains=q)
@@ -729,36 +709,16 @@ class GameSearchView(RobustPaginationMixin, ListView):
             platform_ids = [int(x) for x in platforms_param.split(",")]
             genre_facet_qs = utils.apply_platform_filter(genre_facet_qs, platform_ids)
 
-        # For Match All mode, use subquery to get all IGDB genres on matches
-        # This shows "how many games have all selected IGDB genres AND this IGDB genre"
-        # Note: We must use a subquery because Django ORM reuses JOINs, which would
-        # otherwise limit results to only the filtered Wikipedia genre IDs
-        if genres_param and genre_option == "all":
-            genre_ids = [int(x) for x in genres_param.split(",")]
-            # First, get IDs of games that have ALL selected Wikipedia genres
-            filtered_game_ids = utils.apply_genre_filter(
-                genre_facet_qs, genre_ids, match_all=True, use_wikipedia=True
-            ).values_list("id", flat=True)
-            # Then count Wikipedia genres on those games
-            # (fresh queryset avoids JOIN reuse)
-            genre_counts = dict(
-                models.Game.objects.filter(id__in=list(filtered_game_ids))
-                .values("wikipedia_genres__id")
-                .exclude(wikipedia_genres__id__isnull=True)
-                .annotate(count=Count("id", distinct=True))
-                .values_list("wikipedia_genres__id", "count")
-            )
-        else:
-            # For Match Any mode or no Wikipedia genre filter, standard faceted counting
-            genre_counts = dict(
-                genre_facet_qs.values("wikipedia_genres__id")
-                .exclude(wikipedia_genres__id__isnull=True)
-                .annotate(count=Count("id", distinct=True))
-                .values_list("wikipedia_genres__id", "count")
-            )
+        # Standard faceted counting (single-select mode)
+        genre_counts = dict(
+            genre_facet_qs.values("wikipedia_genres__id")
+            .exclude(wikipedia_genres__id__isnull=True)
+            .annotate(count=Count("id", distinct=True))
+            .values_list("wikipedia_genres__id", "count")
+        )
 
         # FACETED COUNTS FOR PLATFORMS
-        # Base: apply all filters EXCEPT platforms (q, year, Wikipedia genres)
+        # Base: apply all filters EXCEPT platforms (q, year, genres)
         platform_facet_qs = models.Game.objects.all()
         if q:
             platform_facet_qs = platform_facet_qs.filter(name__icontains=q)
@@ -771,9 +731,8 @@ class GameSearchView(RobustPaginationMixin, ListView):
         )
         if genres_param:
             genre_ids = [int(x) for x in genres_param.split(",")]
-            match_all = genre_option != "any"
             platform_facet_qs = utils.apply_genre_filter(
-                platform_facet_qs, genre_ids, match_all=match_all, use_wikipedia=True
+                platform_facet_qs, genre_ids, match_all=False, use_wikipedia=True
             )
 
         # Count games per platform

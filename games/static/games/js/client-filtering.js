@@ -90,11 +90,11 @@ class ClientSideFiltering {
 
         this.currentFilters = filters;
 
-        // Convert Alpine filter format to engine format
+        // Convert Alpine filter format to engine format (single-select, always use 'any')
         const engineFilters = {
             q: filters.q || '',
             genres: (filters.genres || []).map(id => parseInt(id, 10)),
-            genreOption: filters.genre_option || 'any',
+            genreOption: 'any',  // Single-select mode always uses 'any'
             platforms: (filters.platforms || []).map(id => parseInt(id, 10)),
             start: filters.start || null,
             end: filters.end || null,

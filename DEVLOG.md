@@ -1,5 +1,12 @@
 # Developer Log
 
+## 2025-12-27
+
+- Simplified genre filtering from multi-select to single-select for better UX
+- Removed "Match All" / "Match Any" toggle (no longer needed with single-select)
+- Added clear (×) buttons next to selected genres for easy deselection
+- Updated desktop and mobile genre filter components with new single-select behavior
+
 ## 2025-12-16
 
 - Fixed CSV download to use Wikipedia genres instead of IGDB genres (now matches genre display on site)
