@@ -726,17 +726,16 @@
                         </div>
                         <div class="flex gap-2">
                             <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
-                               class="btn btn-sm game-btn shadow-lg text-white border-0 w-[88px]"
-                               style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);"
+                               class="btn btn-ghost btn-xs text-base-content/70 hover:text-success"
                                title="Download CSV">
                                 <span class="mdi mdi-download"></span>
                                 <span>CSV</span>
                             </a>
                             <a href="{% url 'games-list' %}"
-                               class="btn btn-sm game-btn shadow-lg text-white border-0 w-[88px]"
-                               style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
-                                <span class="mdi mdi-undo"></span>
-                                <span>Reset</span>
+                               class="btn btn-ghost btn-xs text-base-content/70 hover:text-error"
+                               title="Reset filters">
+                                <span class="mdi mdi-filter-remove"></span>
+                                <span>Reset All</span>
                             </a>
                         </div>
                     </div>
@@ -750,8 +749,9 @@
                     <div class="flex items-center gap-2 mb-3">
                         <span class="mdi mdi-calendar-range text-xl text-primary"></span>
                         <span class="font-bold text-base">Release Year</span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="resetYears()" title="Reset years" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
-                            <span class="mdi mdi-close"></span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click="resetYears()" title="Reset years" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
+                            <span class="mdi mdi-close text-xs"></span>
+                            <span class="text-xs">Reset</span>
                         </button>
                     </div>
                     <div>
@@ -771,8 +771,9 @@
                         <span class="font-bold text-base">Platforms</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="platformsExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click.stop="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
-                            <span class="mdi mdi-close"></span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetPlatforms()" title="Clear platforms" x-cloak x-show="filters.platforms.length > 0">
+                            <span class="mdi mdi-close text-xs"></span>
+                            <span class="text-xs">Reset</span>
                         </button>
                     </div>
                     <div x-show="platformsExpanded"
@@ -795,8 +796,9 @@
                         <span class="font-bold text-base">Genres</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="genresExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto" @click.stop="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
-                            <span class="mdi mdi-close"></span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetGenres()" title="Clear genres" x-cloak x-show="filters.genres.length > 0">
+                            <span class="mdi mdi-close text-xs"></span>
+                            <span class="text-xs">Reset</span>
                         </button>
                     </div>
                     <div x-show="genresExpanded"

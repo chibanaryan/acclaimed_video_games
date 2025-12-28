@@ -237,15 +237,6 @@
                     {# Game count for category #}
                     <span class="text-xs opacity-60 tabular-nums"
                           x-text="getCategoryTotalCount(category.id)"></span>
-                    {# Clear button when category or child is selected #}
-                    <template x-if="hasCategoryOrChildrenSelected(category.id)">
-                        <button type="button"
-                                class="p-0.5 rounded hover:bg-base-300 text-base-content/60 hover:text-error"
-                                @click.stop="filters.genres = []; dispatchFilterChange();"
-                                title="Clear selection">
-                            <span class="mdi mdi-close text-sm"></span>
-                        </button>
-                    </template>
                 </div>
 
                 {# Child Genres - Collapsible #}
@@ -267,18 +258,9 @@
                                   :class="isGenreSelected(genre.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"></span>
                             {# Genre Name #}
                             <span class="flex-1 truncate" x-text="genre.name"></span>
-                            {# Game Count (hidden when selected) #}
+                            {# Game Count #}
                             <span class="text-xs opacity-60 tabular-nums"
-                                  x-show="!isGenreSelected(genre.id)"
                                   x-text="getEffectiveCount(genre)"></span>
-                            {# Clear button (shown when selected) #}
-                            <button type="button"
-                                    x-show="isGenreSelected(genre.id)"
-                                    class="p-0.5 rounded hover:bg-primary-focus"
-                                    @click.stop="filters.genres = []; dispatchFilterChange();"
-                                    title="Clear selection">
-                                <span class="mdi mdi-close text-sm"></span>
-                            </button>
                         </div>
                     </template>
                 </div>
