@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 {% load game_filters %}
 
-{% block title %}{{ game.name }} - Acclaimed Games{% endblock %}
+{% block title %}{{ game.name }} | Acclaimed Video Games{% endblock %}
 
 {% block meta_description %}{{ game.name }} ({{ game.year_of_release }}) - Ranked #{{ game.rank }} among the most critically acclaimed video games of all time. View critic list appearances and rankings.{% endblock %}
 
-{% block og_title %}{{ game.name }} - Acclaimed Games{% endblock %}
+{% block og_title %}{{ game.name }} | Acclaimed Video Games{% endblock %}
 {% block og_description %}{{ game.name }} ({{ game.year_of_release }}) is ranked #{{ game.rank }} among the most critically acclaimed games of all time.{% endblock %}
 {% block og_image %}{{ game.image }}{% endblock %}
-{% block twitter_title %}{{ game.name }} - Acclaimed Games{% endblock %}
+{% block twitter_title %}{{ game.name }} | Acclaimed Video Games{% endblock %}
 {% block twitter_description %}{{ game.name }} ({{ game.year_of_release }}) is ranked #{{ game.rank }} all-time.{% endblock %}
 
 {% block structured_data %}{

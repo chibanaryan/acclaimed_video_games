@@ -39,14 +39,14 @@
     <link rel="canonical" href="{% block canonical_url %}https://www.acclaimedvideogames.com{{ request.path }}{% endblock %}">
     {# Content Security Policy is set via CSPMiddleware with nonce support #}
     {# Note: 'unsafe-eval' is required for Alpine.js x-data expressions #}
-    <title>{% block title %}Acclaimed Games{% endblock %}</title>
+    <title>{% block title %}Acclaimed Video Games{% endblock %}</title>
 
     {# CRITICAL: Early preload for LCP images - must be before other resources #}
     {% block early_preload %}{% endblock %}
 
     {# Open Graph Tags for social sharing #}
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-    <meta property="og:title" content="{% block og_title %}Acclaimed Games{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Acclaimed Video Games{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Discover the most critically acclaimed video games of all time, ranked by aggregating hundreds of critic lists.{% endblock %}">
     <meta property="og:url" content="{% block og_url %}https://www.acclaimedvideogames.com{{ request.path }}{% endblock %}">
     <meta property="og:image" content="{% block og_image %}https://www.acclaimedvideogames.com{% static 'games/avg_og_image.png' %}{% endblock %}">
@@ -55,7 +55,7 @@
     {# Twitter Card Tags #}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@AVGRankings">
-    <meta name="twitter:title" content="{% block twitter_title %}Acclaimed Games{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Acclaimed Video Games{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Discover the most critically acclaimed video games of all time.{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}https://www.acclaimedvideogames.com{% static 'games/avg_og_image.png' %}{% endblock %}">
 
