@@ -3,7 +3,8 @@
     {# Compact sort dropdown #}
     <div class="mb-4">
         <div class="flex items-center gap-3 mb-3">
-            <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+            {# Desktop: Custom dropdown #}
+            <div class="hidden desktop:block dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
                 <button type="button"
                         class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                         @click="sortOpen = !sortOpen">
@@ -18,6 +19,17 @@
                     <li><button type="button" @click="sortBy = 'rank'; sortGames()" :class="sortBy === 'rank' ? 'active' : ''">Rank</button></li>
                     <li><button type="button" @click="sortBy = 'name'; sortGames()" :class="sortBy === 'name' ? 'active' : ''">A-Z</button></li>
                 </ul>
+            </div>
+            {# Mobile: Native select for touch compatibility #}
+            <div class="desktop:hidden flex items-center gap-1">
+                <span class="mdi mdi-sort text-base text-base-content/60"></span>
+                <select class="select select-sm select-bordered bg-base-200"
+                        style="width: fit-content; max-width: 100%;"
+                        @change="sortBy = $event.target.value; sortGames()">
+                    <option value="year" :selected="sortBy === 'year'">Year</option>
+                    <option value="rank" :selected="sortBy === 'rank'">Rank</option>
+                    <option value="name" :selected="sortBy === 'name'">A-Z</option>
+                </select>
             </div>
         </div>
 

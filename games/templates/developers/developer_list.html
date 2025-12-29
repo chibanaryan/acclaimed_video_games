@@ -68,7 +68,8 @@
 
     {# Sort dropdown #}
     <div class="flex items-center gap-3 mt-4">
-        <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+        {# Desktop: Custom dropdown #}
+        <div class="hidden desktop:block dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
             <button type="button"
                     class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="sortOpen = !sortOpen">
@@ -82,6 +83,16 @@
                 <li><button type="button" @click="updateSort('games')" :class="sort === 'games' ? 'active' : ''"># Games</button></li>
                 <li><button type="button" @click="updateSort('name')" :class="sort === 'name' ? 'active' : ''">Name (A-Z)</button></li>
             </ul>
+        </div>
+        {# Mobile: Native select for touch compatibility #}
+        <div class="desktop:hidden flex items-center gap-1">
+            <span class="mdi mdi-sort text-base text-base-content/60"></span>
+            <select class="select select-sm select-bordered bg-base-200"
+                    style="width: fit-content; max-width: 100%;"
+                    @change="updateSort($event.target.value)">
+                <option value="games" :selected="sort === 'games'"># Games</option>
+                <option value="name" :selected="sort === 'name'">Name (A-Z)</option>
+            </select>
         </div>
     </div>
 </div>

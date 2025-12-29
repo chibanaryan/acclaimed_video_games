@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Fix mobile sort dropdowns: replace DaisyUI dropdown with native select for touch compatibility (Games, Developers, Developer detail)
 - Source Lists: fix table column reflow on Load More, use percentage-based widths with table-fixed, add ellipsis truncation for long names
 - Responsive layout: reduce filter width by 15% (420px→357px), lower breakpoint (1088px→962px) for narrower desktop support
 - Mobile nav: add active state highlighting, cache overflow state in sessionStorage to prevent layout shift

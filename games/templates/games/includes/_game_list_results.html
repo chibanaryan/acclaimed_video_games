@@ -57,22 +57,16 @@
 
 {# Mobile: Sort + jump to rank + result count (hidden at desktop+) #}
 <div class="desktop:hidden flex items-center justify-between gap-4 mb-2 text-sm">
-    {# Sort - Left side #}
-    <div class="dropdown flex-shrink-0" x-data="{ sortOpenMobile: false }" @click.away="sortOpenMobile = false">
-        <button type="button"
-                class="flex items-center gap-1 text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
-                @click="sortOpenMobile = !sortOpenMobile">
-            <span class="mdi mdi-sort text-base"></span>
-            <span class="text-sm" x-text="filters.sort === 'rank' ? 'Rank' : filters.sort === 'year' ? 'Year' : 'A-Z'"></span>
-            <span class="mdi mdi-chevron-down text-xs"></span>
-        </button>
-        <ul x-show="sortOpenMobile" x-cloak
-            class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
-            @click="sortOpenMobile = false">
-            <li><button type="button" @click="updateSort('rank')" :class="filters.sort === 'rank' ? 'active' : ''">Rank</button></li>
-            <li><button type="button" @click="updateSort('year')" :class="filters.sort === 'year' ? 'active' : ''">Year</button></li>
-            <li><button type="button" @click="updateSort('name')" :class="filters.sort === 'name' ? 'active' : ''">A-Z</button></li>
-        </ul>
+    {# Sort - Left side - Native select for mobile touch compatibility #}
+    <div class="flex items-center gap-1">
+        <span class="mdi mdi-sort text-base text-base-content/60"></span>
+        <select class="select select-sm select-bordered bg-base-200"
+                style="width: fit-content; max-width: 100%;"
+                @change="updateSort($event.target.value)">
+            <option value="rank" :selected="filters.sort === 'rank'">Rank</option>
+            <option value="year" :selected="filters.sort === 'year'">Year</option>
+            <option value="name" :selected="filters.sort === 'name'">A-Z</option>
+        </select>
     </div>
     {# Jump to Rank + Result count - Right side #}
     <div class="flex items-center gap-3">
