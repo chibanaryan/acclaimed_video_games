@@ -124,7 +124,7 @@ class IgbdApiTests(SimpleTestCase):
 
         self.assertEqual(result["slug"], "sample")
         self.assertEqual(result["cover"], "cover.jpg")
-        self.assertEqual(result["studios"][0]["name"], "Foo")
+        self.assertEqual(result["developers"][0]["name"], "Foo")
         self.assertIn("Action", result["genres"])
         self.assertIn("Adventure", result["genres"])
 
@@ -291,8 +291,8 @@ class IgbdApiTests(SimpleTestCase):
             ):
                 result = self.api.get_game_info_by_id(2, cache_results=False)
 
-        self.assertEqual(result["studios"][0]["name"], "Support Co")
-        self.assertEqual(result["studios"][0]["parent"]["name"], "Parent Co")
+        self.assertEqual(result["developers"][0]["name"], "Support Co")
+        self.assertEqual(result["developers"][0]["parent"]["name"], "Parent Co")
         self.assertIn("Adventure", result["genres"])
 
     def test_get_game_info_falls_back_to_publishers_then_porters(self):
@@ -349,7 +349,7 @@ class IgbdApiTests(SimpleTestCase):
         ):
             publisher_result = self.api.get_game_info_by_id(3, cache_results=False)
 
-        self.assertEqual(publisher_result["studios"][0]["name"], "Pub Co")
+        self.assertEqual(publisher_result["developers"][0]["name"], "Pub Co")
 
         with mock.patch(
             "games.igdb.requests.post", return_value=DummyResponse(200, porter_payload)
@@ -360,7 +360,7 @@ class IgbdApiTests(SimpleTestCase):
         ):
             porter_result = self.api.get_game_info_by_id(4, cache_results=False)
 
-        self.assertEqual(porter_result["studios"][0]["name"], "Port Co")
+        self.assertEqual(porter_result["developers"][0]["name"], "Port Co")
 
     def test_get_game_info_skips_missing_company_records(self):
         game_payload = [
@@ -389,7 +389,7 @@ class IgbdApiTests(SimpleTestCase):
         ), mock.patch.object(self.api, "get_companies_by_ids", return_value={}):
             result = self.api.get_game_info_by_id(5, cache_results=False)
 
-        self.assertEqual(result["studios"], [])
+        self.assertEqual(result["developers"], [])
 
     def test_get_game_info_uses_cache(self):
         cached = {"slug": "cached"}
@@ -824,8 +824,8 @@ class IgbdApiTests(SimpleTestCase):
         with mock.patch("games.igdb.requests.post", side_effect=fake_post):
             result = self.api.get_games_info_by_ids([1], cache_results=False)
 
-        self.assertEqual(result[1]["studios"][0]["name"], "Child Co")
-        self.assertEqual(result[1]["studios"][0]["parent"]["name"], "Parent Co")
+        self.assertEqual(result[1]["developers"][0]["name"], "Child Co")
+        self.assertEqual(result[1]["developers"][0]["parent"]["name"], "Parent Co")
 
     def test_get_games_info_by_ids_missing_company_id(self):
         """Test get_games_info_by_ids skips entries without company id (line 616)."""
@@ -856,7 +856,7 @@ class IgbdApiTests(SimpleTestCase):
         ):
             result = self.api.get_games_info_by_ids([1], cache_results=False)
 
-        self.assertEqual(result[1]["studios"], [])
+        self.assertEqual(result[1]["developers"], [])
 
     def test_get_games_info_by_ids_supporters_fallback(self):
         """Test get_games_info_by_ids uses supporters when no developers (line 621)."""
@@ -895,7 +895,7 @@ class IgbdApiTests(SimpleTestCase):
         with mock.patch("games.igdb.requests.post", side_effect=fake_post):
             result = self.api.get_games_info_by_ids([1], cache_results=False)
 
-        self.assertEqual(result[1]["studios"][0]["name"], "Support Co")
+        self.assertEqual(result[1]["developers"][0]["name"], "Support Co")
 
     def test_get_games_info_by_ids_porters_fallback(self):
         """Test get_games_info_by_ids uses porters as last fallback (line 625)."""
@@ -932,7 +932,7 @@ class IgbdApiTests(SimpleTestCase):
         with mock.patch("games.igdb.requests.post", side_effect=fake_post):
             result = self.api.get_games_info_by_ids([1], cache_results=False)
 
-        self.assertEqual(result[1]["studios"][0]["name"], "Port Co")
+        self.assertEqual(result[1]["developers"][0]["name"], "Port Co")
 
     def test_get_games_info_by_ids_missing_company_obj(self):
         """Test get_games_info_by_ids skips missing company object (line 642)."""
@@ -968,7 +968,7 @@ class IgbdApiTests(SimpleTestCase):
         with mock.patch("games.igdb.requests.post", side_effect=fake_post):
             result = self.api.get_games_info_by_ids([1], cache_results=False)
 
-        self.assertEqual(result[1]["studios"], [])
+        self.assertEqual(result[1]["developers"], [])
 
     def test_get_game_info_by_id_returns_none_when_request_returns_none(self):
         """Test get_game_info_by_id returns None when request returns None."""

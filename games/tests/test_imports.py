@@ -530,15 +530,21 @@ class ImportListMembershipsTests(TestCase):
 
 class ImportDevelopersTests(TestCase):
 
-    def test_import_developers_creates_aliases(self):
+    def test_import_developers_creates_subsidiaries(self):
         data = "Foo Studio\tFoo Studio\tFoo Devs\r\n" "Bar Alias\tBar Studio\r\n"
         success, message = utils.import_developers(StringIO(data))
 
         self.assertTrue(success)
         self.assertEqual(message, "Developers: 2 created, 0 updated")
-        self.assertEqual(models.Company.objects.count(), 2)
-        foo = models.Company.objects.get(name="Foo Studio")
-        self.assertEqual(foo.studios.count(), 2)
+        # 2 root developers (Foo Studio, Bar Studio)
+        # + 2 subsidiaries (Foo Devs, Bar Alias)
+        # Foo Studio alias skipped since it equals canonical name
+        root_devs = models.Developer.objects.filter(parent__isnull=True)
+        self.assertEqual(root_devs.count(), 2)
+        foo = models.Developer.objects.get(name="Foo Studio", parent__isnull=True)
+        self.assertEqual(
+            foo.subsidiaries.count(), 1
+        )  # Only Foo Devs (Foo Studio alias skipped)
 
 
 class ValidatePrerequisitesTests(TestCase):
@@ -1186,7 +1192,7 @@ class ImportIGDBWithProgressTests(TestCase):
             fake_api = mock.Mock()
             fake_api.get_game_info_by_id.return_value = {
                 "genres": ["Action"],
-                "studios": [
+                "developers": [
                     {
                         "id": 1,
                         "name": "Test Studio",

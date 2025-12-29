@@ -489,7 +489,7 @@ def download_games_csv(request):
     )
 
     for index, game in enumerate(qs, start=1):
-        developers = ", ".join(d.name for d in game.studios.all())
+        developers = ", ".join(d.name for d in game.developers.all())
         platforms = ", ".join(p.name for p in game.platforms.all())
         genres = ", ".join(g.name for g in game.wikipedia_genres.all())
         filtered_rank = index if use_filtered_rank else game.rank
@@ -518,8 +518,8 @@ class GameDetailView(DetailView):
     def get_queryset(self):
         # Prefetch lists with publisher for ListResultsComponent
         return models.Game.objects.prefetch_related(
-            "studios",
-            "studios__company",
+            "developers",
+            "developers__parent",
             "platforms",
             "genres",
             "quotes",
@@ -701,8 +701,14 @@ class GameSearchView(RobustPaginationMixin, ListView):
         )
 
         # Get series list with game counts (only show series with 2+ games)
+        # Include version hash in cache key so it invalidates when series data changes
         MIN_SERIES_GAMES = 2
-        series_list = cache.get("search_series_list_with_counts")
+        series_count = models.Series.objects.count()
+        games_with_series = models.Game.objects.filter(series__isnull=False).count()
+        series_cache_key = (
+            f"search_series_list_with_counts:{series_count}:{games_with_series}"
+        )
+        series_list = cache.get(series_cache_key)
         if series_list is None:
             series_list = list(
                 models.Series.objects.annotate(game_count=Count("games"))
@@ -713,7 +719,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             # Convert IDs to strings for Alpine.js
             series_list = [{**s, "id": str(s["id"])} for s in series_list]
             cache.set(
-                "search_series_list_with_counts",
+                series_cache_key,
                 series_list,
                 config.CACHE_TIMEOUT_DEFAULT,
             )
@@ -949,101 +955,42 @@ class GameSearchView(RobustPaginationMixin, ListView):
         return context
 
 
-class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
-    model = models.Studio
-    template_name = "developers/company_list.html"
+class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
+    """
+    List view for developers with game counts and hierarchy support.
+
+    Uses the unified Developer model with self-referential parent FK for hierarchy.
+    """
+
+    model = models.Developer
+    template_name = "developers/developer_list.html"
     context_object_name = "developers"
     paginate_by = 150
     paginate_orphans = 0
-    htmx_partial_template = "developers/includes/_company_list_content.html"
+    htmx_partial_template = "developers/includes/_developer_list_content.html"
 
-    def _get_studio_hierarchy(self):
-        """
-        Build a map of studio_id -> list of child studio IDs.
-
-        A studio can have children if a Company with the same name exists
-        AND that company is different from the studio's own parent company.
-        (If the matching company is the studio's parent, those are siblings.)
-        """
-        from django.core.cache import cache
-
-        cache_key = "studio_list_hierarchy_map_v2"
-        hierarchy = cache.get(cache_key)
-        if hierarchy is not None:
-            return hierarchy
-
-        hierarchy = {}
-
-        # Get all studios with their parent company IDs
-        studios_with_company = list(
-            models.Studio.objects.values_list("id", "name", "company_id")
-        )
-
-        # Find all companies that share a name with a studio
-        studio_names = set(name for _, name, _ in studios_with_company)
-        matching_companies = models.Company.objects.filter(
-            name__in=studio_names
-        ).prefetch_related("studios")
-
-        # Build name -> company map
-        company_by_name = {c.name: c for c in matching_companies}
-
-        # For each studio, check if there's a DIFFERENT company with the same name
-        for studio_id, studio_name, studio_company_id in studios_with_company:
-            if studio_name in company_by_name:
-                matching_company = company_by_name[studio_name]
-                # Only add children if the matching company is NOT the studio's parent
-                if matching_company.id != studio_company_id:
-                    # Use .all() to leverage prefetch cache (values_list bypasses it)
-                    child_ids = [s.id for s in matching_company.studios.all()]
-                    if child_ids:
-                        hierarchy[studio_id] = child_ids
-
-        cache.set(cache_key, hierarchy, 3600)  # Cache for 1 hour
-        return hierarchy
-
-    def _get_all_descendant_ids(self, studio_id, hierarchy, visited=None):
-        """Recursively get all descendant studio IDs."""
+    def _collect_unique_game_ids(self, developer, game_ids_by_dev, visited=None):
+        """Recursively collect unique game IDs for developer + all subsidiaries."""
         if visited is None:
             visited = set()
-        if studio_id in visited:
+        if developer.id in visited:
             return set()
-        visited.add(studio_id)
+        visited.add(developer.id)
 
-        descendants = set()
-        for child_id in hierarchy.get(studio_id, []):
-            descendants.add(child_id)
-            descendants.update(
-                self._get_all_descendant_ids(child_id, hierarchy, visited)
-            )
-        return descendants
+        # Start with this developer's games
+        unique_ids = set(game_ids_by_dev.get(developer.id, []))
 
-    def _collect_unique_game_ids(
-        self, studio_id, hierarchy, game_ids_by_studio, visited=None
-    ):
-        """Recursively collect unique game IDs for a studio + all descendants."""
-        if visited is None:
-            visited = set()
-        if studio_id in visited:
-            return set()
-        visited.add(studio_id)
-
-        # Start with this studio's games
-        unique_ids = set(game_ids_by_studio.get(studio_id, []))
-
-        # Add games from all child studios
-        for child_id in hierarchy.get(studio_id, []):
+        # Add games from all subsidiaries
+        for sub in developer.subsidiaries.all():
             unique_ids.update(
-                self._collect_unique_game_ids(
-                    child_id, hierarchy, game_ids_by_studio, visited
-                )
+                self._collect_unique_game_ids(sub, game_ids_by_dev, visited)
             )
         return unique_ids
 
     def get_template_names(self):
         # Append mode for Load More - returns just rows
         if self.request.GET.get("append") == "true":
-            return ["developers/includes/_company_list_append.html"]
+            return ["developers/includes/_developer_list_append.html"]
         return super().get_template_names()
 
     def get_paginate_by(self, queryset):
@@ -1056,11 +1003,13 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
     def get_queryset(self):
         qs = (
-            models.Studio.objects.annotate(
-                games_count=Count("games"),
+            models.Developer.objects.annotate(
+                games_count=Count("developed_games"),
             )
-            .filter(games_count__gt=0)  # Only show studios with games
-            .select_related("company")
+            # Don't filter here - we'll filter after calculating recursive counts
+            # This allows holding companies with subsidiary games to appear
+            .select_related("parent")
+            .prefetch_related("subsidiaries")
             .distinct()
         )
 
@@ -1082,38 +1031,36 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         sort = self.request.GET.get("sort", "games")
         context["sort"] = sort
 
-        # Get the studios (full list when sorting by games, paginated otherwise)
-        studios = list(context.get("developers", []))
+        # Get developers (full list when sorting by games, paginated otherwise)
+        developers = list(context.get("developers", []))
 
-        # Build hierarchy map and calculate recursive counts for all studios
-        hierarchy = self._get_studio_hierarchy()
-
-        # Collect all studio IDs we need game IDs for
-        all_studio_ids = set(s.id for s in studios)
-        for studio in studios:
-            all_studio_ids.update(self._get_all_descendant_ids(studio.id, hierarchy))
-
-        # Batch fetch game IDs for all relevant studios
+        # Build mapping of developer ID to game IDs
         from collections import defaultdict
 
-        game_ids_by_studio = defaultdict(list)
-        for studio_id, game_id in models.Studio.objects.filter(
-            id__in=all_studio_ids
-        ).values_list("id", "games__id"):
+        all_dev_ids = set(d.id for d in developers)
+        # Also collect subsidiary IDs
+        for dev in developers:
+            all_dev_ids.update(dev.get_all_subsidiary_ids())
+
+        game_ids_by_dev = defaultdict(list)
+        for dev_id, game_id in models.Developer.objects.filter(
+            id__in=all_dev_ids
+        ).values_list("id", "developed_games__id"):
             if game_id is not None:
-                game_ids_by_studio[studio_id].append(game_id)
+                game_ids_by_dev[dev_id].append(game_id)
 
         # Calculate recursive counts using unique game IDs
-        for studio in studios:
-            unique_game_ids = self._collect_unique_game_ids(
-                studio.id, hierarchy, game_ids_by_studio
-            )
-            studio.recursive_games_count = len(unique_game_ids)
+        for dev in developers:
+            unique_game_ids = self._collect_unique_game_ids(dev, game_ids_by_dev)
+            dev.recursive_games_count = len(unique_game_ids)
+
+        # Filter out developers with no games (direct or through subsidiaries)
+        developers = [d for d in developers if d.recursive_games_count > 0]
 
         # Handle pagination and sorting
         if sort == "games":
             # Sort by recursive game count (desc), then by name (asc) for ties
-            studios.sort(key=lambda s: (-s.recursive_games_count, s.name.lower()))
+            developers.sort(key=lambda d: (-d.recursive_games_count, d.name.lower()))
 
             # Manual pagination
             try:
@@ -1123,12 +1070,12 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             except (ValueError, TypeError):
                 page = 1
             per_page = self.paginate_by
-            total_count = len(studios)
+            total_count = len(developers)
             start_idx = (page - 1) * per_page
             end_idx = start_idx + per_page
 
             # Slice for current page
-            context["developers"] = studios[start_idx:end_idx]
+            context["developers"] = developers[start_idx:end_idx]
 
             # Build pagination context
             context["has_more"] = end_idx < total_count
@@ -1153,50 +1100,63 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         return context
 
 
-class CompanyDetailView(DetailView):
-    model = models.Company
-    template_name = "developers/company_detail.html"
+# Legacy alias for backward compatibility
+StudioListView = DeveloperListView
+
+
+class DeveloperDetailView(DetailView):
+    """
+    Detail view for a developer showing all games and subsidiary hierarchy.
+
+    Uses the unified Developer model with self-referential parent FK.
+    """
+
+    model = models.Developer
+    template_name = "developers/developer_detail.html"
     context_object_name = "developer"
     slug_field = "slug"
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        # Prefetch studios and games with optimized queryset
+        # Prefetch subsidiaries and games with optimized queryset
         games_queryset = models.Game.objects.prefetch_related(
-            "studios",
-            "studios__company",
+            "developers",
+            "developers__parent",
             "platforms",
             "genres",
         ).order_by("year_of_release")
 
-        return models.Company.objects.prefetch_related(
+        return models.Developer.objects.prefetch_related(
             Prefetch(
-                "studios",
-                queryset=models.Studio.objects.order_by("name"),
+                "subsidiaries",
+                queryset=models.Developer.objects.order_by("name"),
             ),
-            Prefetch("studios__games", queryset=games_queryset),
+            Prefetch("developed_games", queryset=games_queryset),
         )
 
-    def flatten_studios(self, studios_data, parent_id=None, level=0):
-        """Flatten recursive studio structure for checkbox tree."""
+    def flatten_developers(self, devs_data, parent_id=None, level=0):
+        """Flatten recursive developer structure for checkbox tree."""
         flat = []
-        for studio_data in studios_data:
-            child_ids = [s["studio"].id for s in studio_data["sub_studios"]]
+        for dev_data in devs_data:
+            child_ids = [s["developer"].id for s in dev_data["sub_developers"]]
             flat.append(
                 {
-                    "id": studio_data["studio"].id,
-                    "name": studio_data["studio"].name,
-                    "game_ids": [g.id for g in studio_data["games"]],
+                    "id": dev_data["developer"].id,
+                    "name": dev_data["developer"].name,
+                    "game_ids": [g.id for g in dev_data["games"]],
+                    "total_game_count": dev_data[
+                        "total_games_count"
+                    ],  # Includes descendants
                     "parent_id": parent_id,
                     "level": level,
                     "child_ids": child_ids,
                 }
             )
-            # Recursively flatten sub-studios
+            # Recursively flatten sub-developers
             flat.extend(
-                self.flatten_studios(
-                    studio_data["sub_studios"],
-                    parent_id=studio_data["studio"].id,
+                self.flatten_developers(
+                    dev_data["sub_developers"],
+                    parent_id=dev_data["developer"].id,
                     level=level + 1,
                 )
             )
@@ -1204,196 +1164,206 @@ class CompanyDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company = context["developer"]
+        developer = context["developer"]
 
-        # Recursively gather studios with nested sub-studios
-        def gather_studios(parent_company, visited=None):
-            """Recursively gather studios and their games, including nested studios."""
+        # Recursively gather subsidiaries with nested structure
+        def gather_subsidiaries(parent_dev, visited=None):
+            """Recursively gather subsidiaries and their games."""
             if visited is None:
                 visited = set()
 
-            if parent_company.id in visited:
+            if parent_dev.id in visited:
                 return []
-            visited.add(parent_company.id)
+            visited.add(parent_dev.id)
 
-            studios_data = []
-            for studio in parent_company.studios.all():
-                studio_games = list(studio.games.all())
+            devs_data = []
+            for sub_dev in parent_dev.subsidiaries.all():
+                dev_games = list(sub_dev.developed_games.all())
 
-                # Check if this studio also exists as a company (has sub-studios)
-                sub_company = (
-                    models.Company.objects.filter(name=studio.name)
-                    .prefetch_related(
-                        Prefetch(
-                            "studios",
-                            queryset=models.Studio.objects.order_by("name"),
-                        )
-                    )
-                    .first()
-                )
-                sub_studios = []
-                if sub_company and sub_company.id not in visited:
-                    sub_studios = gather_studios(sub_company, visited)
+                # Recursively get sub-subsidiaries
+                sub_devs = gather_subsidiaries(sub_dev, visited)
 
-                    # Filter out games that belong to sub-studios
-                    # (show at most specific level)
-                    if sub_studios:
+                # Filter out games that belong to sub-developers
+                # (show at most specific level)
+                if sub_devs:
 
-                        def collect_sub_game_ids(studios):
-                            """Recursively collect all game IDs from sub-studios."""
-                            ids = set()
-                            for s in studios:
-                                ids.update(g.id for g in s["games"])
-                                ids.update(collect_sub_game_ids(s["sub_studios"]))
-                            return ids
+                    def collect_sub_game_ids(devs):
+                        """Recursively collect all game IDs from sub-developers."""
+                        ids = set()
+                        for d in devs:
+                            ids.update(g.id for g in d["games"])
+                            ids.update(collect_sub_game_ids(d["sub_developers"]))
+                        return ids
 
-                        sub_game_ids = collect_sub_game_ids(sub_studios)
-                        studio_games = [
-                            g for g in studio_games if g.id not in sub_game_ids
-                        ]
+                    sub_game_ids = collect_sub_game_ids(sub_devs)
+                    dev_games = [g for g in dev_games if g.id not in sub_game_ids]
 
-                # Only include studios that have games OR sub-studios
-                if studio_games or sub_studios:
-                    studio_games.sort(key=lambda g: (g.year_of_release or 0))
+                # Only include developers that have games OR sub-developers
+                if dev_games or sub_devs:
+                    dev_games.sort(key=lambda g: (g.year_of_release or 0))
 
-                    # Calculate total unique games including all nested studios
-                    def calc_total_games(games, sub_studios_list):
-                        """
-                        Count unique games to prevent double-counting
-                        across siblings.
-                        """
+                    # Calculate total unique games including all nested developers
+                    def calc_total_games(games, sub_devs_list):
+                        """Count unique games to prevent double-counting."""
                         game_ids = {g.id for g in games}
-                        for sub in sub_studios_list:
+                        for sub in sub_devs_list:
                             sub_ids = calc_unique_game_ids(
-                                sub["games"], sub["sub_studios"]
+                                sub["games"], sub["sub_developers"]
                             )
                             game_ids.update(sub_ids)
                         return len(game_ids)
 
-                    def calc_unique_game_ids(games, sub_studios_list):
+                    def calc_unique_game_ids(games, sub_devs_list):
                         """Recursively collect unique game IDs."""
                         game_ids = {g.id for g in games}
-                        for sub in sub_studios_list:
+                        for sub in sub_devs_list:
                             game_ids.update(
-                                calc_unique_game_ids(sub["games"], sub["sub_studios"])
+                                calc_unique_game_ids(
+                                    sub["games"], sub["sub_developers"]
+                                )
                             )
                         return game_ids
 
-                    # Calculate total nested studios
-                    def calc_total_studios(sub_studios_list):
-                        total = len(sub_studios_list)
-                        for sub in sub_studios_list:
-                            total += calc_total_studios(sub["sub_studios"])
+                    # Calculate total nested developers
+                    def calc_total_devs(sub_devs_list):
+                        total = len(sub_devs_list)
+                        for sub in sub_devs_list:
+                            total += calc_total_devs(sub["sub_developers"])
                         return total
 
-                    studios_data.append(
+                    devs_data.append(
                         {
-                            "studio": studio,
-                            "games": studio_games,
-                            "games_count": len(studio_games),
-                            "sub_studios": sub_studios,
-                            "total_games_count": calc_total_games(
-                                studio_games, sub_studios
-                            ),
-                            "total_studios_count": calc_total_studios(sub_studios),
+                            "developer": sub_dev,
+                            "games": dev_games,
+                            "games_count": len(dev_games),
+                            "sub_developers": sub_devs,
+                            "total_games_count": calc_total_games(dev_games, sub_devs),
+                            "total_developers_count": calc_total_devs(sub_devs),
                         }
                     )
 
-            return studios_data
+            return devs_data
 
-        # Get all studios recursively
-        studios_with_games = gather_studios(company)
+        # Get root developer's direct games
+        root_games = list(developer.developed_games.all())
 
-        # Count unique games across all studios
-        # (prevents double-counting across siblings)
-        def collect_unique_game_ids(studios):
-            """Recursively collect unique game IDs across all studios."""
+        # Get all subsidiaries recursively
+        subsidiaries_with_games = gather_subsidiaries(developer)
+
+        # Filter out games from root that belong to subsidiaries
+        if subsidiaries_with_games:
+
+            def collect_all_sub_game_ids(devs):
+                """Recursively collect all game IDs from sub-developers."""
+                ids = set()
+                for d in devs:
+                    ids.update(g.id for g in d["games"])
+                    ids.update(collect_all_sub_game_ids(d["sub_developers"]))
+                return ids
+
+            sub_game_ids = collect_all_sub_game_ids(subsidiaries_with_games)
+            root_games = [g for g in root_games if g.id not in sub_game_ids]
+
+        root_games.sort(key=lambda g: (g.year_of_release or 0))
+
+        # Count unique games across all developers
+        def collect_unique_game_ids(devs):
+            """Recursively collect unique game IDs across all developers."""
             game_ids = set()
-            for studio_data in studios:
-                game_ids.update(g.id for g in studio_data["games"])
-                game_ids.update(collect_unique_game_ids(studio_data["sub_studios"]))
+            for dev_data in devs:
+                game_ids.update(g.id for g in dev_data["games"])
+                game_ids.update(collect_unique_game_ids(dev_data["sub_developers"]))
             return game_ids
 
-        total_games = len(collect_unique_game_ids(studios_with_games))
+        total_games = len(collect_unique_game_ids(subsidiaries_with_games)) + len(
+            root_games
+        )
 
-        # Count unique studios (flatten the hierarchy)
-        def count_studios(studios):
-            total = len(studios)
-            for studio_data in studios:
-                total += count_studios(studio_data["sub_studios"])
+        # Count unique developers (flatten the hierarchy)
+        def count_devs(devs):
+            total = len(devs)
+            for dev_data in devs:
+                total += count_devs(dev_data["sub_developers"])
             return total
 
-        studios_count = count_studios(studios_with_games)
+        subsidiaries_count = count_devs(subsidiaries_with_games)
 
-        context["studios_with_games"] = studios_with_games
+        context["subsidiaries_with_games"] = subsidiaries_with_games
+        context["root_games"] = root_games
         context["total_games"] = total_games
-        context["studios_count"] = studios_count
+        # Include root developer in count (+1) to match filter selection
+        context["subsidiaries_count"] = subsidiaries_count + 1
 
-        # Add flattened studio data for filter UI
-        studios_flat = self.flatten_studios(studios_with_games)
+        # Add flattened developer data for filter UI
+        devs_flat = self.flatten_developers(subsidiaries_with_games)
 
-        # Prepend company as root node for the checkbox tree
-        all_top_level_studio_ids = [s["id"] for s in studios_flat if s["level"] == 0]
-        company_game_ids = collect_unique_game_ids(studios_with_games)
-        company_entry = {
-            "id": 0,  # Special ID for company (DB IDs start at 1)
-            "name": company.name,
-            "game_ids": list(company_game_ids),
+        # Prepend root developer as root node for the checkbox tree
+        all_top_level_dev_ids = [s["id"] for s in devs_flat if s["level"] == 0]
+        all_game_ids = collect_unique_game_ids(subsidiaries_with_games)
+        all_game_ids.update(g.id for g in root_games)
+        # Root entry only stores ROOT'S DIRECT GAMES (not all games)
+        # This ensures proper counting when all children are selected
+        root_game_ids = [g.id for g in root_games]
+        root_entry = {
+            "id": 0,  # Special ID for root (DB IDs start at 1)
+            "name": developer.name,
+            "game_ids": root_game_ids,  # Only root's direct games
+            "total_game_count": len(all_game_ids),  # Total including all descendants
             "level": 0,
-            "child_ids": all_top_level_studio_ids,
+            "child_ids": all_top_level_dev_ids,
         }
 
-        # Increment all studio levels by 1 (company is now level 0)
-        for studio in studios_flat:
-            studio["level"] += 1
+        # Increment all developer levels by 1 (root is now level 0)
+        for dev in devs_flat:
+            dev["level"] += 1
 
-        # Insert company at the beginning
-        studios_flat.insert(0, company_entry)
+        # Insert root at the beginning
+        devs_flat.insert(0, root_entry)
 
-        context["studios_flat"] = studios_flat
+        context["developers_flat"] = devs_flat
 
         # Collect all unique games for filter view
-        all_game_ids = collect_unique_game_ids(studios_with_games)
         all_games = list(
             models.Game.objects.filter(id__in=all_game_ids)
-            .prefetch_related("studios", "platforms", "genres")
+            .prefetch_related("developers", "platforms", "genres")
             .order_by("year_of_release")
         )
         context["all_games"] = all_games
 
-        # Build studio -> game IDs mapping for Alpine.js
-        # Each studio maps to ONLY its direct games (not descendants)
+        # Build developer -> game IDs mapping for Alpine.js
+        # Each developer maps to ONLY its direct games (not descendants)
         # JavaScript handles hierarchical selection by checking/unchecking children
-        studio_game_map = {}
-        for studio in studios_flat:
-            studio_game_map[studio["id"]] = studio["game_ids"]
+        dev_game_map = {}
+        for dev in devs_flat:
+            dev_game_map[dev["id"]] = dev["game_ids"]
 
-        # Build studio -> child IDs mapping for Alpine.js
-        studio_child_map = {s["id"]: s["child_ids"] for s in studios_flat}
+        # Build developer -> child IDs mapping for Alpine.js
+        dev_child_map = {d["id"]: d["child_ids"] for d in devs_flat}
 
         # Serialize to JSON for Alpine.js
         import json
         from django.core.serializers.json import DjangoJSONEncoder
 
-        context["studio_game_map_json"] = json.dumps(
-            studio_game_map, cls=DjangoJSONEncoder
+        context["developer_game_map_json"] = json.dumps(
+            dev_game_map, cls=DjangoJSONEncoder
         )
-        context["studio_child_map_json"] = json.dumps(
-            studio_child_map, cls=DjangoJSONEncoder
+        context["developer_child_map_json"] = json.dumps(
+            dev_child_map, cls=DjangoJSONEncoder
         )
 
         return context
 
 
-class StudioRedirectView(View):
+class DeveloperRedirectView(View):
     """
-    Redirects legacy /developer-alias/:id/ URLs to the company detail page.
-    Also handles /studio/:id/ URLs (renamed but same functionality).
+    Redirects developer by ID to the root developer's detail page.
+    Handles legacy /developer-alias/:id/ URLs.
     """
 
     def get(self, request, id):
-        studio = get_object_or_404(models.Studio, id=id)
-        return redirect("developer-detail", slug=studio.company.slug, permanent=True)
+        developer = get_object_or_404(models.Developer, id=id)
+        root = developer.root_developer
+        return redirect("developer-detail", slug=root.slug, permanent=True)
 
 
 class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
@@ -1695,8 +1665,8 @@ class ImportView(LoginRequiredMixin, FormView):
             "lists": models.List.objects.count(),
             "games": total_games,
             "memberships": models.ListMembership.objects.count(),
-            "companies": models.Company.objects.count(),
-            "studios": models.Studio.objects.count(),
+            "developers": models.Developer.objects.count(),
+            "series": models.Series.objects.count(),
             "igdb_genres": models.IGDBGenre.objects.count(),
             "wikipedia_genres": models.WikipediaGenre.objects.count(),
         }

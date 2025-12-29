@@ -1,0 +1,65 @@
+{# Append-only partial - returns developer rows/cards for Load More #}
+{# Wrap in table so DOMParser doesn't discard tr elements #}
+<table id="append-rows-container">
+<tbody>
+{% for dev in developers %}
+<tr class="developer-row">
+    <td>
+        {% with root=dev.root_developer %}
+        {% if root.slug %}
+            <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-primary">
+                {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}
+            </a>
+        {% elif dev.slug %}
+            <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-primary">
+                {{ dev.name }}
+            </a>
+        {% else %}
+            <span>{{ dev.name }}</span>
+        {% endif %}
+        {% endwith %}
+    </td>
+    <td>{{ dev.recursive_games_count|default:dev.games_count }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{# Mobile cards container #}
+<div id="mobile-append-container">
+{% for dev in developers %}
+<div class="developer-row card bg-base-200 p-3">
+    <div class="flex items-center justify-between gap-2">
+        <div class="flex-1">
+            {% with root=dev.root_developer %}
+            {% if root.slug %}
+                <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-primary font-bold">
+                    {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}
+                </a>
+            {% elif dev.slug %}
+                <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-primary font-bold">
+                    {{ dev.name }}
+                </a>
+            {% else %}
+                <span class="font-bold">{{ dev.name }}</span>
+            {% endif %}
+            {% endwith %}
+        </div>
+        {% with count=dev.recursive_games_count|default:dev.games_count %}
+        <div class="badge badge-ghost">{{ count }} game{{ count|pluralize }}</div>
+        {% endwith %}
+    </div>
+</div>
+{% endfor %}
+</div>
+
+{# JSON metadata for JavaScript to update the button #}
+<script type="application/json" id="load-more-meta">
+{
+    "hasMore": {{ has_more|yesno:"true,false" }},
+    "nextPage": {{ next_page|default:"null" }},
+    "loadedCount": {{ loaded_count }},
+    "totalCount": {{ total_count }},
+    "remainingCount": {{ remaining_count }}
+}
+</script>

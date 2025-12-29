@@ -74,16 +74,14 @@ const PLATFORM_HIERARCHY = {
 class GameFilterEngine {
     /**
      * @param {Object} data - Game data from API
-     * @param {Array} data.games - Game objects with id, n, s, r, y, a, st, p, g
-     * @param {Object} data.studios - Studio lookup by ID {n: name, c: companyId}
-     * @param {Object} data.companies - Company lookup by ID {n: name, s: slug}
+     * @param {Array} data.games - Game objects with id, n, s, r, y, a, dv, p, g
+     * @param {Object} data.developers - Developer lookup by ID {n: name, pa: parentId, s: slug}
      * @param {Object} data.platforms - Platform lookup by ID {n: name, c: code}
      * @param {Array} data.genres - Genre objects with id, n, s, p, l, d (descendants)
      */
     constructor(data) {
         this.games = data.games || [];
-        this.studios = data.studios || {};
-        this.companies = data.companies || {};
+        this.developers = data.developers || {};
         this.platforms = data.platforms || {};
         this.genres = data.genres || [];
 
@@ -597,21 +595,32 @@ class GameFilterEngine {
     /**
      * Get expanded game data with resolved references
      * @param {Object} game - Compact game object
-     * @returns {Object} Expanded game with full studio/platform/genre info
+     * @returns {Object} Expanded game with full developer/platform/genre info
      */
     expandGame(game) {
-        // Resolve studios with company info
-        const studios = game.st.map(sid => {
-            const studio = this.studios[sid];
-            if (!studio) return null;
-            const company = studio.c ? this.companies[studio.c] : null;
+        // Resolve developers with parent info (find root developer for slugs)
+        const developerList = (game.dv || []).map(devId => {
+            const developer = this.developers[devId];
+            if (!developer) return null;
+
+            // Find root developer (for URL slug)
+            let rootDev = developer;
+            let currentId = devId;
+            while (rootDev && rootDev.pa) {
+                const parent = this.developers[rootDev.pa];
+                if (!parent) break;
+                rootDev = parent;
+                currentId = rootDev.pa;
+            }
+
             return {
-                id: sid,
-                name: studio.n,
-                company: company ? {
-                    id: studio.c,
-                    name: company.n,
-                    slug: company.s
+                id: devId,
+                name: developer.n,
+                slug: developer.s || null,
+                root: rootDev ? {
+                    id: currentId,
+                    name: rootDev.n,
+                    slug: rootDev.s
                 } : null
             };
         }).filter(Boolean);
@@ -643,7 +652,7 @@ class GameFilterEngine {
             rank: game.r,
             year: game.y,
             artworkId: game.a,
-            studios,
+            developers: developerList,
             platforms: platformList,
             genres: genreList
         };

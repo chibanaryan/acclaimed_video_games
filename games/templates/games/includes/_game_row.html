@@ -35,8 +35,8 @@
         {# Hover rows - hidden by default, shown on hover - each item on own row #}
         <div class="game-row-details text-sm mt-0.5">
             {# Developer #}
-            {% with studios=game.studios.all %}
-            <div class="text-base-content/70">{% if studios|length == 1 %}Developer{% else %}Developers{% endif %}: {% for studio in studios %}{% if studio.root_company.slug %}<a href="{% url 'developer-detail' slug=studio.root_company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-hover text-base-content">{{ studio.name }}</a>{% elif studio.company.slug %}<a href="{% url 'developer-detail' slug=studio.company.slug %}#studio-{{ studio.id }}-game-{{ game.id }}" class="link link-hover text-base-content">{{ studio.name }}</a>{% else %}<span class="text-base-content">{{ studio.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+            {% with devs=game.developers.all %}
+            <div class="text-base-content/70">{% if devs|length == 1 %}Developer{% else %}Developers{% endif %}: {% for dev in devs %}{% with root=dev.root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-hover text-base-content">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}" class="link link-hover text-base-content">{{ dev.name }}</a>{% else %}<span class="text-base-content">{{ dev.name }}</span>{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
             {% endwith %}
             {# Platforms #}
             {% with platforms=game.platforms.all|slice:":4" total_platforms=game.platforms.count %}

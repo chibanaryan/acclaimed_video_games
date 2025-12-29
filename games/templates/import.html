@@ -272,12 +272,12 @@
                 <div class="value">{{ counts.memberships }}</div>
             </div>
             <div class="status-card">
-                <div class="label">Companies</div>
-                <div class="value">{{ counts.companies }}</div>
+                <div class="label">Developers</div>
+                <div class="value">{{ counts.developers }}</div>
             </div>
             <div class="status-card">
-                <div class="label">Studios</div>
-                <div class="value">{{ counts.studios }}</div>
+                <div class="label">Series</div>
+                <div class="value">{{ counts.series }}</div>
             </div>
             <div class="status-card">
                 <div class="label">IGDB Genres</div>
@@ -409,7 +409,7 @@
             <div class="alert alert-info mt-4">
                 <span class="mdi mdi-information"></span>
                 <span class="text-sm">
-                    After importing games, IGDB metadata is automatically fetched for new games and reconnected for existing games. Developer/Studio/Genre relationships are preserved across imports.
+                    After importing games, IGDB metadata is automatically fetched for new games and reconnected for existing games. Developer and Genre relationships are preserved across imports.
                 </span>
             </div>
 
@@ -626,7 +626,7 @@
                         Delete Game Data
                     </h3>
                     <p class="text-sm opacity-70 mb-3">
-                        Deletes all games, lists, and platforms. Preserves IGDB/Wikipedia metadata and Developer/Studio/Genre objects for reconnection.
+                        Deletes all games, lists, and platforms. Preserves IGDB/Wikipedia metadata and Developer/Genre objects for reconnection.
                     </p>
                     <form method="POST" action=".">
                         {% csrf_token %}
@@ -647,7 +647,7 @@
                         Clear IGDB Metadata
                     </h3>
                     <p class="text-sm opacity-70 mb-3">
-                        Deletes all IGDB records ({{ igdb_counts.total }} total, {{ igdb_counts.orphaned }} orphaned) and derived data (Companies, Studios, Genres).
+                        Deletes all IGDB records ({{ igdb_counts.total }} total, {{ igdb_counts.orphaned }} orphaned) and derived data (Developers, Genres, Series).
                     </p>
                     <form method="POST" action=".">
                         {% csrf_token %}

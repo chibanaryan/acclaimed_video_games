@@ -31,7 +31,7 @@ class GameFilters:
         end: Maximum year of release
         decade: Decade string (e.g., "1990-99")
         year: Single year filter
-        company_igdb_id: Filter by company's IGDB ID
+        developer_igdb_id: Filter by developer's IGDB ID
     """
 
     q: Optional[str] = None
@@ -41,7 +41,7 @@ class GameFilters:
     end: Optional[int] = None
     decade: Optional[str] = None
     year: Optional[str] = None
-    company_igdb_id: Optional[int] = None
+    developer_igdb_id: Optional[int] = None
 
     @classmethod
     def from_request(cls, request: HttpRequest) -> "GameFilters":
@@ -95,12 +95,11 @@ class GameFilters:
             except (ValueError, TypeError):
                 pass
 
-        # Company filtering (API uses igdb_id)
-        # Support both "company" and legacy "developer" parameter
-        company = request.GET.get("company") or request.GET.get("developer")
-        if company:
+        # Developer filtering (API uses igdb_id)
+        developer = request.GET.get("developer")
+        if developer:
             try:
-                filters.company_igdb_id = int(company)
+                filters.developer_igdb_id = int(developer)
             except (ValueError, TypeError):
                 pass
 
@@ -117,7 +116,7 @@ class GameFilters:
             or self.year
             or self.start
             or self.end
-            or self.company_igdb_id
+            or self.developer_igdb_id
         )
 
 
@@ -153,9 +152,9 @@ def apply_game_filters(qs: QuerySet, filters: GameFilters) -> QuerySet:
     if filters.platforms:
         qs = apply_platform_filter(qs, filters.platforms)
 
-    # Company filtering
-    if filters.company_igdb_id:
-        qs = qs.filter(studios__company__igdb_id=filters.company_igdb_id)
+    # Developer filtering
+    if filters.developer_igdb_id:
+        qs = qs.filter(developers__igdb_id=filters.developer_igdb_id)
 
     return qs.distinct()
 

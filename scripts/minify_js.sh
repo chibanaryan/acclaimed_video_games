@@ -1,31 +1,23 @@
 #!/bin/bash
 # Minify JavaScript files that have corresponding .min.js versions
-# This script is run by pre-commit to ensure minified files are up to date
+# This script is run during deploy/commit to ensure minified files are up to date
 
 set -e
 
 JS_DIR="games/static/games/js"
 
-# List of files to minify (source -> min)
-FILES=(
-    "client-filter.js"
-    "client-filtering.js"
-    "game-cache.js"
-    "game-list-renderer.js"
-    "utils-base.js"
-    "utils-loadmore.js"
-)
-
 CHANGED=0
 
-for file in "${FILES[@]}"; do
-    src="$JS_DIR/$file"
-    min="$JS_DIR/${file%.js}.min.js"
+# Find all .min.js files and minify their source counterparts
+for min in "$JS_DIR"/*.min.js; do
+    # Get the source file name by removing .min from the path
+    src="${min%.min.js}.js"
 
     if [ -f "$src" ]; then
         # Check if minified file is older than source
-        if [ ! -f "$min" ] || [ "$src" -nt "$min" ]; then
-            echo "Minifying $file..."
+        if [ "$src" -nt "$min" ]; then
+            filename=$(basename "$src")
+            echo "Minifying $filename..."
             npx terser "$src" -o "$min" -c -m
             git add "$min"
             CHANGED=1
@@ -35,4 +27,6 @@ done
 
 if [ $CHANGED -eq 1 ]; then
     echo "Minified JS files updated and staged."
+else
+    echo "All minified JS files are up to date."
 fi

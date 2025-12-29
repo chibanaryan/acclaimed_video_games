@@ -395,7 +395,7 @@ class IgbdApi:
         self, company_id: int, cache_results: bool = True
     ) -> Optional[Dict[str, Any]]:
         """
-        Fetch company (studio/publisher) data from IGDB API by company ID.
+        Fetch developer (from IGDB companies endpoint) data by ID.
 
         Thread-safe implementation with cache locking.
 
@@ -559,7 +559,7 @@ class IgbdApi:
         Returns:
             Dict mapping game IDs to game data dicts with keys:
                 - cover: Cover art filename
-                - studios: List of studio dicts with id, name, slug, parent
+                - developers: List of developer dicts with id, name, slug, parent
                 - genres: List of genre names (combination of genres and themes)
                 - storyline: Game storyline text
                 - summary: Game summary text
@@ -644,8 +644,8 @@ class IgbdApi:
         for data in results:
             game_id = data["id"]
 
-            # Process studios (companies marked as developers in IGDB)
-            studios = []
+            # Process developers (companies marked as developers in IGDB)
+            developer_ids = []
             porters = []
             supporters = []
             publishers = []
@@ -656,7 +656,7 @@ class IgbdApi:
                     continue
 
                 if involved_company_dict.get("developer"):
-                    studios.append(company_id)
+                    developer_ids.append(company_id)
                 if involved_company_dict.get("supporting"):
                     supporters.append(company_id)
                 if involved_company_dict.get("publisher"):
@@ -665,8 +665,8 @@ class IgbdApi:
                     porters.append(company_id)
 
             company_ids = []
-            if studios:
-                company_ids += studios
+            if developer_ids:
+                company_ids += developer_ids
             else:
                 if supporters:
                     company_ids += supporters
@@ -675,23 +675,33 @@ class IgbdApi:
                 elif porters:
                     company_ids += porters
 
-            studio_objs = []
-            for company_id in company_ids:
+            def build_parent_chain(company_id: int, seen: set = None) -> Optional[dict]:
+                """Recursively build parent chain with full dict objects."""
+                if seen is None:
+                    seen = set()
+                if company_id in seen:
+                    return None  # Prevent infinite loops
+                seen.add(company_id)
+
                 company_obj = companies.get(company_id)
                 if not company_obj:
-                    continue
+                    return None
 
                 parent_id = company_obj.get("parent")
-                parent_obj = companies.get(parent_id) if parent_id else None
+                parent_dict = build_parent_chain(parent_id, seen) if parent_id else None
 
-                studio_objs.append(
-                    {
-                        "id": company_id,
-                        "name": company_obj["name"],
-                        "slug": company_obj["slug"],
-                        "parent": parent_obj,
-                    }
-                )
+                return {
+                    "id": company_id,
+                    "name": company_obj["name"],
+                    "slug": company_obj.get("slug", ""),
+                    "parent": parent_dict,
+                }
+
+            developer_objs = []
+            for company_id in company_ids:
+                dev_dict = build_parent_chain(company_id)
+                if dev_dict:
+                    developer_objs.append(dev_dict)
 
             # Process genres
             theme_names = [
@@ -730,7 +740,7 @@ class IgbdApi:
 
             game_data = {
                 "cover": cover_filename,
-                "studios": studio_objs,
+                "developers": developer_objs,
                 "genres": genres,
                 "series": series_data,
                 "storyline": data.get("storyline"),
@@ -753,8 +763,8 @@ class IgbdApi:
         Fetch comprehensive game information from IGDB API by game ID.
 
         Thread-safe implementation with cache locking. This method retrieves game
-        data including cover art, studios, genres, and metadata. It intelligently
-        selects studios from involved companies, preferring actual developers
+        data including cover art, developers, genres, and metadata. It intelligently
+        selects developers from involved companies, preferring actual developers
         over supporters, publishers, and porters in that order.
 
         Args:
@@ -764,7 +774,7 @@ class IgbdApi:
         Returns:
             Dict containing game data with keys:
                 - cover: Cover art filename
-                - studios: List of studio dicts with id, name, slug, parent
+                - developers: List of developer dicts with id, name, slug, parent
                 - genres: List of genre names (combination of genres and themes)
                 - storyline: Game storyline text
                 - summary: Game summary text
@@ -805,8 +815,8 @@ class IgbdApi:
         assert len(results) == 1
         data = results[0]
 
-        # Get studio information (companies marked as developers in IGDB)
-        studios = []
+        # Get developer information (companies marked as developers in IGDB)
+        developer_ids = []
         porters = []
         supporters = []
         publishers = []
@@ -815,7 +825,7 @@ class IgbdApi:
             company_id = involved_company_dict["company"]
 
             if involved_company_dict["developer"]:
-                studios.append(company_id)
+                developer_ids.append(company_id)
 
             if involved_company_dict["supporting"]:
                 supporters.append(company_id)
@@ -828,8 +838,8 @@ class IgbdApi:
 
         company_ids = []
 
-        if studios:
-            company_ids += studios
+        if developer_ids:
+            company_ids += developer_ids
         else:
             if supporters:
                 company_ids += supporters
@@ -860,24 +870,34 @@ class IgbdApi:
             companies_data.update(parent_data)
             depth += 1
 
-        # Build studio objects using fetched data
-        studio_objs = []
-        for company_id in company_ids:
+        # Build developer objects using fetched data with full parent chains
+        def build_parent_chain(company_id: int, seen: set = None) -> Optional[dict]:
+            """Recursively build parent chain with full dict objects."""
+            if seen is None:
+                seen = set()
+            if company_id in seen:
+                return None  # Prevent infinite loops
+            seen.add(company_id)
+
             company_obj = companies_data.get(company_id)
             if not company_obj:
-                continue
+                return None
 
             parent_id = company_obj.get("parent")
-            parent_obj = companies_data.get(parent_id) if parent_id else None
+            parent_dict = build_parent_chain(parent_id, seen) if parent_id else None
 
-            studio_objs.append(
-                {
-                    "id": company_id,
-                    "name": company_obj["name"],
-                    "slug": company_obj["slug"],
-                    "parent": parent_obj,
-                }
-            )
+            return {
+                "id": company_id,
+                "name": company_obj["name"],
+                "slug": company_obj.get("slug", ""),
+                "parent": parent_dict,
+            }
+
+        developer_objs = []
+        for company_id in company_ids:
+            dev_dict = build_parent_chain(company_id)
+            if dev_dict:
+                developer_objs.append(dev_dict)
 
         # Get genres - now expanded in the query
         theme_names = [
@@ -917,7 +937,7 @@ class IgbdApi:
 
         game_data = {
             "cover": cover_filename,
-            "studios": studio_objs,
+            "developers": developer_objs,
             "genres": genres,
             "series": series_data,
             "storyline": data.get("storyline"),

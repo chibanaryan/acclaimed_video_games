@@ -8,9 +8,14 @@ from django.utils.text import Truncator
 from . import models
 
 
-class StudioInlineAdmin(admin.TabularInline):
-    model = models.Studio
+class SubsidiaryInlineAdmin(admin.TabularInline):
+    """Inline admin for subsidiary developers."""
+
+    model = models.Developer
+    fk_name = "parent"
     extra = 0
+    fields = ["name", "slug", "igdb_id"]
+    show_change_link = True
 
 
 @admin.register(models.Platform)
@@ -53,17 +58,23 @@ class SeriesAdmin(admin.ModelAdmin):
         return getattr(obj, "_game_count", obj.games.count())
 
 
-@admin.register(models.Company)
-class CompanyAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "slug"]
+@admin.register(models.Developer)
+class DeveloperAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "slug", "igdb_id", "parent", "game_count"]
+    list_filter = ["parent"]
     search_fields = ["name"]
-    inlines = [StudioInlineAdmin]
+    inlines = [SubsidiaryInlineAdmin]
+    raw_id_fields = ["parent"]
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("parent").annotate(
+            _game_count=Count("developed_games")
+        )
 
-@admin.register(models.Studio)
-class StudioAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "igdb_id"]
-    search_fields = ["name"]
+    @admin.display(description="Games", ordering="_game_count")
+    def game_count(self, obj):
+        return getattr(obj, "_game_count", obj.developed_games.count())
 
 
 class GameQuoteInline(admin.TabularInline):
@@ -92,7 +103,13 @@ class GameAdmin(admin.ModelAdmin):
     ]
     list_filter = ["year_of_release"]
     search_fields = ["name"]
-    filter_horizontal = ["studios", "platforms", "genres", "wikipedia_genres", "series"]
+    filter_horizontal = [
+        "developers",
+        "platforms",
+        "genres",
+        "wikipedia_genres",
+        "series",
+    ]
     inlines = [GameQuoteInline]
 
     def get_queryset(self, request: HttpRequest):

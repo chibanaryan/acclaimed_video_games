@@ -98,7 +98,7 @@
                         </template>
                         <template x-for="dev in developers" :key="'dev-' + dev.id">
                             <li>
-                                <a :href="'/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-3">
+                                <a :href="'/developers/' + dev.root_slug + '/#developers=' + dev.id" class="flex items-center gap-3">
                                     <span class="mdi mdi-account-group text-xl text-primary"></span>
                                     <div>
                                         <div class="font-semibold" x-text="dev.name"></div>
@@ -199,7 +199,7 @@
                     </template>
                     <template x-for="dev in developers" :key="'dev-' + dev.id">
                         <li>
-                            <a :href="'/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-3">
+                            <a :href="'/developers/' + dev.root_slug + '/#developers=' + dev.id" class="flex items-center gap-3">
                                 <span class="mdi mdi-account-group text-xl text-primary"></span>
                                 <div>
                                     <div class="font-semibold" x-text="dev.name"></div>

@@ -1,0 +1,35 @@
+{# Developer Filter Panel - Vertical tree in right sidebar #}
+<div class="bg-base-200 rounded-lg p-4">
+    {# Header with title and action buttons #}
+    <div class="mb-4 pb-4 border-b border-base-300">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="mdi mdi-account-group text-xl text-primary"></span>
+            <span class="font-bold text-base">Filter by Developer</span>
+        </div>
+
+        <p class="text-sm text-base-content/60" x-text="countSelectedDevelopers() > 0 ? `${countSelectedDevelopers()} developer${countSelectedDevelopers() !== 1 ? 's' : ''} selected` : 'All developers shown'"></p>
+    </div>
+
+    {# Checkbox tree - vertical list with indentation #}
+    <div class="developer-tree-list">
+        {% for developer in developers_flat %}
+        <label class="developer-tree-item" style="--level: {{ developer.level }};">
+            <input type="checkbox"
+                   data-developer-id="{{ developer.id }}"
+                   :checked="shouldBeChecked({{ developer.id }}, {{ developer.child_ids|safe }})"
+                   @change="toggleDeveloper({{ developer.id }}, {{ developer.child_ids|safe }})"
+                   x-effect="$el.indeterminate = isIndeterminate({{ developer.id }}, {{ developer.child_ids|safe }})"
+                   class="checkbox checkbox-md checkbox-primary flex-shrink-0">
+            <span class="text-sm flex-1">{{ developer.name }}</span>
+            <span class="text-xs text-base-content/50">{{ developer.total_game_count }}</span>
+        </label>
+        {% endfor %}
+    </div>
+
+    {# Empty state message when no developers #}
+    {% if not developers_flat %}
+    <div class="alert alert-info text-sm">
+        <span>This developer has no subsidiaries in our database.</span>
+    </div>
+    {% endif %}
+</div>

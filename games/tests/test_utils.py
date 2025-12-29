@@ -45,8 +45,7 @@ class ImportHelpersTests(TestCase):
             publisher=pub, name="Top", year=2020, type=constants.LIST_EOY, order=1
         )
         models.Platform.objects.create(code="PCX", name="PCX")
-        developer = models.Company.objects.create(name="Studio")
-        models.Studio.objects.create(company=developer, name="Studio Alias")
+        models.Developer.objects.create(name="Studio", slug="studio")
         game = models.Game.objects.create(
             name="Alpha",
             rank=1,
@@ -101,7 +100,7 @@ class ImportHelpersTests(TestCase):
         self.assertIn("1 created", message)
 
     def test_import_developers_counts_updates(self):
-        models.Company.objects.create(name="Canonical")
+        models.Developer.objects.create(name="Canonical", slug="canonical")
         stream = StringIO("Alias\tCanonical\r\n")
         success, message = utils.import_developers(stream)
         self.assertTrue(success)
@@ -112,13 +111,14 @@ class ImportHelpersTests(TestCase):
         success, message = utils.import_developers(stream)
         self.assertTrue(success)
         self.assertIn("1 created", message)
-        self.assertEqual(models.Company.objects.count(), 1)
-        self.assertEqual(models.Studio.objects.count(), 2)
-        developer = models.Company.objects.first()
-        self.assertEqual(developer.name, "Canonical")
-        alias_names = list(models.Studio.objects.values_list("name", flat=True))
-        self.assertIn("Alias1", alias_names)
-        self.assertIn("Alias2", alias_names)
+        # Canonical is created as root, Alias1 and Alias2 as subsidiaries
+        root_devs = models.Developer.objects.filter(parent__isnull=True)
+        self.assertEqual(root_devs.count(), 1)
+        root_dev = root_devs.first()
+        self.assertEqual(root_dev.name, "Canonical")
+        subsidiary_names = list(root_dev.subsidiaries.values_list("name", flat=True))
+        self.assertIn("Alias1", subsidiary_names)
+        self.assertIn("Alias2", subsidiary_names)
 
 
 class FilterTests(TestCase):

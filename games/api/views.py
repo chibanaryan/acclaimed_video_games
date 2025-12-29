@@ -30,9 +30,7 @@ class GameListView(ListAPIView):
             param="q",
             fields=search_fields,
         ),
-        utils.Filter(
-            param="developer", fields=["studios__company__igdb_id"], coerce=int
-        ),
+        utils.Filter(param="developer", fields=["developers__igdb_id"], coerce=int),
         utils.Filter(param="start", fields=["year_of_release__gte"], coerce=int),
         utils.Filter(param="end", fields=["year_of_release__lte"], coerce=int),
     ]
@@ -79,15 +77,24 @@ class GameDetailView(RetrieveAPIView):
     )
 
 
-class CompanyDetailView(RetrieveAPIView):
+class DeveloperDetailAPIView(RetrieveAPIView):
+    """API endpoint for developer details."""
+
     lookup_field = "slug"
-    serializer_class = serializers.CompanySerializer
-    queryset = models.Company.objects.prefetch_related("studios")
+    serializer_class = serializers.DeveloperSerializer
+    queryset = models.Developer.objects.select_related("parent").prefetch_related(
+        "subsidiaries"
+    )
 
 
-class StudioListView(ListAPIView):
+# Legacy alias for backward compatibility
+CompanyDetailView = DeveloperDetailAPIView
 
-    serializer_class = serializers.StudioSerializer
+
+class DeveloperListAPIView(ListAPIView):
+    """API endpoint for listing developers."""
+
+    serializer_class = serializers.DeveloperSerializer
     search_fields = ["name__icontains"]
     if connection.vendor == "postgresql":
         search_fields = ["name__search"] + search_fields
@@ -100,12 +107,14 @@ class StudioListView(ListAPIView):
 
     def get_queryset(self):
         qs = (
-            models.Studio.objects.annotate(
-                games_count=Count("games"),
+            models.Developer.objects.annotate(
+                games_count=Count("developed_games"),
             )
-            .filter(games_count__gt=0)  # Only show studios with games
+            .filter(games_count__gt=0)  # Only show developers with games
+            .select_related("parent")
+            .prefetch_related("subsidiaries")
             .order_by(Lower("name"))
-            .distinct()  # Ensure correct count for pagination
+            .distinct()
         )
 
         for filter in self.filters:
@@ -115,12 +124,26 @@ class StudioListView(ListAPIView):
         return qs
 
 
-class StudioDetailView(RetrieveAPIView):
+# Legacy alias for backward compatibility
+StudioListView = DeveloperListAPIView
+
+
+class DeveloperDetailByIdView(RetrieveAPIView):
+    """API endpoint for developer details by IGDB ID."""
+
     lookup_field = "igdb_id"
-    serializer_class = serializers.StudioSerializer
-    queryset = models.Studio.objects.annotate(
-        games_count=Count("games"),
-    ).order_by(Lower("name"))
+    serializer_class = serializers.DeveloperSerializer
+    queryset = (
+        models.Developer.objects.annotate(
+            games_count=Count("developed_games"),
+        )
+        .select_related("parent")
+        .prefetch_related("subsidiaries")
+    )
+
+
+# Legacy alias for backward compatibility
+StudioDetailView = DeveloperDetailByIdView
 
 
 class ListListView(ListAPIView):
@@ -391,29 +414,27 @@ class UnifiedSearchView(APIView):
         if len(q) < 2:
             return JsonResponse({"developers": [], "games": [], "series": []})
 
-        # Search developers (Studios with parent Company that has a slug)
-        # Only include studios that have a parent company with a slug
+        # Search developers - find developers with games
         developers = (
-            models.Studio.objects.filter(
+            models.Developer.objects.filter(
                 name__icontains=q,
-                company__isnull=False,
-                company__slug__isnull=False,
             )
-            .exclude(company__slug="")
-            .select_related("company")
-            .annotate(games_count=Count("games"))
+            .select_related("parent")
+            .annotate(games_count=Count("developed_games"))
             .filter(games_count__gt=0)
             .order_by("-games_count")[:developer_limit]
         )
 
         developer_results = []
-        for studio in developers:
+        for dev in developers:
+            # Use root developer's slug for URL routing
+            root_slug = dev.root_developer.slug if dev.root_developer else dev.slug
             developer_results.append(
                 {
-                    "id": studio.id,
-                    "name": studio.name,
-                    "company_slug": studio.company.slug,
-                    "games_count": studio.games_count,
+                    "id": dev.id,
+                    "name": dev.name,
+                    "root_slug": root_slug,
+                    "games_count": dev.games_count,
                 }
             )
 
@@ -514,16 +535,15 @@ class GameAllDataView(APIView):
 
     Returns all games with minimal payload for efficient client-side filtering:
     - Compressed field names to minimize payload size
-    - Reference data (studios, companies, platforms, genres) keyed by ID
+    - Reference data (developers, platforms, genres) keyed by ID
     - Genre hierarchy with descendant IDs for hierarchical filtering
 
     Response format:
     {
         "version": "abc123def456",
         "data": {
-            "games": [{id, n, s, r, y, a, st, p, g}, ...],
-            "studios": {id: {n, c}, ...},
-            "companies": {id: {n, s}, ...},
+            "games": [{id, n, s, r, y, a, dv, p, g, sr}, ...],
+            "developers": {id: {n, pa, s}, ...},
             "platforms": {id: {n, c}, ...},
             "genres": [{id, n, s, p, l, d}, ...]
         }
@@ -537,7 +557,7 @@ class GameAllDataView(APIView):
         games = (
             models.Game.objects.select_related("primary_igdb_game_data")
             .prefetch_related(
-                "studios__company",
+                "developers__parent",
                 "platforms",
                 "wikipedia_genres",
                 "series",
@@ -547,26 +567,31 @@ class GameAllDataView(APIView):
 
         # Build games list with minimal field names
         games_data = []
-        studios_dict = {}
-        companies_dict = {}
+        developers_dict = {}
         platforms_dict = {}
         series_dict = {}
 
         for game in games:
-            # Collect studio IDs and build studio/company reference data
-            studio_ids = []
-            for studio in game.studios.all():
-                studio_ids.append(studio.id)
-                if studio.id not in studios_dict:
-                    studios_dict[studio.id] = {
-                        "n": studio.name,
-                        "c": studio.company_id,
+            # Collect developer IDs and build developer reference data
+            dev_ids = []
+            for dev in game.developers.all():
+                dev_ids.append(dev.id)
+                if dev.id not in developers_dict:
+                    # Get root developer slug for URL routing
+                    root = dev.root_developer
+                    developers_dict[dev.id] = {
+                        "n": dev.name,
+                        "pa": dev.parent_id,
+                        "s": root.slug if root else dev.slug,
                     }
-                    # Add company if exists
-                    if studio.company and studio.company.id not in companies_dict:
-                        companies_dict[studio.company.id] = {
-                            "n": studio.company.name,
-                            "s": studio.company.slug,
+                    # Also add parent chain to dict
+                    if dev.parent and dev.parent.id not in developers_dict:
+                        parent = dev.parent
+                        parent_root = parent.root_developer
+                        developers_dict[parent.id] = {
+                            "n": parent.name,
+                            "pa": parent.parent_id,
+                            "s": parent_root.slug if parent_root else parent.slug,
                         }
 
             # Collect platform IDs
@@ -605,7 +630,7 @@ class GameAllDataView(APIView):
                     "r": game.rank,
                     "y": game.year_of_release,
                     "a": artwork_id,
-                    "st": studio_ids,
+                    "dv": dev_ids,  # Changed from "st" to "dv" for developers
                     "p": platform_ids,
                     "g": genre_ids,
                     "sr": series_ids,
@@ -635,8 +660,7 @@ class GameAllDataView(APIView):
                 "version": version,
                 "data": {
                     "games": games_data,
-                    "studios": studios_dict,
-                    "companies": companies_dict,
+                    "developers": developers_dict,
                     "platforms": platforms_dict,
                     "genres": genres_data,
                     "series": series_dict,

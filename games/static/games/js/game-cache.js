@@ -11,7 +11,7 @@
  * Usage:
  *   const cache = new GameDataCache();
  *   const data = await cache.getData();
- *   // data contains { games, studios, companies, platforms, genres }
+ *   // data contains { games, developers, platforms, genres }
  */
 class GameDataCache {
     constructor() {
@@ -136,7 +136,7 @@ class GameDataCache {
      * @param {boolean} [options.forceRefresh=false] - Force fetch from server
      * @param {Function} [options.onCacheHit] - Callback when cache is valid
      * @param {Function} [options.onCacheMiss] - Callback when fetching from server
-     * @returns {Promise<Object>} Game data { games, studios, companies, platforms, genres }
+     * @returns {Promise<Object>} Game data { games, developers, platforms, genres }
      */
     async getData(options = {}) {
         const { forceRefresh = false, onCacheHit, onCacheMiss } = options;

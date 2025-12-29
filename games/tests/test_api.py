@@ -15,9 +15,8 @@ class GameListApiTests(TestCase):
         self.genre_action = models.IGDBGenre.objects.create(name="Action")
         self.genre_adventure = models.IGDBGenre.objects.create(name="Adventure")
 
-        developer = models.Company.objects.create(name="Studio", igdb_id=10)
-        self.alias = models.Studio.objects.create(
-            company=developer, name="Studio Alias", igdb_id=11
+        self.developer = models.Developer.objects.create(
+            name="Studio", slug="studio", igdb_id=10
         )
 
         self.game1 = models.Game.objects.create(
@@ -29,7 +28,7 @@ class GameListApiTests(TestCase):
         )
         self.game1.platforms.add(self.platform_pc)
         self.game1.genres.add(self.genre_action)
-        self.game1.studios.add(self.alias)
+        self.game1.developers.add(self.developer)
 
         self.game2 = models.Game.objects.create(
             name="Beta Saga",
@@ -59,7 +58,7 @@ class GameListApiTests(TestCase):
         self.assertCountEqual(names, ["Alpha Quest", "Beta Saga"])
 
     def test_filter_by_developer(self):
-        names = self._get_game_names(developer=str(self.alias.company.igdb_id))
+        names = self._get_game_names(developer=str(self.developer.igdb_id))
         self.assertEqual(names, ["Alpha Quest"])
 
     def test_order_by_parameter_applies(self):
@@ -78,7 +77,9 @@ class ApiSmokeTests(TestCase):
             year=2020,
             type="E",
         )
-        self.company = models.Company.objects.create(name="Studio", slug="studio")
+        self.developer = models.Developer.objects.create(
+            name="Studio", slug="studio", igdb_id=200
+        )
         self.post = models.Post.objects.create(title="News", text="Hello", active=True)
         models.Snippet.objects.create(slug="about", text="About text")
         models.Snippet.objects.create(slug="donate", text="Donate info")
@@ -88,10 +89,7 @@ class ApiSmokeTests(TestCase):
             igdb_id=1234,
             year_of_release=2000,
         )
-        self.alias = models.Studio.objects.create(
-            company=self.company, name="Studio Alias", igdb_id=200
-        )
-        self.game.studios.add(self.alias)
+        self.game.developers.add(self.developer)
         self.flatpage = FlatPage.objects.create(
             url="/faq/", title="FAQ", content="**Docs**"
         )
@@ -102,7 +100,7 @@ class ApiSmokeTests(TestCase):
         self.assertGreaterEqual(resp.json()["count"], 1)
 
     def test_developer_detail_endpoint(self):
-        resp = self.client.get(f"/api/developers/{self.company.slug}/")
+        resp = self.client.get(f"/api/developers/{self.developer.slug}/")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["name"], "Studio")
 
@@ -224,10 +222,9 @@ class GameSearchAPIViewTests(TestCase):
     def setUp(self):
         self.client = APIClient()
 
-        # Create test games
-        developer = models.Company.objects.create(name="Test Dev", igdb_id=10)
-        alias = models.Studio.objects.create(
-            company=developer, name="Test Developer", igdb_id=11
+        # Create test developer
+        self.developer = models.Developer.objects.create(
+            name="Test Developer", slug="test-dev", igdb_id=10
         )
 
         self.game1 = models.Game.objects.create(
@@ -236,7 +233,7 @@ class GameSearchAPIViewTests(TestCase):
             year_of_release=1986,
             slug="zelda",
         )
-        self.game1.studios.add(alias)
+        self.game1.developers.add(self.developer)
 
         self.game2 = models.Game.objects.create(
             name="Zelda II: The Adventure of Link",
@@ -244,7 +241,7 @@ class GameSearchAPIViewTests(TestCase):
             year_of_release=1987,
             slug="zelda-2",
         )
-        self.game2.studios.add(alias)
+        self.game2.developers.add(self.developer)
 
         self.game3 = models.Game.objects.create(
             name="Super Mario Bros",
@@ -335,24 +332,24 @@ class UnifiedSearchViewTests(TestCase):
     def setUp(self):
         self.client = APIClient()
 
-        # Create test companies and studios
-        self.nintendo = models.Company.objects.create(
+        # Create test developers (root developers with subsidiaries)
+        self.nintendo = models.Developer.objects.create(
             name="Nintendo", slug="nintendo", igdb_id=10
         )
-        self.nintendo_ead = models.Studio.objects.create(
-            company=self.nintendo, name="Nintendo EAD", igdb_id=11
+        self.nintendo_ead = models.Developer.objects.create(
+            parent=self.nintendo, name="Nintendo EAD", igdb_id=11
         )
 
-        self.capcom = models.Company.objects.create(
+        self.capcom = models.Developer.objects.create(
             name="Capcom", slug="capcom", igdb_id=20
         )
-        self.capcom_studio = models.Studio.objects.create(
-            company=self.capcom, name="Capcom Production Studio 4", igdb_id=21
+        self.capcom_studio = models.Developer.objects.create(
+            parent=self.capcom, name="Capcom Production Studio 4", igdb_id=21
         )
 
-        # Independent studio with no company
-        self.indie_studio = models.Studio.objects.create(
-            company=None, name="Indie Dev Studio", igdb_id=30
+        # Independent developer with no parent (but also no slug, so no detail page)
+        self.indie_dev = models.Developer.objects.create(
+            name="Indie Dev Studio", igdb_id=30
         )
 
         # Create test games
@@ -362,7 +359,7 @@ class UnifiedSearchViewTests(TestCase):
             year_of_release=1986,
             slug="zelda",
         )
-        self.game1.studios.add(self.nintendo_ead)
+        self.game1.developers.add(self.nintendo_ead)
 
         self.game2 = models.Game.objects.create(
             name="Super Mario Bros",
@@ -370,7 +367,7 @@ class UnifiedSearchViewTests(TestCase):
             year_of_release=1985,
             slug="mario",
         )
-        self.game2.studios.add(self.nintendo_ead)
+        self.game2.developers.add(self.nintendo_ead)
 
         self.game3 = models.Game.objects.create(
             name="Street Fighter II",
@@ -378,7 +375,7 @@ class UnifiedSearchViewTests(TestCase):
             year_of_release=1991,
             slug="sf2",
         )
-        self.game3.studios.add(self.capcom_studio)
+        self.game3.developers.add(self.capcom_studio)
 
     def test_unified_search_returns_both_developers_and_games(self):
         """Test that unified search returns both developers and games."""
@@ -396,7 +393,7 @@ class UnifiedSearchViewTests(TestCase):
         dev = data["developers"][0]
         self.assertIn("id", dev)
         self.assertIn("name", dev)
-        self.assertIn("company_slug", dev)
+        self.assertIn("root_slug", dev)
         self.assertIn("games_count", dev)
 
     def test_unified_search_game_results_have_correct_fields(self):
@@ -489,11 +486,11 @@ class GameAllDataViewTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.platform = models.Platform.objects.create(code="PC", name="PC")
-        self.company = models.Company.objects.create(
+        self.root_dev = models.Developer.objects.create(
             name="Test Company", slug="test-company", igdb_id=100
         )
-        self.studio = models.Studio.objects.create(
-            company=self.company, name="Test Studio", igdb_id=101
+        self.developer = models.Developer.objects.create(
+            parent=self.root_dev, name="Test Studio", igdb_id=101
         )
         self.genre = models.WikipediaGenre.objects.create(
             name="Test Action", slug="test-action-unique", level=0
@@ -509,7 +506,7 @@ class GameAllDataViewTests(TestCase):
             igdb_id=1234,
         )
         self.game.platforms.add(self.platform)
-        self.game.studios.add(self.studio)
+        self.game.developers.add(self.developer)
         self.game.wikipedia_genres.add(self.genre)
 
     def test_all_data_endpoint_returns_correct_structure(self):
@@ -525,8 +522,7 @@ class GameAllDataViewTests(TestCase):
         # Check data structure
         game_data = data["data"]
         self.assertIn("games", game_data)
-        self.assertIn("studios", game_data)
-        self.assertIn("companies", game_data)
+        self.assertIn("developers", game_data)
         self.assertIn("platforms", game_data)
         self.assertIn("genres", game_data)
 
@@ -546,7 +542,7 @@ class GameAllDataViewTests(TestCase):
         self.assertIn("r", game)  # rank
         self.assertIn("y", game)  # year
         self.assertIn("a", game)  # artwork_id
-        self.assertIn("st", game)  # studio IDs
+        self.assertIn("dv", game)  # developer IDs
         self.assertIn("p", game)  # platform IDs
         self.assertIn("g", game)  # genre IDs
 
@@ -554,31 +550,34 @@ class GameAllDataViewTests(TestCase):
         self.assertEqual(game["n"], "Test Game")
         self.assertEqual(game["r"], 1)
         self.assertEqual(game["y"], 2020)
-        self.assertIn(self.studio.id, game["st"])
+        self.assertIn(self.developer.id, game["dv"])
         self.assertIn(self.platform.id, game["p"])
         self.assertIn(self.genre.id, game["g"])
 
-    def test_all_data_studios_reference_data(self):
-        """Test that studios reference data is correct."""
+    def test_all_data_developers_reference_data(self):
+        """Test that developers reference data is correct."""
         response = self.client.get("/api/games/all/")
         data = response.json()
-        studios = data["data"]["studios"]
+        developers = data["data"]["developers"]
 
-        self.assertIn(str(self.studio.id), studios)
-        studio_data = studios[str(self.studio.id)]
-        self.assertEqual(studio_data["n"], "Test Studio")
-        self.assertEqual(studio_data["c"], self.company.id)
+        # Note: JSON keys are strings, but Python dict may use integers
+        # Check that the subsidiary developer is in the developers dict
+        dev_id_key = self.developer.id
+        if str(dev_id_key) in developers:
+            dev_id_key = str(dev_id_key)
+        self.assertIn(dev_id_key, developers)
+        dev_data = developers[dev_id_key]
+        self.assertEqual(dev_data["n"], "Test Studio")
+        self.assertEqual(dev_data["pa"], self.root_dev.id)  # parent ID
 
-    def test_all_data_companies_reference_data(self):
-        """Test that companies reference data is correct."""
-        response = self.client.get("/api/games/all/")
-        data = response.json()
-        companies = data["data"]["companies"]
-
-        self.assertIn(str(self.company.id), companies)
-        company_data = companies[str(self.company.id)]
-        self.assertEqual(company_data["n"], "Test Company")
-        self.assertEqual(company_data["s"], "test-company")
+        # Check that the root developer is also included
+        root_id_key = self.root_dev.id
+        if str(root_id_key) in developers:
+            root_id_key = str(root_id_key)
+        self.assertIn(root_id_key, developers)
+        root_data = developers[root_id_key]
+        self.assertEqual(root_data["n"], "Test Company")
+        self.assertEqual(root_data["s"], "test-company")
 
     def test_all_data_genres_have_hierarchy(self):
         """Test that genres include hierarchy information."""

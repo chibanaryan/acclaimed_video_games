@@ -144,7 +144,7 @@
                     </template>
                     <template x-for="dev in developers" :key="'dev-' + dev.id">
                         <li>
-                            <a :href="'/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-2 py-2">
+                            <a :href="'/developers/' + dev.root_slug + '/#developers=' + dev.id" class="flex items-center gap-2 py-2">
                                 <span class="mdi mdi-account-group text-lg text-primary"></span>
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-sm truncate" x-text="dev.name"></div>

@@ -59,36 +59,12 @@ class GameListRenderer {
     }
 
     /**
-     * Find the root company for a studio (traverses company hierarchy)
+     * Find the root developer (traverses parent hierarchy)
      * @private
      */
-    _getRootCompany(studio) {
-        if (!studio.company) return null;
-
-        let current = studio.company;
-        const visited = new Set([current.id]);
-
-        // Simple traversal - check if company has a studio with same name with parent
-        while (current) {
-            // Look for a studio with the same name as current company
-            let parentCompany = null;
-            for (const [studioId, studioData] of Object.entries(this.engine.studios)) {
-                if (studioData.n === current.name && studioData.c && !visited.has(studioData.c)) {
-                    parentCompany = this.engine.companies[studioData.c];
-                    if (parentCompany) {
-                        visited.add(studioData.c);
-                        break;
-                    }
-                }
-            }
-            if (parentCompany) {
-                current = { id: studioData.c, name: parentCompany.n, slug: parentCompany.s };
-            } else {
-                break;
-            }
-        }
-
-        return current;
+    _getRootDeveloper(developer) {
+        if (!developer.root) return developer;
+        return developer.root;
     }
 
     /**
@@ -105,19 +81,21 @@ class GameListRenderer {
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showGlobalRank = showRank === 'filtered';
 
-        // Build studios HTML
-        const studiosHtml = expanded.studios.map((studio, i) => {
-            const rootCompany = studio.company;
-            const companySlug = rootCompany?.slug || studio.company?.slug;
-            const separator = i < expanded.studios.length - 1 ? ', ' : '';
+        // Build developers HTML
+        const developersHtml = expanded.developers.map((dev, i) => {
+            const rootDev = this._getRootDeveloper(dev);
+            const devSlug = rootDev?.slug;
+            const separator = i < expanded.developers.length - 1 ? ', ' : '';
 
-            if (companySlug) {
-                return `<a href="/developers/${companySlug}/#studio-${studio.id}-game-${game.id}" class="link link-hover text-base-content">${studio.name}</a>${separator}`;
+            if (devSlug) {
+                // Only add hash when dev is not the root developer
+                const hash = dev.id !== rootDev?.id ? `#developer-${dev.id}-game-${game.id}` : '';
+                return `<a href="/developers/${devSlug}/${hash}" class="link link-hover text-base-content">${dev.name}</a>${separator}`;
             }
-            return `<span class="text-base-content">${studio.name}</span>${separator}`;
+            return `<span class="text-base-content">${dev.name}</span>${separator}`;
         }).join('');
 
-        const developerLabel = expanded.studios.length === 1 ? 'Developer' : 'Developers';
+        const developerLabel = expanded.developers.length === 1 ? 'Developer' : 'Developers';
 
         // Build platforms HTML (limit to 6)
         const displayPlatforms = expanded.platforms.slice(0, 6);
@@ -167,7 +145,7 @@ class GameListRenderer {
             ${globalRankHtml}
         </div>
         <div class="game-row-details text-sm mt-0.5">
-            ${expanded.studios.length > 0 ? `<div class="text-base-content/70">${developerLabel}: ${studiosHtml}</div>` : ''}
+            ${expanded.developers.length > 0 ? `<div class="text-base-content/70">${developerLabel}: ${developersHtml}</div>` : ''}
             ${expanded.platforms.length > 0 ? `<div class="flex items-center gap-1 text-base-content/70">${platformLabel}: ${platformsHtml}${platformExtraHtml}</div>` : ''}
             ${expanded.genres.length > 0 ? `<div class="flex items-center gap-1 text-base-content/70">${genreLabel}: ${genresHtml}${genreExtraHtml}</div>` : ''}
         </div>

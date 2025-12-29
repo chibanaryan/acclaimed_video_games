@@ -29,7 +29,7 @@ game_fields = [
     "id",
     "decade_rank",
     "description",
-    "studios",
+    "developers",
     "genres",
     "igdb_artwork_id",
     "igdb_url",
@@ -45,7 +45,7 @@ game_fields = [
 
 class GameSummarySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source="igdb_id")
-    studios = IdNameSerializer(many=True)
+    developers = IdNameSerializer(many=True)
     genres = IdNameSerializer(many=True)  # IGDB genres (not Wikipedia genres)
     platforms = IdCodeNameSerializer(many=True)
     # Delegate to primary_igdb_game_data
@@ -97,33 +97,39 @@ class GameDetailSerializer(GameSummarySerializer):
         )
 
 
-class CompanySerializer(serializers.ModelSerializer):
+class DeveloperSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Developer model.
+
+    Includes subsidiary developers and parent info for hierarchy.
+    """
+
     id = serializers.IntegerField(source="igdb_id")
-    studios = IdNameSerializer(many=True)
+    subsidiaries = IdNameSerializer(many=True)
+    parent = IdSlugNameSerializer(allow_null=True)
+    games_count = serializers.SerializerMethodField()
 
     class Meta:
-        model = models.Company
+        model = models.Developer
         fields = [
             "id",
             "name",
             "slug",
-            "studios",
-        ]
-
-
-class StudioSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source="igdb_id")
-    games_count = serializers.IntegerField()
-    company = IdSlugNameSerializer()
-
-    class Meta:
-        model = models.Studio
-        fields = [
-            "id",
-            "name",
-            "company",
+            "parent",
+            "subsidiaries",
             "games_count",
         ]
+
+    def get_games_count(self, obj):
+        """Get games count (may be annotated or computed)."""
+        if hasattr(obj, "games_count"):
+            return obj.games_count
+        return obj.developed_games.count()
+
+
+# Legacy aliases for backward compatibility
+CompanySerializer = DeveloperSerializer
+StudioSerializer = DeveloperSerializer
 
 
 class ListSerializer(serializers.ModelSerializer):
@@ -292,14 +298,19 @@ class PlatformSerializer(serializers.ModelSerializer):
 class DeveloperSearchSerializer(serializers.ModelSerializer):
     """Lightweight serializer for developer search results in nav dropdown."""
 
-    company_slug = serializers.CharField(source="company.slug", allow_null=True)
+    # For navigation, use the root developer's slug (for URL routing)
+    root_slug = serializers.SerializerMethodField()
     games_count = serializers.IntegerField()
 
     class Meta:
-        model = models.Studio
+        model = models.Developer
         fields = [
             "id",
             "name",
-            "company_slug",
+            "root_slug",
             "games_count",
         ]
+
+    def get_root_slug(self, obj):
+        """Get the root developer's slug for URL routing."""
+        return obj.root_developer.slug if obj.root_developer else obj.slug

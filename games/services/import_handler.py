@@ -90,7 +90,7 @@ def import_igdb_with_progress(update_relationships: bool = False):
     - Performance: ~100 games/sec (25-500x faster than sequential)
 
     Args:
-        update_relationships: If True, update Company/Studio/Genre relationships
+        update_relationships: If True, update Developer/Genre relationships
             for games that already have IGDB metadata, without modifying the
             metadata records. Used after re-importing games.
     """
@@ -910,10 +910,10 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str]:
                             primary_igdb_game_data__isnull=False
                         )
 
-                        # Only update relationships for games that have no studios/IGDB genres
+                        # Only update relationships for games that have no developers/IGDB genres
                         # (reconnected metadata with cleared M2M relationships)
                         games_needing_relationships = [
-                            g for g in games_with_metadata if not g.studios.exists()
+                            g for g in games_with_metadata if not g.developers.exists()
                         ]
 
                         if games_needing_relationships:
@@ -965,7 +965,7 @@ def delete_existing_data() -> Tuple[bool, str]:
     """
     Delete all game-related data from the database.
 
-    Preserves IGDBGameData, WikipediaGameData, Company, Studio, and Genre
+    Preserves IGDBGameData, WikipediaGameData, Developer, and Genre
     for reconnection when games are re-imported.
     """
     models_to_delete = [
@@ -1012,8 +1012,8 @@ def clear_igdb_metadata() -> Tuple[bool, str]:
     """
     Delete all IGDB metadata records (both connected and orphaned).
 
-    This clears all IGDBGameData records and removes Company, Studio, and IGDBGenre
-    objects since they are derived from IGDB data.
+    This clears all IGDBGameData records and removes Developer, IGDBGenre,
+    and Series objects since they are derived from IGDB data.
 
     Returns:
         Tuple of (success, message)
@@ -1021,30 +1021,31 @@ def clear_igdb_metadata() -> Tuple[bool, str]:
     with transaction.atomic():
         # Count records before deletion
         igdb_count = models.IGDBGameData.objects.count()
-        company_count = models.Company.objects.count()
-        studio_count = models.Studio.objects.count()
+        developer_count = models.Developer.objects.count()
         genre_count = models.IGDBGenre.objects.count()
+        series_count = models.Series.objects.count()
 
         # Clear primary relationships on games
         models.Game.objects.update(primary_igdb_game_data=None)
 
         # Clear M2M relationships before deleting objects
         # Use through model to delete efficiently without loading all games
-        models.Game.studios.through.objects.all().delete()
+        models.Game.developers.through.objects.all().delete()
         models.Game.genres.through.objects.all().delete()
+        models.Game.series.through.objects.all().delete()
 
         # Delete all IGDB metadata
         models.IGDBGameData.objects.all().delete()
 
-        # Delete derived data (Company, Studio, IGDBGenre)
-        models.Company.objects.all().delete()
-        models.Studio.objects.all().delete()
+        # Delete derived data (Developer, IGDBGenre, Series)
+        models.Developer.objects.all().delete()
         models.IGDBGenre.objects.all().delete()
+        models.Series.objects.all().delete()
 
     return (
         True,
-        f"Cleared {igdb_count} IGDB records, {company_count} companies, "
-        f"{studio_count} studios, {genre_count} genres",
+        f"Cleared {igdb_count} IGDB records, {developer_count} developers, "
+        f"{genre_count} genres, {series_count} series",
     )
 
 
@@ -1352,6 +1353,23 @@ def import_games(
                     update_fields.append("primary_wikipedia_game_data")
                     needs_save = True
 
+                    # Restore wikipedia_genres from stored all_genres
+                    if wiki_data.all_genres:
+                        genre_names = [
+                            g.strip() for g in wiki_data.all_genres.split(",")
+                        ]
+                        wikipedia_genres = []
+                        seen_genres = set()
+                        for genre_name in genre_names:
+                            normalized = normalize_genre(genre_name)
+                            if normalized is None or normalized in seen_genres:
+                                continue
+                            seen_genres.add(normalized)
+                            genre = get_or_create_genre(normalized)
+                            wikipedia_genres.append(genre)
+                        if wikipedia_genres:
+                            game.wikipedia_genres.set(wikipedia_genres)
+
             # Save if we reconnected any metadata
             if needs_save:
                 game.save(update_fields=update_fields)
@@ -1495,19 +1513,21 @@ def import_developers(f: TextIOWrapper) -> Tuple[bool, str]:
         if len(bits) == 3:
             alias2 = bits[2]
 
-        company, created = models.Company.objects.get_or_create(
+        # Create root developer (canonical name)
+        root_dev, created = models.Developer.objects.get_or_create(
             name=canonical,
+            parent__isnull=True,
+            defaults={"slug": None},  # Will be set via admin or IGDB
         )
 
+        # Create alias developers as subsidiaries
         for alias in [alias1, alias2]:
-            if not alias:
+            if not alias or alias == canonical:
                 continue
 
-            models.Studio.objects.get_or_create(
+            models.Developer.objects.get_or_create(
                 name=alias,
-                defaults={
-                    "company": company,
-                },
+                parent=root_dev,
             )
 
         if created:

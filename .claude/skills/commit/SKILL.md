@@ -42,25 +42,31 @@ Use this workflow to save changes to the repository WITHOUT deploying to product
 python3 manage.py tailwind build
 ```
 
-### 3. Collect static files
+### 3. Minify JavaScript files
+
+```bash
+./scripts/minify_js.sh
+```
+
+### 4. Collect static files
 
 ```bash
 python3 manage.py collectstatic --noinput
 ```
 
-### 4. Stage all changes
+### 5. Stage all changes
 
 ```bash
 git add -A
 ```
 
-### 5. Commit with descriptive message
+### 6. Commit with descriptive message
 
 ```bash
 git commit -m "Your commit message here"
 ```
 
-### 6. Push to main branch
+### 7. Push to main branch
 
 ```bash
 git push origin main
