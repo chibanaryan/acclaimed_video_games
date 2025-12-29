@@ -35,6 +35,7 @@ CONTACT_CATEGORIES = [
     ("general", "General"),
     ("partnership", "Partnership/Business"),
     ("press", "Press Inquiry"),
+    ("submit_list", "List Submission"),
 ]
 
 

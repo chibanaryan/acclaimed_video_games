@@ -56,7 +56,7 @@ class ConstantValuesTests(TestCase):
     def test_contact_categories_tuple(self):
         """Test CONTACT_CATEGORIES is a list of tuples."""
         self.assertIsInstance(constants.CONTACT_CATEGORIES, list)
-        self.assertEqual(len(constants.CONTACT_CATEGORIES), 6)
+        self.assertEqual(len(constants.CONTACT_CATEGORIES), 7)
         for item in constants.CONTACT_CATEGORIES:
             self.assertIsInstance(item, tuple)
             self.assertEqual(len(item), 2)

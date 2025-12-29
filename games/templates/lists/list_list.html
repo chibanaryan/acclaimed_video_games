@@ -31,7 +31,21 @@
         window.history.pushState({}, '', url);
     }
 }">
-    <h1 class="text-3xl font-bold mb-4">Source Lists</h1>
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-3xl font-bold">Source Lists</h1>
+        <a href="#contact"
+           class="contact-modal-trigger link link-hover text-base-content/60 hover:text-primary inline-flex items-center gap-1 text-sm"
+           data-category="submit_list"
+           data-message="I'd like to submit a list for consideration:
+
+List name:
+Publication:
+URL:
+Year published: ">
+            <span class="mdi mdi-plus-circle"></span>
+            Submit a list
+        </a>
+    </div>
 
     <div id="filter-results-wrapper">
         {% include 'lists/includes/_list_list_full.html' %}
