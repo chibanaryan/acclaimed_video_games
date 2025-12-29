@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Fix developer links in search bar: now matches Developers list page format (#developer-X for subsidiaries, no hash for root)
 - Add "Submit a list" link to Source Lists page (opens contact modal with List Submission category)
 - Desktop rankings: always show global rank (#N format) when filtered, matching mobile behavior
 - Fix N+1 query issue in developers page: use prefetch cache instead of values_list (reduces queries from ~16 to ~3)

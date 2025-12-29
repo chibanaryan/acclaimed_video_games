@@ -427,13 +427,16 @@ class UnifiedSearchView(APIView):
 
         developer_results = []
         for dev in developers:
-            # Use root developer's slug for URL routing
-            root_slug = dev.root_developer.slug if dev.root_developer else dev.slug
+            # Use root developer's slug and id for URL routing
+            root = dev.root_developer
+            root_slug = root.slug if root else dev.slug
+            root_id = root.id if root else dev.id
             developer_results.append(
                 {
                     "id": dev.id,
                     "name": dev.name,
                     "root_slug": root_slug,
+                    "root_id": root_id,
                     "games_count": dev.games_count,
                 }
             )
