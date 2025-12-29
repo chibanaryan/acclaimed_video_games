@@ -456,7 +456,7 @@ def _compute_game_data_version():
     """
     Compute a version hash for cache invalidation.
 
-    Uses the max modified timestamp of games and genre hierarchy structure.
+    Uses the max modified timestamp of games, genre count, and series count.
     Returns a short hash string that changes when data is updated.
     """
     import hashlib
@@ -465,11 +465,17 @@ def _compute_game_data_version():
     latest_game = models.Game.objects.order_by("-modified").first()
     game_modified = latest_game.modified.isoformat() if latest_game else ""
 
-    # Get genre count and structure hash (changes if genres are added/modified)
+    # Get genre count (changes if genres are added/modified)
     genre_count = models.WikipediaGenre.objects.count()
 
+    # Get series count (changes if series are added/removed)
+    series_count = models.Series.objects.count()
+
+    # Count games with series assignments
+    games_with_series = models.Game.objects.filter(series__isnull=False).count()
+
     # Combine into version string and hash it
-    version_string = f"{game_modified}:{genre_count}"
+    version_string = f"{game_modified}:{genre_count}:{series_count}:{games_with_series}"
     return hashlib.md5(version_string.encode()).hexdigest()[:12]
 
 
