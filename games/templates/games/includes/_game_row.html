@@ -78,12 +78,11 @@
     {# Game Info #}
     <div class="flex-1 min-w-0">
         <h3 class="font-bold text-base">{{ game.name }}</h3>
-        <div class="flex items-center flex-wrap gap-1 text-sm text-base-content/60">
-            <span class="mr-1" data-year="{{ game.year_of_release }}">{{ game.year_of_release }}</span>
-            {# Platform codes (top 4) #}
-            {% for platform in game.platforms.all|slice:":4" %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); event.preventDefault(); document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '{{ platform.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ platform.name }}">{{ platform.code }}</button>{% endfor %}{% if game.platforms.count > 4 %}<span class="text-xs text-base-content/50">+{{ game.platforms.count|add:"-4" }}</span>{% endif %}
-            {# Genre badges (top 2) #}
-            {% with genres=game.wikipedia_genres.all|slice:":2" %}{% if genres %}<span class="text-base-content/30">•</span>{% for genre in genres %}<span class="badge badge-xs badge-outline">{{ genre.name }}</span>{% endfor %}{% endif %}{% endwith %}
+        <div class="flex items-center gap-1 text-sm text-base-content/60">
+            <span data-year="{{ game.year_of_release }}">{{ game.year_of_release }}</span>
+            <span class="text-base-content/30">•</span>
+            {# Platform codes (top 2) #}
+            {% for platform in game.platforms.all|slice:":2" %}<span class="badge badge-xs badge-outline">{{ platform.code }}</span>{% endfor %}{% if game.platforms.count > 2 %}<span class="text-xs text-base-content/50">+{{ game.platforms.count|add:"-2" }}</span>{% endif %}
         </div>
     </div>
 

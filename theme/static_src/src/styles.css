@@ -136,6 +136,16 @@
   display: none !important;
 }
 
+/* Hide nav items until Alpine calculates overflow */
+.nav-calculating {
+  opacity: 0;
+}
+
+.nav-ready {
+  opacity: 1;
+  transition: opacity 0.05s ease-in;
+}
+
 /* Theme-aware visibility utilities for DaisyUI data-theme system */
 /* Show only in dark theme (forest) */
 .show-dark {
@@ -767,6 +777,11 @@
   /* Ensure sidebar dropdown doesn't overflow */
   aside .dropdown-content {
     @apply max-h-80 overflow-y-auto;
+  }
+
+  /* Active nav item styling for mobile navbar buttons */
+  .navbar .btn.btn-active {
+    @apply bg-primary/20 text-primary;
   }
 }
 

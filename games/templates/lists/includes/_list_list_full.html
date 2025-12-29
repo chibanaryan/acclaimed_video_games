@@ -21,6 +21,7 @@
             hx-trigger="change"
             hx-swap="innerHTML"
             hx-include="[name='publisher'], [name='year'], [name='type']"
+            hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All publishers</option>
         {% for publisher in publishers %}
@@ -38,6 +39,7 @@
             hx-trigger="change"
             hx-swap="innerHTML"
             hx-include="[name='publisher'], [name='year'], [name='type']"
+            hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All years</option>
         {% for year_data in meta.lists.years %}
@@ -55,6 +57,7 @@
             hx-trigger="change"
             hx-swap="innerHTML"
             hx-include="[name='publisher'], [name='year'], [name='type']"
+            hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All list types</option>
         {% for type_data in type_counts %}

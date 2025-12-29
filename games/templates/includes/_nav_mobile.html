@@ -4,9 +4,8 @@
 
     {# Nav items that can overflow to hamburger menu #}
     <div class="flex-1 min-w-0 overflow-hidden" x-ref="navContainer">
-        <div class="flex gap-1 items-center" x-ref="navItems"
-             style="opacity: 0; transition: opacity 0.05s ease-in;">
-            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm btn-square shrink-0 nav-item" data-nav-item="home" aria-label="Home">
+        <div id="mobile-nav-items" class="flex gap-1 items-center nav-calculating" x-ref="navItems">
+            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm btn-square shrink-0 nav-item{% if request.resolver_match.url_name == 'home' %} btn-active{% endif %}" data-nav-item="home" aria-label="Home">
                 <span class="mdi mdi-home text-xl"></span>
             </a>
 
@@ -129,19 +128,19 @@
                 </div>
             </div>
 
-            <a href="{% url 'games-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item" data-nav-item="rankings" data-menu-label="Rankings">
+            <a href="{% url 'games-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'games-list' or request.resolver_match.url_name == 'game-detail' %} btn-active{% endif %}" data-nav-item="rankings" data-menu-label="Rankings">
                 Ranks
             </a>
 
-            <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item" data-nav-item="devs" data-menu-label="Developers">
+            <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'developers-list' or request.resolver_match.url_name == 'developer-detail' %} btn-active{% endif %}" data-nav-item="devs" data-menu-label="Developers">
                 Devs
             </a>
 
-            <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item" data-nav-item="lists" data-menu-label="Source Lists">
+            <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'list-list' or request.resolver_match.url_name == 'list-detail' %} btn-active{% endif %}" data-nav-item="lists" data-menu-label="Source Lists">
                 Lists
             </a>
 
-            <a href="{% url 'post-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item" data-nav-item="news" data-menu-label="News">
+            <a href="{% url 'post-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'post-list' or request.resolver_match.url_name == 'post-detail' %} btn-active{% endif %}" data-nav-item="news" data-menu-label="News">
                 News
             </a>
         </div>
@@ -167,18 +166,18 @@
                 @click="expanded = false">
                 {# Overflow nav items - shown when they don't fit in the navbar #}
                 <template x-for="item in overflowItems" :key="item.id">
-                    <li x-show="item.hidden">
-                        <a :href="item.href" :class="{ 'active': item.active }" x-text="item.label"></a>
+                    <li x-show="item.hidden" :class="{ 'menu-active': item.active }">
+                        <a :href="item.href" x-text="item.label"></a>
                     </li>
                 </template>
                 {# Static menu items #}
-                <li><a href="{% url 'page-detail' slug='about' %}" class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'about' %}active{% endif %}">About</a></li>
+                <li class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'about' %}menu-active{% endif %}"><a href="{% url 'page-detail' slug='about' %}">About</a></li>
                 <li>
                     <a href="#" class="contact-modal-trigger">
                         Contact Us
                     </a>
                 </li>
-                <li><a href="{% url 'page-detail' slug='donate' %}" class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'donate' %}active{% endif %}">Donate</a></li>
+                <li class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'donate' %}menu-active{% endif %}"><a href="{% url 'page-detail' slug='donate' %}">Donate</a></li>
                 <li>
                     <label class="flex cursor-pointer gap-2 items-center justify-center" for="theme-toggle-mobile" @click.stop>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -213,23 +212,73 @@
     </div>
 </nav>
 
+{# Pre-apply cached nav state immediately, before Alpine loads #}
+<script nonce="{{ csp_nonce }}">
+(function() {
+    var cacheKey = 'navOverflow_' + window.innerWidth;
+    var cached = sessionStorage.getItem(cacheKey);
+    var navItems = document.getElementById('mobile-nav-items');
+    if (cached && navItems) {
+        var hiddenIds = JSON.parse(cached);
+        hiddenIds.forEach(function(id) {
+            var el = navItems.querySelector('[data-nav-item="' + id + '"]');
+            if (el) el.style.display = 'none';
+        });
+        navItems.classList.remove('nav-calculating');
+        navItems.classList.add('nav-ready');
+    }
+})();
+</script>
+
 <script nonce="{{ csp_nonce }}">
 function priorityNav() {
     return {
         expanded: false,
         overflowItems: [],
+        cacheKey: 'navOverflow_' + window.innerWidth,
 
         init() {
             // Build the overflow items list from nav items with data-menu-label
             this.buildOverflowItems();
 
-            // Calculate which items fit on load and resize
-            this.$nextTick(() => {
+            // Check if pre-script already showed the nav (has nav-ready class)
+            const alreadyShown = this.$refs.navItems.classList.contains('nav-ready');
+
+            if (alreadyShown) {
+                // Pre-script handled it - just sync the hidden state to overflowItems
+                const cached = sessionStorage.getItem(this.cacheKey);
+                if (cached) {
+                    const hiddenIds = JSON.parse(cached);
+                    this.overflowItems.forEach(item => {
+                        item.hidden = hiddenIds.includes(item.id);
+                    });
+                }
+            } else {
+                // No cache or pre-script didn't run - calculate and cache
+                this.$nextTick(() => {
+                    this.calculateFit();
+                    this.cacheState();
+                    this.showNav();
+                });
+            }
+
+            window.addEventListener('resize', () => {
+                this.cacheKey = 'navOverflow_' + window.innerWidth;
                 this.calculateFit();
-                // Show nav items after calculation is complete
-                this.$refs.navItems.style.opacity = '1';
+                this.cacheState();
             });
-            window.addEventListener('resize', () => this.calculateFit());
+        },
+
+        showNav() {
+            this.$refs.navItems.classList.remove('nav-calculating');
+            this.$refs.navItems.classList.add('nav-ready');
+        },
+
+        cacheState() {
+            const hiddenIds = this.overflowItems
+                .filter(item => item.hidden)
+                .map(item => item.id);
+            sessionStorage.setItem(this.cacheKey, JSON.stringify(hiddenIds));
         },
 
         buildOverflowItems() {

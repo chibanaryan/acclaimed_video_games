@@ -82,18 +82,43 @@
         // Disable button to prevent multiple clicks
         this.classList.add('loading');
 
-        audio.volume = 0.7;
-        audio.play();
+        // Navigate function - called after audio or timeout
+        const navigate = () => {
+            window.location.href = destination;
+        };
 
-        // Fade out over 4 seconds
-        const fadeInterval = setInterval(() => {
-            if (audio.volume > 0.035) {
-                audio.volume -= 0.035;
-            } else {
-                clearInterval(fadeInterval);
-                window.location.href = destination;
-            }
-        }, 200);
+        // Try to play audio
+        audio.volume = 0.7;
+        const playPromise = audio.play();
+
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    // Audio playing - fade out over 4 seconds then navigate
+                    const fadeInterval = setInterval(() => {
+                        if (audio.volume > 0.035) {
+                            audio.volume -= 0.035;
+                        } else {
+                            clearInterval(fadeInterval);
+                            navigate();
+                        }
+                    }, 200);
+                })
+                .catch(() => {
+                    // Audio blocked on mobile - navigate immediately
+                    navigate();
+                });
+        } else {
+            // Older browsers - start fade interval anyway
+            const fadeInterval = setInterval(() => {
+                if (audio.volume > 0.035) {
+                    audio.volume -= 0.035;
+                } else {
+                    clearInterval(fadeInterval);
+                    navigate();
+                }
+            }, 200);
+        }
     });
 </script>
 {% endblock %}
