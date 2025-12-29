@@ -181,6 +181,14 @@ class Developer(models.Model):
 
         return ids
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the developer, clearing slug if it has a parent."""
+        # Only root developers should have slugs - child developers are accessed
+        # via their root parent's URL with hash anchors
+        if self.parent_id is not None:
+            self.slug = ""
+        super().save(*args, **kwargs)
+
 
 class IGDBGenre(models.Model):
     """A video game genre from IGDB"""

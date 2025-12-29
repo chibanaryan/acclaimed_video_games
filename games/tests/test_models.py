@@ -279,7 +279,7 @@ class GameIgdbTests(TestCase):
         child_dev = models.Developer.objects.get(name="Nintendo EPD")
         self.assertEqual(child_dev.parent, parent_dev)
         self.assertEqual(child_dev.igdb_id, 456)
-        self.assertIsNone(child_dev.slug)  # Subsidiaries don't have slugs
+        self.assertEqual(child_dev.slug, "")  # Subsidiaries don't have slugs
 
         # Verify game is linked to the child developer
         self.assertIn(child_dev, game.developers.all())
@@ -965,3 +965,31 @@ class DeveloperModelTests(TestCase):
         self.assertEqual(len(result), 2)
         self.assertIn(parent.id, result)
         self.assertIn(child.id, result)
+
+    def test_save_clears_slug_for_non_root_developer(self):
+        """Test that save() clears slug when developer has a parent."""
+        parent = models.Developer.objects.create(name="Parent", slug="parent")
+
+        # Creating a child with a slug should have it cleared
+        child = models.Developer.objects.create(
+            name="Child", slug="child-slug", parent=parent
+        )
+        self.assertEqual(child.slug, "")
+
+        # Updating an existing developer to have a parent should clear slug
+        standalone = models.Developer.objects.create(name="Solo", slug="solo-slug")
+        self.assertEqual(standalone.slug, "solo-slug")
+
+        standalone.parent = parent
+        standalone.save()
+        self.assertEqual(standalone.slug, "")
+
+    def test_save_preserves_slug_for_root_developer(self):
+        """Test that save() preserves slug for root developers."""
+        dev = models.Developer.objects.create(name="Root Dev", slug="root-dev")
+        self.assertEqual(dev.slug, "root-dev")
+
+        # Re-saving should not clear slug
+        dev.name = "Updated Root Dev"
+        dev.save()
+        self.assertEqual(dev.slug, "root-dev")
