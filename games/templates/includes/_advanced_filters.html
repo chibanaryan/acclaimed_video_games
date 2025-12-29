@@ -13,8 +13,8 @@
         platformGroupCounts: {},  // Populated by client-side filtering
         initialized: false,
         isLoading: false,
-        genresExpanded: localStorage.getItem('genresExpanded') === 'true',
-        platformsExpanded: localStorage.getItem('platformsExpanded') === 'true',
+        genresExpanded: false,
+        platformsExpanded: false,
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
@@ -92,15 +92,6 @@
             this.$watch('filters.q', val => {
                 if (!this.initialized) return;
                 this.updateResults();
-            });
-
-            // Watch for changes to expanded states and save to localStorage
-            this.$watch('platformsExpanded', val => {
-                localStorage.setItem('platformsExpanded', val);
-            });
-
-            this.$watch('genresExpanded', val => {
-                localStorage.setItem('genresExpanded', val);
             });
 
             // Initialize Load More button handler
