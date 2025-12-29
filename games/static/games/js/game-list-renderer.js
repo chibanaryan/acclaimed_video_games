@@ -318,7 +318,7 @@ class GameListRenderer {
         setTimeout(() => {
             const desktopElement = document.getElementById(`game-${gameId}`);
             const mobileElement = document.getElementById(`game-${gameId}-mobile`);
-            const isDesktop = window.matchMedia('(min-width: 1088px)').matches;
+            const isDesktop = window.matchMedia('(min-width: 962px)').matches;
             const element = isDesktop ? desktopElement : mobileElement;
 
             if (element) {

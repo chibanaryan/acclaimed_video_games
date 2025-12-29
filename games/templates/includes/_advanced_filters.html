@@ -364,7 +364,7 @@
                         setTimeout(() => {
                             const desktopElement = document.getElementById('game-' + highlightId);
                             const mobileElement = document.getElementById('game-' + highlightId + '-mobile');
-                            const isDesktop = window.matchMedia('(min-width: 1088px)').matches;
+                            const isDesktop = window.matchMedia('(min-width: 962px)').matches;
                             const element = isDesktop ? desktopElement : mobileElement;
 
                             if (element) {
@@ -746,8 +746,8 @@
             </div>
         </div>
 
-        {# Right sidebar - Filters (fixed 420px width, hidden on mobile) #}
-        <div class="hidden desktop:block" style="width: 420px; flex-shrink: 0; contain: layout;">
+        {# Right sidebar - Filters (fixed 357px width, hidden on mobile) #}
+        <div class="hidden desktop:block" style="width: 357px; flex-shrink: 0; contain: layout;">
             <div style="min-height: 600px;">
                 {# Spacer to align with game list count #}
                 <div class="h-[calc(1rem+0.5rem)]"></div>

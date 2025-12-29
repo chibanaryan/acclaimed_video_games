@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Responsive layout: reduce filter width by 15% (420px→357px), lower breakpoint (1088px→962px) for narrower desktop support
 - Mobile nav: add active state highlighting, cache overflow state in sessionStorage to prevent layout shift
 - Game row: simplify to show year and top 2 platforms only (removed clickable filters and genres)
 - Contact modal: fix scrollability on small screens with max-height constraint

@@ -50,7 +50,7 @@
         var desktopElement = document.getElementById('game-{{ highlight }}');
         var mobileElement = document.getElementById('game-{{ highlight }}-mobile');
         // Use media query to determine which element to scroll to (avoids forced reflow)
-        var isDesktop = window.matchMedia('(min-width: 1088px)').matches;
+        var isDesktop = window.matchMedia('(min-width: 962px)').matches;
         var element = isDesktop ? desktopElement : mobileElement;
 
         if (element) {

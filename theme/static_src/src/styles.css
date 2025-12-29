@@ -94,7 +94,7 @@
   /* Custom breakpoints */
   --breakpoint-xxs: 360px;
   --breakpoint-xs: 480px;
-  --breakpoint-desktop: 1088px;
+  --breakpoint-desktop: 962px;
 }
 
 /* XXS breakpoint utilities (360px) - for very small mobile screens */
@@ -105,8 +105,8 @@
   .xxs\:flex { display: flex; }
 }
 
-/* Desktop breakpoint utilities (1088px) - manual definitions for layout */
-@media (min-width: 1088px) {
+/* Desktop breakpoint utilities (962px) - manual definitions for layout */
+@media (min-width: 962px) {
   .desktop\:block { display: block; }
   .desktop\:hidden { display: none; }
   .desktop\:flex { display: flex; }
