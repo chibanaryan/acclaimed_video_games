@@ -14,6 +14,7 @@
 - Jump-to-game: now works for all sort modes (position-based), fixed mobile scroll offset for fixed header
 - Desktop breakpoint: changed to 1088px (when game list equals filter sidebar width), narrower nav sidebar (192px)
 - Mobile nav: added Devs/Lists/News links (responsive), larger buttons, active page indicator
+- Fix blurry sidebar logo by using high-resolution images (548w/1092w) instead of small variants
 
 ## 2025-12-27
 
