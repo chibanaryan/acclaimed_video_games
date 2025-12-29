@@ -511,6 +511,29 @@ class GameSearchViewTest(TestCase):
         filter_title = response.context["filter_title"]
         self.assertIn("Video Games", filter_title)
 
+    def test_filter_title_series_without_video_prefix(self):
+        """Test that series filter title does not include 'Video' prefix."""
+        from games.models import Series
+
+        # Create a series with 2+ games (required for series to appear in list)
+        zelda_series = Series.objects.create(
+            name="The Legend of Zelda",
+            slug="the-legend-of-zelda",
+            igdb_id=12345,
+        )
+        self.game1.series.add(zelda_series)
+        self.game2.series.add(zelda_series)
+
+        # Clear series cache
+        cache.clear()
+
+        response = self.client.get(reverse("games-list") + f"?series={zelda_series.id}")
+        self.assertEqual(response.status_code, 200)
+        filter_title = response.context["filter_title"]
+        # Should be "The Legend of Zelda Games" not "Video The Legend of Zelda Games"
+        self.assertIn("The Legend of Zelda Games", filter_title)
+        self.assertNotIn("Video The Legend", filter_title)
+
     def test_search_with_platform_filter(self):
         """Test searching with platform filter."""
         response = self.client.get(

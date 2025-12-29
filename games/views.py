@@ -284,7 +284,9 @@ def _build_genre_subtitle(selected_genre_ids, option, genres):
     return f"Genre: {connector.join(genre_names)}"
 
 
-def _build_filter_title(filters, genres, platforms, min_year, max_year):
+def _build_filter_title(
+    filters, genres, platforms, min_year, max_year, series_list=None
+):
     """Compose the heading text based on filters."""
     start_year = filters.get("start")
     end_year = filters.get("end")
@@ -304,8 +306,22 @@ def _build_filter_title(filters, genres, platforms, min_year, max_year):
             if platform_label == "Video":
                 platform_label = ""
 
+    # If exactly one series is selected, fold it into the title
+    series_label = ""
+    selected_series = filters.get("series") or []
+    if len(selected_series) == 1 and series_list:
+        name_lookup = {str(s["id"]): s["name"] for s in series_list}
+        series_name = name_lookup.get(str(selected_series[0]), "").strip()
+        if series_name:
+            series_label = f" {series_name}"
+            # Omit "Video" prefix when series selected
+            if platform_label == "Video":
+                platform_label = ""
+
     time_suffix = f" of {time_window}" if time_window else ""
-    return f"Most Acclaimed {platform_label}{genre_label} Games{time_suffix}"
+    return (
+        f"Most Acclaimed {platform_label}{genre_label}{series_label} Games{time_suffix}"
+    )
 
 
 class HomePageView(FormView):
@@ -822,7 +838,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
         )
         context["is_filtered"] = True  # GameSearch is always filtered
         context["filter_title"] = _build_filter_title(
-            filters, genres, platforms, min_year, max_year
+            filters, genres, platforms, min_year, max_year, series_list
         )
         # Genre subtitle not needed for single-select mode
         context["genre_subtitle"] = ""

@@ -128,19 +128,19 @@
                 </div>
             </div>
 
-            <a href="{% url 'games-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'games-list' or request.resolver_match.url_name == 'game-detail' %} btn-active{% endif %}" data-nav-item="rankings" data-menu-label="Rankings">
+            <a href="{% url 'games-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'games-list' %} btn-active{% endif %}" data-nav-item="rankings" data-menu-label="Rankings">
                 Ranks
             </a>
 
-            <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'developers-list' or request.resolver_match.url_name == 'developer-detail' %} btn-active{% endif %}" data-nav-item="devs" data-menu-label="Developers">
+            <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'developers-list' %} btn-active{% endif %}" data-nav-item="devs" data-menu-label="Developers">
                 Devs
             </a>
 
-            <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'list-list' or request.resolver_match.url_name == 'list-detail' %} btn-active{% endif %}" data-nav-item="lists" data-menu-label="Source Lists">
+            <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'list-list' %} btn-active{% endif %}" data-nav-item="lists" data-menu-label="Source Lists">
                 Lists
             </a>
 
-            <a href="{% url 'post-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'post-list' or request.resolver_match.url_name == 'post-detail' %} btn-active{% endif %}" data-nav-item="news" data-menu-label="News">
+            <a href="{% url 'post-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'post-list' %} btn-active{% endif %}" data-nav-item="news" data-menu-label="News">
                 News
             </a>
         </div>
