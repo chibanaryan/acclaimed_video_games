@@ -12,6 +12,8 @@ function developerFilter() {
         // Data loaded from Django context via window globals
         developerGameMap: {},
         developerChildMap: {},
+        developerNameMap: {},
+        rootDeveloperName: '',
 
         /**
          * Check if a game should be visible based on selected developers
@@ -60,6 +62,102 @@ function developerFilter() {
                 gameIds.forEach(id => allGameIds.add(id));
             }
             return allGameIds.size;
+        },
+
+        /**
+         * Get dynamic page title based on selected developers
+         * Detects if there's a single "top-level" selection (a developer + all its descendants)
+         */
+        getDynamicTitle() {
+            const count = this.selectedDeveloperIds.size;
+
+            // Nothing selected - show root name
+            if (count === 0) {
+                return this.rootDeveloperName;
+            }
+
+            // Find the effective selection - the highest node that accounts for all selections
+            const effectiveSelection = this.getEffectiveSelection();
+
+            if (effectiveSelection !== null) {
+                const name = this.developerNameMap[effectiveSelection] || this.rootDeveloperName;
+                // If root (id 0) or name matches root, just show root name
+                if (effectiveSelection === 0 || name === this.rootDeveloperName) {
+                    return this.rootDeveloperName;
+                }
+                return `${name} (${this.rootDeveloperName})`;
+            }
+
+            // Multiple top-level selections - show count
+            return `${this.rootDeveloperName} (${count} developers selected)`;
+        },
+
+        /**
+         * Find the single top-level selection if one exists
+         * Returns the developer ID if exactly one developer + all its descendants are selected
+         * Returns null if multiple independent selections exist or descendants are partially selected
+         */
+        getEffectiveSelection() {
+            if (this.selectedDeveloperIds.size === 0) return null;
+
+            // Find selected developers that have no selected ancestors (top-level selections)
+            const topLevelSelections = [];
+
+            for (const selectedId of this.selectedDeveloperIds) {
+                let hasSelectedAncestor = false;
+
+                // Check if any other selected developer is an ancestor of this one
+                for (const otherId of this.selectedDeveloperIds) {
+                    if (otherId !== selectedId && this.isAncestorOf(otherId, selectedId)) {
+                        hasSelectedAncestor = true;
+                        break;
+                    }
+                }
+
+                if (!hasSelectedAncestor) {
+                    topLevelSelections.push(selectedId);
+                }
+            }
+
+            // If exactly one top-level selection, verify all its descendants are selected
+            if (topLevelSelections.length === 1) {
+                const topId = topLevelSelections[0];
+                if (this.allDescendantsSelected(topId)) {
+                    return topId;
+                }
+            }
+
+            return null;
+        },
+
+        /**
+         * Check if all descendants of a developer are selected
+         */
+        allDescendantsSelected(developerId) {
+            const children = this.developerChildMap[developerId] || [];
+            for (const childId of children) {
+                if (!this.selectedDeveloperIds.has(childId)) {
+                    return false;
+                }
+                if (!this.allDescendantsSelected(childId)) {
+                    return false;
+                }
+            }
+            return true;
+        },
+
+        /**
+         * Check if ancestorId is an ancestor of descendantId
+         */
+        isAncestorOf(ancestorId, descendantId) {
+            const children = this.developerChildMap[ancestorId] || [];
+            if (children.includes(descendantId)) return true;
+
+            // Check recursively
+            for (const childId of children) {
+                if (this.isAncestorOf(childId, descendantId)) return true;
+            }
+            return false;
         },
 
         /**
@@ -264,6 +362,8 @@ function developerFilter() {
             // Load data from window globals (set by Django template)
             this.developerGameMap = window.DEVELOPER_GAME_MAP || {};
             this.developerChildMap = window.DEVELOPER_CHILD_MAP || {};
+            this.developerNameMap = window.DEVELOPER_NAME_MAP || {};
+            this.rootDeveloperName = window.ROOT_DEVELOPER_NAME || '';
 
             // Parse URL hash for selection state
             const hash = window.location.hash;

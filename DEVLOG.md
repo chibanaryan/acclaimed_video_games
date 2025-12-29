@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Dynamic developer detail page title: updates based on checkbox selection (e.g., "Nintendo EAD (Nintendo)" or "Nintendo (3 developers selected)")
 - Fix developer links in search bar: now matches Developers list page format (#developer-X for subsidiaries, no hash for root)
 - Add "Submit a list" link to Source Lists page (opens contact modal with List Submission category)
 - Desktop rankings: always show global rank (#N format) when filtered, matching mobile behavior

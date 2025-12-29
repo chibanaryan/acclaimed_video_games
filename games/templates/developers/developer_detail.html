@@ -9,6 +9,10 @@
     // Serialize data for Alpine.js developer filter
     window.DEVELOPER_GAME_MAP = {{ developer_game_map_json|safe }};
     window.DEVELOPER_CHILD_MAP = {{ developer_child_map_json|safe }};
+    window.DEVELOPER_NAME_MAP = {
+        {% for dev in developers_flat %}{{ dev.id }}: "{{ dev.name|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}
+    };
+    window.ROOT_DEVELOPER_NAME = "{{ developer.name|escapejs }}";
 </script>
 <script src="{% static 'games/js/developer-filter.min.js' %}"></script>
 {% endblock %}
@@ -16,7 +20,7 @@
 {% block content %}
 {% if developer %}
     <div x-data="developerFilter()">
-        <h1 class="text-3xl font-bold mb-4">{{ developer.name }}</h1>
+        <h1 class="text-3xl font-bold mb-4" x-text="getDynamicTitle()">{{ developer.name }}</h1>
 
         {% if total_games %}
         <p class="text-base-content/70 mb-6">
