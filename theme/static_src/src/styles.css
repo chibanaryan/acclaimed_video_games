@@ -607,16 +607,6 @@
     object-fit: fill;
   }
 
-  /* Desktop: Global rank hidden by default, shown on hover */
-  .game-row.desktop .game-row-global-rank {
-    @apply opacity-0;
-    transition: opacity 0.2s ease;
-  }
-
-  .game-row.desktop:hover .game-row-global-rank {
-    @apply opacity-100;
-  }
-
   /* Desktop: Details row hidden by default, shown on hover */
   .game-row.desktop .game-row-details {
     @apply opacity-0 h-0 overflow-hidden;

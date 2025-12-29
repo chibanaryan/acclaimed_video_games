@@ -118,7 +118,7 @@ class GameListRenderer {
         const genreLabel = expanded.genres.length === 1 ? 'Genre' : 'Genres';
 
         const globalRankHtml = showGlobalRank
-            ? `<span class="game-row-global-rank text-sm text-base-content/70 whitespace-nowrap">Global Rank: <span class="font-medium text-base-content">${game.r}</span></span>`
+            ? `<span class="game-row-global-rank text-sm text-base-content/60 shrink-0 font-medium">#${game.r}</span>`
             : '';
 
         return `

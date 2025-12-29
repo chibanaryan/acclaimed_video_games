@@ -29,7 +29,7 @@
                 </a>
             </div>
             {% if show_rank == 'filtered' or show_rank_in_details %}
-            <span class="game-row-global-rank text-sm text-base-content/70 whitespace-nowrap">Global Rank: <span class="font-medium text-base-content">{{ game.rank }}</span></span>
+            <span class="game-row-global-rank text-sm text-base-content/60 shrink-0 font-medium">#{{ game.rank }}</span>
             {% endif %}
         </div>
         {# Hover rows - hidden by default, shown on hover - each item on own row #}

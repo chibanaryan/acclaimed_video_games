@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Desktop rankings: always show global rank (#N format) when filtered, matching mobile behavior
 - Fix N+1 query issue in developers page: use prefetch cache instead of values_list (reduces queries from ~16 to ~3)
 - Fix IGDB import bug: developer parent chains now correctly set (e.g., Nintendo EAD → Nintendo)
 - Clear slugs from non-root developers: only root developers need slugs (children accessed via hash anchors)
