@@ -82,6 +82,8 @@
             <span class="mr-1" data-year="{{ game.year_of_release }}">{{ game.year_of_release }}</span>
             {# Platform codes (top 4) #}
             {% for platform in game.platforms.all|slice:":4" %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); event.preventDefault(); document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '{{ platform.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ platform.name }}">{{ platform.code }}</button>{% endfor %}{% if game.platforms.count > 4 %}<span class="text-xs text-base-content/50">+{{ game.platforms.count|add:"-4" }}</span>{% endif %}
+            {# Genre badges (top 2) #}
+            {% with genres=game.wikipedia_genres.all|slice:":2" %}{% if genres %}<span class="text-base-content/30">•</span>{% for genre in genres %}<span class="badge badge-xs badge-outline">{{ genre.name }}</span>{% endfor %}{% endif %}{% endwith %}
         </div>
     </div>
 

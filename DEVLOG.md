@@ -13,6 +13,7 @@
 - Tablet layout: narrowed sidebar, compact controls, fixed game row breakpoint (was 768px, now 1024px like navbar)
 - Jump-to-game: now works for all sort modes (position-based), fixed mobile scroll offset for fixed header
 - Desktop breakpoint: changed to 1088px (when game list equals filter sidebar width), narrower nav sidebar (192px)
+- Mobile nav: added Devs/Lists/News links (responsive), larger buttons, active page indicator
 
 ## 2025-12-27
 

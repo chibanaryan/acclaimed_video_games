@@ -2,9 +2,9 @@
 <nav class="navbar bg-transparent px-0" role="navigation" aria-label="main navigation"
      x-data="{ expanded: false }">
 
-    {# Left side: Home + Search dropdown + Rankings #}
-    <div class="navbar-start gap-2">
-        <a href="{% url 'home' %}" class="btn btn-ghost btn-sm">
+    {# Left side: Home + Search dropdown + Rankings + more #}
+    <div class="navbar-start gap-1">
+        <a href="{% url 'home' %}" class="btn btn-ghost {% if request.resolver_match.url_name == 'home' %}btn-active{% endif %}">
             Home
         </a>
 
@@ -112,8 +112,20 @@
             </div>
         </div>
 
-        <a href="{% url 'games-list' %}" class="btn btn-ghost btn-sm">
+        <a href="{% url 'games-list' %}" class="btn btn-ghost {% if request.resolver_match.url_name == 'games-list' %}btn-active{% endif %}">
             Rankings
+        </a>
+
+        <a href="{% url 'developers-list' %}" class="btn btn-ghost {% if request.resolver_match.url_name == 'developers-list' %}btn-active{% endif %}">
+            Devs
+        </a>
+
+        <a href="{% url 'list-list' %}" class="btn btn-ghost hidden xs:inline-flex {% if request.resolver_match.url_name == 'list-list' %}btn-active{% endif %}">
+            Lists
+        </a>
+
+        <a href="{% url 'post-list' %}" class="btn btn-ghost hidden sm:inline-flex {% if request.resolver_match.url_name == 'post-list' %}btn-active{% endif %}">
+            News
         </a>
     </div>
 
@@ -135,16 +147,15 @@
                 class="fixed top-[60px] menu bg-base-200 rounded-box w-52 p-2 shadow-lg origin-top-right"
                 style="z-index: 99999; right: 1rem;"
                 @click="expanded = false">
-                <li><a href="{% url 'developers-list' %}">Developers</a></li>
-                <li><a href="{% url 'list-list' %}">Source Lists</a></li>
-                <li><a href="{% url 'post-list' %}">News</a></li>
-                <li><a href="{% url 'page-detail' slug='about' %}">About</a></li>
+                <li class="xs:hidden"><a href="{% url 'list-list' %}" class="{% if request.resolver_match.url_name == 'list-list' %}active{% endif %}">Source Lists</a></li>
+                <li class="sm:hidden"><a href="{% url 'post-list' %}" class="{% if request.resolver_match.url_name == 'post-list' %}active{% endif %}">News</a></li>
+                <li><a href="{% url 'page-detail' slug='about' %}" class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'about' %}active{% endif %}">About</a></li>
                 <li>
                     <a href="#" class="contact-modal-trigger">
                         Contact Us
                     </a>
                 </li>
-                <li><a href="{% url 'page-detail' slug='donate' %}">Donate</a></li>
+                <li><a href="{% url 'page-detail' slug='donate' %}" class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'donate' %}active{% endif %}">Donate</a></li>
                 <li>
                     <label class="flex cursor-pointer gap-2 items-center justify-center" for="theme-toggle-mobile" @click.stop>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

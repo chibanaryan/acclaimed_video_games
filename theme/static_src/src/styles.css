@@ -91,7 +91,8 @@
   --container-max-w-reading: 800px;
   --container-max-w-container: 1440px;
 
-  /* Custom breakpoint for desktop layout - when game list width equals filter sidebar width */
+  /* Custom breakpoints */
+  --breakpoint-xs: 480px;
   --breakpoint-desktop: 1088px;
 }
 
