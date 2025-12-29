@@ -14,12 +14,7 @@
             { label: '2020s', start: 2020, end: 2029 }
         ],
         isDecadeSelected(decade) {
-            return filters.start <= decade.start && filters.end >= decade.end;
-        },
-        isDecadePartial(decade) {
-            const startsIn = filters.start >= decade.start && filters.start <= decade.end;
-            const endsIn = filters.end >= decade.start && filters.end <= decade.end;
-            return (startsIn || endsIn) && !this.isDecadeSelected(decade);
+            return Number(filters.start) === decade.start && Number(filters.end) === decade.end;
         },
         toggleDecade(decade) {
             if (this.isDecadeSelected(decade)) {
@@ -43,8 +38,19 @@
             filters.start = {{ min_year }};
             filters.end = {{ max_year }};
         },
+        syncRangeSelects() {
+            // Sync the range select dropdowns with current filter values
+            setTimeout(() => {
+                if (this.$refs.startYear) this.$refs.startYear.value = filters.start;
+                if (this.$refs.endYear) this.$refs.endYear.value = filters.end;
+            }, 50);
+        },
         init() {
             this.$watch('expanded', val => localStorage.setItem('mobileFilterExpanded_time', JSON.stringify(val)));
+            // Sync range selects when switching to range mode
+            this.$watch('mode', val => {
+                if (val === 'range') this.syncRangeSelects();
+            });
         }
      }"
      @year-reset.window="filters.start = {{ min_year }}; filters.end = {{ max_year }};"
@@ -106,11 +112,7 @@
             <template x-for="decade in decades" :key="decade.label">
                 <button type="button"
                         @click="selectDecade(decade); debouncedFilterUpdate()"
-                        :class="{
-                            'btn-primary': isDecadeSelected(decade),
-                            'btn-outline btn-primary': isDecadePartial(decade),
-                            'btn-ghost': !isDecadeSelected(decade) && !isDecadePartial(decade)
-                        }"
+                        :class="isDecadeSelected(decade) ? 'btn-primary' : 'btn-outline'"
                         class="btn btn-sm">
                     <span x-text="decade.label"></span>
                 </button>
@@ -138,24 +140,26 @@
                 {# Start Year #}
                 <div>
                     <label class="text-xs text-base-content/60 mb-2 block">From</label>
-                    <select x-model.number="filters.start"
-                            @change="debouncedFilterUpdate()"
+                    <select x-ref="startYear"
+                            x-model.number="filters.start"
+                            @change="if (filters.start > filters.end) filters.end = filters.start; debouncedFilterUpdate()"
                             class="select select-bordered w-full">
-                        <template x-for="year in Array.from({length: {{ max_year }} - {{ min_year }} + 1}, (_, i) => {{ max_year }} - i).filter(y => y <= filters.end)" :key="year">
-                            <option :value="year" x-text="year"></option>
-                        </template>
+                        {% for year in year_range reversed %}
+                        <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
                 {# End Year #}
                 <div>
                     <label class="text-xs text-base-content/60 mb-2 block">To</label>
-                    <select x-model.number="filters.end"
-                            @change="debouncedFilterUpdate()"
+                    <select x-ref="endYear"
+                            x-model.number="filters.end"
+                            @change="if (filters.end < filters.start) filters.start = filters.end; debouncedFilterUpdate()"
                             class="select select-bordered w-full">
-                        <template x-for="year in Array.from({length: {{ max_year }} - {{ min_year }} + 1}, (_, i) => {{ max_year }} - i).filter(y => y >= filters.start)" :key="year">
-                            <option :value="year" x-text="year"></option>
-                        </template>
+                        {% for year in year_range reversed %}
+                        <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
@@ -164,12 +168,12 @@
             <div class="flex flex-wrap gap-2 justify-center">
                 <button type="button"
                         @click="filters.start = new Date().getFullYear() - 4; filters.end = new Date().getFullYear(); debouncedFilterUpdate();"
-                        class="btn btn-ghost btn-xs">
+                        class="btn btn-outline btn-xs">
                     Last 5 years
                 </button>
                 <button type="button"
                         @click="filters.start = new Date().getFullYear() - 9; filters.end = new Date().getFullYear(); debouncedFilterUpdate();"
-                        class="btn btn-ghost btn-xs">
+                        class="btn btn-outline btn-xs">
                     Last 10 years
                 </button>
             </div>

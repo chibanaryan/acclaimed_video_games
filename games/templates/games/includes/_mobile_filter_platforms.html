@@ -504,7 +504,8 @@
                          :class="{
                              'bg-primary text-primary-content': isManufacturerSelected(mfrKey),
                              'bg-primary/10 text-primary': !isManufacturerSelected(mfrKey) && hasManufacturerOrChildrenSelected(mfrKey),
-                             'hover:bg-base-300/50': !isManufacturerSelected(mfrKey)
+                             'hover:bg-base-300/50': !isManufacturerSelected(mfrKey),
+                             'opacity-40': getManufacturerTotalCount(mfrKey) === 0 && !hasManufacturerOrChildrenSelected(mfrKey)
                          }">
                         {# Expand/Collapse Arrow #}
                         <button type="button"
@@ -548,7 +549,8 @@
                                              :class="{
                                                  'bg-primary text-primary-content': isFormFactorSelected(mfrKey, ffKey),
                                                  'bg-primary/10 text-primary': !isFormFactorSelected(mfrKey, ffKey) && !isManufacturerSelected(mfrKey) && hasFormFactorSelection(mfrKey, ffKey),
-                                                 'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey)
+                                                 'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey),
+                                                 'opacity-40': getFormFactorTotalCount(mfrKey, ffKey) === 0 && !hasFormFactorSelection(mfrKey, ffKey)
                                              }"
                                              @click="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();">
                                             {# Form Factor Name #}

@@ -831,6 +831,8 @@ class GameSearchView(RobustPaginationMixin, ListView):
         )
         context["min_year"] = min_year
         context["max_year"] = max_year
+        # Always include full range 1970-present for year dropdowns
+        context["year_range"] = range(1970, max_year + 1)
         # Convert highlight to int for comparison with game.id in template
         highlight_str = self.request.GET.get("highlight")
         context["highlight"] = (

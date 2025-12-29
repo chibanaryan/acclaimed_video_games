@@ -460,6 +460,8 @@
 
             if (!gameListContainer) {
                 console.error('[CSF] game-list-container not found');
+                // Still dispatch count events for mobile filters even if container not found
+                this.updateFacetCounts();
                 this.isLoading = false;
                 return;
             }

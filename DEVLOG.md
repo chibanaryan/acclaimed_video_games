@@ -2,6 +2,9 @@
 
 ## 2025-12-29
 
+- Fix mobile filter Range tab: add year_range (1970-present) to context, fix From/To dropdowns not populating
+- Mobile filters: dim zero-count items (opacity-40), simplify decade selection to exact match only
+- Fix mobile filter loading state: dispatch facet counts even when game-list-container not found
 - Mobile filter sheet: hide nav when open, full-screen layout, fix overflow issues
 - Filter sections: default collapsed, remember expansion state in localStorage
 - Compact filter headers: short year format ('79-'81), badge shows count only, X button for clear

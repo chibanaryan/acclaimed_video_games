@@ -192,7 +192,8 @@
                          :class="{
                              'bg-primary text-primary-content': isCategorySelected(category.id),
                              'bg-primary/10 text-primary': !isCategorySelected(category.id) && hasSelectedChildren(category.id),
-                             'hover:bg-base-300/50': !isCategorySelected(category.id)
+                             'hover:bg-base-300/50': !isCategorySelected(category.id),
+                             'opacity-40': getCategoryTotalCount(category.id) === 0 && !hasCategoryOrChildrenSelected(category.id)
                          }">
                         {# Expand/Collapse Arrow #}
                         <button type="button"
@@ -222,7 +223,8 @@
                             <div class="flex items-center gap-2 py-1 px-2 rounded-md cursor-pointer transition-colors"
                                  :class="{
                                      'bg-primary text-primary-content': isGenreSelected(genre.id),
-                                     'hover:bg-base-300/50': !isGenreSelected(genre.id)
+                                     'hover:bg-base-300/50': !isGenreSelected(genre.id),
+                                     'opacity-40': getEffectiveCount(genre) === 0 && !isGenreSelected(genre.id)
                                  }"
                                  @click="toggleGenre(genre.id); debouncedFilterUpdate();">
                                 <span class="text-sm flex-1" x-text="genre.name"></span>
