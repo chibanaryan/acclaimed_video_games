@@ -386,9 +386,10 @@ class UnifiedSearchView(APIView):
         q = request.GET.get("q", "").strip()
         game_limit = int(request.GET.get("game_limit", 5))
         developer_limit = int(request.GET.get("developer_limit", 3))
+        series_limit = int(request.GET.get("series_limit", 3))
 
         if len(q) < 2:
-            return JsonResponse({"developers": [], "games": []})
+            return JsonResponse({"developers": [], "games": [], "series": []})
 
         # Search developers (Studios with parent Company that has a slug)
         # Only include studios that have a parent company with a slug
@@ -444,10 +445,24 @@ class UnifiedSearchView(APIView):
                 }
             )
 
+        # Search series by name (only show series with 2+ games, like the filter)
+        series = (
+            models.Series.objects.filter(name__icontains=q)
+            .annotate(games_count=Count("games"))
+            .filter(games_count__gte=2)
+            .order_by("-games_count")[:series_limit]
+        )
+
+        series_results = [
+            {"id": s.id, "name": s.name, "slug": s.slug, "games_count": s.games_count}
+            for s in series
+        ]
+
         return JsonResponse(
             {
                 "developers": developer_results,
                 "games": game_results,
+                "series": series_results,
             }
         )
 

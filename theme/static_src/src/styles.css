@@ -92,8 +92,17 @@
   --container-max-w-container: 1440px;
 
   /* Custom breakpoints */
+  --breakpoint-xxs: 360px;
   --breakpoint-xs: 480px;
   --breakpoint-desktop: 1088px;
+}
+
+/* XXS breakpoint utilities (360px) - for very small mobile screens */
+@media (min-width: 360px) {
+  .xxs\:inline-flex { display: inline-flex; }
+  .xxs\:hidden { display: none; }
+  .xxs\:block { display: block; }
+  .xxs\:flex { display: flex; }
 }
 
 /* Desktop breakpoint utilities (1088px) - manual definitions for layout */

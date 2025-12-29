@@ -108,6 +108,8 @@
 .mdi-newspaper::before { content: "\F0395"; }
 .mdi-information::before { content: "\F02FC"; }
 .mdi-heart::before { content: "\F02D1"; }
+.mdi-domain::before { content: "\F01D7"; }
+.mdi-mushroom::before { content: "\F07DF"; }
 
 /* Genre category icons */
 .mdi-bullseye-arrow::before { content: "\F08C9"; }

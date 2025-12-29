@@ -103,11 +103,17 @@
      @series-reset.window="handleReset()">
 
     {# Search input - styled like genre filter #}
-    <div class="mb-2">
+    <div class="mb-2 relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+            </g>
+        </svg>
         <input type="text"
                x-model="searchQuery"
                placeholder="Search series..."
-               class="input input-sm input-bordered w-full bg-base-100 text-sm">
+               class="input input-sm input-bordered w-full pl-9 bg-base-100 text-sm">
     </div>
 
     {# Loading State - Show until counts are ready #}

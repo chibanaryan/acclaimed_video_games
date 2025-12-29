@@ -1,136 +1,154 @@
 {% load static %}
 <nav class="navbar bg-transparent px-0" role="navigation" aria-label="main navigation"
-     x-data="{ expanded: false }">
+     x-data="priorityNav()" x-init="init()">
 
-    {# Left side: Home + Search dropdown + Rankings + more #}
-    <div class="navbar-start gap-1">
-        <a href="{% url 'home' %}" class="btn btn-ghost {% if request.resolver_match.url_name == 'home' %}btn-active{% endif %}">
-            Home
-        </a>
+    {# Nav items that can overflow to hamburger menu #}
+    <div class="flex-1 min-w-0 overflow-hidden" x-ref="navContainer">
+        <div class="flex gap-1 items-center" x-ref="navItems"
+             style="opacity: 0; transition: opacity 0.05s ease-in;">
+            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm btn-square shrink-0 nav-item" data-nav-item="home" aria-label="Home">
+                <span class="mdi mdi-home text-xl"></span>
+            </a>
 
-        {# Search dropdown #}
-        <div class="relative" x-data="{
-                 showSearchDropdown: false,
-                 ...createUnifiedSearchData('{% url 'api-unified-search' %}', 3, 5)
-             }"
-             x-init="window.addEventListener('reset-search-state', () => { reset(); showSearchDropdown = false; })"
-             @click.away="showSearchDropdown = false; q = ''; developers = []; games = []; showMenu = false">
+            {# Search dropdown #}
+            <div class="relative shrink-0 nav-item" data-nav-item="search" x-data="{
+                     showSearchDropdown: false,
+                     ...createUnifiedSearchData('{% url 'api-unified-search' %}', 3, 5)
+                 }"
+                 x-init="window.addEventListener('reset-search-state', () => { reset(); showSearchDropdown = false; })"
+                 @click.away="showSearchDropdown = false; q = ''; developers = []; games = []; series = []; showMenu = false">
 
-            {# Search button #}
-            <button @click="showSearchDropdown = !showSearchDropdown; $nextTick(() => { if(showSearchDropdown) $refs.searchInputMobile.focus(); })"
-                    class="btn btn-ghost btn-sm"
-                    aria-label="Search">
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.3-4.3"></path>
-                    </g>
-                </svg>
-            </button>
+                {# Search button #}
+                <button @click="showSearchDropdown = !showSearchDropdown; $nextTick(() => { if(showSearchDropdown) $refs.searchInputMobile.focus(); })"
+                        class="btn btn-ghost btn-sm"
+                        aria-label="Search">
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.3-4.3"></path>
+                        </g>
+                    </svg>
+                </button>
 
-            {# Search dropdown panel #}
-            <div x-show="showSearchDropdown" x-cloak
-                 class="fixed left-4 right-4 top-24 bg-base-200 rounded-box shadow-lg z-[99999]">
-                <div class="p-4">
-                    <div class="relative">
-                        <label for="nav-search-mobile" class="sr-only">Search games and developers</label>
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <path d="m21 21-4.3-4.3"></path>
-                            </g>
-                        </svg>
-                        <input type="text"
-                               id="nav-search-mobile"
-                               name="q"
-                               x-ref="searchInputMobile"
-                               x-model="q"
-                               @focus="showMenu = true"
-                               @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; loading = false; }"
-                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
-                               placeholder="Search games & developers"
-                               class="input input-bordered input-sm w-full pl-9 bg-base-100"
-                               autocomplete="off">
-                    </div>
+                {# Search dropdown panel #}
+                <div x-show="showSearchDropdown" x-cloak
+                     class="fixed left-4 right-4 top-24 bg-base-200 rounded-box shadow-lg z-[99999]">
+                    <div class="p-4">
+                        <div class="relative">
+                            <label for="nav-search-mobile" class="sr-only">Search games and developers</label>
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.3-4.3"></path>
+                                </g>
+                            </svg>
+                            <input type="text"
+                                   id="nav-search-mobile"
+                                   name="q"
+                                   x-ref="searchInputMobile"
+                                   x-model="q"
+                                   @focus="showMenu = true"
+                                   @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
+                                   @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
+                                   placeholder="Search games & developers"
+                                   class="input input-bordered input-sm w-full pl-9 bg-base-100"
+                                   autocomplete="off">
+                        </div>
 
-                    {# Search results #}
-                    <div x-show="showMenu" x-cloak class="mt-2 max-h-80 overflow-y-auto">
-                        <ul class="menu p-0">
-                            <template x-if="!q || q.trim().length < 2">
-                                <li class="disabled"><span class="text-base-content/85 text-sm">Please enter two or more characters</span></li>
-                            </template>
-                            <template x-if="q && q.trim().length >= 2 && !loading && !hasResults()">
-                                <li class="disabled"><span class="text-base-content/85 text-sm">No results found</span></li>
-                            </template>
-                            {# Games section #}
-                            <template x-if="hasGameResults()">
-                                <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-1 pb-0">Games</li>
-                            </template>
-                            <template x-for="result in games" :key="'game-' + result.id">
-                                <li>
-                                    <a :href="'/game/' + result.slug + '/'" class="flex items-center gap-3">
-                                        <img :src="result.thumbnail" :alt="result.name" width="32" height="32" class="w-8 h-8 rounded">
-                                        <div>
-                                            <div class="font-semibold text-sm" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
-                                            <div class="text-xs text-base-content/85" x-text="'All time rank: ' + result.rank"></div>
-                                        </div>
-                                    </a>
-                                </li>
-                            </template>
-                            <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
-                                <li>
-                                    <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
-                                        See all game results &hellip;
-                                    </a>
-                                </li>
-                            </template>
-                            {# Developers section #}
-                            <template x-if="hasDeveloperResults()">
-                                <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Developers</li>
-                            </template>
-                            <template x-for="dev in developers" :key="'dev-' + dev.id">
-                                <li>
-                                    <a :href="'/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-3">
-                                        <span class="mdi mdi-domain text-xl text-primary"></span>
-                                        <div>
-                                            <div class="font-semibold text-sm" x-text="dev.name"></div>
-                                            <div class="text-xs text-base-content/85" x-text="dev.games_count + ' games'"></div>
-                                        </div>
-                                    </a>
-                                </li>
-                            </template>
-                            <template x-if="q && q.trim().length >= 2 && !loading && hasDeveloperResults()">
-                                <li>
-                                    <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
-                                        See all developer results &hellip;
-                                    </a>
-                                </li>
-                            </template>
-                        </ul>
+                        {# Search results #}
+                        <div x-show="showMenu" x-cloak class="mt-2 max-h-80 overflow-y-auto">
+                            <ul class="menu p-0">
+                                <template x-if="!q || q.trim().length < 2">
+                                    <li class="disabled"><span class="text-base-content/85 text-sm">Please enter two or more characters</span></li>
+                                </template>
+                                <template x-if="q && q.trim().length >= 2 && !loading && !hasResults()">
+                                    <li class="disabled"><span class="text-base-content/85 text-sm">No results found</span></li>
+                                </template>
+                                {# Games section #}
+                                <template x-if="hasGameResults()">
+                                    <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-1 pb-0">Games</li>
+                                </template>
+                                <template x-for="result in games" :key="'game-' + result.id">
+                                    <li>
+                                        <a :href="'/game/' + result.slug + '/'" class="flex items-center gap-3">
+                                            <img :src="result.thumbnail" :alt="result.name" width="32" height="32" class="w-8 h-8 rounded">
+                                            <div>
+                                                <div class="font-semibold text-sm" x-text="result.name + ' (' + result.year_of_release + ')'"></div>
+                                                <div class="text-xs text-base-content/85" x-text="'All time rank: ' + result.rank"></div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                </template>
+                                <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
+                                    <li>
+                                        <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
+                                            See all game results &hellip;
+                                        </a>
+                                    </li>
+                                </template>
+                                {# Developers section #}
+                                <template x-if="hasDeveloperResults()">
+                                    <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Developers</li>
+                                </template>
+                                <template x-for="dev in developers" :key="'dev-' + dev.id">
+                                    <li>
+                                        <a :href="'/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-3">
+                                            <span class="mdi mdi-account-group text-xl text-primary"></span>
+                                            <div>
+                                                <div class="font-semibold text-sm" x-text="dev.name"></div>
+                                                <div class="text-xs text-base-content/85" x-text="dev.games_count + ' games'"></div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                </template>
+                                <template x-if="q && q.trim().length >= 2 && !loading && hasDeveloperResults()">
+                                    <li>
+                                        <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
+                                            See all developer results &hellip;
+                                        </a>
+                                    </li>
+                                </template>
+                                {# Series section #}
+                                <template x-if="hasSeriesResults()">
+                                    <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Series</li>
+                                </template>
+                                <template x-for="s in series" :key="'series-' + s.id">
+                                    <li>
+                                        <a :href="'{% url 'games-list' %}?series=' + s.id" class="flex items-center gap-3">
+                                            <span class="mdi mdi-mushroom text-xl text-primary"></span>
+                                            <div>
+                                                <div class="font-semibold text-sm" x-text="s.name"></div>
+                                                <div class="text-xs text-base-content/85" x-text="s.games_count + ' games'"></div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <a href="{% url 'games-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item" data-nav-item="rankings" data-menu-label="Rankings">
+                Ranks
+            </a>
+
+            <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item" data-nav-item="devs" data-menu-label="Developers">
+                Devs
+            </a>
+
+            <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item" data-nav-item="lists" data-menu-label="Source Lists">
+                Lists
+            </a>
+
+            <a href="{% url 'post-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item" data-nav-item="news" data-menu-label="News">
+                News
+            </a>
         </div>
-
-        <a href="{% url 'games-list' %}" class="btn btn-ghost {% if request.resolver_match.url_name == 'games-list' %}btn-active{% endif %}">
-            Rankings
-        </a>
-
-        <a href="{% url 'developers-list' %}" class="btn btn-ghost {% if request.resolver_match.url_name == 'developers-list' %}btn-active{% endif %}">
-            Devs
-        </a>
-
-        <a href="{% url 'list-list' %}" class="btn btn-ghost hidden xs:inline-flex {% if request.resolver_match.url_name == 'list-list' %}btn-active{% endif %}">
-            Lists
-        </a>
-
-        <a href="{% url 'post-list' %}" class="btn btn-ghost hidden sm:inline-flex {% if request.resolver_match.url_name == 'post-list' %}btn-active{% endif %}">
-            News
-        </a>
     </div>
 
-    {# Right side: Hamburger menu #}
-    <div class="navbar-end">
+    {# Hamburger menu with overflow items - ml-auto keeps it right-aligned #}
+    <div class="shrink-0 ml-auto">
         <div @click.away="expanded = false">
             <button type="button" @click="expanded = !expanded" class="btn btn-ghost btn-sm"
                    aria-label="menu" :aria-expanded="expanded">
@@ -147,8 +165,13 @@
                 class="fixed top-[60px] menu bg-base-200 rounded-box w-52 p-2 shadow-lg origin-top-right"
                 style="z-index: 99999; right: 1rem;"
                 @click="expanded = false">
-                <li class="xs:hidden"><a href="{% url 'list-list' %}" class="{% if request.resolver_match.url_name == 'list-list' %}active{% endif %}">Source Lists</a></li>
-                <li class="sm:hidden"><a href="{% url 'post-list' %}" class="{% if request.resolver_match.url_name == 'post-list' %}active{% endif %}">News</a></li>
+                {# Overflow nav items - shown when they don't fit in the navbar #}
+                <template x-for="item in overflowItems" :key="item.id">
+                    <li x-show="item.hidden">
+                        <a :href="item.href" :class="{ 'active': item.active }" x-text="item.label"></a>
+                    </li>
+                </template>
+                {# Static menu items #}
                 <li><a href="{% url 'page-detail' slug='about' %}" class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'about' %}active{% endif %}">About</a></li>
                 <li>
                     <a href="#" class="contact-modal-trigger">
@@ -189,3 +212,87 @@
         </div>
     </div>
 </nav>
+
+<script nonce="{{ csp_nonce }}">
+function priorityNav() {
+    return {
+        expanded: false,
+        overflowItems: [],
+
+        init() {
+            // Build the overflow items list from nav items with data-menu-label
+            this.buildOverflowItems();
+
+            // Calculate which items fit on load and resize
+            this.$nextTick(() => {
+                this.calculateFit();
+                // Show nav items after calculation is complete
+                this.$refs.navItems.style.opacity = '1';
+            });
+            window.addEventListener('resize', () => this.calculateFit());
+        },
+
+        buildOverflowItems() {
+            const items = this.$refs.navItems.querySelectorAll('[data-menu-label]');
+            this.overflowItems = Array.from(items).map(el => ({
+                id: el.dataset.navItem,
+                href: el.href,
+                label: el.dataset.menuLabel,
+                active: el.classList.contains('btn-active'),
+                hidden: false,
+                element: el
+            }));
+        },
+
+        calculateFit() {
+            const container = this.$refs.navContainer;
+            const itemsWrapper = this.$refs.navItems;
+            if (!container || !itemsWrapper) return;
+
+            // Get available width - subtract buffer for hamburger button and safety margin
+            // The hamburger takes ~48px, plus we add 16px safety margin to prevent partial visibility
+            const availableWidth = container.offsetWidth - 16;
+
+            // First, show all items to measure their true widths
+            this.overflowItems.forEach(item => {
+                item.element.style.display = '';
+                item.hidden = false;
+            });
+
+            // Calculate total width needed
+            let totalWidth = 0;
+            const navItems = itemsWrapper.querySelectorAll('.nav-item');
+
+            // Measure each item and determine which ones fit
+            navItems.forEach(item => {
+                totalWidth += item.offsetWidth + 4; // 4px for gap
+            });
+
+            // If everything fits, we're done
+            if (totalWidth <= availableWidth) {
+                return;
+            }
+
+            // Otherwise, hide items from the end until they fit
+            // Start from the last overflow item and work backwards
+            for (let i = this.overflowItems.length - 1; i >= 0; i--) {
+                const item = this.overflowItems[i];
+                item.hidden = true;
+                item.element.style.display = 'none';
+
+                // Recalculate total width
+                totalWidth = 0;
+                navItems.forEach(navItem => {
+                    if (navItem.style.display !== 'none') {
+                        totalWidth += navItem.offsetWidth + 4;
+                    }
+                });
+
+                if (totalWidth <= availableWidth) {
+                    break;
+                }
+            }
+        }
+    };
+}
+</script>

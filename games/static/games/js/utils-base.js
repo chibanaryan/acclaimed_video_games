@@ -383,21 +383,22 @@ function createSearchData(apiUrl, limit = 5) {
 }
 
 /**
- * Performs unified search API call for both developers and games
+ * Performs unified search API call for developers, games, and series
  * @param {string} query - Search query
  * @param {number} developerLimit - Max developer results
  * @param {number} gameLimit - Max game results
+ * @param {number} seriesLimit - Max series results
  * @param {string} apiUrl - API endpoint URL
- * @returns {Promise<Object>} Search results with developers and games arrays
+ * @returns {Promise<Object>} Search results with developers, games, and series arrays
  */
-async function searchUnified(query, developerLimit, gameLimit, apiUrl) {
+async function searchUnified(query, developerLimit, gameLimit, seriesLimit, apiUrl) {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length < 2) {
-        return { developers: [], games: [] };
+        return { developers: [], games: [], series: [] };
     }
 
     const response = await fetch(
-        `${apiUrl}?q=${encodeURIComponent(trimmedQuery)}&developer_limit=${developerLimit}&game_limit=${gameLimit}`
+        `${apiUrl}?q=${encodeURIComponent(trimmedQuery)}&developer_limit=${developerLimit}&game_limit=${gameLimit}&series_limit=${seriesLimit}`
     );
 
     if (!response.ok) {
@@ -407,27 +408,30 @@ async function searchUnified(query, developerLimit, gameLimit, apiUrl) {
     const data = await response.json();
     return {
         developers: data.developers || [],
-        games: data.games || []
+        games: data.games || [],
+        series: data.series || []
     };
 }
 
 /**
- * Creates Alpine.js unified search component data (developers + games)
+ * Creates Alpine.js unified search component data (developers, games, and series)
  * @param {string} apiUrl - API endpoint for unified search
  * @param {number} developerLimit - Max developer results (default 3)
  * @param {number} gameLimit - Max game results (default 5)
+ * @param {number} seriesLimit - Max series results (default 3)
  * @returns {Object} Alpine component data
  */
-function createUnifiedSearchData(apiUrl, developerLimit = 3, gameLimit = 5) {
+function createUnifiedSearchData(apiUrl, developerLimit = 3, gameLimit = 5, seriesLimit = 3) {
     return {
         showMenu: false,
         q: '',
         developers: [],
         games: [],
+        series: [],
         loading: false,
 
         hasResults() {
-            return this.developers.length > 0 || this.games.length > 0;
+            return this.developers.length > 0 || this.games.length > 0 || this.series.length > 0;
         },
 
         hasDeveloperResults() {
@@ -438,25 +442,33 @@ function createUnifiedSearchData(apiUrl, developerLimit = 3, gameLimit = 5) {
             return this.games.length > 0;
         },
 
+        hasSeriesResults() {
+            return this.series.length > 0;
+        },
+
         async loadResults() {
             const trimmedQ = this.q.trim();
             if (trimmedQ.length < 2) {
                 this.developers = [];
                 this.games = [];
+                this.series = [];
                 this.loading = false;
                 return;
             }
             this.loading = true;
             this.developers = [];
             this.games = [];
+            this.series = [];
             try {
-                const results = await searchUnified(trimmedQ, developerLimit, gameLimit, apiUrl);
+                const results = await searchUnified(trimmedQ, developerLimit, gameLimit, seriesLimit, apiUrl);
                 this.developers = results.developers;
                 this.games = results.games;
+                this.series = results.series;
             } catch (e) {
                 console.error('Search error:', e);
                 this.developers = [];
                 this.games = [];
+                this.series = [];
             } finally {
                 this.loading = false;
             }
@@ -467,6 +479,7 @@ function createUnifiedSearchData(apiUrl, developerLimit = 3, gameLimit = 5) {
             this.q = '';
             this.developers = [];
             this.games = [];
+            this.series = [];
             this.loading = false;
         }
     };

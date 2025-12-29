@@ -19,6 +19,7 @@
 - Series filter: bidirectional count responsiveness, integration in dynamic title, mushroom icon
 - Genre category counts now include root-level games (e.g., games tagged "Role-Playing" directly)
 - Add pre-commit hook for automatic JS minification (prevents stale .min.js files)
+- Add Series to unified search: navbar/sidebar search now shows series with game counts, links to filtered rankings
 
 ## 2025-12-27
 
