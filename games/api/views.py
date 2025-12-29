@@ -492,10 +492,14 @@ def _compute_game_data_version():
     """
     Compute a version hash for cache invalidation.
 
-    Uses the max modified timestamp of games, genre count, and series count.
+    Uses schema version, max modified timestamp of games, genre count, and series count.
     Returns a short hash string that changes when data is updated.
     """
     import hashlib
+
+    # Schema version - increment when API response format changes
+    # v2: Changed st->dv, studios/companies->developers (commit ac84d07c)
+    SCHEMA_VERSION = "2"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()
@@ -511,7 +515,10 @@ def _compute_game_data_version():
     games_with_series = models.Game.objects.filter(series__isnull=False).count()
 
     # Combine into version string and hash it
-    version_string = f"{game_modified}:{genre_count}:{series_count}:{games_with_series}"
+    version_string = (
+        f"{SCHEMA_VERSION}:{game_modified}:{genre_count}"
+        f":{series_count}:{games_with_series}"
+    )
     return hashlib.md5(version_string.encode()).hexdigest()[:12]
 
 
