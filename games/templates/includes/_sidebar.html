@@ -142,12 +142,12 @@
                     <template x-if="hasDeveloperResults()">
                         <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Developers</li>
                     </template>
-                    <template x-for="dev in developers" :key="'dev-' + dev.id">
+                    <template x-for="dev in developers" :key="'dev-' + dev.id + '-' + (dev.is_company ? 'c' : 's')">
                         <li>
-                            <a :href="'/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-2 py-2">
+                            <a :href="dev.is_company ? '/developers/' + dev.slug + '/' : '/developers/' + dev.company_slug + '/#studios=' + dev.id" class="flex items-center gap-2 py-2">
                                 <span class="mdi mdi-account-group text-lg text-primary"></span>
                                 <div class="flex-1 min-w-0">
-                                    <div class="font-semibold text-sm truncate" x-text="dev.name"></div>
+                                    <div class="font-semibold text-sm truncate" x-text="dev.is_company ? dev.name : dev.name + ' (' + dev.company_name + ')'"></div>
                                     <div class="text-xs text-base-content/85" x-text="dev.games_count + ' games'"></div>
                                 </div>
                             </a>

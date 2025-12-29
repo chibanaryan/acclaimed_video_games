@@ -381,6 +381,7 @@ class UnifiedSearchView(APIView):
     """
 
     def get(self, request):
+        from django.db.models import F
         from django.http import JsonResponse
 
         q = request.GET.get("q", "").strip()
@@ -391,31 +392,64 @@ class UnifiedSearchView(APIView):
         if len(q) < 2:
             return JsonResponse({"developers": [], "games": [], "series": []})
 
-        # Search developers (Studios with parent Company that has a slug)
-        # Only include studios that have a parent company with a slug
-        developers = (
+        developer_results = []
+
+        # Search Companies first (shown without parentheses)
+        companies = (
+            models.Company.objects.filter(
+                name__icontains=q,
+                slug__isnull=False,
+            )
+            .exclude(slug="")
+            .prefetch_related("studios__games")
+        )
+
+        for company in companies:
+            # Calculate aggregated game count from all studios
+            game_ids = set()
+            for studio in company.studios.all():
+                game_ids.update(studio.games.values_list("id", flat=True))
+            if game_ids:
+                developer_results.append(
+                    {
+                        "id": company.id,
+                        "name": company.name,
+                        "slug": company.slug,
+                        "games_count": len(game_ids),
+                        "is_company": True,
+                    }
+                )
+
+        # Search Studios (with parent company in parentheses)
+        # Exclude primary studios (name == company.name) to avoid duplicates
+        studios = (
             models.Studio.objects.filter(
                 name__icontains=q,
                 company__isnull=False,
                 company__slug__isnull=False,
             )
             .exclude(company__slug="")
+            .exclude(name=F("company__name"))  # Exclude primary studios
             .select_related("company")
             .annotate(games_count=Count("games"))
             .filter(games_count__gt=0)
-            .order_by("-games_count")[:developer_limit]
         )
 
-        developer_results = []
-        for studio in developers:
+        for studio in studios:
             developer_results.append(
                 {
                     "id": studio.id,
                     "name": studio.name,
                     "company_slug": studio.company.slug,
+                    "company_name": studio.company.name,
                     "games_count": studio.games_count,
+                    "is_company": False,
                 }
             )
+
+        # Sort by game count and limit
+        developer_results.sort(key=lambda x: -x["games_count"])
+        developer_results = developer_results[:developer_limit]
 
         # Search games by name (only fetch required fields for performance)
         games = (

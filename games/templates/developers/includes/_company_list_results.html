@@ -18,15 +18,23 @@
             {% for alias in developers %}
             <tr class="developer-row">
                 <td>
-                    {% if alias.root_company.slug %}
+                    {% if alias.is_company %}
+                        {# Company: direct link, no parentheses #}
+                        <a href="{% url 'developer-detail' slug=alias.slug %}" class="link link-primary">
+                            {{ alias.name }}
+                        </a>
+                    {% elif alias.root_company.slug %}
+                        {# Studio with root company: show parent in parentheses #}
                         <a href="{% url 'developer-detail' slug=alias.root_company.slug %}#studio-{{ alias.id }}" class="link link-primary">
-                            {{ alias.name }}{% if alias.name != alias.root_company.name %} ({{ alias.root_company.name }}){% endif %}
+                            {{ alias.name }} ({{ alias.root_company.name }})
                         </a>
                     {% elif alias.company.slug %}
+                        {# Studio with direct company: show parent in parentheses #}
                         <a href="{% url 'developer-detail' slug=alias.company.slug %}#studio-{{ alias.id }}" class="link link-primary">
-                            {{ alias.name }}{% if alias.name != alias.company.name %} ({{ alias.company.name }}){% endif %}
+                            {{ alias.name }} ({{ alias.company.name }})
                         </a>
                     {% else %}
+                        {# Independent studio: no link or parentheses #}
                         <span>{{ alias.name }}</span>
                     {% endif %}
                 </td>
@@ -43,15 +51,23 @@
     <div class="developer-row card bg-base-200 p-3">
         <div class="flex items-center justify-between gap-2">
             <div class="flex-1">
-                {% if alias.root_company.slug %}
+                {% if alias.is_company %}
+                    {# Company: direct link, no parentheses #}
+                    <a href="{% url 'developer-detail' slug=alias.slug %}" class="link link-primary font-bold">
+                        {{ alias.name }}
+                    </a>
+                {% elif alias.root_company.slug %}
+                    {# Studio with root company: show parent in parentheses #}
                     <a href="{% url 'developer-detail' slug=alias.root_company.slug %}#studio-{{ alias.id }}" class="link link-primary font-bold">
-                        {{ alias.name }}{% if alias.name != alias.root_company.name %} ({{ alias.root_company.name }}){% endif %}
+                        {{ alias.name }} ({{ alias.root_company.name }})
                     </a>
                 {% elif alias.company.slug %}
+                    {# Studio with direct company: show parent in parentheses #}
                     <a href="{% url 'developer-detail' slug=alias.company.slug %}#studio-{{ alias.id }}" class="link link-primary font-bold">
-                        {{ alias.name }}{% if alias.name != alias.company.name %} ({{ alias.company.name }}){% endif %}
+                        {{ alias.name }} ({{ alias.company.name }})
                     </a>
                 {% else %}
+                    {# Independent studio: no link or parentheses #}
                     <span class="font-bold">{{ alias.name }}</span>
                 {% endif %}
             </div>

@@ -396,8 +396,14 @@ class UnifiedSearchViewTests(TestCase):
         dev = data["developers"][0]
         self.assertIn("id", dev)
         self.assertIn("name", dev)
-        self.assertIn("company_slug", dev)
         self.assertIn("games_count", dev)
+        self.assertIn("is_company", dev)
+        # Companies have 'slug', Studios have 'company_slug'
+        if dev["is_company"]:
+            self.assertIn("slug", dev)
+        else:
+            self.assertIn("company_slug", dev)
+            self.assertIn("company_name", dev)
 
     def test_unified_search_game_results_have_correct_fields(self):
         """Test that game results contain expected fields."""

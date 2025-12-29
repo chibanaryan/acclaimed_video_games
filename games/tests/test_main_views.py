@@ -735,11 +735,17 @@ class DeveloperListViewTest(TestCase):
 
     def setUp(self):
         # Create developers with aliases
-        dev1 = Company.objects.create(name="Nintendo", slug="nintendo")
-        dev2 = Company.objects.create(name="Capcom", slug="capcom")
+        self.company1 = Company.objects.create(name="Nintendo", slug="nintendo")
+        self.company2 = Company.objects.create(name="Capcom", slug="capcom")
 
-        self.alias1 = Studio.objects.create(name="Nintendo", company=dev1, igdb_id=1)
-        self.alias2 = Studio.objects.create(name="Capcom", company=dev2, igdb_id=2)
+        # Create primary studios (same name as company) - these will be excluded
+        # in favor of showing the Company entry
+        self.alias1 = Studio.objects.create(
+            name="Nintendo", company=self.company1, igdb_id=1
+        )
+        self.alias2 = Studio.objects.create(
+            name="Capcom", company=self.company2, igdb_id=2
+        )
 
         # Create games for the aliases
         game1 = Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
@@ -755,16 +761,19 @@ class DeveloperListViewTest(TestCase):
         """Test that only developers with games are shown."""
         response = self.client.get(reverse("developers-list"))
         developers = list(response.context["developers"])
-        # Only alias1 has games
+        # Only company1/alias1 has games - shown as Company entry
         self.assertEqual(len(developers), 1)
-        self.assertIn(self.alias1, developers)
+        # Check that the developer name matches
+        self.assertEqual(developers[0].name, "Nintendo")
 
     def test_search_filter(self):
         """Test searching developers by name."""
         response = self.client.get(reverse("developers-list") + "?q=nintendo")
         self.assertEqual(response.status_code, 200)
         developers = list(response.context["developers"])
-        self.assertIn(self.alias1, developers)
+        # Should find Nintendo (either Company or Studio wrapper)
+        self.assertEqual(len(developers), 1)
+        self.assertEqual(developers[0].name, "Nintendo")
 
     def test_htmx_request_returns_partial(self):
         """Test that HTMX requests return partial template."""

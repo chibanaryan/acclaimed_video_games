@@ -949,6 +949,50 @@ class GameSearchView(RobustPaginationMixin, ListView):
         return context
 
 
+class DeveloperListItem:
+    """
+    Wrapper to normalize Company and Studio objects for unified display.
+
+    Allows the developers list to include both parent Companies and Studios
+    with consistent interface for templates.
+    """
+
+    def __init__(self, obj, game_count, is_company=False):
+        self.obj = obj
+        self.recursive_games_count = game_count
+        self.is_company = is_company
+
+    @property
+    def id(self):
+        return self.obj.id
+
+    @property
+    def name(self):
+        return self.obj.name
+
+    @property
+    def slug(self):
+        """Return slug for Companies, None for Studios."""
+        return self.obj.slug if self.is_company else None
+
+    @property
+    def company(self):
+        """Return parent company for Studios, None for Companies."""
+        return None if self.is_company else self.obj.company
+
+    @property
+    def root_company(self):
+        """Return root company for Studios, None for Companies."""
+        if self.is_company:
+            return None
+        return getattr(self.obj, "root_company", self.obj.company)
+
+    @property
+    def games_count(self):
+        """Fallback for template compatibility - same as recursive_games_count."""
+        return self.recursive_games_count
+
+
 class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.Studio
     template_name = "developers/company_list.html"
@@ -1047,14 +1091,13 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         return super().get_template_names()
 
     def get_paginate_by(self, queryset):
-        # Disable Django's pagination when sorting by games (the default)
-        # We'll handle pagination manually after calculating recursive counts
-        sort = self.request.GET.get("sort", "games")
-        if sort == "games":
-            return None
-        return self.paginate_by
+        # Disable Django's pagination - we handle it manually in get_context_data
+        # because we merge Companies and Studios into a unified list
+        return None
 
     def get_queryset(self):
+        from django.db.models import F
+
         qs = (
             models.Studio.objects.annotate(
                 games_count=Count("games"),
@@ -1063,6 +1106,10 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             .select_related("company")
             .distinct()
         )
+
+        # Exclude primary studios (where studio name = company name)
+        # These will be represented by the Company entry instead
+        qs = qs.exclude(company__isnull=False, name=F("company__name"))
 
         # Search filter
         q = self.request.GET.get("q")
@@ -1077,9 +1124,42 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
         return qs
 
+    def _get_company_game_counts(self, hierarchy, game_ids_by_studio):
+        """
+        Calculate aggregated game counts for all Companies.
+
+        For each Company, recursively collects unique game IDs from all
+        child studios and their descendants.
+        """
+        from collections import defaultdict
+
+        company_game_counts = {}
+
+        # Get all companies with their studios
+        companies = (
+            models.Company.objects.filter(slug__isnull=False)
+            .exclude(slug="")
+            .prefetch_related("studios")
+        )
+
+        for company in companies:
+            all_game_ids = set()
+            for studio in company.studios.all():
+                # Get this studio's games + all descendant games
+                all_game_ids.update(
+                    self._collect_unique_game_ids(
+                        studio.id, hierarchy, game_ids_by_studio
+                    )
+                )
+            if all_game_ids:  # Only include companies with games
+                company_game_counts[company] = len(all_game_ids)
+
+        return company_game_counts
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sort = self.request.GET.get("sort", "games")
+        search_query = self.request.GET.get("q", "").strip()
         context["sort"] = sort
 
         # Get the studios (full list when sorting by games, paginated otherwise)
@@ -1088,10 +1168,18 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         # Build hierarchy map and calculate recursive counts for all studios
         hierarchy = self._get_studio_hierarchy()
 
-        # Collect all studio IDs we need game IDs for
+        # Collect all studio IDs we need game IDs for (including all descendants)
         all_studio_ids = set(s.id for s in studios)
         for studio in studios:
             all_studio_ids.update(self._get_all_descendant_ids(studio.id, hierarchy))
+
+        # Also include all studios for Company game counting
+        for company in models.Company.objects.prefetch_related("studios"):
+            for studio in company.studios.all():
+                all_studio_ids.add(studio.id)
+                all_studio_ids.update(
+                    self._get_all_descendant_ids(studio.id, hierarchy)
+                )
 
         # Batch fetch game IDs for all relevant studios
         from collections import defaultdict
@@ -1103,17 +1191,39 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             if game_id is not None:
                 game_ids_by_studio[studio_id].append(game_id)
 
-        # Calculate recursive counts using unique game IDs
+        # Calculate recursive counts for studios
         for studio in studios:
             unique_game_ids = self._collect_unique_game_ids(
                 studio.id, hierarchy, game_ids_by_studio
             )
             studio.recursive_games_count = len(unique_game_ids)
 
+        # Get Companies with aggregated game counts
+        company_game_counts = self._get_company_game_counts(
+            hierarchy, game_ids_by_studio
+        )
+
+        # Build unified developer list with DeveloperListItem wrappers
+        developers = []
+
+        # Add Companies (filter by search query if present)
+        for company, game_count in company_game_counts.items():
+            if search_query and search_query.lower() not in company.name.lower():
+                continue
+            developers.append(DeveloperListItem(company, game_count, is_company=True))
+
+        # Add Studios (already filtered in get_queryset, but wrap them)
+        for studio in studios:
+            developers.append(
+                DeveloperListItem(
+                    studio, studio.recursive_games_count, is_company=False
+                )
+            )
+
         # Handle pagination and sorting
         if sort == "games":
-            # Sort by recursive game count (desc), then by name (asc) for ties
-            studios.sort(key=lambda s: (-s.recursive_games_count, s.name.lower()))
+            # Sort by game count (desc), then by name (asc) for ties
+            developers.sort(key=lambda d: (-d.recursive_games_count, d.name.lower()))
 
             # Manual pagination
             try:
@@ -1123,12 +1233,12 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             except (ValueError, TypeError):
                 page = 1
             per_page = self.paginate_by
-            total_count = len(studios)
+            total_count = len(developers)
             start_idx = (page - 1) * per_page
             end_idx = start_idx + per_page
 
             # Slice for current page
-            context["developers"] = studios[start_idx:end_idx]
+            context["developers"] = developers[start_idx:end_idx]
 
             # Build pagination context
             context["has_more"] = end_idx < total_count
@@ -1137,18 +1247,27 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             context["loaded_count"] = min(end_idx, total_count)
             context["remaining_count"] = max(0, total_count - end_idx)
         else:
-            # Use Django's built-in pagination
-            page_obj = context.get("page_obj")
-            if page_obj:
-                context["has_more"] = page_obj.has_next()
-                context["next_page"] = (
-                    page_obj.next_page_number() if page_obj.has_next() else None
-                )
-                context["total_count"] = page_obj.paginator.count
-                context["loaded_count"] = page_obj.end_index()
-                context["remaining_count"] = max(
-                    0, page_obj.paginator.count - page_obj.end_index()
-                )
+            # Sort alphabetically
+            developers.sort(key=lambda d: d.name.lower())
+
+            # Manual pagination for name sort too (since we're merging Companies)
+            try:
+                page = int(self.request.GET.get("page", 1))
+                if page < 1:
+                    page = 1
+            except (ValueError, TypeError):
+                page = 1
+            per_page = self.paginate_by
+            total_count = len(developers)
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+
+            context["developers"] = developers[start_idx:end_idx]
+            context["has_more"] = end_idx < total_count
+            context["next_page"] = page + 1 if end_idx < total_count else None
+            context["total_count"] = total_count
+            context["loaded_count"] = min(end_idx, total_count)
+            context["remaining_count"] = max(0, total_count - end_idx)
 
         return context
 
