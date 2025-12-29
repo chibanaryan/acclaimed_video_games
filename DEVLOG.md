@@ -12,6 +12,7 @@
 - Bug fixes: mobile rankings flash, studio filter checkbox clipping, mobile search "No results" bug, year heatmap clearing
 - Tablet layout: narrowed sidebar, compact controls, fixed game row breakpoint (was 768px, now 1024px like navbar)
 - Jump-to-game: now works for all sort modes (position-based), fixed mobile scroll offset for fixed header
+- Desktop breakpoint: changed to 1088px (when game list equals filter sidebar width), narrower nav sidebar (192px)
 
 ## 2025-12-27
 

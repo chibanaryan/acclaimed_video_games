@@ -30,7 +30,7 @@
         {% endif %}
 
         {# Mobile filter button #}
-        <div class="lg:hidden mb-4">
+        <div class="desktop:hidden mb-4">
             <button @click="showMobileFilters = true" class="btn btn-primary btn-block">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -44,7 +44,7 @@
         <div x-show="showMobileFilters"
              x-cloak
              @keydown.escape.window="showMobileFilters = false"
-             class="fixed inset-0 z-50 lg:hidden">
+             class="fixed inset-0 z-50 desktop:hidden">
             <div class="fixed inset-0 bg-black/50" @click="showMobileFilters = false"></div>
             <div class="fixed inset-x-0 bottom-0 max-h-[85vh] bg-base-100 rounded-t-2xl overflow-hidden flex flex-col z-10"
                  @click.stop>
@@ -72,14 +72,14 @@
         </div>
 
         {# Two-column layout: results on left, filters sidebar on right #}
-        <div class="flex flex-col lg:flex-row gap-6">
-            {# Left column - Game results #}
-            <div class="flex-1 min-w-0 lg:max-w-[calc(100%-444px)]" style="contain: layout;">
+        <div class="flex flex-col desktop:flex-row gap-6">
+            {# Left column - Game results (takes remaining space) #}
+            <div class="flex-1 min-w-0" style="contain: layout;">
                 {% include 'developers/includes/_filtered_game_list.html' %}
             </div>
 
-            {# Right sidebar - Studio filter (hidden on mobile) #}
-            <div class="hidden lg:block w-full flex-shrink-0" style="width: 420px; min-width: 420px; contain: layout; will-change: contents;">
+            {# Right sidebar - Studio filter (fixed 420px width, hidden on mobile) #}
+            <div class="hidden desktop:block" style="width: 420px; flex-shrink: 0; contain: layout;">
                 <div style="min-height: 400px;">
                     {% include 'developers/includes/_studio_filter_panel.html' %}
                 </div>

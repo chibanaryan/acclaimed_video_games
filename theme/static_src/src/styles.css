@@ -90,6 +90,26 @@
   /* Container max widths */
   --container-max-w-reading: 800px;
   --container-max-w-container: 1440px;
+
+  /* Custom breakpoint for desktop layout - when game list width equals filter sidebar width */
+  --breakpoint-desktop: 1088px;
+}
+
+/* Desktop breakpoint utilities (1088px) - manual definitions for layout */
+@media (min-width: 1088px) {
+  .desktop\:block { display: block; }
+  .desktop\:hidden { display: none; }
+  .desktop\:flex { display: flex; }
+  .desktop\:grid { display: grid; }
+  .desktop\:flex-row { flex-direction: row; }
+  .desktop\:flex-col { flex-direction: column; }
+  .desktop\:w-48 { width: 12rem; }
+  .desktop\:fixed { position: fixed; }
+  .desktop\:inset-y-0 { top: 0; bottom: 0; }
+  .desktop\:left-0 { left: 0; }
+  .desktop\:ml-48 { margin-left: 12rem; }
+  .desktop\:gap-8 { gap: 2rem; }
+  .desktop\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* Custom font face for display headings */
@@ -503,7 +523,7 @@
 }
 
 /* Mobile: scroll offset for fixed header (60px nav + 8px breathing room) */
-@media (max-width: 1023px) {
+@media (max-width: 1087px) {
   .game-row {
     scroll-margin-top: 68px;
   }

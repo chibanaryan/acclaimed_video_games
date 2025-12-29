@@ -340,7 +340,7 @@
                         setTimeout(() => {
                             const desktopElement = document.getElementById('game-' + highlightId);
                             const mobileElement = document.getElementById('game-' + highlightId + '-mobile');
-                            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+                            const isDesktop = window.matchMedia('(min-width: 1088px)').matches;
                             const element = isDesktop ? desktopElement : mobileElement;
 
                             if (element) {
@@ -605,7 +605,7 @@
      ">
 
     {# Page heading above the two-column layout - hidden on mobile (sticky header shows there) #}
-    <div id="search-heading" class="mb-4 hidden lg:block">
+    <div id="search-heading" class="mb-4 hidden desktop:block">
         <div class="flex justify-between items-center mb-1">
             <h1 class="text-2xl font-bold" id="search-title">
                 {{ filter_title|default:"Advanced Search" }}
@@ -619,7 +619,7 @@
     </div>
 
     {# Mobile Sticky Header + Bottom Sheet (shown only on mobile/tablet) #}
-    <div class="lg:hidden"
+    <div class="desktop:hidden"
          @filters-updated.window="$refs.mobileTitle.textContent = buildDynamicTitle()"
          x-data="{
             filterOpen: false,
@@ -684,18 +684,16 @@
     </div>
 
     {# Two-column layout: results on left, filters sidebar on right #}
-    <div class="flex flex-col lg:flex-row gap-6">
-        {# Left column - Results #}
-        {# Max-width prevents column from taking full width during HTMX swap (desktop only) #}
-        <div class="flex-1 min-w-0 lg:max-w-[calc(100%-444px)]" style="contain: layout;">
+    <div class="flex flex-col desktop:flex-row gap-6">
+        {# Left column - Results (takes remaining space) #}
+        <div class="flex-1 min-w-0" style="contain: layout;">
             <div id="game-results-container">
                 {% include 'games/includes/_game_list_results.html' %}
             </div>
         </div>
 
-        {# Right sidebar - Filters (hidden on mobile) #}
-        {# Inline styles + CSS containment force browser to reserve space #}
-        <div class="hidden lg:block w-full flex-shrink-0" style="width: 420px; min-width: 420px; contain: layout; will-change: contents;">
+        {# Right sidebar - Filters (fixed 420px width, hidden on mobile) #}
+        <div class="hidden desktop:block" style="width: 420px; flex-shrink: 0; contain: layout;">
             <div style="min-height: 600px;">
                 {# Spacer to align with game list count #}
                 <div class="h-[calc(1rem+0.5rem)]"></div>

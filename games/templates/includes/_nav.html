@@ -210,7 +210,7 @@
     </div>
 
     {# Center/End: Navigation links (desktop) #}
-    <div class="navbar-end hidden lg:flex gap-1">
+    <div class="navbar-end hidden desktop:flex gap-1">
         <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm">Developers</a>
         <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm">Lists</a>
         <a href="{% url 'page-detail' slug='about' %}" class="btn btn-ghost btn-sm">About</a>
@@ -231,7 +231,7 @@
     </div>
 
     {# Mobile menu (dropdown) #}
-    <div class="navbar-end lg:hidden" x-show="!mobileSearchActive">
+    <div class="navbar-end desktop:hidden" x-show="!mobileSearchActive">
         <div class="dropdown dropdown-end">
             <label tabindex="0" @click="expanded = !expanded" class="btn btn-ghost btn-sm" aria-label="menu" :aria-expanded="expanded">
                 <span class="mdi mdi-menu text-xl" x-show="!expanded"></span>

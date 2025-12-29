@@ -2,7 +2,7 @@
 {# Props: game, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional game ID) #}
 {% load game_filters %}
 {# Desktop view - 2 column grid #}
-<div class="game-row desktop hidden lg:grid py-1.5 px-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr;">
+<div class="game-row desktop hidden desktop:grid py-1.5 px-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr;">
     {# Rank + Thumbnail #}
     <div class="flex items-center gap-3 flex-shrink-0">
         {% if show_rank == 'alltime' or show_rank == 'filtered' %}
@@ -55,7 +55,7 @@
 </div>
 {# Mobile view - Card layout #}
 <a href="{% url 'game-detail' slug=game.slug %}"
-   class="game-row game-card-mobile lg:hidden flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}"
+   class="game-row game-card-mobile desktop:hidden flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}"
    id="game-{{ game.id }}-mobile">
 
     {# Rank Number #}
