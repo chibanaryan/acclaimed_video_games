@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2025-12-29
+
+- Fix N+1 query issue in developers page: use prefetch cache instead of values_list (reduces queries from ~16 to ~3)
+
 ## 2025-12-28
 
 - Fixed icon issues: updated filter icons (Action, Simulation, Retro, Strategy), sidebar icons, replaced MDI subset with full font

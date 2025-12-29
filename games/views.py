@@ -994,9 +994,8 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
                 matching_company = company_by_name[studio_name]
                 # Only add children if the matching company is NOT the studio's parent
                 if matching_company.id != studio_company_id:
-                    child_ids = list(
-                        matching_company.studios.values_list("id", flat=True)
-                    )
+                    # Use .all() to leverage prefetch cache (values_list bypasses it)
+                    child_ids = [s.id for s in matching_company.studios.all()]
                     if child_ids:
                         hierarchy[studio_id] = child_ids
 
