@@ -3,7 +3,7 @@
 {# Props: min_year, max_year from context #}
 
 <div x-data="{
-        expanded: true,
+        expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_time') || 'false'),
         mode: 'decade',
         decades: [
             { label: '1970s', start: 1970, end: 1979 },
@@ -42,6 +42,9 @@
         clearYears() {
             filters.start = {{ min_year }};
             filters.end = {{ max_year }};
+        },
+        init() {
+            this.$watch('expanded', val => localStorage.setItem('mobileFilterExpanded_time', JSON.stringify(val)));
         }
      }"
      @year-reset.window="filters.start = {{ min_year }}; filters.end = {{ max_year }};"
@@ -57,7 +60,7 @@
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
         <template x-if="hasYearFilter()">
-            <span class="badge badge-primary badge-sm ml-2" x-text="filters.start === filters.end ? filters.start : filters.start + '-' + filters.end"></span>
+            <span class="badge badge-primary badge-sm ml-2 whitespace-nowrap" x-text="filters.start === filters.end ? String.fromCharCode(39) + String(filters.start).slice(-2) : String.fromCharCode(39) + String(filters.start).slice(-2) + '-' + String.fromCharCode(39) + String(filters.end).slice(-2)"></span>
         </template>
         <div class="flex-1"></div>
         <button type="button"
@@ -65,8 +68,7 @@
                 x-cloak
                 @click.stop="clearYears(); debouncedFilterUpdate();"
                 class="btn btn-ghost btn-xs ml-2">
-            <span class="mdi mdi-close text-xs"></span>
-            Clear Year Filter
+            <span class="mdi mdi-close text-sm"></span>
         </button>
     </div>
 

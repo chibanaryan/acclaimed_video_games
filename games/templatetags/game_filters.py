@@ -220,13 +220,13 @@ def tojson(value):
 def format_decade(value):
     """
     Format decade string for display.
-    Converts "1990-99" to "1990's".
+    Converts "1990-99" to "1990s".
     """
     if not value:
         return ""
     # Extract the start year (e.g., "1990" from "1990-99")
     start_year = value.split("-")[0] if "-" in value else value
-    return f"{start_year}'s"
+    return f"{start_year}s"
 
 
 @register.simple_tag(takes_context=True)

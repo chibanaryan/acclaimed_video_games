@@ -2,6 +2,9 @@
 
 ## 2025-12-29
 
+- Mobile filter sheet: hide nav when open, full-screen layout, fix overflow issues
+- Filter sections: default collapsed, remember expansion state in localStorage
+- Compact filter headers: short year format ('79-'81), badge shows count only, X button for clear
 - Fix mobile nav active state: only highlight list pages (not detail pages) to match desktop sidebar behavior
 - Fix mobile sort dropdowns: replace DaisyUI dropdown with native select for touch compatibility (Games, Developers, Developer detail)
 - Source Lists: fix table column reflow on Load More, use percentage-based widths with table-fixed, add ellipsis truncation for long names

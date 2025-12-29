@@ -3,11 +3,14 @@
 {% load static %}
 
 <div x-data="{
-        expanded: true,
+        expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_genre') || 'false'),
         expandedCategories: {},
         countsReady: false,
 
         init() {
+            // Watch for expansion changes and persist to localStorage
+            this.$watch('expanded', val => localStorage.setItem('mobileFilterExpanded_genre', JSON.stringify(val)));
+
             // Listen for genre count updates from client-side filtering
             window.addEventListener('genre-counts-update', (event) => {
                 this.updateFilteredCounts(event.detail);
@@ -155,7 +158,7 @@
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
         <template x-if="selectedCount() > 0">
-            <span class="badge badge-primary badge-sm ml-2" x-text="selectedCount() + ' selected'"></span>
+            <span class="badge badge-primary badge-sm ml-2" x-text="selectedCount()"></span>
         </template>
         <div class="flex-1"></div>
         <button type="button"
@@ -163,8 +166,7 @@
                 x-cloak
                 @click.stop="clearGenres(); resetExpanded(); debouncedFilterUpdate();"
                 class="btn btn-ghost btn-xs ml-2">
-            <span class="mdi mdi-close text-xs"></span>
-            Clear Genre Filter
+            <span class="mdi mdi-close text-sm"></span>
         </button>
     </div>
 

@@ -3,11 +3,14 @@
 {% load static %}
 
 <div x-data="{
-        expanded: false,
+        expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_series') || 'false'),
         searchQuery: '',
         maxDisplayed: 25,
 
         init() {
+            // Watch for expansion changes and persist to localStorage
+            this.$watch('expanded', val => localStorage.setItem('mobileFilterExpanded_series', JSON.stringify(val)));
+
             // Ensure filters.series exists
             if (!filters.series) filters.series = [];
 
@@ -96,14 +99,16 @@
             Series
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
+        <template x-if="isSeriesActive()">
+            <span class="badge badge-primary badge-sm ml-2">1</span>
+        </template>
         <div class="flex-1"></div>
         <button type="button"
                 x-show="isSeriesActive()"
                 x-cloak
                 @click.stop="clearSeries(); debouncedFilterUpdate();"
                 class="btn btn-ghost btn-xs ml-2">
-            <span class="mdi mdi-close text-xs"></span>
-            Clear
+            <span class="mdi mdi-close text-sm"></span>
         </button>
     </div>
 

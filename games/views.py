@@ -58,7 +58,7 @@ def _build_time_window(start_year, end_year, min_year, max_year):
     if start_year == end_year:
         return str(start_year)
     if start_year % 10 == 0 and end_year == start_year + 9:
-        return f"the {start_year}'s"
+        return f"the {start_year}s"
     return f"{start_year}-{end_year}"
 
 

@@ -441,15 +441,15 @@ class FormatDecadeFilterTest(TestCase):
 
     def test_format_1990s(self):
         """Test formatting 1990s decade."""
-        self.assertEqual(format_decade("1990-99"), "1990's")
+        self.assertEqual(format_decade("1990-99"), "1990s")
 
     def test_format_2000s(self):
         """Test formatting 2000s decade."""
-        self.assertEqual(format_decade("2000-09"), "2000's")
+        self.assertEqual(format_decade("2000-09"), "2000s")
 
     def test_format_2010s(self):
         """Test formatting 2010s decade."""
-        self.assertEqual(format_decade("2010-19"), "2010's")
+        self.assertEqual(format_decade("2010-19"), "2010s")
 
     def test_empty_value_returns_empty_string(self):
         """Test that empty/None value returns empty string."""
@@ -458,4 +458,4 @@ class FormatDecadeFilterTest(TestCase):
 
     def test_value_without_dash(self):
         """Test that value without dash uses the whole value."""
-        self.assertEqual(format_decade("1990"), "1990's")
+        self.assertEqual(format_decade("1990"), "1990s")

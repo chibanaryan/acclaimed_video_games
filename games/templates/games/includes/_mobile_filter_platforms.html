@@ -3,13 +3,16 @@
 {% load static %}
 
 <div x-data="{
-        expanded: true,
+        expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_platform') || 'false'),
         expandedManufacturers: {},
         expandedFormFactors: {},
         groupCounts: {},
         countsReady: false,
 
         init() {
+            // Watch for expansion changes and persist to localStorage
+            this.$watch('expanded', val => localStorage.setItem('mobileFilterExpanded_platform', JSON.stringify(val)));
+
             // Listen for platform count updates from client-side filtering
             window.addEventListener('platform-counts-update', (event) => {
                 this.updateFilteredCounts(event.detail);
@@ -141,13 +144,16 @@
             return platform.filtered_count !== undefined ? platform.filtered_count : (platform.game_count || 0);
         },
 
-        // Format platform years only (for display next to name)
+        // Format platform years only (for display next to name) - short format ('79-'81)
         formatPlatformYears(platform) {
             if (!platform) return '';
             const range = this.platformYearRanges[platform.code];
             if (!range) return '';
-            const endYear = range.end ? range.end : 'now';
-            return '(' + range.start + '-' + endYear + ')';
+            const startShort = String.fromCharCode(39) + String(range.start).slice(-2);
+            if (!range.end) return startShort + '-';
+            if (range.start === range.end) return startShort;
+            const endShort = String.fromCharCode(39) + String(range.end).slice(-2);
+            return startShort + '-' + endShort;
         },
 
         // Format platform name with year range (for tooltips)
@@ -463,7 +469,7 @@
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
         <template x-if="selectedCount() > 0">
-            <span class="badge badge-primary badge-sm ml-2" x-text="selectedCount() + ' selected'"></span>
+            <span class="badge badge-primary badge-sm ml-2" x-text="selectedCount()"></span>
         </template>
         <div class="flex-1"></div>
         <button type="button"
@@ -471,8 +477,7 @@
                 x-cloak
                 @click.stop="clearPlatforms(); resetExpanded(); debouncedFilterUpdate();"
                 class="btn btn-ghost btn-xs ml-2">
-            <span class="mdi mdi-close text-xs"></span>
-            Clear Platform Filter
+            <span class="mdi mdi-close text-sm"></span>
         </button>
     </div>
 

@@ -119,11 +119,17 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     {# Mobile header - fixed at top, visible only below desktop: breakpoint #}
-    <header id="header" class="desktop:hidden bg-base-100 border-b border-base-content/10 fixed top-0 left-0 right-0 w-full" style="z-index: 99999 !important;">
+    {# Hides when filter sheet is open via body class toggle #}
+    <header id="header"
+            class="desktop:hidden bg-base-100 border-b border-base-content/10 fixed top-0 left-0 right-0 w-full transition-transform duration-300"
+            style="z-index: 99999 !important;">
         <div class="px-4">
             {% include 'includes/_nav_mobile.html' %}
         </div>
     </header>
+    <style>
+        body.filter-sheet-open #header { transform: translateY(-100%); }
+    </style>
 
     {# Main layout wrapper - padding-top on mobile for fixed header space, isolate creates stacking boundary #}
     <style>@media (min-width: 962px) { #main-wrapper { padding-top: 0 !important; } }</style>

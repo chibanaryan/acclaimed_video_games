@@ -16,15 +16,16 @@
      x-cloak>
 </div>
 
-{# Bottom Sheet Panel #}
+{# Bottom Sheet Panel - Full screen with top padding for gap #}
 <div x-show="filterOpen"
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="translate-y-full"
-     x-transition:enter-end="translate-y-0"
-     x-transition:leave="transition ease-in duration-200"
-     x-transition:leave-start="translate-y-0"
-     x-transition:leave-end="translate-y-full"
-     class="fixed bottom-0 left-0 right-0 z-50 h-[85vh] bg-base-100 rounded-t-2xl flex flex-col shadow-2xl"
+     x-effect="if (filterOpen) { document.body.style.overflow = 'hidden'; $nextTick(() => $refs.filterScroll.scrollTop = 0); } else { document.body.style.overflow = ''; }"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 pt-12 bg-base-100 flex flex-col overflow-hidden"
      x-cloak>
 
     {# Handle bar indicator #}
@@ -52,7 +53,7 @@
     </div>
 
     {# Scrollable Filter Content #}
-    <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4" id="mobile-filter-form">
+    <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-4" id="mobile-filter-form" x-ref="filterScroll">
         {# Search Input #}
         <div class="space-y-2">
             <label class="text-sm font-semibold text-base-content/85 block mb-2">Search</label>
