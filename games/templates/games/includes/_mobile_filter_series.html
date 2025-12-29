@@ -5,7 +5,7 @@
 <div x-data="{
         expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_series') || 'false'),
         searchQuery: '',
-        maxDisplayed: 25,
+        maxDisplayed: 20,
 
         init() {
             // Watch for expansion changes and persist to localStorage
@@ -120,14 +120,22 @@
          x-transition:enter-end="opacity-100 translate-y-0"
          class="space-y-2">
 
-        {# Search input #}
-        <div class="relative">
-            <span class="mdi mdi-magnify absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 z-10 pointer-events-none"></span>
+        {# Search input - using DaisyUI label pattern #}
+        <label class="input input-bordered w-full bg-base-200">
+            <span class="mdi mdi-magnify opacity-50"></span>
             <input type="text"
                    x-model="searchQuery"
                    placeholder="Search series..."
-                   class="input input-bordered w-full pl-9 bg-base-200">
-        </div>
+                   class="grow">
+            <button type="button"
+                    @click="searchQuery = ''"
+                    class="btn btn-ghost btn-xs btn-circle"
+                    style="display: none"
+                    :style="{ display: searchQuery.length > 0 ? 'flex' : 'none' }"
+                    aria-label="Clear search">
+                <span class="mdi mdi-close"></span>
+            </button>
+        </label>
 
         {# Series List #}
         <div class="space-y-1">

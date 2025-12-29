@@ -81,9 +81,9 @@
              x-data="createUnifiedSearchData('{% url 'api-unified-search' %}', 3, 5)"
              x-init="window.addEventListener('reset-search-state', () => reset())"
              @click.away="showMenu = false">
-            <div class="relative">
-                <label for="sidebar-search" class="sr-only">Search games and developers</label>
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <label for="sidebar-search" class="sr-only">Search games and developers</label>
+            <label class="input input-bordered input-sm w-full bg-base-300 border-base-content/20">
+                <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.3-4.3"></path>
@@ -93,19 +93,21 @@
                        id="sidebar-search"
                        name="q"
                        placeholder="Search..."
-                       class="input input-bordered input-sm w-full pl-9 bg-base-300 border-base-content/20"
+                       class="grow"
                        x-model="q"
                        @focus="showMenu = true"
                        @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
                        @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                        autocomplete="off">
-                <button x-show="q && q.trim()" x-cloak
+                <button type="button"
                         @click="q = ''; developers = []; games = []; series = []; showMenu = false"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-circle"
+                        class="btn btn-ghost btn-xs btn-circle"
+                        style="display: none"
+                        :style="{ display: q.length > 0 ? 'flex' : 'none' }"
                         aria-label="Clear search">
                     <span class="mdi mdi-close"></span>
                 </button>
-            </div>
+            </label>
             {# Search results dropdown - fixed position to escape sidebar bounds #}
             <div x-show="showMenu" x-cloak
                  class="absolute left-0 top-full mt-1 bg-base-200 rounded-box w-80 p-2 shadow-lg z-[9999] max-h-80 overflow-y-auto">

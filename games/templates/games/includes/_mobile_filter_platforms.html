@@ -150,7 +150,7 @@
             const range = this.platformYearRanges[platform.code];
             if (!range) return '';
             const startShort = String.fromCharCode(39) + String(range.start).slice(-2);
-            if (!range.end) return startShort + '-';
+            if (!range.end) return startShort + '-now';
             if (range.start === range.end) return startShort;
             const endShort = String.fromCharCode(39) + String(range.end).slice(-2);
             return startShort + '-' + endShort;

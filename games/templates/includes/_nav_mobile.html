@@ -33,9 +33,9 @@
                 <div x-show="showSearchDropdown" x-cloak
                      class="fixed left-4 right-4 top-24 bg-base-200 rounded-box shadow-lg z-[99999]">
                     <div class="p-4">
-                        <div class="relative">
-                            <label for="nav-search-mobile" class="sr-only">Search games and developers</label>
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <label for="nav-search-mobile" class="sr-only">Search games and developers</label>
+                        <label class="input input-bordered input-sm w-full bg-base-100">
+                            <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                 <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
                                     <circle cx="11" cy="11" r="8"></circle>
                                     <path d="m21 21-4.3-4.3"></path>
@@ -50,9 +50,17 @@
                                    @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
                                    @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
                                    placeholder="Search games & developers"
-                                   class="input input-bordered input-sm w-full pl-9 bg-base-100"
+                                   class="grow"
                                    autocomplete="off">
-                        </div>
+                            <button type="button"
+                                    @click="q = ''; developers = []; games = []; series = []; showMenu = false"
+                                    class="btn btn-ghost btn-xs btn-circle"
+                                    style="display: none"
+                                    :style="{ display: q.length > 0 ? 'flex' : 'none' }"
+                                    aria-label="Clear search">
+                                <span class="mdi mdi-close"></span>
+                            </button>
+                        </label>
 
                         {# Search results #}
                         <div x-show="showMenu" x-cloak class="mt-2 max-h-80 overflow-y-auto">

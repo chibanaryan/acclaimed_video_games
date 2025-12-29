@@ -140,30 +140,33 @@
              x-init="window.addEventListener('reset-search-state', () => reset())"
              @click.away="showMenu = false">
             <div class="dropdown" :class="{ 'dropdown-open': showMenu }">
-                <div class="join">
-                    <div class="relative">
-                        <label for="nav-search-desktop" class="sr-only">Search games and developers</label>
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <path d="m21 21-4.3-4.3"></path>
-                            </g>
-                        </svg>
-                        <input type="text"
-                               id="nav-search-desktop"
-                               name="q"
-                               placeholder="Search games & developers"
-                               class="input input-bordered input-sm w-64 pl-9 bg-base-200"
-                               x-model="q"
-                               @focus="showMenu = true"
-                               @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
-                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
-                               autocomplete="off">
-                    </div>
-                    <button x-show="q && q.trim()" x-cloak @click="q = ''; developers = []; games = []; series = []; showMenu = false" class="btn btn-sm join-item" aria-label="Clear search">
+                <label for="nav-search-desktop" class="sr-only">Search games and developers</label>
+                <label class="input input-bordered input-sm w-64 bg-base-200">
+                    <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.3-4.3"></path>
+                        </g>
+                    </svg>
+                    <input type="text"
+                           id="nav-search-desktop"
+                           name="q"
+                           placeholder="Search games & developers"
+                           class="grow"
+                           x-model="q"
+                           @focus="showMenu = true"
+                           @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
+                           @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
+                           autocomplete="off">
+                    <button type="button"
+                            @click="q = ''; developers = []; games = []; series = []; showMenu = false"
+                            class="btn btn-ghost btn-xs btn-circle"
+                            style="display: none"
+                            :style="{ display: q.length > 0 ? 'flex' : 'none' }"
+                            aria-label="Clear search">
                         <span class="mdi mdi-close" aria-hidden="true"></span>
                     </button>
-                </div>
+                </label>
                 <ul class="dropdown-content menu bg-base-200 rounded-box w-80 p-2 shadow-lg z-50 mt-1">
                     <template x-if="!q || q.trim().length < 2">
                         <li class="disabled"><span class="text-base-content/85">Please enter two or more characters</span></li>
