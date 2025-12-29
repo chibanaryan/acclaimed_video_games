@@ -1,0 +1,157 @@
+{# Series filter - Flat list with search, styled like genre filter #}
+{# Uses seriesList from parent AdvancedFilters component #}
+<div class="series-filter"
+     x-data="{
+         searchQuery: '',
+         countsReady: false,
+         init() {
+             // Initialize from parent filters
+             this.selectedSeries = filters.series || [];
+
+             // Listen for reset events
+             window.addEventListener('series-reset', () => this.handleReset());
+
+             // Listen for filtered count updates from client-side filtering
+             window.addEventListener('series-counts-update', (event) => {
+                 this.updateFilteredCounts(event.detail);
+             });
+
+             // Mark counts ready after a short delay (series doesn't have server-side counts)
+             setTimeout(() => { this.countsReady = true; }, 150);
+         },
+         selectedSeries: [],
+
+         handleReset() {
+             this.selectedSeries = [];
+             this.searchQuery = '';
+         },
+
+         // Update filtered counts on seriesList
+         updateFilteredCounts(countMap) {
+             seriesList.forEach(s => {
+                 s.filtered_count = countMap[String(s.id)] || 0;
+             });
+         },
+
+         // Get effective count for display
+         getEffectiveCount(series) {
+             return series.filtered_count !== undefined ? series.filtered_count : series.game_count;
+         },
+
+         // Check if series has games available with current filters
+         isSeriesAvailable(seriesId) {
+             const series = seriesList.find(s => String(s.id) === String(seriesId));
+             if (!series) return false;
+             const count = this.getEffectiveCount(series);
+             return count > 0 || this.isSelected(seriesId);
+         },
+
+         // Check if selected series has zero results
+         hasZeroResults(seriesId) {
+             const series = seriesList.find(s => String(s.id) === String(seriesId));
+             if (!series) return false;
+             const count = this.getEffectiveCount(series);
+             return count === 0 && this.isSelected(seriesId);
+         },
+
+         // Max series to show when not searching
+         maxDisplayed: 25,
+
+         get filteredSeries() {
+             let list = seriesList;
+             if (this.searchQuery) {
+                 // When searching, show all matches
+                 const query = this.searchQuery.toLowerCase();
+                 list = list.filter(s => s.name.toLowerCase().includes(query));
+             }
+             // Sort by effective count descending, then name
+             list = list.sort((a, b) => {
+                 const countDiff = this.getEffectiveCount(b) - this.getEffectiveCount(a);
+                 if (countDiff !== 0) return countDiff;
+                 return a.name.localeCompare(b.name);
+             });
+             // Limit to maxDisplayed when not searching
+             if (!this.searchQuery) {
+                 list = list.slice(0, this.maxDisplayed);
+             }
+             return list;
+         },
+
+         // Check if there are more series beyond the displayed limit
+         get hasMoreSeries() {
+             return !this.searchQuery && seriesList.length > this.maxDisplayed;
+         },
+
+         toggleSeries(seriesId) {
+             const id = String(seriesId);
+             // Single-select: toggle off if already selected, otherwise select only this one
+             if (this.selectedSeries.includes(id)) {
+                 this.selectedSeries = [];  // Deselect
+             } else {
+                 this.selectedSeries = [id];  // Replace with single selection
+             }
+             // Update parent filters
+             filters.series = [...this.selectedSeries];
+             // Dispatch filter change event
+             this.$dispatch('filter-changed', { type: 'series', items: this.selectedSeries });
+         },
+
+         isSelected(seriesId) {
+             return this.selectedSeries.includes(String(seriesId));
+         }
+     }"
+     @series-reset.window="handleReset()">
+
+    {# Search input - styled like genre filter #}
+    <div class="mb-2">
+        <input type="text"
+               x-model="searchQuery"
+               placeholder="Search series..."
+               class="input input-sm input-bordered w-full bg-base-100 text-sm">
+    </div>
+
+    {# Loading State - Show until counts are ready #}
+    <div x-show="!countsReady" class="space-y-1 animate-pulse">
+        <div class="h-7 bg-base-300/50 rounded-md"></div>
+        <div class="h-7 bg-base-300/50 rounded-md"></div>
+        <div class="h-7 bg-base-300/50 rounded-md"></div>
+        <div class="h-7 bg-base-300/50 rounded-md"></div>
+    </div>
+
+    {# Series list - styled like genre children #}
+    <div class="series-list space-y-0.5" x-show="countsReady" x-cloak>
+        <template x-for="series in filteredSeries" :key="series.id">
+            <div class="series-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
+                 :class="{
+                     'bg-primary text-primary-content': isSelected(series.id),
+                     'hover:bg-base-300/50': !isSelected(series.id),
+                     'opacity-40': !isSeriesAvailable(series.id) && !isSelected(series.id),
+                     'bg-error/20 text-error': hasZeroResults(series.id)
+                 }"
+                 @click="toggleSeries(series.id)"
+                 :title="series.name + ' - ' + getEffectiveCount(series) + ' games'">
+                {# Series Name #}
+                <span class="flex-1 truncate" x-text="series.name"></span>
+                {# Game Count #}
+                <span class="text-xs opacity-60 tabular-nums"
+                      x-text="getEffectiveCount(series)"></span>
+            </div>
+        </template>
+
+        {# Empty state #}
+        <template x-if="filteredSeries.length === 0">
+            <div class="text-center py-4 text-base-content/60 text-sm">
+                <span x-show="searchQuery">No series matching "<span x-text="searchQuery"></span>"</span>
+                <span x-show="!searchQuery">No series available</span>
+            </div>
+        </template>
+
+        {# Hint for more series #}
+        <template x-if="hasMoreSeries">
+            <div class="text-center pt-2 text-base-content/50 text-xs">
+                Search to find more series...
+            </div>
+        </template>
+    </div>
+
+</div>

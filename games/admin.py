@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 from django.forms import ModelForm
 from django.http import HttpRequest
 from django.utils.html import format_html
@@ -34,6 +35,22 @@ class WikipediaGenreAdmin(admin.ModelAdmin):
     @admin.display(description="Games")
     def game_count(self, obj):
         return obj.games_with_wikipedia_genre.count()
+
+
+@admin.register(models.Series)
+class SeriesAdmin(admin.ModelAdmin):
+    list_display = ["name", "slug", "igdb_id", "game_count"]
+    search_fields = ["name", "slug"]
+    ordering = ["name"]
+    readonly_fields = ["game_count"]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(_game_count=Count("games"))
+
+    @admin.display(description="Games", ordering="_game_count")
+    def game_count(self, obj):
+        return getattr(obj, "_game_count", obj.games.count())
 
 
 @admin.register(models.Company)
@@ -75,7 +92,7 @@ class GameAdmin(admin.ModelAdmin):
     ]
     list_filter = ["year_of_release"]
     search_fields = ["name"]
-    filter_horizontal = ["studios", "platforms", "genres", "wikipedia_genres"]
+    filter_horizontal = ["studios", "platforms", "genres", "wikipedia_genres", "series"]
     inlines = [GameQuoteInline]
 
     def get_queryset(self, request: HttpRequest):

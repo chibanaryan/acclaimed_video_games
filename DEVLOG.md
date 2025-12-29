@@ -16,6 +16,9 @@
 - Mobile nav: added Devs/Lists/News links (responsive), larger buttons, active page indicator
 - Fix blurry sidebar logo by using high-resolution images (548w/1092w) instead of small variants
 - Developers list: added sort options (# Games default, Name A-Z), recursive game counting, secondary alpha sort for ties
+- Series filter: bidirectional count responsiveness, integration in dynamic title, mushroom icon
+- Genre category counts now include root-level games (e.g., games tagged "Role-Playing" directly)
+- Add pre-commit hook for automatic JS minification (prevents stale .min.js files)
 
 ## 2025-12-27
 

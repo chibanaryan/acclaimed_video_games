@@ -629,6 +629,12 @@ class GameSearchView(RobustPaginationMixin, ListView):
             platform_ids = _expand_platform_virtual_ids(platforms_param, platforms_list)
             qs = utils.apply_platform_filter(qs, platform_ids)
 
+        # Series filtering
+        series_param = self.request.GET.get("series")
+        if series_param:
+            series_ids = [int(x) for x in series_param.split(",") if x.strip()]
+            qs = utils.apply_series_filter(qs, series_ids)
+
         # Sort order
         sort = self.request.GET.get("sort", "rank")
 
@@ -694,6 +700,24 @@ class GameSearchView(RobustPaginationMixin, ListView):
             transform_id=True,
         )
 
+        # Get series list with game counts (only show series with 2+ games)
+        MIN_SERIES_GAMES = 2
+        series_list = cache.get("search_series_list_with_counts")
+        if series_list is None:
+            series_list = list(
+                models.Series.objects.annotate(game_count=Count("games"))
+                .filter(game_count__gte=MIN_SERIES_GAMES)
+                .values("id", "name", "slug", "game_count")
+                .order_by("-game_count", "name")
+            )
+            # Convert IDs to strings for Alpine.js
+            series_list = [{**s, "id": str(s["id"])} for s in series_list]
+            cache.set(
+                "search_series_list_with_counts",
+                series_list,
+                config.CACHE_TIMEOUT_DEFAULT,
+            )
+
         min_year, max_year = _get_year_bounds()
 
         # Parse year/decade params and convert to start/end
@@ -723,6 +747,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
         sort_param = self.request.GET.get("sort", "rank")
         genres_param = self.request.GET.get("genres")
         platforms_param = self.request.GET.get("platforms")
+        series_param = self.request.GET.get("series")
 
         # Determine if any filter actually narrows results (affects rank display)
         # Year filter only counts if it's narrower than the full range
@@ -736,6 +761,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             or has_year_filter
             or genres_param
             or platforms_param
+            or series_param
             or sort_param != "rank"
         )
 
@@ -745,6 +771,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             "end": end_val,
             "genres": genres_param.split(",") if genres_param else [],
             "platforms": platforms_param.split(",") if platforms_param else [],
+            "series": series_param.split(",") if series_param else [],
             "rank_display": "filtered" if has_any_filter else "alltime",
             "sort": sort_param,
             # Keep legacy params for context
@@ -754,6 +781,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
 
         context["genres"] = genres
         context["platforms"] = platforms
+        context["series_list"] = series_list
         context["filters"] = filters
         context["download_query"] = urlencode(
             {
@@ -767,6 +795,9 @@ class GameSearchView(RobustPaginationMixin, ListView):
                     {"platforms": ",".join(filters["platforms"])}
                     if filters["platforms"]
                     else {}
+                ),
+                **(
+                    {"series": ",".join(filters["series"])} if filters["series"] else {}
                 ),
                 **(
                     {"sort": filters["sort"]}

@@ -43,9 +43,11 @@ class IgbdApi:
         self.company_cache: OrderedDict[int, Dict[str, Any]] = OrderedDict()
         self.game_cache: OrderedDict[int, Dict[str, Any]] = OrderedDict()
         self.genre_cache: OrderedDict[int, str] = OrderedDict()
+        self.series_cache: OrderedDict[int, Dict[str, Any]] = OrderedDict()
         self.company_cache_max_size: int = config.IGDB_COMPANY_CACHE_MAX_SIZE
         self.game_cache_max_size: int = config.IGDB_GAME_CACHE_MAX_SIZE
         self.genre_cache_max_size: int = config.IGDB_GENRE_CACHE_MAX_SIZE
+        self.series_cache_max_size: int = config.IGDB_SERIES_CACHE_MAX_SIZE
         # Bounded dictionaries (populated once from IGDB API, finite size)
         self.release_date_statuses: Dict[str, int] = {}
         self.themes: Dict[int, str] = {}
@@ -145,6 +147,31 @@ class IgbdApi:
             # Evict oldest (first item)
             self.genre_cache.popitem(last=False)  # pragma: no cover
         self.genre_cache[genre_id] = value
+
+    def _get_from_series_cache(self, series_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get series from cache with LRU update (moves to end).
+        Thread-safe.
+        """
+        if series_id in self.series_cache:
+            # Move to end (most recently used)
+            value = self.series_cache.pop(series_id)
+            self.series_cache[series_id] = value
+            return value
+        return None
+
+    def _set_in_series_cache(self, series_id: int, value: Dict[str, Any]) -> None:
+        """
+        Set series in cache with LRU eviction if at max size.
+        Thread-safe.
+        """
+        if series_id in self.series_cache:
+            # Update existing: move to end
+            self.series_cache.pop(series_id)  # pragma: no cover
+        elif len(self.series_cache) >= self.series_cache_max_size:  # pragma: no cover
+            # Evict oldest (first item)
+            self.series_cache.popitem(last=False)  # pragma: no cover
+        self.series_cache[series_id] = value
 
     def _get_endpoint_url(self, endpoint: str) -> str:
         """
@@ -567,7 +594,7 @@ class IgbdApi:
                 data=(
                     f"where id = ({ids_str}); "
                     "fields slug,cover.*,genres.*,first_release_date,"
-                    "summary,storyline,url,themes,involved_companies.*; "
+                    "summary,storyline,url,themes,involved_companies.*,collections.*; "
                     "limit 500;"
                 ),
             )
@@ -686,10 +713,26 @@ class IgbdApi:
             else:
                 cover_filename = None
 
+            # Process collections (series) - games can be in multiple collections
+            series_data = []
+            for collection_obj in data.get("collections", []):
+                if isinstance(collection_obj, dict) and "id" in collection_obj:
+                    series_info = {
+                        "id": collection_obj["id"],
+                        "name": collection_obj.get("name", ""),
+                        "slug": collection_obj.get("slug", ""),
+                    }
+                    series_data.append(series_info)
+                    # Cache the series data
+                    if cache_results:
+                        with self.cache_lock:
+                            self._set_in_series_cache(collection_obj["id"], series_info)
+
             game_data = {
                 "cover": cover_filename,
                 "studios": studio_objs,
                 "genres": genres,
+                "series": series_data,
                 "storyline": data.get("storyline"),
                 "summary": data.get("summary"),
                 "url": data.get("url"),
@@ -736,13 +779,13 @@ class IgbdApi:
                 if cached is not None:
                     return cached
 
-        # Get game data from API with field expansion for cover and genres
+        # Get game data from API with field expansion for cover, genres, and collections
         res = self._make_request_with_retry(
             self._get_endpoint_url("games"),
             data=(
                 "where id="
                 f"{game_id}; fields slug,cover.*,genres.*,first_release_date,"
-                "summary,storyline,url,themes,involved_companies.*;"
+                "summary,storyline,url,themes,involved_companies.*,collections.*;"
             ),
         )
 
@@ -857,10 +900,26 @@ class IgbdApi:
         else:
             cover_filename = None
 
+        # Process collections (series) - games can be in multiple collections
+        series_data = []
+        for collection_obj in data.get("collections", []):
+            if isinstance(collection_obj, dict) and "id" in collection_obj:
+                series_info = {
+                    "id": collection_obj["id"],
+                    "name": collection_obj.get("name", ""),
+                    "slug": collection_obj.get("slug", ""),
+                }
+                series_data.append(series_info)
+                # Cache the series data
+                if cache_results:
+                    with self.cache_lock:
+                        self._set_in_series_cache(collection_obj["id"], series_info)
+
         game_data = {
             "cover": cover_filename,
             "studios": studio_objs,
             "genres": genres,
+            "series": series_data,
             "storyline": data.get("storyline"),
             "summary": data.get("summary"),
             "url": data.get("url"),

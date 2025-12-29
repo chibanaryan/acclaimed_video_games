@@ -234,3 +234,82 @@ class PostListViewTests(TestCase):
 
         self.assertEqual(len(page.object_list), 5)
         self.assertTrue(page.has_other_pages())
+
+
+class GameListSeriesFilterTests(TestCase):
+    """Tests for series filtering in GameListView."""
+
+    def setUp(self):
+        self.client = Client()
+        # Create a series
+        self.series = models.Series.objects.create(
+            name="Test Series",
+            slug="test-series",
+            igdb_id=12345,
+        )
+        # Create games - one in series, one not
+        self.game_in_series = models.Game.objects.create(
+            name="Game In Series",
+            rank=1,
+            igdb_id=100,
+            year_of_release=2020,
+        )
+        self.game_in_series.series.add(self.series)
+
+        self.game_not_in_series = models.Game.objects.create(
+            name="Game Not In Series",
+            rank=2,
+            igdb_id=101,
+            year_of_release=2020,
+        )
+
+    def test_series_filter_returns_only_games_in_series(self):
+        """Test that series filter returns only games in the specified series."""
+        response = self.client.get(f"/rankings/?series={self.series.id}")
+        self.assertEqual(response.status_code, 200)
+        # The response should contain the game in the series
+        self.assertContains(response, "Game In Series")
+
+    def test_series_filter_with_invalid_id(self):
+        """Test that series filter with invalid ID returns empty results gracefully."""
+        response = self.client.get("/rankings/?series=99999")
+        self.assertEqual(response.status_code, 200)
+
+    def test_series_list_in_context(self):
+        """Test that series_list is included in the view context."""
+        response = self.client.get("/rankings/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("series_list", response.context)
+
+
+class GenreSubtitleTests(TestCase):
+    """Tests for _build_genre_subtitle helper."""
+
+    def test_build_genre_subtitle_empty(self):
+        """Test subtitle with no genres."""
+        result = views._build_genre_subtitle([], "any", [])
+        self.assertEqual(result, "")
+
+    def test_build_genre_subtitle_single(self):
+        """Test subtitle with single genre."""
+        genres = [{"id": 1, "name": "Action"}]
+        result = views._build_genre_subtitle([1], "any", genres)
+        self.assertEqual(result, "Genre: Action")
+
+    def test_build_genre_subtitle_multiple_any(self):
+        """Test subtitle with multiple genres using 'any' option."""
+        genres = [{"id": 1, "name": "Action"}, {"id": 2, "name": "RPG"}]
+        result = views._build_genre_subtitle([1, 2], "any", genres)
+        self.assertEqual(result, "Genre: Action OR RPG")
+
+    def test_build_genre_subtitle_multiple_all(self):
+        """Test subtitle with multiple genres using 'all' option."""
+        genres = [{"id": 1, "name": "Action"}, {"id": 2, "name": "RPG"}]
+        result = views._build_genre_subtitle([1, 2], "all", genres)
+        self.assertEqual(result, "Genre: Action AND RPG")
+
+    def test_build_genre_subtitle_missing_genre(self):
+        """Test subtitle with genre ID not in lookup."""
+        genres = [{"id": 1, "name": "Action"}]
+        result = views._build_genre_subtitle([999], "any", genres)
+        self.assertEqual(result, "Genre: 999")

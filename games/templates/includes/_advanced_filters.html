@@ -3,18 +3,21 @@
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
 {% load humanize %}
-{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "rank_display": "filtered", "sort": "rank"}</script>{% endif %}
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "series": [], "rank_display": "filtered", "sort": "rank"}</script>{% endif %}
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
+{% if series_list %}{{ series_list|json_script:"series-data" }}{% else %}<script id="series-data" type="application/json">[]</script>{% endif %}
 <div x-data="{
         filters: JSON.parse(document.getElementById('filters-data').textContent),
         genres: JSON.parse(document.getElementById('genres-data').textContent),
         platforms: JSON.parse(document.getElementById('platforms-data').textContent),
+        seriesList: JSON.parse(document.getElementById('series-data').textContent),
         platformGroupCounts: {},  // Populated by client-side filtering
         initialized: false,
         isLoading: false,
         genresExpanded: localStorage.getItem('genresExpanded') === 'true',
         platformsExpanded: localStorage.getItem('platformsExpanded') === 'true',
+        seriesExpanded: localStorage.getItem('seriesExpanded') === 'true',
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
@@ -80,6 +83,8 @@
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
                 const platformsParam = params.get('platforms');
                 this.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
+                const seriesParam = params.get('series');
+                this.filters.series = seriesParam ? seriesParam.split(',').filter(id => id) : [];
                 // Use client-side filtering if ready, otherwise show loading state
                 if (this.clientFilterReady) {
                     this.performClientUpdate();
@@ -116,6 +121,7 @@
             return this.filters.q ||
                    this.filters.genres.length > 0 ||
                    this.filters.platforms.length > 0 ||
+                   (this.filters.series && this.filters.series.length > 0) ||
                    this.filters.start !== {{ min_year }} ||
                    this.filters.end !== {{ max_year }} ||
                    this.filters.sort !== 'rank';
@@ -164,6 +170,7 @@
             const timeWindow = this._buildTimeWindow();
             const platformLabel = this._buildPlatformSegment();
             let genreLabel = '';
+            let seriesLabel = '';
 
             // If exactly one genre is selected, fold it into the title
             if (this.filters.genres && this.filters.genres.length === 1) {
@@ -173,15 +180,31 @@
                 }
             }
 
+            // If exactly one series is selected, use it as the primary label
+            if (this.filters.series && this.filters.series.length === 1) {
+                const series = this.seriesList.find(s => String(s.id) === String(this.filters.series[0]));
+                if (series) {
+                    seriesLabel = series.name;
+                }
+            }
+
             const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
             let platform = platformLabel;
 
-            // Omit 'Video' prefix when genre is selected
-            if (genreLabel && platform === 'Video') {
+            // Omit 'Video' prefix when genre or series is selected
+            if ((genreLabel || seriesLabel) && platform === 'Video') {
                 platform = '';
             }
 
-            return 'Most Acclaimed ' + platform + genreLabel + ' Games' + timeSuffix;
+            // Build combined title: 'Most Acclaimed [Platform] [Genre] [Series] Games of [time]'
+            // Platform comes first if present, then genre, then series
+            let titleParts = 'Most Acclaimed';
+            if (platform) titleParts += ' ' + platform;
+            if (genreLabel) titleParts += genreLabel;  // genreLabel already has leading space
+            if (seriesLabel) titleParts += ' ' + seriesLabel;
+            titleParts += ' Games' + timeSuffix;
+
+            return titleParts;
         },
         _buildTimeWindow() {
             const start = this.filters.start;
@@ -210,6 +233,8 @@
                 this.filters.genres = itemIds;
             } else if (type === 'platforms') {
                 this.filters.platforms = itemIds;
+            } else if (type === 'series') {
+                this.filters.series = itemIds;
             }
             if (this.initialized) {
                 this.debouncedFilterUpdate();
@@ -238,12 +263,19 @@
             this.$dispatch('genres-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
+        resetSeries() {
+            this.filters.series = [];
+            // Dispatch event to update the series filter component
+            this.$dispatch('series-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
         resetAllFilters() {
             this.filters.q = '';
             this.filters.start = {{ min_year }};
             this.filters.end = {{ max_year }};
             this.filters.genres = [];
             this.filters.platforms = [];
+            this.filters.series = [];
             this.filters.sort = 'rank';
             // Dispatch reset events to update filter UI components AND reset expanded states
             // These events trigger handleReset() in each component which:
@@ -252,6 +284,7 @@
             // - Year: clears lastClicked for shift+click ranges
             this.$dispatch('platforms-reset');
             this.$dispatch('genres-reset');
+            this.$dispatch('series-reset');
             this.$dispatch('year-reset');
             if (this.initialized) this.debouncedFilterUpdate();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -481,6 +514,11 @@
                     this.platformGroupCounts = state.facets.platformGroups;
                     window.dispatchEvent(new CustomEvent('platform-group-counts-update', { detail: state.facets.platformGroups }));
                 }
+
+                // Series counts
+                if (state.facets.series) {
+                    window.dispatchEvent(new CustomEvent('series-counts-update', { detail: state.facets.series }));
+                }
             }
 
             // Update URL
@@ -517,6 +555,11 @@
             if (result.facets.platformGroups) {
                 this.platformGroupCounts = result.facets.platformGroups;
                 window.dispatchEvent(new CustomEvent('platform-group-counts-update', { detail: result.facets.platformGroups }));
+            }
+
+            // Series counts
+            if (result.facets.series) {
+                window.dispatchEvent(new CustomEvent('series-counts-update', { detail: result.facets.series }));
             }
         },
         _initClientLoadMore(loadMoreContainer, gameListContainer, countContainer) {
@@ -621,6 +664,7 @@
                 const timeWindow = this.buildTimeWindow();
                 const platformLabel = this.buildPlatformSegment();
                 let genreLabel = '';
+                let seriesLabel = '';
 
                 // If exactly one genre is selected, fold it into the title
                 if (filters.genres && filters.genres.length === 1) {
@@ -630,15 +674,34 @@
                     }
                 }
 
+                // If exactly one series is selected, fold it into the title
+                if (filters.series && filters.series.length === 1) {
+                    const seriesDataEl = document.getElementById('series-data');
+                    if (seriesDataEl) {
+                        const seriesList = JSON.parse(seriesDataEl.textContent);
+                        const series = seriesList.find(s => String(s.id) === String(filters.series[0]));
+                        if (series) {
+                            seriesLabel = series.name;
+                        }
+                    }
+                }
+
                 const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
                 let platform = platformLabel;
 
-                // Omit 'Video' prefix when genre is selected
-                if (genreLabel && platform === 'Video') {
+                // Omit 'Video' prefix when genre or series is selected
+                if ((genreLabel || seriesLabel) && platform === 'Video') {
                     platform = '';
                 }
 
-                return 'Most Acclaimed ' + platform + genreLabel + ' Games' + timeSuffix;
+                // Build combined title
+                let titleParts = 'Most Acclaimed';
+                if (platform) titleParts += ' ' + platform;
+                if (genreLabel) titleParts += genreLabel;
+                if (seriesLabel) titleParts += ' ' + seriesLabel;
+                titleParts += ' Games' + timeSuffix;
+
+                return titleParts;
             },
 
             buildTimeWindow() {
@@ -664,7 +727,7 @@
             <button type="button" class="btn btn-primary btn-sm shrink-0" @click="filterOpen = true">
                 <span class="mdi mdi-tune"></span>
                 Filters
-                <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
+                <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || (filters.series && filters.series.length > 0) || filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
                     <span class="badge badge-xs badge-secondary">!</span>
                 </template>
             </button>
@@ -752,7 +815,7 @@
                 <div class="mb-4 pb-3 border-b border-base-300">
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="platformsExpanded = !platformsExpanded; localStorage.setItem('platformsExpanded', platformsExpanded)">
                         <span class="mdi mdi-controller text-xl text-primary"></span>
-                        <span class="font-bold text-base">Platforms</span>
+                        <span class="font-bold text-base">Platform</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="platformsExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetPlatforms()" title="Clear platform filter" x-cloak x-show="filters.platforms.length > 0">
@@ -777,7 +840,7 @@
                 <div :class="genresExpanded ? 'mb-3' : 'mb-1'">
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="genresExpanded = !genresExpanded; localStorage.setItem('genresExpanded', genresExpanded)">
                         <span class="mdi mdi-gamepad-variant text-xl text-primary"></span>
-                        <span class="font-bold text-base">Genres</span>
+                        <span class="font-bold text-base">Genre</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="genresExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetGenres()" title="Clear genre filter" x-cloak x-show="filters.genres.length > 0">
@@ -793,6 +856,30 @@
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                         {% include 'includes/_genre_filter.html' %}
+                    </div>
+                </div>
+                {% endif %}
+                {% if series_list %}
+                {# Series filter - Flat list with search #}
+                <div class="mt-4 pt-3 border-t border-base-300" :class="seriesExpanded ? 'mb-3' : 'mb-1'">
+                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="seriesExpanded = !seriesExpanded; localStorage.setItem('seriesExpanded', seriesExpanded)">
+                        <span class="mdi mdi-mushroom text-xl text-primary"></span>
+                        <span class="font-bold text-base">Series</span>
+                        <span class="mdi text-base-content/60 ml-1"
+                              :class="seriesExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetSeries()" title="Clear series filter" x-cloak x-show="filters.series && filters.series.length > 0">
+                            <span class="mdi mdi-close text-xs"></span>
+                            <span class="text-xs">Clear Series Filter</span>
+                        </button>
+                    </div>
+                    <div x-show="seriesExpanded"
+                         x-cloak
+                         x-collapse
+                         style="display: none;"
+                         data-filter-type="series"
+                         @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
+                         @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
+                        {% include 'includes/_series_filter.html' %}
                     </div>
                 </div>
                 {% endif %}

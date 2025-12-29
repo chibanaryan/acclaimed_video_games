@@ -30,10 +30,10 @@
     </script>
     {% if enable_client_filtering %}
     {# Client-side filtering scripts - loaded for fast subsequent filtering #}
-    <script src="{% static 'games/js/client-filter.js' %}" defer nonce="{{ csp_nonce }}"></script>
-    <script src="{% static 'games/js/game-cache.js' %}" defer nonce="{{ csp_nonce }}"></script>
-    <script src="{% static 'games/js/game-list-renderer.js' %}" defer nonce="{{ csp_nonce }}"></script>
-    <script src="{% static 'games/js/client-filtering.js' %}" defer nonce="{{ csp_nonce }}"></script>
+    <script src="{% static 'games/js/client-filter.min.js' %}" defer nonce="{{ csp_nonce }}"></script>
+    <script src="{% static 'games/js/game-cache.min.js' %}" defer nonce="{{ csp_nonce }}"></script>
+    <script src="{% static 'games/js/game-list-renderer.min.js' %}" defer nonce="{{ csp_nonce }}"></script>
+    <script src="{% static 'games/js/client-filtering.min.js' %}" defer nonce="{{ csp_nonce }}"></script>
     {% endif %}
 {% endblock %}
 

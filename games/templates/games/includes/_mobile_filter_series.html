@@ -1,0 +1,156 @@
+{# Mobile Series Filter - Flat list with search #}
+{# Assumes parent has filters.series (array) and seriesList from main Alpine.js state #}
+{% load static %}
+
+<div x-data="{
+        expanded: false,
+        searchQuery: '',
+        maxDisplayed: 25,
+
+        init() {
+            // Ensure filters.series exists
+            if (!filters.series) filters.series = [];
+
+            // Listen for series count updates from client-side filtering
+            window.addEventListener('series-counts-update', (event) => {
+                this.updateFilteredCounts(event.detail);
+            });
+        },
+
+        // Update filtered counts on the seriesList array
+        updateFilteredCounts(countMap) {
+            if (!seriesList) return;
+            seriesList.forEach(s => {
+                s.filtered_count = countMap[String(s.id)] || 0;
+            });
+        },
+
+        // Get effective count for display and sorting
+        getEffectiveCount(series) {
+            return series.filtered_count !== undefined ? series.filtered_count : series.game_count;
+        },
+
+        // Get filtered series based on search query
+        get filteredSeries() {
+            let list = [...(seriesList || [])];
+
+            // Filter by search query
+            if (this.searchQuery) {
+                const query = this.searchQuery.toLowerCase();
+                list = list.filter(s => s.name.toLowerCase().includes(query));
+            }
+
+            // Sort by effective count descending, then name
+            list.sort((a, b) => {
+                const countDiff = this.getEffectiveCount(b) - this.getEffectiveCount(a);
+                if (countDiff !== 0) return countDiff;
+                return a.name.localeCompare(b.name);
+            });
+
+            // Limit to maxDisplayed when not searching
+            if (!this.searchQuery) {
+                list = list.slice(0, this.maxDisplayed);
+            }
+
+            return list;
+        },
+
+        get hasMoreSeries() {
+            return !this.searchQuery && (seriesList || []).length > this.maxDisplayed;
+        },
+
+        isSeriesSelected(seriesId) {
+            return (filters.series || []).includes(String(seriesId));
+        },
+
+        toggleSeries(seriesId) {
+            const id = String(seriesId);
+            if (!filters.series) filters.series = [];
+            // Single-select: toggle off if already selected, otherwise select only this one
+            if (filters.series.includes(id)) {
+                filters.series = [];  // Deselect
+            } else {
+                filters.series = [id];  // Replace with single selection
+            }
+        },
+
+        isSeriesActive() {
+            return (filters.series || []).length > 0;
+        },
+
+        clearSeries() {
+            filters.series = [];
+            this.searchQuery = '';
+        }
+     }"
+     @series-reset.window="clearSeries();"
+     class="space-y-3"
+     x-show="seriesList && seriesList.length > 0">
+
+    {# Accordion Header #}
+    <div class="flex items-center w-full text-base font-semibold">
+        <button type="button"
+                @click="expanded = !expanded"
+                class="flex items-center gap-2">
+            <span class="mdi mdi-mushroom text-lg text-base-content/60"></span>
+            Series
+            <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
+        </button>
+        <div class="flex-1"></div>
+        <button type="button"
+                x-show="isSeriesActive()"
+                x-cloak
+                @click.stop="clearSeries(); debouncedFilterUpdate();"
+                class="btn btn-ghost btn-xs ml-2">
+            <span class="mdi mdi-close text-xs"></span>
+            Clear
+        </button>
+    </div>
+
+    {# Accordion Content #}
+    <div x-show="expanded"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 -translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="space-y-2">
+
+        {# Search input #}
+        <div class="relative">
+            <span class="mdi mdi-magnify absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 z-10 pointer-events-none"></span>
+            <input type="text"
+                   x-model="searchQuery"
+                   placeholder="Search series..."
+                   class="input input-bordered w-full pl-9 bg-base-200">
+        </div>
+
+        {# Series List #}
+        <div class="space-y-1">
+            <template x-for="series in filteredSeries" :key="series.id">
+                <div class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors"
+                     :class="{
+                         'bg-primary text-primary-content': isSeriesSelected(series.id),
+                         'hover:bg-base-300/50': !isSeriesSelected(series.id)
+                     }"
+                     @click="toggleSeries(series.id); debouncedFilterUpdate();">
+                    <span class="text-sm flex-1 truncate" x-text="series.name"></span>
+                    <span class="text-xs opacity-60 tabular-nums shrink-0" x-text="getEffectiveCount(series)"></span>
+                </div>
+            </template>
+
+            {# Empty state #}
+            <template x-if="filteredSeries.length === 0">
+                <div class="text-center py-4 text-base-content/60 text-sm">
+                    <span x-show="searchQuery">No series matching "<span x-text="searchQuery"></span>"</span>
+                    <span x-show="!searchQuery">No series available</span>
+                </div>
+            </template>
+
+            {# Hint for more series #}
+            <template x-if="hasMoreSeries">
+                <div class="text-center pt-2 text-base-content/50 text-xs">
+                    Search to find more series...
+                </div>
+            </template>
+        </div>
+    </div>
+</div>

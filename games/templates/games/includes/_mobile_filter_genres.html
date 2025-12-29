@@ -32,10 +32,13 @@
             });
         },
 
-        // Get total game count for a category (sum of all children's effective counts)
+        // Get total game count for a category (category's own count + sum of all children's effective counts)
         getCategoryTotalGameCount(categoryId) {
+            const category = genres.find(g => String(g.id) === String(categoryId));
+            const categoryCount = category ? this.getEffectiveCount(category) : 0;
             const children = genres.filter(g => String(g.parent_id) === String(categoryId));
-            return children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+            const childrenCount = children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+            return categoryCount + childrenCount;
         },
 
         // Get child genres for a parent, sorted by effective count (descending)
@@ -46,10 +49,13 @@
             });
         },
 
-        // Get total filtered count for a category (sum of all children's effective count)
+        // Get total filtered count for a category (category's own count + sum of all children's effective count)
         getCategoryTotalCount(categoryId) {
+            const category = genres.find(g => String(g.id) === String(categoryId));
+            const categoryCount = category ? this.getEffectiveCount(category) : 0;
             const children = this.getChildren(categoryId);
-            return children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+            const childrenCount = children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+            return categoryCount + childrenCount;
         },
 
         // Category icons mapping
@@ -145,7 +151,7 @@
                 @click="expanded = !expanded"
                 class="flex items-center gap-2">
             <span class="mdi mdi-gamepad-variant text-lg text-base-content/60"></span>
-            Genres
+            Genre
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
         <template x-if="selectedCount() > 0">

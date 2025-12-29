@@ -878,3 +878,67 @@ class WikipediaGameDataTests(TestCase):
         """Test wikipedia_url property returns None when no page title."""
         self.wiki_data.page_title = ""
         self.assertIsNone(self.wiki_data.wikipedia_url)
+
+
+class SeriesModelTests(TestCase):
+    """Tests for the Series model."""
+
+    def test_str(self):
+        """Test __str__ returns the series name."""
+        series = models.Series.objects.create(
+            name="Super Mario",
+            slug="super-mario",
+            igdb_id=12345,
+        )
+        self.assertEqual(str(series), "Super Mario")
+
+    def test_series_game_relationship(self):
+        """Test that games can be linked to series."""
+        series = models.Series.objects.create(
+            name="The Legend of Zelda",
+            slug="the-legend-of-zelda",
+            igdb_id=11111,
+        )
+        game = models.Game.objects.create(
+            name="Zelda Game",
+            rank=1,
+            igdb_id=999,
+            year_of_release=1990,
+        )
+        game.series.add(series)
+        self.assertIn(series, game.series.all())
+        self.assertIn(game, series.games.all())
+
+    def test_get_igdb_data_creates_series(self):
+        """Test that get_igdb_data creates Series from IGDB collections."""
+        game = models.Game.objects.create(
+            name="Mario Kart 8", rank=1, igdb_id=555, year_of_release=2014
+        )
+
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": "mario-kart-8",
+            "url": "https://example.com/mk8",
+            "cover": "cover_hash",
+            "storyline": "",
+            "summary": "",
+            "genres": [],
+            "studios": [],
+            "series": [
+                {"id": 101, "name": "Mario Kart", "slug": "mario-kart"},
+                {"id": 102, "name": "Mario", "slug": "mario"},
+            ],
+        }
+
+        game.get_igdb_data(api_client=fake_api)
+
+        # Verify series were created and linked
+        self.assertEqual(game.series.count(), 2)
+        series_names = list(game.series.values_list("name", flat=True))
+        self.assertIn("Mario Kart", series_names)
+        self.assertIn("Mario", series_names)
+
+        # Verify Series objects exist with correct IGDB IDs
+        mario_kart = models.Series.objects.get(name="Mario Kart")
+        self.assertEqual(mario_kart.igdb_id, 101)
+        self.assertEqual(mario_kart.slug, "mario-kart")

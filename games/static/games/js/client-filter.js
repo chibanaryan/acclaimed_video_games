@@ -156,6 +156,7 @@ class GameFilterEngine {
      * @param {Array<number>} [filters.genres] - Genre IDs to filter by
      * @param {string} [filters.genreOption] - 'any' or 'all' matching
      * @param {Array<number>} [filters.platforms] - Platform IDs to filter by
+     * @param {Array<number>} [filters.series] - Series IDs to filter by
      * @param {number} [filters.start] - Minimum year
      * @param {number} [filters.end] - Maximum year
      * @param {string} [filters.sort] - Sort order: 'rank', 'year', 'name'
@@ -167,6 +168,7 @@ class GameFilterEngine {
             genres = [],
             genreOption = 'any',
             platforms = [],
+            series = [],
             start = null,
             end = null,
             sort = 'rank'
@@ -176,6 +178,8 @@ class GameFilterEngine {
         const genreIds = genres.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const platformIds = platforms.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const platformSet = new Set(platformIds);
+        const seriesIds = series.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+        const seriesSet = new Set(seriesIds);
         const matchAll = genreOption !== 'any';
 
         // Pre-compute expanded genre sets for each selected genre
@@ -201,6 +205,15 @@ class GameFilterEngine {
             if (platformIds.length > 0) {
                 const hasMatchingPlatform = game.p.some(pid => platformSet.has(pid));
                 if (!hasMatchingPlatform) {
+                    continue;
+                }
+            }
+
+            // Series filter (any match)
+            if (seriesIds.length > 0) {
+                const gameSeries = game.sr || [];
+                const hasMatchingSeries = gameSeries.some(sid => seriesSet.has(sid));
+                if (!hasMatchingSeries) {
                     continue;
                 }
             }
@@ -298,12 +311,14 @@ class GameFilterEngine {
         const genreCounts = new Map();
         const platformCounts = new Map();
         const yearCounts = new Map();
+        const seriesCounts = new Map();
 
         // For genre facets, we need to calculate counts based on filters EXCLUDING genres
         // For platform facets, calculate counts based on filters EXCLUDING platforms
+        // For series facets, calculate counts based on filters EXCLUDING series
         // This is standard faceted search behavior
 
-        const { q, start, end, platforms, genres, genreOption } = currentFilters;
+        const { q, start, end, platforms, genres, genreOption, series } = currentFilters;
         const matchAll = genreOption !== 'any';
 
         // Create base filter functions (without genre/platform)
@@ -323,12 +338,21 @@ class GameFilterEngine {
 
         // Calculate genre facet counts (apply all filters except genre)
         const platformSet = new Set((platforms || []).map(id => parseInt(id, 10)));
+        const seriesIds = (series || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+        const seriesSet = new Set(seriesIds);
+
         for (const game of this.games) {
             if (!passesBaseFilters(game)) continue;
 
             // Apply platform filter
             if (platformSet.size > 0) {
                 if (!game.p.some(pid => platformSet.has(pid))) continue;
+            }
+
+            // Apply series filter
+            if (seriesSet.size > 0) {
+                const gameSeries = game.sr || [];
+                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
             }
 
             // For Match All mode with existing selections, only count genres on matching games
@@ -403,6 +427,12 @@ class GameFilterEngine {
                     }
                     if (!hasAnyMatch) continue;
                 }
+            }
+
+            // Apply series filter
+            if (seriesSet.size > 0) {
+                const gameSeries = game.sr || [];
+                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
             }
 
             // Count platforms for this game and track group membership
@@ -493,9 +523,65 @@ class GameFilterEngine {
                 }
             }
 
+            // Apply series filter
+            if (seriesSet.size > 0) {
+                const gameSeries = game.sr || [];
+                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
+            }
+
             // Count this game's year
             if (game.y !== null) {
                 yearCounts.set(game.y, (yearCounts.get(game.y) || 0) + 1);
+            }
+        }
+
+        // Calculate series facet counts (apply all filters except series)
+        for (const game of this.games) {
+            if (!passesBaseFilters(game)) continue;
+
+            // Apply platform filter
+            if (platformSet.size > 0) {
+                if (!game.p.some(pid => platformSet.has(pid))) continue;
+            }
+
+            // Apply genre filter
+            if (genreIds.length > 0) {
+                const gameGenreSet = new Set(game.g);
+                if (matchAll) {
+                    let matchesAll = true;
+                    for (const expandedSet of expandedGenreSets) {
+                        let hasMatch = false;
+                        for (const gid of gameGenreSet) {
+                            if (expandedSet.has(gid)) {
+                                hasMatch = true;
+                                break;
+                            }
+                        }
+                        if (!hasMatch) {
+                            matchesAll = false;
+                            break;
+                        }
+                    }
+                    if (!matchesAll) continue;
+                } else {
+                    let hasAnyMatch = false;
+                    for (const expandedSet of expandedGenreSets) {
+                        for (const gid of gameGenreSet) {
+                            if (expandedSet.has(gid)) {
+                                hasAnyMatch = true;
+                                break;
+                            }
+                        }
+                        if (hasAnyMatch) break;
+                    }
+                    if (!hasAnyMatch) continue;
+                }
+            }
+
+            // Count series for this game (series filter NOT applied)
+            const gameSeries = game.sr || [];
+            for (const sid of gameSeries) {
+                seriesCounts.set(sid, (seriesCounts.get(sid) || 0) + 1);
             }
         }
 
@@ -503,7 +589,8 @@ class GameFilterEngine {
             genres: Object.fromEntries(genreCounts),
             platforms: Object.fromEntries(platformCounts),
             platformGroups: platformGroupCounts,
-            years: Object.fromEntries(yearCounts)
+            years: Object.fromEntries(yearCounts),
+            series: Object.fromEntries(seriesCounts)
         };
     }
 

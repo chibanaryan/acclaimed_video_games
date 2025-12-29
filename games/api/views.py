@@ -519,6 +519,7 @@ class GameAllDataView(APIView):
                 "studios__company",
                 "platforms",
                 "wikipedia_genres",
+                "series",
             )
             .order_by("rank")
         )
@@ -528,6 +529,7 @@ class GameAllDataView(APIView):
         studios_dict = {}
         companies_dict = {}
         platforms_dict = {}
+        series_dict = {}
 
         for game in games:
             # Collect studio IDs and build studio/company reference data
@@ -559,6 +561,16 @@ class GameAllDataView(APIView):
             # Collect genre IDs
             genre_ids = [g.id for g in game.wikipedia_genres.all()]
 
+            # Collect series IDs and build series reference data
+            series_ids = []
+            for s in game.series.all():
+                series_ids.append(s.id)
+                if s.id not in series_dict:
+                    series_dict[s.id] = {
+                        "n": s.name,
+                        "s": s.slug,
+                    }
+
             # Get artwork ID from primary IGDB data
             artwork_id = None
             if game.primary_igdb_game_data:
@@ -575,6 +587,7 @@ class GameAllDataView(APIView):
                     "st": studio_ids,
                     "p": platform_ids,
                     "g": genre_ids,
+                    "sr": series_ids,
                 }
             )
 
@@ -605,6 +618,7 @@ class GameAllDataView(APIView):
                     "companies": companies_dict,
                     "platforms": platforms_dict,
                     "genres": genres_data,
+                    "series": series_dict,
                 },
             }
         )

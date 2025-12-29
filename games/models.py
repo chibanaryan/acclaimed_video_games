@@ -391,6 +391,27 @@ class WikipediaGenre(models.Model):
         return not self.children.exists()
 
 
+class Series(models.Model):
+    """
+    A video game series from IGDB (called 'Collection' in IGDB API).
+    Examples: 'Mario Kart', 'Paper Mario', 'Final Fantasy VII'
+
+    Games can belong to multiple series (e.g., 'Super Smash Bros Ultimate'
+    belongs to 'Super Smash Bros', 'Mario', 'Zelda', etc.).
+    """
+
+    name = models.CharField(max_length=200, unique=True, db_index=True)
+    slug = models.SlugField(max_length=210, unique=True, db_index=True)
+    igdb_id = models.IntegerField(unique=True, db_index=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "Series"
+
+    def __str__(self):
+        return self.name
+
+
 class IGDBGameData(models.Model):
     """
     Supplemental IGDB game data.
@@ -587,6 +608,7 @@ class GameQuerySet(models.QuerySet):
             "studios__company",
             "platforms",
             "genres",
+            "series",
         ).select_related(
             "primary_igdb_game_data",
             "primary_wikipedia_game_data",
@@ -624,6 +646,12 @@ class Game(models.Model):
         ),
     )
     platforms = models.ManyToManyField("Platform", blank=True, related_name="games")
+    series = models.ManyToManyField(
+        "Series",
+        blank=True,
+        related_name="games",
+        help_text="Game series from IGDB (e.g., 'Mario Kart', 'Final Fantasy VII')",
+    )
     created = models.DateTimeField(
         auto_now_add=True, db_index=True, null=True, blank=True
     )
@@ -890,6 +918,19 @@ class Game(models.Model):
                 genres.append(genre)
             self.genres.set(genres)
 
+            # Update series from IGDB collections
+            series_list = []
+            for s in first_data.get("series", []):
+                series_obj, _ = Series.objects.get_or_create(
+                    igdb_id=s["id"],
+                    defaults={
+                        "name": s["name"],
+                        "slug": s.get("slug") or slugify(s["name"]),
+                    },
+                )
+                series_list.append(series_obj)
+            self.series.set(series_list)
+
         # Save only specific fields to avoid updating modified timestamp
         self.save(update_fields=["slug", "primary_igdb_game_data", "description"])
 
@@ -949,6 +990,19 @@ class Game(models.Model):
             genre, created = IGDBGenre.objects.get_or_create(name=genre_name)
             genres.append(genre)
         self.genres.set(genres)
+
+        # Update series from IGDB collections
+        series_list = []
+        for s in game_data.get("series", []):
+            series_obj, _ = Series.objects.get_or_create(
+                igdb_id=s["id"],
+                defaults={
+                    "name": s["name"],
+                    "slug": s.get("slug") or slugify(s["name"]),
+                },
+            )
+            series_list.append(series_obj)
+        self.series.set(series_list)
 
     def update_igdb_relationships(self, api_client=None) -> bool:
         """

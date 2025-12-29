@@ -194,6 +194,23 @@ def apply_platform_filter(queryset: QuerySet, platform_ids: List[int]) -> QueryS
     return queryset.filter(platforms__in=platform_ids)
 
 
+def apply_series_filter(queryset: QuerySet, series_ids: List[int]) -> QuerySet:
+    """
+    Filter queryset by series (any match).
+
+    Args:
+        queryset: The queryset to filter
+        series_ids: List of series IDs to filter by
+
+    Returns:
+        Filtered queryset with distinct() to avoid duplicates from M2M join
+    """
+    if not series_ids:
+        return queryset
+
+    return queryset.filter(series__in=series_ids).distinct()
+
+
 def get_or_set_cache(
     cache_key: str,
     queryset: QuerySet,

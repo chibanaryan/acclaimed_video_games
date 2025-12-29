@@ -218,6 +218,12 @@ function buildFilterParams(filters, options = {}) {
         ).filter(id => id !== null && id !== undefined);
         if (platformIds.length > 0) params.set('platforms', platformIds.join(','));
     }
+    if (filters.series && filters.series.length) {
+        const seriesIds = filters.series.map(s =>
+            (typeof s === 'object' && s !== null && s.id !== undefined) ? s.id : s
+        ).filter(id => id !== null && id !== undefined);
+        if (seriesIds.length > 0) params.set('series', seriesIds.join(','));
+    }
     if (filters.sort && filters.sort !== 'rank') params.set('sort', filters.sort);
     if (filters.highlight) params.set('highlight', filters.highlight);
 

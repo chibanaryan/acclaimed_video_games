@@ -66,10 +66,13 @@
              });
          },
 
-         // Get total game count for a category (sum of all children's effective counts)
+         // Get total game count for a category (category's own count + sum of all children's effective counts)
          getCategoryTotalGameCount(categoryId) {
+             const category = genres.find(g => String(g.id) === String(categoryId));
+             const categoryCount = category ? this.getEffectiveCount(category) : 0;
              const children = genres.filter(g => String(g.parent_id) === String(categoryId));
-             return children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+             const childrenCount = children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+             return categoryCount + childrenCount;
          },
 
          // Get child genres for a parent, sorted by effective count (descending)
@@ -111,14 +114,21 @@
              return genre.filtered_count !== undefined ? genre.filtered_count : genre.game_count;
          },
 
-         // Get total game count for a category (sum of all children)
+         // Get total game count for a category (category's own count + sum of all children)
          getCategoryTotalCount(categoryId) {
+             const category = genres.find(g => String(g.id) === String(categoryId));
+             const categoryCount = category ? this.getEffectiveCount(category) : 0;
              const children = this.getChildren(categoryId);
-             return children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+             const childrenCount = children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+             return categoryCount + childrenCount;
          },
 
-         // Check if category has any available children (any child with games in current filters)
+         // Check if category has any available games (category itself or any child with games in current filters)
          isCategoryAvailable(categoryId) {
+             // Check if category itself has games
+             const category = genres.find(g => String(g.id) === String(categoryId));
+             if (category && this.getEffectiveCount(category) > 0) return true;
+             // Check if any children have games
              const children = this.getChildren(categoryId);
              return children.some(c => this.isGenreAvailable(c.id));
          },

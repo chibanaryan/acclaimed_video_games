@@ -1,44 +1,33 @@
 {# SearchInput component #}
-{# Props: value (current search value), placeholder (optional), show_submit_button (default: False), id (optional), name (optional) #}
+{# Props: value (current search value), placeholder (optional), id (optional), name (optional) #}
 {# Uses Alpine.js for interactivity - operates within parent Alpine.js scope (expects filters.q) #}
 {# Note: No x-data scope to allow proper binding to parent's filters.q #}
 <div class="w-full">
-    <div class="join w-full">
-        <div class="relative flex-1">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.3-4.3"></path>
-                </g>
-            </svg>
-            <input class="input input-bordered w-full pl-10 bg-base-200 join-item"
-                   {% if id %}id="{{ id }}"{% endif %}
-                   {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}
-                   x-model="filters.q"
-                   @keyup.enter="updateUrlAndResults()"
-                   placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}"
-                   autocomplete="off">
-        </div>
+    <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/60 z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+            </g>
+        </svg>
+        <input class="input input-bordered w-full pl-10 pr-10 bg-base-200"
+               {% if id %}id="{{ id }}"{% endif %}
+               {% if name %}name="{{ name }}"{% else %}name="q"{% endif %}
+               x-model="filters.q"
+               @keyup.enter="updateUrlAndResults()"
+               placeholder="{% if placeholder %}{{ placeholder }}{% else %}Search{% endif %}"
+               autocomplete="off">
         <button @click="filters.q = ''"
-                title="Clear search text"
-                class="btn btn-ghost join-item"
+                title="Clear search"
+                class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-square"
                 x-show="filters.q"
                 x-cloak>
-            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
                     <path d="M18 6 6 18"></path>
                     <path d="m6 6 12 12"></path>
                 </g>
             </svg>
         </button>
-        {% if show_submit_button %}
-        <button @click="filters.q = filters.q"
-                title="Submit search text"
-                class="btn btn-primary join-item"
-                x-show="filters.q"
-                x-cloak>
-            Submit
-        </button>
-        {% endif %}
     </div>
 </div>
