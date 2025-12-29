@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Mobile filter clear buttons: add text labels ("Clear Years", "Clear Platforms", etc.) to match desktop UX
 - Fix mobile filter Range tab: add year_range (1970-present) to context, fix From/To dropdowns not populating
 - Mobile filters: dim zero-count items (opacity-40), simplify decade selection to exact match only
 - Fix mobile filter loading state: dispatch facet counts even when game-list-container not found

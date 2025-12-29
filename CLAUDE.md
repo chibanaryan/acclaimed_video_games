@@ -15,6 +15,7 @@ Use these skills for common workflows:
 - `/wikipedia` - Fetch Wikipedia metadata and genres
 - `/refresh-metadata` - Weekly metadata refresh (IGDB + Wikipedia)
 - `/test` - Run tests with coverage
+- `/icons` - Add Material Design Icons to the site
 
 ## Development Commands
 

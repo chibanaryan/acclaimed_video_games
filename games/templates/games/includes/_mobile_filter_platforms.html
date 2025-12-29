@@ -476,8 +476,9 @@
                 x-show="selectedCount() > 0"
                 x-cloak
                 @click.stop="clearPlatforms(); resetExpanded(); debouncedFilterUpdate();"
-                class="btn btn-ghost btn-xs ml-2">
-            <span class="mdi mdi-close text-sm"></span>
+                class="btn btn-ghost btn-xs ml-2 text-base-content/60 hover:text-error">
+            <span class="mdi mdi-close text-xs"></span>
+            <span class="text-xs">Clear Platforms</span>
         </button>
     </div>
 
