@@ -711,7 +711,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
         platforms = utils.get_or_set_cache(
             "search_platforms_list",
             models.Platform.objects.all(),
-            ["id", "name", "code"],
+            ["id", "name", "code", "year_start", "year_end"],
             order_by="name",
             transform_id=True,
         )

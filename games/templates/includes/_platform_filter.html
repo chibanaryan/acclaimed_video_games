@@ -144,54 +144,6 @@
              }
          },
 
-         // Canonical platform year ranges (historical active years, not derived from game data)
-         platformYearRanges: {
-             // Nintendo
-             NES: { start: 1983, end: 1995 }, FDS: { start: 1986, end: 1993 },
-             SNES: { start: 1990, end: 1999 }, N64: { start: 1996, end: 2002 },
-             GC: { start: 2001, end: 2007 }, Wii: { start: 2006, end: 2013 },
-             WiiU: { start: 2012, end: 2017 }, SW: { start: 2017, end: null },
-             GB: { start: 1989, end: 1999 }, GBC: { start: 1998, end: 2003 },
-             GBA: { start: 2001, end: 2008 }, DS: { start: 2004, end: 2014 },
-             '3DS': { start: 2011, end: 2020 },
-             // PlayStation
-             PS: { start: 1994, end: 2006 }, PS2: { start: 2000, end: 2013 },
-             PS3: { start: 2006, end: 2017 }, PS4: { start: 2013, end: null },
-             PS5: { start: 2020, end: null }, PSVR: { start: 2016, end: 2023 },
-             PSP: { start: 2004, end: 2014 }, PSV: { start: 2011, end: 2019 },
-             // Xbox
-             Xbox: { start: 2001, end: 2009 }, X360: { start: 2005, end: 2016 },
-             XB1: { start: 2013, end: 2020 }, XBXS: { start: 2020, end: null },
-             // Sega
-             SMS: { start: 1985, end: 1996 }, GEN: { start: 1988, end: 1997 },
-             SCD: { start: 1991, end: 1996 }, SAT: { start: 1994, end: 1998 },
-             DC: { start: 1998, end: 2001 }, GG: { start: 1990, end: 1997 },
-             // PC
-             WIN: { start: 1985, end: null }, DOS: { start: 1981, end: 2000 },
-             LIN: { start: 1991, end: null }, MAC: { start: 1984, end: null },
-             // Arcade+
-             ARC: { start: 1972, end: null }, AND: { start: 2008, end: null },
-             iOS: { start: 2007, end: null }, LMD: { start: 1997, end: 2012 },
-             VR: { start: 2016, end: null }, BR: { start: 2004, end: null },
-             // Retro Consoles
-             A26: { start: 1977, end: 1992 }, A52: { start: 1982, end: 1984 },
-             A78: { start: 1986, end: 1992 }, INTV: { start: 1979, end: 1990 },
-             CV: { start: 1982, end: 1985 }, TG16: { start: 1987, end: 1994 },
-             '3DO': { start: 1993, end: 1996 }, NG: { start: 1990, end: 2004 },
-             JAG: { start: 1993, end: 1996 }, LYNX: { start: 1989, end: 1995 },
-             NGP: { start: 1998, end: 2001 }, WS: { start: 1999, end: 2003 },
-             // Microcomputers
-             C64: { start: 1982, end: 1994 }, AMI: { start: 1985, end: 1996 },
-             CD32: { start: 1993, end: 1994 }, MSX: { start: 1983, end: 1995 },
-             CPC: { start: 1984, end: 1990 }, ZXS: { start: 1982, end: 1992 },
-             AST: { start: 1985, end: 1993 }, BBCM: { start: 1981, end: 1994 },
-             PC88: { start: 1981, end: 1991 }, PC98: { start: 1982, end: 2000 },
-             FMT: { start: 1989, end: 1997 }, FM7: { start: 1982, end: 1988 },
-             SX1: { start: 1982, end: 1988 }, T80: { start: 1977, end: 1981 },
-             TCC: { start: 1980, end: 1991 }, VC20: { start: 1980, end: 1985 },
-             A8: { start: 1979, end: 1992 }, A2: { start: 1977, end: 1993 }
-         },
-
          // Get platform object by code
          getPlatformByCode(code) {
              return platforms.find(p => p.code === code);
@@ -205,20 +157,17 @@
 
          // Format platform years only (for display next to name)
          formatPlatformYears(platform) {
-             if (!platform) return '';
-             const range = this.platformYearRanges[platform.code];
-             if (!range) return '';
-             const endYear = range.end ? range.end : 'now';
-             return '(' + range.start + '-' + endYear + ')';
+             if (!platform || !platform.year_start) return '';
+             const endYear = platform.year_end ? platform.year_end : 'now';
+             return '(' + platform.year_start + '-' + endYear + ')';
          },
 
          // Format platform name with year range (for tooltips)
          formatPlatformName(platform) {
              if (!platform) return '';
-             const range = this.platformYearRanges[platform.code];
-             if (!range) return platform.name;
-             const endYear = range.end ? range.end : 'now';
-             return platform.name + ' (' + range.start + '-' + endYear + ')';
+             if (!platform.year_start) return platform.name;
+             const endYear = platform.year_end ? platform.year_end : 'now';
+             return platform.name + ' (' + platform.year_start + '-' + endYear + ')';
          },
 
          // Get sorted manufacturer keys by total game count
@@ -275,11 +224,11 @@
                  .map(code => this.getPlatformByCode(code))
                  .filter(p => p)
                  .sort((a, b) => {
-                     const rangeA = this.platformYearRanges[a.code] || { start: 9999, end: 9999 };
-                     const rangeB = this.platformYearRanges[b.code] || { start: 9999, end: 9999 };
-                     if (rangeA.start !== rangeB.start) return rangeA.start - rangeB.start;
-                     const endA = rangeA.end || 9999;
-                     const endB = rangeB.end || 9999;
+                     const startA = a.year_start || 9999;
+                     const startB = b.year_start || 9999;
+                     if (startA !== startB) return startA - startB;
+                     const endA = a.year_end || 9999;
+                     const endB = b.year_end || 9999;
                      if (endA !== endB) return endA - endB;
                      return a.name.localeCompare(b.name);
                  });
@@ -293,11 +242,11 @@
                  .map(code => this.getPlatformByCode(code))
                  .filter(p => p)
                  .sort((a, b) => {
-                     const rangeA = this.platformYearRanges[a.code] || { start: 9999, end: 9999 };
-                     const rangeB = this.platformYearRanges[b.code] || { start: 9999, end: 9999 };
-                     if (rangeA.start !== rangeB.start) return rangeA.start - rangeB.start;
-                     const endA = rangeA.end || 9999;
-                     const endB = rangeB.end || 9999;
+                     const startA = a.year_start || 9999;
+                     const startB = b.year_start || 9999;
+                     if (startA !== startB) return startA - startB;
+                     const endA = a.year_end || 9999;
+                     const endB = b.year_end || 9999;
                      if (endA !== endB) return endA - endB;
                      return a.name.localeCompare(b.name);
                  });

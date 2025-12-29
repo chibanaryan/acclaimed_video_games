@@ -20,7 +20,9 @@ class SubsidiaryInlineAdmin(admin.TabularInline):
 
 @admin.register(models.Platform)
 class PlatformAdmin(admin.ModelAdmin):
-    list_display = ["name", "code"]
+    list_display = ["name", "code", "year_start", "year_end"]
+    list_editable = ["year_start", "year_end"]
+    ordering = ["name"]
 
 
 @admin.register(models.IGDBGenre)

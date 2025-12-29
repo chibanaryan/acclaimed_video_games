@@ -57,6 +57,16 @@ class Platform(models.Model):
 
     code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100, unique=True)
+    year_start = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Year platform became active",
+    )
+    year_end = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Year platform discontinued (null = still active)",
+    )
 
     class Meta:
         ordering = ["name"]

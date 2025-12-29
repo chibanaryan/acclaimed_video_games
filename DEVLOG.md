@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Platform year ranges: move from hardcoded JS to database fields (year_start, year_end) for admin management
 - Search bar clear buttons: standardize all inputs using DaisyUI label pattern, show X immediately on typing
 - Mobile filter clear buttons: add text labels ("Clear Years", "Clear Platforms", etc.) to match desktop UX
 - Fix mobile filter Range tab: add year_range (1970-present) to context, fix From/To dropdowns not populating

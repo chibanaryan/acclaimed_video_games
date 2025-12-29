@@ -14,7 +14,9 @@ class ImportGamesTests(TestCase):
         success, message = utils.import_games(StringIO(data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Games: 1 created, 0 updated, 1 ranks calculated")
+        self.assertEqual(
+            message, "Games: 1 created, 0 updated, 0 deleted, 1 ranks calculated"
+        )
         game = models.Game.objects.get()
         self.assertEqual(game.name, "First Game")
         self.assertEqual(game.year_of_release, 1990)
@@ -24,7 +26,9 @@ class ImportGamesTests(TestCase):
         success, message = utils.import_games(StringIO(updated_data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Games: 0 created, 1 updated, 1 ranks calculated")
+        self.assertEqual(
+            message, "Games: 0 created, 1 updated, 0 deleted, 1 ranks calculated"
+        )
         game.refresh_from_db()
         self.assertEqual(game.name, "First Game Deluxe")
         self.assertEqual(game.year_of_release, 1991)
@@ -308,7 +312,7 @@ class ImportPlatformsTests(TestCase):
         success, message = utils.import_platforms(StringIO(data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Platforms: 1 created, 0 updated")
+        self.assertEqual(message, "Platforms: 1 created, 0 updated, 0 deleted")
         platform = models.Platform.objects.get()
         self.assertEqual(platform.name, "Personal Computer")
 
@@ -316,7 +320,7 @@ class ImportPlatformsTests(TestCase):
         success, message = utils.import_platforms(StringIO(updated_data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Platforms: 0 created, 1 updated")
+        self.assertEqual(message, "Platforms: 0 created, 1 updated, 0 deleted")
 
     def test_import_platforms_with_progress_callback_line_687(self):
         """Test import_platforms progress callback at line 687 (row % 10 == 0)."""
@@ -372,7 +376,10 @@ class ImportListsTests(TestCase):
         success, message = utils.import_lists(StringIO(data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Lists: 2 created, 0 updated")
+        self.assertEqual(
+            message,
+            "Lists: 2 created, 0 updated, 0 deleted; Publications: 0 orphaned deleted",
+        )
         orders = list(
             models.List.objects.order_by("order").values_list("order", flat=True)
         )

@@ -1087,6 +1087,10 @@ def import_lists(
     Import critic lists from a TSV file with columns:
     publisher, year, type, name, url.
 
+    Uses get_or_create for idempotent imports, and deletes lists
+    not in the import file (stale cleanup). Also deletes publications
+    that have no remaining lists.
+
     Args:
         f: File object to read from
         progress_callback: Optional callback for progress updates
@@ -1096,6 +1100,7 @@ def import_lists(
     updated = 0
     row_number = 0
     total_rows = 0
+    imported_list_ids = set()
 
     # Count total rows first
     current_pos = f.tell()
@@ -1125,6 +1130,7 @@ def import_lists(
                     "type": type[0],
                 },
             )
+            imported_list_ids.add(source_list.id)
 
             if created:
                 count += 1
@@ -1150,10 +1156,34 @@ def import_lists(
                     },
                 )
 
-        if progress_callback:
-            progress_callback("complete", {"count": count, "updated": updated})
+        # Delete lists not in the import file (stale cleanup)
+        stale_lists = models.List.objects.exclude(id__in=imported_list_ids)
+        lists_deleted = stale_lists.count()
+        if lists_deleted > 0:
+            stale_lists.delete()
 
-        return (True, f"Lists: {count} created, {updated} updated")
+        # Delete publications that have no remaining lists
+        orphan_pubs = models.Publication.objects.filter(lists__isnull=True)
+        pubs_deleted = orphan_pubs.count()
+        if pubs_deleted > 0:
+            orphan_pubs.delete()
+
+        if progress_callback:
+            progress_callback(
+                "complete",
+                {
+                    "count": count,
+                    "updated": updated,
+                    "lists_deleted": lists_deleted,
+                    "publications_deleted": pubs_deleted,
+                },
+            )
+
+        return (
+            True,
+            f"Lists: {count} created, {updated} updated, {lists_deleted} deleted; "
+            f"Publications: {pubs_deleted} orphaned deleted",
+        )
 
     except Exception as e:
         if progress_callback:
@@ -1256,6 +1286,10 @@ def import_games(
     Import games from a TSV file with columns:
     rank, name, year, platforms (comma-separated codes), IGDB id, Wikidata id.
 
+    Uses update_or_create for idempotent imports, and deletes games
+    not in the import file (stale cleanup). Orphans metadata before
+    deleting stale games so it can be reconnected on future imports.
+
     Args:
         f: File object to read from
         progress_callback: Optional callback for progress updates
@@ -1270,6 +1304,7 @@ def import_games(
     updated = 0
     row_number = 0
     total_rows = 0
+    imported_igdb_ids = set()
 
     # Count total rows first
     current_pos = f.tell()
@@ -1312,6 +1347,7 @@ def import_games(
                 },
             )
             game.platforms.set(platform_objs)
+            imported_igdb_ids.add(igdb_id)
 
             # Reconnect to existing IGDB/Wikipedia metadata if not already connected
             # This handles both orphaned metadata (game=None) and metadata still
@@ -1398,6 +1434,17 @@ def import_games(
                     },
                 )
 
+        # Delete games not in the import file (stale cleanup)
+        stale_games = models.Game.objects.exclude(igdb_id__in=imported_igdb_ids)
+        deleted_count = stale_games.count()
+        if deleted_count > 0:
+            # Orphan metadata before deleting games so it can be reconnected later
+            models.IGDBGameData.objects.filter(game__in=stale_games).update(game=None)
+            models.WikipediaGameData.objects.filter(game__in=stale_games).update(
+                game=None
+            )
+            stale_games.delete()
+
         # Update year and decade ranks for all games
         games_ranked, years_processed = update_year_decade_ranks()
 
@@ -1407,13 +1454,14 @@ def import_games(
                 {
                     "count": count,
                     "updated": updated,
+                    "deleted": deleted_count,
                     "ranks_updated": games_ranked,
                 },
             )
 
         return (
             True,
-            f"Games: {count} created, {updated} updated, "
+            f"Games: {count} created, {updated} updated, {deleted_count} deleted, "
             f"{games_ranked} ranks calculated",
         )
 
@@ -1429,6 +1477,9 @@ def import_platforms(
     """
     Import platform code/name pairs from a TSV file.
 
+    Uses update_or_create for idempotent imports, and deletes platforms
+    not in the import file (stale cleanup).
+
     Args:
         f: File object to read from
         progress_callback: Optional callback for progress updates
@@ -1438,6 +1489,7 @@ def import_platforms(
     updated = 0
     row_number = 0
     total_rows = 0
+    imported_codes = set()
 
     # Count total rows first
     current_pos = f.tell()
@@ -1454,6 +1506,7 @@ def import_platforms(
             row_number += 1
             code = code.strip()
             name = name.strip()
+            imported_codes.add(code)
 
             platform, created = models.Platform.objects.update_or_create(
                 code=code,
@@ -1486,10 +1539,22 @@ def import_platforms(
                     },
                 )
 
-        if progress_callback:
-            progress_callback("complete", {"count": count, "updated": updated})
+        # Delete platforms not in the import file (stale cleanup)
+        stale_platforms = models.Platform.objects.exclude(code__in=imported_codes)
+        deleted_count = stale_platforms.count()
+        if deleted_count > 0:
+            stale_platforms.delete()
 
-        return (True, f"Platforms: {count} created, {updated} updated")
+        if progress_callback:
+            progress_callback(
+                "complete",
+                {"count": count, "updated": updated, "deleted": deleted_count},
+            )
+
+        return (
+            True,
+            f"Platforms: {count} created, {updated} updated, {deleted_count} deleted",
+        )
 
     except Exception as e:
         if progress_callback:
