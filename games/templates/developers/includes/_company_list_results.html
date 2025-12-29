@@ -20,17 +20,17 @@
                 <td>
                     {% if alias.root_company.slug %}
                         <a href="{% url 'developer-detail' slug=alias.root_company.slug %}#studio-{{ alias.id }}" class="link link-primary">
-                            {{ alias.name }} ({{ alias.root_company.name }})
+                            {{ alias.name }}{% if alias.name != alias.root_company.name %} ({{ alias.root_company.name }}){% endif %}
                         </a>
                     {% elif alias.company.slug %}
                         <a href="{% url 'developer-detail' slug=alias.company.slug %}#studio-{{ alias.id }}" class="link link-primary">
-                            {{ alias.name }} ({{ alias.company.name }})
+                            {{ alias.name }}{% if alias.name != alias.company.name %} ({{ alias.company.name }}){% endif %}
                         </a>
                     {% else %}
                         <span>{{ alias.name }}</span>
                     {% endif %}
                 </td>
-                <td>{{ alias.games_count }}</td>
+                <td>{{ alias.recursive_games_count|default:alias.games_count }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -45,17 +45,19 @@
             <div class="flex-1">
                 {% if alias.root_company.slug %}
                     <a href="{% url 'developer-detail' slug=alias.root_company.slug %}#studio-{{ alias.id }}" class="link link-primary font-bold">
-                        {{ alias.name }} ({{ alias.root_company.name }})
+                        {{ alias.name }}{% if alias.name != alias.root_company.name %} ({{ alias.root_company.name }}){% endif %}
                     </a>
                 {% elif alias.company.slug %}
                     <a href="{% url 'developer-detail' slug=alias.company.slug %}#studio-{{ alias.id }}" class="link link-primary font-bold">
-                        {{ alias.name }} ({{ alias.company.name }})
+                        {{ alias.name }}{% if alias.name != alias.company.name %} ({{ alias.company.name }}){% endif %}
                     </a>
                 {% else %}
                     <span class="font-bold">{{ alias.name }}</span>
                 {% endif %}
             </div>
-            <div class="badge badge-ghost">{{ alias.games_count }} game{{ alias.games_count|pluralize }}</div>
+            {% with count=alias.recursive_games_count|default:alias.games_count %}
+            <div class="badge badge-ghost">{{ count }} game{{ count|pluralize }}</div>
+            {% endwith %}
         </div>
     </div>
     {% endfor %}

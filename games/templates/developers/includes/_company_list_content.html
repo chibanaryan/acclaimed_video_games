@@ -4,8 +4,8 @@
 
 {# Store pagination data in a hidden element for JavaScript access #}
 <div id="pagination-data"
-     data-loaded-count="{% if page_obj %}{{ loaded_count }}{% else %}0{% endif %}"
-     data-total-count="{% if page_obj %}{{ total_count }}{% else %}0{% endif %}"
+     data-loaded-count="{{ loaded_count|default:0 }}"
+     data-total-count="{{ total_count|default:0 }}"
      style="display: none;"></div>
 
 {% include 'developers/includes/_company_list_results.html' %}

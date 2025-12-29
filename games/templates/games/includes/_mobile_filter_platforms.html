@@ -538,35 +538,23 @@
                             <div class="space-y-1">
                                 <template x-for="(ff, ffKey) in platformHierarchy[mfrKey].formFactors" :key="ffKey">
                                     <div class="space-y-1">
-                                        {# Form Factor Header #}
-                                        <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors"
+                                        {# Form Factor Header - always visible, no expand/collapse #}
+                                        <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors cursor-pointer"
                                              :class="{
                                                  'bg-primary text-primary-content': isFormFactorSelected(mfrKey, ffKey),
-                                                 'bg-primary/10 text-primary': !isFormFactorSelected(mfrKey, ffKey) && hasFormFactorSelection(mfrKey, ffKey),
+                                                 'bg-primary/10 text-primary': !isFormFactorSelected(mfrKey, ffKey) && !isManufacturerSelected(mfrKey) && hasFormFactorSelection(mfrKey, ffKey),
                                                  'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey)
-                                             }">
-                                            {# Expand/Collapse Arrow #}
-                                            <button type="button"
-                                                    class="p-0.5 rounded hover:bg-base-300/50"
-                                                    @click.stop="toggleFormFactorExpansion(mfrKey, ffKey)">
-                                                <span class="mdi text-sm transition-transform duration-200"
-                                                      :class="isFormFactorExpanded(mfrKey, ffKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                                            </button>
-                                            {# Form Factor Name - click to toggle selection #}
-                                            <button type="button"
-                                                    class="text-xs font-medium opacity-80 flex-1 text-left"
-                                                    @click="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();"
-                                                    x-text="ff.name"></button>
+                                             }"
+                                             @click="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();">
+                                            {# Form Factor Name #}
+                                            <span class="text-xs font-medium opacity-80 flex-1"
+                                                  x-text="ff.name"></span>
                                             {# Deduplicated form factor count #}
                                             <span class="text-xs opacity-60 tabular-nums" x-text="getFormFactorTotalCount(mfrKey, ffKey)"></span>
                                         </div>
 
-                                        {# Platforms in Form Factor #}
-                                        <div x-show="isFormFactorExpanded(mfrKey, ffKey)"
-                                             x-transition:enter="transition ease-out duration-200"
-                                             x-transition:enter-start="opacity-0 -translate-y-1"
-                                             x-transition:enter-end="opacity-100 translate-y-0"
-                                             class="ml-6 space-y-0.5">
+                                        {# Platforms in Form Factor - always visible when manufacturer is expanded #}
+                                        <div class="ml-6 space-y-0.5">
                                             <template x-for="platform in getFormFactorPlatforms(mfrKey, ffKey)" :key="platform.id">
                                                 <div class="flex items-center gap-2 py-1 px-2 rounded-md cursor-pointer transition-colors"
                                                      :class="{

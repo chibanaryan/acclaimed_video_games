@@ -13,8 +13,8 @@
         platformGroupCounts: {},  // Populated by client-side filtering
         initialized: false,
         isLoading: false,
-        genresExpanded: false,
-        platformsExpanded: false,
+        genresExpanded: localStorage.getItem('genresExpanded') === 'true',
+        platformsExpanded: localStorage.getItem('platformsExpanded') === 'true',
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
@@ -750,7 +750,7 @@
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
                 <div class="mb-4 pb-3 border-b border-base-300">
-                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="platformsExpanded = !platformsExpanded">
+                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="platformsExpanded = !platformsExpanded; localStorage.setItem('platformsExpanded', platformsExpanded)">
                         <span class="mdi mdi-controller text-xl text-primary"></span>
                         <span class="font-bold text-base">Platforms</span>
                         <span class="mdi text-base-content/60 ml-1"
@@ -775,7 +775,7 @@
                 {% if genres %}
                 {# Genres filter - Inventory Grid Style #}
                 <div :class="genresExpanded ? 'mb-3' : 'mb-1'">
-                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="genresExpanded = !genresExpanded">
+                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="genresExpanded = !genresExpanded; localStorage.setItem('genresExpanded', genresExpanded)">
                         <span class="mdi mdi-gamepad-variant text-xl text-primary"></span>
                         <span class="font-bold text-base">Genres</span>
                         <span class="mdi text-base-content/60 ml-1"

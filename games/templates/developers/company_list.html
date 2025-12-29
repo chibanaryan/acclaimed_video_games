@@ -8,7 +8,7 @@
 <div class="max-w-3xl mx-auto">
 <h1 class="text-3xl font-bold mb-4">Developers</h1>
 <h2 id="results-count" class="text-xl text-base-content/85 mb-4">
-    {% if page_obj %}
+    {% if total_count %}
     Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} developer{{ total_count|pluralize }}
     {% else %}
     Showing 0
@@ -16,6 +16,7 @@
 </h2>
 
 <div class="mb-6" x-data="{
+    sort: new URLSearchParams(window.location.search).get('sort') || 'games',
     updateUrl(event) {
         const searchValue = event.target.value;
         const url = new URL(window.location);
@@ -26,6 +27,21 @@
         }
         url.searchParams.delete('page');
         window.history.pushState({}, '', url);
+    },
+    updateSort(newSort) {
+        this.sort = newSort;
+        const url = new URL(window.location);
+        if (newSort !== 'games') {
+            url.searchParams.set('sort', newSort);
+        } else {
+            url.searchParams.delete('sort');
+        }
+        url.searchParams.delete('page');
+        window.history.pushState({}, '', url);
+        // Wait for Alpine to update hx-vals before triggering HTMX
+        this.$nextTick(() => {
+            htmx.trigger(document.getElementById('developer-search'), 'sort-changed');
+        });
     }
 }">
     <div class="relative max-w-lg">
@@ -43,10 +59,30 @@
                value="{{ request.GET.q|default:'' }}"
                hx-get="{% url 'developers-list' %}"
                hx-target="#results-container"
-               hx-trigger="input changed delay:150ms"
+               hx-trigger="input changed delay:150ms, sort-changed"
                hx-swap="innerHTML"
+               :hx-vals="JSON.stringify({sort: sort})"
                x-on:htmx:after-request="updateUrl($event)"
                autocomplete="off">
+    </div>
+
+    {# Sort dropdown #}
+    <div class="flex items-center gap-3 mt-4">
+        <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+            <button type="button"
+                    class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                    @click="sortOpen = !sortOpen">
+                <span class="mdi mdi-sort text-base"></span>
+                <span class="text-sm" x-text="sort === 'games' ? '# Games' : 'Name (A-Z)'"></span>
+                <span class="mdi mdi-chevron-down text-xs"></span>
+            </button>
+            <ul x-show="sortOpen" x-cloak
+                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                @click="sortOpen = false">
+                <li><button type="button" @click="updateSort('games')" :class="sort === 'games' ? 'active' : ''"># Games</button></li>
+                <li><button type="button" @click="updateSort('name')" :class="sort === 'name' ? 'active' : ''">Name (A-Z)</button></li>
+            </ul>
+        </div>
     </div>
 </div>
 

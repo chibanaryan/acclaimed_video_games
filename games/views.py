@@ -926,11 +926,103 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     paginate_orphans = 0
     htmx_partial_template = "developers/includes/_company_list_content.html"
 
+    def _get_studio_hierarchy(self):
+        """
+        Build a map of studio_id -> list of child studio IDs.
+
+        A studio can have children if a Company with the same name exists
+        AND that company is different from the studio's own parent company.
+        (If the matching company is the studio's parent, those are siblings.)
+        """
+        from django.core.cache import cache
+
+        cache_key = "studio_list_hierarchy_map_v2"
+        hierarchy = cache.get(cache_key)
+        if hierarchy is not None:
+            return hierarchy
+
+        hierarchy = {}
+
+        # Get all studios with their parent company IDs
+        studios_with_company = list(
+            models.Studio.objects.values_list("id", "name", "company_id")
+        )
+
+        # Find all companies that share a name with a studio
+        studio_names = set(name for _, name, _ in studios_with_company)
+        matching_companies = models.Company.objects.filter(
+            name__in=studio_names
+        ).prefetch_related("studios")
+
+        # Build name -> company map
+        company_by_name = {c.name: c for c in matching_companies}
+
+        # For each studio, check if there's a DIFFERENT company with the same name
+        for studio_id, studio_name, studio_company_id in studios_with_company:
+            if studio_name in company_by_name:
+                matching_company = company_by_name[studio_name]
+                # Only add children if the matching company is NOT the studio's parent
+                if matching_company.id != studio_company_id:
+                    child_ids = list(
+                        matching_company.studios.values_list("id", flat=True)
+                    )
+                    if child_ids:
+                        hierarchy[studio_id] = child_ids
+
+        cache.set(cache_key, hierarchy, 3600)  # Cache for 1 hour
+        return hierarchy
+
+    def _get_all_descendant_ids(self, studio_id, hierarchy, visited=None):
+        """Recursively get all descendant studio IDs."""
+        if visited is None:
+            visited = set()
+        if studio_id in visited:
+            return set()
+        visited.add(studio_id)
+
+        descendants = set()
+        for child_id in hierarchy.get(studio_id, []):
+            descendants.add(child_id)
+            descendants.update(
+                self._get_all_descendant_ids(child_id, hierarchy, visited)
+            )
+        return descendants
+
+    def _collect_unique_game_ids(
+        self, studio_id, hierarchy, game_ids_by_studio, visited=None
+    ):
+        """Recursively collect unique game IDs for a studio + all descendants."""
+        if visited is None:
+            visited = set()
+        if studio_id in visited:
+            return set()
+        visited.add(studio_id)
+
+        # Start with this studio's games
+        unique_ids = set(game_ids_by_studio.get(studio_id, []))
+
+        # Add games from all child studios
+        for child_id in hierarchy.get(studio_id, []):
+            unique_ids.update(
+                self._collect_unique_game_ids(
+                    child_id, hierarchy, game_ids_by_studio, visited
+                )
+            )
+        return unique_ids
+
     def get_template_names(self):
         # Append mode for Load More - returns just rows
         if self.request.GET.get("append") == "true":
             return ["developers/includes/_company_list_append.html"]
         return super().get_template_names()
+
+    def get_paginate_by(self, queryset):
+        # Disable Django's pagination when sorting by games (the default)
+        # We'll handle pagination manually after calculating recursive counts
+        sort = self.request.GET.get("sort", "games")
+        if sort == "games":
+            return None
+        return self.paginate_by
 
     def get_queryset(self):
         qs = (
@@ -939,7 +1031,6 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             )
             .filter(games_count__gt=0)  # Only show studios with games
             .select_related("company")
-            .order_by(Lower("name"))
             .distinct()
         )
 
@@ -948,23 +1039,86 @@ class StudioListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         if q:
             qs = qs.filter(name__icontains=q)
 
+        # Sort parameter - "games" sort (default) is handled in get_context_data
+        # because it requires recursive counting
+        sort = self.request.GET.get("sort", "games")
+        if sort != "games":
+            qs = qs.order_by(Lower("name"))
+
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        sort = self.request.GET.get("sort", "games")
+        context["sort"] = sort
 
-        # Load More context
-        page_obj = context.get("page_obj")
-        if page_obj:
-            context["has_more"] = page_obj.has_next()
-            context["next_page"] = (
-                page_obj.next_page_number() if page_obj.has_next() else None
+        # Get the studios (full list when sorting by games, paginated otherwise)
+        studios = list(context.get("developers", []))
+
+        # Build hierarchy map and calculate recursive counts for all studios
+        hierarchy = self._get_studio_hierarchy()
+
+        # Collect all studio IDs we need game IDs for
+        all_studio_ids = set(s.id for s in studios)
+        for studio in studios:
+            all_studio_ids.update(self._get_all_descendant_ids(studio.id, hierarchy))
+
+        # Batch fetch game IDs for all relevant studios
+        from collections import defaultdict
+
+        game_ids_by_studio = defaultdict(list)
+        for studio_id, game_id in models.Studio.objects.filter(
+            id__in=all_studio_ids
+        ).values_list("id", "games__id"):
+            if game_id is not None:
+                game_ids_by_studio[studio_id].append(game_id)
+
+        # Calculate recursive counts using unique game IDs
+        for studio in studios:
+            unique_game_ids = self._collect_unique_game_ids(
+                studio.id, hierarchy, game_ids_by_studio
             )
-            context["total_count"] = page_obj.paginator.count
-            context["loaded_count"] = page_obj.end_index()
-            context["remaining_count"] = max(
-                0, page_obj.paginator.count - page_obj.end_index()
-            )
+            studio.recursive_games_count = len(unique_game_ids)
+
+        # Handle pagination and sorting
+        if sort == "games":
+            # Sort by recursive game count (desc), then by name (asc) for ties
+            studios.sort(key=lambda s: (-s.recursive_games_count, s.name.lower()))
+
+            # Manual pagination
+            try:
+                page = int(self.request.GET.get("page", 1))
+                if page < 1:
+                    page = 1
+            except (ValueError, TypeError):
+                page = 1
+            per_page = self.paginate_by
+            total_count = len(studios)
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+
+            # Slice for current page
+            context["developers"] = studios[start_idx:end_idx]
+
+            # Build pagination context
+            context["has_more"] = end_idx < total_count
+            context["next_page"] = page + 1 if end_idx < total_count else None
+            context["total_count"] = total_count
+            context["loaded_count"] = min(end_idx, total_count)
+            context["remaining_count"] = max(0, total_count - end_idx)
+        else:
+            # Use Django's built-in pagination
+            page_obj = context.get("page_obj")
+            if page_obj:
+                context["has_more"] = page_obj.has_next()
+                context["next_page"] = (
+                    page_obj.next_page_number() if page_obj.has_next() else None
+                )
+                context["total_count"] = page_obj.paginator.count
+                context["loaded_count"] = page_obj.end_index()
+                context["remaining_count"] = max(
+                    0, page_obj.paginator.count - page_obj.end_index()
+                )
 
         return context
 

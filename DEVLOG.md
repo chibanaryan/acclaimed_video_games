@@ -15,6 +15,7 @@
 - Desktop breakpoint: changed to 1088px (when game list equals filter sidebar width), narrower nav sidebar (192px)
 - Mobile nav: added Devs/Lists/News links (responsive), larger buttons, active page indicator
 - Fix blurry sidebar logo by using high-resolution images (548w/1092w) instead of small variants
+- Developers list: added sort options (# Games default, Name A-Z), recursive game counting, secondary alpha sort for ties
 
 ## 2025-12-27
 
