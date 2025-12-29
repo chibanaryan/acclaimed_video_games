@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Platform filters: add 4 missing platforms (ARCH, E60, HP21, PDP) to Microcomputers, remove phantom NGP/WS from Retro
 - Platform year ranges: move from hardcoded JS to database fields (year_start, year_end) for admin management
 - Search bar clear buttons: standardize all inputs using DaisyUI label pattern, show X immediately on typing
 - Mobile filter clear buttons: add text labels ("Clear Years", "Clear Platforms", etc.) to match desktop UX
