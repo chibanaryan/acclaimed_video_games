@@ -8,6 +8,10 @@
 - Added django-allauth for user authentication (email/username login, social auth providers ready)
 - Add UserProfile model with auto-creation signal for display name and email subscription preferences
 - Add auth modal structure with HTMX-powered multi-step flow (feature-flagged, disabled in production)
+- Auth modal Phase 4: working email login form with allauth LoginForm, HTMX submission, error display
+- Auth modal: login redirects to previous page, logout via POST with immediate redirect
+- Sidebar auth section: shows Sign In button (logged out) or user email + logout (logged in), behind feature flag
+- Added MDI icons: arrow-left, login, logout, account-circle
 
 ## 2025-12-29
 

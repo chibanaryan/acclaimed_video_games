@@ -1545,3 +1545,82 @@ class SitemapViewTest(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn('<?xml version="1.0"', content)
         self.assertIn("http://www.sitemaps.org/schemas/sitemap/0.9", content)
+
+
+class AuthModalViewsTest(TestCase):
+    """Test auth modal views (HTMX partials)."""
+
+    def test_auth_modal_options_returns_200(self):
+        """Test that auth modal options view returns 200."""
+        response = self.client.get(reverse("auth-modal-options"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_auth_modal_options_contains_email_button(self):
+        """Test that auth options contains email sign-in button."""
+        response = self.client.get(reverse("auth-modal-options"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Continue with Email", content)
+
+    def test_auth_modal_login_get_returns_200(self):
+        """Test that login form GET returns 200."""
+        response = self.client.get(reverse("auth-modal-login"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_auth_modal_login_contains_form_fields(self):
+        """Test that login form contains expected fields."""
+        response = self.client.get(reverse("auth-modal-login"))
+        content = response.content.decode("utf-8")
+        self.assertIn('name="login"', content)
+        self.assertIn('name="password"', content)
+        self.assertIn("Sign In", content)
+
+    def test_auth_modal_login_post_invalid_credentials(self):
+        """Test login with invalid credentials shows error."""
+        response = self.client.post(
+            reverse("auth-modal-login"),
+            {"login": "invalid@example.com", "password": "wrongpassword"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # Should show error, not redirect
+        self.assertIn('name="login"', content)
+
+    def test_auth_modal_login_post_valid_credentials(self):
+        """Test login with valid credentials returns HX-Redirect."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+
+        response = self.client.post(
+            reverse("auth-modal-login"),
+            {"login": "test@example.com", "password": "testpass123"},
+        )
+        # Should return HX-Redirect header to redirect after login
+        self.assertIn("HX-Redirect", response)
+
+    def test_auth_modal_login_back_button(self):
+        """Test that login form has back button to options."""
+        response = self.client.get(reverse("auth-modal-login"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Back", content)
+        self.assertIn(reverse("auth-modal-options"), content)
+
+    def test_auth_logout_logs_out_and_redirects(self):
+        """Test that logout view logs out user and redirects."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(reverse("auth-logout"))
+        # Should redirect to home
+        self.assertEqual(response.status_code, 302)
+        # User should be logged out
+        response = self.client.get(reverse("home"))
+        self.assertFalse(response.wsgi_request.user.is_authenticated)

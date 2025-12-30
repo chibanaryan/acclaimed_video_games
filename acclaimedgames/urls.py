@@ -55,6 +55,11 @@ urlpatterns = [
         views.AuthModalLoginView.as_view(),
         name="auth-modal-login",
     ),
+    path(
+        "auth/logout/",
+        views.AuthLogoutView.as_view(),
+        name="auth-logout",
+    ),
     # Main site routes (Django + HTMX + Alpine.js)
     path("", views.HomePageView.as_view(), name="home"),
     path(

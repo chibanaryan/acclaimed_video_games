@@ -1,14 +1,105 @@
-{# Email login form - placeholder for Phase 4 #}
-<h3 class="text-lg font-bold mb-4">Sign in with Email</h3>
+{# Email login form for auth modal #}
 
-<p class="text-base-content/70 mb-4">
-    Email authentication coming soon.
-</p>
-
+{# Back button #}
 <button type="button"
-        class="btn btn-ghost btn-sm"
+        class="btn btn-ghost btn-sm gap-1 mb-4"
         hx-get="{% url 'auth-modal-options' %}"
         hx-target="#auth-modal-content"
         hx-swap="innerHTML">
-    &larr; Back
+    <span class="mdi mdi-arrow-left"></span>
+    Back
 </button>
+
+<h3 class="text-lg font-bold mb-6">Sign In with Email</h3>
+
+{# Non-field errors (invalid credentials, etc.) #}
+{% if form.non_field_errors %}
+<div class="alert alert-error mb-4">
+    <span class="mdi mdi-alert-circle"></span>
+    <div>
+        {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<form hx-post="{% url 'auth-modal-login' %}"
+      hx-target="#auth-modal-content"
+      hx-swap="innerHTML"
+      class="flex flex-col gap-4">
+    {% csrf_token %}
+
+    {# Email/Login field #}
+    <div class="form-control">
+        <label class="label" for="id_login">
+            <span class="label-text">{{ form.login.label }}</span>
+        </label>
+        <input type="email"
+               name="login"
+               id="id_login"
+               class="input input-bordered w-full {% if form.login.errors %}input-error{% endif %}"
+               placeholder="you@example.com"
+               value="{{ form.login.value|default:'' }}"
+               autocomplete="email"
+               required>
+        {% if form.login.errors %}
+        <label class="label">
+            <span class="label-text-alt text-error">{{ form.login.errors.0 }}</span>
+        </label>
+        {% endif %}
+    </div>
+
+    {# Password field #}
+    <div class="form-control">
+        <label class="label" for="id_password">
+            <span class="label-text">{{ form.password.label }}</span>
+        </label>
+        <input type="password"
+               name="password"
+               id="id_password"
+               class="input input-bordered w-full {% if form.password.errors %}input-error{% endif %}"
+               placeholder="Enter your password"
+               autocomplete="current-password"
+               required>
+        {% if form.password.errors %}
+        <label class="label">
+            <span class="label-text-alt text-error">{{ form.password.errors.0 }}</span>
+        </label>
+        {% endif %}
+    </div>
+
+    {# Remember me & Forgot password #}
+    <div class="flex items-center justify-between">
+        {% if form.remember %}
+        <label class="label cursor-pointer gap-2">
+            <input type="checkbox"
+                   name="remember"
+                   class="checkbox checkbox-sm"
+                   {% if form.remember.value %}checked{% endif %}>
+            <span class="label-text">{{ form.remember.label }}</span>
+        </label>
+        {% else %}
+        <div></div>
+        {% endif %}
+        <a href="{% url 'account_reset_password' %}"
+           class="link link-primary text-sm">
+            Forgot password?
+        </a>
+    </div>
+
+    {# Submit button #}
+    <button type="submit" class="btn btn-primary w-full mt-2">
+        <span class="mdi mdi-login"></span>
+        Sign In
+    </button>
+</form>
+
+{# Create account link #}
+<p class="text-center text-sm mt-6">
+    Don't have an account?
+    <a href="{% url 'account_signup' %}"
+       class="link link-primary">
+        Create an Account
+    </a>
+</p>

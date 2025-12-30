@@ -11,6 +11,7 @@ from django.db.models import Count, Min, Max, Prefetch, Q
 from django.db.models.functions import Lower
 from django.forms import Form
 from django.http import HttpResponse, StreamingHttpResponse
+from django.template.response import TemplateResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -1974,7 +1975,51 @@ class AuthModalOptionsView(TemplateView):
     template_name = "auth/partials/_auth_options.html"
 
 
-class AuthModalLoginView(TemplateView):
-    """Render the email login form partial for the auth modal."""
+class AuthModalLoginView(View):
+    """Handle email login form in the auth modal (HTMX partial)."""
 
     template_name = "auth/partials/_login_form.html"
+
+    def get(self, request):
+        from allauth.account.forms import LoginForm
+
+        form = LoginForm(request=request)
+        return TemplateResponse(request, self.template_name, {"form": form})
+
+    def post(self, request):
+        from allauth.account.forms import LoginForm
+        from django.contrib.auth import login
+
+        form = LoginForm(request.POST, request=request)
+        if form.is_valid():
+            # Log the user in directly (allauth's form.login() returns a redirect)
+            login(
+                request,
+                form.user,
+                backend="allauth.account.auth_backends.AuthenticationBackend",
+            )
+            # Redirect to home page (or referer if available)
+            redirect_url = request.META.get("HTTP_REFERER", "/")
+            # Don't redirect back to auth endpoints
+            if "/auth/" in redirect_url or "/accounts/" in redirect_url:
+                redirect_url = "/"
+            response = HttpResponse()
+            response["HX-Redirect"] = redirect_url
+            return response
+
+        # Re-render form with errors
+        return TemplateResponse(request, self.template_name, {"form": form})
+
+
+class AuthLogoutView(View):
+    """Handle logout and redirect back to previous page."""
+
+    def post(self, request):
+        from django.contrib.auth import logout
+
+        logout(request)
+        # Redirect back to referer or home
+        redirect_url = request.META.get("HTTP_REFERER", "/")
+        if "/auth/" in redirect_url or "/accounts/" in redirect_url:
+            redirect_url = "/"
+        return redirect(redirect_url)
