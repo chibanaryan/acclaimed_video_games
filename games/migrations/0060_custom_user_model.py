@@ -15,8 +15,9 @@ class Migration(migrations.Migration):
 
     # Ensure this runs before migrations that reference the User model.
     # This is needed for fresh databases. For existing databases with these
-    # migrations already applied, run on production:
-    #   heroku run python manage.py migrate games 0060 --fake
+    # migrations already applied, we handle this manually:
+    #   1. heroku run python manage.py migrate games 0060 --fake
+    #   2. Then run remaining migrations normally
     run_before = [
         ("account", "0001_initial"),
         ("admin", "0001_initial"),

@@ -139,7 +139,9 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("games", "0060_custom_user_model"),
-        ("games", "0059_alter_game_series_userprofile"),  # Need Subscriber model
+        # Note: 0060 has run_before 0059, so 0059 runs after 0060.
+        # We depend on 0059 for the Subscriber model.
+        ("games", "0059_alter_game_series_userprofile"),
     ]
 
     operations = [
