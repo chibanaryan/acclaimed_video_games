@@ -30,6 +30,8 @@
   --color-warning-content: oklch(17.674% 0.027 79.94);
   --color-error: oklch(80.8% 0.247 28.470);
   --color-error-content: oklch(15.732% 0.03 28.47);
+  /* Heatmap color - darker for light theme */
+  --color-heatmap: oklch(64% 0.14 70);
   --radius-selector: 2rem;
   --radius-field: 1rem;
   --radius-box: 2rem;
@@ -65,6 +67,8 @@
   --color-warning-content: oklch(0% 0 0);
   --color-error: oklch(71.76% 0.221 22.18);
   --color-error-content: oklch(0% 0 0);
+  /* Heatmap color - lighter for dark theme */
+  --color-heatmap: oklch(72% 0.14 70);
   --radius-selector: 2rem;
   --radius-field: 1rem;
   --radius-box: 2rem;
@@ -269,8 +273,8 @@
   .year-grid-cell {
     @apply flex-1 min-w-0 h-7 flex items-center justify-center;
     @apply rounded-sm cursor-pointer relative transition-all duration-150;
-    /* Warm saturated heatmap - uses accent color for visible contrast with primary selection */
-    background-color: color-mix(in oklch, var(--color-accent) var(--heatmap-opacity, 10%), transparent);
+    /* Heat-style heatmap - deep orange-red for warm color gradient */
+    background-color: color-mix(in oklch, var(--color-heatmap) var(--heatmap-opacity, 10%), transparent);
   }
 
   .year-grid-cell:hover {
