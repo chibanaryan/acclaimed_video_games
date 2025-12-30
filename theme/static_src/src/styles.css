@@ -565,9 +565,9 @@
   align-items: center;
 }
 
-/* Desktop hover effects - gradient fades to right */
+/* Desktop hover effects - gradient fades to right, extending to meet filter sidebar */
 .game-row.desktop:hover {
-  background: linear-gradient(to right, color-mix(in oklch, var(--color-primary) 25%, transparent) 65%, transparent 92%);
+  background: linear-gradient(to right, color-mix(in oklch, var(--color-primary) 25%, transparent) 50%, transparent 100%);
   transform: translateY(-1px);
   border-left-color: var(--color-primary);
 }
