@@ -1443,3 +1443,29 @@ class Subscriber(models.Model):
 
             self.unsubscribe_token = secrets.token_urlsafe(32)
         super().save(*args, **kwargs)
+
+
+class UserProfile(models.Model):
+    """Extended user profile with preferences."""
+
+    user = models.OneToOneField(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    display_name = models.CharField(max_length=50, blank=True)
+    email_subscribed = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Profile for {self.user.email}"
+
+    @property
+    def name(self):
+        """Return display name or email prefix."""
+        if self.display_name:
+            return self.display_name
+        if self.user.email:
+            return self.user.email.split("@")[0]
+        return "User"

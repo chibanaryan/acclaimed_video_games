@@ -3,6 +3,7 @@
 ## 2025-12-30
 
 - Added django-allauth for user authentication (email/username login, social auth providers ready)
+- Add UserProfile model with auto-creation signal for display name and email subscription preferences
 
 ## 2025-12-29
 

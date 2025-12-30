@@ -965,9 +965,9 @@ class ImportDataTests(TestCase):
         data = {"delete": True}
         success, message = utils.import_data(data)
 
-        # Should have deleted data
+        # Should have deleted data but preserved platforms
         self.assertTrue(success)
-        self.assertEqual(models.Platform.objects.count(), 0)
+        self.assertEqual(models.Platform.objects.count(), 1)  # Platforms are preserved
 
     def test_import_data_legacy_game_import_updates_metadata(self):
         """Test that legacy game import updates SiteMetadata (lines 51-58)."""

@@ -965,11 +965,10 @@ def delete_existing_data() -> Tuple[bool, str]:
     """
     Delete all game-related data from the database.
 
-    Preserves IGDBGameData, WikipediaGameData, Developer, and Genre
+    Preserves IGDBGameData, WikipediaGameData, Developer, Genre, and Platform
     for reconnection when games are re-imported.
     """
     models_to_delete = [
-        models.Platform,
         models.List,
         models.Publication,
         models.ListMembership,

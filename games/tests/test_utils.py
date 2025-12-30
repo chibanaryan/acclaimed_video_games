@@ -59,7 +59,8 @@ class ImportHelpersTests(TestCase):
         self.assertTrue(success)
         self.assertIn("objects deleted", message)
         self.assertEqual(models.Game.objects.count(), 0)
-        self.assertEqual(models.Platform.objects.count(), 0)
+        # Platform is preserved for reconnection when games are re-imported
+        self.assertEqual(models.Platform.objects.count(), 1)
 
     def test_import_lists_counts_updates(self):
         pub = models.Publication.objects.create(name="IGN")

@@ -4,12 +4,20 @@ Signals for the games app.
 
 import logging
 
+from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from games.models import Post
+from games.models import Post, UserProfile
 
 logger = logging.getLogger(__name__)
+
+
+@receiver(post_save, sender=get_user_model())
+def create_user_profile(sender, instance, created, **kwargs):
+    """Create a UserProfile whenever a new User is created."""
+    if created:
+        UserProfile.objects.create(user=instance)
 
 
 @receiver(pre_save, sender=Post)
