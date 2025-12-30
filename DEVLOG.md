@@ -2,6 +2,9 @@
 
 ## 2025-12-30
 
+- Jump to Rank: use client-side filtering for instant navigation (no network requests)
+- Jump to Rank: validate against filtered total, show error if rank exceeds list size
+- Jump to Rank: use event delegation for reliable button handling, auto-initialize on script load
 - Added django-allauth for user authentication (email/username login, social auth providers ready)
 - Add UserProfile model with auto-creation signal for display name and email subscription preferences
 - Add auth modal structure with HTMX-powered multi-step flow (feature-flagged, disabled in production)

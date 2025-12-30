@@ -55,36 +55,56 @@ function initLoadMore() {
 }
 
 /**
- * Initializes Jump to Rank functionality for all instances (desktop + mobile)
+ * Track if Jump to Rank has been initialized
+ */
+let jumpToRankInitialized = false;
+
+/**
+ * Initializes Jump to Rank functionality using event delegation
  */
 function initJumpToRank() {
-    const inputs = document.querySelectorAll('.jump-to-rank-input');
-    const buttons = document.querySelectorAll('.jump-to-rank-btn');
+    if (jumpToRankInitialized) return;
 
-    if (!inputs.length || !buttons.length) return;
-
-    // Initialize each input/button pair
-    inputs.forEach((input, index) => {
-        const button = buttons[index];
-        if (!button) return;
-
-        // Clone to remove existing listeners (prevents duplicates after DOM updates)
-        const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
-
-        const newInput = input.cloneNode(true);
-        input.parentNode.replaceChild(newInput, input);
-
-        // Handle button click
-        newButton.addEventListener('click', () => handleJumpToRank(newInput));
-
-        // Handle Enter key in input
-        newInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleJumpToRank(newInput);
+    // Use event delegation on document for robustness
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('.jump-to-rank-btn');
+        if (button) {
+            e.preventDefault();
+            // Find the associated input (sibling or nearby)
+            const container = button.closest('.jump-to-rank-container') ||
+                              button.parentElement;
+            const input = container?.querySelector('.jump-to-rank-input');
+            if (input) {
+                handleJumpToRank(input);
             }
-        });
+        }
     });
+
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && e.target.classList.contains('jump-to-rank-input')) {
+            e.preventDefault();
+            handleJumpToRank(e.target);
+        }
+    });
+
+    jumpToRankInitialized = true;
+    console.log('[JumpToRank] Event delegation initialized');
+}
+
+/**
+ * Get current filters from URL parameters
+ */
+function getFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        q: params.get('q') || '',
+        start: params.get('start') ? parseInt(params.get('start')) : null,
+        end: params.get('end') ? parseInt(params.get('end')) : null,
+        genres: params.get('genres') ? params.get('genres').split(',') : [],
+        platforms: params.get('platforms') ? params.get('platforms').split(',') : [],
+        series: params.get('series') ? params.get('series').split(',') : [],
+        sort: params.get('sort') || 'rank'
+    };
 }
 
 /**
@@ -93,24 +113,141 @@ function initJumpToRank() {
  */
 async function handleJumpToRank(input) {
     const targetRank = parseInt(input.value);
-    const total = parseInt(input.dataset.total);
+    let total = parseInt(input.dataset.total);
     const loaded = parseInt(input.dataset.loaded);
     const perPage = parseInt(input.dataset.perPage);
+
+    // Get actual filtered total from CSF if available
+    if (typeof getClientSideFiltering === 'function') {
+        const csf = getClientSideFiltering();
+        if (csf && csf.isReady()) {
+            const filters = getFiltersFromURL();
+            const result = csf.applyFilters(filters);
+            if (result && result.total) {
+                total = result.total;
+            }
+        }
+    }
+
+    console.log('[JumpToRank] Target:', targetRank, 'Loaded:', loaded, 'Total:', total);
 
     // Validate input
     if (!targetRank || targetRank < 1 || targetRank > total) {
         input.classList.add('input-error');
         setTimeout(() => input.classList.remove('input-error'), 1000);
+        console.log('[JumpToRank] Invalid input - target exceeds total');
         return;
     }
 
     // Check if target is already loaded
     if (targetRank <= loaded) {
+        console.log('[JumpToRank] Already loaded, scrolling');
         scrollToAndHighlightRank(targetRank);
         return;
     }
 
-    // Calculate target page and load pages progressively
+    // Try to use client-side filtering (instant, no network requests)
+    if (typeof getClientSideFiltering === 'function') {
+        const csf = getClientSideFiltering();
+        console.log('[JumpToRank] CSF available:', !!csf, 'Ready:', csf?.isReady?.());
+        if (csf && csf.isReady()) {
+            try {
+                jumpToRankClientSide(csf, targetRank, loaded, perPage);
+                input.value = '';
+                return;
+            } catch (err) {
+                console.error('[JumpToRank] Client-side error:', err);
+                // Fall through to server-side
+            }
+        }
+    }
+
+    // Fallback: fetch from server (parallel loading)
+    console.log('[JumpToRank] Using server-side fallback');
+    await jumpToRankServerSide(targetRank, loaded, perPage);
+    input.value = '';
+}
+
+/**
+ * Jump to rank using client-side rendering (instant, no network)
+ */
+function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
+    const gameListContainer = document.getElementById('game-list-container');
+    const countContainer = document.querySelector('.result-count');
+    const loadMoreContainer = document.querySelector('.load-more-container');
+
+    console.log('[JumpToRank CSF] Container:', !!gameListContainer);
+    if (!gameListContainer) {
+        console.error('[JumpToRank CSF] No game list container found');
+        return;
+    }
+
+    // Get current filters from URL
+    const filters = getFiltersFromURL();
+    console.log('[JumpToRank CSF] Filters:', filters);
+
+    // Get filtered games from engine
+    const result = csf.applyFilters(filters);
+    console.log('[JumpToRank CSF] Filter result:', result?.total, 'games');
+    if (!result || !result.games) {
+        console.error('[JumpToRank CSF] No games returned from filter');
+        return;
+    }
+
+    // Calculate which games to render (from loaded to targetRank)
+    const gamesToRender = result.games.slice(loaded, targetRank);
+    const total = result.total;
+    const newLoaded = Math.min(targetRank, total);
+
+    // Render games directly to container
+    const renderer = csf.renderer;
+    gamesToRender.forEach((game, i) => {
+        const index = loaded + i + 1; // 1-based rank
+        const html = renderer._renderDesktopRow(game, index, 'filtered') +
+                     renderer._renderMobileRow(game, index, 'filtered');
+        gameListContainer.insertAdjacentHTML('beforeend', html);
+    });
+
+    // Update the renderer's state to match
+    renderer.currentGames = result.games;
+    renderer.currentPage = Math.ceil(newLoaded / perPage);
+
+    // Update count display
+    if (countContainer) {
+        countContainer.innerHTML = renderer.getResultSummaryHtml(newLoaded, total);
+    }
+
+    // Update Load More button
+    const hasMore = newLoaded < total && newLoaded < 1000;
+    const remaining = Math.min(total - newLoaded, 1000 - newLoaded);
+    if (loadMoreContainer) {
+        loadMoreContainer.innerHTML = renderer.getLoadMoreHtml({
+            hasMore,
+            remaining,
+            maxLoaded: newLoaded >= 1000
+        });
+        if (hasMore) {
+            csf._initLoadMoreButton(loadMoreContainer, gameListContainer, countContainer);
+        }
+    }
+
+    // Update jump-to-rank inputs
+    document.querySelectorAll('.jump-to-rank-input').forEach(inp => {
+        inp.dataset.loaded = newLoaded;
+    });
+
+    console.log('[JumpToRank CSF] Rendered', gamesToRender.length, 'games, now loaded:', newLoaded);
+
+    // Scroll to and highlight the target rank
+    setTimeout(() => {
+        scrollToAndHighlightRank(targetRank);
+    }, 50);
+}
+
+/**
+ * Jump to rank using server-side fetching (fallback)
+ */
+async function jumpToRankServerSide(targetRank, loaded, perPage) {
     const targetPage = Math.ceil(targetRank / perPage);
     const currentPage = Math.ceil(loaded / perPage);
 
@@ -121,29 +258,41 @@ async function handleJumpToRank(input) {
     allInputs.forEach(inp => { inp.disabled = true; });
 
     try {
-        // Load pages progressively to reach target
+        // Load all pages in parallel for speed
+        const pagesToLoad = [];
         for (let page = currentPage + 1; page <= targetPage; page++) {
-            await loadPage(page);
+            pagesToLoad.push(page);
+        }
+
+        // Fetch all pages concurrently
+        const pageResults = await Promise.all(
+            pagesToLoad.map(page => fetchPage(page))
+        );
+
+        // Append pages in correct order (they may have arrived out of order)
+        pageResults.sort((a, b) => a.page - b.page);
+        for (const result of pageResults) {
+            appendPageResults(result);
         }
 
         // Scroll to and highlight the target rank
         setTimeout(() => {
             scrollToAndHighlightRank(targetRank);
-        }, 300); // Wait for animations to settle
+        }, 100);
     } catch (err) {
         console.error('Jump to rank error:', err);
     } finally {
         allButtons.forEach(btn => { btn.classList.remove('loading'); btn.disabled = false; });
-        allInputs.forEach(inp => { inp.disabled = false; inp.value = ''; });
+        allInputs.forEach(inp => { inp.disabled = false; });
     }
 }
 
 /**
- * Loads a specific page and appends to the list
+ * Fetches a specific page and returns parsed results (without appending to DOM)
  * @param {number} page - The page number to load
- * @returns {Promise<void>}
+ * @returns {Promise<{page: number, rows: NodeList, meta: Object}>}
  */
-async function loadPage(page) {
+async function fetchPage(page) {
     const params = new URLSearchParams(window.location.search);
     params.set('page', page);
     params.set('append', 'true');
@@ -157,7 +306,7 @@ async function loadPage(page) {
         }
     });
 
-    if (!response.ok) throw new Error('Failed to load page');
+    if (!response.ok) throw new Error('Failed to load page ' + page);
 
     const html = await response.text();
     const parser = new DOMParser();
@@ -166,18 +315,29 @@ async function loadPage(page) {
     // Extract metadata
     const metaScript = doc.getElementById('load-more-meta');
     const meta = metaScript ? JSON.parse(metaScript.textContent) : null;
-    if (metaScript) metaScript.remove();
 
-    // Append game rows (without animation for jump)
+    // Get all game rows
+    const rows = doc.querySelectorAll('.game-row');
+
+    return { page, rows, meta };
+}
+
+/**
+ * Appends fetched page results to the DOM
+ * @param {{page: number, rows: NodeList, meta: Object}} result - Fetched page data
+ */
+function appendPageResults(result) {
+    const { rows, meta } = result;
+
+    // Append game rows
     const gameList = document.getElementById('game-list-container');
     if (gameList) {
-        const allRows = doc.querySelectorAll('.game-row');
-        allRows.forEach((row) => {
+        rows.forEach((row) => {
             gameList.appendChild(row);
         });
     }
 
-    // Update metadata
+    // Update metadata (last page's meta will have final counts)
     if (meta) {
         updateResultSummary(meta.loadedCount, meta.totalCount);
 
@@ -188,10 +348,20 @@ async function loadPage(page) {
 
         // Update or remove load more button
         const loadMoreButton = document.querySelector('.load-more-button');
-        if (loadMoreButton && meta) {
+        if (loadMoreButton) {
             updateLoadMoreButton(loadMoreButton, meta);
         }
     }
+}
+
+/**
+ * Loads a specific page and appends to the list (used by Load More button)
+ * @param {number} page - The page number to load
+ * @returns {Promise<void>}
+ */
+async function loadPage(page) {
+    const result = await fetchPage(page);
+    appendPageResults(result);
 }
 
 /**
@@ -362,3 +532,14 @@ function updateLoadMoreButton(button, meta) {
         }
     }
 }
+
+// Auto-initialize when script loads
+(function() {
+    console.log('[LoadMore] Script loaded, initializing...');
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLoadMore);
+    } else {
+        // DOM already loaded
+        initLoadMore();
+    }
+})();
