@@ -16,6 +16,7 @@
 - Subscriber sync: profile checkbox syncs with Subscriber model, new users inherit existing subscription state
 - Auth modal Phase 6: signup form with email/password, HTMX navigation between login/signup forms
 - Custom allauth adapter sets username=email for guaranteed uniqueness and cleaner admin display
+- Auth modal Phase 7: forgot password flow with HTMX, shows success message in modal, reset link via email
 
 ## 2025-12-29
 

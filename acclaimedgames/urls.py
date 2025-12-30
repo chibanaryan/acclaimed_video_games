@@ -66,6 +66,11 @@ urlpatterns = [
         name="auth-modal-profile",
     ),
     path(
+        "auth/modal/forgot-password/",
+        views.AuthModalForgotPasswordView.as_view(),
+        name="auth-modal-forgot-password",
+    ),
+    path(
         "auth/logout/",
         views.AuthLogoutView.as_view(),
         name="auth-logout",

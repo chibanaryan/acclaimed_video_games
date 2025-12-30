@@ -2062,6 +2062,38 @@ class AuthModalSignupView(View):
         return response
 
 
+class AuthModalForgotPasswordView(View):
+    """Handle forgot password form in the auth modal (HTMX partial)."""
+
+    template_name = "auth/partials/_forgot_password_form.html"
+
+    def get(self, request):
+        from allauth.account.forms import ResetPasswordForm
+
+        form = ResetPasswordForm()
+        response = TemplateResponse(request, self.template_name, {"form": form})
+        response["HX-Push-Url"] = "false"
+        return response
+
+    def post(self, request):
+        from allauth.account.forms import ResetPasswordForm
+
+        form = ResetPasswordForm(request.POST)
+        if form.is_valid():
+            form.save(request)
+            # Show success message
+            response = TemplateResponse(
+                request, "auth/partials/_forgot_password_sent.html", {}
+            )
+            response["HX-Push-Url"] = "false"
+            return response
+
+        # Re-render form with errors
+        response = TemplateResponse(request, self.template_name, {"form": form})
+        response["HX-Push-Url"] = "false"
+        return response
+
+
 class AuthModalProfileView(View):
     """Handle profile editing form in the auth modal (HTMX partial)."""
 

@@ -1903,3 +1903,67 @@ class AuthModalViewsTest(TestCase):
 
         # Profile should have email_subscribed=False (unconfirmed subscriber)
         self.assertFalse(user.profile.email_subscribed)
+
+    def test_auth_modal_forgot_password_get_returns_200(self):
+        """Test that forgot password form GET returns 200."""
+        response = self.client.get(reverse("auth-modal-forgot-password"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_auth_modal_forgot_password_contains_form_fields(self):
+        """Test that forgot password form contains expected fields."""
+        response = self.client.get(reverse("auth-modal-forgot-password"))
+        content = response.content.decode("utf-8")
+        self.assertIn('name="email"', content)
+        self.assertIn("Send Reset Link", content)
+        self.assertIn("Reset Password", content)
+
+    def test_auth_modal_forgot_password_back_button(self):
+        """Test that forgot password form has back button to login."""
+        response = self.client.get(reverse("auth-modal-forgot-password"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Back", content)
+        self.assertIn(reverse("auth-modal-login"), content)
+
+    def test_auth_modal_forgot_password_post_invalid_email(self):
+        """Test forgot password with invalid email shows error."""
+        response = self.client.post(
+            reverse("auth-modal-forgot-password"),
+            {"email": "notanemail"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # Should show form again with error
+        self.assertIn('name="email"', content)
+
+    def test_auth_modal_forgot_password_post_valid_email_shows_sent(self):
+        """Test forgot password with valid email shows success message."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+
+        response = self.client.post(
+            reverse("auth-modal-forgot-password"),
+            {"email": "test@example.com"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # Should show success message
+        self.assertIn("Check Your Email", content)
+        self.assertIn("Return to Login", content)
+
+    def test_auth_modal_forgot_password_has_signin_link(self):
+        """Test that forgot password form has link to sign in form."""
+        response = self.client.get(reverse("auth-modal-forgot-password"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Remember your password?", content)
+        self.assertIn(reverse("auth-modal-login"), content)
+
+    def test_auth_modal_login_has_forgot_password_link(self):
+        """Test that login form has HTMX link to forgot password."""
+        response = self.client.get(reverse("auth-modal-login"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Forgot password?", content)
+        self.assertIn(reverse("auth-modal-forgot-password"), content)

@@ -82,10 +82,13 @@
         {% else %}
         <div></div>
         {% endif %}
-        <a href="{% url 'account_reset_password' %}"
-           class="link link-primary text-sm">
+        <button type="button"
+                class="link link-primary text-sm"
+                hx-get="{% url 'auth-modal-forgot-password' %}"
+                hx-target="#auth-modal-content"
+                hx-swap="innerHTML">
             Forgot password?
-        </a>
+        </button>
     </div>
 
     {# Submit button #}
