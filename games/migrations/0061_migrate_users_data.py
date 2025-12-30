@@ -94,6 +94,17 @@ def migrate_users_and_subscribers(apps, schema_editor):
             for (permission_id,) in cursor.fetchall():
                 new_user.user_permissions.add(permission_id)
 
+    # Update the sequence to avoid conflicts when creating new users
+    # This is needed because we inserted users with explicit IDs
+    if old_users and connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT setval('games_user_id_seq',
+                    (SELECT COALESCE(MAX(id), 1) FROM games_user), true)
+            """
+            )
+
     # Step 2: Create User records for remaining subscribers (no account)
     for subscriber in Subscriber.objects.all():
         # Skip if already migrated with a user
