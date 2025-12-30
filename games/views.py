@@ -1961,3 +1961,20 @@ class UnsubscribeView(TemplateView):
             return self.render_to_response({"success": True, "email": subscriber.email})
         except models.Subscriber.DoesNotExist:
             return self.render_to_response({"success": False})
+
+
+# =============================================================================
+# Auth Modal Views (HTMX partials for modal-based authentication)
+# =============================================================================
+
+
+class AuthModalOptionsView(TemplateView):
+    """Render the auth options partial (initial modal screen)."""
+
+    template_name = "auth/partials/_auth_options.html"
+
+
+class AuthModalLoginView(TemplateView):
+    """Render the email login form partial for the auth modal."""
+
+    template_name = "auth/partials/_login_form.html"

@@ -226,6 +226,11 @@
         </form>
     </dialog>
 
+    {# Auth Modal - modal-based authentication flow (feature flagged) #}
+    {% if AUTH_MODAL_ENABLED %}
+    {% include 'includes/_auth_modal.html' %}
+    {% endif %}
+
     <audio id="naviSound" preload="auto">
         <source src="{% static 'audio/navi_fly.mp3' %}" type="audio/mpeg">
     </audio>
@@ -235,6 +240,29 @@
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('contactModal');
             const sound = document.getElementById('naviSound');
+
+            {% if AUTH_MODAL_ENABLED %}
+            // Auth modal trigger
+            const authModal = document.getElementById('authModal');
+            const authModalContent = document.getElementById('auth-modal-content');
+            if (authModal && authModalContent) {
+                document.addEventListener('click', function(e) {
+                    const trigger = e.target.closest('.auth-modal-trigger');
+                    if (trigger) {
+                        e.preventDefault();
+                        // Reset modal content to initial state via HTMX
+                        htmx.ajax('GET', '{% url "auth-modal-options" %}', {target: '#auth-modal-content', swap: 'innerHTML'});
+                        authModal.showModal();
+
+                        // Close mobile menu if open
+                        const mobileMenu = document.querySelector('[x-data]');
+                        if (mobileMenu && mobileMenu.__x) {
+                            mobileMenu.__x.$data.expanded = false;
+                        }
+                    }
+                });
+            }
+            {% endif %}
 
             if (modal) {
                 // Handle contact modal trigger clicks

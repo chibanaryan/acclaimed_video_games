@@ -29,6 +29,9 @@ if SENTRY_DSN and not TEST_MODE:
 
 # Core Django settings
 DEBUG = env("DEBUG", default=False)  # Default to True for development
+
+# Feature flags
+AUTH_MODAL_ENABLED = env.bool("AUTH_MODAL_ENABLED", default=DEBUG)  # Auth modal (WIP)
 SECRET_KEY = env(
     "SECRET_KEY",
     default="django-insecure-dev-key-change-in-production" if DEBUG else None,
@@ -119,6 +122,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "games.context_processors.csp_nonce",  # CSP nonce for templates
+                "games.context_processors.feature_flags",  # Feature flags
             ],
             # In development, don't use cached template loader
             # This ensures template changes are picked up immediately

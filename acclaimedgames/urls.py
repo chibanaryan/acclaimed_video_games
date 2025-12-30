@@ -44,6 +44,17 @@ urlpatterns = [
         name="wikipedia-page-progress",
     ),
     path("accounts/", include("allauth.urls")),
+    # Auth modal partials (HTMX)
+    path(
+        "auth/modal/options/",
+        views.AuthModalOptionsView.as_view(),
+        name="auth-modal-options",
+    ),
+    path(
+        "auth/modal/login/",
+        views.AuthModalLoginView.as_view(),
+        name="auth-modal-login",
+    ),
     # Main site routes (Django + HTMX + Alpine.js)
     path("", views.HomePageView.as_view(), name="home"),
     path(

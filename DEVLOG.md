@@ -4,6 +4,7 @@
 
 - Added django-allauth for user authentication (email/username login, social auth providers ready)
 - Add UserProfile model with auto-creation signal for display name and email subscription preferences
+- Add auth modal structure with HTMX-powered multi-step flow (feature-flagged, disabled in production)
 
 ## 2025-12-29
 
