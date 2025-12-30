@@ -67,6 +67,12 @@ INSTALLED_APPS = [
     "tailwind",
     "theme",
     "games",
+    # django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.facebook",
 ]
 
 # django-tailwind configuration
@@ -82,6 +88,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
@@ -166,6 +173,25 @@ AUTH_PASSWORD_VALIDATORS = [
 # Authentication URLs
 LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "/accounts/login/"
+LOGOUT_REDIRECT_URL = "/"
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# django-allauth configuration
+ACCOUNT_LOGIN_METHODS = {"email", "username"}  # Allow both email and username login
+ACCOUNT_SIGNUP_FIELDS = [
+    "email*",
+    "password1*",
+    "password2*",
+]  # Email required, no username for signup
+ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"
+SOCIALACCOUNT_AUTO_SIGNUP = True
 
 INTERNAL_IPS = [
     "127.0.0.1",

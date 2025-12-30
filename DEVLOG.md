@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2025-12-30
+
+- Added django-allauth for user authentication (email/username login, social auth providers ready)
+
 ## 2025-12-29
 
 - Year grid heatmap: orange color scheme with theme-specific variants, smart corner rounding based on adjacency
