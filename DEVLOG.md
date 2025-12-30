@@ -18,7 +18,7 @@
 - Source Lists: fix table column reflow on Load More, use percentage-based widths with table-fixed, add ellipsis truncation for long names
 - Responsive layout: reduce filter width by 15% (420px→357px), lower breakpoint (1088px→962px) for narrower desktop support
 - Mobile nav: add active state highlighting, cache overflow state in sessionStorage to prevent layout shift
-- Game row: simplify to show year and top 2 platforms only (removed clickable filters and genres)
+- Mobile game row: compact layout with title+year combined, platforms (max 2) • genre (max 1) on single line with +N overflow
 - Contact modal: fix scrollability on small screens with max-height constraint
 - Source lists filters: blur select on change to dismiss mobile dropdown
 - 404 page: handle mobile autoplay blocking gracefully (navigate immediately if audio can't play)

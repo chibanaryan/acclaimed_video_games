@@ -642,3 +642,4 @@ function joinNames(names) {
     if (names.length === 2) return names.join(' and ');
     return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
 }
+
