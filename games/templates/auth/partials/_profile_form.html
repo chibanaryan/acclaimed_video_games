@@ -26,6 +26,17 @@
             {% endif %}
         </div>
 
+        {# Email (read-only) #}
+        <div class="form-control w-full mb-4">
+            <label class="label py-1">
+                <span class="label-text">Email</span>
+            </label>
+            <input type="email"
+                   value="{{ request.user.email }}"
+                   disabled
+                   class="input input-bordered input-sm w-full input-disabled bg-base-200">
+        </div>
+
         {# Email Subscription #}
         <div class="form-control mb-6">
             <label class="label cursor-pointer justify-start gap-3 pb-1">

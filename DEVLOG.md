@@ -17,6 +17,7 @@
 - Auth modal Phase 6: signup form with email/password, HTMX navigation between login/signup forms
 - Custom allauth adapter sets username=email for guaranteed uniqueness and cleaner admin display
 - Auth modal Phase 7: forgot password flow with HTMX, shows success message in modal, reset link via email
+- Auth modal Phase 8: profile form shows read-only email field for user reference
 
 ## 2025-12-29
 
