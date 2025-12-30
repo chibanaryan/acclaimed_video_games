@@ -581,7 +581,7 @@
 
   /* Desktop: Game row - compact by default, expands on hover */
   .game-row.desktop {
-    min-height: 68px;
+    min-height: 58px;
   }
 
   /* Desktop: Rank number scales up on hover */
@@ -591,6 +591,19 @@
 
   .game-row.desktop:hover .game-rank {
     transform: scale(1.4);
+  }
+
+  /* Desktop: Game title - shrinks slightly on hover to make room for properties */
+  .game-row.desktop .game-title {
+    font-size: 1.25rem; /* text-xl */
+    line-height: 1.75rem;
+    transition: font-size 0.2s ease, line-height 0.2s ease, letter-spacing 0.2s ease;
+  }
+
+  .game-row.desktop:hover .game-title {
+    font-size: 1.125rem; /* text-lg (original size) */
+    line-height: 1.5rem;
+    letter-spacing: -0.01em;
   }
 
   /* Desktop: Game cover thumbnails - full aspect ratio, scale on hover */

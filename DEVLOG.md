@@ -2,6 +2,7 @@
 
 ## 2025-12-29
 
+- Game row hover: title shrinks on hover to make room for properties, properties indented under title
 - Game row hover: rank scales up, thumbnail shows full cover art and expands, gradient background fades right, removed borders
 - Platform filters: add 4 missing platforms (ARCH, E60, HP21, PDP) to Microcomputers, remove phantom NGP/WS from Retro
 - Platform year ranges: move from hardcoded JS to database fields (year_start, year_end) for admin management

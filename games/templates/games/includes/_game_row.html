@@ -2,7 +2,7 @@
 {# Props: game, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional game ID) #}
 {% load game_filters %}
 {# Desktop view - 2 column grid #}
-<div class="game-row desktop hidden desktop:grid py-1 px-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr;">
+<div class="game-row desktop hidden desktop:grid py-0.5 px-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr;">
     {# Rank + Thumbnail #}
     <div class="flex items-center gap-3 flex-shrink-0">
         {% if show_rank == 'alltime' or show_rank == 'filtered' %}
@@ -21,7 +21,7 @@
     <div class="flex-1 min-w-0 px-4">
         <div class="flex items-center justify-between gap-4">
             <div class="truncate">
-                <a href="{% url 'game-detail' slug=game.slug %}" class="font-bold text-lg link link-hover">
+                <a href="{% url 'game-detail' slug=game.slug %}" class="game-title font-bold link link-hover">
                     {{ game.name }}
                 </a>
                 <a href="{% url 'games-list' %}?start={{ game.year_of_release }}&end={{ game.year_of_release }}&highlight={{ game.id }}" class="text-base-content/60 ml-1" data-year="{{ game.year_of_release }}">
@@ -33,7 +33,7 @@
             {% endif %}
         </div>
         {# Hover rows - hidden by default, shown on hover - each item on own row #}
-        <div class="game-row-details text-sm mt-0.5">
+        <div class="game-row-details text-sm ml-4">
             {# Developer #}
             {% with devs=game.developers.all %}
             <div class="truncate"><span class="text-base-content/70">{% if devs|length == 1 %}Developer{% else %}Developers{% endif %}:</span> {% for dev in devs %}{% with root=dev.root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-hover">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}" class="link link-hover">{{ dev.name }}</a>{% else %}{{ dev.name }}{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
