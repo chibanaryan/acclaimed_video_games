@@ -1,0 +1,108 @@
+{# Email signup form for auth modal #}
+
+{# Back button #}
+<button type="button"
+        class="btn btn-ghost btn-sm gap-1 mb-4"
+        hx-get="{% url 'auth-modal-options' %}"
+        hx-target="#auth-modal-content"
+        hx-swap="innerHTML">
+    <span class="mdi mdi-arrow-left"></span>
+    Back
+</button>
+
+<h3 class="text-lg font-bold mb-6">Create an Account</h3>
+
+{# Non-field errors (password mismatch, etc.) #}
+{% if form.non_field_errors %}
+<div class="alert alert-error mb-4">
+    <span class="mdi mdi-alert-circle"></span>
+    <div>
+        {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<form hx-post="{% url 'auth-modal-signup' %}"
+      hx-target="#auth-modal-content"
+      hx-swap="innerHTML"
+      class="flex flex-col gap-4">
+    {% csrf_token %}
+
+    {# Email field #}
+    <div class="form-control">
+        <label class="label" for="id_email">
+            <span class="label-text">Email</span>
+        </label>
+        <input type="email"
+               name="email"
+               id="id_email"
+               class="input input-bordered w-full {% if form.email.errors %}input-error{% endif %}"
+               placeholder="you@example.com"
+               value="{{ form.email.value|default:'' }}"
+               autocomplete="email"
+               required>
+        {% if form.email.errors %}
+        <label class="label">
+            <span class="label-text-alt text-error">{{ form.email.errors.0 }}</span>
+        </label>
+        {% endif %}
+    </div>
+
+    {# Password field #}
+    <div class="form-control">
+        <label class="label" for="id_password1">
+            <span class="label-text">Password</span>
+        </label>
+        <input type="password"
+               name="password1"
+               id="id_password1"
+               class="input input-bordered w-full {% if form.password1.errors %}input-error{% endif %}"
+               placeholder="Create a password"
+               autocomplete="new-password"
+               required>
+        {% if form.password1.errors %}
+        <label class="label">
+            <span class="label-text-alt text-error">{{ form.password1.errors.0 }}</span>
+        </label>
+        {% endif %}
+    </div>
+
+    {# Confirm password field #}
+    <div class="form-control">
+        <label class="label" for="id_password2">
+            <span class="label-text">Confirm Password</span>
+        </label>
+        <input type="password"
+               name="password2"
+               id="id_password2"
+               class="input input-bordered w-full {% if form.password2.errors %}input-error{% endif %}"
+               placeholder="Confirm your password"
+               autocomplete="new-password"
+               required>
+        {% if form.password2.errors %}
+        <label class="label">
+            <span class="label-text-alt text-error">{{ form.password2.errors.0 }}</span>
+        </label>
+        {% endif %}
+    </div>
+
+    {# Submit button #}
+    <button type="submit" class="btn btn-primary w-full mt-2">
+        <span class="mdi mdi-account-plus"></span>
+        Create Account
+    </button>
+</form>
+
+{# Sign in link #}
+<p class="text-center text-sm mt-6">
+    Already have an account?
+    <button type="button"
+            class="link link-primary"
+            hx-get="{% url 'auth-modal-login' %}"
+            hx-target="#auth-modal-content"
+            hx-swap="innerHTML">
+        Sign In
+    </button>
+</p>

@@ -98,8 +98,11 @@
 {# Create account link #}
 <p class="text-center text-sm mt-6">
     Don't have an account?
-    <a href="{% url 'account_signup' %}"
-       class="link link-primary">
+    <button type="button"
+            class="link link-primary"
+            hx-get="{% url 'auth-modal-signup' %}"
+            hx-target="#auth-modal-content"
+            hx-swap="innerHTML">
         Create an Account
-    </a>
+    </button>
 </p>

@@ -1609,6 +1609,110 @@ class AuthModalViewsTest(TestCase):
         self.assertIn("Back", content)
         self.assertIn(reverse("auth-modal-options"), content)
 
+    def test_auth_modal_signup_get_returns_200(self):
+        """Test that signup form GET returns 200."""
+        response = self.client.get(reverse("auth-modal-signup"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_auth_modal_signup_contains_form_fields(self):
+        """Test that signup form contains expected fields."""
+        response = self.client.get(reverse("auth-modal-signup"))
+        content = response.content.decode("utf-8")
+        self.assertIn('name="email"', content)
+        self.assertIn('name="password1"', content)
+        self.assertIn('name="password2"', content)
+        self.assertIn("Create Account", content)
+
+    def test_auth_modal_signup_post_mismatched_passwords(self):
+        """Test signup with mismatched passwords shows error."""
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "new@example.com",
+                "password1": "testpass123",
+                "password2": "differentpass",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # Should show form again with error, not redirect
+        self.assertIn('name="email"', content)
+
+    def test_auth_modal_signup_post_valid_creates_user(self):
+        """Test signup with valid data creates user and returns HX-Redirect."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        self.assertFalse(User.objects.filter(email="newuser@example.com").exists())
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "newuser@example.com",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        # Should return HX-Redirect header to redirect after signup
+        self.assertIn("HX-Redirect", response)
+
+        # User should be created
+        self.assertTrue(User.objects.filter(email="newuser@example.com").exists())
+
+    def test_auth_modal_signup_sets_username_to_email(self):
+        """Test that signup sets username equal to email address."""
+        from django.contrib.auth import get_user_model
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "usernametest@example.com",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertIn("HX-Redirect", response)
+
+        # Username should be the same as email
+        User = get_user_model()
+        user = User.objects.get(email="usernametest@example.com")
+        self.assertEqual(user.username, "usernametest@example.com")
+
+    def test_auth_modal_signup_creates_user_profile(self):
+        """Test that signup creates UserProfile for new user."""
+        from django.contrib.auth import get_user_model
+        from games.models import UserProfile
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "profileuser@example.com",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertIn("HX-Redirect", response)
+
+        # User profile should be auto-created via signal
+        User = get_user_model()
+        user = User.objects.get(email="profileuser@example.com")
+        self.assertTrue(hasattr(user, "profile"))
+        self.assertIsInstance(user.profile, UserProfile)
+
+    def test_auth_modal_signup_back_button(self):
+        """Test that signup form has back button to options."""
+        response = self.client.get(reverse("auth-modal-signup"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Back", content)
+        self.assertIn(reverse("auth-modal-options"), content)
+
+    def test_auth_modal_signup_has_signin_link(self):
+        """Test that signup form has link to sign in form."""
+        response = self.client.get(reverse("auth-modal-signup"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Already have an account?", content)
+        self.assertIn(reverse("auth-modal-login"), content)
+
     def test_auth_logout_logs_out_and_redirects(self):
         """Test that logout view logs out user and redirects."""
         from django.contrib.auth import get_user_model

@@ -2020,6 +2020,48 @@ class AuthModalLoginView(View):
         return response
 
 
+class AuthModalSignupView(View):
+    """Handle email signup form in the auth modal (HTMX partial)."""
+
+    template_name = "auth/partials/_signup_form.html"
+
+    def get(self, request):
+        from allauth.account.forms import SignupForm
+
+        form = SignupForm()
+        response = TemplateResponse(request, self.template_name, {"form": form})
+        response["HX-Push-Url"] = "false"
+        return response
+
+    def post(self, request):
+        from allauth.account.forms import SignupForm
+        from django.contrib.auth import login
+
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            # Save the user (allauth handles password hashing, etc.)
+            user = form.save(request)
+            # Log the user in
+            login(
+                request,
+                user,
+                backend="allauth.account.auth_backends.AuthenticationBackend",
+            )
+            # Redirect to home page (or referer if available)
+            redirect_url = request.META.get("HTTP_REFERER", "/")
+            # Don't redirect back to auth endpoints
+            if "/auth/" in redirect_url or "/accounts/" in redirect_url:
+                redirect_url = "/"
+            response = HttpResponse()
+            response["HX-Redirect"] = redirect_url
+            return response
+
+        # Re-render form with errors
+        response = TemplateResponse(request, self.template_name, {"form": form})
+        response["HX-Push-Url"] = "false"
+        return response
+
+
 class AuthModalProfileView(View):
     """Handle profile editing form in the auth modal (HTMX partial)."""
 

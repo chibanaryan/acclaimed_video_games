@@ -56,6 +56,11 @@ urlpatterns = [
         name="auth-modal-login",
     ),
     path(
+        "auth/modal/signup/",
+        views.AuthModalSignupView.as_view(),
+        name="auth-modal-signup",
+    ),
+    path(
         "auth/modal/profile/",
         views.AuthModalProfileView.as_view(),
         name="auth-modal-profile",
