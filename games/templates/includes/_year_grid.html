@@ -302,6 +302,59 @@
              return decade.cells
                  .filter(c => c && c.year && !c.hidden)
                  .reduce((sum, c) => sum + (c.count || 0), 0);
+         },
+
+         // Get current selection range (handles both dragging and committed selection)
+         getSelectionRange() {
+             if (this.isDragging) {
+                 return {
+                     start: Math.min(this.dragStart, this.dragAnchorEnd, this.dragEnd),
+                     end: Math.max(this.dragStart, this.dragAnchorEnd, this.dragEnd)
+                 };
+             }
+             if (filters.start === {{ min_year }} && filters.end === {{ max_year }}) {
+                 return null;  // No selection when full range
+             }
+             return { start: filters.start, end: filters.end };
+         },
+
+         // Edge detection for rounded corners on selection boundary
+         isLeftEdge(year) {
+             const range = this.getSelectionRange();
+             if (!range) return false;
+             const decadeStart = Math.floor(year / 10) * 10;
+             const isFirstInRow = year === Math.max(range.start, decadeStart);
+             // If decade is selected, first year in row is not a left edge (decade label is)
+             if (isFirstInRow && year % 10 === 0) {
+                 const decadeSelected = this.isDecadeSelected(decadeStart) || this.isDecadeInDragRange(decadeStart);
+                 if (decadeSelected) return false;
+             }
+             return isFirstInRow;
+         },
+
+         isRightEdge(year) {
+             const range = this.getSelectionRange();
+             if (!range) return false;
+             const decadeStart = Math.floor(year / 10) * 10;
+             return year === Math.min(range.end, decadeStart + 9);
+         },
+
+         isTopEdge(year) {
+             const range = this.getSelectionRange();
+             if (!range) return false;
+             const yearDecade = Math.floor(year / 10) * 10;
+             const endDecade = Math.floor(range.end / 10) * 10;
+             // Newer decades are at top, so top edge is the END decade (higher years)
+             return yearDecade === endDecade;
+         },
+
+         isBottomEdge(year) {
+             const range = this.getSelectionRange();
+             if (!range) return false;
+             const yearDecade = Math.floor(year / 10) * 10;
+             const startDecade = Math.floor(range.start / 10) * 10;
+             // Older decades are at bottom, so bottom edge is the START decade (lower years)
+             return yearDecade === startDecade;
          }
      }"
      @mouseleave="cancelDrag()"
@@ -327,6 +380,10 @@
                          :class="{
                              'is-selected': cell && cell.year && isInRange(cell.year),
                              'is-dragging': cell && cell.year && isDragging && isInRange(cell.year),
+                             'is-left-edge': cell && cell.year && isInRange(cell.year) && isLeftEdge(cell.year),
+                             'is-right-edge': cell && cell.year && isInRange(cell.year) && isRightEdge(cell.year),
+                             'is-top-edge': cell && cell.year && isInRange(cell.year) && isTopEdge(cell.year),
+                             'is-bottom-edge': cell && cell.year && isInRange(cell.year) && isBottomEdge(cell.year),
                              'year-grid-cell-empty': !cell,
                              'year-grid-cell-hidden': cell && cell.hidden,
                              'is-unavailable': cell && cell.year && !cell.available && !isInRange(cell.year)

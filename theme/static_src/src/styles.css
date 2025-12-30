@@ -266,7 +266,7 @@
   }
 
   .year-grid-decade.is-selected {
-    @apply bg-primary text-primary-content;
+    @apply bg-primary text-primary-content rounded-sm;
   }
 
   /* Year cell with heatmap background */
@@ -284,6 +284,30 @@
   .year-grid-cell.is-selected,
   .year-grid-cell.is-dragging {
     @apply !bg-primary text-primary-content;
+    /* No rounded corners by default (interior cells) */
+    border-radius: 0;
+  }
+
+  /* Rounded corners on outer edges of selection - each edge contributes its corners */
+  .year-grid-cell.is-selected.is-left-edge,
+  .year-grid-cell.is-dragging.is-left-edge {
+    border-top-left-radius: 0.125rem;
+    border-bottom-left-radius: 0.125rem;
+  }
+  .year-grid-cell.is-selected.is-right-edge,
+  .year-grid-cell.is-dragging.is-right-edge {
+    border-top-right-radius: 0.125rem;
+    border-bottom-right-radius: 0.125rem;
+  }
+  .year-grid-cell.is-selected.is-top-edge,
+  .year-grid-cell.is-dragging.is-top-edge {
+    border-top-left-radius: 0.125rem;
+    border-top-right-radius: 0.125rem;
+  }
+  .year-grid-cell.is-selected.is-bottom-edge,
+  .year-grid-cell.is-dragging.is-bottom-edge {
+    border-bottom-left-radius: 0.125rem;
+    border-bottom-right-radius: 0.125rem;
   }
 
   .year-grid-cell-empty {
