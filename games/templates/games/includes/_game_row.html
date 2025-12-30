@@ -2,11 +2,11 @@
 {# Props: game, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional game ID) #}
 {% load game_filters %}
 {# Desktop view - 2 column grid #}
-<div class="game-row desktop hidden desktop:grid py-1.5 px-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr;">
+<div class="game-row desktop hidden desktop:grid py-1 px-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr;">
     {# Rank + Thumbnail #}
     <div class="flex items-center gap-3 flex-shrink-0">
         {% if show_rank == 'alltime' or show_rank == 'filtered' %}
-        <span class="text-2xl font-bold text-primary w-12 text-center">
+        <span class="game-rank text-2xl font-bold text-primary w-14 text-center">
             {% if show_rank == 'filtered' %}{{ index|default:game.rank }}{% else %}{{ game.rank }}{% endif %}
         </span>
         {% endif %}
@@ -36,18 +36,18 @@
         <div class="game-row-details text-sm mt-0.5">
             {# Developer #}
             {% with devs=game.developers.all %}
-            <div class="text-base-content/70">{% if devs|length == 1 %}Developer{% else %}Developers{% endif %}: {% for dev in devs %}{% with root=dev.root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-hover text-base-content">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}" class="link link-hover text-base-content">{{ dev.name }}</a>{% else %}<span class="text-base-content">{{ dev.name }}</span>{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+            <div><span class="text-base-content/70">{% if devs|length == 1 %}Developer{% else %}Developers{% endif %}:</span> {% for dev in devs %}{% with root=dev.root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-hover">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}" class="link link-hover">{{ dev.name }}</a>{% else %}{{ dev.name }}{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
             {% endwith %}
             {# Platforms #}
             {% with platforms=game.platforms.all|slice:":4" total_platforms=game.platforms.count %}
             {% if platforms %}
-            <div class="flex items-center flex-wrap gap-1 text-base-content/70">{% if total_platforms == 1 %}Platform{% else %}Platforms{% endif %}: {% for platform in platforms %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '{{ platform.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ platform.name }}">{{ platform.code }}</button>{% endfor %}{% if total_platforms > 4 %}<span class="text-xs text-base-content/50 ml-1">+{{ total_platforms|add:"-4" }}</span>{% endif %}</div>
+            <div class="flex items-center flex-wrap gap-1"><span class="text-base-content/70">{% if total_platforms == 1 %}Platform{% else %}Platforms{% endif %}:</span> {% for platform in platforms %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '{{ platform.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ platform.name }}">{{ platform.code }}</button>{% endfor %}{% if total_platforms > 4 %}<span class="text-xs text-base-content/60 ml-1">+{{ total_platforms|add:"-4" }}</span>{% endif %}</div>
             {% endif %}
             {% endwith %}
             {# Genres #}
             {% with genres=game.wikipedia_genres.all|slice:":3" total_genres=game.wikipedia_genres.count %}
             {% if genres %}
-            <div class="flex items-center flex-wrap gap-1 text-base-content/70">{% if total_genres == 1 %}Genre{% else %}Genres{% endif %}: {% for genre in genres %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '{{ genre.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ genre.name }}">{{ genre.name }}</button>{% endfor %}{% if total_genres > 3 %}<span class="text-xs text-base-content/50 ml-1">+{{ total_genres|add:"-3" }}</span>{% endif %}</div>
+            <div class="flex items-center flex-wrap gap-1"><span class="text-base-content/70">{% if total_genres == 1 %}Genre{% else %}Genres{% endif %}:</span> {% for genre in genres %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '{{ genre.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ genre.name }}">{{ genre.name }}</button>{% endfor %}{% if total_genres > 3 %}<span class="text-xs text-base-content/60 ml-1">+{{ total_genres|add:"-3" }}</span>{% endif %}</div>
             {% endif %}
             {% endwith %}
         </div>
