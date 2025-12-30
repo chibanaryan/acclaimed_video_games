@@ -269,6 +269,20 @@
     @apply bg-primary text-primary-content rounded-sm;
   }
 
+  /* Sharp corner classes for decade labels - remove corners when adjacent to other selected cells */
+  .year-grid-decade.is-selected.sharp-top {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+  .year-grid-decade.is-selected.sharp-bottom {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .year-grid-decade.is-selected.sharp-right {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
   /* Year cell with heatmap background */
   .year-grid-cell {
     @apply flex-1 min-w-0 h-7 flex items-center justify-center;
@@ -283,39 +297,33 @@
 
   .year-grid-cell.is-selected,
   .year-grid-cell.is-dragging {
-    @apply !bg-primary text-primary-content;
-    /* No rounded corners by default (interior cells) */
-    border-radius: 0;
+    @apply !bg-primary text-primary-content rounded-sm;
   }
 
-  /* Rounded corners on outer edges of selection - each edge contributes its corners */
-  .year-grid-cell.is-selected.is-left-edge,
-  .year-grid-cell.is-dragging.is-left-edge {
-    border-top-left-radius: 0.125rem;
-    border-bottom-left-radius: 0.125rem;
+  /* Sharp corner classes for year cells - remove corners when adjacent to other selected cells */
+  .year-grid-cell.is-selected.sharp-top,
+  .year-grid-cell.is-dragging.sharp-top {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
   }
-  .year-grid-cell.is-selected.is-right-edge,
-  .year-grid-cell.is-dragging.is-right-edge {
-    border-top-right-radius: 0.125rem;
-    border-bottom-right-radius: 0.125rem;
+  .year-grid-cell.is-selected.sharp-bottom,
+  .year-grid-cell.is-dragging.sharp-bottom {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
-  .year-grid-cell.is-selected.is-top-edge,
-  .year-grid-cell.is-dragging.is-top-edge {
-    border-top-left-radius: 0.125rem;
-    border-top-right-radius: 0.125rem;
+  .year-grid-cell.is-selected.sharp-left,
+  .year-grid-cell.is-dragging.sharp-left {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
   }
-  .year-grid-cell.is-selected.is-bottom-edge,
-  .year-grid-cell.is-dragging.is-bottom-edge {
-    border-bottom-left-radius: 0.125rem;
-    border-bottom-right-radius: 0.125rem;
+  .year-grid-cell.is-selected.sharp-right,
+  .year-grid-cell.is-dragging.sharp-right {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   .year-grid-cell-empty {
     @apply !bg-transparent cursor-default;
-  }
-
-  .year-grid-cell-empty:hover {
-    @apply outline-none;
   }
 
   /* Unavailable year cell - dimmed but still visible and clickable */
