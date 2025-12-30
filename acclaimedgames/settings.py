@@ -186,7 +186,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # django-allauth configuration
-ACCOUNT_ADAPTER = "games.adapters.EmailAsUsernameAdapter"
+ACCOUNT_ADAPTER = "games.adapters.ModalAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "games.adapters.ModalSocialAccountAdapter"
 ACCOUNT_LOGIN_METHODS = {"email", "username"}  # Allow both email and username login
 ACCOUNT_SIGNUP_FIELDS = [
     "email*",

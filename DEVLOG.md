@@ -18,6 +18,8 @@
 - Custom allauth adapter sets username=email for guaranteed uniqueness and cleaner admin display
 - Auth modal Phase 7: forgot password flow with HTMX, shows success message in modal, reset link via email
 - Auth modal Phase 8: profile form shows read-only email field for user reference
+- Auth modal Phase 9: custom adapters for modal-friendly redirects, comprehensive adapter tests
+- Fix sign out button: add @click.stop to prevent menu from closing before form submits
 
 ## 2025-12-29
 

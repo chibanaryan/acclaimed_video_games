@@ -22,7 +22,7 @@
             </button>
         </li>
         <li>
-            <form action="{% url 'auth-logout' %}" method="post" class="w-full">
+            <form action="{% url 'auth-logout' %}" method="post" class="w-full" @click.stop>
                 {% csrf_token %}
                 <button type="submit" class="w-full flex items-center gap-2 text-left">
                     <span class="mdi mdi-logout"></span>
