@@ -12,7 +12,7 @@
 <script type="application/json" id="platform-counts-update">{{ platform_counts_json|tojson }}</script>
 {% endif %}
 
-{# Desktop: Sort + jump to rank + result count (horizontal row at desktop+) #}
+{# Desktop: Sort + result count + jump to rank (horizontal row at desktop+) #}
 <div class="hidden desktop:flex items-center justify-between gap-4 mb-2 text-sm">
     {# Sort - Left side #}
     <div class="dropdown flex-shrink-0" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
@@ -31,64 +31,59 @@
             <li><button type="button" @click="updateSort('name')" :class="filters.sort === 'name' ? 'active' : ''">A-Z</button></li>
         </ul>
     </div>
-    {# Jump to Rank + Result count - Right side #}
-    <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2 flex-shrink-0">
-            <input type="number"
-                   min="1"
-                   max="{{ total_count }}"
-                   placeholder="Game #"
-                   class="jump-to-rank-input input input-xs input-bordered w-20 text-center"
-                   data-total="{{ total_count }}"
-                   data-loaded="{{ loaded_count }}"
-                   data-per-page="100">
-            <button type="button"
-                    class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
-                    title="Jump to rank">
-                <span class="mdi mdi-arrow-down"></span>
-            </button>
-        </div>
-        {# Result count #}
-        <div class="result-count text-base-content/60 whitespace-nowrap flex-shrink-0">
-            {% if total_count %}Showing <span id="loaded-count" class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
-        </div>
+    {# Result count - Middle #}
+    <div class="result-count text-base-content/60 whitespace-nowrap">
+        {% if total_count %}Showing <span id="loaded-count" class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
+    </div>
+    {# Jump to Rank - Right side #}
+    <div class="flex items-center gap-2 flex-shrink-0">
+        <input type="number"
+               min="1"
+               max="{{ total_count }}"
+               placeholder="Game #"
+               class="jump-to-rank-input input input-xs input-bordered w-20 text-center"
+               data-total="{{ total_count }}"
+               data-loaded="{{ loaded_count }}"
+               data-per-page="100">
+        <button type="button"
+                class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
+                title="Jump to rank">
+            <span class="mdi mdi-arrow-down"></span>
+        </button>
     </div>
 </div>
 
 {# Mobile: Sort + jump to rank + result count (hidden at desktop+) #}
-<div class="desktop:hidden flex items-center justify-between gap-4 mb-2 text-sm">
+<div class="desktop:hidden flex items-center justify-between gap-2 mb-2 text-sm">
     {# Sort - Left side - Native select for mobile touch compatibility #}
-    <div class="flex items-center gap-1">
+    <div class="flex items-center gap-1 shrink-0">
         <span class="mdi mdi-sort text-base text-base-content/60"></span>
-        <select class="select select-sm select-bordered bg-base-200"
-                style="width: fit-content; max-width: 100%;"
+        <select class="select select-xs select-bordered bg-base-200"
                 @change="updateSort($event.target.value)">
             <option value="rank" :selected="filters.sort === 'rank'">Rank</option>
             <option value="year" :selected="filters.sort === 'year'">Year</option>
             <option value="name" :selected="filters.sort === 'name'">A-Z</option>
         </select>
     </div>
-    {# Jump to Rank + Result count - Right side #}
-    <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 flex-shrink-0">
-            <input type="number"
-                   min="1"
-                   max="{{ total_count }}"
-                   placeholder="Game #"
-                   class="jump-to-rank-input input input-xs input-bordered w-18 text-center"
-                   data-total="{{ total_count }}"
-                   data-loaded="{{ loaded_count }}"
-                   data-per-page="100">
-            <button type="button"
-                    class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
-                    title="Jump to rank">
-                <span class="mdi mdi-arrow-down"></span>
-            </button>
-        </div>
-        {# Result count #}
-        <div class="result-count text-base-content/60 whitespace-nowrap flex-shrink-0">
-            {% if total_count %}Showing <span class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
-        </div>
+    {# Result count - middle, can shrink #}
+    <div class="result-count text-base-content/60 text-xs truncate min-w-0">
+        {% if total_count %}<span class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% endif %}
+    </div>
+    {# Jump to Rank - Right side #}
+    <div class="flex items-center gap-1 shrink-0">
+        <input type="number"
+               min="1"
+               max="{{ total_count }}"
+               placeholder="#"
+               class="jump-to-rank-input input input-xs input-bordered w-12 text-center"
+               data-total="{{ total_count }}"
+               data-loaded="{{ loaded_count }}"
+               data-per-page="100">
+        <button type="button"
+                class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
+                title="Jump to rank">
+            <span class="mdi mdi-arrow-down"></span>
+        </button>
     </div>
 </div>
 

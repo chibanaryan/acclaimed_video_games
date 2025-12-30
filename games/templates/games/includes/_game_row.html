@@ -78,12 +78,10 @@
 
     {# Game Info #}
     <div class="min-w-0">
-        {# Title + Year - allow 2 lines total #}
+        {# Title + Year #}
         <div class="font-bold text-base leading-tight line-clamp-2">{{ game.name }} <span class="font-normal text-base-content/60">({{ game.year_of_release }})</span></div>
-        {# Metadata row: platforms (max 2) • genre (max 1) #}
-        <div class="flex items-center gap-1 mt-0.5 text-sm">
-            {% with platforms=game.platforms.all|slice:":2" total=game.platforms.count %}{% if total > 0 %}<span class="flex gap-1">{% for platform in platforms %}<span class="badge badge-xs badge-outline border-base-content/30 text-base-content/60 shrink-0">{{ platform.code }}</span>{% endfor %}{% if total > 2 %}<span class="text-base-content/50 text-xs">+{{ total|add:"-2" }}</span>{% endif %}</span>{% endif %}{% endwith %}{% if game.platforms.exists and game.wikipedia_genres.exists %}<span class="text-base-content/30 shrink-0 mx-0.5">•</span>{% endif %}{% with genres=game.wikipedia_genres.all|slice:":1" total=game.wikipedia_genres.count %}{% if total > 0 %}<span class="flex gap-1">{% for genre in genres %}<span class="badge badge-xs badge-outline border-base-content/30 text-base-content/60 shrink-0 max-w-24 truncate">{{ genre.name }}</span>{% endfor %}{% if total > 1 %}<span class="text-base-content/50 text-xs">+{{ total|add:"-1" }}</span>{% endif %}</span>{% endif %}{% endwith %}
-        </div>
+        {# Metadata row: platforms • genre #}
+        <div class="text-xs text-base-content/60 truncate">{% with platforms=game.platforms.all|slice:":3" %}{% if platforms %}{% for platform in platforms %}{{ platform.code }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}{% if game.platforms.exists and game.wikipedia_genres.exists %} • {% endif %}{% with genre=game.wikipedia_genres.first %}{% if genre %}{{ genre.name }}{% endif %}{% endwith %}</div>
     </div>
 
     {# Global rank (when filtered) or chevron indicator #}
