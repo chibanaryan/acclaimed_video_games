@@ -73,41 +73,6 @@ class ContactForm(forms.Form):
         return honeypot
 
 
-class SubscribeForm(forms.Form):
-    """Form for users to subscribe to post notifications."""
-
-    email = forms.EmailField(
-        required=True,
-        widget=forms.EmailInput(
-            attrs={
-                "class": "input input-bordered w-full",
-                "placeholder": "your.email@example.com",
-            }
-        ),
-    )
-
-    # Honeypot field for spam protection (should remain empty)
-    website = forms.CharField(
-        required=False,
-        widget=forms.TextInput(
-            attrs={
-                "style": "display:none;",
-                "tabindex": "-1",
-                "autocomplete": "off",
-            }
-        ),
-    )
-
-    def clean_website(self):
-        """Honeypot validation - this field should always be empty."""
-        honeypot = self.cleaned_data.get("website")
-        if honeypot:
-            raise forms.ValidationError(
-                "Spam detected. Please try again or contact us directly."
-            )
-        return honeypot
-
-
 class ImportForm(forms.Form):
     """Form for batch importing game data files."""
 

@@ -2,8 +2,6 @@
 Custom template context processors.
 """
 
-from django.conf import settings
-
 
 def csp_nonce(request):
     """
@@ -18,6 +16,4 @@ def feature_flags(request):
     """
     Add feature flags to template context.
     """
-    return {
-        "AUTH_MODAL_ENABLED": getattr(settings, "AUTH_MODAL_ENABLED", False),
-    }
+    return {}

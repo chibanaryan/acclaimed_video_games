@@ -12,8 +12,9 @@ from django.db.models.functions import Lower
 from django.forms import Form
 from django.http import HttpResponse, StreamingHttpResponse
 from django.template.response import TemplateResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.views import View
@@ -21,7 +22,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
 from games import config, constants, models, utils
-from games.forms import ImportForm, ContactForm, SubscribeForm
+from games.forms import ImportForm, ContactForm
 from games.mixins import HTMXPartialMixin, RobustPaginationMixin
 
 
@@ -379,6 +380,23 @@ class ContactThankYouView(TemplateView):
     """Display thank you page after successful contact form submission."""
 
     template_name = "contact_thank_you.html"
+
+
+class HomeSubscribeView(View):
+    """Subscribe to newsletter from home page (for logged-in users)."""
+
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return redirect("home")
+
+        user = request.user
+        if not user.email_subscribed:
+            user.email_subscribed = True
+            user.date_subscribed = timezone.now()
+            user.generate_unsubscribe_token()
+            user.save()
+
+        return redirect("home")
 
 
 def download_games_csv(request):
@@ -1537,41 +1555,6 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         return context
 
 
-class PostListView(RobustPaginationMixin, ListView):
-    model = models.Post
-    template_name = "posts/post_list.html"
-    context_object_name = "posts"
-    paginate_by = 5
-    paginate_orphans = 0
-
-    def get_template_names(self):
-        # Append mode for Load More - returns just posts
-        if self.request.GET.get("append") == "true":
-            return ["posts/includes/_post_list_append.html"]
-        return super().get_template_names()
-
-    def get_queryset(self):
-        return models.Post.objects.filter(active=True).order_by("-date")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # Load More context
-        page_obj = context.get("page_obj")
-        if page_obj:
-            context["has_more"] = page_obj.has_next()
-            context["next_page"] = (
-                page_obj.next_page_number() if page_obj.has_next() else None
-            )
-            context["total_count"] = page_obj.paginator.count
-            context["loaded_count"] = page_obj.end_index()
-            context["remaining_count"] = max(
-                0, page_obj.paginator.count - page_obj.end_index()
-            )
-
-        return context
-
-
 class PageDetailView(TemplateView):
     template_name = "pages/page_detail.html"
 
@@ -1869,85 +1852,6 @@ class WikipediaPageProgressView(LoginRequiredMixin, View):
 # =============================================================================
 
 
-class SubscribeView(FormView):
-    """Handle newsletter subscription with double opt-in."""
-
-    template_name = "subscribe.html"
-    form_class = SubscribeForm
-    success_url = reverse_lazy("subscribe_pending")
-
-    def form_valid(self, form):  # pragma: no cover
-        """Process valid subscription form and send confirmation email."""
-        email = form.cleaned_data["email"]
-
-        # Check if already subscribed
-        subscriber, created = models.Subscriber.objects.get_or_create(email=email)
-
-        if not created:
-            # Already exists - check status
-            if subscriber.is_confirmed and subscriber.is_active:
-                # Already subscribed and active
-                return redirect("subscribe_already")
-            elif not subscriber.is_confirmed:
-                # Pending confirmation - resend email
-                utils.send_subscription_confirmation_email(subscriber)
-                return redirect("subscribe_pending")
-            else:
-                # Was unsubscribed - reactivate and send confirmation
-                subscriber.is_active = True
-                subscriber.is_confirmed = False
-                subscriber.save()
-                utils.send_subscription_confirmation_email(subscriber)
-                return redirect("subscribe_pending")
-        else:
-            # New subscriber - send confirmation email
-            email_sent = utils.send_subscription_confirmation_email(subscriber)
-
-            if not email_sent:
-                # If email fails, delete the subscriber and show error
-                subscriber.delete()
-                form.add_error(
-                    None,
-                    (
-                        "We're sorry, but there was an error sending "
-                        "the confirmation email. Please try again later "
-                        "or contact us at contact@acclaimedvideogames.com"
-                    ),
-                )
-                return self.form_invalid(form)
-
-        return super().form_valid(form)
-
-
-class SubscribePendingView(TemplateView):
-    """Display pending confirmation message."""
-
-    template_name = "subscribe_pending.html"
-
-
-class SubscribeAlreadyView(TemplateView):
-    """Display already subscribed message."""
-
-    template_name = "subscribe_already.html"
-
-
-class ConfirmSubscriptionView(TemplateView):
-    """Confirm subscription via token."""
-
-    template_name = "subscribe_confirmed.html"
-
-    def get(self, request, token):  # pragma: no cover
-        """Process confirmation token."""
-        try:
-            subscriber = models.Subscriber.objects.get(confirmation_token=token)
-            subscriber.is_confirmed = True
-            subscriber.is_active = True
-            subscriber.save()
-            return self.render_to_response({"success": True})
-        except models.Subscriber.DoesNotExist:
-            return self.render_to_response({"success": False})
-
-
 class UnsubscribeView(TemplateView):
     """Handle unsubscribe requests."""
 
@@ -1956,11 +1860,11 @@ class UnsubscribeView(TemplateView):
     def get(self, request, token):  # pragma: no cover
         """Process unsubscribe token."""
         try:
-            subscriber = models.Subscriber.objects.get(unsubscribe_token=token)
-            subscriber.is_active = False
-            subscriber.save()
-            return self.render_to_response({"success": True, "email": subscriber.email})
-        except models.Subscriber.DoesNotExist:
+            user = models.User.objects.get(unsubscribe_token=token)
+            user.email_subscribed = False
+            user.save()
+            return self.render_to_response({"success": True, "email": user.email})
+        except models.User.DoesNotExist:
             return self.render_to_response({"success": False})
 
 
@@ -1995,14 +1899,34 @@ class AuthModalLoginView(View):
 
     def post(self, request):
         from allauth.account.forms import LoginForm
+        from allauth.account.models import EmailAddress
         from django.contrib.auth import login
 
         form = LoginForm(request.POST, request=request)
         if form.is_valid():
-            # Log the user in directly (allauth's form.login() returns a redirect)
+            user = form.user
+
+            # Check if email is verified (mandatory verification)
+            # Look for user's email in EmailAddress table
+            email_address = EmailAddress.objects.filter(
+                user=user, email__iexact=user.email
+            ).first()
+
+            # If no EmailAddress record or not verified, block login
+            if not email_address or not email_address.verified:
+                # User exists but email not verified - show resend option
+                response = TemplateResponse(
+                    request,
+                    "auth/partials/_unverified_email.html",
+                    {"email": user.email},
+                )
+                response["HX-Push-Url"] = "false"
+                return response
+
+            # Email verified - proceed with login
             login(
                 request,
-                form.user,
+                user,
                 backend="allauth.account.auth_backends.AuthenticationBackend",
             )
             # Redirect to home page (or referer if available)
@@ -2035,29 +1959,79 @@ class AuthModalSignupView(View):
 
     def post(self, request):
         from allauth.account.forms import SignupForm
-        from django.contrib.auth import login
+        from allauth.account.models import EmailAddress
 
         form = SignupForm(request.POST)
-        if form.is_valid():
-            # Save the user (allauth handles password hashing, etc.)
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
+        username_error = None
+
+        # Validate username if provided (skip if it matches email - that's the default)
+        if username and username.lower() != email.lower():
+            if len(username) < 3:
+                username_error = "Username must be at least 3 characters."
+            elif len(username) > 30:
+                username_error = "Username must be 30 characters or fewer."
+            elif not username.replace("_", "").replace("-", "").isalnum():
+                username_error = (
+                    "Username can only contain letters, numbers, "
+                    "underscores, and hyphens."
+                )
+            elif models.User.objects.filter(username__iexact=username).exists():
+                username_error = "This username is already taken."
+
+        if form.is_valid() and not username_error:
+            # Save the user (creates user and EmailAddress, but doesn't send email)
             user = form.save(request)
-            # Log the user in
-            login(
+
+            # Set email subscription preference from checkbox
+            email_subscribed = request.POST.get("email_subscribed") == "on"
+            if email_subscribed:
+                user.email_subscribed = True
+                user.date_subscribed = timezone.now()
+                user.generate_unsubscribe_token()
+                user.save()
+
+            # Send verification email (form.save doesn't do this automatically)
+            email_address = EmailAddress.objects.filter(
+                user=user, email__iexact=user.email
+            ).first()
+            if email_address and not email_address.verified:
+                email_address.send_confirmation(request, signup=True)
+
+            # Don't log in - show verification screen instead
+            response = TemplateResponse(
                 request,
-                user,
-                backend="allauth.account.auth_backends.AuthenticationBackend",
+                "auth/partials/_verification_sent.html",
+                {"email": user.email},
             )
-            # Redirect to home page (or referer if available)
-            redirect_url = request.META.get("HTTP_REFERER", "/")
-            # Don't redirect back to auth endpoints
-            if "/auth/" in redirect_url or "/accounts/" in redirect_url:
-                redirect_url = "/"
-            response = HttpResponse()
-            response["HX-Redirect"] = redirect_url
+            response["HX-Push-Url"] = "false"
             return response
 
+        # Check if email already exists with unverified account
+        email = request.POST.get("email", "").strip()
+        if email and form.errors.get("email"):
+            existing_email = EmailAddress.objects.filter(email__iexact=email).first()
+            if existing_email and not existing_email.verified:
+                # Show resend verification option instead of error
+                response = TemplateResponse(
+                    request,
+                    "auth/partials/_unverified_email.html",
+                    {"email": existing_email.email},
+                )
+                response["HX-Push-Url"] = "false"
+                return response
+
         # Re-render form with errors
-        response = TemplateResponse(request, self.template_name, {"form": form})
+        response = TemplateResponse(
+            request,
+            self.template_name,
+            {
+                "form": form,
+                "username_error": username_error,
+                "username_value": username,
+            },
+        )
         response["HX-Push-Url"] = "false"
         return response
 
@@ -2094,6 +2068,69 @@ class AuthModalForgotPasswordView(View):
         return response
 
 
+class AuthModalResendVerificationView(View):
+    """Handle resending verification email from the auth modal."""
+
+    def post(self, request):
+        from allauth.account.models import EmailAddress
+
+        email = request.POST.get("email", "").strip()
+
+        if email:
+            try:
+                email_address = EmailAddress.objects.get(email__iexact=email)
+                if not email_address.verified:
+                    email_address.send_confirmation(request, signup=False)
+            except EmailAddress.DoesNotExist:
+                pass  # Don't reveal if email exists
+
+        # Always show success (prevents email enumeration)
+        response = TemplateResponse(
+            request,
+            "auth/partials/_verification_resent.html",
+            {"email": email},
+        )
+        response["HX-Push-Url"] = "false"
+        return response
+
+
+class EmailConfirmationView(TemplateView):
+    """Custom email confirmation page matching the site style."""
+
+    template_name = "account/email_confirmed.html"
+
+    def get(self, request, key):
+        """Process email confirmation key."""
+        from allauth.account.models import EmailConfirmationHMAC
+        from django.contrib.auth import login
+
+        try:
+            # Validate the confirmation key
+            email_confirmation = EmailConfirmationHMAC.from_key(key)
+            if email_confirmation:
+                # Confirm the email
+                email_confirmation.confirm(request)
+                email_address = email_confirmation.email_address
+
+                # Log the user in (matches ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION)
+                user = email_address.user
+                login(
+                    request, user, backend="django.contrib.auth.backends.ModelBackend"
+                )
+
+                return self.render_to_response(
+                    {
+                        "success": True,
+                        "email": email_address.email,
+                    }
+                )
+        except Exception:
+            pass
+
+        # Invalid or expired key
+        return self.render_to_response({"success": False})
+
+
 class AuthModalProfileView(View):
     """Handle profile editing form in the auth modal (HTMX partial)."""
 
@@ -2106,22 +2143,12 @@ class AuthModalProfileView(View):
             response["HX-Push-Url"] = "false"
             return response
 
-        profile = request.user.profile
-        # Sync profile.email_subscribed with actual Subscriber state
-        if request.user.email:
-            is_subscribed = models.Subscriber.objects.filter(
-                email__iexact=request.user.email,
-                is_confirmed=True,
-                is_active=True,
-            ).exists()
-            if profile.email_subscribed != is_subscribed:
-                profile.email_subscribed = is_subscribed
-                profile.save(update_fields=["email_subscribed"])
-
+        # User fields are now directly on the user model
+        user = request.user
         response = TemplateResponse(
             request,
             self.template_name,
-            {"profile": profile, "form": {}},
+            {"profile": user, "form": {}},  # Pass user as 'profile' for template compat
         )
         response["HX-Push-Url"] = "false"
         return response
@@ -2132,29 +2159,57 @@ class AuthModalProfileView(View):
             response["HX-Redirect"] = "/"
             return response
 
-        profile = request.user.profile
-        profile.display_name = request.POST.get("display_name", "").strip()[:50]
-        email_subscribed = request.POST.get("email_subscribed") == "on"
-        profile.email_subscribed = email_subscribed
-        profile.save()
+        user = request.user
+        new_username = request.POST.get("username", "").strip()
 
-        # Sync with Subscriber model
-        if request.user.email:
-            if email_subscribed:
-                # Create or update subscriber - confirmed since user is logged in
-                subscriber, created = models.Subscriber.objects.get_or_create(
-                    email__iexact=request.user.email,
-                    defaults={"email": request.user.email},
+        # Validate username (if changed, skip validation if it matches user's email)
+        username_error = None
+        if (
+            new_username
+            and new_username != user.username
+            and new_username.lower() != user.email.lower()
+        ):
+            if len(new_username) < 3:
+                username_error = "Username must be at least 3 characters."
+            elif len(new_username) > 30:
+                username_error = "Username must be 30 characters or fewer."
+            elif not new_username.replace("_", "").replace("-", "").isalnum():
+                username_error = (
+                    "Username can only contain letters, numbers, "
+                    "underscores, and hyphens."
                 )
-                if not subscriber.is_confirmed or not subscriber.is_active:
-                    subscriber.is_confirmed = True
-                    subscriber.is_active = True
-                    subscriber.save()
-            else:
-                # Unsubscribe if subscriber exists
-                models.Subscriber.objects.filter(
-                    email__iexact=request.user.email
-                ).update(is_active=False)
+            elif (
+                models.User.objects.filter(username__iexact=new_username)
+                .exclude(pk=user.pk)
+                .exists()
+            ):
+                username_error = "This username is already taken."
+
+            if username_error:
+                return render(
+                    request,
+                    "auth/partials/_profile_form.html",
+                    {
+                        "profile": user,
+                        "form": {"username": {"errors": [username_error]}},
+                    },
+                )
+            user.username = new_username
+
+        email_subscribed = request.POST.get("email_subscribed") == "on"
+
+        if email_subscribed and not user.email_subscribed:
+            # Subscribing - logged in user already has verified email
+            user.email_subscribed = True
+            user.generate_unsubscribe_token()
+            if not user.date_subscribed:
+                from django.utils import timezone
+
+                user.date_subscribed = timezone.now()
+        elif not email_subscribed:
+            user.email_subscribed = False
+
+        user.save()
 
         # Refresh page to show updated name in sidebar
         response = HttpResponse()

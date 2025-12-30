@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from datetime import datetime
 import json
+import markdown as md
 
 from games import constants
 
@@ -404,3 +405,11 @@ def platform_families(platforms):
 
     # Preserve encounter order (no sorting)
     return families
+
+
+@register.filter
+def markdown(value):
+    """Convert markdown text to HTML."""
+    if not value:
+        return ""
+    return mark_safe(md.markdown(value))

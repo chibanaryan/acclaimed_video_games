@@ -182,11 +182,6 @@ class PublicationDetailView(RetrieveAPIView):
     queryset = models.Publication.objects.all()
 
 
-class PostListView(ListAPIView):
-    serializer_class = serializers.PostSerializer
-    queryset = models.Post.objects.all()
-
-
 @method_decorator(cache_page(config.CACHE_TIMEOUT_1_HOUR), name="dispatch")
 class MetaView(APIView):
 

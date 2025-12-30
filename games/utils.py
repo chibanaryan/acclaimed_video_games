@@ -128,62 +128,13 @@ This message was sent via the contact form at {site_url}
         return False
 
 
-def send_subscription_confirmation_email(subscriber) -> bool:
-    """
-    Send a confirmation email to a new subscriber.
-
-    Args:
-        subscriber: Subscriber model instance
-
-    Returns:
-        True if the email was sent successfully, False otherwise
-    """
-    from django.conf import settings
-    from django.core.mail import send_mail
-
-    site_url = getattr(settings, "SITE_URL", "https://www.acclaimedvideogames.com")
-    confirmation_url = f"{site_url}/subscribe/confirm/{subscriber.confirmation_token}/"
-
-    subject = "Confirm your subscription to Acclaimed Games"
-
-    email_body = f"""
-Thank you for subscribing to Acclaimed Games!
-
-Please confirm your subscription by clicking the link below:
-
-{confirmation_url}
-
-If you didn't request this subscription, you can safely ignore this email.
-
----
-Acclaimed Games
-{site_url}
-"""
-
-    try:
-        send_mail(
-            subject=subject,
-            message=email_body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[subscriber.email],
-            fail_silently=False,
-        )
-        return True
-    except Exception as e:
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.error(f"Failed to send confirmation email: {e}")
-        return False
-
-
-def send_post_notification_email(post, subscriber) -> bool:
+def send_post_notification_email(post, user) -> bool:
     """
     Send a notification email about a new post to a subscriber.
 
     Args:
         post: Post model instance
-        subscriber: Subscriber model instance
+        user: User model instance with subscription fields
 
     Returns:
         True if the email was sent successfully, False otherwise
@@ -194,7 +145,7 @@ def send_post_notification_email(post, subscriber) -> bool:
 
     site_url = getattr(settings, "SITE_URL", "https://www.acclaimedvideogames.com")
     post_url = f"{site_url}/#latest-news"
-    unsubscribe_url = f"{site_url}/unsubscribe/{subscriber.unsubscribe_token}/"
+    unsubscribe_url = f"{site_url}/unsubscribe/{user.unsubscribe_token}/"
 
     subject = f"New post: {post.title or 'Latest Update'}"
 
@@ -202,7 +153,7 @@ def send_post_notification_email(post, subscriber) -> bool:
     if post.author:
         author_name = post.author.get_full_name() or post.author.username
     else:
-        author_name = "Acclaimed Games"
+        author_name = "Acclaimed Video Games"
 
     # Get HTML version (full post with links intact)
     post_html = post.text_rendered
@@ -212,7 +163,7 @@ def send_post_notification_email(post, subscriber) -> bool:
 
     # Plain text version
     text_body = f"""
-New post on Acclaimed Games!
+New post on Acclaimed Video Games!
 
 {post.title or 'Latest Update'}
 By {author_name}
@@ -222,88 +173,57 @@ By {author_name}
 Read more: {post_url}
 
 ---
-You're receiving this because you subscribed to Acclaimed Games
+You're receiving this because you subscribed to Acclaimed Video Games
 post notifications. To unsubscribe, visit: {unsubscribe_url}
 
-Acclaimed Games
+Acclaimed Video Games
 {site_url}
 """
 
-    # HTML version (with working links)
-    html_body = f"""
-<!DOCTYPE html>
+    # HTML version with minimal styling - just accent color for button
+    # fmt: off
+    body_style = (
+        "font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, "
+        "sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; "
+        "padding: 20px;"
+    )
+    button_style = (
+        "display: inline-block; background-color: #004900; color: #fff; "
+        "padding: 12px 24px; border-radius: 6px; text-decoration: none; "
+        "font-weight: bold;"
+    )
+    footer_style = (
+        "font-size: 12px; margin-top: 30px; padding-top: 20px; "
+        "border-top: 1px solid #ccc;"
+    )
+    # fmt: on
+    html_body = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont,
-                'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }}
-        h2 {{
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 5px;
-        }}
-        .byline {{
-            color: #666;
-            font-size: 14px;
-            margin-top: 0;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }}
-        .footer {{
-            font-size: 12px;
-            color: #666;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-        }}
-        a {{ color: #3498db; text-decoration: none; }}
-        a:hover {{ text-decoration: underline; }}
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
+<body style="{body_style}">
     <h2>{post.title or 'Latest Update'}</h2>
-    <p class="byline">By {author_name}</p>
+    <p style="font-size: 14px; margin-top: 0; margin-bottom: 20px;">
+        By {author_name}
+    </p>
 
-    <div class="content">
+    <div style="margin: 20px 0;">
         {post_html}
     </div>
 
-    <p>
-        <a href="{post_url}" style="
-            display: inline-block;
-            background-color: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-        ">Read More</a>
+    <p style="margin: 30px 0;">
+        <a href="{post_url}" style="{button_style}">Read More</a>
     </p>
 
-    <div class="footer">
-        <p>You're receiving this because you subscribed to
-        Acclaimed Games post notifications.</p>
-        <p>
-            <a href="{unsubscribe_url}">Unsubscribe</a> |
-            <a href="{site_url}">Acclaimed Games</a>
-        </p>
-    </div>
+    <p style="{footer_style}">
+        You're receiving this because you subscribed to updates.<br>
+        <a href="{unsubscribe_url}">Unsubscribe</a> |
+        <a href="{site_url}">Acclaimed Video Games</a>
+    </p>
 </body>
-</html>
-"""
+</html>"""
 
     try:
         # Create email with both plain text and HTML versions
@@ -311,7 +231,7 @@ Acclaimed Games
             subject=subject,
             body=text_body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[subscriber.email],
+            to=[user.email],
         )
         email.attach_alternative(html_body, "text/html")
         email.send(fail_silently=False)
@@ -326,7 +246,7 @@ Acclaimed Games
 
 def notify_subscribers_of_new_post(post) -> int:
     """
-    Notify all confirmed, active subscribers about a new post.
+    Notify all verified, subscribed users about a new post.
 
     Args:
         post: Post model instance
@@ -334,13 +254,18 @@ def notify_subscribers_of_new_post(post) -> int:
     Returns:
         Number of emails sent successfully
     """
-    from games.models import Subscriber
+    from allauth.account.models import EmailAddress
+    from games.models import User
 
-    subscribers = Subscriber.objects.filter(is_confirmed=True, is_active=True)
+    # Get users who are subscribed AND have a verified email
+    verified_emails = EmailAddress.objects.filter(verified=True).values_list(
+        "user_id", flat=True
+    )
+    subscribers = User.objects.filter(email_subscribed=True, id__in=verified_emails)
     sent_count = 0
 
-    for subscriber in subscribers:
-        if send_post_notification_email(post, subscriber):
+    for user in subscribers:
+        if send_post_notification_email(post, user):
             sent_count += 1
 
     import logging

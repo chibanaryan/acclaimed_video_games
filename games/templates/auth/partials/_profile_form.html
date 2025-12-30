@@ -7,22 +7,20 @@
           hx-swap="innerHTML">
         {% csrf_token %}
 
-        {# Display Name #}
+        {# Username #}
         <div class="form-control w-full mb-4">
-            <label class="label py-1" for="id_display_name">
-                <span class="label-text">Display Name</span>
+            <label class="label py-1" for="id_username">
+                <span class="label-text">Username</span>
             </label>
             <input type="text"
-                   id="id_display_name"
-                   name="display_name"
-                   value="{{ profile.display_name }}"
-                   maxlength="50"
-                   placeholder="How should we call you?"
-                   class="input input-bordered input-sm w-full{% if form.display_name.errors %} input-error{% endif %}">
-            {% if form.display_name.errors %}
-            <p class="text-xs text-error mt-2">{{ form.display_name.errors.0 }}</p>
-            {% else %}
-            <p class="text-xs text-base-content/60 mt-2">Leave blank to use your email prefix</p>
+                   id="id_username"
+                   name="username"
+                   value="{{ request.user.username }}"
+                   maxlength="150"
+                   placeholder="Your username"
+                   class="input input-bordered input-sm w-full{% if form.username.errors %} input-error{% endif %}">
+            {% if form.username.errors %}
+            <p class="text-xs text-error mt-2">{{ form.username.errors.0 }}</p>
             {% endif %}
         </div>
 

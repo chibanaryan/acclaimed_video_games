@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if success %}Subscription Confirmed{% else %}Invalid Link{% endif %} | Acclaimed Video Games{% endblock %}
+{% block title %}{% if success %}Email Verified{% else %}Invalid Link{% endif %} | Acclaimed Video Games{% endblock %}
 
 {% block content %}
 <div class="flex items-center justify-center min-h-[60vh]">
@@ -12,16 +12,17 @@
                 <span class="mdi mdi-check-circle"></span>
             </div>
 
-            <h1 class="card-title text-2xl mb-4">Subscription Confirmed!</h1>
+            <h1 class="card-title text-2xl mb-4">Email Verified!</h1>
 
             <p class="text-base-content/85 mb-4">
-                Thank you for subscribing! You'll receive an email notification when we publish new content.
+                Your email address <strong>{{ email }}</strong> has been verified.
+                You're now logged in and ready to explore!
             </p>
 
             <div class="card-actions mt-4">
                 <a href="{% url 'home' %}" class="btn btn-primary">
                     <span class="mdi mdi-home mr-2"></span>
-                    Return Home
+                    Start Exploring
                 </a>
             </div>
             {% else %}
@@ -30,18 +31,16 @@
                 <span class="mdi mdi-alert-circle"></span>
             </div>
 
-            <h1 class="card-title text-2xl mb-4">Invalid Confirmation Link</h1>
+            <h1 class="card-title text-2xl mb-4">Invalid Verification Link</h1>
 
             <p class="text-base-content/85 mb-4">
-                This confirmation link is invalid or has expired. Please try subscribing again.
+                This verification link is invalid or has expired.
+                Please request a new verification email.
             </p>
 
             <div class="card-actions mt-4">
-                <a href="{% url 'subscribe' %}" class="btn btn-outline">
-                    <span class="mdi mdi-email-outline mr-2"></span>
-                    Subscribe Again
-                </a>
-                <a href="{% url 'home' %}" class="btn btn-ghost">
+                <a href="{% url 'home' %}" class="btn btn-primary">
+                    <span class="mdi mdi-home mr-2"></span>
                     Return Home
                 </a>
             </div>

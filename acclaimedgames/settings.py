@@ -30,8 +30,6 @@ if SENTRY_DSN and not TEST_MODE:
 # Core Django settings
 DEBUG = env("DEBUG", default=False)  # Default to True for development
 
-# Feature flags
-AUTH_MODAL_ENABLED = env.bool("AUTH_MODAL_ENABLED", default=DEBUG)  # Auth modal (WIP)
 SECRET_KEY = env(
     "SECRET_KEY",
     default="django-insecure-dev-key-change-in-production" if DEBUG else None,
@@ -174,6 +172,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Custom User model
+AUTH_USER_MODEL = "games.User"
+
 # Authentication URLs
 LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "/accounts/login/"
@@ -194,8 +195,10 @@ ACCOUNT_SIGNUP_FIELDS = [
     "password1*",
     "password2*",
 ]  # Email required, no username for signup
-ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_PREVENT_ENUMERATION = False  # Show "email already exists" error on signup form
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = ""  # No prefix in email subjects
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 SOCIALACCOUNT_AUTO_SIGNUP = True
 
@@ -285,7 +288,10 @@ EMAIL_HOST_PASSWORD = env("BREVO_SMTP_KEY", default="")
 
 DEFAULT_FROM_EMAIL = "contact@acclaimedvideogames.com"
 CONTACT_EMAIL = "contact@acclaimedvideogames.com"
-SITE_URL = "https://www.acclaimedvideogames.com"
+SITE_URL = env(
+    "SITE_URL",
+    default="http://localhost:8000" if DEBUG else "https://www.acclaimedvideogames.com",
+)
 
 # Logging configuration
 # Suppress noisy logs during test runs
@@ -305,6 +311,14 @@ LOGGING = {
         "games.management.commands.get_igdb": {
             "handlers": ["console"],
             "level": "CRITICAL" if TEST_MODE else "INFO",
+        },
+        "games.signals": {
+            "handlers": ["console"],
+            "level": "ERROR" if TEST_MODE else "INFO",
+        },
+        "games.utils": {
+            "handlers": ["console"],
+            "level": "ERROR" if TEST_MODE else "INFO",
         },
     },
 }

@@ -19,15 +19,12 @@
             </p>
 
             <p class="text-base-content/60 text-sm mb-4">
-                We're sorry to see you go! If you change your mind, you can always subscribe again.
+                We're sorry to see you go! If you change your mind, you can re-subscribe from your profile settings.
             </p>
 
             <div class="card-actions mt-4">
-                <a href="{% url 'subscribe' %}" class="btn btn-outline">
-                    <span class="mdi mdi-email-outline mr-2"></span>
-                    Subscribe Again
-                </a>
-                <a href="{% url 'home' %}" class="btn btn-ghost">
+                <a href="{% url 'home' %}" class="btn btn-primary">
+                    <span class="mdi mdi-home mr-2"></span>
                     Return Home
                 </a>
             </div>

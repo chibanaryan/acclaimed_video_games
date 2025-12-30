@@ -43,6 +43,12 @@ urlpatterns = [
         views.WikipediaPageProgressView.as_view(),
         name="wikipedia-page-progress",
     ),
+    # Custom email confirmation page (must be before allauth include)
+    path(
+        "accounts/confirm-email/<str:key>/",
+        views.EmailConfirmationView.as_view(),
+        name="account_confirm_email",
+    ),
     path("accounts/", include("allauth.urls")),
     # Auth modal partials (HTMX)
     path(
@@ -71,34 +77,24 @@ urlpatterns = [
         name="auth-modal-forgot-password",
     ),
     path(
+        "auth/modal/resend-verification/",
+        views.AuthModalResendVerificationView.as_view(),
+        name="auth-modal-resend-verification",
+    ),
+    path(
         "auth/logout/",
         views.AuthLogoutView.as_view(),
         name="auth-logout",
     ),
     # Main site routes (Django + HTMX + Alpine.js)
     path("", views.HomePageView.as_view(), name="home"),
+    path("subscribe/", views.HomeSubscribeView.as_view(), name="home-subscribe"),
     path(
         "contact/thank-you/",
         views.ContactThankYouView.as_view(),
         name="contact_thank_you",
     ),
-    # Newsletter subscription routes
-    path("subscribe/", views.SubscribeView.as_view(), name="subscribe"),
-    path(
-        "subscribe/pending/",
-        views.SubscribePendingView.as_view(),
-        name="subscribe_pending",
-    ),
-    path(
-        "subscribe/already/",
-        views.SubscribeAlreadyView.as_view(),
-        name="subscribe_already",
-    ),
-    path(
-        "subscribe/confirm/<str:token>/",
-        views.ConfirmSubscriptionView.as_view(),
-        name="subscribe_confirm",
-    ),
+    # Newsletter unsubscribe (for links in notification emails)
     path(
         "unsubscribe/<str:token>/", views.UnsubscribeView.as_view(), name="unsubscribe"
     ),
@@ -128,7 +124,6 @@ urlpatterns = [
         name="developer-alias-redirect",
     ),
     path("lists/", views.ListListView.as_view(), name="list-list"),
-    path("posts/", views.PostListView.as_view(), name="post-list"),
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
 ]
 

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, mock_open
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, RequestFactory, TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from games import models, views
@@ -194,46 +194,6 @@ class IGDBProgressViewTests(TestCase):
 
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response["content-type"], "text/event-stream")
-
-
-class PostListViewTests(TestCase):
-    """Tests for PostListView."""
-
-    def setUp(self):
-        self.client = Client()
-        # Create some posts for testing
-        models.Post.objects.create(title="Post 1", text="Content 1", active=True)
-        models.Post.objects.create(title="Post 2", text="Content 2", active=True)
-        models.Post.objects.create(title="Post 3", text="Content 3", active=True)
-        models.Post.objects.create(title="Post 4", text="Content 4", active=True)
-        models.Post.objects.create(title="Post 5", text="Content 5", active=True)
-        models.Post.objects.create(title="Post 6", text="Content 6", active=True)
-
-    def test_post_list_view_returns_posts(self):
-        """Test that PostListView returns posts."""
-        # Test the view directly
-        factory = RequestFactory()
-        request = factory.get("/posts/")
-        view = views.PostListView()
-        view.request = request
-
-        queryset = view.get_queryset()
-        self.assertEqual(queryset.count(), 6)
-
-    def test_post_list_view_pagination(self):
-        """Test that PostListView paginates correctly."""
-        factory = RequestFactory()
-        request = factory.get("/posts/")
-        view = views.PostListView()
-        view.request = request
-
-        # PostListView has paginate_by = 5
-        queryset = view.get_queryset()
-        paginator = view.get_paginator(queryset, view.paginate_by)
-        page = paginator.page(1)
-
-        self.assertEqual(len(page.object_list), 5)
-        self.assertTrue(page.has_other_pages())
 
 
 class GameListSeriesFilterTests(TestCase):

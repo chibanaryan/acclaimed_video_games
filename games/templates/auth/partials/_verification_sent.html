@@ -1,0 +1,39 @@
+{# Email verification sent - shown after signup #}
+
+<div class="text-center py-4">
+    {# Success icon #}
+    <span class="mdi mdi-email-check text-6xl text-success mb-4 block"></span>
+
+    <h3 class="text-lg font-bold mb-2">Check Your Email</h3>
+    <p class="text-sm text-base-content/70 mb-6">
+        We've sent a verification link to <strong>{{ email }}</strong>.
+        Click the link to verify your account.
+    </p>
+
+    <p class="text-xs text-base-content/50 mb-6">
+        Didn't receive it? Check your spam folder.
+    </p>
+
+    {# Resend verification email button #}
+    <form hx-post="{% url 'auth-modal-resend-verification' %}"
+          hx-target="#auth-modal-content"
+          hx-swap="innerHTML"
+          class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ email }}">
+        <button type="submit" class="btn btn-ghost btn-sm">
+            <span class="mdi mdi-email-sync"></span>
+            Resend email
+        </button>
+    </form>
+
+    {# Go to login button #}
+    <button type="button"
+            class="btn btn-primary w-full"
+            hx-get="{% url 'auth-modal-login' %}"
+            hx-target="#auth-modal-content"
+            hx-swap="innerHTML">
+        <span class="mdi mdi-arrow-left"></span>
+        Go to Login
+    </button>
+</div>

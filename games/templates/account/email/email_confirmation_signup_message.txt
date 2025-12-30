@@ -1,0 +1,11 @@
+Welcome to Acclaimed Video Games!
+
+Please click the link below to verify your email address:
+
+{{ activate_url }}
+
+If you didn't create an account on Acclaimed Video Games, you can safely ignore this email.
+
+---
+Acclaimed Video Games
+https://www.acclaimedvideogames.com

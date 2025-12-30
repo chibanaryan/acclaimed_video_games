@@ -50,6 +50,29 @@
         {% endif %}
     </div>
 
+    {# Username field (optional) #}
+    <div class="form-control">
+        <label class="label" for="id_username">
+            <span class="label-text">Username <span class="text-base-content/50">(optional)</span></span>
+        </label>
+        <input type="text"
+               name="username"
+               id="id_username"
+               class="input input-bordered w-full {% if username_error %}input-error{% endif %}"
+               placeholder="Choose a username"
+               value="{{ username_value|default:'' }}"
+               autocomplete="username">
+        {% if username_error %}
+        <label class="label pt-2">
+            <span class="label-text-alt text-error">{{ username_error }}</span>
+        </label>
+        {% else %}
+        <label class="label pt-2">
+            <span class="label-text-alt text-base-content/50">Leave blank to use your email</span>
+        </label>
+        {% endif %}
+    </div>
+
     {# Password field #}
     <div class="form-control">
         <label class="label" for="id_password1">
@@ -86,6 +109,17 @@
             <span class="label-text-alt text-error">{{ form.password2.errors.0 }}</span>
         </label>
         {% endif %}
+    </div>
+
+    {# Newsletter subscription checkbox #}
+    <div class="form-control">
+        <label class="label cursor-pointer justify-start gap-3">
+            <input type="checkbox"
+                   name="email_subscribed"
+                   class="checkbox checkbox-sm checkbox-primary"
+                   checked>
+            <span class="label-text">Email me about news and updates</span>
+        </label>
     </div>
 
     {# Submit button #}

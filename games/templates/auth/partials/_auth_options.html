@@ -30,17 +30,17 @@
     {# Divider #}
     <div class="divider text-base-content/50 text-sm my-2">OR</div>
 
-    {# Email Sign In - Functional #}
+    {# Email/Username Sign In - Functional #}
     <button type="button"
             class="btn btn-primary gap-2 w-full"
             hx-get="{% url 'auth-modal-login' %}"
             hx-target="#auth-modal-content"
             hx-swap="innerHTML">
-        <span class="mdi mdi-email"></span>
-        Continue with Email
+        <span class="mdi mdi-account"></span>
+        Continue with Email or Username
     </button>
 </div>
 
 <p class="text-xs text-base-content/60 mt-6 text-center">
-    By signing in, you agree to our Terms of Service and Privacy Policy.
+    By signing in, you agree to our <a href="/pages/terms/" class="link link-hover">Terms of Service</a> and <a href="/pages/privacy/" class="link link-hover">Privacy Policy</a>.
 </p>

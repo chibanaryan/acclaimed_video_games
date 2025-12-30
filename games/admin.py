@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models import Count
 from django.forms import ModelForm
 from django.http import HttpRequest
@@ -310,45 +311,60 @@ class SiteMetadataAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(models.Subscriber)
-class SubscriberAdmin(admin.ModelAdmin):
-    """Admin interface for newsletter subscribers."""
+class EmailAddressInline(admin.TabularInline):
+    """Inline admin for allauth EmailAddress to show verification status."""
 
-    list_display = [
-        "email",
-        "is_confirmed",
-        "is_active",
-        "date_subscribed",
-    ]
-    list_filter = ["is_confirmed", "is_active", "date_subscribed"]
-    search_fields = ["email"]
-    readonly_fields = [
-        "email",
-        "date_subscribed",
-        "confirmation_token",
-        "unsubscribe_token",
-    ]
-    ordering = ["-date_subscribed"]
+    from allauth.account.models import EmailAddress
 
-    def has_add_permission(self, request):
-        # Prevent manual addition of subscribers through admin
-        # Subscribers should only be added via the public subscription form
+    model = EmailAddress
+    extra = 0
+    fields = ["email", "verified", "primary"]
+    readonly_fields = ["email"]
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
         return False
 
 
-@admin.register(models.UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    """Admin interface for user profiles."""
+@admin.register(models.User)
+class UserAdmin(BaseUserAdmin):
+    """Admin interface for custom User model with subscription fields."""
 
     list_display = [
-        "user",
-        "display_name",
+        "username",
+        "email",
+        "is_staff",
         "email_subscribed",
-        "created",
-        "modified",
+        "email_verified_display",
+        "date_joined",
     ]
-    list_filter = ["email_subscribed", "created"]
-    search_fields = ["user__email", "user__username", "display_name"]
-    readonly_fields = ["created", "modified"]
-    raw_id_fields = ["user"]
-    ordering = ["-created"]
+    list_filter = [
+        "is_staff",
+        "is_superuser",
+        "is_active",
+        "email_subscribed",
+    ]
+    search_fields = ["email", "username"]
+    ordering = ["-date_joined"]
+    inlines = [EmailAddressInline]
+
+    # Extend the default fieldsets with our custom fields
+    fieldsets = BaseUserAdmin.fieldsets + (
+        (
+            "Newsletter Subscription",
+            {
+                "fields": (
+                    "email_subscribed",
+                    "date_subscribed",
+                    "unsubscribe_token",
+                ),
+            },
+        ),
+    )
+
+    readonly_fields = ["unsubscribe_token", "date_subscribed"]
+
+    @admin.display(description="Email Verified", boolean=True)
+    def email_verified_display(self, obj):
+        """Show email verification status from allauth EmailAddress."""
+        return obj.email_verified

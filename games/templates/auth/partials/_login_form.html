@@ -10,7 +10,7 @@
     Back
 </button>
 
-<h3 class="text-lg font-bold mb-6">Sign In with Email</h3>
+<h3 class="text-lg font-bold mb-6">Sign In</h3>
 
 {# Non-field errors (invalid credentials, etc.) #}
 {% if form.non_field_errors %}
@@ -30,18 +30,18 @@
       class="flex flex-col gap-4">
     {% csrf_token %}
 
-    {# Email/Login field #}
+    {# Email/Username field #}
     <div class="form-control">
         <label class="label" for="id_login">
-            <span class="label-text">{{ form.login.label }}</span>
+            <span class="label-text">Email or username</span>
         </label>
-        <input type="email"
+        <input type="text"
                name="login"
                id="id_login"
                class="input input-bordered w-full {% if form.login.errors %}input-error{% endif %}"
-               placeholder="you@example.com"
+               placeholder="you@example.com or username"
                value="{{ form.login.value|default:'' }}"
-               autocomplete="email"
+               autocomplete="username"
                required>
         {% if form.login.errors %}
         <label class="label">
@@ -69,19 +69,8 @@
         {% endif %}
     </div>
 
-    {# Remember me & Forgot password #}
-    <div class="flex items-center justify-between">
-        {% if form.remember %}
-        <label class="label cursor-pointer gap-2">
-            <input type="checkbox"
-                   name="remember"
-                   class="checkbox checkbox-sm"
-                   {% if form.remember.value %}checked{% endif %}>
-            <span class="label-text">{{ form.remember.label }}</span>
-        </label>
-        {% else %}
-        <div></div>
-        {% endif %}
+    {# Forgot password #}
+    <div class="flex justify-end">
         <button type="button"
                 class="link link-primary text-sm"
                 hx-get="{% url 'auth-modal-forgot-password' %}"

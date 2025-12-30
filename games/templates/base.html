@@ -82,7 +82,7 @@
 .mdi-18px::before{font-size:18px}.mdi-24px::before{font-size:24px}.mdi-36px::before{font-size:36px}.mdi-48px::before{font-size:48px}
 .mdi-magnify::before{content:"\F0349"}.mdi-close::before{content:"\F0156"}.mdi-form-select::before{content:"\F1401"}.mdi-download::before{content:"\F01DA"}.mdi-tune-variant::before{content:"\F1542"}.mdi-open-in-new::before{content:"\F03CC"}.mdi-email::before{content:"\F01EE"}.mdi-email-outline::before{content:"\F01F0"}.mdi-email-check::before{content:"\F0AB1"}.mdi-email-remove::before{content:"\F1661"}.mdi-check-circle::before{content:"\F0135"}.mdi-alert-circle::before{content:"\F0029"}.mdi-shield-check::before{content:"\F0565"}.mdi-chevron-double-right::before{content:"\F013E"}.mdi-chevron-double-left::before{content:"\F013D"}.mdi-chevron-right::before{content:"\F0142"}.mdi-chevron-up::before{content:"\F0143"}.mdi-chevron-down::before{content:"\F0140"}.mdi-send::before{content:"\F048A"}.mdi-calendar-range::before{content:"\F0679"}.mdi-power::before{content:"\F0425"}.mdi-undo::before{content:"\F054C"}.mdi-tune::before{content:"\F062E"}.mdi-format-list-numbered::before{content:"\F027B"}
 .mdi-sony-playstation::before{content:"\F0414"}.mdi-microsoft-xbox::before{content:"\F05B9"}.mdi-microsoft-windows::before{content:"\F05B3"}.mdi-nintendo-switch::before{content:"\F07E1"}.mdi-nintendo-game-boy::before{content:"\F1393"}.mdi-nintendo-wii::before{content:"\F05AB"}.mdi-nintendo-wiiu::before{content:"\F072C"}.mdi-apple::before{content:"\F0035"}.mdi-apple-ios::before{content:"\F0037"}.mdi-linux::before{content:"\F033D"}.mdi-android::before{content:"\F0032"}.mdi-gamepad::before{content:"\F0296"}.mdi-gamepad-variant::before{content:"\F0297"}.mdi-gamepad-square::before{content:"\F0EB5"}.mdi-controller::before{content:"\F0B66"}.mdi-controller-classic::before{content:"\F0B67"}.mdi-pinwheel::before{content:"\F0AD5"}.mdi-fan::before{content:"\F0210"}.mdi-alpha-s-circle::before{content:"\F0C34"}.mdi-run-fast::before{content:"\F046E"}.mdi-floppy::before{content:"\F0218"}.mdi-desktop-classic::before{content:"\F07C0"}.mdi-cellphone::before{content:"\F011C"}.mdi-pac-man::before{content:"\F0BAF"}.mdi-space-invaders::before{content:"\F0BC9"}.mdi-web::before{content:"\F059F"}.mdi-virtual-reality::before{content:"\F0895"}
-.mdi-plus-circle::before{content:"\F0417"}.mdi-plus-circle-outline::before{content:"\F0763"}.mdi-information-outline::before{content:"\F02FD"}.mdi-menu::before{content:"\F035C"}.mdi-home::before{content:"\F02DC"}.mdi-palette::before{content:"\F03D8"}.mdi-trophy::before{content:"\F0548"}.mdi-medal::before{content:"\F0987"}.mdi-podium::before{content:"\F0D25"}.mdi-account-group::before{content:"\F0849"}.mdi-newspaper::before{content:"\F0395"}.mdi-information::before{content:"\F02FC"}.mdi-heart::before{content:"\F02D1"}.mdi-checkbox-marked::before{content:"\F0132"}.mdi-checkbox-blank-outline::before{content:"\F0131"}.mdi-sort::before{content:"\F04BA"}.mdi-arrow-down::before{content:"\F0045"}.mdi-arrow-left::before{content:"\F004D"}.mdi-login::before{content:"\F0342"}.mdi-logout::before{content:"\F0343"}.mdi-account-circle::before{content:"\F0009"}.mdi-domain::before{content:"\F01D7"}
+.mdi-plus-circle::before{content:"\F0417"}.mdi-plus-circle-outline::before{content:"\F0763"}.mdi-information-outline::before{content:"\F02FD"}.mdi-menu::before{content:"\F035C"}.mdi-home::before{content:"\F02DC"}.mdi-palette::before{content:"\F03D8"}.mdi-trophy::before{content:"\F0548"}.mdi-medal::before{content:"\F0987"}.mdi-podium::before{content:"\F0D25"}.mdi-account-group::before{content:"\F0849"}.mdi-newspaper::before{content:"\F0395"}.mdi-information::before{content:"\F02FC"}.mdi-heart::before{content:"\F02D1"}.mdi-checkbox-marked::before{content:"\F0132"}.mdi-checkbox-blank-outline::before{content:"\F0131"}.mdi-sort::before{content:"\F04BA"}.mdi-arrow-down::before{content:"\F0045"}.mdi-arrow-left::before{content:"\F004D"}.mdi-login::before{content:"\F0342"}.mdi-logout::before{content:"\F0343"}.mdi-account-circle::before{content:"\F0009"}.mdi-domain::before{content:"\F01D7"}.mdi-scale-balance::before{content:"\F05D1"}.mdi-shield-lock::before{content:"\F099D"}
 .mdi-bullseye-arrow::before{content:"\F08C9"}.mdi-image-filter-hdr::before{content:"\F02F5"}.mdi-wizard-hat::before{content:"\F1477"}.mdi-chess-knight::before{content:"\F0858"}.mdi-crosshairs::before{content:"\F01A3"}.mdi-car-sports::before{content:"\F07AC"}.mdi-airplane-takeoff::before{content:"\F05D5"}.mdi-basketball::before{content:"\F0806"}.mdi-puzzle::before{content:"\F0431"}.mdi-party-popper::before{content:"\F1056"}.mdi-layers::before{content:"\F0328"}.mdi-mushroom::before{content:"\F07DF"}
     </style>
 
@@ -227,10 +227,8 @@
         </form>
     </dialog>
 
-    {# Auth Modal - modal-based authentication flow (feature flagged) #}
-    {% if AUTH_MODAL_ENABLED %}
+    {# Auth Modal - modal-based authentication flow #}
     {% include 'includes/_auth_modal.html' %}
-    {% endif %}
 
     <audio id="naviSound" preload="auto">
         <source src="{% static 'audio/navi_fly.mp3' %}" type="audio/mpeg">
@@ -242,7 +240,6 @@
             const modal = document.getElementById('contactModal');
             const sound = document.getElementById('naviSound');
 
-            {% if AUTH_MODAL_ENABLED %}
             // Auth modal trigger
             const authModal = document.getElementById('authModal');
             const authModalContent = document.getElementById('auth-modal-content');
@@ -256,6 +253,8 @@
                         let url = '{% url "auth-modal-options" %}';
                         if (screen === 'profile') {
                             url = '{% url "auth-modal-profile" %}';
+                        } else if (screen === 'signup') {
+                            url = '{% url "auth-modal-signup" %}';
                         }
                         htmx.ajax('GET', url, {target: '#auth-modal-content', swap: 'innerHTML'});
                         authModal.showModal();
@@ -267,8 +266,14 @@
                         }
                     }
                 });
+
+                // Ensure HTMX processes content after swaps into auth modal
+                document.body.addEventListener('htmx:afterSwap', function(e) {
+                    if (e.detail.target.id === 'auth-modal-content') {
+                        htmx.process(e.detail.target);
+                    }
+                });
             }
-            {% endif %}
 
             if (modal) {
                 // Handle contact modal trigger clicks

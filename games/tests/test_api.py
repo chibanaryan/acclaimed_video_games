@@ -128,34 +128,6 @@ class ApiSmokeTests(TestCase):
         self.assertIsInstance(data["publications"]["total_count"], int)
         self.assertGreaterEqual(data["publications"]["total_count"], 1)
 
-    def test_posts_endpoint(self):
-        resp = self.client.get("/api/posts/")
-        self.assertEqual(resp.status_code, 200)
-        self.assertGreaterEqual(len(resp.json()["results"]), 1)
-
-    def test_posts_endpoint_with_author(self):
-        from django.contrib.auth import get_user_model
-
-        User = get_user_model()
-        user = User.objects.create_user(
-            username="newsauthor", first_name="Jane", last_name="Smith"
-        )
-        models.Post.objects.create(
-            title="Authored News", text="Content", active=True, author=user
-        )
-        resp = self.client.get("/api/posts/")
-        self.assertEqual(resp.status_code, 200)
-        results = resp.json()["results"]
-        authored_post = next(r for r in results if r["title"] == "Authored News")
-        self.assertEqual(authored_post["author"], "Jane Smith")
-
-    def test_posts_endpoint_without_author(self):
-        resp = self.client.get("/api/posts/")
-        results = resp.json()["results"]
-        # The post created in setUp has no author
-        unauth_post = next(r for r in results if r["title"] == "News")
-        self.assertIsNone(unauth_post["author"])
-
     def test_snippet_endpoint(self):
         resp = self.client.get("/api/snippets/about/")
         self.assertEqual(resp.status_code, 200)

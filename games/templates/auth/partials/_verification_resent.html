@@ -1,0 +1,26 @@
+{# Confirmation after resending verification email #}
+
+<div class="text-center py-4">
+    {# Success icon #}
+    <span class="mdi mdi-email-fast text-6xl text-success mb-4 block"></span>
+
+    <h3 class="text-lg font-bold mb-2">Email Sent</h3>
+    <p class="text-sm text-base-content/70 mb-6">
+        If an account exists for <strong>{{ email }}</strong>,
+        we've sent a new verification link.
+    </p>
+
+    <p class="text-xs text-base-content/50 mb-6">
+        Please check your inbox and spam folder.
+    </p>
+
+    {# Return to login button #}
+    <button type="button"
+            class="btn btn-primary w-full"
+            hx-get="{% url 'auth-modal-login' %}"
+            hx-target="#auth-modal-content"
+            hx-swap="innerHTML">
+        <span class="mdi mdi-arrow-left"></span>
+        Return to Login
+    </button>
+</div>

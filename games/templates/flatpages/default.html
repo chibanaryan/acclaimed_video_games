@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load game_filters %}
+
+{% block title %}{{ flatpage.title }} | Acclaimed Video Games{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">{{ flatpage.title }}</h1>
+    <div class="prose prose-invert max-w-none">
+        {{ flatpage.content|markdown }}
+    </div>
+</div>
+{% endblock %}

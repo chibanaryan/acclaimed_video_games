@@ -20,7 +20,6 @@ from games.models import (
     Post,
     Publication,
     SiteMetadata,
-    Subscriber,
     WikipediaGenre,
 )
 
@@ -1288,56 +1287,6 @@ class ListListFacetedFilterTest(TestCase):
         self.assertEqual(pub_dict["Polygon"], 0)
 
 
-class PostListViewTest(TestCase):
-    """Test the post list view."""
-
-    def setUp(self):
-        # Create test posts
-        for i in range(10):
-            Post.objects.create(
-                title=f"Post {i}",
-                text=f"Content {i}",
-                active=True,
-            )
-
-    def test_post_list_loads(self):
-        """Test that post list page loads."""
-        response = self.client.get(reverse("post-list"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "posts/post_list.html")
-
-    def test_pagination(self):
-        """Test that pagination works (5 posts per page)."""
-        response = self.client.get(reverse("post-list"))
-        posts = list(response.context["posts"])
-        self.assertEqual(len(posts), 5)
-
-    def test_offset_parameter(self):
-        """Test that offset parameter works."""
-        response = self.client.get(reverse("post-list") + "?offset=5")
-        self.assertEqual(response.status_code, 200)
-        # Should return 5 posts (posts 5-9, since we created 10 total)
-        posts = response.context["posts"]
-        self.assertEqual(len(posts), 5)
-
-    def test_only_shows_active_posts(self):
-        """Test that only active posts are shown."""
-        # Create an inactive post
-        Post.objects.create(title="Inactive", text="Content", active=False)
-
-        response = self.client.get(reverse("post-list"))
-        posts = list(response.context["posts"])
-        # Should still only show 5 active posts (from the 10 we created)
-        self.assertEqual(len(posts), 5)
-        for post in posts:
-            self.assertTrue(post.active)
-
-    def test_invalid_offset_defaults_to_zero(self):
-        """Test that invalid offset parameter defaults to 0."""
-        response = self.client.get(reverse("post-list") + "?offset=invalid")
-        self.assertEqual(response.status_code, 200)
-
-
 class PageDetailViewTest(TestCase):
     """Test the page detail view."""
 
@@ -1525,7 +1474,6 @@ class SitemapViewTest(TestCase):
         self.assertIn("/rankings/", content)
         self.assertIn("/developers/", content)
         self.assertIn("/lists/", content)
-        self.assertIn("/posts/", content)
 
     def test_sitemap_contains_game_urls(self):
         """Test that sitemap contains game detail URLs."""
@@ -1588,11 +1536,16 @@ class AuthModalViewsTest(TestCase):
 
     def test_auth_modal_login_post_valid_credentials(self):
         """Test login with valid credentials returns HX-Redirect."""
+        from allauth.account.models import EmailAddress
         from django.contrib.auth import get_user_model
 
         User = get_user_model()
-        User.objects.create_user(
+        user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
+        )
+        # Create verified EmailAddress for the user
+        EmailAddress.objects.create(
+            user=user, email="test@example.com", verified=True, primary=True
         )
 
         response = self.client.post(
@@ -1639,7 +1592,7 @@ class AuthModalViewsTest(TestCase):
         self.assertIn('name="email"', content)
 
     def test_auth_modal_signup_post_valid_creates_user(self):
-        """Test signup with valid data creates user and returns HX-Redirect."""
+        """Test signup with valid data creates user and shows verification screen."""
         from django.contrib.auth import get_user_model
 
         User = get_user_model()
@@ -1653,8 +1606,11 @@ class AuthModalViewsTest(TestCase):
                 "password2": "SecurePass123!",
             },
         )
-        # Should return HX-Redirect header to redirect after signup
-        self.assertIn("HX-Redirect", response)
+        # With mandatory email verification, should show verification screen
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Check Your Email", content)
+        self.assertIn("newuser@example.com", content)
 
         # User should be created
         self.assertTrue(User.objects.filter(email="newuser@example.com").exists())
@@ -1671,17 +1627,18 @@ class AuthModalViewsTest(TestCase):
                 "password2": "SecurePass123!",
             },
         )
-        self.assertIn("HX-Redirect", response)
+        # With mandatory verification, shows verification screen (not redirect)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Check Your Email", response.content.decode("utf-8"))
 
         # Username should be the same as email
         User = get_user_model()
         user = User.objects.get(email="usernametest@example.com")
         self.assertEqual(user.username, "usernametest@example.com")
 
-    def test_auth_modal_signup_creates_user_profile(self):
-        """Test that signup creates UserProfile for new user."""
+    def test_auth_modal_signup_creates_user_with_profile_fields(self):
+        """Test that signup creates User with profile fields."""
         from django.contrib.auth import get_user_model
-        from games.models import UserProfile
 
         response = self.client.post(
             reverse("auth-modal-signup"),
@@ -1691,13 +1648,16 @@ class AuthModalViewsTest(TestCase):
                 "password2": "SecurePass123!",
             },
         )
-        self.assertIn("HX-Redirect", response)
+        # With mandatory verification, shows verification screen (not redirect)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Check Your Email", response.content.decode("utf-8"))
 
-        # User profile should be auto-created via signal
+        # User should have profile fields directly on the model
         User = get_user_model()
         user = User.objects.get(email="profileuser@example.com")
-        self.assertTrue(hasattr(user, "profile"))
-        self.assertIsInstance(user.profile, UserProfile)
+        self.assertTrue(hasattr(user, "username"))
+        self.assertTrue(hasattr(user, "email_subscribed"))
+        self.assertFalse(user.email_subscribed)  # Default False
 
     def test_auth_modal_signup_back_button(self):
         """Test that signup form has back button to options."""
@@ -1752,7 +1712,7 @@ class AuthModalViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
         self.assertIn("Edit Profile", content)
-        self.assertIn('name="display_name"', content)
+        self.assertIn('name="username"', content)
         self.assertIn('name="email_subscribed"', content)
 
     def test_auth_modal_profile_post_updates_profile(self):
@@ -1767,142 +1727,95 @@ class AuthModalViewsTest(TestCase):
 
         response = self.client.post(
             reverse("auth-modal-profile"),
-            {"display_name": "New Name", "email_subscribed": "on"},
+            {"username": "newusername", "email_subscribed": "on"},
         )
         self.assertEqual(response.status_code, 200)
         # Should trigger page refresh to show updated name
         self.assertEqual(response.get("HX-Refresh"), "true")
 
         # Verify profile was updated
-        user.profile.refresh_from_db()
-        self.assertEqual(user.profile.display_name, "New Name")
-        self.assertTrue(user.profile.email_subscribed)
+        user.refresh_from_db()
+        self.assertEqual(user.username, "newusername")
+        self.assertTrue(user.email_subscribed)
 
     def test_auth_modal_profile_post_unauthenticated_redirects(self):
         """Test that profile POST without auth returns HX-Redirect."""
         response = self.client.post(
             reverse("auth-modal-profile"),
-            {"display_name": "New Name"},
+            {"username": "newusername"},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get("HX-Redirect"), "/")
 
-    def test_auth_modal_profile_creates_subscriber_on_subscribe(self):
-        """Test that checking email_subscribed creates/updates Subscriber."""
+    def test_auth_modal_profile_subscribes_user(self):
+        """Test that checking email_subscribed updates User subscription fields."""
         from django.contrib.auth import get_user_model
 
         User = get_user_model()
-        User.objects.create_user(
+        user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
         )
         self.client.login(username="testuser", password="testpass123")
 
-        # No subscriber exists initially
-        self.assertFalse(Subscriber.objects.filter(email="test@example.com").exists())
+        # User starts unsubscribed
+        self.assertFalse(user.email_subscribed)
 
         # Subscribe via profile form
         response = self.client.post(
             reverse("auth-modal-profile"),
-            {"display_name": "Test", "email_subscribed": "on"},
+            {"username": "testuser", "email_subscribed": "on"},
         )
         self.assertEqual(response.status_code, 200)
 
-        # Subscriber should be created and confirmed
-        subscriber = Subscriber.objects.get(email="test@example.com")
-        self.assertTrue(subscriber.is_confirmed)
-        self.assertTrue(subscriber.is_active)
+        # User should now be subscribed (email already verified via allauth)
+        user.refresh_from_db()
+        self.assertTrue(user.email_subscribed)
+        self.assertIsNotNone(user.unsubscribe_token)
 
-    def test_auth_modal_profile_unsubscribes_existing_subscriber(self):
-        """Test that unchecking email_subscribed sets Subscriber.is_active=False."""
+    def test_auth_modal_profile_unsubscribes_user(self):
+        """Test that unchecking email_subscribed sets User.email_subscribed=False."""
         from django.contrib.auth import get_user_model
 
         User = get_user_model()
-        User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+        user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+            email_subscribed=True,
         )
         self.client.login(username="testuser", password="testpass123")
-
-        # Create an active subscriber
-        Subscriber.objects.create(
-            email="test@example.com", is_confirmed=True, is_active=True
-        )
 
         # Unsubscribe via profile form (checkbox not checked)
         response = self.client.post(
             reverse("auth-modal-profile"),
-            {"display_name": "Test"},  # No email_subscribed
+            {"username": "testuser"},  # No email_subscribed
         )
         self.assertEqual(response.status_code, 200)
 
-        # Subscriber should now be inactive
-        subscriber = Subscriber.objects.get(email="test@example.com")
-        self.assertFalse(subscriber.is_active)
+        # User should now be unsubscribed
+        user.refresh_from_db()
+        self.assertFalse(user.email_subscribed)
 
-    def test_auth_modal_profile_syncs_checkbox_from_subscriber(self):
-        """Test that profile GET syncs email_subscribed from Subscriber state."""
+    def test_auth_modal_profile_shows_subscription_checkbox_state(self):
+        """Test that profile GET shows correct subscription checkbox state."""
         from django.contrib.auth import get_user_model
 
         User = get_user_model()
-        user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+        User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+            email_subscribed=True,
         )
         self.client.login(username="testuser", password="testpass123")
 
-        # Profile starts with email_subscribed=False
-        self.assertFalse(user.profile.email_subscribed)
-
-        # Create an active, confirmed subscriber for this email
-        Subscriber.objects.create(
-            email="test@example.com", is_confirmed=True, is_active=True
-        )
-
-        # GET the profile form - should sync the checkbox state
+        # GET the profile form - checkbox should be checked
         response = self.client.get(reverse("auth-modal-profile"))
         self.assertEqual(response.status_code, 200)
-
-        # Profile should now be synced
-        user.profile.refresh_from_db()
-        self.assertTrue(user.profile.email_subscribed)
 
         # Checkbox should be checked in the form
         content = response.content.decode("utf-8")
         self.assertIn("checked", content)
-
-    def test_user_profile_created_with_subscriber_sync(self):
-        """Test that new UserProfile gets email_subscribed from existing Subscriber."""
-        from django.contrib.auth import get_user_model
-
-        # Create a confirmed subscriber first
-        Subscriber.objects.create(
-            email="subscriber@example.com", is_confirmed=True, is_active=True
-        )
-
-        # Create a user with the same email
-        User = get_user_model()
-        user = User.objects.create_user(
-            username="testuser", email="subscriber@example.com", password="testpass123"
-        )
-
-        # Profile should have email_subscribed=True from the signal
-        self.assertTrue(user.profile.email_subscribed)
-
-    def test_user_profile_not_synced_with_unconfirmed_subscriber(self):
-        """Test that UserProfile doesn't sync with unconfirmed Subscriber."""
-        from django.contrib.auth import get_user_model
-
-        # Create an unconfirmed subscriber
-        Subscriber.objects.create(
-            email="pending@example.com", is_confirmed=False, is_active=True
-        )
-
-        # Create a user with the same email
-        User = get_user_model()
-        user = User.objects.create_user(
-            username="testuser", email="pending@example.com", password="testpass123"
-        )
-
-        # Profile should have email_subscribed=False (unconfirmed subscriber)
-        self.assertFalse(user.profile.email_subscribed)
 
     def test_auth_modal_forgot_password_get_returns_200(self):
         """Test that forgot password form GET returns 200."""
@@ -1967,3 +1880,397 @@ class AuthModalViewsTest(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("Forgot password?", content)
         self.assertIn(reverse("auth-modal-forgot-password"), content)
+
+    def test_auth_modal_login_unverified_email_shows_message(self):
+        """Test that login with unverified email shows verification message."""
+        from allauth.account.models import EmailAddress
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="unverified@example.com",
+            email="unverified@example.com",
+            password="testpass123",
+        )
+        # Create EmailAddress record (unverified)
+        EmailAddress.objects.create(
+            user=user, email="unverified@example.com", verified=False, primary=True
+        )
+
+        response = self.client.post(
+            reverse("auth-modal-login"),
+            {"login": "unverified@example.com", "password": "testpass123"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Email Not Verified", content)
+        self.assertIn("unverified@example.com", content)
+        self.assertIn("Resend Verification Email", content)
+
+    def test_auth_modal_login_verified_email_logs_in(self):
+        """Test that login with verified email logs in successfully."""
+        from allauth.account.models import EmailAddress
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="verified@example.com",
+            email="verified@example.com",
+            password="testpass123",
+        )
+        # Create verified EmailAddress record
+        EmailAddress.objects.create(
+            user=user, email="verified@example.com", verified=True, primary=True
+        )
+
+        response = self.client.post(
+            reverse("auth-modal-login"),
+            {"login": "verified@example.com", "password": "testpass123"},
+        )
+        # Should return HX-Redirect header (successful login)
+        self.assertIn("HX-Redirect", response)
+
+    def test_auth_modal_resend_verification_post_returns_success(self):
+        """Test resend verification shows success message."""
+        from allauth.account.models import EmailAddress
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="resend@example.com",
+            email="resend@example.com",
+            password="testpass123",
+        )
+        EmailAddress.objects.create(
+            user=user, email="resend@example.com", verified=False, primary=True
+        )
+
+        response = self.client.post(
+            reverse("auth-modal-resend-verification"),
+            {"email": "resend@example.com"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Email Sent", content)
+        self.assertIn("resend@example.com", content)
+
+    def test_auth_modal_resend_verification_nonexistent_email_same_response(self):
+        """Test resend shows same message for nonexistent email."""
+        response = self.client.post(
+            reverse("auth-modal-resend-verification"),
+            {"email": "nonexistent@example.com"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # Should show same success message (prevents enumeration)
+        self.assertIn("Email Sent", content)
+
+    def test_verification_sent_template_has_resend_button(self):
+        """Test that verification sent screen has resend button."""
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "newuser2@example.com",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        content = response.content.decode("utf-8")
+        self.assertIn("Resend email", content)
+        self.assertIn(reverse("auth-modal-resend-verification"), content)
+
+    def test_signup_form_has_email_subscribed_checkbox(self):
+        """Test that signup form includes newsletter subscription checkbox."""
+        response = self.client.get(reverse("auth-modal-signup"))
+        content = response.content.decode("utf-8")
+        self.assertIn('name="email_subscribed"', content)
+        self.assertIn("Email me about news and updates", content)
+
+    def test_signup_with_email_subscribed_sets_subscription(self):
+        """Test that signup with checkbox checked sets email_subscribed."""
+        from django.contrib.auth import get_user_model
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "subscriber@example.com",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+                "email_subscribed": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+
+        User = get_user_model()
+        user = User.objects.get(email="subscriber@example.com")
+        self.assertTrue(user.email_subscribed)
+        self.assertIsNotNone(user.date_subscribed)
+        self.assertIsNotNone(user.unsubscribe_token)
+
+    def test_signup_without_email_subscribed_stays_unsubscribed(self):
+        """Test that signup without checkbox leaves email_subscribed False."""
+        from django.contrib.auth import get_user_model
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "nonsubscriber@example.com",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+                # No email_subscribed field
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+
+        User = get_user_model()
+        user = User.objects.get(email="nonsubscriber@example.com")
+        self.assertFalse(user.email_subscribed)
+
+    def test_signup_username_too_short(self):
+        """Test signup with username less than 3 characters shows error."""
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "short@example.com",
+                "username": "ab",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("at least 3 characters", content)
+
+    def test_signup_username_too_long(self):
+        """Test signup with username over 30 characters shows error."""
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "long@example.com",
+                "username": "a" * 31,
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("30 characters or fewer", content)
+
+    def test_signup_username_invalid_chars(self):
+        """Test signup with special characters in username shows error."""
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "invalid@example.com",
+                "username": "user@name!",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("letters, numbers, underscores", content)
+
+    def test_signup_username_already_taken(self):
+        """Test signup with existing username shows error."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="takenuser", email="taken@example.com", password="testpass123"
+        )
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "new@example.com",
+                "username": "takenuser",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("already taken", content)
+
+    def test_signup_existing_unverified_email_shows_resend(self):
+        """Test signup with existing unverified email shows resend option."""
+        from allauth.account.models import EmailAddress
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="existing@example.com",
+            email="existing@example.com",
+            password="testpass123",
+        )
+        EmailAddress.objects.create(
+            user=user, email="existing@example.com", verified=False, primary=True
+        )
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "existing@example.com",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Email Not Verified", content)
+        self.assertIn("Resend Verification Email", content)
+
+    def test_profile_username_too_short(self):
+        """Test profile edit with username less than 3 characters shows error."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="profileuser", email="profile@example.com", password="testpass123"
+        )
+        self.client.login(username="profileuser", password="testpass123")
+
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"username": "ab"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("at least 3 characters", content)
+
+    def test_profile_username_too_long(self):
+        """Test profile edit with username over 30 characters shows error."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="profileuser2",
+            email="profile2@example.com",
+            password="testpass123",
+        )
+        self.client.login(username="profileuser2", password="testpass123")
+
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"username": "a" * 31},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("30 characters or fewer", content)
+
+    def test_profile_username_invalid_chars(self):
+        """Test profile edit with special characters shows error."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="profileuser3",
+            email="profile3@example.com",
+            password="testpass123",
+        )
+        self.client.login(username="profileuser3", password="testpass123")
+
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"username": "bad@name!"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("letters, numbers, underscores", content)
+
+    def test_profile_username_already_taken(self):
+        """Test profile edit with taken username shows error."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="existingname",
+            email="existing2@example.com",
+            password="testpass123",
+        )
+        User.objects.create_user(
+            username="myuser", email="myuser@example.com", password="testpass123"
+        )
+        self.client.login(username="myuser", password="testpass123")
+
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"username": "existingname"},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("already taken", content)
+
+    def test_email_confirmation_invalid_key(self):
+        """Test email confirmation with invalid key shows error."""
+        response = self.client.get(
+            reverse("account_confirm_email", kwargs={"key": "invalid-key"})
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Invalid Verification Link", content)
+
+
+class HomeSubscribeViewTests(TestCase):
+    """Tests for the home page newsletter subscription for logged-in users."""
+
+    def test_home_subscribe_requires_authentication(self):
+        """Test that home subscribe redirects to home for anonymous users."""
+        response = self.client.post(reverse("home-subscribe"))
+        self.assertRedirects(response, reverse("home"))
+
+    def test_home_subscribe_subscribes_user(self):
+        """Test that home subscribe sets email_subscribed for logged-in user."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        # User starts unsubscribed
+        self.assertFalse(user.email_subscribed)
+
+        response = self.client.post(reverse("home-subscribe"))
+        self.assertRedirects(response, reverse("home"))
+
+        # User should now be subscribed
+        user.refresh_from_db()
+        self.assertTrue(user.email_subscribed)
+        self.assertIsNotNone(user.date_subscribed)
+        self.assertIsNotNone(user.unsubscribe_token)
+
+    def test_home_subscribe_already_subscribed_no_change(self):
+        """Test that home subscribe is idempotent for already subscribed users."""
+        from django.contrib.auth import get_user_model
+        from django.utils import timezone
+
+        User = get_user_model()
+        original_date = timezone.now()
+        user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+            email_subscribed=True,
+            date_subscribed=original_date,
+        )
+        user.generate_unsubscribe_token()
+        user.save()
+        original_token = user.unsubscribe_token
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(reverse("home-subscribe"))
+        self.assertRedirects(response, reverse("home"))
+
+        # Date and token should be unchanged
+        user.refresh_from_db()
+        self.assertTrue(user.email_subscribed)
+        self.assertEqual(user.unsubscribe_token, original_token)
+
+    def test_home_page_shows_signup_for_anonymous(self):
+        """Test that home page shows sign up button for anonymous users."""
+        response = self.client.get(reverse("home"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Sign Up for Updates", content)

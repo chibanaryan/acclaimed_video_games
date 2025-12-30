@@ -1,0 +1,38 @@
+{# Shown at login if email not verified #}
+
+<div class="text-center py-4">
+    {# Warning icon #}
+    <span class="mdi mdi-email-alert text-6xl text-warning mb-4 block"></span>
+
+    <h3 class="text-lg font-bold mb-2">Email Not Verified</h3>
+    <p class="text-sm text-base-content/70 mb-6">
+        Please verify <strong>{{ email }}</strong> before signing in.
+    </p>
+
+    <p class="text-xs text-base-content/50 mb-6">
+        Check your inbox for a verification link, or request a new one below.
+    </p>
+
+    {# Resend verification email button #}
+    <form hx-post="{% url 'auth-modal-resend-verification' %}"
+          hx-target="#auth-modal-content"
+          hx-swap="innerHTML"
+          class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ email }}">
+        <button type="submit" class="btn btn-primary w-full">
+            <span class="mdi mdi-email-sync"></span>
+            Resend Verification Email
+        </button>
+    </form>
+
+    {# Back to login button #}
+    <button type="button"
+            class="btn btn-ghost btn-sm"
+            hx-get="{% url 'auth-modal-login' %}"
+            hx-target="#auth-modal-content"
+            hx-swap="innerHTML">
+        <span class="mdi mdi-arrow-left"></span>
+        Back to Login
+    </button>
+</div>

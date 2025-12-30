@@ -4,6 +4,7 @@ from unittest import mock
 from django.test import TestCase
 
 from games import constants, models, utils
+from games.models import User
 
 
 class ImportDataRoutingTests(TestCase):
@@ -448,64 +449,32 @@ class GetOrSetCacheTests(TestCase):
         self.assertEqual(len(result2), 3)  # Still has 3 genres from cache
 
 
-class SendSubscriptionConfirmationEmailTests(TestCase):
-    """Test send_subscription_confirmation_email utility function."""
-
-    def test_sends_confirmation_email(self):
-        """Test sending confirmation email successfully."""
-        from django.core import mail
-
-        from games.models import Subscriber
-
-        subscriber = Subscriber.objects.create(
-            email="test@example.com",
-        )
-
-        result = utils.send_subscription_confirmation_email(subscriber)
-
-        self.assertTrue(result)
-        self.assertEqual(len(mail.outbox), 1)
-
-        email = mail.outbox[0]
-        self.assertIn("Confirm your subscription", email.subject)
-        self.assertIn("test@example.com", email.to)
-        self.assertIn(subscriber.confirmation_token, email.body)
-        self.assertIn("confirm", email.body)
-
-    def test_handles_exception(self):
-        """Test email sending with exception."""
-        from games.models import Subscriber
-
-        subscriber = Subscriber.objects.create(email="test@example.com")
-
-        with mock.patch("django.core.mail.send_mail", side_effect=Exception("Error")):
-            result = utils.send_subscription_confirmation_email(subscriber)
-            self.assertFalse(result)
-
-
 class SendPostNotificationEmailTests(TestCase):
     """Test send_post_notification_email utility function."""
 
     def test_sends_multipart_notification_email(self):
         """Test sending multipart notification email."""
-        from django.contrib.auth import get_user_model
         from django.core import mail
 
-        from games.models import Post, Subscriber
+        from games.models import Post, User
 
-        User = get_user_model()
-        user = User.objects.create_user(username="testuser", email="author@example.com")
+        author = User.objects.create_user(
+            username="testuser", email="author@example.com"
+        )
 
         post = Post.objects.create(
             title="Test Post",
             text="# Test\n\n[Link](https://example.com)",
-            author=user,
+            author=author,
         )
 
-        subscriber = Subscriber.objects.create(
+        subscriber = User.objects.create_user(
+            username="subscriber",
             email="subscriber@example.com",
-            is_confirmed=True,
+            email_subscribed=True,
         )
+        subscriber.generate_unsubscribe_token()
+        subscriber.save()
 
         result = utils.send_post_notification_email(post, subscriber)
 
@@ -527,16 +496,23 @@ class SendPostNotificationEmailTests(TestCase):
 
     def test_handles_exception(self):
         """Test notification sending with exception."""
-        from django.contrib.auth import get_user_model
+        from games.models import Post, User
 
-        from games.models import Post, Subscriber
+        author = User.objects.create_user(
+            username="testuser", email="author@example.com"
+        )
 
-        User = get_user_model()
-        user = User.objects.create_user(username="testuser", email="author@example.com")
+        post = Post.objects.create(
+            title="Test Post", text="Test content", author=author
+        )
 
-        post = Post.objects.create(title="Test Post", text="Test content", author=user)
-
-        subscriber = Subscriber.objects.create(email="test@example.com")
+        subscriber = User.objects.create_user(
+            username="subscriber",
+            email="test@example.com",
+            email_subscribed=True,
+        )
+        subscriber.generate_unsubscribe_token()
+        subscriber.save()
 
         with mock.patch(
             "django.core.mail.EmailMultiAlternatives.send",
@@ -549,43 +525,57 @@ class SendPostNotificationEmailTests(TestCase):
 class NotifySubscribersOfNewPostTests(TestCase):
     """Test notify_subscribers_of_new_post utility function."""
 
+    def _create_subscriber(self, email, verified=True, subscribed=True):
+        """Helper to create a subscriber user with EmailAddress verification."""
+        from allauth.account.models import EmailAddress
+
+        username = email.split("@")[0]
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            email_subscribed=subscribed,
+        )
+        user.generate_unsubscribe_token()
+        user.save()
+
+        # Create EmailAddress record with verification status
+        EmailAddress.objects.create(
+            user=user,
+            email=email,
+            verified=verified,
+            primary=True,
+        )
+        return user
+
     def test_notifies_confirmed_active_subscribers(self):
         """Test batch notification to confirmed subscribers."""
-        from django.contrib.auth import get_user_model
         from django.core import mail
 
-        from games.models import Post, Subscriber
+        from games.models import Post, User
 
-        User = get_user_model()
-        user = User.objects.create_user(username="testuser", email="author@example.com")
+        author = User.objects.create_user(
+            username="testuser", email="author@example.com"
+        )
 
-        post = Post.objects.create(title="Test Post", text="Test content", author=user)
+        post = Post.objects.create(
+            title="Test Post", text="Test content", author=author
+        )
 
         # Create confirmed subscribers
-        Subscriber.objects.create(
-            email="confirmed1@example.com",
-            is_confirmed=True,
-            is_active=True,
+        self._create_subscriber(
+            "confirmed1@example.com", verified=True, subscribed=True
         )
-        Subscriber.objects.create(
-            email="confirmed2@example.com",
-            is_confirmed=True,
-            is_active=True,
+        self._create_subscriber(
+            "confirmed2@example.com", verified=True, subscribed=True
         )
 
         # Create unconfirmed subscriber (should not receive email)
-        Subscriber.objects.create(
-            email="unconfirmed@example.com",
-            is_confirmed=False,
-            is_active=True,
+        self._create_subscriber(
+            "unconfirmed@example.com", verified=False, subscribed=True
         )
 
-        # Create inactive subscriber (should not receive email)
-        Subscriber.objects.create(
-            email="inactive@example.com",
-            is_confirmed=True,
-            is_active=False,
-        )
+        # Create unsubscribed user (should not receive email)
+        self._create_subscriber("inactive@example.com", verified=True, subscribed=False)
 
         sent_count = utils.notify_subscribers_of_new_post(post)
 
@@ -600,24 +590,21 @@ class NotifySubscribersOfNewPostTests(TestCase):
 
     def test_handles_individual_failures(self):
         """Test that individual email failures don't stop batch."""
-        from django.contrib.auth import get_user_model
+        from games.models import Post, User
 
-        from games.models import Post, Subscriber
-
-        User = get_user_model()
-        user = User.objects.create_user(username="testuser", email="author@example.com")
-
-        post = Post.objects.create(title="Test Post", text="Test content", author=user)
-
-        Subscriber.objects.create(
-            email="subscriber1@example.com",
-            is_confirmed=True,
-            is_active=True,
+        author = User.objects.create_user(
+            username="testuser", email="author@example.com"
         )
-        Subscriber.objects.create(
-            email="subscriber2@example.com",
-            is_confirmed=True,
-            is_active=True,
+
+        post = Post.objects.create(
+            title="Test Post", text="Test content", author=author
+        )
+
+        self._create_subscriber(
+            "subscriber1@example.com", verified=True, subscribed=True
+        )
+        self._create_subscriber(
+            "subscriber2@example.com", verified=True, subscribed=True
         )
 
         # Mock to fail on first, succeed on second

@@ -1,6 +1,6 @@
 {# User authentication dropdown/sign-in button #}
 {% if user.is_authenticated %}
-{% with display_name=user.profile.name|default:user.email|default:"User" %}
+{% with display_name=user.name|default:user.email|default:"User" %}
 <div class="dropdown dropdown-top w-full" x-data="{ open: false }">
     <button @click="open = !open" class="btn btn-ghost w-full justify-start gap-2 px-3">
         <span class="mdi mdi-account-circle text-xl"></span>

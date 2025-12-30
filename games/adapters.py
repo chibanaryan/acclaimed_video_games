@@ -9,8 +9,9 @@ class ModalAccountAdapter(DefaultAccountAdapter):
     """
 
     def populate_username(self, request, user):
-        """Set username to be the same as email."""
-        user.username = user.email
+        """Set username from form input, or default to email if not provided."""
+        custom_username = request.POST.get("username", "").strip() if request else ""
+        user.username = custom_username if custom_username else user.email
 
     def get_login_redirect_url(self, request):
         """Return modal-friendly redirect for HTMX requests."""

@@ -33,7 +33,6 @@ urlpatterns = [
         views.PublicationDetailView.as_view(),
         name="publication-detail",
     ),
-    path("posts/", views.PostListView.as_view(), name="post-list"),
     path(
         "snippets/<slug:slug>/",
         views.SnippetDetailView.as_view(),

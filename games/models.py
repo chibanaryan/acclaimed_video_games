@@ -1,9 +1,11 @@
 import logging
+import secrets
 from functools import cached_property
 from typing import Any, Dict, Optional
 
 import markdown
-from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.text import Truncator, slugify
 from unidecode import unidecode
@@ -11,6 +13,62 @@ from unidecode import unidecode
 from . import constants, igdb
 
 logger = logging.getLogger(__name__)
+
+
+class User(AbstractUser):
+    """
+    Custom user model consolidating UserProfile and Subscriber functionality.
+
+    This model extends Django's AbstractUser to include:
+    - Newsletter subscription fields (email_subscribed, unsubscribe_token, etc.)
+
+    Email verification is handled by allauth's EmailAddress model.
+    Check EmailAddress.verified to determine if a user's email is verified.
+
+    Users can be:
+    - Full accounts: Have a usable password, can log in
+    - Subscriber-only: Created from newsletter signup with unusable password,
+      can claim account later via password reset
+    """
+
+    # Newsletter subscription fields
+    email_subscribed = models.BooleanField(default=False)
+    unsubscribe_token = models.CharField(
+        max_length=64, unique=True, null=True, blank=True, db_index=True
+    )
+    date_subscribed = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        swappable = "AUTH_USER_MODEL"
+
+    @property
+    def name(self) -> str:
+        """Return username or email prefix for display purposes."""
+        if self.username:
+            return self.username
+        if self.email:
+            return self.email.split("@")[0]
+        return "User"
+
+    @property
+    def email_verified(self) -> bool:
+        """Check if user's email is verified via allauth EmailAddress."""
+        from allauth.account.models import EmailAddress
+
+        return EmailAddress.objects.filter(
+            user=self, email__iexact=self.email, verified=True
+        ).exists()
+
+    def generate_unsubscribe_token(self) -> None:
+        """Generate unsubscribe token for newsletter."""
+        if not self.unsubscribe_token:
+            self.unsubscribe_token = secrets.token_urlsafe(32)
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Generate unsubscribe token if subscribing for first time."""
+        if self.email_subscribed and not self.unsubscribe_token:
+            self.generate_unsubscribe_token()
+        super().save(*args, **kwargs)
 
 
 class Snippet(models.Model):
@@ -1387,7 +1445,7 @@ class Post(models.Model):
         ),
     )
     author = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -1407,65 +1465,3 @@ class Post(models.Model):
     def text_rendered(self) -> str:
         """Render the markdown text as HTML (cached)."""
         return markdown.markdown(self.text)
-
-
-class Subscriber(models.Model):
-    """
-    Newsletter subscriber for post notifications with double opt-in.
-    """
-
-    email = models.EmailField(unique=True, db_index=True)
-    date_subscribed = models.DateTimeField(auto_now_add=True)
-    is_confirmed = models.BooleanField(default=False, db_index=True)
-    is_active = models.BooleanField(default=True, db_index=True)
-    confirmation_token = models.CharField(max_length=64, unique=True, db_index=True)
-    unsubscribe_token = models.CharField(max_length=64, unique=True, db_index=True)
-
-    class Meta:
-        ordering = ["-date_subscribed"]
-        indexes = [
-            models.Index(fields=["is_confirmed", "is_active"]),
-        ]
-
-    def __str__(self) -> str:
-        status = "confirmed" if self.is_confirmed else "pending"
-        active_status = "" if self.is_active else " (unsubscribed)"
-        return f"{self.email} ({status}){active_status}"
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """Generate tokens on first save if not already set."""
-        if not self.confirmation_token:
-            import secrets
-
-            self.confirmation_token = secrets.token_urlsafe(32)
-        if not self.unsubscribe_token:
-            import secrets
-
-            self.unsubscribe_token = secrets.token_urlsafe(32)
-        super().save(*args, **kwargs)
-
-
-class UserProfile(models.Model):
-    """Extended user profile with preferences."""
-
-    user = models.OneToOneField(
-        get_user_model(),
-        on_delete=models.CASCADE,
-        related_name="profile",
-    )
-    display_name = models.CharField(max_length=50, blank=True)
-    email_subscribed = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Profile for {self.user.email}"
-
-    @property
-    def name(self):
-        """Return display name or email prefix."""
-        if self.display_name:
-            return self.display_name
-        if self.user.email:
-            return self.user.email.split("@")[0]
-        return "User"

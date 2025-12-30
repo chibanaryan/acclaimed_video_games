@@ -67,12 +67,6 @@
                         Source Lists
                     </a>
                 </li>
-                <li>
-                    <a href="{% url 'post-list' %}" class="{% if request.resolver_match.url_name == 'post-list' %}active{% endif %}">
-                        <span class="mdi mdi-newspaper text-xl"></span>
-                        News
-                    </a>
-                </li>
             </ul>
         </nav>
 
@@ -201,6 +195,18 @@
                     Donate
                 </a>
             </li>
+            <li>
+                <a href="/terms/">
+                    <span class="mdi mdi-scale-balance text-xl"></span>
+                    Terms
+                </a>
+            </li>
+            <li>
+                <a href="/privacy/">
+                    <span class="mdi mdi-shield-lock text-xl"></span>
+                    Privacy
+                </a>
+            </li>
         </ul>
 
         {# Contact button #}
@@ -209,12 +215,10 @@
             Contact Us
         </button>
 
-        {# User auth - behind feature flag #}
-        {% if AUTH_MODAL_ENABLED %}
+        {# User auth #}
         <div class="mb-3">
             {% include 'includes/_user_dropdown.html' %}
         </div>
-        {% endif %}
 
         {# Theme toggle #}
         <div class="flex items-center justify-center px-3 py-2 mb-2 bg-base-200 rounded-lg">
