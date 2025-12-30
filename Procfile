@@ -1,2 +1,2 @@
 web: gunicorn acclaimedgames.wsgi
-# release: python manage.py migrate  # Temporarily disabled for custom User migration
+release: python manage.py migrate
