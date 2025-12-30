@@ -7,10 +7,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("games", "0061_migrate_users_data"),
-        (
-            "games",
-            "0059_alter_game_series_userprofile",
-        ),  # Merge branches - wait for UserProfile to be created
     ]
 
     operations = [

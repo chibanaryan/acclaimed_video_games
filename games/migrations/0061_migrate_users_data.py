@@ -139,10 +139,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("games", "0060_custom_user_model"),
-        (
-            "games",
-            "0059_alter_game_series_userprofile",
-        ),  # Need access to UserProfile and Subscriber
+        ("games", "0059_alter_game_series_userprofile"),  # Need Subscriber model
     ]
 
     operations = [

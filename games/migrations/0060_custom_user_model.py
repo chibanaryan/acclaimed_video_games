@@ -10,19 +10,19 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
-        (
-            "games",
-            "0031_add_year_rank_decade_rank_indexes",
-        ),  # Before any User-referencing migration
+        ("games", "0031_add_year_rank_decade_rank_indexes"),
     ]
 
-    # Ensure this runs before any migrations that reference the User model
+    # Ensure this runs before migrations that reference the User model.
+    # This is needed for fresh databases. For existing databases with these
+    # migrations already applied, run on production:
+    #   heroku run python manage.py migrate games 0060 --fake
     run_before = [
         ("account", "0001_initial"),
         ("admin", "0001_initial"),
         ("socialaccount", "0001_initial"),
-        ("games", "0032_post_author"),  # Uses swappable_dependency
-        ("games", "0059_alter_game_series_userprofile"),  # Uses swappable_dependency
+        ("games", "0032_post_author"),
+        ("games", "0059_alter_game_series_userprofile"),
     ]
 
     operations = [
