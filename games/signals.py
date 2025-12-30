@@ -8,16 +8,34 @@ from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from games.models import Post, UserProfile
+from games.models import Post, Subscriber, UserProfile
 
 logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=get_user_model())
 def create_user_profile(sender, instance, created, **kwargs):
-    """Create a UserProfile whenever a new User is created."""
+    """Create a UserProfile whenever a new User is created.
+
+    If the user's email matches an existing confirmed and active Subscriber,
+    auto-set email_subscribed=True to maintain their subscription preference.
+    """
     if created:
-        UserProfile.objects.create(user=instance)
+        email_subscribed = False
+        # Check if user's email is already a confirmed, active subscriber
+        if instance.email:
+            subscriber = Subscriber.objects.filter(
+                email__iexact=instance.email,
+                is_confirmed=True,
+                is_active=True,
+            ).first()
+            if subscriber:
+                email_subscribed = True
+                logger.info(
+                    f"Found existing subscriber for {instance.email}, "
+                    "setting email_subscribed=True"
+                )
+        UserProfile.objects.create(user=instance, email_subscribed=email_subscribed)
 
 
 @receiver(pre_save, sender=Post)

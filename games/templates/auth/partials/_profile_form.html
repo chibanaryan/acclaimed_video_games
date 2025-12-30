@@ -1,0 +1,61 @@
+{# Edit Profile Form - loaded via HTMX into auth modal #}
+<div>
+    <h3 class="text-lg font-bold mb-6">Edit Profile</h3>
+
+    <form hx-post="{% url 'auth-modal-profile' %}"
+          hx-target="#auth-modal-content"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+
+        {# Display Name #}
+        <div class="form-control w-full mb-4">
+            <label class="label py-1" for="id_display_name">
+                <span class="label-text">Display Name</span>
+            </label>
+            <input type="text"
+                   id="id_display_name"
+                   name="display_name"
+                   value="{{ profile.display_name }}"
+                   maxlength="50"
+                   placeholder="How should we call you?"
+                   class="input input-bordered input-sm w-full{% if form.display_name.errors %} input-error{% endif %}">
+            {% if form.display_name.errors %}
+            <p class="text-xs text-error mt-2">{{ form.display_name.errors.0 }}</p>
+            {% else %}
+            <p class="text-xs text-base-content/60 mt-2">Leave blank to use your email prefix</p>
+            {% endif %}
+        </div>
+
+        {# Email Subscription #}
+        <div class="form-control mb-6">
+            <label class="label cursor-pointer justify-start gap-3 pb-1">
+                <input type="checkbox"
+                       name="email_subscribed"
+                       {% if profile.email_subscribed %}checked{% endif %}
+                       class="checkbox checkbox-primary">
+                <span class="label-text">Subscribe to email updates</span>
+            </label>
+            <p class="text-xs text-base-content/60 pl-10">
+                Get notified about new features and important updates
+            </p>
+        </div>
+
+        {% if success %}
+        <div class="alert alert-success mb-4">
+            <span class="mdi mdi-check-circle"></span>
+            <span>Profile updated successfully!</span>
+        </div>
+        {% endif %}
+
+        <div class="flex gap-2">
+            <button type="submit" class="btn btn-primary flex-1">
+                Save Changes
+            </button>
+            <button type="button"
+                    onclick="document.getElementById('authModal').close()"
+                    class="btn btn-ghost">
+                Cancel
+            </button>
+        </div>
+    </form>
+</div>

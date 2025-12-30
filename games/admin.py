@@ -334,3 +334,21 @@ class SubscriberAdmin(admin.ModelAdmin):
         # Prevent manual addition of subscribers through admin
         # Subscribers should only be added via the public subscription form
         return False
+
+
+@admin.register(models.UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    """Admin interface for user profiles."""
+
+    list_display = [
+        "user",
+        "display_name",
+        "email_subscribed",
+        "created",
+        "modified",
+    ]
+    list_filter = ["email_subscribed", "created"]
+    search_fields = ["user__email", "user__username", "display_name"]
+    readonly_fields = ["created", "modified"]
+    raw_id_fields = ["user"]
+    ordering = ["-created"]

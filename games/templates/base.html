@@ -251,8 +251,13 @@
                     const trigger = e.target.closest('.auth-modal-trigger');
                     if (trigger) {
                         e.preventDefault();
-                        // Reset modal content to initial state via HTMX
-                        htmx.ajax('GET', '{% url "auth-modal-options" %}', {target: '#auth-modal-content', swap: 'innerHTML'});
+                        // Check for specific screen to load
+                        const screen = trigger.dataset.authScreen;
+                        let url = '{% url "auth-modal-options" %}';
+                        if (screen === 'profile') {
+                            url = '{% url "auth-modal-profile" %}';
+                        }
+                        htmx.ajax('GET', url, {target: '#auth-modal-content', swap: 'innerHTML'});
                         authModal.showModal();
 
                         // Close mobile menu if open

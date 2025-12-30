@@ -20,6 +20,7 @@ from games.models import (
     Post,
     Publication,
     SiteMetadata,
+    Subscriber,
     WikipediaGenre,
 )
 
@@ -1624,3 +1625,177 @@ class AuthModalViewsTest(TestCase):
         # User should be logged out
         response = self.client.get(reverse("home"))
         self.assertFalse(response.wsgi_request.user.is_authenticated)
+
+    def test_auth_modal_profile_unauthenticated_shows_options(self):
+        """Test that profile view redirects to options if not authenticated."""
+        response = self.client.get(reverse("auth-modal-profile"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # Should show options screen, not profile
+        self.assertIn("Continue with Email", content)
+
+    def test_auth_modal_profile_authenticated_shows_form(self):
+        """Test that profile view shows form when authenticated."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.get(reverse("auth-modal-profile"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Edit Profile", content)
+        self.assertIn('name="display_name"', content)
+        self.assertIn('name="email_subscribed"', content)
+
+    def test_auth_modal_profile_post_updates_profile(self):
+        """Test that profile form POST updates user profile."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"display_name": "New Name", "email_subscribed": "on"},
+        )
+        self.assertEqual(response.status_code, 200)
+        # Should trigger page refresh to show updated name
+        self.assertEqual(response.get("HX-Refresh"), "true")
+
+        # Verify profile was updated
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.display_name, "New Name")
+        self.assertTrue(user.profile.email_subscribed)
+
+    def test_auth_modal_profile_post_unauthenticated_redirects(self):
+        """Test that profile POST without auth returns HX-Redirect."""
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"display_name": "New Name"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get("HX-Redirect"), "/")
+
+    def test_auth_modal_profile_creates_subscriber_on_subscribe(self):
+        """Test that checking email_subscribed creates/updates Subscriber."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        # No subscriber exists initially
+        self.assertFalse(Subscriber.objects.filter(email="test@example.com").exists())
+
+        # Subscribe via profile form
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"display_name": "Test", "email_subscribed": "on"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Subscriber should be created and confirmed
+        subscriber = Subscriber.objects.get(email="test@example.com")
+        self.assertTrue(subscriber.is_confirmed)
+        self.assertTrue(subscriber.is_active)
+
+    def test_auth_modal_profile_unsubscribes_existing_subscriber(self):
+        """Test that unchecking email_subscribed sets Subscriber.is_active=False."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create an active subscriber
+        Subscriber.objects.create(
+            email="test@example.com", is_confirmed=True, is_active=True
+        )
+
+        # Unsubscribe via profile form (checkbox not checked)
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"display_name": "Test"},  # No email_subscribed
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Subscriber should now be inactive
+        subscriber = Subscriber.objects.get(email="test@example.com")
+        self.assertFalse(subscriber.is_active)
+
+    def test_auth_modal_profile_syncs_checkbox_from_subscriber(self):
+        """Test that profile GET syncs email_subscribed from Subscriber state."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        # Profile starts with email_subscribed=False
+        self.assertFalse(user.profile.email_subscribed)
+
+        # Create an active, confirmed subscriber for this email
+        Subscriber.objects.create(
+            email="test@example.com", is_confirmed=True, is_active=True
+        )
+
+        # GET the profile form - should sync the checkbox state
+        response = self.client.get(reverse("auth-modal-profile"))
+        self.assertEqual(response.status_code, 200)
+
+        # Profile should now be synced
+        user.profile.refresh_from_db()
+        self.assertTrue(user.profile.email_subscribed)
+
+        # Checkbox should be checked in the form
+        content = response.content.decode("utf-8")
+        self.assertIn("checked", content)
+
+    def test_user_profile_created_with_subscriber_sync(self):
+        """Test that new UserProfile gets email_subscribed from existing Subscriber."""
+        from django.contrib.auth import get_user_model
+
+        # Create a confirmed subscriber first
+        Subscriber.objects.create(
+            email="subscriber@example.com", is_confirmed=True, is_active=True
+        )
+
+        # Create a user with the same email
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="testuser", email="subscriber@example.com", password="testpass123"
+        )
+
+        # Profile should have email_subscribed=True from the signal
+        self.assertTrue(user.profile.email_subscribed)
+
+    def test_user_profile_not_synced_with_unconfirmed_subscriber(self):
+        """Test that UserProfile doesn't sync with unconfirmed Subscriber."""
+        from django.contrib.auth import get_user_model
+
+        # Create an unconfirmed subscriber
+        Subscriber.objects.create(
+            email="pending@example.com", is_confirmed=False, is_active=True
+        )
+
+        # Create a user with the same email
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="testuser", email="pending@example.com", password="testpass123"
+        )
+
+        # Profile should have email_subscribed=False (unconfirmed subscriber)
+        self.assertFalse(user.profile.email_subscribed)

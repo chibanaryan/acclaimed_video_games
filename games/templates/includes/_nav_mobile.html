@@ -186,6 +186,35 @@
                     </a>
                 </li>
                 <li class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'donate' %}menu-active{% endif %}"><a href="{% url 'page-detail' slug='donate' %}">Donate</a></li>
+                {# Auth section - behind feature flag #}
+                {% if AUTH_MODAL_ENABLED %}
+                <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Account</li>
+                {% if user.is_authenticated %}
+                {% with display_name=user.profile.name|default:user.email|default:"User" %}
+                <li>
+                    <a href="#" class="auth-modal-trigger" data-auth-screen="profile">
+                        <span class="mdi mdi-account-circle"></span>
+                        {{ display_name }}
+                    </a>
+                </li>
+                <li>
+                    <form action="{% url 'auth-logout' %}" method="post" class="w-full">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left">
+                            Sign Out
+                        </button>
+                    </form>
+                </li>
+                {% endwith %}
+                {% else %}
+                <li>
+                    <a href="#" class="auth-modal-trigger">
+                        <span class="mdi mdi-login"></span>
+                        Sign In
+                    </a>
+                </li>
+                {% endif %}
+                {% endif %}
                 <li>
                     <label class="flex cursor-pointer gap-2 items-center justify-center" for="theme-toggle-mobile" @click.stop>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

@@ -12,6 +12,8 @@
 - Auth modal: login redirects to previous page, logout via POST with immediate redirect
 - Sidebar auth section: shows Sign In button (logged out) or user email + logout (logged in), behind feature flag
 - Added MDI icons: arrow-left, login, logout, account-circle
+- Auth modal Phase 5: user dropdown in sidebar/mobile, Edit Profile form with display name and email subscription
+- Subscriber sync: profile checkbox syncs with Subscriber model, new users inherit existing subscription state
 
 ## 2025-12-29
 

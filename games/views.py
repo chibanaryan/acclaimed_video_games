@@ -1974,6 +1974,11 @@ class AuthModalOptionsView(TemplateView):
 
     template_name = "auth/partials/_auth_options.html"
 
+    def render_to_response(self, context, **response_kwargs):
+        response = super().render_to_response(context, **response_kwargs)
+        response["HX-Push-Url"] = "false"
+        return response
+
 
 class AuthModalLoginView(View):
     """Handle email login form in the auth modal (HTMX partial)."""
@@ -1984,7 +1989,9 @@ class AuthModalLoginView(View):
         from allauth.account.forms import LoginForm
 
         form = LoginForm(request=request)
-        return TemplateResponse(request, self.template_name, {"form": form})
+        response = TemplateResponse(request, self.template_name, {"form": form})
+        response["HX-Push-Url"] = "false"
+        return response
 
     def post(self, request):
         from allauth.account.forms import LoginForm
@@ -2008,7 +2015,77 @@ class AuthModalLoginView(View):
             return response
 
         # Re-render form with errors
-        return TemplateResponse(request, self.template_name, {"form": form})
+        response = TemplateResponse(request, self.template_name, {"form": form})
+        response["HX-Push-Url"] = "false"
+        return response
+
+
+class AuthModalProfileView(View):
+    """Handle profile editing form in the auth modal (HTMX partial)."""
+
+    template_name = "auth/partials/_profile_form.html"
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            # Return to options if not logged in
+            response = TemplateResponse(request, "auth/partials/_auth_options.html", {})
+            response["HX-Push-Url"] = "false"
+            return response
+
+        profile = request.user.profile
+        # Sync profile.email_subscribed with actual Subscriber state
+        if request.user.email:
+            is_subscribed = models.Subscriber.objects.filter(
+                email__iexact=request.user.email,
+                is_confirmed=True,
+                is_active=True,
+            ).exists()
+            if profile.email_subscribed != is_subscribed:
+                profile.email_subscribed = is_subscribed
+                profile.save(update_fields=["email_subscribed"])
+
+        response = TemplateResponse(
+            request,
+            self.template_name,
+            {"profile": profile, "form": {}},
+        )
+        response["HX-Push-Url"] = "false"
+        return response
+
+    def post(self, request):
+        if not request.user.is_authenticated:
+            response = HttpResponse()
+            response["HX-Redirect"] = "/"
+            return response
+
+        profile = request.user.profile
+        profile.display_name = request.POST.get("display_name", "").strip()[:50]
+        email_subscribed = request.POST.get("email_subscribed") == "on"
+        profile.email_subscribed = email_subscribed
+        profile.save()
+
+        # Sync with Subscriber model
+        if request.user.email:
+            if email_subscribed:
+                # Create or update subscriber - confirmed since user is logged in
+                subscriber, created = models.Subscriber.objects.get_or_create(
+                    email__iexact=request.user.email,
+                    defaults={"email": request.user.email},
+                )
+                if not subscriber.is_confirmed or not subscriber.is_active:
+                    subscriber.is_confirmed = True
+                    subscriber.is_active = True
+                    subscriber.save()
+            else:
+                # Unsubscribe if subscriber exists
+                models.Subscriber.objects.filter(
+                    email__iexact=request.user.email
+                ).update(is_active=False)
+
+        # Refresh page to show updated name in sidebar
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response
 
 
 class AuthLogoutView(View):

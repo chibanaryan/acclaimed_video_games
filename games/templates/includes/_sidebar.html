@@ -209,25 +209,11 @@
             Contact Us
         </button>
 
-        {# Auth section - behind feature flag #}
+        {# User auth - behind feature flag #}
         {% if AUTH_MODAL_ENABLED %}
-            {% if user.is_authenticated %}
-            <div class="flex items-center gap-2 px-3 py-2 mb-3 bg-base-200 rounded-lg">
-                <span class="mdi mdi-account-circle text-xl"></span>
-                <span class="flex-1 truncate text-sm">{{ user.email }}</span>
-                <form action="{% url 'auth-logout' %}" method="post" class="inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-ghost btn-xs" title="Sign out">
-                        <span class="mdi mdi-logout"></span>
-                    </button>
-                </form>
-            </div>
-            {% else %}
-            <button class="btn btn-outline w-full mb-3 auth-modal-trigger">
-                <span class="mdi mdi-login"></span>
-                Sign In
-            </button>
-            {% endif %}
+        <div class="mb-3">
+            {% include 'includes/_user_dropdown.html' %}
+        </div>
         {% endif %}
 
         {# Theme toggle #}

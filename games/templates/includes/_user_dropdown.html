@@ -1,0 +1,41 @@
+{# User authentication dropdown/sign-in button #}
+{% if user.is_authenticated %}
+{% with display_name=user.profile.name|default:user.email|default:"User" %}
+<div class="dropdown dropdown-top w-full" x-data="{ open: false }">
+    <button @click="open = !open" class="btn btn-ghost w-full justify-start gap-2 px-3">
+        <span class="mdi mdi-account-circle text-xl"></span>
+        <span class="truncate flex-1 text-left">{{ display_name }}</span>
+        <span class="mdi mdi-chevron-up transition-transform" :class="{ 'rotate-180': open }"></span>
+    </button>
+    <ul x-show="open" @click.away="open = false" x-cloak
+        x-transition:enter="transition ease-out duration-100"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="dropdown-content menu bg-base-300 rounded-box w-full p-2 shadow-lg z-50 mb-2">
+        <li>
+            <button class="auth-modal-trigger" data-auth-screen="profile" @click="open = false">
+                <span class="mdi mdi-account-circle"></span>
+                Edit Profile
+            </button>
+        </li>
+        <li>
+            <form action="{% url 'auth-logout' %}" method="post" class="w-full">
+                {% csrf_token %}
+                <button type="submit" class="w-full flex items-center gap-2 text-left">
+                    <span class="mdi mdi-logout"></span>
+                    Sign Out
+                </button>
+            </form>
+        </li>
+    </ul>
+</div>
+{% endwith %}
+{% else %}
+<button class="btn btn-primary w-full auth-modal-trigger">
+    <span class="mdi mdi-login"></span>
+    Sign In
+</button>
+{% endif %}

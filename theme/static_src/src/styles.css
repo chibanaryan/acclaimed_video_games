@@ -812,6 +812,14 @@
    ============================================================================= */
 
 @layer components {
+  /* DaisyUI v5 menu doesn't set cursor:pointer by default, only on :focus-visible.
+     This fixes cursor for all menu items in sidebar and mobile navbar. */
+  .menu li > a,
+  .menu li > button,
+  .menu li > label {
+    cursor: pointer;
+  }
+
   /* Active nav item styling for sidebar menu */
   aside .menu li a.active,
   aside .menu li > a.active {
