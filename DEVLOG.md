@@ -28,6 +28,10 @@
 - Add played games filter: three-way toggle (All/Played/Unplayed) in rankings page search section
 - Played filter updates faceted counts (genres, platforms, year heatmap) dynamically
 - Played filter: URL parameter support (?played=yes/no), page title suffix, client-side filtering
+- Reorder navigation: Home → Search → Login → Developers → Lists (consistent across sidebar and mobile)
+- Mobile nav priority system: more items show outside hamburger when space permits (About, Contact, Donate)
+- Move login/account to primary nav area, add logout button to Account modal
+- Remove News and Legal from navigation (link Legal from About page instead)
 - Unify game row templates: split into desktop/mobile partials with data-slot attributes for JS template cloning
 - Played button: hide star for unauthenticated users (no empty space), show only when logged in
 - CSV download: support series/played filters, show Played column (Yes/No) for authenticated users

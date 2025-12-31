@@ -136,12 +136,39 @@
                 </div>
             </div>
 
+            {# Login/User button #}
+            {% if user.is_authenticated %}
+            {% with display_name=user.name|default:user.email|default:'Account' %}
+            <button type="button" class="btn btn-ghost btn-sm shrink-0 nav-item auth-modal-trigger" data-nav-item="login" data-menu-label="{{ display_name }}" data-auth-screen="profile">
+                <span class="mdi mdi-account-circle text-xl"></span>
+                {{ display_name }}
+            </button>
+            {% endwith %}
+            {% else %}
+            <button type="button" class="btn btn-ghost btn-sm shrink-0 nav-item auth-modal-trigger" data-nav-item="login" data-menu-label="Login">
+                <span class="mdi mdi-login text-xl"></span>
+                Login
+            </button>
+            {% endif %}
+
             <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'developers-list' %} btn-active{% endif %}" data-nav-item="devs" data-menu-label="Developers">
                 Devs
             </a>
 
             <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'list-list' %} btn-active{% endif %}" data-nav-item="lists" data-menu-label="Source Lists">
                 Lists
+            </a>
+
+            <a href="{% url 'page-detail' slug='about' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'about' %} btn-active{% endif %}" data-nav-item="about" data-menu-label="About">
+                About
+            </a>
+
+            <button type="button" class="btn btn-ghost btn-sm shrink-0 nav-item contact-modal-trigger" data-nav-item="contact" data-menu-label="Contact Us">
+                Contact
+            </button>
+
+            <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'donate' %} btn-active{% endif %}" data-nav-item="donate" data-menu-label="Donate">
+                Donate
             </a>
         </div>
     </div>
@@ -167,46 +194,10 @@
                 {# Overflow nav items - shown when they don't fit in the navbar #}
                 <template x-for="item in overflowItems" :key="item.id">
                     <li x-show="item.hidden" :class="{ 'menu-active': item.active }">
-                        <a :href="item.href" x-text="item.label"></a>
+                        <a :href="item.href || '#'" :class="{ 'contact-modal-trigger': item.isContactModal, 'auth-modal-trigger': item.isAuthModal }" :data-auth-screen="item.authScreen" x-text="item.label"></a>
                     </li>
                 </template>
-                {# Static menu items #}
-                <li class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'about' %}menu-active{% endif %}"><a href="{% url 'page-detail' slug='about' %}">About</a></li>
-                <li>
-                    <a href="#" class="contact-modal-trigger">
-                        Contact Us
-                    </a>
-                </li>
-                <li class="{% if request.resolver_match.url_name == 'news-list' %}menu-active{% endif %}"><a href="{% url 'news-list' %}">News</a></li>
-                <li class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'donate' %}menu-active{% endif %}"><a href="{% url 'page-detail' slug='donate' %}">Donate</a></li>
-                <li><a href="/legal/">Legal</a></li>
-                {# Auth section #}
-                <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Account</li>
-                {% if user.is_authenticated %}
-                {% with display_name=user.name|default:user.email|default:"User" %}
-                <li>
-                    <a href="#" class="auth-modal-trigger" data-auth-screen="profile">
-                        <span class="mdi mdi-account-circle"></span>
-                        {{ display_name }}
-                    </a>
-                </li>
-                <li>
-                    <button type="button" @click.stop="document.getElementById('logout-form-mobile').submit()">
-                        Logout
-                    </button>
-                </li>
-                <form id="logout-form-mobile" action="{% url 'auth-logout' %}" method="post" class="hidden">
-                    {% csrf_token %}
-                </form>
-                {% endwith %}
-                {% else %}
-                <li>
-                    <a href="#" class="auth-modal-trigger">
-                        <span class="mdi mdi-login"></span>
-                        Login
-                    </a>
-                </li>
-                {% endif %}
+                {# Theme and social links #}
                 <li>
                     <label class="flex cursor-pointer gap-2 items-center justify-center" for="theme-toggle-mobile" @click.stop>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -314,11 +305,14 @@ function priorityNav() {
             const items = this.$refs.navItems.querySelectorAll('[data-menu-label]');
             this.overflowItems = Array.from(items).map(el => ({
                 id: el.dataset.navItem,
-                href: el.href,
+                href: el.href || null,
                 label: el.dataset.menuLabel,
                 active: el.classList.contains('btn-active'),
                 hidden: false,
-                element: el
+                element: el,
+                isContactModal: el.classList.contains('contact-modal-trigger'),
+                isAuthModal: el.classList.contains('auth-modal-trigger'),
+                authScreen: el.dataset.authScreen || null
             }));
         },
 

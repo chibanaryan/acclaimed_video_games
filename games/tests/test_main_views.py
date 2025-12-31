@@ -1933,7 +1933,7 @@ class AuthModalViewsTest(TestCase):
         response = self.client.get(reverse("auth-modal-profile"))
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
-        self.assertIn("Edit Profile", content)
+        self.assertIn("Account", content)
         self.assertIn('name="username"', content)
         self.assertIn('name="email_subscribed"', content)
         # Should show played games count

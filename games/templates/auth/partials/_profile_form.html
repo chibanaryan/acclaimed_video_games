@@ -1,7 +1,7 @@
-{# Edit Profile Form - loaded via HTMX into auth modal #}
+{# Account/Profile Form - loaded via HTMX into auth modal #}
 {% load static %}
 <div>
-    <h3 class="text-lg font-bold mb-6">Edit Profile</h3>
+    <h3 class="text-lg font-bold mb-6">Account</h3>
 
     <form hx-post="{% url 'auth-modal-profile' %}"
           hx-target="#auth-modal-content"
@@ -79,5 +79,15 @@
                 Cancel
             </button>
         </div>
+    </form>
+
+    {# Logout section #}
+    <div class="divider my-4"></div>
+    <form action="{% url 'auth-logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline btn-error w-full">
+            <span class="mdi mdi-logout"></span>
+            Logout
+        </button>
     </form>
 </div>
