@@ -2,6 +2,7 @@
 
 ## 2025-12-31
 
+- Fix hierarchical filter drill-down: clicking child when parent selected shifts selection down, not toggle
 - Make rankings page the homepage (redirect /rankings/ and /games/ to /)
 - Add dedicated contact page at /contact/ with form fallback for modal errors
 - Add news page at /news/ for blog post listing

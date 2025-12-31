@@ -161,9 +161,48 @@
              return children.every(c => filters.genres.includes(String(c.id)));
          },
 
+         // Find the parent of a genre
+         findGenreParent(genreId) {
+             const genre = genres.find(g => String(g.id) === String(genreId));
+             if (!genre || !genre.parent_id) return null;
+             return genres.find(g => String(g.id) === String(genre.parent_id));
+         },
+
          // MULTI-SELECT: Toggle individual genre (add/remove from selection)
+         // Implements drill-down: clicking a child when parent/ancestor is fully selected
+         // switches to just the child instead of removing it
          toggleGenre(genreId) {
              const id = String(genreId);
+             const genre = genres.find(g => String(g.id) === id);
+
+             // Check if parent category is selected
+             if (genre && genre.parent_id) {
+                 const parentId = String(genre.parent_id);
+
+                 // If parent category is directly selected, drill down to just this genre
+                 if (filters.genres.includes(parentId)) {
+                     // Remove parent, add just this child
+                     filters.genres = filters.genres.filter(gid => gid !== parentId);
+                     if (!filters.genres.includes(id)) {
+                         filters.genres.push(id);
+                     }
+                     this.dispatchFilterChange();
+                     return;
+                 }
+
+                 // If all siblings are selected, drill down to just this genre
+                 if (this.allChildrenSelected(parentId)) {
+                     const siblingIds = this.getChildren(parentId).map(c => String(c.id));
+                     // Remove all siblings
+                     filters.genres = filters.genres.filter(gid => !siblingIds.includes(gid));
+                     // Add just this genre
+                     filters.genres.push(id);
+                     this.dispatchFilterChange();
+                     return;
+                 }
+             }
+
+             // Normal toggle behavior
              const idx = filters.genres.indexOf(id);
              if (idx > -1) {
                  // Already selected - remove it
@@ -176,6 +215,7 @@
          },
 
          // MULTI-SELECT: Toggle parent category selection (add/remove from selection)
+         // Implements exclusive selection: selecting parent removes all descendants
          toggleCategorySelection(categoryId) {
              const id = String(categoryId);
              // Preserve current expansion state before selection changes
@@ -187,7 +227,11 @@
                  // Already selected - remove it
                  filters.genres.splice(idx, 1);
              } else {
-                 // Not selected - add it
+                 // Not selected - add category and remove all descendants (exclusive selection)
+                 const descendantIds = this.getDescendantIds(categoryId);
+                 // Remove any selected descendants
+                 filters.genres = filters.genres.filter(gid => !descendantIds.includes(gid));
+                 // Add the category
                  filters.genres.push(id);
              }
              this.dispatchFilterChange();

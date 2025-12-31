@@ -346,8 +346,36 @@
          },
 
          // MULTI-SELECT: Toggle platform (add/remove from selection)
+         // Implements drill-down: clicking a child when parent is fully selected
+         // switches to just the child instead of removing it
          togglePlatform(platformId) {
              const id = String(platformId);
+             const parentInfo = this.findPlatformParent(platformId);
+
+             // Check if clicking a platform whose parent hierarchy is fully selected
+             if (parentInfo) {
+                 // If manufacturer is fully selected, drill down to just this platform
+                 if (this.isManufacturerSelected(parentInfo.mfrKey)) {
+                     const mfrPlatformIds = this.getAllPlatformIdsForManufacturer(parentInfo.mfrKey);
+                     // Remove all manufacturer platforms, keep others
+                     filters.platforms = filters.platforms.filter(pid => !mfrPlatformIds.includes(pid));
+                     // Add just this platform
+                     filters.platforms.push(id);
+                     return;
+                 }
+
+                 // If form factor is fully selected, drill down to just this platform
+                 if (parentInfo.ffKey && this._isFormFactorFullySelected(parentInfo.mfrKey, parentInfo.ffKey)) {
+                     const ffPlatformIds = this.getAllPlatformIdsForFormFactor(parentInfo.mfrKey, parentInfo.ffKey);
+                     // Remove all form factor platforms, keep others
+                     filters.platforms = filters.platforms.filter(pid => !ffPlatformIds.includes(pid));
+                     // Add just this platform
+                     filters.platforms.push(id);
+                     return;
+                 }
+             }
+
+             // Normal toggle behavior
              const idx = filters.platforms.indexOf(id);
              if (idx > -1) {
                  // Already selected - remove it
@@ -424,6 +452,8 @@
          },
 
          // MULTI-SELECT: Toggle form factor selection (add/remove all platforms)
+         // Implements drill-down: clicking a form factor when manufacturer is fully selected
+         // switches to just that form factor instead of toggling
          toggleFormFactorSelection(mfrKey, ffKey) {
              const key = mfrKey + '_' + ffKey;
              // Preserve current expansion state before selection changes
@@ -431,6 +461,17 @@
                  this.expandedFormFactors[key] = this.hasFormFactorSelection(mfrKey, ffKey);
              }
              const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
+
+             // If manufacturer is fully selected, drill down to just this form factor
+             if (this.isManufacturerSelected(mfrKey)) {
+                 const mfrPlatformIds = this.getAllPlatformIdsForManufacturer(mfrKey);
+                 // Remove all manufacturer platforms, keep others
+                 filters.platforms = filters.platforms.filter(id => !mfrPlatformIds.includes(id));
+                 // Add just this form factor's platforms
+                 filters.platforms = [...filters.platforms, ...platformIds];
+                 return;
+             }
+
              if (this._isFormFactorFullySelected(mfrKey, ffKey)) {
                  // All selected - remove all form factor's platforms
                  filters.platforms = filters.platforms.filter(id => !platformIds.includes(id));
