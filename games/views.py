@@ -1112,7 +1112,7 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.Developer
     template_name = "developers/developer_list.html"
     context_object_name = "developers"
-    paginate_by = 150
+    paginate_by = 100
     paginate_orphans = 0
     htmx_partial_template = "developers/includes/_developer_list_content.html"
 
@@ -1141,10 +1141,10 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         return super().get_template_names()
 
     def get_paginate_by(self, queryset):
-        # Disable Django's pagination when sorting by games (the default)
+        # Disable Django's pagination when sorting by games, studios, or rank
         # We'll handle pagination manually after calculating recursive counts
         sort = self.request.GET.get("sort", "games")
-        if sort == "games":
+        if sort in ("games", "studios", "rank"):
             return None
         return self.paginate_by
 
@@ -1165,10 +1165,10 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         if q:
             qs = qs.filter(name__icontains=q)
 
-        # Sort parameter - "games" sort (default) is handled in get_context_data
-        # because it requires recursive counting
+        # Sort parameter - "games" and "studios" sorts are handled in get_context_data
+        # because they require recursive counting
         sort = self.request.GET.get("sort", "games")
-        if sort != "games":
+        if sort == "name":
             qs = qs.order_by(Lower("name"))
 
         return qs
@@ -1196,18 +1196,62 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             if game_id is not None:
                 game_ids_by_dev[dev_id].append(game_id)
 
-        # Calculate recursive counts using unique game IDs
+        # Calculate recursive counts and store game IDs for top game lookup
         for dev in developers:
             unique_game_ids = self._collect_unique_game_ids(dev, game_ids_by_dev)
             dev.recursive_games_count = len(unique_game_ids)
+            dev._unique_game_ids = unique_game_ids  # Store for top game lookup
+            # Calculate recursive subsidiary count
+            dev.recursive_studios_count = len(dev.get_all_subsidiary_ids())
 
         # Filter out developers with no games (direct or through subsidiaries)
         developers = [d for d in developers if d.recursive_games_count > 0]
 
         # Handle pagination and sorting
-        if sort == "games":
-            # Sort by recursive game count (desc), then by name (asc) for ties
-            developers.sort(key=lambda d: (-d.recursive_games_count, d.name.lower()))
+        if sort in ("games", "studios", "rank"):
+            # For rank sorting, we need to calculate top_game for all developers first
+            if sort == "rank":
+                all_game_ids = set()
+                for dev in developers:
+                    all_game_ids.update(getattr(dev, "_unique_game_ids", set()))
+
+                if all_game_ids:
+                    games_by_id = {
+                        g.id: g
+                        for g in models.Game.objects.filter(id__in=all_game_ids)
+                        .select_related("primary_igdb_game_data")
+                        .only("id", "name", "slug", "rank", "primary_igdb_game_data")
+                    }
+                    for dev in developers:
+                        game_ids = getattr(dev, "_unique_game_ids", set())
+                        if game_ids:
+                            dev_games = [
+                                games_by_id[gid]
+                                for gid in game_ids
+                                if gid in games_by_id
+                            ]
+                            if dev_games:
+                                dev.top_game = min(
+                                    dev_games, key=lambda g: g.rank or 9999
+                                )
+
+            # Sort by recursive count (desc), then by name (asc) for ties
+            if sort == "games":
+                developers.sort(
+                    key=lambda d: (-d.recursive_games_count, d.name.lower())
+                )
+            elif sort == "studios":
+                developers.sort(
+                    key=lambda d: (-d.recursive_studios_count, d.name.lower())
+                )
+            else:  # rank
+                developers.sort(
+                    key=lambda d: (
+                        getattr(d, "top_game", None) is None,  # No game = last
+                        getattr(getattr(d, "top_game", None), "rank", 9999) or 9999,
+                        d.name.lower(),
+                    )
+                )
 
             # Manual pagination
             try:
@@ -1243,6 +1287,31 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
                 context["remaining_count"] = max(
                     0, page_obj.paginator.count - page_obj.end_index()
                 )
+
+        # Fetch top game for each developer on the current page
+        page_developers = context.get("developers", [])
+        all_game_ids = set()
+        for dev in page_developers:
+            all_game_ids.update(getattr(dev, "_unique_game_ids", set()))
+
+        if all_game_ids:
+            # Batch fetch all games with IGDB data for thumbnails
+            games_by_id = {
+                g.id: g
+                for g in models.Game.objects.filter(id__in=all_game_ids)
+                .select_related("primary_igdb_game_data")
+                .only("id", "name", "slug", "rank", "primary_igdb_game_data")
+            }
+
+            # Find best game (lowest rank) for each developer
+            for dev in page_developers:
+                game_ids = getattr(dev, "_unique_game_ids", set())
+                if game_ids:
+                    dev_games = [
+                        games_by_id[gid] for gid in game_ids if gid in games_by_id
+                    ]
+                    if dev_games:
+                        dev.top_game = min(dev_games, key=lambda g: g.rank or 9999)
 
         return context
 

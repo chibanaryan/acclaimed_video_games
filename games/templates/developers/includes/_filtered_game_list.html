@@ -47,7 +47,7 @@
              data-year="{{ game.year_of_release }}"
              data-rank="{{ game.rank }}"
              data-name="{{ game.name }}">
-            {% include 'games/includes/_game_row.html' with game=game show_rank='filtered' %}
+            {% include 'games/includes/_game_row.html' with game=game show_rank='alltime' hide_played_button=True %}
         </div>
         {% endfor %}
     </div>

@@ -7,10 +7,10 @@
      {% if game %}id="game-{{ game.id }}-mobile"{% endif %}
      data-slot="root"
      {% if game %}onclick="window.location.href='{% url 'game-detail' slug=game.slug %}'"{% endif %}
-     style="grid-template-columns: {% if user.is_authenticated or not game %}auto {% endif %}{% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}auto {% endif %}auto 1fr;">
+     style="grid-template-columns: {% if not hide_played_button and user.is_authenticated or not game %}auto {% endif %}{% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}auto {% endif %}auto 1fr;">
 
     {# Played button - only render container if authenticated (server) or for JS template cloning #}
-    {% if user.is_authenticated or not game %}
+    {% if not hide_played_button and user.is_authenticated or not game %}
     <div class="w-8 h-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center" data-slot="played-button">
         {% if game %}
             {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}

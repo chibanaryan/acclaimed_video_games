@@ -7,7 +7,7 @@
      {% if game %}id="game-{{ game.id }}"{% endif %}
      data-slot="root">
     {# Played button - outside game-row to avoid hover effect #}
-    {% if user.is_authenticated or not game %}
+    {% if not hide_played_button and user.is_authenticated or not game %}
     <div class="w-12 min-w-12 max-w-12 shrink-0 flex items-center justify-center" data-slot="played-button">
         {% if game %}
             {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}

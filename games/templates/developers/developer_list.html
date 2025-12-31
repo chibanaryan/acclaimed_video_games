@@ -5,7 +5,7 @@
 {% block title %}Developers | Acclaimed Video Games{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-5xl mx-auto">
 <h1 class="text-3xl font-bold mb-4">Developers</h1>
 <h2 id="results-count" class="text-xl text-base-content/85 mb-4">
     {% if total_count %}
@@ -83,13 +83,15 @@
                     class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="sortOpen = !sortOpen">
                 <span class="mdi mdi-sort text-base"></span>
-                <span class="text-sm" x-text="sort === 'games' ? '# Games' : 'Name (A-Z)'"></span>
+                <span class="text-sm" x-text="sort === 'games' ? '# Games' : (sort === 'studios' ? '# Subsidiaries' : (sort === 'rank' ? 'Top Rank' : 'Name (A-Z)'))"></span>
                 <span class="mdi mdi-chevron-down text-xs"></span>
             </button>
             <ul x-show="sortOpen" x-cloak
-                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-44 p-2 mt-1"
                 @click="sortOpen = false">
                 <li><button type="button" @click="updateSort('games')" :class="sort === 'games' ? 'active' : ''"># Games</button></li>
+                <li><button type="button" @click="updateSort('studios')" :class="sort === 'studios' ? 'active' : ''"># Subsidiaries</button></li>
+                <li><button type="button" @click="updateSort('rank')" :class="sort === 'rank' ? 'active' : ''">Top Rank</button></li>
                 <li><button type="button" @click="updateSort('name')" :class="sort === 'name' ? 'active' : ''">Name (A-Z)</button></li>
             </ul>
         </div>
@@ -100,6 +102,8 @@
                     style="width: fit-content; max-width: 100%;"
                     @change="updateSort($event.target.value)">
                 <option value="games" :selected="sort === 'games'"># Games</option>
+                <option value="studios" :selected="sort === 'studios'"># Subsidiaries</option>
+                <option value="rank" :selected="sort === 'rank'">Top Rank</option>
                 <option value="name" :selected="sort === 'name'">Name (A-Z)</option>
             </select>
         </div>
