@@ -1870,15 +1870,29 @@ class PageDetailView(TemplateView):
         return context
 
 
-class NewsListView(ListView):
-    """News list showing latest 5 active posts."""
+class NewsListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
+    """News list showing all active posts with pagination."""
 
     model = models.Post
     template_name = "posts/post_list.html"
     context_object_name = "posts"
+    paginate_by = 10
+    paginate_orphans = 0
+    htmx_partial_template = "posts/includes/_post_list_content.html"
 
     def get_queryset(self):
-        return models.Post.objects.filter(active=True).order_by("-date")[:5]
+        return models.Post.objects.filter(active=True).order_by("-date")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Pagination context
+        page_obj = context.get("page_obj")
+        if page_obj:
+            context["total_count"] = page_obj.paginator.count
+            context["loaded_count"] = page_obj.end_index()
+
+        return context
 
 
 class NotFoundView(TemplateView):

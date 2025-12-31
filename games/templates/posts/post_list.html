@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load game_filters %}
+{% load humanize %}
 
 {% block title %}News | Acclaimed Video Games{% endblock %}
 
@@ -7,12 +8,8 @@
 <div class="max-w-3xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">News</h1>
 
-    {% if posts %}
-        {% for post in posts %}
-            {% include 'posts/includes/_post_item.html' with post=post %}
-        {% endfor %}
-    {% else %}
-        <p class="text-base-content/70">No news yet.</p>
-    {% endif %}
+    <div id="content">
+        {% include 'posts/includes/_post_list_content.html' %}
+    </div>
 </div>
 {% endblock %}
