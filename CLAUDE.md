@@ -393,3 +393,24 @@ Themes are defined in `theme/static_src/src/styles.css` using DaisyUI's `@plugin
 }
 ```
 The theme switcher in the navigation allows users to change themes, with the selection persisted in localStorage.
+
+## Design Guidelines
+
+### Quantitative Display Ruleset
+
+When making any changes that affect **visual displays of quantitative information** (charts, graphs, tables with numbers, rankings, statistics, data visualizations), read and follow the principles in:
+
+**`acclaimedgames/rulesets/Unified Quantitative Display Ruleset.md`**
+
+This ruleset applies to:
+- Game ranking displays and tables
+- Statistics and metrics (play counts, list appearances, scores)
+- Charts or graphs showing trends, distributions, or comparisons
+- Any numerical data presentation to users
+
+Key principles to prioritize:
+- **Graphical integrity**: Represent quantities proportionally; what is shown must match the data
+- **Data-ink ratio**: Maximize data-bearing elements, minimize decorative non-data elements
+- **Comparison support**: Design to encourage meaningful comparisons
+- **Context**: Always provide units, time frames, and context needed for interpretation
+- **Avoid chartjunk**: No fake 3D, unnecessary decoration, or design that doesn't serve the data
