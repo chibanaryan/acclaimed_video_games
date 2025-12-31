@@ -9,7 +9,7 @@
     data-igdb-id="{{ game.igdb_id }}"
     data-is-played="{% if is_played %}true{% else %}false{% endif %}"
     {% if size == 'large' %}data-size="large"{% endif %}
-    hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}"
+    hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}{% if size == 'large' %}?size=large{% endif %}"
     hx-trigger="click"
     hx-swap="outerHTML"
     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'

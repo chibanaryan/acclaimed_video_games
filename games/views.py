@@ -598,6 +598,16 @@ class GameDetailView(DetailView):
                 user=self.request.user, igdb_id=game.igdb_id
             ).exists()
 
+        # Get series with 2+ games (single-game series aren't useful)
+        # Must query Series separately for accurate game counts
+        series_ids = list(game.series.values_list("id", flat=True))
+        context["series_list"] = (
+            models.Series.objects.filter(id__in=series_ids)
+            .annotate(games_count=Count("games"))
+            .filter(games_count__gte=2)
+            .order_by("name")
+        )
+
         return context
 
 
@@ -2322,10 +2332,13 @@ class TogglePlayedGameView(LoginRequiredMixin, View):
         else:
             is_played = True
 
+        # Preserve button size (large on game detail page, default elsewhere)
+        size = request.GET.get("size")
+
         response = render(
             request,
             "games/includes/_played_button.html",
-            {"game": game, "is_played": is_played},
+            {"game": game, "is_played": is_played, "size": size},
         )
         # Prevent URL push for this HTMX action
         response["HX-Push-Url"] = "false"

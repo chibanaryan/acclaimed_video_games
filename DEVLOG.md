@@ -2,6 +2,8 @@
 
 ## 2025-12-31
 
+- Add series display to game properties: clickable badges link to filtered game list with highlight
+- Fix played button on game detail page: preserve large size when toggling played status
 - Add played games filter: three-way toggle (All/Played/Unplayed) in rankings page search section
 - Played filter updates faceted counts (genres, platforms, year heatmap) dynamically
 - Played filter: URL parameter support (?played=yes/no), page title suffix, client-side filtering

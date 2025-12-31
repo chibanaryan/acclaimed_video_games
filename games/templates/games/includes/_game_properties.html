@@ -65,6 +65,16 @@
     </tr>
     {% endif %}
     {% endwith %}
+    {% if series_list %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">Series:</td>
+        <td class="pb-3">
+            <span class="flex flex-wrap gap-1">
+                {% for series in series_list %}<a href="{% url 'games-list' %}?series={{ series.id }}&highlight={{ game.id }}" class="badge badge-outline hover:badge-primary transition-colors">{{ series.name }}</a>{% endfor %}
+            </span>
+        </td>
+    </tr>
+    {% endif %}
     {% if game.primary_wikipedia_game_data.wikipedia_url %}
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Wikipedia:</td>
