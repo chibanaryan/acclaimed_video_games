@@ -29,15 +29,7 @@
 
 {% block content %}
 {% if game %}
-    <h1 class="text-3xl font-bold mb-2">{{ game.name }} ({{ game.year_of_release }})</h1>
-    {% if user.is_authenticated and game.igdb_id %}
-    <div class="flex items-center gap-2 mb-4">
-        <span class="text-base-content/70">Played?:</span>
-        {% include 'games/includes/_played_button.html' %}
-    </div>
-    {% else %}
-    <div class="mb-4"></div>
-    {% endif %}
+    <h1 class="text-3xl font-bold mb-4">{{ game.name }} ({{ game.year_of_release }})</h1>
     {% block extra_head %}
         {% if game.image %}
             <link rel="preload"
