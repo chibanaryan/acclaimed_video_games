@@ -3,15 +3,17 @@
 {# Sizes: Mobile w-8/text-4xl, Desktop w-6/text-2xl #}
 {% load static %}
 {% if user.is_authenticated and game.igdb_id %}
-<button
-    class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-6 desktop:w-6 desktop:min-w-6 cursor-pointer overflow-hidden"
+<div class="tooltip tooltip-top played-button-wrapper cursor-pointer"
+    data-tip="{% if is_played %}You have played this game!{% else %}You have not played this game.{% endif %}"
     data-igdb-id="{{ game.igdb_id }}"
     data-is-played="{% if is_played %}true{% else %}false{% endif %}"
     hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}"
+    hx-trigger="click"
     hx-swap="outerHTML"
     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-    onclick="event.stopPropagation()"
-    title="{% if is_played %}Unmark as played{% else %}Mark as played{% endif %}">
+    onclick="event.stopPropagation()">
+<button
+    class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none">
     {% if is_played %}
     <span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center">
         <img src="{% static 'games/images/mario-star.png' %}"
@@ -25,16 +27,17 @@
     </span>
     {% endif %}
 </button>
+</div>
 <script data-played-sync>
 (function() {
     var thisScript = document.currentScript;
     if (!thisScript) return;
 
-    var btn = thisScript.previousElementSibling;
-    if (!btn || !btn.classList.contains('played-button')) return;
+    var wrapper = thisScript.previousElementSibling;
+    if (!wrapper || !wrapper.classList.contains('played-button-wrapper')) return;
 
-    var igdbId = btn.dataset.igdbId;
-    var isPlayed = btn.dataset.isPlayed === 'true';
+    var igdbId = wrapper.dataset.igdbId;
+    var isPlayed = wrapper.dataset.isPlayed === 'true';
 
     // Update global state
     if (isPlayed) {
@@ -43,19 +46,26 @@
         window.playedGameIds?.delete(parseInt(igdbId));
     }
 
-    // Sync other buttons with same IGDB ID (desktop/mobile views)
-    document.querySelectorAll('.played-button[data-igdb-id="' + igdbId + '"]').forEach(function(otherBtn) {
-        if (otherBtn !== btn) {
-            otherBtn.innerHTML = btn.innerHTML;
-            otherBtn.dataset.isPlayed = String(isPlayed);
-            otherBtn.title = btn.title;
+    // Sync other wrappers with same IGDB ID (desktop/mobile views)
+    document.querySelectorAll('.played-button-wrapper[data-igdb-id="' + igdbId + '"]').forEach(function(otherWrapper) {
+        if (otherWrapper !== wrapper) {
+            var btn = wrapper.querySelector('.played-button');
+            var otherBtn = otherWrapper.querySelector('.played-button');
+            if (btn && otherBtn) {
+                otherBtn.innerHTML = btn.innerHTML;
+            }
+            otherWrapper.dataset.isPlayed = String(isPlayed);
+            otherWrapper.dataset.tip = wrapper.dataset.tip;
         }
     });
 
     // Remove old sync scripts for this IGDB ID to prevent accumulation
     document.querySelectorAll('script[data-played-sync]').forEach(function(s) {
-        if (s !== thisScript && s.previousElementSibling?.dataset?.igdbId === igdbId) {
-            s.remove();
+        if (s !== thisScript) {
+            var prevWrapper = s.previousElementSibling;
+            if (prevWrapper?.dataset?.igdbId === igdbId) {
+                s.remove();
+            }
         }
     });
 })();

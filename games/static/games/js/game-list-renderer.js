@@ -58,7 +58,7 @@ class GameListRenderer {
         const igdbId = game.i;
         const isPlayed = this._isPlayed(igdbId);
         const csrfToken = this._getCsrfToken();
-        const title = isPlayed ? 'Unmark as played' : 'Mark as played';
+        const tooltipText = isPlayed ? 'You have played this game!' : 'You have not played this game.';
 
         const innerHtml = isPlayed
             ? `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center">
@@ -71,17 +71,19 @@ class GameListRenderer {
     <span class="mdi mdi-star-outline text-4xl desktop:text-2xl text-base-content/30"></span>
 </span>`;
 
-        return `<button
-    class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-6 desktop:w-6 desktop:min-w-6 cursor-pointer overflow-hidden"
+        return `<div class="tooltip tooltip-top played-button-wrapper cursor-pointer"
+    data-tip="${tooltipText}"
     data-igdb-id="${igdbId}"
     data-is-played="${isPlayed}"
-    hx-post="/api/toggle-played-game/${igdbId}/"
+    hx-post="/game/${igdbId}/toggle-played/"
+    hx-trigger="click"
     hx-swap="outerHTML"
     hx-headers='{"X-CSRFToken": "${csrfToken}"}'
-    onclick="event.stopPropagation()"
-    title="${title}">
+    onclick="event.stopPropagation()">
+<button class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none">
     ${innerHtml}
-</button>`;
+</button>
+</div>`;
     }
 
     /**
@@ -174,7 +176,7 @@ class GameListRenderer {
         return `
 <div class="game-row desktop hidden desktop:grid py-0.5 px-2 ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}" style="grid-template-columns: auto 1fr;">
     <div class="flex items-center gap-3 flex-shrink-0">
-        <div class="w-6 min-w-6 max-w-6 shrink-0 flex items-center justify-center">
+        <div class="w-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center">
             ${playedButtonHtml}
         </div>
         ${showRank !== 'none' ? `<span class="game-rank text-2xl font-bold text-primary w-14 text-center">${displayRank}</span>` : ''}

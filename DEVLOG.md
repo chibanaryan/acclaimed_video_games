@@ -28,6 +28,7 @@
 - Remove Posts feature and old newsletter subscription pages (consolidated into auth flow)
 - Test speed optimization: parallel execution (36s→12s), in-memory SQLite, setUpTestData for fixtures
 - Fix client-side renderer to match Django template exactly (desktop:grid, game-rank/game-title classes, hover effects)
+- Played button: fix star glow clipping, add DaisyUI tooltip, fix HTMX swap on client-rendered rows
 - Played button UI: Mario star PNG when played, MDI outline when not, in game rows and detail page
 - Played button: HTMX toggle, desktop/mobile sync, no layout shift with fixed-size wrappers
 - Client-side renderer: add played button rendering with playedGameIds state sync
