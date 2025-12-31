@@ -2,6 +2,7 @@
 
 ## 2025-12-31
 
+- Fix Load More showing filtered rank on unfiltered list after Jump to Rank
 - Fix profile played count to exclude orphaned games (games no longer in rankings)
 - Fix badge opacity on Load More: client-side rendered badges now match server opacity (70%)
 - Add opt-in notification for posts: new send_notification checkbox, publish without notifying subscribers

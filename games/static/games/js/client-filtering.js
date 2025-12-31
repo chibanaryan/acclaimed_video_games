@@ -212,6 +212,35 @@ class ClientSideFiltering {
     }
 
     /**
+     * Compute whether to show filtered or alltime rank based on URL params
+     * @private
+     * @returns {string} 'filtered' or 'alltime'
+     */
+    _computeShowRank() {
+        const params = new URLSearchParams(window.location.search);
+
+        // Check simple filters
+        if (params.get('q')) return 'filtered';
+        if (params.get('genres')) return 'filtered';
+        if (params.get('platforms')) return 'filtered';
+        if (params.get('series')) return 'filtered';
+        if (params.get('played')) return 'filtered';
+        if (params.get('sort') && params.get('sort') !== 'rank') return 'filtered';
+
+        // Check year/decade filters
+        if (params.get('year') || params.get('decade')) return 'filtered';
+
+        // Check start/end year bounds
+        const bounds = this.getYearBounds();
+        const start = params.get('start') ? parseInt(params.get('start')) : null;
+        const end = params.get('end') ? parseInt(params.get('end')) : null;
+        if (start && start > bounds.min) return 'filtered';
+        if (end && end < bounds.max) return 'filtered';
+
+        return 'alltime';
+    }
+
+    /**
      * Initialize Load More button click handler
      * @private
      */
@@ -223,7 +252,9 @@ class ClientSideFiltering {
             button.classList.add('loading');
             button.disabled = true;
 
-            const state = this.loadMore(gameListContainer);
+            // Compute showRank at click time based on current URL params
+            const showRank = this._computeShowRank();
+            const state = this.loadMore(gameListContainer, { showRank });
 
             // Update count
             if (countContainer) {
