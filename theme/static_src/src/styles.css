@@ -838,6 +838,29 @@
     @apply max-h-80 overflow-y-auto;
   }
 
+  /* Sidebar scroll styling - subtle thin scrollbar */
+  aside .sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(var(--bc) / 0.2) transparent;
+  }
+
+  aside .sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  aside .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  aside .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: oklch(var(--bc) / 0.2);
+    border-radius: 2px;
+  }
+
+  aside .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: oklch(var(--bc) / 0.3);
+  }
+
   /* Active nav item styling for mobile navbar buttons */
   .navbar .btn.btn-active {
     @apply bg-primary/20 text-primary;

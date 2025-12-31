@@ -1,9 +1,9 @@
 {% load static %}
 <div class="flex flex-col h-full">
-    {# TOP CONTAINER: Logo + Navigation + Search (as footer) #}
-    <div class="p-4">
+    {# TOP CONTAINER: Logo + Navigation + Search - Always visible #}
+    <div class="shrink-0 p-4">
         {# Logo at top #}
-        <div class="mb-6">
+        <div class="mb-4">
             <a href="{% url 'home' %}" class="block">
                 {# White logo for dark theme #}
                 <picture class="w-full max-w-[160px] mx-auto show-dark block">
@@ -41,7 +41,7 @@
         </div>
 
         {# Primary navigation links #}
-        <nav class="mb-4">
+        <nav class="mb-3">
             <ul class="menu gap-1">
                 <li>
                     <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
@@ -176,13 +176,16 @@
         </div>
     </div>
 
-    {# FLEX GAP - Auto-expanding space #}
-    <div class="flex-1"></div>
+    {# BOTTOM SECTION: Scrollable when viewport is short #}
+    <div class="flex-1 min-h-0 overflow-y-auto sidebar-scroll">
+        <div class="flex flex-col min-h-full">
+            {# FLEX GAP - Auto-expanding space (pushes content to bottom) #}
+            <div class="flex-1"></div>
 
-    {# BOTTOM CONTAINER: Secondary nav, Social, Theme, Contact #}
-    <div class="p-4 pt-3 border-t border-base-content/10">
+            {# BOTTOM CONTAINER: Secondary nav, Social, Theme, Contact #}
+            <div class="p-4 pt-3 border-t border-base-content/10">
         {# Secondary navigation #}
-        <ul class="menu gap-1 mb-3">
+        <ul class="menu gap-1 mb-2">
             <li>
                 <a href="{% url 'page-detail' slug='about' %}">
                     <span class="mdi mdi-information text-xl"></span>
@@ -196,27 +199,21 @@
                 </a>
             </li>
             <li>
-                <a href="/terms/">
+                <a href="/legal/">
                     <span class="mdi mdi-scale-balance text-xl"></span>
-                    Terms
-                </a>
-            </li>
-            <li>
-                <a href="/privacy/">
-                    <span class="mdi mdi-shield-lock text-xl"></span>
-                    Privacy
+                    Legal
                 </a>
             </li>
         </ul>
 
         {# Contact button #}
-        <button class="btn btn-primary w-full mb-3 contact-modal-trigger">
+        <button class="btn btn-primary w-full mb-2 contact-modal-trigger">
             <span class="mdi mdi-email text-xl"></span>
             Contact Us
         </button>
 
         {# User auth #}
-        <div class="mb-3">
+        <div class="mb-2">
             {% include 'includes/_user_dropdown.html' %}
         </div>
 
@@ -260,5 +257,7 @@
                 }
             })();
         </script>
+            </div>
+        </div>
     </div>
 </div>

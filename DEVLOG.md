@@ -2,6 +2,8 @@
 
 ## 2025-12-31
 
+- Sidebar vertical squish: scrollable bottom section for short viewports, tightened margins throughout
+- Consolidate Terms/Privacy into single Legal link (sidebar, mobile nav, login modal)
 - Add series display to game properties: clickable badges link to filtered game list with highlight
 - Fix played button on game detail page: preserve large size when toggling played status
 - Add played games filter: three-way toggle (All/Played/Unplayed) in rankings page search section

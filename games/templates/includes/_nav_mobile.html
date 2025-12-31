@@ -182,8 +182,7 @@
                     </a>
                 </li>
                 <li class="{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'donate' %}menu-active{% endif %}"><a href="{% url 'page-detail' slug='donate' %}">Donate</a></li>
-                <li><a href="/terms/">Terms</a></li>
-                <li><a href="/privacy/">Privacy</a></li>
+                <li><a href="/legal/">Legal</a></li>
                 {# Auth section #}
                 <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 pt-2 pb-0">Account</li>
                 {% if user.is_authenticated %}
@@ -195,9 +194,9 @@
                     </a>
                 </li>
                 <li>
-                    <form action="{% url 'auth-logout' %}" method="post" class="w-full" @click.stop>
+                    <form action="{% url 'auth-logout' %}" method="post" class="w-full">
                         {% csrf_token %}
-                        <button type="submit" class="w-full text-left">
+                        <button type="submit" @click.stop="$el.closest('form').submit()" class="w-full text-left">
                             Logout
                         </button>
                     </form>
