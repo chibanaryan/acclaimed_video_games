@@ -195,7 +195,7 @@ The application uses Django templates with HTMX for dynamic interactions and Alp
 
 **Styling:**
 - Uses Tailwind CSS v4 with DaisyUI v5 component library
-- Dark theme (forest) as default with theme switcher (night, business, black alternatives)
+- Light theme (lofi) as default with forest dark theme available via theme switcher
 - Responsive design using Tailwind's mobile-first breakpoints (md:, lg:, etc.)
 - Custom components defined in `theme/static_src/src/styles.css` using Tailwind's `@layer components`
 
@@ -389,7 +389,7 @@ Common components used: `btn`, `card`, `table`, `alert`, `badge`, `input`, `sele
 Themes are defined in `theme/static_src/src/styles.css` using DaisyUI's `@plugin` directive:
 ```css
 @plugin "daisyui" {
-  themes: forest --default, night, sunset, nord, lofi;
+  themes: ["lofi", "forest"];
 }
 ```
 The theme switcher in the navigation allows users to change themes, with the selection persisted in localStorage.
