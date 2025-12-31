@@ -166,10 +166,6 @@
             <button type="button" class="btn btn-ghost btn-sm shrink-0 nav-item contact-modal-trigger" data-nav-item="contact" data-menu-label="Contact Us">
                 Contact
             </button>
-
-            <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'donate' %} btn-active{% endif %}" data-nav-item="donate" data-menu-label="Donate">
-                Donate
-            </a>
         </div>
     </div>
 
