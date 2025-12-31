@@ -2320,8 +2320,8 @@ class AuthModalProfileView(View):
         # User fields are now directly on the user model
         user = request.user
 
-        # Get played games stats
-        played_count = user.played_games.count()
+        # Get played games stats (only count non-orphaned games)
+        played_count = user.played_games.filter(game__isnull=False).count()
         total_games = models.Game.objects.count()
 
         response = TemplateResponse(

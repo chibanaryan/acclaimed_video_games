@@ -292,3 +292,82 @@ class TogglePlayedGameViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # Should contain the button element
         self.assertIn(b"button", response.content)
+
+
+class ProfilePlayedCountTests(TestCase):
+    """Test cases for played game count in profile view."""
+
+    @classmethod
+    def setUpTestData(cls):
+        """Set up test data."""
+        cls.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        cls.game1 = Game.objects.create(
+            name="Active Game 1",
+            rank=1,
+            igdb_id=11111,
+        )
+        cls.game2 = Game.objects.create(
+            name="Active Game 2",
+            rank=2,
+            igdb_id=22222,
+        )
+
+    def test_profile_count_excludes_orphaned_games(self):
+        """Test that profile played count excludes orphaned PlayedGame records."""
+        from django.urls import reverse
+
+        # Create played records for both games
+        PlayedGame.objects.create(
+            user=self.user,
+            game=self.game1,
+            igdb_id=self.game1.igdb_id,
+        )
+        PlayedGame.objects.create(
+            user=self.user,
+            game=self.game2,
+            igdb_id=self.game2.igdb_id,
+        )
+
+        # Create an orphaned played record (game=None)
+        PlayedGame.objects.create(
+            user=self.user,
+            game=None,
+            igdb_id=99999,  # Orphaned - game doesn't exist
+        )
+
+        self.client.force_login(self.user)
+        url = reverse("auth-modal-profile")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should only count the 2 connected games, not the orphaned one
+        self.assertEqual(response.context["played_count"], 2)
+
+    def test_orphaned_records_preserved_for_reconnection(self):
+        """Test that orphaned records are preserved and can be reconnected."""
+        # Create a played record for game1
+        played = PlayedGame.objects.create(
+            user=self.user,
+            game=self.game1,
+            igdb_id=self.game1.igdb_id,
+        )
+
+        # Delete the game - should orphan the PlayedGame record
+        igdb_id = self.game1.igdb_id
+        self.game1.delete()
+
+        # Verify record is orphaned but still exists
+        played.refresh_from_db()
+        self.assertIsNone(played.game)
+        self.assertEqual(played.igdb_id, igdb_id)
+
+        # Verify user still has the orphaned record
+        self.assertEqual(self.user.played_games.count(), 1)
+
+        # But active count (for profile) should be 0
+        active_count = self.user.played_games.filter(game__isnull=False).count()
+        self.assertEqual(active_count, 0)
