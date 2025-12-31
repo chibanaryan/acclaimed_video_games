@@ -1,3 +1,4 @@
+import os
 from unittest import mock
 
 from django.core.management import call_command
@@ -432,6 +433,16 @@ class SyncFromProdCommandTests(TestCase):
             name="Local Game", rank=1, year_of_release=2020
         )
 
+    def tearDown(self):
+        # Clean up the fixture file if it was created
+        fixture_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "fixtures",
+            "prod_dump.json",
+        )
+        if os.path.exists(fixture_path):
+            os.remove(fixture_path)
+
     @mock.patch("games.management.commands.sync_from_prod.call_command")
     @mock.patch("subprocess.run")
     def test_successful_sync(self, mock_subprocess, mock_call_command):
@@ -557,7 +568,6 @@ class SyncFromProdCommandTests(TestCase):
     @mock.patch("subprocess.run")
     def test_keep_fixture_flag(self, mock_subprocess, mock_call_command):
         """Test --keep-fixture flag keeps the downloaded file"""
-        import os
         from io import StringIO
 
         mock_subprocess.return_value = mock.Mock(
@@ -571,15 +581,7 @@ class SyncFromProdCommandTests(TestCase):
         output = out.getvalue()
 
         self.assertIn("Fixture kept at:", output)
-
-        # Clean up the fixture file
-        fixture_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            "fixtures",
-            "prod_dump.json",
-        )
-        if os.path.exists(fixture_path):
-            os.remove(fixture_path)
+        # tearDown handles fixture cleanup
 
     @mock.patch("games.management.commands.sync_from_prod.call_command")
     @mock.patch("subprocess.run")
