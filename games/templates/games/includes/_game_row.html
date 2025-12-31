@@ -1,10 +1,14 @@
 {# GameRow component #}
 {# Props: game, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional game ID) #}
-{% load game_filters %}
+{% load game_filters static %}
 {# Desktop view - 2 column grid #}
 <div class="game-row desktop hidden desktop:grid py-0.5 px-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}" id="game-{{ game.id }}" style="grid-template-columns: auto 1fr;">
-    {# Rank + Thumbnail #}
+    {# Star + Rank + Thumbnail #}
     <div class="flex items-center gap-3 flex-shrink-0">
+        {# Always reserve space for star to prevent layout shift #}
+        <div class="w-6 min-w-6 max-w-6 shrink-0 flex items-center justify-center">
+            {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}
+        </div>
         {% if show_rank == 'alltime' or show_rank == 'filtered' %}
         <span class="game-rank text-2xl font-bold text-primary w-14 text-center">
             {% if show_rank == 'filtered' %}{{ index|default:game.rank }}{% else %}{{ game.rank }}{% endif %}
@@ -53,11 +57,16 @@
         </div>
     </div>
 </div>
-{# Mobile view - Card layout using CSS Grid like desktop #}
-<a href="{% url 'game-detail' slug=game.slug %}"
-   class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 {% if highlight and game.id == highlight %}is-highlighted{% endif %}"
+{# Mobile view - Card layout with star on left #}
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer {% if highlight and game.id == highlight %}is-highlighted{% endif %}"
    id="game-{{ game.id }}-mobile"
-   style="grid-template-columns: {% if show_rank == 'alltime' or show_rank == 'filtered' %}auto {% endif %}auto 1fr auto;">
+   onclick="window.location.href='{% url 'game-detail' slug=game.slug %}'"
+   style="grid-template-columns: auto {% if show_rank == 'alltime' or show_rank == 'filtered' %}auto {% endif %}auto 1fr;">
+
+    {# Star button - always reserve space #}
+    <div class="w-11 h-11 min-w-11 max-w-11 shrink-0 flex items-center justify-center">
+        {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}
+    </div>
 
     {# Rank Number #}
     {% if show_rank == 'alltime' or show_rank == 'filtered' %}
@@ -66,30 +75,24 @@
     </div>
     {% endif %}
 
-    {# Thumbnail - full aspect ratio (90x128) #}
+    {# Thumbnail #}
     <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;">
-        <img src="{{ game.thumbnail }}"
-             alt="{{ game.name }}"
-             width="90" height="128"
-             class="w-full h-full object-cover"
-             loading="lazy"
-             decoding="async">
+        <img src="{{ game.thumbnail }}" alt="{{ game.name }}" width="90" height="128"
+             class="w-full h-full object-cover" loading="lazy" decoding="async">
     </div>
 
     {# Game Info #}
-    <div class="min-w-0">
-        {# Title + Year #}
-        <div class="font-bold text-base leading-tight line-clamp-2">{{ game.name }} <span class="font-normal text-base-content/60">({{ game.year_of_release }})</span></div>
-        {# Metadata row: platforms • genre #}
-        <div class="text-xs text-base-content/60 truncate">{% with platforms=game.platforms.all|slice:":3" %}{% if platforms %}{% for platform in platforms %}{{ platform.code }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}{% if game.platforms.exists and game.wikipedia_genres.exists %} • {% endif %}{% with genre=game.wikipedia_genres.first %}{% if genre %}{{ genre.name }}{% endif %}{% endwith %}</div>
+    <div class="min-w-0 flex items-center justify-between">
+        <div class="min-w-0">
+            <div class="font-bold text-base leading-tight line-clamp-2">{{ game.name }} <span class="font-normal text-base-content/60">({{ game.year_of_release }})</span></div>
+            <div class="text-xs text-base-content/60 truncate">{% with platforms=game.platforms.all|slice:":3" %}{% if platforms %}{% for platform in platforms %}{{ platform.code }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}{% if game.platforms.exists and game.wikipedia_genres.exists %} • {% endif %}{% with genre=game.wikipedia_genres.first %}{% if genre %}{{ genre.name }}{% endif %}{% endwith %}</div>
+        </div>
+        {% if show_rank == 'filtered' %}
+        <span class="text-sm text-base-content/60 font-medium shrink-0 ml-2">#{{ game.rank }}</span>
+        {% else %}
+        <svg class="w-5 h-5 text-base-content/30 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+        {% endif %}
     </div>
-
-    {# Global rank (when filtered) or chevron indicator #}
-    {% if show_rank == 'filtered' %}
-    <span class="text-sm text-base-content/60 font-medium">#{{ game.rank }}</span>
-    {% else %}
-    <svg class="w-5 h-5 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-    </svg>
-    {% endif %}
-</a>
+</div>

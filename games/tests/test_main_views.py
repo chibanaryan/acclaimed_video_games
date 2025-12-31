@@ -17,9 +17,11 @@ from games.models import (
     List,
     ListMembership,
     Platform,
+    PlayedGame,
     Post,
     Publication,
     SiteMetadata,
+    User,
     WikipediaGenre,
 )
 
@@ -407,6 +409,40 @@ class GameDetailViewTest(TestCase):
 
         # Page should load successfully
         self.assertEqual(response.status_code, 200)
+
+    def test_is_played_context_for_authenticated_user(self):
+        """Test that is_played context is set for authenticated users."""
+        # Create user and log in
+        user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create a game with igdb_id
+        game_with_igdb = Game.objects.create(
+            name="Game With IGDB",
+            slug="game-with-igdb",
+            rank=12,
+            year_of_release=2020,
+            igdb_id=12345,
+        )
+
+        # Initially not played
+        response = self.client.get(
+            reverse("game-detail", kwargs={"slug": game_with_igdb.slug})
+        )
+        self.assertFalse(response.context.get("is_played", False))
+
+        # Mark as played
+        PlayedGame.objects.create(user=user, igdb_id=12345)
+
+        # Now should show as played
+        response = self.client.get(
+            reverse("game-detail", kwargs={"slug": game_with_igdb.slug})
+        )
+        self.assertTrue(response.context.get("is_played", False))
 
 
 class GameSearchViewTest(TestCase):

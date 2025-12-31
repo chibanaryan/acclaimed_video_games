@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load game_filters %}
+{% load game_filters static %}
 
 {% block title %}{{ game.name }} | Acclaimed Video Games{% endblock %}
 
@@ -31,6 +31,7 @@
 {% if game %}
     <div class="flex items-center gap-3 mb-4">
         <h1 class="text-3xl font-bold">{{ game.name }} ({{ game.year_of_release }})</h1>
+        {% include 'games/includes/_played_button.html' %}
     </div>
     {% block extra_head %}
         {% if game.image %}

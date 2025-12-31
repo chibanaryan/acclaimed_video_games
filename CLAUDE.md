@@ -309,7 +309,7 @@ Environment variables are managed via django-environ (`.env` file):
 - **`.pre-commit-config.yaml`** - Pre-commit hook configuration for code quality enforcement (Black, Flake8, tests)
 - **`.coveragerc`** - Coverage configuration excluding migrations and database vendor-specific code
 - **`.flake8`** - Flake8 linter configuration (max line length 88, excludes venv)
-- **`scripts/run_tests.sh`** - Test execution script used by pre-commit hooks
+- **`scripts/run_tests.sh`** - Alternative test runner using Django's test framework
 
 ## Database
 
@@ -321,7 +321,7 @@ Environment variables are managed via django-environ (`.env` file):
 ## Dependencies
 
 The backend dependencies are listed in `requirements.txt` and include:
-- **coverage** - Test coverage reporting tool (required for pre-commit hooks)
+- **coverage** - Test coverage reporting tool
 - **Django** and related packages - Web framework and extensions
 - **django-tailwind** - Tailwind CSS integration for Django
 - **djangorestframework** - REST API framework

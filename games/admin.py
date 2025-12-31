@@ -311,6 +311,44 @@ class SiteMetadataAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(models.PlayedGame)
+class PlayedGameAdmin(admin.ModelAdmin):
+    """Admin interface for PlayedGame records."""
+
+    list_display = ["user", "game_name", "igdb_id", "created", "game_status"]
+    list_filter = ["created"]
+    search_fields = ["user__username", "user__email", "game__name", "igdb_id"]
+    raw_id_fields = ["user", "game"]
+    readonly_fields = ["created"]
+    ordering = ["-created"]
+
+    @admin.display(description="Game")
+    def game_name(self, obj):
+        """Display game name or IGDB ID if game is orphaned."""
+        if obj.game:
+            return obj.game.name
+        return f"(orphaned) IGDB:{obj.igdb_id}"
+
+    @admin.display(description="Status")
+    def game_status(self, obj):
+        """Show if the game record is connected or orphaned."""
+        return "Connected" if obj.game else "Orphaned"
+
+
+class PlayedGameInline(admin.TabularInline):
+    """Inline admin for PlayedGame on User admin."""
+
+    model = models.PlayedGame
+    extra = 0
+    fields = ["game", "igdb_id", "created"]
+    readonly_fields = ["game", "igdb_id", "created"]
+    can_delete = True
+    ordering = ["-created"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 class EmailAddressInline(admin.TabularInline):
     """Inline admin for allauth EmailAddress to show verification status."""
 
@@ -336,6 +374,7 @@ class UserAdmin(BaseUserAdmin):
         "is_staff",
         "email_subscribed",
         "email_verified_display",
+        "played_games_count",
         "date_joined",
     ]
     list_filter = [
@@ -346,7 +385,7 @@ class UserAdmin(BaseUserAdmin):
     ]
     search_fields = ["email", "username"]
     ordering = ["-date_joined"]
-    inlines = [EmailAddressInline]
+    inlines = [EmailAddressInline, PlayedGameInline]
 
     # Extend the default fieldsets with our custom fields
     fieldsets = BaseUserAdmin.fieldsets + (
@@ -368,3 +407,8 @@ class UserAdmin(BaseUserAdmin):
     def email_verified_display(self, obj):
         """Show email verification status from allauth EmailAddress."""
         return obj.email_verified
+
+    @admin.display(description="Played")
+    def played_games_count(self, obj):
+        """Show count of games marked as played."""
+        return obj.played_games.count()

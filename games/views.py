@@ -573,6 +573,12 @@ class GameDetailView(DetailView):
         # Get lists grouped by type using model property
         context["grouped_lists"] = list(game.lists_grouped_by_type.items())
 
+        # Check if current user has marked this game as played
+        if self.request.user.is_authenticated and game.igdb_id:
+            context["is_played"] = models.PlayedGame.objects.filter(
+                user=self.request.user, igdb_id=game.igdb_id
+            ).exists()
+
         return context
 
 
@@ -626,7 +632,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
         return super().get_template_names()
 
     def get_queryset(self):
-        qs = models.Game.objects.with_relations()
+        qs = models.Game.objects.with_relations().with_played_status(self.request.user)
 
         # Basic search by name
         q = self.request.GET.get("q")
@@ -988,6 +994,14 @@ class GameSearchView(RobustPaginationMixin, ListView):
 
         # Enable client-side filtering for fast subsequent interactions
         context["enable_client_filtering"] = True
+
+        # Add played game IDs for client-side rendering
+        if self.request.user.is_authenticated:
+            context["played_game_ids"] = list(
+                models.PlayedGame.objects.filter(user=self.request.user).values_list(
+                    "igdb_id", flat=True
+                )
+            )
 
         return context
 
@@ -2251,8 +2265,11 @@ class TogglePlayedGameView(LoginRequiredMixin, View):
         else:
             is_played = True
 
-        return render(
+        response = render(
             request,
             "games/includes/_played_button.html",
             {"game": game, "is_played": is_played},
         )
+        # Prevent URL push for this HTMX action
+        response["HX-Push-Url"] = "false"
+        return response

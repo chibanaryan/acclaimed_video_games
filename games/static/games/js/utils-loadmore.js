@@ -208,6 +208,11 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
         gameListContainer.insertAdjacentHTML('beforeend', html);
     });
 
+    // Reinitialize HTMX for dynamically rendered content
+    if (typeof htmx !== 'undefined') {
+        htmx.process(gameListContainer);
+    }
+
     // Update the renderer's state to match
     renderer.currentGames = result.games;
     renderer.currentPage = Math.ceil(newLoaded / perPage);
@@ -335,6 +340,11 @@ function appendPageResults(result) {
         rows.forEach((row) => {
             gameList.appendChild(row);
         });
+
+        // Reinitialize HTMX for dynamically appended content
+        if (typeof htmx !== 'undefined') {
+            htmx.process(gameList);
+        }
     }
 
     // Update metadata (last page's meta will have final counts)

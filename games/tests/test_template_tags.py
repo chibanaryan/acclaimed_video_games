@@ -7,11 +7,14 @@ from django.utils import timezone
 
 from games.templatetags.game_filters import (
     format_decade,
+    format_duration,
     from_now,
     game_rank_url,
     get_list_type_label,
+    markdown,
     pagination_pages,
     pagination_url,
+    platform_families,
     tojson,
 )
 
@@ -459,3 +462,104 @@ class FormatDecadeFilterTest(TestCase):
     def test_value_without_dash(self):
         """Test that value without dash uses the whole value."""
         self.assertEqual(format_decade("1990"), "1990s")
+
+
+class FormatDurationFilterTest(TestCase):
+    """Test the format_duration template filter."""
+
+    def test_seconds_only(self):
+        """Test formatting for seconds only."""
+        self.assertEqual(format_duration(30), "30s")
+
+    def test_minutes_and_seconds(self):
+        """Test formatting for minutes and seconds."""
+        self.assertEqual(format_duration(90), "1m 30s")
+
+    def test_minutes_only(self):
+        """Test formatting for exact minutes."""
+        self.assertEqual(format_duration(120), "2m")
+
+    def test_hours_and_minutes(self):
+        """Test formatting for hours and minutes."""
+        self.assertEqual(format_duration(3660), "1h 1m")
+
+    def test_hours_only(self):
+        """Test formatting for exact hours."""
+        self.assertEqual(format_duration(3600), "1h")
+
+    def test_zero_returns_zero_seconds(self):
+        """Test that 0 returns '0s'."""
+        self.assertEqual(format_duration(0), "0s")
+
+    def test_none_returns_zero_seconds(self):
+        """Test that None returns '0s'."""
+        self.assertEqual(format_duration(None), "0s")
+
+    def test_negative_returns_zero_seconds(self):
+        """Test that negative returns '0s'."""
+        self.assertEqual(format_duration(-10), "0s")
+
+
+class PlatformFamiliesFilterTest(TestCase):
+    """Test the platform_families template filter."""
+
+    def _make_platform(self, code, id, name):
+        """Create a mock platform with proper attributes."""
+        p = Mock()
+        p.code = code
+        p.id = id
+        p.name = name
+        return p
+
+    def test_returns_unique_families(self):
+        """Test that duplicate platform families are deduplicated."""
+        # Create mock platforms in same family (PS4 and PS5)
+        ps4 = self._make_platform("PS4", 1, "PlayStation 4")
+        ps5 = self._make_platform("PS5", 2, "PlayStation 5")
+        result = platform_families([ps4, ps5])
+        # Should only have one PlayStation family
+        family_keys = [f["key"] for f in result]
+        self.assertEqual(family_keys.count("playstation"), 1)
+
+    def test_preserves_encounter_order(self):
+        """Test that families are returned in encounter order."""
+        # Use correct platform codes: XBXS for Xbox Series, PS5 for PlayStation 5
+        xbox = self._make_platform("XBXS", 1, "Xbox Series X")
+        ps5 = self._make_platform("PS5", 2, "PlayStation 5")
+        result = platform_families([xbox, ps5])
+        # Xbox encountered first
+        self.assertEqual(result[0]["key"], "xbox")
+        self.assertEqual(result[1]["key"], "playstation")
+
+    def test_includes_platform_info(self):
+        """Test that result includes platform ID and name."""
+        ps5 = self._make_platform("PS5", 42, "PlayStation 5")
+        result = platform_families([ps5])
+        self.assertEqual(result[0]["platform_id"], 42)
+        self.assertEqual(result[0]["platform_name"], "PlayStation 5")
+
+    def test_empty_list_returns_empty(self):
+        """Test that empty list returns empty list."""
+        result = platform_families([])
+        self.assertEqual(result, [])
+
+
+class MarkdownFilterTest(TestCase):
+    """Test the markdown template filter."""
+
+    def test_bold_text(self):
+        """Test that bold markdown is converted."""
+        result = markdown("**bold text**")
+        self.assertIn("<strong>", result)
+        self.assertIn("bold text", result)
+
+    def test_italic_text(self):
+        """Test that italic markdown is converted."""
+        result = markdown("*italic text*")
+        self.assertIn("<em>", result)
+        self.assertIn("italic text", result)
+
+    def test_empty_value_returns_empty(self):
+        """Test that empty value returns empty string."""
+        self.assertEqual(markdown(None), "")
+        self.assertEqual(markdown(""), "")

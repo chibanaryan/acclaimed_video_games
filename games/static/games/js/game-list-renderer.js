@@ -22,6 +22,66 @@ class GameListRenderer {
         this.currentPage = 1;
         this.currentGames = [];
         this.highlightId = null;
+        this._csrfToken = null;
+    }
+
+    /**
+     * Get CSRF token from cookie
+     * @private
+     */
+    _getCsrfToken() {
+        if (this._csrfToken) return this._csrfToken;
+        const match = document.cookie.match(/csrftoken=([^;]+)/);
+        this._csrfToken = match ? match[1] : '';
+        return this._csrfToken;
+    }
+
+    /**
+     * Check if a game is marked as played
+     * @private
+     */
+    _isPlayed(igdbId) {
+        return window.playedGameIds && window.playedGameIds.has(igdbId);
+    }
+
+    /**
+     * Render the played button HTML
+     * Matches server-side _played_button.html exactly
+     * @private
+     */
+    _renderPlayedButton(game) {
+        // Only render if authenticated and game has IGDB ID
+        if (!window.isAuthenticated || !game.i) {
+            return '';
+        }
+
+        const igdbId = game.i;
+        const isPlayed = this._isPlayed(igdbId);
+        const csrfToken = this._getCsrfToken();
+        const title = isPlayed ? 'Unmark as played' : 'Mark as played';
+
+        const innerHtml = isPlayed
+            ? `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center">
+    <img src="/static/games/images/mario-star.png"
+         srcset="/static/games/images/mario-star.png 1x, /static/games/images/mario-star@2x.png 2x"
+         alt="Played" width="32" height="32"
+         class="w-8 h-8 desktop:w-6 desktop:h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
+</span>`
+            : `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center">
+    <span class="mdi mdi-star-outline text-4xl desktop:text-2xl text-base-content/30"></span>
+</span>`;
+
+        return `<button
+    class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-6 desktop:w-6 desktop:min-w-6 cursor-pointer overflow-hidden"
+    data-igdb-id="${igdbId}"
+    data-is-played="${isPlayed}"
+    hx-post="/api/toggle-played-game/${igdbId}/"
+    hx-swap="outerHTML"
+    hx-headers='{"X-CSRFToken": "${csrfToken}"}'
+    onclick="event.stopPropagation()"
+    title="${title}">
+    ${innerHtml}
+</button>`;
     }
 
     /**
@@ -108,9 +168,15 @@ class GameListRenderer {
             ? `<span class="game-row-global-rank text-sm text-base-content/60 shrink-0 font-medium">#${game.r}</span>`
             : '';
 
+        // Render played button
+        const playedButtonHtml = this._renderPlayedButton(game);
+
         return `
 <div class="game-row desktop hidden desktop:grid py-0.5 px-2 ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}" style="grid-template-columns: auto 1fr;">
     <div class="flex items-center gap-3 flex-shrink-0">
+        <div class="w-6 min-w-6 max-w-6 shrink-0 flex items-center justify-center">
+            ${playedButtonHtml}
+        </div>
         ${showRank !== 'none' ? `<span class="game-rank text-2xl font-bold text-primary w-14 text-center">${displayRank}</span>` : ''}
         <a href="/game/${game.s}/" class="game-thumb-link">
             <img src="${thumbnail}"
@@ -166,33 +232,40 @@ class GameListRenderer {
         if (platformsText && firstGenre) metaText += ' • ';
         if (firstGenre) metaText += firstGenre;
 
-        // Grid template columns: [rank] thumbnail content [chevron/rank]
-        const gridCols = showRankColumn ? 'auto auto 1fr auto' : 'auto 1fr auto';
+        // Grid template columns: star [rank] thumbnail content
+        const gridCols = showRankColumn ? 'auto auto auto 1fr' : 'auto auto 1fr';
+
+        // Render played button
+        const playedButtonHtml = this._renderPlayedButton(game);
+
+        // End element: global rank or chevron (inside content div)
+        const endElementHtml = showRank === 'filtered'
+            ? `<span class="text-sm text-base-content/60 font-medium shrink-0 ml-2">#${game.r}</span>`
+            : `<svg class="w-5 h-5 text-base-content/30 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>`;
 
         return `
-<a href="/game/${game.s}/"
-   class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 ${isHighlighted ? 'is-highlighted' : ''}"
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}"
    id="game-${game.id}-mobile"
+   onclick="window.location.href='/game/${game.s}/'"
    style="grid-template-columns: ${gridCols};">
+    <div class="w-11 h-11 min-w-11 max-w-11 shrink-0 flex items-center justify-center">
+        ${playedButtonHtml}
+    </div>
     ${showRankColumn ? `<div class="text-2xl font-bold text-primary w-10 text-center">${displayRank}</div>` : ''}
     <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;">
-        <img src="${thumbnail}"
-             alt="${this._escapeHtml(game.n)}"
-             width="90" height="128"
-             class="w-full h-full object-cover"
-             loading="lazy"
-             decoding="async">
+        <img src="${thumbnail}" alt="${this._escapeHtml(game.n)}" width="90" height="128"
+             class="w-full h-full object-cover" loading="lazy" decoding="async">
     </div>
-    <div class="min-w-0">
-        <div class="font-bold text-base leading-tight line-clamp-2">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
-        <div class="text-xs text-base-content/60 truncate">${metaText}</div>
+    <div class="min-w-0 flex items-center justify-between">
+        <div class="min-w-0">
+            <div class="font-bold text-base leading-tight line-clamp-2">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
+            <div class="text-xs text-base-content/60 truncate">${metaText}</div>
+        </div>
+        ${endElementHtml}
     </div>
-    ${showRank === 'filtered'
-        ? `<span class="text-sm text-base-content/60 font-medium">#${game.r}</span>`
-        : `<svg class="w-5 h-5 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-    </svg>`}
-</a>`;
+</div>`;
     }
 
     /**
@@ -240,6 +313,11 @@ class GameListRenderer {
             container.innerHTML = html;
         }
 
+        // Reinitialize HTMX for dynamically rendered content
+        if (typeof htmx !== 'undefined') {
+            htmx.process(container);
+        }
+
         // Handle highlighting
         if (highlightId) {
             this._scrollToHighlight(highlightId);
@@ -283,6 +361,11 @@ class GameListRenderer {
 
         const html = this._renderGames(pageGames, showRank, start + 1);
         container.insertAdjacentHTML('beforeend', html);
+
+        // Reinitialize HTMX for dynamically rendered content
+        if (typeof htmx !== 'undefined') {
+            htmx.process(container);
+        }
 
         const loaded = Math.min(this.currentPage * this.PAGE_SIZE, this.currentGames.length);
         const hasMore = loaded < this.currentGames.length && loaded < 1000; // Max 1000
