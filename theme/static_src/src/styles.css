@@ -573,7 +573,6 @@
 /* Game Row Component - Desktop and Mobile */
 .game-row {
   position: relative;
-  border-left: 3px solid transparent;
   transition: background-color 0.5s ease, transform 0.2s ease;
 }
 
@@ -599,6 +598,9 @@
 /* Desktop grid layout with equidistant spacing */
 .game-row.desktop {
   align-items: center;
+  border-left: 4px solid transparent;
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
 }
 
 /* Desktop hover effects - gradient fades to right, extending to meet filter sidebar */
