@@ -463,6 +463,11 @@ async function handleLoadMore(event) {
             allRows.forEach((row) => {
                 gameList.appendChild(row);
             });
+
+            // Reinitialize HTMX for dynamically appended content
+            if (typeof htmx !== 'undefined') {
+                htmx.process(gameList);
+            }
         }
 
         // Update result summary and button

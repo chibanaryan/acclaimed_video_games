@@ -31,6 +31,7 @@
 - Played button UI: Mario star PNG when played, MDI outline when not, in game rows and detail page
 - Played button: HTMX toggle, desktop/mobile sync, no layout shift with fixed-size wrappers
 - Client-side renderer: add played button rendering with playedGameIds state sync
+- Fix played buttons on Load More: add htmx.process() to reinitialize HTMX for dynamically rendered content
 
 ## 2025-12-29
 
