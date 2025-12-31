@@ -48,17 +48,6 @@ class GameListRenderer {
     }
 
     /**
-     * Generate square thumbnail URL for mobile
-     * @private
-     */
-    _getThumbnailSquare(artworkId) {
-        if (!artworkId) {
-            return '/static/games/images/placeholder.webp';
-        }
-        return `https://images.igdb.com/igdb/image/upload/t_thumb/${artworkId}`;
-    }
-
-    /**
      * Find the root developer (traverses parent hierarchy)
      * @private
      */
@@ -69,6 +58,7 @@ class GameListRenderer {
 
     /**
      * Render a single game row (desktop version)
+     * Matches server-side _game_row.html template exactly
      * @private
      */
     _renderDesktopRow(game, index, showRank) {
@@ -81,40 +71,37 @@ class GameListRenderer {
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showGlobalRank = showRank === 'filtered';
 
-        // Build developers HTML
+        // Build developers HTML - matches Django template structure
         const developersHtml = expanded.developers.map((dev, i) => {
             const rootDev = this._getRootDeveloper(dev);
             const devSlug = rootDev?.slug;
             const separator = i < expanded.developers.length - 1 ? ', ' : '';
 
             if (devSlug) {
-                // Only add hash when dev is not the root developer
-                const hash = dev.id !== rootDev?.id ? `#developer-${dev.id}-game-${game.id}` : '';
-                return `<a href="/developers/${devSlug}/${hash}" class="link link-hover text-base-content">${dev.name}</a>${separator}`;
+                // Hash logic: when dev is not root, use #developer-{dev.id}-game-{game.id}
+                // when dev is root, use #game-{game.id}
+                const hash = dev.id !== rootDev?.id
+                    ? `#developer-${dev.id}-game-${game.id}`
+                    : `#game-${game.id}`;
+                return `<a href="/developers/${devSlug}/${hash}" class="link link-hover">${dev.name}</a>${separator}`;
+            } else if (dev.slug) {
+                return `<a href="/developers/${dev.slug}/#game-${game.id}" class="link link-hover">${dev.name}</a>${separator}`;
             }
-            return `<span class="text-base-content">${dev.name}</span>${separator}`;
+            return `${dev.name}${separator}`;
         }).join('');
 
         const developerLabel = expanded.developers.length === 1 ? 'Developer' : 'Developers';
 
-        // Build platforms HTML (limit to 6)
-        const displayPlatforms = expanded.platforms.slice(0, 6);
-        const extraPlatforms = expanded.platforms.length > 6 ? expanded.platforms.length - 6 : 0;
-
-        const platformsHtml = displayPlatforms.map(p =>
+        // Build platforms HTML - all platforms, CSS handles overflow
+        const platformsHtml = expanded.platforms.map(p =>
             `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${p.name}">${p.code}</button>`
         ).join('');
-        const platformExtraHtml = extraPlatforms > 0 ? `<span class="text-xs text-base-content/50 ml-1">+${extraPlatforms}</span>` : '';
         const platformLabel = expanded.platforms.length === 1 ? 'Platform' : 'Platforms';
 
-        // Build genres HTML (limit to 3)
-        const displayGenres = expanded.genres.slice(0, 3);
-        const extraGenres = expanded.genres.length > 3 ? expanded.genres.length - 3 : 0;
-
-        const genresHtml = displayGenres.map(g =>
-            `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="Filter by ${g.name}">${g.name}</button>`
+        // Build genres HTML - all genres, CSS handles overflow
+        const genresHtml = expanded.genres.map(g =>
+            `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${g.name}">${g.name}</button>`
         ).join('');
-        const genreExtraHtml = extraGenres > 0 ? `<span class="text-xs text-base-content/50 ml-1">+${extraGenres}</span>` : '';
         const genreLabel = expanded.genres.length === 1 ? 'Genre' : 'Genres';
 
         const globalRankHtml = showGlobalRank
@@ -122,9 +109,9 @@ class GameListRenderer {
             : '';
 
         return `
-<div class="game-row desktop hidden lg:grid py-1.5 px-2 ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}" style="grid-template-columns: auto 1fr;">
+<div class="game-row desktop hidden desktop:grid py-0.5 px-2 ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}" style="grid-template-columns: auto 1fr;">
     <div class="flex items-center gap-3 flex-shrink-0">
-        ${showRank !== 'none' ? `<span class="text-2xl font-bold text-primary w-12 text-center">${displayRank}</span>` : ''}
+        ${showRank !== 'none' ? `<span class="game-rank text-2xl font-bold text-primary w-14 text-center">${displayRank}</span>` : ''}
         <a href="/game/${game.s}/" class="game-thumb-link">
             <img src="${thumbnail}"
                  srcset="${thumbnail} 1x, ${thumbnail2x} 2x"
@@ -135,7 +122,7 @@ class GameListRenderer {
     <div class="flex-1 min-w-0 px-4">
         <div class="flex items-center justify-between gap-4">
             <div class="truncate">
-                <a href="/game/${game.s}/" class="font-bold text-lg link link-hover">
+                <a href="/game/${game.s}/" class="game-title font-bold link link-hover">
                     ${this._escapeHtml(game.n)}
                 </a>
                 <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1" data-year="${game.y}">
@@ -144,10 +131,10 @@ class GameListRenderer {
             </div>
             ${globalRankHtml}
         </div>
-        <div class="game-row-details text-sm mt-0.5">
-            ${expanded.developers.length > 0 ? `<div class="text-base-content/70">${developerLabel}: ${developersHtml}</div>` : ''}
-            ${expanded.platforms.length > 0 ? `<div class="flex items-center gap-1 text-base-content/70">${platformLabel}: ${platformsHtml}${platformExtraHtml}</div>` : ''}
-            ${expanded.genres.length > 0 ? `<div class="flex items-center gap-1 text-base-content/70">${genreLabel}: ${genresHtml}${genreExtraHtml}</div>` : ''}
+        <div class="game-row-details text-sm ml-4">
+            ${expanded.developers.length > 0 ? `<div class="truncate"><span class="text-base-content/70">${developerLabel}:</span> ${developersHtml}</div>` : ''}
+            ${expanded.platforms.length > 0 ? `<div class="flex items-center gap-1"><span class="text-base-content/70 shrink-0">${platformLabel}:</span><span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;">${platformsHtml}</span></div>` : ''}
+            ${expanded.genres.length > 0 ? `<div class="flex items-center gap-1"><span class="text-base-content/70 shrink-0">${genreLabel}:</span><span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;">${genresHtml}</span></div>` : ''}
         </div>
     </div>
 </div>`;
@@ -155,47 +142,54 @@ class GameListRenderer {
 
     /**
      * Render a single game row (mobile version)
+     * Matches server-side _game_row.html template exactly
      * @private
      */
     _renderMobileRow(game, index, showRank) {
         const expanded = this.engine.expandGame(game);
         const isHighlighted = this.highlightId && game.id === this.highlightId;
-        const thumbnailSquare = this._getThumbnailSquare(game.a);
+        const thumbnail = this._getThumbnail(game.a);
 
         const displayRank = showRank === 'filtered' ? index : game.r;
+        const showRankColumn = showRank !== 'none';
 
-        // Build platforms HTML (limit to 4 for mobile)
-        const displayPlatforms = expanded.platforms.slice(0, 4);
-        const extraPlatforms = expanded.platforms.length > 4 ? expanded.platforms.length - 4 : 0;
+        // Build platforms text (limit to 3, comma-separated codes)
+        const displayPlatforms = expanded.platforms.slice(0, 3);
+        const platformsText = displayPlatforms.map(p => p.code).join(', ');
 
-        const platformsHtml = displayPlatforms.map(p =>
-            `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); event.preventDefault(); document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${p.name}">${p.code}</button>`
-        ).join('');
-        const platformExtraHtml = extraPlatforms > 0 ? `<span class="text-xs text-base-content/50">+${extraPlatforms}</span>` : '';
+        // Get first genre name
+        const firstGenre = expanded.genres.length > 0 ? expanded.genres[0].name : '';
+
+        // Build metadata text: "platforms • genre"
+        let metaText = '';
+        if (platformsText) metaText += platformsText;
+        if (platformsText && firstGenre) metaText += ' • ';
+        if (firstGenre) metaText += firstGenre;
+
+        // Grid template columns: [rank] thumbnail content [chevron/rank]
+        const gridCols = showRankColumn ? 'auto auto 1fr auto' : 'auto 1fr auto';
 
         return `
 <a href="/game/${game.s}/"
-   class="game-row game-card-mobile lg:hidden flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 ${isHighlighted ? 'is-highlighted' : ''}"
-   id="game-${game.id}-mobile">
-    ${showRank !== 'none' ? `<div class="text-2xl font-bold text-primary w-10 text-center shrink-0">${displayRank}</div>` : ''}
-    <div class="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-base-300">
-        <img src="${thumbnailSquare}"
+   class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 ${isHighlighted ? 'is-highlighted' : ''}"
+   id="game-${game.id}-mobile"
+   style="grid-template-columns: ${gridCols};">
+    ${showRankColumn ? `<div class="text-2xl font-bold text-primary w-10 text-center">${displayRank}</div>` : ''}
+    <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;">
+        <img src="${thumbnail}"
              alt="${this._escapeHtml(game.n)}"
-             width="90" height="90"
+             width="90" height="128"
              class="w-full h-full object-cover"
              loading="lazy"
              decoding="async">
     </div>
-    <div class="flex-1 min-w-0">
-        <h3 class="font-bold text-base">${this._escapeHtml(game.n)}</h3>
-        <div class="flex items-center flex-wrap gap-1 text-sm text-base-content/60">
-            <span class="mr-1" data-year="${game.y}">${game.y || 'N/A'}</span>
-            ${platformsHtml}${platformExtraHtml}
-        </div>
+    <div class="min-w-0">
+        <div class="font-bold text-base leading-tight line-clamp-2">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
+        <div class="text-xs text-base-content/60 truncate">${metaText}</div>
     </div>
     ${showRank === 'filtered'
-        ? `<span class="text-sm text-base-content/60 shrink-0 font-medium">#${game.r}</span>`
-        : `<svg class="w-5 h-5 text-base-content/30 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        ? `<span class="text-sm text-base-content/60 font-medium">#${game.r}</span>`
+        : `<svg class="w-5 h-5 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
     </svg>`}
 </a>`;
@@ -352,7 +346,7 @@ class GameListRenderer {
      * @returns {string} HTML string
      */
     getResultSummaryHtml(loaded, total) {
-        return `<span id="loaded-count" class="loaded-count-value">${loaded.toLocaleString()}</span> of ${total.toLocaleString()} games`;
+        return `Showing <span id="loaded-count" class="loaded-count-value">${loaded.toLocaleString()}</span> of ${total.toLocaleString()}`;
     }
 
     /**

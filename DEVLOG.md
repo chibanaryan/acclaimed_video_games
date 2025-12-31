@@ -25,6 +25,7 @@
 - Login accepts email or username, signup has optional username field and newsletter checkbox
 - Remove Posts feature and old newsletter subscription pages (consolidated into auth flow)
 - Test speed optimization: parallel execution (36s→12s), in-memory SQLite, setUpTestData for fixtures
+- Fix client-side renderer to match Django template exactly (desktop:grid, game-rank/game-title classes, hover effects)
 
 ## 2025-12-29
 
