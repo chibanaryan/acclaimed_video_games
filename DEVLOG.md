@@ -2,6 +2,7 @@
 
 ## 2025-12-31
 
+- Add player rank/percentile to profile: shows "#X of Y players" for small groups, percentile for 10+
 - Fix hierarchical filter drill-down: clicking child when parent selected shifts selection down, not toggle
 - Make rankings page the homepage (redirect /rankings/ and /games/ to /)
 - Add dedicated contact page at /contact/ with form fallback for modal errors

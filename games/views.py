@@ -22,6 +22,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
 from games import config, constants, models, utils
+from games.services.percentile_service import calculate_percentile
 from games.forms import ImportForm, ContactForm
 from games.mixins import HTMXPartialMixin, RobustPaginationMixin
 
@@ -2460,6 +2461,9 @@ class AuthModalProfileView(View):
         played_count = user.played_games.filter(game__isnull=False).count()
         total_games = models.Game.objects.count()
 
+        # Calculate percentile ranking
+        percentile_data = calculate_percentile(played_count)
+
         response = TemplateResponse(
             request,
             self.template_name,
@@ -2468,6 +2472,8 @@ class AuthModalProfileView(View):
                 "form": {},
                 "played_count": played_count,
                 "total_games": total_games,
+                "percentile": percentile_data["percentile"],
+                "percentile_message": percentile_data["message"],
             },
         )
         response["HX-Push-Url"] = "false"
@@ -2568,6 +2574,9 @@ class TogglePlayedGameView(LoginRequiredMixin, View):
             is_played = False
         else:
             is_played = True
+
+        # Invalidate percentile distribution cache
+        cache.delete("user_played_games_distribution")
 
         # Preserve button size (large on game detail page, default elsewhere)
         size = request.GET.get("size")
