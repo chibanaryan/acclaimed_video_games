@@ -1587,8 +1587,10 @@ class NotFoundView(TemplateView):
 
     template_name = "404.html"
 
-    def get(self, request, *args, **kwargs):
-        response = super().get(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        # Handle all HTTP methods (GET, POST, etc.) the same way
+        context = self.get_context_data(**kwargs)
+        response = self.render_to_response(context)
         response.status_code = 404
         return response
 
@@ -2229,3 +2231,28 @@ class AuthLogoutView(View):
         if "/auth/" in redirect_url or "/accounts/" in redirect_url:
             redirect_url = "/"
         return redirect(redirect_url)
+
+
+class TogglePlayedGameView(LoginRequiredMixin, View):
+    """Toggle a game's played status for the current user."""
+
+    def post(self, request, igdb_id):
+        game = get_object_or_404(models.Game, igdb_id=igdb_id)
+
+        played_game, created = models.PlayedGame.objects.get_or_create(
+            user=request.user,
+            igdb_id=igdb_id,
+            defaults={"game": game},
+        )
+
+        if not created:
+            played_game.delete()
+            is_played = False
+        else:
+            is_played = True
+
+        return render(
+            request,
+            "games/includes/_played_button.html",
+            {"game": game, "is_played": is_played},
+        )

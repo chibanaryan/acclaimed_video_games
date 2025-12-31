@@ -1,0 +1,10 @@
+{# Played game toggle button - HTMX-enabled #}
+{% if user.is_authenticated and game.igdb_id %}
+<button
+    class="btn btn-ghost btn-xs p-0 h-auto min-h-0 {% if is_played %}text-success{% else %}text-base-content/40{% endif %}"
+    hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}"
+    hx-swap="outerHTML"
+    title="{% if is_played %}Unmark as played{% else %}Mark as played{% endif %}">
+    <span class="mdi mdi-check-circle{% if not is_played %}-outline{% endif %} text-lg"></span>
+</button>
+{% endif %}

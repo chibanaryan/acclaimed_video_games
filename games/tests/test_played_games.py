@@ -201,3 +201,94 @@ class GameQuerySetPlayedStatusTests(TestCase):
         # Neither game should be marked as played for user2
         self.assertFalse(game1.is_played_by_user)
         self.assertFalse(game2.is_played_by_user)
+
+
+class TogglePlayedGameViewTests(TestCase):
+    """Test cases for TogglePlayedGameView."""
+
+    @classmethod
+    def setUpTestData(cls):
+        """Set up test data."""
+        cls.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        cls.game = Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=12345,
+        )
+
+    def test_toggle_requires_authentication(self):
+        """Test that toggle endpoint requires authentication."""
+        from django.urls import reverse
+
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+        response = self.client.post(url)
+        # Should redirect to login page
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response.url)
+
+    def test_toggle_creates_played_game(self):
+        """Test that toggle creates PlayedGame for authenticated user."""
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+    def test_toggle_deletes_existing_played_game(self):
+        """Test that toggle deletes PlayedGame if it already exists."""
+        from django.urls import reverse
+
+        # Create existing PlayedGame
+        PlayedGame.objects.create(
+            user=self.user,
+            game=self.game,
+            igdb_id=self.game.igdb_id,
+        )
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+    def test_toggle_404_for_invalid_igdb_id(self):
+        """Test that toggle returns 404 for non-existent igdb_id."""
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": 99999})
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_toggle_returns_button_template(self):
+        """Test that toggle returns the played button partial."""
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should contain the button element
+        self.assertIn(b"button", response.content)

@@ -112,6 +112,11 @@ urlpatterns = [
         name="games-search",
     ),
     path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
+    path(
+        "game/<int:igdb_id>/toggle-played/",
+        views.TogglePlayedGameView.as_view(),
+        name="toggle-played-game",
+    ),
     path("developers/", views.DeveloperListView.as_view(), name="developers-list"),
     path(
         "developers/<slug:slug>/",

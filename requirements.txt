@@ -1,5 +1,9 @@
 beautifulsoup4
 coverage
+pytest
+pytest-cov
+pytest-django
+pytest-xdist
 django
 django-debug-toolbar
 django-environ

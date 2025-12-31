@@ -630,6 +630,7 @@ class GameAllDataView(APIView):
             games_data.append(
                 {
                     "id": game.id,
+                    "i": game.igdb_id,  # IGDB ID for played game tracking
                     "n": game.name,
                     "s": game.slug,
                     "r": game.rank,
