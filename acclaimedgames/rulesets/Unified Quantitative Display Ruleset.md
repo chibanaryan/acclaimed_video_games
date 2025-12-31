@@ -4,6 +4,32 @@ A comprehensive ruleset for producing visual displays of quantitative informatio
 
 ---
 
+## Project Context: Acclaimed Video Games
+
+This section captures requirements gathered from stakeholder interview (December 2025) to guide visualization decisions for this specific project.
+
+| Aspect | Requirement |
+|--------|-------------|
+| **Audience** | Enthusiast collectors + researchers/journalists |
+| **Data literacy** | Statistically fluent |
+| **Primary task** | Discovery/browsing |
+| **Key comparisons** | Game vs game rank, trends over time, developer strength |
+| **Core message** | Comprehensive reference |
+| **Visualization scope** | Add targeted charts only where they enlighten—not as decoration |
+| **Distribution display** | Enhanced heatmap with sqrt scaling for better differentiation |
+
+### Design Implications
+
+Based on these requirements:
+
+1. **No need to simplify for novices** — Can use sophisticated visualizations (progress bars, distribution charts) without extensive explanation
+2. **Support quick browsing** — Rank context denominators ("47 of 3,240"), tabular-nums for aligned scanning
+3. **Developer comparisons matter** — Rank distribution charts show quality consistency across a developer's catalog
+4. **Minimal decoration** — Every visual element must carry information; follow high data-ink ratio principles
+5. **Tables over charts for lookup** — Use tables with minimal styling for exact value reference
+
+---
+
 ## Table of contents
 
 - [[#1. Purpose, mission, and success criteria]]
