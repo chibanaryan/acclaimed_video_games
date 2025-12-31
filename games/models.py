@@ -71,6 +71,39 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
 
+class PlayedGame(models.Model):
+    """
+    Tracks games a user has marked as played.
+
+    Uses hybrid FK + igdb_id approach:
+    - FK to Game for fast queries and joins
+    - igdb_id stored for reconnection after game re-imports
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="played_games",
+    )
+    game = models.ForeignKey(
+        "Game",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="played_by",
+    )
+    igdb_id = models.IntegerField(db_index=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "igdb_id")]
+        indexes = [models.Index(fields=["user", "game"])]
+
+    def __str__(self):
+        game_name = self.game.name if self.game else f"IGDB:{self.igdb_id}"
+        return f"{self.user.username} played {game_name}"
+
+
 class Snippet(models.Model):
     """A reusable piece of text"""
 
@@ -668,6 +701,18 @@ class GameQuerySet(models.QuerySet):
         ).select_related(
             "primary_igdb_game_data",
             "primary_wikipedia_game_data",
+        )
+
+    def with_played_status(self, user):
+        """Annotate games with played status for the given user."""
+        if not user or not user.is_authenticated:
+            return self
+        from django.db.models import Exists, OuterRef
+
+        return self.annotate(
+            is_played_by_user=Exists(
+                PlayedGame.objects.filter(user=user, game=OuterRef("pk"))
+            )
         )
 
 

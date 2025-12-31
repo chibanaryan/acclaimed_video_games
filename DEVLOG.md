@@ -2,6 +2,7 @@
 
 ## 2025-12-30
 
+- Add PlayedGame model for tracking user's played games with IGDB ID-based reconnection across re-imports
 - Jump to Rank: use client-side filtering for instant navigation (no network requests)
 - Jump to Rank: validate against filtered total, show error if rank exceeds list size
 - Jump to Rank: use event delegation for reliable button handling, auto-initialize on script load

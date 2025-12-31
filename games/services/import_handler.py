@@ -1348,6 +1348,12 @@ def import_games(
             game.platforms.set(platform_objs)
             imported_igdb_ids.add(igdb_id)
 
+            # Reconnect orphaned PlayedGame records
+            models.PlayedGame.objects.filter(
+                igdb_id=igdb_id,
+                game__isnull=True,
+            ).update(game=game)
+
             # Reconnect to existing IGDB/Wikipedia metadata if not already connected
             # This handles both orphaned metadata (game=None) and metadata still
             # linked to this game but not set as primary
@@ -1442,6 +1448,7 @@ def import_games(
             models.WikipediaGameData.objects.filter(game__in=stale_games).update(
                 game=None
             )
+            models.PlayedGame.objects.filter(game__in=stale_games).update(game=None)
             stale_games.delete()
 
         # Update year and decade ranks for all games

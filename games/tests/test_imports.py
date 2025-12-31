@@ -304,6 +304,62 @@ class ImportGamesTests(TestCase):
         self.assertEqual(game.primary_igdb_game_data.id, igdb_primary.id)
         self.assertEqual(game.primary_igdb_game_data.artwork_id, "primary_artwork")
 
+    def test_import_games_orphans_played_games_on_delete(self):
+        """Test that PlayedGame records are orphaned when games are deleted."""
+        # Create user and game
+        user = models.User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964\r\n"
+        success, _ = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+        game = models.Game.objects.get()
+
+        # Mark game as played
+        played = models.PlayedGame.objects.create(
+            user=user,
+            game=game,
+            igdb_id=12345,
+        )
+
+        # Import without this game (should delete it)
+        data2 = "1\tDifferent Game\t2024\tPC\t99999\tQ99999\r\n"
+        success, message = utils.import_games(StringIO(data2))
+        self.assertTrue(success)
+        self.assertIn("1 deleted", message)
+
+        # PlayedGame should still exist but with game=None (orphaned)
+        played.refresh_from_db()
+        self.assertIsNone(played.game)
+        self.assertEqual(played.igdb_id, 12345)
+
+    def test_import_games_reconnects_played_games(self):
+        """Test that orphaned PlayedGame records are reconnected on re-import."""
+        # Create user and orphaned PlayedGame (simulating previous game was deleted)
+        user = models.User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        played = models.PlayedGame.objects.create(
+            user=user,
+            game=None,  # Orphaned
+            igdb_id=12345,
+        )
+
+        # Import game with matching igdb_id
+        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964\r\n"
+        success, _ = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        # PlayedGame should now be connected to the new game
+        played.refresh_from_db()
+        self.assertIsNotNone(played.game)
+        self.assertEqual(played.game.name, "Test Game")
+        self.assertEqual(played.igdb_id, 12345)
+
 
 class ImportPlatformsTests(TestCase):
 
