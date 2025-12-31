@@ -35,13 +35,15 @@ function initLoadMore() {
         container.addEventListener('click', function(e) {
             const button = e.target.closest('.load-more-button');
             if (button && !button.classList.contains('is-loading')) {
-                // Skip if client-side filtering is handling load more
+                // Use CSF load more if available (instant, no network requests)
                 if (typeof getClientSideFiltering === 'function') {
                     const csf = getClientSideFiltering();
                     if (csf && csf.isReady()) {
-                        return; // Let client-side filtering handle it
+                        handleLoadMoreCSF(csf);
+                        return;
                     }
                 }
+                // Fallback to server-side load more
                 handleLoadMore({ currentTarget: button });
             }
         });
@@ -109,8 +111,88 @@ function getFiltersFromURL() {
         genres: params.get('genres') ? params.get('genres').split(',') : [],
         platforms: params.get('platforms') ? params.get('platforms').split(',') : [],
         series: params.get('series') ? params.get('series').split(',') : [],
-        sort: params.get('sort') || 'rank'
+        sort: params.get('sort') || 'rank',
+        played: params.get('played') || ''
     };
+}
+
+/**
+ * Get the current game list state from the best available source
+ * Priority: CSF renderer state > data attributes > DOM count
+ * @returns {Object} { total, loaded, filters, showRank, csf }
+ */
+function getCurrentState() {
+    const filters = getFiltersFromURL();
+    let total = 0;
+    let loaded = 0;
+    let csf = null;
+
+    // Try to get state from CSF (most authoritative when available)
+    if (typeof getClientSideFiltering === 'function') {
+        csf = getClientSideFiltering();
+        if (csf && csf.isReady()) {
+            const result = csf.applyFilters(filters);
+            if (result) {
+                total = result.total;
+            }
+            // Get loaded count from renderer if it has state
+            if (csf.renderer && csf.renderer.currentGames && csf.renderer.currentGames.length > 0) {
+                loaded = Math.min(
+                    csf.renderer.currentPage * csf.renderer.PAGE_SIZE,
+                    csf.renderer.currentGames.length
+                );
+            }
+        }
+    }
+
+    // Fallback to data attributes if CSF doesn't have state
+    if (loaded === 0) {
+        const input = document.querySelector('.jump-to-rank-input');
+        if (input) {
+            loaded = parseInt(input.dataset.loaded) || 0;
+            if (total === 0) {
+                total = parseInt(input.dataset.total) || 0;
+            }
+        }
+    }
+
+    // Final fallback: count actual rendered rows
+    const renderedRows = document.querySelectorAll('#game-list-container .game-row.desktop').length;
+    if (renderedRows > loaded) {
+        loaded = renderedRows;
+    }
+
+    const showRank = hasActiveFilters(filters, csf) ? 'filtered' : 'alltime';
+
+    return { total, loaded, filters, showRank, csf };
+}
+
+/**
+ * Check if any filters are active (should show filtered rank vs alltime rank)
+ * @param {Object} filters - Filters from getFiltersFromURL()
+ * @param {Object} csf - ClientSideFiltering instance (optional, for year bounds)
+ * @returns {boolean}
+ */
+function hasActiveFilters(filters, csf) {
+    // Check simple filters
+    if (filters.q) return true;
+    if (filters.genres && filters.genres.length > 0) return true;
+    if (filters.platforms && filters.platforms.length > 0) return true;
+    if (filters.series && filters.series.length > 0) return true;
+    if (filters.played) return true;
+
+    // Check year filter - only active if different from default bounds
+    if (csf && csf.getYearBounds) {
+        const bounds = csf.getYearBounds();
+        if (filters.start && filters.start > bounds.min) return true;
+        if (filters.end && filters.end < bounds.max) return true;
+    } else {
+        // Without CSF, any year value counts as filter
+        if (filters.start) return true;
+        if (filters.end) return true;
+    }
+
+    return false;
 }
 
 /**
@@ -119,21 +201,11 @@ function getFiltersFromURL() {
  */
 async function handleJumpToRank(input) {
     const targetRank = parseInt(input.value);
-    let total = parseInt(input.dataset.total);
-    const loaded = parseInt(input.dataset.loaded);
-    const perPage = parseInt(input.dataset.perPage);
+    const perPage = parseInt(input.dataset.perPage) || 100;
 
-    // Get actual filtered total from CSF if available
-    if (typeof getClientSideFiltering === 'function') {
-        const csf = getClientSideFiltering();
-        if (csf && csf.isReady()) {
-            const filters = getFiltersFromURL();
-            const result = csf.applyFilters(filters);
-            if (result && result.total) {
-                total = result.total;
-            }
-        }
-    }
+    // Get authoritative state
+    const state = getCurrentState();
+    const { total, loaded, csf } = state;
 
     // Validate input
     if (!targetRank || targetRank < 1 || targetRank > total) {
@@ -150,17 +222,14 @@ async function handleJumpToRank(input) {
     }
 
     // Try to use client-side filtering (instant, no network requests)
-    if (typeof getClientSideFiltering === 'function') {
-        const csf = getClientSideFiltering();
-        if (csf && csf.isReady()) {
-            try {
-                jumpToRankClientSide(csf, targetRank, loaded, perPage);
-                input.value = '';
-                return;
-            } catch (err) {
-                console.error('[JumpToRank] Client-side error:', err);
-                // Fall through to server-side
-            }
+    if (csf && csf.isReady()) {
+        try {
+            jumpToRankClientSide(csf, targetRank, loaded, perPage);
+            input.value = '';
+            return;
+        } catch (err) {
+            console.error('[JumpToRank] Client-side error:', err);
+            // Fall through to server-side
         }
     }
 
@@ -182,8 +251,9 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
         return;
     }
 
-    // Get current filters from URL
-    const filters = getFiltersFromURL();
+    // Get authoritative state (filters, showRank already computed)
+    const currentState = getCurrentState();
+    const { filters, showRank } = currentState;
 
     // Get filtered games from engine
     const result = csf.applyFilters(filters);
@@ -201,8 +271,8 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
     const renderer = csf.renderer;
     gamesToRender.forEach((game, i) => {
         const index = loaded + i + 1; // 1-based rank
-        const desktopRow = renderer._renderDesktopRow(game, index, 'filtered');
-        const mobileRow = renderer._renderMobileRow(game, index, 'filtered');
+        const desktopRow = renderer._renderDesktopRow(game, index, showRank);
+        const mobileRow = renderer._renderMobileRow(game, index, showRank);
         if (desktopRow) gameListContainer.appendChild(desktopRow);
         if (mobileRow) gameListContainer.appendChild(mobileRow);
     });
@@ -408,6 +478,65 @@ function scrollToAndHighlightRank(position) {
         if (desktopRow) desktopRow.classList.remove('is-highlighted');
         if (mobileRow) mobileRow.classList.remove('is-highlighted');
     }, 3000); // Remove highlight after 3 seconds
+}
+
+/**
+ * Handles Load More using client-side filtering (instant, no network)
+ * @param {ClientSideFiltering} csf - The CSF instance
+ */
+function handleLoadMoreCSF(csf) {
+    const gameListContainer = document.getElementById('game-list-container');
+    const countContainer = document.querySelector('.result-count');
+    const loadMoreContainer = document.querySelector('.load-more-container');
+
+    if (!gameListContainer) return;
+
+    // Get authoritative state
+    const currentState = getCurrentState();
+    const { filters, showRank, loaded } = currentState;
+
+    // Initialize renderer state if not already done (taking over from server-rendered content)
+    const renderer = csf.renderer;
+    if (!renderer.currentGames || renderer.currentGames.length === 0) {
+        // Get the filtered games from the engine
+        const result = csf.applyFilters(filters);
+        if (!result || !result.games) return;
+
+        // Set the renderer's state based on what's already loaded
+        renderer.currentGames = result.games;
+        renderer.currentPage = Math.ceil(loaded / renderer.PAGE_SIZE);
+    }
+
+    // Use CSF's loadMore method
+    const state = csf.loadMore(gameListContainer, { showRank });
+    if (!state) return;
+
+    // Mark that CSF has taken over
+    csf._hasRenderedUI = true;
+
+    // Reinitialize HTMX for dynamically rendered content
+    if (typeof htmx !== 'undefined') {
+        htmx.process(gameListContainer);
+    }
+
+    // Update count display
+    if (countContainer) {
+        countContainer.innerHTML = csf.renderer.getResultSummaryHtml(state.loaded, state.total);
+    }
+
+    // Update Load More button
+    if (loadMoreContainer) {
+        loadMoreContainer.innerHTML = csf.renderer.getLoadMoreHtml({
+            hasMore: state.hasMore,
+            remaining: state.remaining,
+            maxLoaded: state.loaded >= 1000
+        });
+    }
+
+    // Update jump-to-rank inputs
+    document.querySelectorAll('.jump-to-rank-input').forEach(inp => {
+        inp.dataset.loaded = state.loaded;
+    });
 }
 
 /**

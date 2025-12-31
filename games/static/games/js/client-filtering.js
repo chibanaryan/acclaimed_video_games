@@ -24,6 +24,7 @@ class ClientSideFiltering {
         this.currentFilters = {};
         this.minYear = 1970;
         this.maxYear = new Date().getFullYear();
+        this._hasRenderedUI = false;  // Track if CSF has taken over the UI
     }
 
     /**
@@ -131,6 +132,9 @@ class ClientSideFiltering {
             showRank = 'filtered'
         } = options;
 
+        // Mark that CSF has taken over UI rendering
+        this._hasRenderedUI = true;
+
         // Clear and render new results
         this.renderer.render(filterResult.games, gameListContainer, {
             showRank,
@@ -154,13 +158,16 @@ class ClientSideFiltering {
      * Load more results
      *
      * @param {HTMLElement} gameListContainer - Container for game rows
+     * @param {Object} options - Options including showRank
      * @returns {Object} Updated state
      */
-    loadMore(gameListContainer) {
+    loadMore(gameListContainer, options = {}) {
         if (!this.isInitialized) return null;
 
+        const { showRank = 'filtered' } = options;
+
         return this.renderer.loadMore(gameListContainer, {
-            showRank: 'filtered'
+            showRank
         });
     }
 
@@ -265,6 +272,15 @@ class ClientSideFiltering {
      */
     isReady() {
         return this.isInitialized;
+    }
+
+    /**
+     * Check if CSF has taken over UI rendering
+     * (i.e., CSF has actively rendered the page, not just loaded data)
+     * @returns {boolean}
+     */
+    hasRenderedUI() {
+        return this._hasRenderedUI;
     }
 
     /**
