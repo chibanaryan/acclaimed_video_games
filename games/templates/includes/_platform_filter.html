@@ -140,7 +140,13 @@
              computers: {
                  name: 'Microcomputers',
                  icon: 'mdi-desktop-classic',
-                 platforms: ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2', 'ARCH', 'E60', 'HP21', 'PDP']
+                 formFactors: {
+                     commodore: { name: 'Commodore', platforms: ['VC20', 'C64', 'AMI', 'CD32'] },
+                     uk: { name: 'UK', platforms: ['ZXS', 'CPC', 'BBCM', 'ARCH'] },
+                     japan: { name: 'Japan', platforms: ['PC88', 'PC98', 'FM7', 'FMT', 'SX1', 'MSX'] },
+                     atari: { name: 'Atari', platforms: ['A8', 'AST'] },
+                     other: { name: 'Other', platforms: ['A2', 'T80', 'TCC', 'PDP', 'HP21', 'E60'] }
+                 }
              }
          },
 
@@ -156,10 +162,12 @@
          },
 
          // Format platform years only (for display next to name)
+         // Uses abbreviated two-digit format: '78-'05 or '78-now
          formatPlatformYears(platform) {
              if (!platform || !platform.year_start) return '';
-             const endYear = platform.year_end ? platform.year_end : 'now';
-             return '(' + platform.year_start + '-' + endYear + ')';
+             const startAbbr = '\'' + String(platform.year_start).slice(-2);
+             const endAbbr = platform.year_end ? '\'' + String(platform.year_end).slice(-2) : 'now';
+             return '(' + startAbbr + '-' + endAbbr + ')';
          },
 
          // Format platform name with year range (for tooltips)
@@ -174,6 +182,15 @@
          get sortedManufacturerKeys() {
              return Object.keys(this.platformHierarchy).sort((a, b) => {
                  return this.getManufacturerTotalCount(b) - this.getManufacturerTotalCount(a);
+             });
+         },
+
+         // Get sorted form factor keys by total game count
+         getSortedFormFactorKeys(mfrKey) {
+             const mfr = this.platformHierarchy[mfrKey];
+             if (!mfr || !mfr.formFactors) return [];
+             return Object.keys(mfr.formFactors).sort((a, b) => {
+                 return this.getFormFactorTotalCount(mfrKey, b) - this.getFormFactorTotalCount(mfrKey, a);
              });
          },
 
@@ -216,40 +233,24 @@
              }, 0);
          },
 
-         // Get platforms for a form factor, sorted chronologically (primary: start year, secondary: end year, tertiary: alphabetical)
+         // Get platforms for a form factor, sorted by game count (descending)
          getFormFactorPlatforms(mfrKey, ffKey) {
              const mfr = this.platformHierarchy[mfrKey];
              if (!mfr || !mfr.formFactors || !mfr.formFactors[ffKey]) return [];
              return mfr.formFactors[ffKey].platforms
                  .map(code => this.getPlatformByCode(code))
                  .filter(p => p)
-                 .sort((a, b) => {
-                     const startA = a.year_start || 9999;
-                     const startB = b.year_start || 9999;
-                     if (startA !== startB) return startA - startB;
-                     const endA = a.year_end || 9999;
-                     const endB = b.year_end || 9999;
-                     if (endA !== endB) return endA - endB;
-                     return a.name.localeCompare(b.name);
-                 });
+                 .sort((a, b) => this.getEffectiveCount(b) - this.getEffectiveCount(a));
          },
 
-         // Get flat platforms for a manufacturer (no form factors), sorted chronologically
+         // Get flat platforms for a manufacturer (no form factors), sorted by game count (descending)
          getFlatPlatforms(mfrKey) {
              const mfr = this.platformHierarchy[mfrKey];
              if (!mfr || !mfr.platforms) return [];
              return mfr.platforms
                  .map(code => this.getPlatformByCode(code))
                  .filter(p => p)
-                 .sort((a, b) => {
-                     const startA = a.year_start || 9999;
-                     const startB = b.year_start || 9999;
-                     if (startA !== startB) return startA - startB;
-                     const endA = a.year_end || 9999;
-                     const endB = b.year_end || 9999;
-                     if (endA !== endB) return endA - endB;
-                     return a.name.localeCompare(b.name);
-                 });
+                 .sort((a, b) => this.getEffectiveCount(b) - this.getEffectiveCount(a));
          },
 
          // Check if platform has any games with current filters (or is selected)
@@ -424,11 +425,8 @@
          },
 
          // Check if ALL platforms for form factor are selected (checkbox shows checked)
-         // Only shows checked if parent manufacturer is NOT fully selected (hierarchical visual)
+         // Shows as selected when all its platforms are selected (additive visual model)
          isFormFactorSelected(mfrKey, ffKey) {
-             // If entire manufacturer is selected, form factor shouldn't show as checked
-             if (this.isManufacturerSelected(mfrKey)) return false;
-
              const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
              if (platformIds.length === 0) return false;
              return platformIds.every(id => filters.platforms.includes(id));
@@ -555,7 +553,7 @@
                     {# If has form factors (Home/Handheld) #}
                     <template x-if="platformHierarchy[mfrKey].formFactors">
                         <div class="space-y-1">
-                            <template x-for="(ff, ffKey) in platformHierarchy[mfrKey].formFactors" :key="ffKey">
+                            <template x-for="ffKey in getSortedFormFactorKeys(mfrKey)" :key="ffKey">
                                 <div class="form-factor-group">
                                     {# Form Factor Header - always visible, no expand/collapse #}
                                     <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors cursor-pointer"
@@ -569,7 +567,7 @@
                                         {# Form Factor Name #}
                                         <span class="text-xs font-medium flex-1"
                                               :class="isFormFactorSelected(mfrKey, ffKey) ? '' : 'opacity-80'"
-                                              x-text="ff.name"></span>
+                                              x-text="platformHierarchy[mfrKey].formFactors[ffKey].name"></span>
                                         {# Deduplicated form factor count #}
                                         <span class="text-xs opacity-60 tabular-nums" x-text="getFormFactorTotalCount(mfrKey, ffKey)"></span>
                                     </div>

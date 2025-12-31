@@ -13,6 +13,9 @@ CACHE_TIMEOUT_1_HOUR = 60 * 60  # 3600 seconds
 CACHE_TIMEOUT_24_HOURS = 60 * 60 * 24  # 86400 seconds
 CACHE_TIMEOUT_DEFAULT = CACHE_TIMEOUT_24_HOURS
 
+# Cache version - bump this to invalidate all caches after schema/data changes
+CACHE_VERSION = "v2"
+
 # =============================================================================
 # Pagination Defaults
 # =============================================================================

@@ -41,6 +41,8 @@
 - CSV download: support series/played filters, show Played column (Yes/No) for authenticated users
 - Fix mobile filter race condition: re-dispatch facet counts when filter sheet opens for first time
 - Add legal disclaimer link to profile form
+- Add Microcomputers sub-grouping: Commodore, UK, Japan, Atari, Other (sorted by game count)
+- Sort all platform filter levels by game count: manufacturers, form factors, and individual platforms
 
 ## 2025-12-30
 

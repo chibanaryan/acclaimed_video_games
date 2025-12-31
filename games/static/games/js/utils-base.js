@@ -540,7 +540,7 @@ var PLATFORM_GROUPS = [
     ['PC', ['WIN', 'DOS', 'LIN', 'MAC']],
     ['Arcade, Mobile & VR', ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']],
     ['Retro Consoles', ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS']],
-    ['Microcomputers', ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2']],
+    ['Microcomputers', ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2', 'ARCH', 'E60', 'HP21', 'PDP']],
     // Form factor groups (checked after manufacturer groups)
     ['Nintendo Handheld', ['GB', 'GBC', 'GBA', 'DS', '3DS']],
     ['Nintendo Home Console', ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW']],

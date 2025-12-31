@@ -498,9 +498,9 @@ def download_games_csv(request):
 
     # Get platforms list for virtual ID expansion
     platforms_lookup = utils.get_or_set_cache(
-        "search_platforms_list",
+        f"search_platforms_list:{config.CACHE_VERSION}",
         models.Platform.objects.all(),
-        ["id", "name", "code"],
+        ["id", "name", "code", "year_start", "year_end"],
         order_by="name",
         transform_id=True,
     )
@@ -800,9 +800,9 @@ class GameSearchView(RobustPaginationMixin, ListView):
         platforms_param = self.request.GET.get("platforms")
         if platforms_param:
             platforms_list = utils.get_or_set_cache(
-                "search_platforms_list",
+                f"search_platforms_list:{config.CACHE_VERSION}",
                 models.Platform.objects.all(),
-                ["id", "name", "code"],
+                ["id", "name", "code", "year_start", "year_end"],
                 order_by="name",
                 transform_id=True,
             )
@@ -877,7 +877,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             )
 
         platforms = utils.get_or_set_cache(
-            "search_platforms_list",
+            f"search_platforms_list:{config.CACHE_VERSION}",
             models.Platform.objects.all(),
             ["id", "name", "code", "year_start", "year_end"],
             order_by="name",
