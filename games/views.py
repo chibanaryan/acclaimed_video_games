@@ -423,6 +423,12 @@ def download_games_csv(request):
     # Get filtered queryset using same logic as GameSearchView / GameListView
     qs = models.Game.objects.with_relations()
 
+    # Add played status annotation for authenticated users
+    user = request.user
+    is_authenticated = user.is_authenticated
+    if is_authenticated:
+        qs = qs.with_played_status(user)
+
     q = request.GET.get("q")
     decade = request.GET.get("decade")
     year = request.GET.get("year")
@@ -430,6 +436,8 @@ def download_games_csv(request):
     end = request.GET.get("end")
     genres_param = request.GET.get("genres")
     platforms_param = request.GET.get("platforms")
+    series_param = request.GET.get("series")
+    played_param = request.GET.get("played")
 
     if q:
         qs = qs.filter(name__icontains=q)
@@ -459,6 +467,14 @@ def download_games_csv(request):
     else:
         platform_ids = []
 
+    # Apply series filter
+    if series_param:
+        series_ids = [int(x) for x in series_param.split(",") if x.strip()]
+        qs = utils.apply_series_filter(qs, series_ids)
+
+    # Apply played status filter (authenticated users only)
+    qs = _apply_played_filter(qs, user, played_param)
+
     qs = qs.distinct().order_by("rank")
 
     use_filtered_rank = True
@@ -473,6 +489,19 @@ def download_games_csv(request):
         transform_id=True,
     )
     # platforms_lookup already defined above for virtual ID expansion
+
+    # Get series list for title building (if series filter is used)
+    series_list = None
+    if series_param:
+        series_ids_for_title = [int(x) for x in series_param.split(",") if x.strip()]
+        series_list = list(
+            models.Series.objects.filter(id__in=series_ids_for_title).values(
+                "id", "name"
+            )
+        )
+        # Convert IDs to strings for lookup
+        for s in series_list:
+            s["id"] = str(s["id"])
 
     def _safe_int(val, default):
         try:
@@ -506,23 +535,31 @@ def download_games_csv(request):
     if end_for_title is None:
         end_for_title = max_year
 
+    # Get series IDs for title (if series filter is used)
+    series_ids_for_filter = []
+    if series_param:
+        series_ids_for_filter = [str(x) for x in series_param.split(",") if x.strip()]
+
     filters_for_title = {
         "q": q or "",
         "start": start_for_title,
         "end": end_for_title,
         "genres": [str(gid) for gid in genre_ids],
         "platforms": [str(pid) for pid in platform_ids],
+        "series": series_ids_for_filter,
+        "played": played_param or "",
         "rank_display": "filtered",
     }
     filter_title = _build_filter_title(
-        filters_for_title, genres_lookup, platforms_lookup, min_year, max_year
+        filters_for_title,
+        genres_lookup,
+        platforms_lookup,
+        min_year,
+        max_year,
+        series_list=series_list,
     )
-    filename_base = filter_title
-    if decade:
-        filename_base = f"{filename_base} {decade}"
-    elif year:
-        filename_base = f"{filename_base} {year}"
-    filename_base = slugify(filename_base) or "acclaimed-games"
+    # Use the page title directly as the filename (slugified)
+    filename_base = slugify(filter_title) or "acclaimed-games"
     filename = f"{filename_base}.csv"
 
     # Create CSV response
@@ -530,34 +567,40 @@ def download_games_csv(request):
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
-    writer.writerow(
-        [
-            "Filtered Rank",
-            "Global Rank",
-            "Name",
-            "Year",
-            "Developers",
-            "Platforms",
-            "Genres",
-        ]
-    )
+
+    # Build header row - include Played column for authenticated users
+    header = [
+        "Filtered Rank",
+        "Global Rank",
+        "Name",
+        "Year",
+        "Developers",
+        "Platforms",
+        "Genres",
+    ]
+    if is_authenticated:
+        header.append("Played")
+    writer.writerow(header)
 
     for index, game in enumerate(qs, start=1):
         developers = ", ".join(d.name for d in game.developers.all())
         platforms = ", ".join(p.name for p in game.platforms.all())
         genres = ", ".join(g.name for g in game.wikipedia_genres.all())
         filtered_rank = index if use_filtered_rank else game.rank
-        writer.writerow(
-            [
-                filtered_rank,
-                game.rank,
-                game.name,
-                game.year_of_release,
-                developers,
-                platforms,
-                genres,
-            ]
-        )
+        row = [
+            filtered_rank,
+            game.rank,
+            game.name,
+            game.year_of_release,
+            developers,
+            platforms,
+            genres,
+        ]
+        if is_authenticated:
+            # Use the annotated is_played_by_user field
+            played = "Yes" if getattr(game, "is_played_by_user", False) else "No"
+            row.append(played)
+        writer.writerow(row)
 
     return response
 

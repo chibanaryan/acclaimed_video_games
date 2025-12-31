@@ -1526,7 +1526,8 @@ class GameDownloadCSVTest(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("Game 1", content)  # 1995 is in 1990s
         self.assertNotIn("Game 2", content)  # 2005 is not in 1990s
-        self.assertIn("1990-99", response["Content-Disposition"])
+        # Filename uses page title format "the 1990s"
+        self.assertIn("1990s", response["Content-Disposition"])
         # Should use filtered rank (1) not alltime rank
         lines = content.strip().split("\n")
         self.assertTrue(lines[1].startswith("1,"))  # First data row starts with rank 1
@@ -1547,6 +1548,99 @@ class GameDownloadCSVTest(TestCase):
         content = response.content.decode("utf-8")
         # Should contain the actual rank (100), not sequential (3)
         self.assertIn("100,Game 3", content)
+
+    def test_csv_includes_played_column_for_authenticated_user(self):
+        """Test that CSV includes Played column for authenticated users."""
+        User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-download"))
+        content = response.content.decode("utf-8")
+        lines = content.strip().split("\n")
+        expected = (
+            "Filtered Rank,Global Rank,Name,Year,Developers,Platforms,Genres,Played"
+        )
+        self.assertEqual(lines[0].strip(), expected)
+
+    def test_csv_shows_yes_for_played_games(self):
+        """Test that CSV shows 'Yes' for games user has marked as played."""
+        user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        # Set igdb_id for game1 and mark as played
+        self.game1.igdb_id = 1001
+        self.game1.save()
+        PlayedGame.objects.create(user=user, game=self.game1, igdb_id=1001)
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-download"))
+        content = response.content.decode("utf-8")
+        # Game 1 should show "Yes" in played column
+        self.assertIn("Game 1", content)
+        lines = content.strip().split("\n")
+        # Find the line with Game 1 (strip \r from CSV line endings)
+        game1_line = next(line.strip() for line in lines if "Game 1" in line)
+        self.assertTrue(game1_line.endswith(",Yes"))
+
+    def test_csv_shows_no_for_unplayed_games(self):
+        """Test that CSV shows 'No' for games user has not marked as played."""
+        User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-download"))
+        content = response.content.decode("utf-8")
+        lines = content.strip().split("\n")
+        # Both games should show "No" since none are marked as played
+        game1_line = next(line.strip() for line in lines if "Game 1" in line)
+        game2_line = next(line.strip() for line in lines if "Game 2" in line)
+        self.assertTrue(game1_line.endswith(",No"))
+        self.assertTrue(game2_line.endswith(",No"))
+
+    def test_csv_respects_played_yes_filter(self):
+        """Test that CSV respects played=yes filter."""
+        user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        # Set igdb_id for game1 and mark as played
+        self.game1.igdb_id = 1001
+        self.game1.save()
+        PlayedGame.objects.create(user=user, game=self.game1, igdb_id=1001)
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-download") + "?played=yes")
+        content = response.content.decode("utf-8")
+        # Should only include Game 1 (played)
+        self.assertIn("Game 1", content)
+        self.assertNotIn("Game 2", content)
+
+    def test_csv_respects_played_no_filter(self):
+        """Test that CSV respects played=no filter."""
+        user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        # Set igdb_id for game1 and mark as played
+        self.game1.igdb_id = 1001
+        self.game1.save()
+        PlayedGame.objects.create(user=user, game=self.game1, igdb_id=1001)
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-download") + "?played=no")
+        content = response.content.decode("utf-8")
+        # Should only include Game 2 (unplayed)
+        self.assertNotIn("Game 1", content)
+        self.assertIn("Game 2", content)
+
+    def test_csv_respects_series_filter(self):
+        """Test that CSV respects series filter."""
+        from games.models import Series
+
+        # Create a series and add game1 to it
+        series = Series.objects.create(name="Test Series", igdb_id=9001)
+        self.game1.series.add(series)
+        response = self.client.get(reverse("games-download") + f"?series={series.id}")
+        content = response.content.decode("utf-8")
+        # Should only include Game 1 (in series)
+        self.assertIn("Game 1", content)
+        self.assertNotIn("Game 2", content)
 
 
 class RobotsTxtViewTest(TestCase):

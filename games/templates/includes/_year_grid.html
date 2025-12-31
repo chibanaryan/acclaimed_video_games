@@ -22,6 +22,8 @@
          lastClicked: null,  // Track last clicked year for shift+click ranges
          wasAlreadySelected: false,  // Track if clicked item was already selected (for toggle)
 
+         _yearCountsHandler: null,
+
          init() {
              // Load year counts from JSON
              const dataEl = document.getElementById('year-counts-data');
@@ -34,12 +36,42 @@
              }
 
              // Listen for updates when filters change
-             window.addEventListener('year-counts-update', (event) => {
-                 this.yearCounts = event.detail;
+             // Store handler reference for cleanup on destroy
+             this._yearCountsHandler = (event) => {
+                 // Validate event.detail is an array with expected structure
+                 if (!Array.isArray(event.detail) || event.detail.length === 0) {
+                     console.warn('[YearGrid] Invalid year counts received:', event.detail);
+                     return;
+                 }
+                 // Ensure the array has the same years as originalYearCounts
+                 // If lengths don't match, something is wrong - use a merged approach
+                 if (event.detail.length !== this.originalYearCounts.length) {
+                     console.warn('[YearGrid] Year counts length mismatch:', event.detail.length, 'vs', this.originalYearCounts.length);
+                     // Build a complete array using original structure with new counts
+                     const newCountMap = {};
+                     event.detail.forEach(yc => {
+                         if (yc && typeof yc.year === 'number') {
+                             newCountMap[yc.year] = yc.count || 0;
+                         }
+                     });
+                     this.yearCounts = this.originalYearCounts.map(yc => ({
+                         year: yc.year,
+                         count: newCountMap[yc.year] !== undefined ? newCountMap[yc.year] : 0
+                     }));
+                 } else {
+                     this.yearCounts = event.detail;
+                 }
                  // Keep originalMaxCount for consistent intensity scale
                  this.maxCount = this.originalMaxCount;
                  this.buildDecades();
-             });
+             };
+             window.addEventListener('year-counts-update', this._yearCountsHandler);
+         },
+         destroy() {
+             // Clean up event listener when component is destroyed
+             if (this._yearCountsHandler) {
+                 window.removeEventListener('year-counts-update', this._yearCountsHandler);
+             }
          },
          handleReset() {
              this.lastClicked = null;

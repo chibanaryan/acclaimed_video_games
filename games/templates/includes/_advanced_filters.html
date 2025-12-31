@@ -30,6 +30,12 @@
             if (!this.filters.sort || this.filters.sort === '') {
                 this.filters.sort = 'rank';
             }
+            // Capture highlight from URL if present (for direct navigation)
+            const urlParams = new URLSearchParams(window.location.search);
+            const highlightParam = urlParams.get('highlight');
+            if (highlightParam) {
+                this.filters.highlight = highlightParam;
+            }
             // Mark as initialized after a short delay to prevent initial watcher triggers
             setTimeout(() => { this.initialized = true; }, 100);
 
@@ -114,6 +120,14 @@
             // Listen for add-platform and add-genre events from game rows
             document.addEventListener('add-platform', (e) => this.addPlatform(e.detail));
             document.addEventListener('add-genre', (e) => this.addGenre(e.detail));
+
+            // Listen for played status changes and update filter immediately if played filter is active
+            window.addEventListener('played-status-changed', (event) => {
+                if (this.filters.played && this.clientFilterReady) {
+                    // Re-apply filters to immediately update the list
+                    this.performClientUpdate({ historyMethod: 'replaceState' });
+                }
+            });
 
             // Initialize client-side filtering (if scripts are loaded)
             this.initClientFiltering();
@@ -514,8 +528,9 @@
             if (state.facets) {
                 // Year counts for heatmap
                 const yearCountsArray = [];
+                const yearFacets = state.facets.years || {};
                 for (let y = {{ min_year }}; y <= {{ max_year }}; y++) {
-                    yearCountsArray.push({ year: y, count: state.facets.years[y] || 0 });
+                    yearCountsArray.push({ year: y, count: yearFacets[y] || 0 });
                 }
                 window.dispatchEvent(new CustomEvent('year-counts-update', { detail: yearCountsArray }));
 
@@ -556,16 +571,17 @@
 
             // Year counts for heatmap
             const yearCountsArray = [];
+            const yearFacets = result.facets.years || {};
             for (let y = {{ min_year }}; y <= {{ max_year }}; y++) {
-                yearCountsArray.push({ year: y, count: result.facets.years[y] || 0 });
+                yearCountsArray.push({ year: y, count: yearFacets[y] || 0 });
             }
             window.dispatchEvent(new CustomEvent('year-counts-update', { detail: yearCountsArray }));
 
             // Genre counts
-            window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: result.facets.genres }));
+            window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: result.facets.genres || {} }));
 
             // Platform counts (individual)
-            window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: result.facets.platforms }));
+            window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: result.facets.platforms || {} }));
 
             // Platform group counts (deduplicated manufacturer/form factor counts)
             if (result.facets.platformGroups) {

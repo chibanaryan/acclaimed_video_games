@@ -9,6 +9,7 @@
 - Played filter: URL parameter support (?played=yes/no), page title suffix, client-side filtering
 - Unify game row templates: split into desktop/mobile partials with data-slot attributes for JS template cloning
 - Played button: hide star for unauthenticated users (no empty space), show only when logged in
+- CSV download: support series/played filters, show Played column (Yes/No) for authenticated users
 
 ## 2025-12-30
 

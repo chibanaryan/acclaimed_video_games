@@ -923,8 +923,10 @@ input[type="number"] {
   }
 
   /* Scroll margin for game elements to account for fixed header on mobile */
-  [id^="game-"] {
-    scroll-margin-top: 5rem; /* 80px to clear fixed header + padding */
+  @media (max-width: 961px) {
+    [id^="game-"] {
+      scroll-margin-top: 5rem; /* 80px to clear fixed header + padding */
+    }
   }
 
   /* Hide elements with x-cloak until Alpine.js initializes */
