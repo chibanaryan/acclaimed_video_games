@@ -196,6 +196,7 @@ Acclaimed Video Games
         "font-size: 12px; margin-top: 30px; padding-top: 20px; "
         "border-top: 1px solid #ccc;"
     )
+    header_style = "font-size: 12px; color: #666; margin: 0 0 20px 0;"
     # fmt: on
     html_body = f"""<!DOCTYPE html>
 <html>
@@ -204,7 +205,8 @@ Acclaimed Video Games
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="{body_style}">
-    <h2>{post.title or 'Latest Update'}</h2>
+    <p style="{header_style}">Acclaimed Video Games</p>
+    <h2 style="margin-top: 0;">{post.title or 'Latest Update'}</h2>
     <p style="font-size: 14px; margin-top: 0; margin-bottom: 20px;">
         By {author_name}
     </p>
