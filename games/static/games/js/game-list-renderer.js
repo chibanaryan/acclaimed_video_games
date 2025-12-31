@@ -284,7 +284,7 @@ class GameListRenderer {
         if (platsContainer && expanded.platforms.length > 0) {
             if (platLabel) platLabel.textContent = expanded.platforms.length === 1 ? 'Platform:' : 'Platforms:';
             platsContainer.innerHTML = expanded.platforms.map(p =>
-                `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${this._escapeHtml(p.name)}">${this._escapeHtml(p.code)}</button>`
+                `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${this._escapeHtml(p.name)}">${this._escapeHtml(p.code)}</button>`
             ).join('');
             if (platsRow) platsRow.classList.remove('hidden');
         } else if (platsRow) {
@@ -298,7 +298,7 @@ class GameListRenderer {
         if (genresContainer && expanded.genres.length > 0) {
             if (genreLabel) genreLabel.textContent = expanded.genres.length === 1 ? 'Genre:' : 'Genres:';
             genresContainer.innerHTML = expanded.genres.map(g =>
-                `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>`
+                `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>`
             ).join('');
             if (genresRow) genresRow.classList.remove('hidden');
         } else if (genresRow) {
@@ -337,11 +337,11 @@ class GameListRenderer {
 
         const developerLabel = expanded.developers.length === 1 ? 'Developer' : 'Developers';
         const platformsHtml = expanded.platforms.map(p =>
-            `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${p.name}">${p.code}</button>`
+            `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${p.name}">${p.code}</button>`
         ).join('');
         const platformLabel = expanded.platforms.length === 1 ? 'Platform' : 'Platforms';
         const genresHtml = expanded.genres.map(g =>
-            `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${g.name}">${g.name}</button>`
+            `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${g.name}">${g.name}</button>`
         ).join('');
         const genreLabel = expanded.genres.length === 1 ? 'Genre' : 'Genres';
         const globalRankHtml = showGlobalRank ? `<span class="game-row-global-rank text-xs text-base-content/50">(#${game.r})</span>` : '';
