@@ -161,28 +161,34 @@
              return children.every(c => filters.genres.includes(String(c.id)));
          },
 
-         // Toggle individual genre (single-select)
+         // MULTI-SELECT: Toggle individual genre (add/remove from selection)
          toggleGenre(genreId) {
              const id = String(genreId);
-             if (filters.genres.includes(id)) {
-                 filters.genres = [];  // Deselect
+             const idx = filters.genres.indexOf(id);
+             if (idx > -1) {
+                 // Already selected - remove it
+                 filters.genres.splice(idx, 1);
              } else {
-                 filters.genres = [id];  // Replace with single selection
+                 // Not selected - add it
+                 filters.genres.push(id);
              }
              this.dispatchFilterChange();
          },
 
-         // Toggle parent category selection (single-select)
+         // MULTI-SELECT: Toggle parent category selection (add/remove from selection)
          toggleCategorySelection(categoryId) {
              const id = String(categoryId);
              // Preserve current expansion state before selection changes
              if (this.expandedCategories[id] === undefined) {
                  this.expandedCategories[id] = this.hasCategoryOrChildrenSelected(id);
              }
-             if (filters.genres.includes(id)) {
-                 filters.genres = [];  // Deselect
+             const idx = filters.genres.indexOf(id);
+             if (idx > -1) {
+                 // Already selected - remove it
+                 filters.genres.splice(idx, 1);
              } else {
-                 filters.genres = [id];  // Replace with single selection
+                 // Not selected - add it
+                 filters.genres.push(id);
              }
              this.dispatchFilterChange();
          },

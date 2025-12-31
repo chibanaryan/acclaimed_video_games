@@ -225,19 +225,19 @@ class GameListSeriesFilterTests(TestCase):
 
     def test_series_filter_returns_only_games_in_series(self):
         """Test that series filter returns only games in the specified series."""
-        response = self.client.get(f"/rankings/?series={self.series.id}")
+        response = self.client.get(f"/?series={self.series.id}")
         self.assertEqual(response.status_code, 200)
         # The response should contain the game in the series
         self.assertContains(response, "Game In Series")
 
     def test_series_filter_with_invalid_id(self):
         """Test that series filter with invalid ID returns empty results gracefully."""
-        response = self.client.get("/rankings/?series=99999")
+        response = self.client.get("/?series=99999")
         self.assertEqual(response.status_code, 200)
 
     def test_series_list_in_context(self):
         """Test that series_list is included in the view context."""
-        response = self.client.get("/rankings/")
+        response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("series_list", response.context)
 

@@ -45,14 +45,8 @@
             <ul class="menu gap-1">
                 <li>
                     <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                        <span class="mdi mdi-home text-xl"></span>
-                        Home
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'games-list' %}" class="{% if request.resolver_match.url_name == 'games-list' %}active{% endif %}">
                         <span class="mdi mdi-medal text-xl"></span>
-                        Rankings
+                        Home
                     </a>
                 </li>
                 <li>
@@ -91,7 +85,7 @@
                        x-model="q"
                        @focus="showMenu = true"
                        @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
-                       @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
+                       @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'home' %}?q=' + encodeURIComponent(q.trim())"
                        autocomplete="off">
                 <button type="button"
                         @click="q = ''; developers = []; games = []; series = []; showMenu = false"
@@ -129,7 +123,7 @@
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
                         <li>
-                            <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
+                            <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
                                 See all game results...
                             </a>
                         </li>
@@ -162,7 +156,7 @@
                     </template>
                     <template x-for="s in series" :key="'series-' + s.id">
                         <li>
-                            <a :href="'{% url 'games-list' %}?series=' + s.id" class="flex items-center gap-2 py-2">
+                            <a :href="'{% url 'home' %}?series=' + s.id" class="flex items-center gap-2 py-2">
                                 <span class="mdi mdi-mushroom text-lg text-primary"></span>
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-sm truncate" x-text="s.name"></div>
@@ -183,9 +177,15 @@
             <div class="flex-1"></div>
 
             {# BOTTOM CONTAINER: Secondary nav, Social, Theme, Contact #}
-            <div class="p-4 pt-3 border-t border-base-content/10">
+            <div class="p-4 pt-4 border-t border-base-content/10">
         {# Secondary navigation #}
-        <ul class="menu gap-1 mb-2">
+        <ul class="menu gap-1 mb-3">
+            <li>
+                <a href="{% url 'news-list' %}" class="{% if request.resolver_match.url_name == 'news-list' %}active{% endif %}">
+                    <span class="mdi mdi-newspaper text-xl"></span>
+                    News
+                </a>
+            </li>
             <li>
                 <a href="{% url 'page-detail' slug='about' %}">
                     <span class="mdi mdi-information text-xl"></span>

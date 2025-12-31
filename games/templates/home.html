@@ -20,7 +20,7 @@
 
 {% block content %}
 {# Hero Section: Logo + Press Quotes #}
-<div class="flex flex-col desktop:flex-row items-center justify-center gap-4 desktop:gap-8 mb-4">
+<div class="flex flex-col desktop:flex-row items-center justify-center gap-2 desktop:gap-6 mb-2">
     {# Logo #}
     <div class="flex-shrink-0">
         {# Dark theme logo (white text) - shown in dark themes #}
@@ -48,7 +48,7 @@
     </div>
 
     {# Press Quotes #}
-    <div class="flex flex-col gap-4 text-center items-center">
+    <div class="flex flex-col gap-2 text-center items-center">
         <a href="https://youtu.be/D4SGbPzT4Oc"
            target="_blank"
            rel="noopener noreferrer"
@@ -81,18 +81,8 @@
     </div>
 </div>
 
-{# Centered Tagline with enhanced statistics #}
-<div class="text-center mb-8">
-    <p class="text-xl text-base-content/80 mb-2">
-        The definitive ranking: {{ game_count|default:"3,000+"|intcomma }} games evaluated across {{ list_count }} critic lists from {{ publication_count }} publications
-    </p>
-    <p class="text-sm text-base-content/60 tabular-nums">
-        Coverage: {{ min_year|default:"1976" }}–{{ max_year|default:"2024" }}{% if last_update %} · Updated: {{ last_update|date:"F j, Y" }}{% endif %}
-    </p>
-</div>
-
 {# Action Buttons #}
-<div class="text-center mb-8 flex flex-col items-center gap-3">
+<div class="text-center mb-2 flex flex-col items-center gap-2">
     <div class="flex flex-wrap justify-center gap-2">
         {% if not user.is_authenticated %}
         <button type="button" class="btn btn-primary btn-sm gap-2 auth-modal-trigger" data-auth-screen="signup">
@@ -107,6 +97,18 @@
     </div>
     {% if not user.is_authenticated %}
     <p class="text-sm text-base-content/60">Track your played games and subscribe to site updates</p>
+    {% endif %}
+</div>
+
+{# Centered Tagline with enhanced statistics #}
+<div class="text-center mb-4">
+    <p class="text-xl text-base-content/80 mb-2">
+        The definitive ranking: {{ game_count|default:"3,000+"|intcomma }} games evaluated across {{ list_count }} critic lists from {{ publication_count }} publications
+    </p>
+    {% if last_update %}
+    <p class="text-sm text-base-content/60 tabular-nums">
+        Updated: {{ last_update|date:"F j, Y" }}
+    </p>
     {% endif %}
 </div>
 
@@ -136,7 +138,7 @@
             {% endfor %}
         </div>
         <div class="mt-4">
-            <a href="{% url 'games-list' %}" class="btn btn-primary">
+            <a href="{% url 'home' %}" class="btn btn-primary">
                 <span class="mdi mdi-medal"></span>
                 See the full rankings&hellip;
             </a>

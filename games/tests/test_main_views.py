@@ -53,11 +53,12 @@ class HomePageViewTest(TestCase):
         """Test that home page loads successfully."""
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "home.html")
+        self.assertTemplateUsed(response, "games/game_list.html")
 
-    def test_context_contains_posts(self):
-        """Test that context includes latest posts."""
-        response = self.client.get(reverse("home"))
+    def test_news_page_contains_posts(self):
+        """Test that news page includes posts."""
+        response = self.client.get(reverse("news-list"))
+        self.assertEqual(response.status_code, 200)
         self.assertIn("posts", response.context)
         posts = list(response.context["posts"])
         self.assertTrue(len(posts) > 0)
@@ -82,18 +83,13 @@ class HomePageViewTest(TestCase):
         response = self.client.get(reverse("home"))
         self.assertIn("last_update", response.context)
 
-    def test_context_contains_contact_form(self):
-        """Test that context includes contact form."""
-        response = self.client.get(reverse("home"))
-        self.assertIn("form", response.context)
-
     def test_contact_form_post_valid(self):
         """Test valid contact form submission."""
         from unittest import mock
 
         with mock.patch("games.utils.send_contact_email", return_value=True):
             response = self.client.post(
-                reverse("home"),
+                reverse("contact"),
                 {
                     "name": "Test User",
                     "email": "test@example.com",
@@ -109,7 +105,7 @@ class HomePageViewTest(TestCase):
     def test_contact_form_post_invalid(self):
         """Test invalid contact form submission."""
         response = self.client.post(
-            reverse("home"),
+            reverse("contact"),
             {
                 "name": "",  # Missing name
                 "email": "test@example.com",
@@ -127,7 +123,7 @@ class HomePageViewTest(TestCase):
     def test_contact_form_honeypot_spam(self):
         """Test contact form with honeypot filled (spam)."""
         response = self.client.post(
-            reverse("home"),
+            reverse("contact"),
             {
                 "name": "Test User",
                 "email": "test@example.com",
@@ -147,7 +143,7 @@ class HomePageViewTest(TestCase):
 
         with mock.patch("games.utils.send_contact_email", return_value=False):
             response = self.client.post(
-                reverse("home"),
+                reverse("contact"),
                 {
                     "name": "Test User",
                     "email": "test@example.com",
@@ -160,6 +156,17 @@ class HomePageViewTest(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn("form", response.context)
             self.assertFalse(response.context["form"].is_valid())
+
+
+class ContactPageViewTest(TestCase):
+    """Test the dedicated contact page view."""
+
+    def test_contact_page_loads(self):
+        """Test that contact page loads successfully."""
+        response = self.client.get(reverse("contact"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "contact.html")
+        self.assertIn("form", response.context)
 
 
 class ContactThankYouViewTest(TestCase):
@@ -185,27 +192,27 @@ class GameListViewTest(TestCase):
 
     def test_game_list_loads(self):
         """Test that game list page loads."""
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "games/game_list.html")
 
     def test_pagination(self):
         """Test that pagination works correctly."""
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertIn("page_obj", response.context)
         # Should have 100 games per page
         self.assertEqual(len(response.context["games"]), 100)
 
     def test_second_page(self):
         """Test accessing second page."""
-        response = self.client.get(reverse("games-list") + "?page=2")
+        response = self.client.get(reverse("home") + "?page=2")
         self.assertEqual(response.status_code, 200)
         # Second page should have 50 games (150 total - 100 on first page)
         self.assertEqual(len(response.context["games"]), 50)
 
     def test_decade_filter(self):
         """Test filtering by decade (legacy param support)."""
-        response = self.client.get(reverse("games-list") + "?decade=1990-99")
+        response = self.client.get(reverse("home") + "?decade=1990-99")
         self.assertEqual(response.status_code, 200)
         # All games should be from 1990-1999
         for game in response.context["games"]:
@@ -214,7 +221,7 @@ class GameListViewTest(TestCase):
 
     def test_year_filter(self):
         """Test filtering by single year (legacy param support)."""
-        response = self.client.get(reverse("games-list") + "?year=1995")
+        response = self.client.get(reverse("home") + "?year=1995")
         self.assertEqual(response.status_code, 200)
         # All games should be from 1995
         for game in response.context["games"]:
@@ -222,27 +229,27 @@ class GameListViewTest(TestCase):
 
     def test_htmx_request_returns_partial(self):
         """Test that HTMX requests return partial template."""
-        response = self.client.get(reverse("games-list"), HTTP_HX_REQUEST="true")
+        response = self.client.get(reverse("home"), HTTP_HX_REQUEST="true")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "games/includes/_game_list_content.html")
 
     def test_invalid_page_returns_last_page(self):
         """Test that invalid page number returns last page."""
-        response = self.client.get(reverse("games-list") + "?page=999")
+        response = self.client.get(reverse("home") + "?page=999")
         self.assertEqual(response.status_code, 200)
         # Should return the last page (page 2 with our 150 games)
         self.assertEqual(response.context["page_obj"].number, 2)
 
     def test_non_numeric_page_defaults_to_first(self):
         """Test that non-numeric page parameter defaults to page 1."""
-        response = self.client.get(reverse("games-list") + "?page=invalid")
+        response = self.client.get(reverse("home") + "?page=invalid")
         self.assertEqual(response.status_code, 200)
         # Should default to first page
         self.assertEqual(response.context["page_obj"].number, 1)
 
     def test_context_has_filters(self):
         """Test that context includes filter information with legacy params."""
-        response = self.client.get(reverse("games-list") + "?decade=2000-09")
+        response = self.client.get(reverse("home") + "?decade=2000-09")
         self.assertIn("filters", response.context)
         # Decade is preserved in filters for legacy compatibility
         self.assertEqual(response.context["filters"]["decade"], "2000-09")
@@ -252,7 +259,7 @@ class GameListViewTest(TestCase):
 
     def test_context_has_year_counts(self):
         """Test that context includes year counts for year grid."""
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertIn("year_counts", response.context)
 
     def test_year_counts_reflects_genre_filter(self):
@@ -284,7 +291,7 @@ class GameListViewTest(TestCase):
         game2.wikipedia_genres.add(rpg)
 
         # Without filter, both years should have counts
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         year_counts = {
             yc["year"]: yc["count"] for yc in response.context["year_counts"]
         }
@@ -292,7 +299,7 @@ class GameListViewTest(TestCase):
         self.assertGreaterEqual(year_counts.get(2015, 0), 1)
 
         # With genre filter, only matching year should have count
-        response = self.client.get(reverse("games-list") + f"?genres={action.id}")
+        response = self.client.get(reverse("home") + f"?genres={action.id}")
         year_counts = {
             yc["year"]: yc["count"] for yc in response.context["year_counts"]
         }
@@ -320,7 +327,7 @@ class GameListViewTest(TestCase):
         )
 
         # With search filter, only matching year should have count
-        response = self.client.get(reverse("games-list") + "?q=ZeldaTest")
+        response = self.client.get(reverse("home") + "?q=ZeldaTest")
         year_counts = {
             yc["year"]: yc["count"] for yc in response.context["year_counts"]
         }
@@ -446,7 +453,7 @@ class GameDetailViewTest(TestCase):
 
 
 class GameSearchViewTest(TestCase):
-    """Test the game search view (at /rankings/ URL)."""
+    """Test the game search view (at / URL)."""
 
     def setUp(self):
         # Create test games with different attributes
@@ -477,53 +484,63 @@ class GameSearchViewTest(TestCase):
 
     def test_search_page_loads(self):
         """Test that search page loads."""
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "games/game_list.html")
 
     def test_old_search_url_redirects(self):
-        """Test that old /games/search/ URL redirects to /rankings/."""
+        """Test that old /games/search/ URL redirects to /."""
         response = self.client.get(reverse("games-search"))
         self.assertEqual(response.status_code, 301)
-        self.assertEqual(response.url, "/rankings/")
+        self.assertEqual(response.url, "/")
 
     def test_old_search_url_preserves_query_params(self):
         """Test that redirect preserves query parameters."""
         response = self.client.get(reverse("games-search") + "?q=zelda&page=2")
         self.assertEqual(response.status_code, 301)
-        self.assertEqual(response.url, "/rankings/?q=zelda&page=2")
+        self.assertEqual(response.url, "/?q=zelda&page=2")
 
     def test_old_games_url_redirects(self):
-        """Test that old /games/ URL redirects to /rankings/."""
+        """Test that old /games/ URL redirects to /."""
         response = self.client.get(reverse("games-redirect"))
         self.assertEqual(response.status_code, 301)
-        self.assertEqual(response.url, "/rankings/")
+        self.assertEqual(response.url, "/")
 
     def test_old_games_url_preserves_query_params(self):
         """Test that /games/ redirect preserves query parameters."""
         response = self.client.get(reverse("games-redirect") + "?q=zelda&page=2")
         self.assertEqual(response.status_code, 301)
-        self.assertEqual(response.url, "/rankings/?q=zelda&page=2")
+        self.assertEqual(response.url, "/?q=zelda&page=2")
+
+    def test_old_rankings_url_redirects(self):
+        """Test that old /rankings/ URL redirects to /."""
+        response = self.client.get(reverse("rankings-redirect"))
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.url, "/")
+
+    def test_old_rankings_url_preserves_query_params(self):
+        """Test that /rankings/ redirect preserves query parameters."""
+        response = self.client.get(reverse("rankings-redirect") + "?q=zelda&page=2")
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.url, "/?q=zelda&page=2")
 
     def test_search_by_name(self):
         """Test searching games by name."""
-        response = self.client.get(reverse("games-list") + "?q=zelda")
+        response = self.client.get(reverse("home") + "?q=zelda")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         self.assertEqual(len(games), 2)  # Should find both Zelda games
 
     def test_search_with_year_range(self):
         """Test searching with year range filter."""
-        response = self.client.get(reverse("games-list") + "?start=1986&end=1987")
+        response = self.client.get(reverse("home") + "?start=1986&end=1987")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         self.assertEqual(len(games), 2)  # Zelda games from 1986-1987
 
     def test_search_with_genre_filter(self):
         """Test searching with genre filter."""
-        response = self.client.get(
-            reverse("games-list") + f"?genres={self.rpg_genre.id}"
-        )
+        response = self.client.get(reverse("home") + f"?genres={self.rpg_genre.id}")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Both Zelda games have RPG genre
@@ -532,9 +549,7 @@ class GameSearchViewTest(TestCase):
 
     def test_filter_title_genre_without_video_prefix(self):
         """Test that genre filter title does not include 'Video' prefix."""
-        response = self.client.get(
-            reverse("games-list") + f"?genres={self.action_genre.id}"
-        )
+        response = self.client.get(reverse("home") + f"?genres={self.action_genre.id}")
         self.assertEqual(response.status_code, 200)
         filter_title = response.context["filter_title"]
         # Should be "Action Games" not "Video Action Games"
@@ -543,7 +558,7 @@ class GameSearchViewTest(TestCase):
 
     def test_filter_title_no_filters_has_video(self):
         """Test that filter title with no filters includes 'Video Games'."""
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         filter_title = response.context["filter_title"]
         self.assertIn("Video Games", filter_title)
@@ -564,7 +579,7 @@ class GameSearchViewTest(TestCase):
         # Clear series cache
         cache.clear()
 
-        response = self.client.get(reverse("games-list") + f"?series={zelda_series.id}")
+        response = self.client.get(reverse("home") + f"?series={zelda_series.id}")
         self.assertEqual(response.status_code, 200)
         filter_title = response.context["filter_title"]
         # Should be "The Legend of Zelda Games" not "Video The Legend of Zelda Games"
@@ -574,7 +589,7 @@ class GameSearchViewTest(TestCase):
     def test_search_with_platform_filter(self):
         """Test searching with platform filter."""
         response = self.client.get(
-            reverse("games-list") + f"?platforms={self.nes_platform.id}"
+            reverse("home") + f"?platforms={self.nes_platform.id}"
         )
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
@@ -583,7 +598,7 @@ class GameSearchViewTest(TestCase):
     def test_htmx_request_returns_partial(self):
         """Test that HTMX requests return partial template."""
         response = self.client.get(
-            reverse("games-list") + "?q=zelda",
+            reverse("home") + "?q=zelda",
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
@@ -592,7 +607,7 @@ class GameSearchViewTest(TestCase):
     def test_htmx_request_with_target_returns_results_template(self):
         """Test that HTMX request with HX-Target returns results-only template."""
         response = self.client.get(
-            reverse("games-list") + "?q=zelda",
+            reverse("home") + "?q=zelda",
             HTTP_HX_REQUEST="true",
             HTTP_HX_TARGET="game-results-container",
         )
@@ -601,26 +616,24 @@ class GameSearchViewTest(TestCase):
 
     def test_context_has_filters(self):
         """Test that context includes filter data."""
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertIn("filters", response.context)
         self.assertIn("genres", response.context)
         self.assertIn("platforms", response.context)
 
     def test_invalid_page_defaults_to_first(self):
         """Test that invalid page parameter defaults to page 1."""
-        response = self.client.get(reverse("games-list") + "?page=invalid")
+        response = self.client.get(reverse("home") + "?page=invalid")
         self.assertEqual(response.status_code, 200)
 
     def test_out_of_range_page_returns_last(self):
         """Test that out of range page returns last page."""
-        response = self.client.get(reverse("games-list") + "?page=999")
+        response = self.client.get(reverse("home") + "?page=999")
         self.assertEqual(response.status_code, 200)
 
     def test_highlight_parameter_in_context(self):
         """Test that highlight parameter is passed to context as integer."""
-        response = self.client.get(
-            reverse("games-list") + f"?highlight={self.game1.id}"
-        )
+        response = self.client.get(reverse("home") + f"?highlight={self.game1.id}")
         self.assertEqual(response.status_code, 200)
         # Should be converted to integer for comparison with game.id
         self.assertEqual(response.context["highlight"], self.game1.id)
@@ -628,13 +641,13 @@ class GameSearchViewTest(TestCase):
 
     def test_highlight_invalid_value_is_none(self):
         """Test that invalid highlight value results in None."""
-        response = self.client.get(reverse("games-list") + "?highlight=invalid")
+        response = self.client.get(reverse("home") + "?highlight=invalid")
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context["highlight"])
 
     def test_sort_by_rank_default(self):
         """Test that default sort is by rank."""
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should be sorted by rank (1, 2, 50)
@@ -644,7 +657,7 @@ class GameSearchViewTest(TestCase):
 
     def test_sort_by_year(self):
         """Test sorting by year of release."""
-        response = self.client.get(reverse("games-list") + "?sort=year")
+        response = self.client.get(reverse("home") + "?sort=year")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should be sorted by year (1985, 1986, 1987)
@@ -654,7 +667,7 @@ class GameSearchViewTest(TestCase):
 
     def test_sort_by_name(self):
         """Test sorting alphabetically by name."""
-        response = self.client.get(reverse("games-list") + "?sort=name")
+        response = self.client.get(reverse("home") + "?sort=name")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should be sorted alphabetically
@@ -665,7 +678,7 @@ class GameSearchViewTest(TestCase):
     def test_sort_with_filters(self):
         """Test that sort persists with genre and platform filters."""
         response = self.client.get(
-            reverse("games-list")
+            reverse("home")
             + f"?sort=year&genres={self.rpg_genre.id}&platforms={self.nes_platform.id}"
         )
         self.assertEqual(response.status_code, 200)
@@ -677,13 +690,13 @@ class GameSearchViewTest(TestCase):
 
     def test_sort_parameter_in_context(self):
         """Test that sort parameter is passed to template context."""
-        response = self.client.get(reverse("games-list") + "?sort=year")
+        response = self.client.get(reverse("home") + "?sort=year")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["filters"]["sort"], "year")
 
     def test_sort_defaults_to_rank_when_invalid(self):
         """Test that invalid sort value falls back to rank."""
-        response = self.client.get(reverse("games-list") + "?sort=invalid")
+        response = self.client.get(reverse("home") + "?sort=invalid")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should fall back to rank sorting
@@ -719,7 +732,7 @@ class GameSearchPlayedFilterTest(TestCase):
 
     def test_played_filter_ignored_when_not_authenticated(self):
         """Test that played filter is ignored for anonymous users."""
-        response = self.client.get(reverse("games-list") + "?played=yes")
+        response = self.client.get(reverse("home") + "?played=yes")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should return all games since user is not authenticated
@@ -728,7 +741,7 @@ class GameSearchPlayedFilterTest(TestCase):
     def test_played_filter_yes_shows_played_games(self):
         """Test that played=yes filter shows only played games."""
         self.client.login(username="testuser", password="testpass123")
-        response = self.client.get(reverse("games-list") + "?played=yes")
+        response = self.client.get(reverse("home") + "?played=yes")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should only show played games
@@ -740,7 +753,7 @@ class GameSearchPlayedFilterTest(TestCase):
     def test_played_filter_no_shows_unplayed_games(self):
         """Test that played=no filter shows only unplayed games."""
         self.client.login(username="testuser", password="testpass123")
-        response = self.client.get(reverse("games-list") + "?played=no")
+        response = self.client.get(reverse("home") + "?played=no")
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should only show unplayed games
@@ -752,7 +765,7 @@ class GameSearchPlayedFilterTest(TestCase):
     def test_played_filter_empty_shows_all_games(self):
         """Test that empty played filter shows all games."""
         self.client.login(username="testuser", password="testpass123")
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should show all games
@@ -761,7 +774,7 @@ class GameSearchPlayedFilterTest(TestCase):
     def test_filter_title_includes_played_suffix(self):
         """Test that filter title includes ': Played' suffix."""
         self.client.login(username="testuser", password="testpass123")
-        response = self.client.get(reverse("games-list") + "?played=yes")
+        response = self.client.get(reverse("home") + "?played=yes")
         self.assertEqual(response.status_code, 200)
         filter_title = response.context["filter_title"]
         self.assertTrue(filter_title.endswith(": Played"))
@@ -769,7 +782,7 @@ class GameSearchPlayedFilterTest(TestCase):
     def test_filter_title_includes_unplayed_suffix(self):
         """Test that filter title includes ': Unplayed' suffix."""
         self.client.login(username="testuser", password="testpass123")
-        response = self.client.get(reverse("games-list") + "?played=no")
+        response = self.client.get(reverse("home") + "?played=no")
         self.assertEqual(response.status_code, 200)
         filter_title = response.context["filter_title"]
         self.assertTrue(filter_title.endswith(": Unplayed"))
@@ -777,13 +790,13 @@ class GameSearchPlayedFilterTest(TestCase):
     def test_played_in_filters_context(self):
         """Test that played parameter is in filters context."""
         self.client.login(username="testuser", password="testpass123")
-        response = self.client.get(reverse("games-list") + "?played=yes")
+        response = self.client.get(reverse("home") + "?played=yes")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["filters"]["played"], "yes")
 
     def test_played_filter_not_in_context_for_anonymous(self):
         """Test that played filter is empty for anonymous users."""
-        response = self.client.get(reverse("games-list") + "?played=yes")
+        response = self.client.get(reverse("home") + "?played=yes")
         self.assertEqual(response.status_code, 200)
         # For anonymous users, played should be empty
         self.assertEqual(response.context["filters"]["played"], "")
@@ -803,7 +816,7 @@ class GameSearchLoadMoreTest(TestCase):
 
     def test_initial_load_includes_load_more_context(self):
         """Test that initial load includes load more context variables."""
-        response = self.client.get(reverse("games-list"))
+        response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["games"]), 100)
         self.assertTrue(response.context["has_more"])
@@ -816,7 +829,7 @@ class GameSearchLoadMoreTest(TestCase):
     def test_append_mode_returns_append_template(self):
         """Test that append=true returns the append template."""
         response = self.client.get(
-            reverse("games-list"),
+            reverse("home"),
             {"page": 2, "append": "true"},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
@@ -826,7 +839,7 @@ class GameSearchLoadMoreTest(TestCase):
     def test_append_mode_contains_game_rows(self):
         """Test that append mode response contains game rows."""
         response = self.client.get(
-            reverse("games-list"),
+            reverse("home"),
             {"page": 2, "append": "true"},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
@@ -836,7 +849,7 @@ class GameSearchLoadMoreTest(TestCase):
     def test_append_mode_contains_metadata(self):
         """Test that append mode returns JSON metadata."""
         response = self.client.get(
-            reverse("games-list"),
+            reverse("home"),
             {"page": 2, "append": "true"},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
@@ -846,7 +859,7 @@ class GameSearchLoadMoreTest(TestCase):
 
     def test_last_page_has_no_more(self):
         """Test that last page correctly reports no more items."""
-        response = self.client.get(reverse("games-list"), {"page": 2})
+        response = self.client.get(reverse("home"), {"page": 2})
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["has_more"])
         self.assertIsNone(response.context["next_page"])
@@ -855,7 +868,7 @@ class GameSearchLoadMoreTest(TestCase):
         """Test that filters with few results don't show load more."""
         Game.objects.create(name="Unique2021Game", rank=200, year_of_release=2021)
 
-        response = self.client.get(reverse("games-list"), {"start": 2021, "end": 2021})
+        response = self.client.get(reverse("home"), {"start": 2021, "end": 2021})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["games"]), 1)
         self.assertFalse(response.context["has_more"])
@@ -865,7 +878,7 @@ class GameSearchLoadMoreTest(TestCase):
         # Get the game at position 120 (rank 121)
         game_120 = Game.objects.get(rank=121)
 
-        response = self.client.get(reverse("games-list") + f"?highlight={game_120.id}")
+        response = self.client.get(reverse("home") + f"?highlight={game_120.id}")
         self.assertEqual(response.status_code, 200)
         # Should load 200 games to include position 121
         self.assertEqual(len(response.context["games"]), 150)  # All 150 games
@@ -878,7 +891,7 @@ class GameSearchLoadMoreTest(TestCase):
         # Get the game at position 50 (rank 51)
         game_50 = Game.objects.get(rank=51)
 
-        response = self.client.get(reverse("games-list") + f"?highlight={game_50.id}")
+        response = self.client.get(reverse("home") + f"?highlight={game_50.id}")
         self.assertEqual(response.status_code, 200)
         # Should load normal 100 games
         self.assertEqual(len(response.context["games"]), 100)
@@ -1699,8 +1712,7 @@ class SitemapViewTest(TestCase):
         """Test that sitemap contains static page URLs."""
         response = self.client.get("/sitemap.xml")
         content = response.content.decode("utf-8")
-        # Check for static page paths
-        self.assertIn("/rankings/", content)
+        # Check for static page paths (homepage at / contains rankings)
         self.assertIn("/developers/", content)
         self.assertIn("/lists/", content)
 

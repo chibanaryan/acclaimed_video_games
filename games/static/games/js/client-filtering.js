@@ -70,6 +70,18 @@ class ClientSideFiltering {
                     detail: platformYearRanges
                 }));
 
+                // Dispatch unfiltered year counts to reset heatmap baseline
+                // This ensures the heatmap uses full data for intensity scaling,
+                // even when the page loads with URL filters
+                const unfilteredYearCounts = this.engine.getUnfilteredYearCounts();
+                const yearCountsArray = [];
+                for (let y = this.minYear; y <= this.maxYear; y++) {
+                    yearCountsArray.push({ year: y, count: unfilteredYearCounts[y] || 0 });
+                }
+                window.dispatchEvent(new CustomEvent('year-original-counts-update', {
+                    detail: yearCountsArray
+                }));
+
                 console.log(`[CSF] Initialized with ${data.games.length} games`);
                 return true;
             } catch (e) {

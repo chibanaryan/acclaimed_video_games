@@ -307,14 +307,18 @@ def _build_filter_title(
     platform_label = _build_platform_segment(
         filters.get("platforms", []), platforms, include_games=False
     )
-    # If exactly one genre is selected, fold it into the title after platform
+    # Fold selected genres into the title after platform
     genre_label = ""
     selected_genres = filters.get("genres") or []
-    if len(selected_genres) == 1:
+    if selected_genres:
         name_lookup = {str(g["id"]): g["name"] for g in genres}
-        genre_name = name_lookup.get(str(selected_genres[0]), "").strip()
-        if genre_name:
-            genre_label = f" {genre_name}"
+        genre_names = [
+            name_lookup.get(str(gid), "").strip()
+            for gid in selected_genres
+            if name_lookup.get(str(gid), "").strip()
+        ]
+        if genre_names:
+            genre_label = f" {_join_names(genre_names)}"
             # Omit "Video" prefix when genre selected ("Action Games")
             if platform_label == "Video":
                 platform_label = ""
@@ -394,6 +398,35 @@ class HomePageView(FormView):
 
         if not email_sent:
             # If email fails, add an error message and re-render the form
+            form.add_error(
+                None,
+                "We're sorry, but there was an error sending your message. "
+                "Please try again later or email us directly at "
+                "contact@acclaimedvideogames.com",
+            )
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
+
+
+class ContactFormView(FormView):
+    """Dedicated contact form handler (for form POST from modal)."""
+
+    form_class = ContactForm
+    success_url = reverse_lazy("contact_thank_you")
+    template_name = "contact.html"  # Minimal template for form errors
+
+    def form_valid(self, form):
+        """Process valid contact form submission and send email."""
+        name = form.cleaned_data["name"]
+        email = form.cleaned_data["email"]
+        category = form.cleaned_data["category"]
+        message = form.cleaned_data["message"]
+
+        # Send the email
+        email_sent = utils.send_contact_email(name, email, category, message)
+
+        if not email_sent:
             form.add_error(
                 None,
                 "We're sorry, but there was an error sending your message. "
@@ -1132,6 +1165,13 @@ class GameSearchView(RobustPaginationMixin, ListView):
                 )
             )
 
+        # Hero section context (for homepage at /)
+        context["list_count"] = models.List.objects.count()
+        context["publication_count"] = models.Publication.objects.count()
+        context["game_count"] = models.Game.objects.count()
+        metadata = models.SiteMetadata.get_instance()
+        context["last_update"] = metadata.last_full_update
+
         return context
 
 
@@ -1828,6 +1868,17 @@ class PageDetailView(TemplateView):
 
         context["flatpage"] = flatpage
         return context
+
+
+class NewsListView(ListView):
+    """News list showing latest 5 active posts."""
+
+    model = models.Post
+    template_name = "posts/post_list.html"
+    context_object_name = "posts"
+
+    def get_queryset(self):
+        return models.Post.objects.filter(active=True).order_by("-date")[:5]
 
 
 class NotFoundView(TemplateView):

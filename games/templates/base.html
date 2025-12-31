@@ -141,7 +141,7 @@
 
         {# Main content area - offset by sidebar width on desktop #}
         <main id="main-content" class="flex-1 desktop:ml-48 min-h-screen">
-            <div class="container mx-auto px-4 max-w-7xl py-6">
+            <div class="container mx-auto px-4 max-w-7xl py-4">
                 {% block content %}{% endblock %}
             </div>
         </main>
@@ -164,7 +164,7 @@
                 Have a question, suggestion, or found an issue? We'd love to hear from you!
                 Fill out the form below and we'll get back to you as soon as possible.
             </p>
-            <form method="post" action="{% url 'home' %}" id="contactForm">
+            <form method="post" action="{% url 'contact' %}" id="contactForm">
                 {% csrf_token %}
 
                 {# Name field #}

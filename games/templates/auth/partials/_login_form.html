@@ -78,16 +78,19 @@
 </form>
 
 {# Create account link #}
-<p class="text-center text-sm mt-6">
-    Don't have an account?
-    <button type="button"
-            class="link link-primary"
-            hx-get="{% url 'auth-modal-signup' %}"
-            hx-target="#auth-modal-content"
-            hx-swap="innerHTML">
-        Create an Account
-    </button>
-</p>
+<div class="text-center mt-6">
+    <p class="text-sm">
+        Don't have an account?
+        <button type="button"
+                class="link link-primary"
+                hx-get="{% url 'auth-modal-signup' %}"
+                hx-target="#auth-modal-content"
+                hx-swap="innerHTML">
+            Create an Account
+        </button>
+    </p>
+    <p class="text-xs text-base-content/60 mt-1">Track your played games and subscribe to site updates</p>
+</div>
 
 <p class="text-xs text-base-content/60 mt-4 text-center">
     By signing in, you agree to our <a href="/legal/" class="link link-hover">Terms of Service and Privacy Policy</a>.

@@ -345,25 +345,16 @@
              return true;
          },
 
-         // SINGLE-SELECT: Toggle platform (replaces selection)
+         // MULTI-SELECT: Toggle platform (add/remove from selection)
          togglePlatform(platformId) {
              const id = String(platformId);
-             // Check if this platform is part of a fully selected parent
-             const parentInfo = this.findPlatformParent(platformId);
-             const isPartOfFullSelection = parentInfo && (
-                 this.isManufacturerSelected(parentInfo.mfrKey) ||
-                 (parentInfo.ffKey && this._isFormFactorFullySelected(parentInfo.mfrKey, parentInfo.ffKey))
-             );
-
-             if (isPartOfFullSelection) {
-                 // When clicking a platform within a fully selected group, select only that platform
-                 filters.platforms = [id];
-             } else if (filters.platforms.length === 1 && filters.platforms.includes(id)) {
-                 // Only deselect if this is the only selected platform
-                 filters.platforms = [];
+             const idx = filters.platforms.indexOf(id);
+             if (idx > -1) {
+                 // Already selected - remove it
+                 filters.platforms.splice(idx, 1);
              } else {
-                 // Otherwise select just this platform
-                 filters.platforms = [id];
+                 // Not selected - add it
+                 filters.platforms.push(id);
              }
          },
 
@@ -415,7 +406,7 @@
              return platformIds.every(id => filters.platforms.includes(id));
          },
 
-         // Toggle manufacturer selection (select all platforms if not all selected, clear if all selected)
+         // MULTI-SELECT: Toggle manufacturer selection (add/remove all platforms)
          toggleManufacturerSelection(mfrKey) {
              // Preserve current expansion state before selection changes
              if (this.expandedManufacturers[mfrKey] === undefined) {
@@ -423,13 +414,16 @@
              }
              const platformIds = this.getAllPlatformIdsForManufacturer(mfrKey);
              if (this.isManufacturerSelected(mfrKey)) {
-                 filters.platforms = [];  // Deselect all
+                 // All selected - remove all manufacturer's platforms
+                 filters.platforms = filters.platforms.filter(id => !platformIds.includes(id));
              } else {
-                 filters.platforms = [...platformIds];  // Select all manufacturer platforms
+                 // Add all manufacturer's platforms that aren't already selected
+                 const newIds = platformIds.filter(id => !filters.platforms.includes(id));
+                 filters.platforms = [...filters.platforms, ...newIds];
              }
          },
 
-         // Toggle form factor selection (select all platforms if not all selected, clear if all selected)
+         // MULTI-SELECT: Toggle form factor selection (add/remove all platforms)
          toggleFormFactorSelection(mfrKey, ffKey) {
              const key = mfrKey + '_' + ffKey;
              // Preserve current expansion state before selection changes
@@ -437,20 +431,13 @@
                  this.expandedFormFactors[key] = this.hasFormFactorSelection(mfrKey, ffKey);
              }
              const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
-             // If manufacturer is fully selected, clicking form factor selects just that form factor
-             if (this.isManufacturerSelected(mfrKey)) {
-                 filters.platforms = [...platformIds];
-             } else if (this._isFormFactorFullySelected(mfrKey, ffKey)) {
-                 // Only deselect if this form factor is the only thing selected
-                 const allFormFactorIds = new Set(platformIds);
-                 const allSelected = filters.platforms.every(id => allFormFactorIds.has(id));
-                 if (allSelected && filters.platforms.length === platformIds.length) {
-                     filters.platforms = [];  // Deselect all
-                 } else {
-                     filters.platforms = [...platformIds];  // Select just this form factor
-                 }
+             if (this._isFormFactorFullySelected(mfrKey, ffKey)) {
+                 // All selected - remove all form factor's platforms
+                 filters.platforms = filters.platforms.filter(id => !platformIds.includes(id));
              } else {
-                 filters.platforms = [...platformIds];  // Select all form factor platforms
+                 // Add all form factor's platforms that aren't already selected
+                 const newIds = platformIds.filter(id => !filters.platforms.includes(id));
+                 filters.platforms = [...filters.platforms, ...newIds];
              }
          },
 

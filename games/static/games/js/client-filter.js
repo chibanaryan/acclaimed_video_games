@@ -730,6 +730,23 @@ class GameFilterEngine {
 
         return ranges;
     }
+
+    /**
+     * Get unfiltered year counts for all games
+     * Used to initialize the heatmap with true baseline counts
+     * @returns {Object} Map of year -> count
+     */
+    getUnfilteredYearCounts() {
+        const yearCounts = new Map();
+
+        for (const game of this.games) {
+            if (game.y !== null) {
+                yearCounts.set(game.y, (yearCounts.get(game.y) || 0) + 1);
+            }
+        }
+
+        return Object.fromEntries(yearCounts);
+    }
 }
 
 // Export for use in other modules

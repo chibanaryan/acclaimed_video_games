@@ -2,6 +2,11 @@
 
 ## 2025-12-31
 
+- Make rankings page the homepage (redirect /rankings/ and /games/ to /)
+- Add dedicated contact page at /contact/ with form fallback for modal errors
+- Add news page at /news/ for blog post listing
+- Filter title now shows all selected genres (not just first one)
+- Various home page layout refinements: tighter spacing, reordered sections
 - Add rank position indicator bar on game detail page using DaisyUI progress component
 - Change homepage game tooltips to show above covers (avoid rank chip collision)
 - Fix Load More showing filtered rank on unfiltered list after Jump to Rank

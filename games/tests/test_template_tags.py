@@ -248,7 +248,7 @@ class GameRankUrlTest(TestCase):
     def test_basic_rank_url_no_params(self):
         """Test basic rank URL returns base games path with no params."""
         url = game_rank_url(150)
-        self.assertEqual(url, "/rankings/")
+        self.assertEqual(url, "/")
         self.assertNotIn("page=", url)  # No page param - view handles dynamic loading
 
     def test_rank_with_game_id_highlight(self):

@@ -82,7 +82,9 @@ urlpatterns = [
         name="auth-logout",
     ),
     # Main site routes (Django + HTMX + Alpine.js)
-    path("", views.HomePageView.as_view(), name="home"),
+    # Rankings is the homepage
+    path("", views.GameSearchView.as_view(), name="home"),
+    path("contact/", views.ContactFormView.as_view(), name="contact"),
     path("subscribe/", views.HomeSubscribeView.as_view(), name="home-subscribe"),
     path(
         "contact/thank-you/",
@@ -93,17 +95,21 @@ urlpatterns = [
     path(
         "unsubscribe/<str:token>/", views.UnsubscribeView.as_view(), name="unsubscribe"
     ),
-    path("rankings/", views.GameSearchView.as_view(), name="games-list"),
-    path("rankings/download/", views.download_games_csv, name="games-download"),
-    # Redirect old URLs to new rankings page (preserves query params)
+    path("download/", views.download_games_csv, name="games-download"),
+    # Redirect old URLs to homepage (preserves query params)
+    path(
+        "rankings/",
+        RedirectView.as_view(url="/", permanent=True, query_string=True),
+        name="rankings-redirect",
+    ),
     path(
         "games/",
-        RedirectView.as_view(url="/rankings/", permanent=True, query_string=True),
+        RedirectView.as_view(url="/", permanent=True, query_string=True),
         name="games-redirect",
     ),
     path(
         "games/search/",
-        RedirectView.as_view(url="/rankings/", permanent=True, query_string=True),
+        RedirectView.as_view(url="/", permanent=True, query_string=True),
         name="games-search",
     ),
     path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
@@ -124,6 +130,7 @@ urlpatterns = [
         name="developer-alias-redirect",
     ),
     path("lists/", views.ListListView.as_view(), name="list-list"),
+    path("news/", views.NewsListView.as_view(), name="news-list"),
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
 ]
 

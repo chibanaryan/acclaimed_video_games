@@ -23,6 +23,7 @@
          wasAlreadySelected: false,  // Track if clicked item was already selected (for toggle)
 
          _yearCountsHandler: null,
+         _yearOriginalCountsHandler: null,
 
          init() {
              // Load year counts from JSON
@@ -34,6 +35,21 @@
                  this.originalMaxCount = this.maxCount;  // Store for consistent intensity
                  this.buildDecades();
              }
+
+             // Listen for original counts update (from CSF initialization with full data)
+             // This resets the baseline when page loads with URL filters
+             this._yearOriginalCountsHandler = (event) => {
+                 if (!Array.isArray(event.detail) || event.detail.length === 0) {
+                     console.warn('[YearGrid] Invalid original year counts received:', event.detail);
+                     return;
+                 }
+                 // Update original counts with full unfiltered data
+                 this.originalYearCounts = event.detail;
+                 this.originalMaxCount = Math.max(...event.detail.map(y => y.count), 1);
+                 this.maxCount = this.originalMaxCount;
+                 // Don't rebuild decades here - wait for the filtered counts update
+             };
+             window.addEventListener('year-original-counts-update', this._yearOriginalCountsHandler);
 
              // Listen for updates when filters change
              // Store handler reference for cleanup on destroy
@@ -68,9 +84,12 @@
              window.addEventListener('year-counts-update', this._yearCountsHandler);
          },
          destroy() {
-             // Clean up event listener when component is destroyed
+             // Clean up event listeners when component is destroyed
              if (this._yearCountsHandler) {
                  window.removeEventListener('year-counts-update', this._yearCountsHandler);
+             }
+             if (this._yearOriginalCountsHandler) {
+                 window.removeEventListener('year-original-counts-update', this._yearOriginalCountsHandler);
              }
          },
          handleReset() {

@@ -19,14 +19,14 @@
     {% with platforms=game.platforms.all %}
     <div class="game-property">
         <span>Platforms:</span>
-        <span>{% for platform in platforms %}<a href="{% url 'games-list' %}?platforms={{ platform.id }}">{{ platform.code }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+        <span>{% for platform in platforms %}<a href="{% url 'home' %}?platforms={{ platform.id }}">{{ platform.code }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</span>
     </div>
     {% endwith %}
 
     {% with genres=game.wikipedia_genres.all %}
     <div class="game-property">
         <span>Genres:</span>
-        <span>{% for genre in genres %}<a href="{% url 'games-list' %}?genres={{ genre.id }}&highlight={{ game.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+        <span>{% for genre in genres %}<a href="{% url 'home' %}?genres={{ genre.id }}&highlight={{ game.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</span>
     </div>
     {% endwith %}
 </div>

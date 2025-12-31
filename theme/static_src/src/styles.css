@@ -663,7 +663,7 @@
 
 /* Desktop hover effects - gradient fades to right, extending to meet filter sidebar */
 .game-row.desktop:hover {
-  background: linear-gradient(to right, color-mix(in oklch, var(--color-primary) 25%, transparent) 50%, transparent 100%);
+  background: linear-gradient(to right, color-mix(in oklch, var(--color-primary) 15%, transparent) 50%, transparent 100%);
   transform: translateY(-1px);
   border-left-color: var(--color-primary);
 }
@@ -682,27 +682,20 @@
 
   /* Desktop: Rank number scales up on hover */
   .game-row.desktop .game-rank {
-    transition: transform 0.25s ease;
+    transition: transform 0.35s ease;
   }
 
   .game-row.desktop:hover .game-rank {
-    transform: scale(1.4);
+    transform: scale(1.15);
   }
 
-  /* Desktop: Game title - shrinks slightly on hover to make room for properties */
+  /* Desktop: Game title - consistent size (no shrink on hover) */
   .game-row.desktop .game-title {
     font-size: 1.25rem; /* text-xl */
     line-height: 1.75rem;
-    transition: font-size 0.2s ease, line-height 0.2s ease, letter-spacing 0.2s ease;
   }
 
-  .game-row.desktop:hover .game-title {
-    font-size: 1.125rem; /* text-lg (original size) */
-    line-height: 1.5rem;
-    letter-spacing: -0.01em;
-  }
-
-  /* Desktop: Game cover thumbnails - full aspect ratio, scale on hover */
+  /* Desktop: Game cover thumbnails - full aspect ratio, subtle scale on hover */
   .game-row.desktop .game-thumb-link {
     @apply block flex-shrink-0;
     width: 42px;
@@ -711,13 +704,13 @@
     overflow: hidden;
     margin-left: 8px;
     margin-right: 8px;
-    transition: width 0.25s ease, height 0.25s ease, margin 0.25s ease;
+    transition: width 0.35s ease, height 0.35s ease, margin 0.35s ease;
   }
 
   .game-row.desktop:hover .game-thumb-link {
-    width: 65px;
-    height: calc(65px * 128 / 90);
-    margin-left: -4px;
+    width: 52px;
+    height: calc(52px * 128 / 90);
+    margin-left: 3px;
   }
 
   .game-row.desktop .game-thumb {

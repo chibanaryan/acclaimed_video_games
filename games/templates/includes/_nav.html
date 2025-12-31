@@ -47,7 +47,7 @@
                                x-model="q"
                                @focus="showMenu = true"
                                @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
-                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
+                               @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'home' %}?q=' + encodeURIComponent(q.trim())"
                                placeholder="Search games & developers"
                                class="input input-bordered input-sm w-full pl-9 bg-base-200"
                                autocomplete="off">
@@ -87,7 +87,7 @@
                         </template>
                         <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
                             <li>
-                                <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
+                                <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
                                     See all game results &hellip;
                                 </a>
                             </li>
@@ -120,7 +120,7 @@
                         </template>
                         <template x-for="s in series" :key="'series-' + s.id">
                             <li>
-                                <a :href="'{% url 'games-list' %}?series=' + s.id" class="flex items-center gap-3">
+                                <a :href="'{% url 'home' %}?series=' + s.id" class="flex items-center gap-3">
                                     <span class="mdi mdi-mushroom text-xl text-primary"></span>
                                     <div>
                                         <div class="font-semibold" x-text="s.name"></div>
@@ -156,7 +156,7 @@
                            x-model="q"
                            @focus="showMenu = true"
                            @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
-                           @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())"
+                           @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'home' %}?q=' + encodeURIComponent(q.trim())"
                            autocomplete="off">
                     <button type="button"
                             @click="q = ''; developers = []; games = []; series = []; showMenu = false"
@@ -191,7 +191,7 @@
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
                         <li>
-                            <a :href="'{% url 'games-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
+                            <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
                                 See all game results &hellip;
                             </a>
                         </li>
@@ -224,7 +224,7 @@
                     </template>
                     <template x-for="s in series" :key="'series-' + s.id">
                         <li>
-                            <a :href="'{% url 'games-list' %}?series=' + s.id" class="flex items-center gap-3">
+                            <a :href="'{% url 'home' %}?series=' + s.id" class="flex items-center gap-3">
                                 <span class="mdi mdi-mushroom text-xl text-primary"></span>
                                 <div>
                                     <div class="font-semibold" x-text="s.name"></div>
@@ -237,7 +237,7 @@
             </div>
         </div>
 
-        <a href="{% url 'games-list' %}" class="btn btn-ghost btn-sm" x-show="!mobileSearchActive">
+        <a href="{% url 'home' %}" class="btn btn-ghost btn-sm" x-show="!mobileSearchActive">
             Rankings
         </a>
     </div>
@@ -246,6 +246,7 @@
     <div class="navbar-end hidden desktop:flex gap-1">
         <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm">Developers</a>
         <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm">Lists</a>
+        <a href="{% url 'news-list' %}" class="btn btn-ghost btn-sm"><span class="mdi mdi-newspaper"></span> News</a>
         <a href="{% url 'page-detail' slug='about' %}" class="btn btn-ghost btn-sm">About</a>
         <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-ghost btn-sm">Donate</a>
 
@@ -273,6 +274,7 @@
             <ul class="dropdown-content menu bg-base-200 rounded-box w-52 p-2 shadow-lg z-50" :class="{ 'hidden': !expanded }" @click="expanded = false">
                 <li><a href="{% url 'developers-list' %}">Developers</a></li>
                 <li><a href="{% url 'list-list' %}">Lists</a></li>
+                <li><a href="{% url 'news-list' %}"><span class="mdi mdi-newspaper"></span> News</a></li>
                 <li><a href="{% url 'page-detail' slug='about' %}">About</a></li>
                 <li><a href="{% url 'page-detail' slug='donate' %}">Donate</a></li>
                 <li class="menu-title mt-2">Theme</li>

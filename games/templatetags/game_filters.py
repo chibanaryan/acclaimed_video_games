@@ -184,7 +184,7 @@ def game_rank_url(rank, game_id=None, start=None, end=None):
         end: Optional end year for filtering
 
     Returns:
-        URL string for games-list with appropriate query parameters
+        URL string for home with appropriate query parameters
     """
     from django.urls import reverse
     from urllib.parse import urlencode
@@ -202,7 +202,7 @@ def game_rank_url(rank, game_id=None, start=None, end=None):
         query_params["end"] = end
 
     # Build URL with query string
-    base_url = reverse("games-list")
+    base_url = reverse("home")
     if query_params:
         query_string = urlencode(query_params)
         return f"{base_url}?{query_string}"

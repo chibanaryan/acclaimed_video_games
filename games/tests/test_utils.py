@@ -4,7 +4,7 @@ from unittest import mock
 from django.test import TestCase
 
 from games import constants, models, utils
-from games.models import User
+from games.models import Post, User
 
 
 class ImportDataRoutingTests(TestCase):
@@ -625,3 +625,80 @@ class NotifySubscribersOfNewPostTests(TestCase):
 
         # Should send to 1 (second one succeeded)
         self.assertEqual(sent_count, 1)
+
+
+class PostSignalTests(TestCase):
+    """Test Post signal handlers for notifications."""
+
+    def setUp(self):
+        """Create test author."""
+        self.author = User.objects.create_user(
+            username="author", email="author@example.com"
+        )
+
+    def test_notification_signal_triggers_when_conditions_met(self):
+        """Test that notification is sent when post is active with send_notification."""
+        with mock.patch("games.utils.notify_subscribers_of_new_post") as mock_notify:
+            mock_notify.return_value = 5
+            # Create post with notification enabled
+            post = Post.objects.create(
+                title="Test Post",
+                text="Test content",
+                author=self.author,
+                active=True,
+                send_notification=True,
+            )
+            # Signal should have triggered notification
+            mock_notify.assert_called_once_with(post)
+            # notification_sent should be marked True
+            post.refresh_from_db()
+            self.assertTrue(post.notification_sent)
+
+    def test_notification_not_sent_when_inactive(self):
+        """Test that notification is not sent for inactive posts."""
+        with mock.patch("games.utils.notify_subscribers_of_new_post") as mock_notify:
+            Post.objects.create(
+                title="Draft Post",
+                text="Draft content",
+                author=self.author,
+                active=False,
+                send_notification=True,
+            )
+            mock_notify.assert_not_called()
+
+    def test_notification_not_sent_when_flag_false(self):
+        """Test that notification is not sent when send_notification is False."""
+        with mock.patch("games.utils.notify_subscribers_of_new_post") as mock_notify:
+            Post.objects.create(
+                title="Silent Post",
+                text="Silent content",
+                author=self.author,
+                active=True,
+                send_notification=False,
+            )
+            mock_notify.assert_not_called()
+
+    def test_notification_not_sent_twice(self):
+        """Test that notification is not sent again on re-save."""
+        with mock.patch("games.utils.notify_subscribers_of_new_post") as mock_notify:
+            mock_notify.return_value = 1
+            post = Post.objects.create(
+                title="Test Post",
+                text="Test content",
+                author=self.author,
+                active=True,
+                send_notification=True,
+            )
+            # First save triggers notification
+            self.assertEqual(mock_notify.call_count, 1)
+
+            # Refresh from DB to get updated notification_sent flag
+            post.refresh_from_db()
+            self.assertTrue(post.notification_sent)
+
+            # Update and save again
+            post.text = "Updated content"
+            post.save()
+
+            # Should not trigger again (notification_sent is True)
+            self.assertEqual(mock_notify.call_count, 1)

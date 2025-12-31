@@ -7,6 +7,21 @@
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 {% if series_list %}{{ series_list|json_script:"series-data" }}{% else %}<script id="series-data" type="application/json">[]</script>{% endif %}
+{# Synchronous script to set initial filter visibility based on localStorage - prevents layout shift #}
+<script nonce="{{ csp_nonce }}">
+(function() {
+    // Read localStorage preferences (default to expanded = true)
+    var genresExpanded = localStorage.getItem('genresExpanded') !== 'false';
+    var platformsExpanded = localStorage.getItem('platformsExpanded') !== 'false';
+    var seriesExpanded = localStorage.getItem('seriesExpanded') !== 'false';
+    // Add CSS to show/hide filter sections based on initial state
+    var style = document.createElement('style');
+    style.textContent = '[data-filter-init="genres"]{display:' + (genresExpanded ? 'block' : 'none') + '!important}' +
+                        '[data-filter-init="platforms"]{display:' + (platformsExpanded ? 'block' : 'none') + '!important}' +
+                        '[data-filter-init="series"]{display:' + (seriesExpanded ? 'block' : 'none') + '!important}';
+    document.head.appendChild(style);
+})();
+</script>
 <div x-data="{
         filters: JSON.parse(document.getElementById('filters-data').textContent),
         genres: JSON.parse(document.getElementById('genres-data').textContent),
@@ -15,9 +30,9 @@
         platformGroupCounts: {},  // Populated by client-side filtering
         initialized: false,
         isLoading: false,
-        genresExpanded: localStorage.getItem('genresExpanded') === 'true',
-        platformsExpanded: localStorage.getItem('platformsExpanded') === 'true',
-        seriesExpanded: localStorage.getItem('seriesExpanded') === 'true',
+        genresExpanded: localStorage.getItem('genresExpanded') !== 'false',
+        platformsExpanded: localStorage.getItem('platformsExpanded') !== 'false',
+        seriesExpanded: localStorage.getItem('seriesExpanded') !== 'false',
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
@@ -188,11 +203,14 @@
             let genreLabel = '';
             let seriesLabel = '';
 
-            // If exactly one genre is selected, fold it into the title
-            if (this.filters.genres && this.filters.genres.length === 1) {
-                const genre = this.genres.find(g => String(g.id) === String(this.filters.genres[0]));
-                if (genre) {
-                    genreLabel = ' ' + genre.name;
+            // If genres are selected, fold them into the title
+            if (this.filters.genres && this.filters.genres.length > 0) {
+                const genreNames = this.filters.genres
+                    .map(gid => this.genres.find(g => String(g.id) === String(gid)))
+                    .filter(g => g)
+                    .map(g => g.name);
+                if (genreNames.length > 0) {
+                    genreLabel = ' ' + this._joinNames(genreNames);
                 }
             }
 
@@ -244,6 +262,13 @@
         _buildPlatformSegment() {
             // Use helper function from utils-base.js to build platform segment
             return buildPlatformSegment(this.platforms, this.filters.platforms);
+        },
+        _joinNames(names) {
+            // Join a list of names with commas and 'and' before the last item
+            if (!names || names.length === 0) return '';
+            if (names.length === 1) return names[0];
+            if (names.length === 2) return names.join(' and ');
+            return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
         },
         handleFilterChange(type, items) {
             const itemIds = items.map(item => {
@@ -371,7 +396,7 @@
             setLoading('game-results-container');
 
             const params = buildFilterParams(this.filters, { preservePage });
-            const url = '{% url 'games-list' %}?' + normalizeUrl(params.toString());
+            const url = '{% url 'home' %}?' + normalizeUrl(params.toString());
 
             try {
                 const html = await fetchHtml(url, signal);
@@ -554,7 +579,7 @@
 
             // Update URL
             const params = buildFilterParams(this.filters);
-            const url = '{% url 'games-list' %}?' + normalizeUrl(params.toString());
+            const url = '{% url 'home' %}?' + normalizeUrl(params.toString());
             window.history[historyMethod]({}, '', url);
 
             this.isLoading = false;
@@ -698,11 +723,14 @@
                 let genreLabel = '';
                 let seriesLabel = '';
 
-                // If exactly one genre is selected, fold it into the title
-                if (filters.genres && filters.genres.length === 1) {
-                    const genre = genres.find(g => String(g.id) === String(filters.genres[0]));
-                    if (genre) {
-                        genreLabel = ' ' + genre.name;
+                // If genres are selected, fold them into the title
+                if (filters.genres && filters.genres.length > 0) {
+                    const genreNames = filters.genres
+                        .map(gid => genres.find(g => String(g.id) === String(gid)))
+                        .filter(g => g)
+                        .map(g => g.name);
+                    if (genreNames.length > 0) {
+                        genreLabel = ' ' + this.joinNames(genreNames);
                     }
                 }
 
@@ -759,6 +787,14 @@
             buildPlatformSegment() {
                 // Use helper function from utils-base.js to build platform segment
                 return buildPlatformSegment(platforms, filters.platforms);
+            },
+
+            joinNames(names) {
+                // Join a list of names with commas and 'and' before the last item
+                if (!names || names.length === 0) return '';
+                if (names.length === 1) return names[0];
+                if (names.length === 2) return names.join(' and ');
+                return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
             }
          }"
          x-effect="document.body.classList.toggle('filter-sheet-open', filterOpen)">
@@ -879,7 +915,7 @@
                     <div x-show="platformsExpanded"
                          x-cloak
                          x-collapse
-                         style="display: none;"
+                         data-filter-init="platforms"
                          data-filter-type="platforms"
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">

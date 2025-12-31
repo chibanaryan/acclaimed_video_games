@@ -3,7 +3,7 @@
 {% load humanize %}
 {% load static %}
 
-{% block title %}Game Search | Acclaimed Video Games{% endblock %}
+{% block title %}Most Acclaimed Video Games of All Time{% endblock %}
 
 {% block extra_head %}
     {# Load More utilities - deferred with requestIdleCallback for better performance #}
@@ -48,6 +48,63 @@
 {% endblock %}
 
 {% block content %}
+{# Hero section for homepage - side by side on desktop, stacked on mobile #}
+<div class="hero py-2 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+    {# Logo #}
+    <a href="{% url 'home' %}" class="block flex-shrink-0" style="max-width: 280px;">
+        {# Dark theme logo (white text) - shown in dark themes #}
+        <picture class="show-dark block">
+            <source type="image/webp"
+                    srcset="{% static 'games/avg_logo_web.webp' %} 548w, {% static 'games/avg_logo.webp' %} 1092w"
+                    sizes="280px">
+            <img src="{% static 'games/avg_logo.png' %}"
+                 srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
+                 sizes="280px"
+                 alt="Acclaimed Video Games"
+                 width="1092"
+                 height="737"
+                 class="w-full h-auto">
+        </picture>
+        {# Light theme logo (black text) - shown in light themes #}
+        <picture class="show-light block">
+            <source type="image/webp"
+                    srcset="{% static 'games/avg_logo_dark_web.webp' %} 548w, {% static 'games/avg_logo_dark.webp' %} 1092w"
+                    sizes="280px">
+            <img src="{% static 'games/avg_logo_dark.png' %}"
+                 srcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w"
+                 sizes="280px"
+                 alt="Acclaimed Video Games"
+                 width="1092"
+                 height="737"
+                 class="w-full h-auto">
+        </picture>
+    </a>
+    {# Content to the right on desktop #}
+    <div class="flex flex-col items-center text-center">
+        {# Action Buttons #}
+        <div class="flex flex-wrap justify-center gap-2 mb-3">
+            {% if not user.is_authenticated %}
+            <button type="button" class="btn btn-primary btn-sm gap-2 auth-modal-trigger" data-auth-screen="signup">
+                <span class="mdi mdi-gamepad"></span>
+                <span>Sign Up</span>
+            </button>
+            {% endif %}
+            <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-primary btn-sm gap-2">
+                <span class="mdi mdi-heart"></span>
+                <span>Support This Project</span>
+            </a>
+        </div>
+        <p class="text-base text-base-content/70 max-w-md">
+            The definitive ranking: {{ game_count|default:"1,000"|intcomma }} games evaluated across {{ list_count|intcomma }} critic lists from {{ publication_count|intcomma }} publications
+        </p>
+        {% if last_update %}
+        <p class="text-sm text-base-content/60 mt-2">
+            Updated: {{ last_update|date:"F j, Y" }}
+        </p>
+        {% endif %}
+    </div>
+</div>
+
 <div id="content">
     {% include 'includes/_advanced_filters.html' with filters=filters genres=genres platforms=platforms min_year=min_year max_year=max_year %}
 </div>
