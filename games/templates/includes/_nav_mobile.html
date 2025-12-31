@@ -194,13 +194,13 @@
                     </a>
                 </li>
                 <li>
-                    <form action="{% url 'auth-logout' %}" method="post" class="w-full">
-                        {% csrf_token %}
-                        <button type="submit" @click.stop="$el.closest('form').submit()" class="w-full text-left">
-                            Logout
-                        </button>
-                    </form>
+                    <button type="button" @click.stop="document.getElementById('logout-form-mobile').submit()">
+                        Logout
+                    </button>
                 </li>
+                <form id="logout-form-mobile" action="{% url 'auth-logout' %}" method="post" class="hidden">
+                    {% csrf_token %}
+                </form>
                 {% endwith %}
                 {% else %}
                 <li>

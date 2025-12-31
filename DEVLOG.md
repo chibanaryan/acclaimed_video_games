@@ -2,6 +2,7 @@
 
 ## 2025-12-31
 
+- Fix logout button reliability: restructure to match DaisyUI menu pattern, separate hidden form
 - Sidebar vertical squish: scrollable bottom section for short viewports, tightened margins throughout
 - Consolidate Terms/Privacy into single Legal link (sidebar, mobile nav, login modal)
 - Add series display to game properties: clickable badges link to filtered game list with highlight
