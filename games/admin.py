@@ -292,8 +292,15 @@ class SnippetAdmin(admin.ModelAdmin):
 
 @admin.register(models.Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "author", "date", "active", "notification_sent"]
-    list_filter = ["author", "active", "notification_sent"]
+    list_display = [
+        "__str__",
+        "author",
+        "date",
+        "active",
+        "send_notification",
+        "notification_sent",
+    ]
+    list_filter = ["author", "active", "send_notification", "notification_sent"]
     readonly_fields = ["notification_sent"]
 
 

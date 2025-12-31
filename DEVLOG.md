@@ -2,6 +2,7 @@
 
 ## 2025-12-31
 
+- Add opt-in notification for posts: new send_notification checkbox, publish without notifying subscribers
 - Developers page redesign: add Top Rank, Top Game (with thumbnail), and Subsidiaries columns
 - Add sort options for subsidiaries count and top game rank on developers list
 - Wider developers layout (max-w-5xl), pagination reduced to 100 per page

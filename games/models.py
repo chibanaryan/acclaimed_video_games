@@ -1477,9 +1477,13 @@ class Post(models.Model):
     active = models.BooleanField(
         default=True,
         db_index=True,
+        help_text="Whether the post is published and visible on the site.",
+    )
+    send_notification = models.BooleanField(
+        default=False,
         help_text=(
-            "⚠️ Checking this box will publish the post and "
-            "send email notifications to all subscribers."
+            "Check to send email notification to subscribers when publishing. "
+            "Only sends if notification hasn't been sent yet."
         ),
     )
     notification_sent = models.BooleanField(

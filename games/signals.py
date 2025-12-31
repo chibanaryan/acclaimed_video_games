@@ -19,12 +19,17 @@ def check_should_notify(sender, instance, **kwargs):
 
     Notifications are sent when:
     - Post is active (published)
+    - AND send_notification is checked
     - AND notification hasn't been sent yet (notification_sent=False)
 
     This ensures each post only triggers notifications once, even if edited later.
     """
     # Check if post should trigger notification
-    if instance.active and not instance.notification_sent:
+    if (
+        instance.active
+        and instance.send_notification
+        and not instance.notification_sent
+    ):
         # Mark that we should send notification after save
         instance._should_send_notification = True
         post_id = instance.title or instance.pk
