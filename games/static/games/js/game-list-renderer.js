@@ -1,12 +1,15 @@
 /**
  * Acclaimed Games - Client-Side Game List Renderer
  *
- * Renders game rows matching the server-side _game_row.html template.
+ * Renders game rows by cloning HTML templates from the DOM.
+ * Templates are defined in Django and included as <template> elements.
+ * This ensures a single source of truth for HTML structure.
+ *
  * Supports Load More pattern and game highlighting.
  */
 
 /**
- * GameListRenderer - Renders game lists client-side
+ * GameListRenderer - Renders game lists client-side using DOM template cloning
  *
  * Usage:
  *   const renderer = new GameListRenderer(filterEngine);
@@ -23,6 +26,28 @@ class GameListRenderer {
         this.currentGames = [];
         this.highlightId = null;
         this._csrfToken = null;
+        this._templates = null;
+    }
+
+    /**
+     * Initialize templates from DOM
+     * Called lazily on first render
+     * @private
+     */
+    _initTemplates() {
+        if (this._templates) return;
+
+        this._templates = {
+            desktop: document.getElementById('desktop-row-template'),
+            mobile: document.getElementById('mobile-row-template'),
+            playedButton: document.getElementById('played-button-template')
+        };
+
+        // Fallback check - if templates don't exist, we'll use string rendering
+        if (!this._templates.desktop || !this._templates.mobile) {
+            console.warn('Game row templates not found, falling back to string rendering');
+            this._templates = null;
+        }
     }
 
     /**
@@ -45,45 +70,67 @@ class GameListRenderer {
     }
 
     /**
-     * Render the played button HTML
-     * Matches server-side _played_button.html exactly
+     * Fill a data slot with text content
      * @private
      */
-    _renderPlayedButton(game) {
+    _fillSlot(container, slotName, value) {
+        const el = container.querySelector(`[data-slot="${slotName}"]`);
+        if (!el) return null;
+        if (value !== undefined && value !== null) {
+            el.textContent = value;
+        }
+        return el;
+    }
+
+    /**
+     * Render the played button by cloning template
+     * @private
+     * @returns {DocumentFragment|null}
+     */
+    _renderPlayedButtonDOM(game) {
         // Only render if authenticated and game has IGDB ID
         if (!window.isAuthenticated || !game.i) {
-            return '';
+            return null;
         }
+
+        const template = this._templates?.playedButton;
+        if (!template) {
+            // Fallback to string-based button
+            const html = this._renderPlayedButtonString(game);
+            if (!html) return null;
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            return div.firstElementChild;
+        }
+
+        const fragment = template.content.cloneNode(true);
+        const wrapper = fragment.querySelector('[data-slot="played-wrapper"]');
+        if (!wrapper) return null;
 
         const igdbId = game.i;
         const isPlayed = this._isPlayed(igdbId);
         const csrfToken = this._getCsrfToken();
-        const tooltipText = isPlayed ? 'You have played this game!' : 'You have not played this game.';
 
-        const innerHtml = isPlayed
-            ? `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center">
-    <img src="/static/games/images/mario-star.png"
-         srcset="/static/games/images/mario-star.png 1x, /static/games/images/mario-star@2x.png 2x"
-         alt="Played" width="32" height="32"
-         class="w-8 h-8 desktop:w-6 desktop:h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
-</span>`
-            : `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center">
-    <span class="mdi mdi-star-outline text-4xl desktop:text-2xl text-base-content/30"></span>
-</span>`;
+        // Set attributes
+        wrapper.dataset.tip = isPlayed ? 'You have played this game!' : 'You have not played this game.';
+        wrapper.dataset.igdbId = igdbId;
+        wrapper.dataset.isPlayed = isPlayed;
+        wrapper.setAttribute('hx-post', `/game/${igdbId}/toggle-played/`);
+        wrapper.setAttribute('hx-headers', `{"X-CSRFToken": "${csrfToken}"}`);
 
-        return `<div class="tooltip tooltip-top played-button-wrapper cursor-pointer"
-    data-tip="${tooltipText}"
-    data-igdb-id="${igdbId}"
-    data-is-played="${isPlayed}"
-    hx-post="/game/${igdbId}/toggle-played/"
-    hx-trigger="click"
-    hx-swap="outerHTML"
-    hx-headers='{"X-CSRFToken": "${csrfToken}"}'
-    onclick="event.stopPropagation()">
-<button class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none">
-    ${innerHtml}
-</button>
-</div>`;
+        // Show correct icon based on played state
+        const playedIcon = wrapper.querySelector('[data-slot="played-icon"]');
+        const unplayedIcon = wrapper.querySelector('[data-slot="unplayed-icon"]');
+
+        if (isPlayed) {
+            if (playedIcon) playedIcon.classList.remove('hidden');
+            if (unplayedIcon) unplayedIcon.classList.add('hidden');
+        } else {
+            if (playedIcon) playedIcon.classList.add('hidden');
+            if (unplayedIcon) unplayedIcon.classList.remove('hidden');
+        }
+
+        return fragment;
     }
 
     /**
@@ -119,29 +166,162 @@ class GameListRenderer {
     }
 
     /**
-     * Render a single game row (desktop version)
-     * Matches server-side _game_row.html template exactly
+     * Render a single game row (desktop version) using DOM template cloning
      * @private
+     * @returns {Element} The rendered desktop row element
      */
     _renderDesktopRow(game, index, showRank) {
+        this._initTemplates();
+
+        const template = this._templates?.desktop;
+        if (!template) {
+            // Fallback: create element from string (legacy behavior)
+            return this._renderDesktopRowString(game, index, showRank);
+        }
+
+        const fragment = template.content.cloneNode(true);
+        const row = fragment.querySelector('[data-slot="root"]');
+        if (!row) return this._renderDesktopRowString(game, index, showRank);
+
         const expanded = this.engine.expandGame(game);
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const thumbnail = this._getThumbnail(game.a);
         const thumbnail2x = this._getThumbnail2x(game.a);
-
-        // Determine rank display
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showGlobalRank = showRank === 'filtered';
 
-        // Build developers HTML - matches Django template structure
+        // Set root element attributes
+        row.id = `game-${game.id}`;
+        if (isHighlighted) row.classList.add('is-highlighted');
+
+        // Fill played button (or remove container if not authenticated)
+        const playedContainer = row.querySelector('[data-slot="played-button"]');
+        if (playedContainer) {
+            const playedButton = this._renderPlayedButtonDOM(game);
+            if (playedButton) {
+                playedContainer.appendChild(playedButton);
+            } else {
+                // Remove container to save space when not authenticated
+                playedContainer.remove();
+            }
+        }
+
+        // Fill rank
+        const rankEl = row.querySelector('[data-slot="rank"]');
+        if (rankEl) {
+            if (showRank !== 'none') {
+                rankEl.textContent = displayRank;
+                rankEl.classList.remove('hidden');
+            } else {
+                rankEl.classList.add('hidden');
+            }
+        }
+
+        // Fill thumbnail
+        const thumbImg = row.querySelector('[data-slot="thumbnail"]');
+        if (thumbImg) {
+            thumbImg.src = thumbnail;
+            thumbImg.srcset = `${thumbnail} 1x, ${thumbnail2x} 2x`;
+            thumbImg.alt = game.n;
+        }
+
+        // Fill links
+        const thumbLink = row.querySelector('[data-slot="thumb-link"]');
+        if (thumbLink) thumbLink.href = `/game/${game.s}/`;
+
+        const titleLink = row.querySelector('[data-slot="title-link"]');
+        if (titleLink) titleLink.href = `/game/${game.s}/`;
+
+        // Fill title and year
+        this._fillSlot(row, 'name', game.n);
+        this._fillSlot(row, 'year', game.y || 'N/A');
+
+        const yearLink = row.querySelector('[data-slot="year-link"]');
+        if (yearLink) yearLink.href = `/games/?start=${game.y}&end=${game.y}&highlight=${game.id}`;
+
+        // Fill global rank (now under the main rank)
+        const globalRankEl = row.querySelector('[data-slot="global-rank"]');
+        if (globalRankEl) {
+            if (showGlobalRank) {
+                globalRankEl.textContent = `(#${game.r})`;
+                globalRankEl.classList.remove('hidden');
+            } else {
+                globalRankEl.classList.add('hidden');
+            }
+        }
+
+        // Fill developers
+        const devsRow = row.querySelector('[data-slot="developers-row"]');
+        const devsContainer = row.querySelector('[data-slot="developers"]');
+        const devLabel = row.querySelector('[data-slot="developer-label"]');
+        if (devsContainer && expanded.developers.length > 0) {
+            if (devLabel) devLabel.textContent = expanded.developers.length === 1 ? 'Developer:' : 'Developers:';
+            devsContainer.innerHTML = expanded.developers.map((dev, i) => {
+                const rootDev = this._getRootDeveloper(dev);
+                const devSlug = rootDev?.slug;
+                const separator = i < expanded.developers.length - 1 ? ', ' : '';
+                if (devSlug) {
+                    const hash = dev.id !== rootDev?.id
+                        ? `#developer-${dev.id}-game-${game.id}`
+                        : `#game-${game.id}`;
+                    return `<a href="/developers/${devSlug}/${hash}" class="link link-hover">${this._escapeHtml(dev.name)}</a>${separator}`;
+                } else if (dev.slug) {
+                    return `<a href="/developers/${dev.slug}/#game-${game.id}" class="link link-hover">${this._escapeHtml(dev.name)}</a>${separator}`;
+                }
+                return `${this._escapeHtml(dev.name)}${separator}`;
+            }).join('');
+        } else if (devsRow) {
+            devsRow.classList.add('hidden');
+        }
+
+        // Fill platforms
+        const platsRow = row.querySelector('[data-slot="platforms-row"]');
+        const platsContainer = row.querySelector('[data-slot="platforms"]');
+        const platLabel = row.querySelector('[data-slot="platform-label"]');
+        if (platsContainer && expanded.platforms.length > 0) {
+            if (platLabel) platLabel.textContent = expanded.platforms.length === 1 ? 'Platform:' : 'Platforms:';
+            platsContainer.innerHTML = expanded.platforms.map(p =>
+                `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${this._escapeHtml(p.name)}">${this._escapeHtml(p.code)}</button>`
+            ).join('');
+            if (platsRow) platsRow.classList.remove('hidden');
+        } else if (platsRow) {
+            platsRow.classList.add('hidden');
+        }
+
+        // Fill genres
+        const genresRow = row.querySelector('[data-slot="genres-row"]');
+        const genresContainer = row.querySelector('[data-slot="genres"]');
+        const genreLabel = row.querySelector('[data-slot="genre-label"]');
+        if (genresContainer && expanded.genres.length > 0) {
+            if (genreLabel) genreLabel.textContent = expanded.genres.length === 1 ? 'Genre:' : 'Genres:';
+            genresContainer.innerHTML = expanded.genres.map(g =>
+                `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>`
+            ).join('');
+            if (genresRow) genresRow.classList.remove('hidden');
+        } else if (genresRow) {
+            genresRow.classList.add('hidden');
+        }
+
+        return row;
+    }
+
+    /**
+     * Fallback: Render desktop row as string (legacy behavior)
+     * @private
+     */
+    _renderDesktopRowString(game, index, showRank) {
+        const expanded = this.engine.expandGame(game);
+        const isHighlighted = this.highlightId && game.id === this.highlightId;
+        const thumbnail = this._getThumbnail(game.a);
+        const thumbnail2x = this._getThumbnail2x(game.a);
+        const displayRank = showRank === 'filtered' ? index : game.r;
+        const showGlobalRank = showRank === 'filtered';
+
         const developersHtml = expanded.developers.map((dev, i) => {
             const rootDev = this._getRootDeveloper(dev);
             const devSlug = rootDev?.slug;
             const separator = i < expanded.developers.length - 1 ? ', ' : '';
-
             if (devSlug) {
-                // Hash logic: when dev is not root, use #developer-{dev.id}-game-{game.id}
-                // when dev is root, use #game-{game.id}
                 const hash = dev.id !== rootDev?.id
                     ? `#developer-${dev.id}-game-${game.id}`
                     : `#game-${game.id}`;
@@ -153,51 +333,35 @@ class GameListRenderer {
         }).join('');
 
         const developerLabel = expanded.developers.length === 1 ? 'Developer' : 'Developers';
-
-        // Build platforms HTML - all platforms, CSS handles overflow
         const platformsHtml = expanded.platforms.map(p =>
             `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${p.name}">${p.code}</button>`
         ).join('');
         const platformLabel = expanded.platforms.length === 1 ? 'Platform' : 'Platforms';
-
-        // Build genres HTML - all genres, CSS handles overflow
         const genresHtml = expanded.genres.map(g =>
             `<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${g.name}">${g.name}</button>`
         ).join('');
         const genreLabel = expanded.genres.length === 1 ? 'Genre' : 'Genres';
+        const globalRankHtml = showGlobalRank ? `<span class="game-row-global-rank text-xs text-base-content/50">(#${game.r})</span>` : '';
+        const playedButtonHtml = this._renderPlayedButtonString(game);
+        // Only include container if authenticated (button exists)
+        const playedContainerHtml = playedButtonHtml ? `<div class="w-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
 
-        const globalRankHtml = showGlobalRank
-            ? `<span class="game-row-global-rank text-sm text-base-content/60 shrink-0 font-medium">#${game.r}</span>`
-            : '';
-
-        // Render played button
-        const playedButtonHtml = this._renderPlayedButton(game);
-
-        return `
+        const div = document.createElement('div');
+        div.innerHTML = `
 <div class="game-row desktop hidden desktop:grid py-0.5 px-2 ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}" style="grid-template-columns: auto 1fr;">
     <div class="flex items-center gap-3 flex-shrink-0">
-        <div class="w-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center">
-            ${playedButtonHtml}
-        </div>
-        ${showRank !== 'none' ? `<span class="game-rank text-2xl font-bold text-primary w-14 text-center">${displayRank}</span>` : ''}
+        ${playedContainerHtml}
+        ${showRank !== 'none' ? `<div class="w-14 text-center flex flex-col items-center justify-center"><span class="game-rank text-2xl font-bold text-primary">${displayRank}</span>${globalRankHtml}</div>` : ''}
         <a href="/game/${game.s}/" class="game-thumb-link">
-            <img src="${thumbnail}"
-                 srcset="${thumbnail} 1x, ${thumbnail2x} 2x"
-                 alt="${this._escapeHtml(game.n)}" width="90" height="128" loading="lazy" decoding="async"
-                 class="game-thumb">
+            <img src="${thumbnail}" srcset="${thumbnail} 1x, ${thumbnail2x} 2x" alt="${this._escapeHtml(game.n)}" width="90" height="128" loading="lazy" decoding="async" class="game-thumb">
         </a>
     </div>
     <div class="flex-1 min-w-0 px-4">
         <div class="flex items-center justify-between gap-4">
             <div class="truncate">
-                <a href="/game/${game.s}/" class="game-title font-bold link link-hover">
-                    ${this._escapeHtml(game.n)}
-                </a>
-                <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1" data-year="${game.y}">
-                    (${game.y || 'N/A'})
-                </a>
+                <a href="/game/${game.s}/" class="game-title font-bold link link-hover">${this._escapeHtml(game.n)}</a>
+                <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1" data-year="${game.y}">(${game.y || 'N/A'})</a>
             </div>
-            ${globalRankHtml}
         </div>
         <div class="game-row-details text-sm ml-4">
             ${expanded.developers.length > 0 ? `<div class="truncate"><span class="text-base-content/70">${developerLabel}:</span> ${developersHtml}</div>` : ''}
@@ -206,68 +370,170 @@ class GameListRenderer {
         </div>
     </div>
 </div>`;
+        return div.firstElementChild;
     }
 
     /**
-     * Render a single game row (mobile version)
-     * Matches server-side _game_row.html template exactly
+     * Fallback: Render played button as string (legacy behavior)
      * @private
      */
+    _renderPlayedButtonString(game) {
+        if (!window.isAuthenticated || !game.i) return '';
+        const igdbId = game.i;
+        const isPlayed = this._isPlayed(igdbId);
+        const csrfToken = this._getCsrfToken();
+        const tooltipText = isPlayed ? 'You have played this game!' : 'You have not played this game.';
+        const innerHtml = isPlayed
+            ? `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center"><img src="/static/games/images/mario-star.png" srcset="/static/games/images/mario-star.png 1x, /static/games/images/mario-star@2x.png 2x" alt="Played" width="32" height="32" class="w-8 h-8 desktop:w-6 desktop:h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`
+            : `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center"><span class="mdi mdi-star-outline text-4xl desktop:text-2xl text-base-content/30"></span></span>`;
+        return `<div class="tooltip tooltip-top played-button-wrapper cursor-pointer" data-tip="${tooltipText}" data-igdb-id="${igdbId}" data-is-played="${isPlayed}" hx-post="/game/${igdbId}/toggle-played/" hx-trigger="click" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "${csrfToken}"}' onclick="event.stopPropagation()"><button class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none">${innerHtml}</button></div>`;
+    }
+
+    /**
+     * Render a single game row (mobile version) using DOM template cloning
+     * @private
+     * @returns {Element} The rendered mobile row element
+     */
     _renderMobileRow(game, index, showRank) {
+        this._initTemplates();
+
+        const template = this._templates?.mobile;
+        if (!template) {
+            return this._renderMobileRowString(game, index, showRank);
+        }
+
+        const fragment = template.content.cloneNode(true);
+        const row = fragment.querySelector('[data-slot="root"]');
+        if (!row) return this._renderMobileRowString(game, index, showRank);
+
         const expanded = this.engine.expandGame(game);
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const thumbnail = this._getThumbnail(game.a);
-
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showRankColumn = showRank !== 'none';
 
-        // Build platforms text (limit to 3, comma-separated codes)
+        // Build metadata text
         const displayPlatforms = expanded.platforms.slice(0, 3);
         const platformsText = displayPlatforms.map(p => p.code).join(', ');
-
-        // Get first genre name
         const firstGenre = expanded.genres.length > 0 ? expanded.genres[0].name : '';
-
-        // Build metadata text: "platforms • genre"
         let metaText = '';
         if (platformsText) metaText += platformsText;
-        if (platformsText && firstGenre) metaText += ' • ';
+        if (platformsText && firstGenre) metaText += ' \u2022 ';
         if (firstGenre) metaText += firstGenre;
 
-        // Grid template columns: star [rank] thumbnail content
-        const gridCols = showRankColumn ? 'auto auto auto 1fr' : 'auto auto 1fr';
+        // Set root element attributes
+        row.id = `game-${game.id}-mobile`;
+        row.onclick = () => { window.location.href = `/game/${game.s}/`; };
+        if (isHighlighted) row.classList.add('is-highlighted');
 
-        // Render played button
-        const playedButtonHtml = this._renderPlayedButton(game);
+        // Fill played button (or remove container if not authenticated)
+        const playedContainer = row.querySelector('[data-slot="played-button"]');
+        let hasPlayedButton = false;
+        if (playedContainer) {
+            const playedButton = this._renderPlayedButtonDOM(game);
+            if (playedButton) {
+                playedContainer.appendChild(playedButton);
+                hasPlayedButton = true;
+            } else {
+                // Remove container to save space when not authenticated
+                playedContainer.remove();
+            }
+        }
 
-        // End element: global rank or chevron (inside content div)
-        const endElementHtml = showRank === 'filtered'
-            ? `<span class="text-sm text-base-content/60 font-medium shrink-0 ml-2">#${game.r}</span>`
-            : `<svg class="w-5 h-5 text-base-content/30 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-        </svg>`;
+        // Update grid columns based on played button and rank visibility
+        if (hasPlayedButton) {
+            row.style.gridTemplateColumns = showRankColumn ? 'auto auto auto 1fr' : 'auto auto 1fr';
+        } else {
+            row.style.gridTemplateColumns = showRankColumn ? 'auto auto 1fr' : 'auto 1fr';
+        }
 
-        return `
-<div class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}"
-   id="game-${game.id}-mobile"
-   onclick="window.location.href='/game/${game.s}/'"
-   style="grid-template-columns: ${gridCols};">
-    <div class="w-11 h-11 min-w-11 max-w-11 shrink-0 flex items-center justify-center">
-        ${playedButtonHtml}
-    </div>
-    ${showRankColumn ? `<div class="text-2xl font-bold text-primary w-10 text-center">${displayRank}</div>` : ''}
-    <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;">
-        <img src="${thumbnail}" alt="${this._escapeHtml(game.n)}" width="90" height="128"
-             class="w-full h-full object-cover" loading="lazy" decoding="async">
-    </div>
+        // Fill rank (now just the inner span, parent div controls visibility)
+        const rankEl = row.querySelector('[data-slot="rank"]');
+        const rankParent = rankEl?.parentElement;
+        if (rankEl) {
+            rankEl.textContent = displayRank;
+        }
+        if (rankParent) {
+            if (!showRankColumn) {
+                rankParent.style.display = 'none';
+            }
+        }
+
+        // Fill thumbnail
+        const thumbImg = row.querySelector('[data-slot="thumbnail"]');
+        if (thumbImg) {
+            thumbImg.src = thumbnail;
+            thumbImg.alt = game.n;
+        }
+
+        // Fill title (includes year span)
+        const titleEl = row.querySelector('[data-slot="title"]');
+        if (titleEl) {
+            titleEl.innerHTML = `${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span>`;
+        }
+
+        // Fill meta
+        this._fillSlot(row, 'meta', metaText);
+
+        // Show/hide global rank (now under the main rank) based on mode
+        const globalRankEl = row.querySelector('[data-slot="global-rank"]');
+
+        if (showRank === 'filtered') {
+            if (globalRankEl) {
+                globalRankEl.textContent = `(#${game.r})`;
+                globalRankEl.classList.remove('hidden');
+            }
+        } else {
+            if (globalRankEl) globalRankEl.classList.add('hidden');
+        }
+
+        return row;
+    }
+
+    /**
+     * Fallback: Render mobile row as string (legacy behavior)
+     * @private
+     */
+    _renderMobileRowString(game, index, showRank) {
+        const expanded = this.engine.expandGame(game);
+        const isHighlighted = this.highlightId && game.id === this.highlightId;
+        const thumbnail = this._getThumbnail(game.a);
+        const displayRank = showRank === 'filtered' ? index : game.r;
+        const showRankColumn = showRank !== 'none';
+
+        const displayPlatforms = expanded.platforms.slice(0, 3);
+        const platformsText = displayPlatforms.map(p => p.code).join(', ');
+        const firstGenre = expanded.genres.length > 0 ? expanded.genres[0].name : '';
+        let metaText = '';
+        if (platformsText) metaText += platformsText;
+        if (platformsText && firstGenre) metaText += ' \u2022 ';
+        if (firstGenre) metaText += firstGenre;
+
+        const playedButtonHtml = this._renderPlayedButtonString(game);
+        // Only include container if authenticated (button exists)
+        const playedContainerHtml = playedButtonHtml ? `<div class="w-11 h-11 min-w-11 max-w-11 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
+        // Grid columns depend on whether played button and rank are shown
+        const hasPlayedButton = !!playedButtonHtml;
+        const gridCols = hasPlayedButton
+            ? (showRankColumn ? 'auto auto auto 1fr' : 'auto auto 1fr')
+            : (showRankColumn ? 'auto auto 1fr' : 'auto 1fr');
+        const globalRankHtml = showRank === 'filtered' ? `<span class="text-xs text-base-content/50">(#${game.r})</span>` : '';
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}-mobile" onclick="window.location.href='/game/${game.s}/'" style="grid-template-columns: ${gridCols};">
+    ${playedContainerHtml}
+    ${showRankColumn ? `<div class="w-10 text-center flex flex-col items-center justify-center"><div class="text-2xl font-bold text-primary">${displayRank}</div>${globalRankHtml}</div>` : ''}
+    <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;"><img src="${thumbnail}" alt="${this._escapeHtml(game.n)}" width="90" height="128" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>
     <div class="min-w-0 flex items-center justify-between">
         <div class="min-w-0">
             <div class="font-bold text-base leading-tight line-clamp-2">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
             <div class="text-xs text-base-content/60 truncate">${metaText}</div>
         </div>
-        ${endElementHtml}
+        <svg class="w-5 h-5 text-base-content/30 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
     </div>
 </div>`;
+        return div.firstElementChild;
     }
 
     /**
@@ -307,13 +573,9 @@ class GameListRenderer {
 
         // Render first page
         const pageGames = games.slice(0, this.PAGE_SIZE);
-        const html = this._renderGames(pageGames, showRank, 1);
+        const fragment = this._renderGames(pageGames, showRank, 1);
 
-        if (append) {
-            container.insertAdjacentHTML('beforeend', html);
-        } else {
-            container.innerHTML = html;
-        }
+        container.appendChild(fragment);
 
         // Reinitialize HTMX for dynamically rendered content
         if (typeof htmx !== 'undefined') {
@@ -327,15 +589,20 @@ class GameListRenderer {
     }
 
     /**
-     * Render games HTML
+     * Render games as DOM fragment
      * @private
+     * @returns {DocumentFragment}
      */
     _renderGames(games, showRank, startIndex) {
-        return games.map((game, i) => {
+        const fragment = document.createDocumentFragment();
+        games.forEach((game, i) => {
             const index = startIndex + i;
-            return this._renderDesktopRow(game, index, showRank) +
-                   this._renderMobileRow(game, index, showRank);
-        }).join('');
+            const desktopRow = this._renderDesktopRow(game, index, showRank);
+            const mobileRow = this._renderMobileRow(game, index, showRank);
+            if (desktopRow) fragment.appendChild(desktopRow);
+            if (mobileRow) fragment.appendChild(mobileRow);
+        });
+        return fragment;
     }
 
     /**
@@ -361,8 +628,8 @@ class GameListRenderer {
             };
         }
 
-        const html = this._renderGames(pageGames, showRank, start + 1);
-        container.insertAdjacentHTML('beforeend', html);
+        const fragment = this._renderGames(pageGames, showRank, start + 1);
+        container.appendChild(fragment);
 
         // Reinitialize HTMX for dynamically rendered content
         if (typeof htmx !== 'undefined') {

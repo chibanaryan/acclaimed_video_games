@@ -254,7 +254,7 @@
                         if (screen === 'profile') {
                             url = '{% url "auth-modal-profile" %}';
                         } else if (screen === 'signup') {
-                            url = '{% url "auth-modal-signup" %}';
+                            url = '{% url "auth-modal-signup" %}?direct=1';
                         }
                         htmx.ajax('GET', url, {target: '#auth-modal-content', swap: 'innerHTML'});
                         authModal.showModal();

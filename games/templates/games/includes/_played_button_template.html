@@ -1,0 +1,25 @@
+{# Played Button Template for JS cloning #}
+{# Contains both played and unplayed state elements - JS shows the correct one #}
+{% load static %}
+<div class="tooltip tooltip-top played-button-wrapper cursor-pointer"
+     data-slot="played-wrapper"
+     data-tip=""
+     data-igdb-id=""
+     data-is-played="false"
+     hx-trigger="click"
+     hx-swap="outerHTML"
+     onclick="event.stopPropagation()">
+    <button class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none">
+        {# Played state - Mario star image #}
+        <span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center" data-slot="played-icon">
+            <img src="{% static 'games/images/mario-star.png' %}"
+                 srcset="{% static 'games/images/mario-star.png' %} 1x, {% static 'games/images/mario-star@2x.png' %} 2x"
+                 alt="Played" width="32" height="32"
+                 class="w-8 h-8 desktop:w-6 desktop:h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
+        </span>
+        {# Unplayed state - Star outline icon #}
+        <span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center hidden" data-slot="unplayed-icon">
+            <span class="mdi mdi-star-outline text-4xl desktop:text-2xl text-base-content/30"></span>
+        </span>
+    </button>
+</div>

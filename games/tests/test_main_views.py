@@ -1558,7 +1558,7 @@ class AuthModalViewsTest(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn('name="login"', content)
         self.assertIn('name="password"', content)
-        self.assertIn("Sign In", content)
+        self.assertIn("Login", content)
 
     def test_auth_modal_login_post_invalid_credentials(self):
         """Test login with invalid credentials shows error."""
@@ -2310,4 +2310,4 @@ class HomeSubscribeViewTests(TestCase):
         """Test that home page shows sign up button for anonymous users."""
         response = self.client.get(reverse("home"))
         content = response.content.decode("utf-8")
-        self.assertIn("Sign Up for Updates", content)
+        self.assertIn("Sign Up", content)

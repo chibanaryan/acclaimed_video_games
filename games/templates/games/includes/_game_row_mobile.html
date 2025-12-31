@@ -1,0 +1,56 @@
+{# Mobile Game Row Template #}
+{# Single source of truth: Used for both server-side rendering and JS template cloning #}
+{# Props: game (optional), show_rank ('alltime'|'filtered'|'none'), index (filtered rank), highlight (game ID) #}
+{# When game is not provided, renders empty template structure for JS cloning with all elements present #}
+{% load game_filters static %}
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
+     {% if game %}id="game-{{ game.id }}-mobile"{% endif %}
+     data-slot="root"
+     {% if game %}onclick="window.location.href='{% url 'game-detail' slug=game.slug %}'"{% endif %}
+     style="grid-template-columns: {% if user.is_authenticated or not game %}auto {% endif %}{% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}auto {% endif %}auto 1fr;">
+
+    {# Played button - only render container if authenticated (server) or for JS template cloning #}
+    {% if user.is_authenticated or not game %}
+    <div class="w-11 h-11 min-w-11 max-w-11 shrink-0 flex items-center justify-center" data-slot="played-button">
+        {% if game %}
+            {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# Rank Number - always present in template (for JS), conditionally shown for server render #}
+    {% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}
+    <div class="w-10 text-center flex flex-col items-center justify-center">
+        <div class="text-2xl font-bold text-primary" data-slot="rank">
+            {% if game %}{% if show_rank == 'filtered' %}{{ index|default:game.rank }}{% else %}{{ game.rank }}{% endif %}{% endif %}
+        </div>
+        <span class="text-xs text-base-content/50 {% if show_rank != 'filtered' and game %}hidden{% endif %}" data-slot="global-rank">{% if game %}(#{{ game.rank }}){% endif %}</span>
+    </div>
+    {% endif %}
+
+    {# Thumbnail #}
+    <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;">
+        <img {% if game %}src="{{ game.thumbnail }}" alt="{{ game.name }}"{% endif %}
+             width="90" height="128"
+             class="w-full h-full object-cover" loading="lazy" decoding="async"
+             data-slot="thumbnail">
+    </div>
+
+    {# Game Info #}
+    <div class="min-w-0 flex items-center justify-between">
+        <div class="min-w-0">
+            <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">
+                {% if game %}{{ game.name }} <span class="font-normal text-base-content/60">({{ game.year_of_release }})</span>{% else %}<span class="font-normal text-base-content/60" data-slot="year"></span>{% endif %}
+            </div>
+            <div class="text-xs text-base-content/60 truncate" data-slot="meta">
+                {% if game %}
+                    {% with platforms=game.platforms.all|slice:":3" %}{% if platforms %}{% for platform in platforms %}{{ platform.code }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}{% if game.platforms.exists and game.wikipedia_genres.exists %} &bull; {% endif %}{% with genre=game.wikipedia_genres.first %}{% if genre %}{{ genre.name }}{% endif %}{% endwith %}
+                {% endif %}
+            </div>
+        </div>
+        {# Chevron - always show on mobile since global rank moved to left side #}
+        <svg class="w-5 h-5 text-base-content/30 shrink-0 ml-2" data-slot="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+    </div>
+</div>

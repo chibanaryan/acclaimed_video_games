@@ -87,12 +87,23 @@
     </p>
 </div>
 
-{# Donate Button #}
-<div class="text-center mb-8">
-    <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-primary btn-sm gap-2">
-        <span class="mdi mdi-heart"></span>
-        <span>Support This Project</span>
-    </a>
+{# Action Buttons #}
+<div class="text-center mb-8 flex flex-col items-center gap-3">
+    <div class="flex flex-wrap justify-center gap-2">
+        {% if not user.is_authenticated %}
+        <button type="button" class="btn btn-primary btn-sm gap-2 auth-modal-trigger" data-auth-screen="signup">
+            <span class="mdi mdi-gamepad"></span>
+            <span>Sign Up</span>
+        </button>
+        {% endif %}
+        <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-primary btn-sm gap-2">
+            <span class="mdi mdi-heart"></span>
+            <span>Support This Project</span>
+        </a>
+    </div>
+    {% if not user.is_authenticated %}
+    <p class="text-sm text-base-content/60">Track your played games and subscribe to site updates</p>
+    {% endif %}
 </div>
 
 {# Two Column Layout: Top Games (Left) | News (Right) #}
@@ -131,16 +142,7 @@
 
     {# Right Column: Latest News #}
     <div>
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-bold">Latest News</h3>
-            {# Signup prompt for unauthenticated users #}
-            {% if not user.is_authenticated %}
-            <button type="button" class="btn btn-primary btn-sm auth-modal-trigger" data-auth-screen="signup">
-                <span class="mdi mdi-email-outline mr-1"></span>
-                Sign Up for Updates
-            </button>
-            {% endif %}
-        </div>
+        <h3 class="text-xl font-bold mb-4">Latest News</h3>
 
         {% for post in posts %}
             {% include 'posts/includes/_post_item.html' with post=post %}

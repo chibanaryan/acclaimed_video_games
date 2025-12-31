@@ -26,7 +26,7 @@
                 {% csrf_token %}
                 <button type="submit" class="w-full flex items-center gap-2 text-left">
                     <span class="mdi mdi-logout"></span>
-                    Sign Out
+                    Logout
                 </button>
             </form>
         </li>
@@ -36,6 +36,6 @@
 {% else %}
 <button class="btn btn-primary w-full auth-modal-trigger">
     <span class="mdi mdi-login"></span>
-    Sign In
+    Login
 </button>
 {% endif %}

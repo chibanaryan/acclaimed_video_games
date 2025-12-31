@@ -51,6 +51,19 @@
 <div id="content">
     {% include 'includes/_advanced_filters.html' with filters=filters genres=genres platforms=platforms min_year=min_year max_year=max_year %}
 </div>
+
+{# Client-side rendering templates - hidden, cloned by JavaScript #}
+{% if enable_client_filtering %}
+<template id="desktop-row-template">
+    {% include 'games/includes/_game_row_desktop.html' %}
+</template>
+<template id="mobile-row-template">
+    {% include 'games/includes/_game_row_mobile.html' %}
+</template>
+<template id="played-button-template">
+    {% include 'games/includes/_played_button_template.html' %}
+</template>
+{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}

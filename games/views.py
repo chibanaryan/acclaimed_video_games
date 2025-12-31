@@ -1969,7 +1969,11 @@ class AuthModalSignupView(View):
         from allauth.account.forms import SignupForm
 
         form = SignupForm()
-        response = TemplateResponse(request, self.template_name, {"form": form})
+        # Hide back button when accessed directly (not from auth options)
+        show_back = request.GET.get("direct") != "1"
+        response = TemplateResponse(
+            request, self.template_name, {"form": form, "show_back": show_back}
+        )
         response["HX-Push-Url"] = "false"
         return response
 

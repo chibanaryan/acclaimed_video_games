@@ -1,6 +1,7 @@
 {# Email signup form for auth modal #}
 
-{# Back button #}
+{# Back button - only show when navigating from auth options, not direct access #}
+{% if show_back %}
 <button type="button"
         class="btn btn-ghost btn-sm gap-1 mb-4"
         hx-get="{% url 'auth-modal-options' %}"
@@ -9,6 +10,7 @@
     <span class="mdi mdi-arrow-left"></span>
     Back
 </button>
+{% endif %}
 
 <h3 class="text-lg font-bold mb-6">Create an Account</h3>
 
@@ -137,6 +139,6 @@
             hx-get="{% url 'auth-modal-login' %}"
             hx-target="#auth-modal-content"
             hx-swap="innerHTML">
-        Sign In
+        Login
     </button>
 </p>

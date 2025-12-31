@@ -1,5 +1,10 @@
 # Developer Log
 
+## 2025-12-31
+
+- Unify game row templates: split into desktop/mobile partials with data-slot attributes for JS template cloning
+- Played button: hide star for unauthenticated users (no empty space), show only when logged in
+
 ## 2025-12-30
 
 - Add PlayedGame model for tracking user's played games with IGDB ID-based reconnection across re-imports

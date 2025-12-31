@@ -88,7 +88,6 @@ function initJumpToRank() {
     });
 
     jumpToRankInitialized = true;
-    console.log('[JumpToRank] Event delegation initialized');
 }
 
 /**
@@ -129,27 +128,23 @@ async function handleJumpToRank(input) {
         }
     }
 
-    console.log('[JumpToRank] Target:', targetRank, 'Loaded:', loaded, 'Total:', total);
-
     // Validate input
     if (!targetRank || targetRank < 1 || targetRank > total) {
         input.classList.add('input-error');
         setTimeout(() => input.classList.remove('input-error'), 1000);
-        console.log('[JumpToRank] Invalid input - target exceeds total');
         return;
     }
 
     // Check if target is already loaded
     if (targetRank <= loaded) {
-        console.log('[JumpToRank] Already loaded, scrolling');
         scrollToAndHighlightRank(targetRank);
+        input.value = '';
         return;
     }
 
     // Try to use client-side filtering (instant, no network requests)
     if (typeof getClientSideFiltering === 'function') {
         const csf = getClientSideFiltering();
-        console.log('[JumpToRank] CSF available:', !!csf, 'Ready:', csf?.isReady?.());
         if (csf && csf.isReady()) {
             try {
                 jumpToRankClientSide(csf, targetRank, loaded, perPage);
@@ -163,7 +158,6 @@ async function handleJumpToRank(input) {
     }
 
     // Fallback: fetch from server (parallel loading)
-    console.log('[JumpToRank] Using server-side fallback');
     await jumpToRankServerSide(targetRank, loaded, perPage);
     input.value = '';
 }
@@ -176,7 +170,6 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
     const countContainer = document.querySelector('.result-count');
     const loadMoreContainer = document.querySelector('.load-more-container');
 
-    console.log('[JumpToRank CSF] Container:', !!gameListContainer);
     if (!gameListContainer) {
         console.error('[JumpToRank CSF] No game list container found');
         return;
@@ -184,11 +177,9 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
 
     // Get current filters from URL
     const filters = getFiltersFromURL();
-    console.log('[JumpToRank CSF] Filters:', filters);
 
     // Get filtered games from engine
     const result = csf.applyFilters(filters);
-    console.log('[JumpToRank CSF] Filter result:', result?.total, 'games');
     if (!result || !result.games) {
         console.error('[JumpToRank CSF] No games returned from filter');
         return;
@@ -203,9 +194,10 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
     const renderer = csf.renderer;
     gamesToRender.forEach((game, i) => {
         const index = loaded + i + 1; // 1-based rank
-        const html = renderer._renderDesktopRow(game, index, 'filtered') +
-                     renderer._renderMobileRow(game, index, 'filtered');
-        gameListContainer.insertAdjacentHTML('beforeend', html);
+        const desktopRow = renderer._renderDesktopRow(game, index, 'filtered');
+        const mobileRow = renderer._renderMobileRow(game, index, 'filtered');
+        if (desktopRow) gameListContainer.appendChild(desktopRow);
+        if (mobileRow) gameListContainer.appendChild(mobileRow);
     });
 
     // Reinitialize HTMX for dynamically rendered content
@@ -241,7 +233,6 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
         inp.dataset.loaded = newLoaded;
     });
 
-    console.log('[JumpToRank CSF] Rendered', gamesToRender.length, 'games, now loaded:', newLoaded);
 
     // Scroll to and highlight the target rank
     setTimeout(() => {
@@ -550,7 +541,6 @@ function updateLoadMoreButton(button, meta) {
 
 // Auto-initialize when script loads
 (function() {
-    console.log('[LoadMore] Script loaded, initializing...');
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initLoadMore);
     } else {

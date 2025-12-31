@@ -198,7 +198,7 @@
                     <form action="{% url 'auth-logout' %}" method="post" class="w-full" @click.stop>
                         {% csrf_token %}
                         <button type="submit" class="w-full text-left">
-                            Sign Out
+                            Logout
                         </button>
                     </form>
                 </li>
@@ -207,7 +207,7 @@
                 <li>
                     <a href="#" class="auth-modal-trigger">
                         <span class="mdi mdi-login"></span>
-                        Sign In
+                        Login
                     </a>
                 </li>
                 {% endif %}
