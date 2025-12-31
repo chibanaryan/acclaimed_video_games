@@ -6,7 +6,7 @@ function developerFilter() {
     return {
         // State
         selectedDeveloperIds: new Set(),
-        sortBy: 'year', // 'year', 'rank', or 'name'
+        sortBy: 'rank', // 'rank', 'year', or 'name'
         showMobileFilters: false, // Controls mobile filter modal
 
         // Data loaded from Django context via window globals

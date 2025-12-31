@@ -1414,7 +1414,7 @@ class DeveloperDetailView(DetailView):
             "developers__parent",
             "platforms",
             "genres",
-        ).order_by("year_of_release")
+        ).order_by("rank")
 
         return models.Developer.objects.prefetch_related(
             Prefetch(
@@ -1490,7 +1490,7 @@ class DeveloperDetailView(DetailView):
 
                 # Only include developers that have games OR sub-developers
                 if dev_games or sub_devs:
-                    dev_games.sort(key=lambda g: (g.year_of_release or 0))
+                    dev_games.sort(key=lambda g: (g.rank or 999999))
 
                     # Calculate total unique games including all nested developers
                     def calc_total_games(games, sub_devs_list):
@@ -1554,7 +1554,7 @@ class DeveloperDetailView(DetailView):
             sub_game_ids = collect_all_sub_game_ids(subsidiaries_with_games)
             root_games = [g for g in root_games if g.id not in sub_game_ids]
 
-        root_games.sort(key=lambda g: (g.year_of_release or 0))
+        root_games.sort(key=lambda g: (g.rank or 999999))
 
         # Count unique games across all developers
         def collect_unique_game_ids(devs):
@@ -1616,7 +1616,7 @@ class DeveloperDetailView(DetailView):
         all_games = list(
             models.Game.objects.filter(id__in=all_game_ids)
             .prefetch_related("developers", "platforms", "genres")
-            .order_by("year_of_release")
+            .order_by("rank")
         )
         context["all_games"] = all_games
 

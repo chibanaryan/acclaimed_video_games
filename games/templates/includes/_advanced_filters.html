@@ -898,9 +898,10 @@
     </div>
 
     {# Two-column layout: results on left, filters sidebar on right #}
+    {# Reserve sidebar space on desktop with calc() to prevent layout shift #}
     <div class="flex flex-col desktop:flex-row">
-        {# Left column - Results (takes remaining space) #}
-        <div class="flex-1 min-w-0" style="contain: layout;">
+        {# Left column - Results (explicit max-width reserves sidebar space) #}
+        <div class="min-w-0 w-full desktop:max-w-[calc(100%-357px)]" style="contain: layout;">
             <div id="game-results-container">
                 {% include 'games/includes/_game_list_results.html' %}
             </div>

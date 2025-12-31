@@ -15,8 +15,8 @@
                 <ul x-show="sortOpen" x-cloak
                     class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
                     @click="sortOpen = false">
-                    <li><button type="button" @click="sortBy = 'year'; sortGames()" :class="sortBy === 'year' ? 'active' : ''">Year</button></li>
                     <li><button type="button" @click="sortBy = 'rank'; sortGames()" :class="sortBy === 'rank' ? 'active' : ''">Rank</button></li>
+                    <li><button type="button" @click="sortBy = 'year'; sortGames()" :class="sortBy === 'year' ? 'active' : ''">Year</button></li>
                     <li><button type="button" @click="sortBy = 'name'; sortGames()" :class="sortBy === 'name' ? 'active' : ''">A-Z</button></li>
                 </ul>
             </div>
@@ -26,8 +26,8 @@
                 <select class="select select-sm select-bordered bg-base-200"
                         style="width: fit-content; max-width: 100%;"
                         @change="sortBy = $event.target.value; sortGames()">
-                    <option value="year" :selected="sortBy === 'year'">Year</option>
                     <option value="rank" :selected="sortBy === 'rank'">Rank</option>
+                    <option value="year" :selected="sortBy === 'year'">Year</option>
                     <option value="name" :selected="sortBy === 'name'">A-Z</option>
                 </select>
             </div>

@@ -498,12 +498,16 @@
      }"
      @platforms-reset.window="handleReset()">
 
-    {# Loading State - Show until client counts are ready #}
-    <div x-show="!countsReady" class="space-y-2 animate-pulse">
-        <div class="h-8 bg-base-300/50 rounded-lg"></div>
-        <div class="h-8 bg-base-300/50 rounded-lg"></div>
-        <div class="h-8 bg-base-300/50 rounded-lg"></div>
-        <div class="h-8 bg-base-300/50 rounded-lg"></div>
+    {# Loading State - matches actual rendered height of 8 manufacturer headers #}
+    <div x-show="!countsReady" class="space-y-1 animate-pulse" style="min-height: 316px;">
+        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
     </div>
 
     {# Hierarchical Platform Tree - Only show after counts are ready #}

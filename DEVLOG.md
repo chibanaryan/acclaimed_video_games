@@ -2,6 +2,8 @@
 
 ## 2025-12-31
 
+- Fix layout shift on game list: use CSS Grid with calc() to reserve sidebar space on initial render
+- Fix filter skeleton loading states: match actual rendered heights to prevent layout shift on load
 - Add player rank/percentile to profile: shows "#X of Y players" for small groups, percentile for 10+
 - Fix hierarchical filter drill-down: clicking child when parent selected shifts selection down, not toggle
 - Make rankings page the homepage (redirect /rankings/ and /games/ to /)

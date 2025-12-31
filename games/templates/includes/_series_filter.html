@@ -124,12 +124,28 @@
         </button>
     </label>
 
-    {# Loading State - Show until counts are ready #}
-    <div x-show="!countsReady" class="space-y-1 animate-pulse">
-        <div class="h-7 bg-base-300/50 rounded-md"></div>
-        <div class="h-7 bg-base-300/50 rounded-md"></div>
-        <div class="h-7 bg-base-300/50 rounded-md"></div>
-        <div class="h-7 bg-base-300/50 rounded-md"></div>
+    {# Loading State - 20 rows to match maxDisplayed series items #}
+    <div x-show="!countsReady" class="space-y-0.5 animate-pulse" style="min-height: 618px;">
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
     </div>
 
     {# Series list - styled like genre children #}
