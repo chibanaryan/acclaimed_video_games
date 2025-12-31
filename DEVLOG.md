@@ -2,6 +2,7 @@
 
 ## 2025-12-31
 
+- Fix series badge truncation on mobile: prevent text wrap/overflow with ellipsis and max-width
 - Fix Load More button: use CSF's loadMore when ready, initialize renderer state from server-rendered content
 - Fix Jump to Rank: centralize state management, get authoritative loaded count from CSF/DOM
 - Fix rank display: show 'alltime' rank (no global rank indicator) when no filters active

@@ -70,7 +70,7 @@
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">Series:</td>
         <td class="pb-3">
             <span class="flex flex-wrap gap-1">
-                {% for series in series_list %}<a href="{% url 'games-list' %}?series={{ series.id }}&highlight={{ game.id }}" class="badge badge-outline hover:badge-primary transition-colors">{{ series.name }}</a>{% endfor %}
+                {% for series in series_list %}<a href="{% url 'games-list' %}?series={{ series.id }}&highlight={{ game.id }}" class="badge badge-outline hover:badge-primary transition-colors max-w-[200px] sm:max-w-none" title="{{ series.name }}"><span class="truncate">{{ series.name }}</span></a>{% endfor %}
             </span>
         </td>
     </tr>
