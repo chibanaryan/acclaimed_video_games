@@ -192,7 +192,10 @@ class GameListRenderer {
 
         // Set root element attributes
         row.id = `game-${game.id}`;
-        if (isHighlighted) row.classList.add('is-highlighted');
+
+        // Add highlight to inner game-row element (not wrapper)
+        const gameRowEl = row.querySelector('[data-slot="game-row"]') || row;
+        if (isHighlighted) gameRowEl.classList.add('is-highlighted');
 
         // Fill played button (or remove container if not authenticated)
         const playedContainer = row.querySelector('[data-slot="played-button"]');
@@ -344,29 +347,31 @@ class GameListRenderer {
         const globalRankHtml = showGlobalRank ? `<span class="game-row-global-rank text-xs text-base-content/50">(#${game.r})</span>` : '';
         const playedButtonHtml = this._renderPlayedButtonString(game);
         // Only include container if authenticated (button exists)
-        const playedContainerHtml = playedButtonHtml ? `<div class="w-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
+        const playedContainerHtml = playedButtonHtml ? `<div class="w-10 min-w-10 max-w-10 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
 
         const div = document.createElement('div');
         div.innerHTML = `
-<div class="game-row desktop hidden desktop:grid py-0.5 px-2 ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}" style="grid-template-columns: auto 1fr;">
-    <div class="flex items-center gap-3 flex-shrink-0">
-        ${playedContainerHtml}
-        ${showRank !== 'none' ? `<div class="w-14 text-center flex flex-col items-center justify-center"><span class="game-rank text-2xl font-bold text-primary">${displayRank}</span>${globalRankHtml}</div>` : ''}
-        <a href="/game/${game.s}/" class="game-thumb-link">
-            <img src="${thumbnail}" srcset="${thumbnail} 1x, ${thumbnail2x} 2x" alt="${this._escapeHtml(game.n)}" width="90" height="128" loading="lazy" decoding="async" class="game-thumb">
-        </a>
-    </div>
-    <div class="flex-1 min-w-0 px-4">
-        <div class="flex items-center justify-between gap-4">
-            <div class="truncate">
-                <a href="/game/${game.s}/" class="game-title font-bold link link-hover">${this._escapeHtml(game.n)}</a>
-                <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1" data-year="${game.y}">(${game.y || 'N/A'})</a>
-            </div>
+<div class="game-row-wrapper hidden desktop:flex items-center" id="game-${game.id}">
+    ${playedContainerHtml}
+    <div class="game-row desktop flex-1 py-0.5 px-2 grid ${isHighlighted ? 'is-highlighted' : ''}" style="grid-template-columns: auto 1fr;">
+        <div class="flex items-center gap-3 flex-shrink-0">
+            ${showRank !== 'none' ? `<div class="w-14 text-center flex flex-col items-center justify-center"><span class="game-rank text-2xl font-bold text-primary">${displayRank}</span>${globalRankHtml}</div>` : ''}
+            <a href="/game/${game.s}/" class="game-thumb-link">
+                <img src="${thumbnail}" srcset="${thumbnail} 1x, ${thumbnail2x} 2x" alt="${this._escapeHtml(game.n)}" width="90" height="128" loading="lazy" decoding="async" class="game-thumb">
+            </a>
         </div>
-        <div class="game-row-details text-sm ml-4">
-            ${expanded.developers.length > 0 ? `<div class="truncate"><span class="text-base-content/70">${developerLabel}:</span> ${developersHtml}</div>` : ''}
-            ${expanded.platforms.length > 0 ? `<div class="flex items-center gap-1"><span class="text-base-content/70 shrink-0">${platformLabel}:</span><span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;">${platformsHtml}</span></div>` : ''}
-            ${expanded.genres.length > 0 ? `<div class="flex items-center gap-1"><span class="text-base-content/70 shrink-0">${genreLabel}:</span><span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;">${genresHtml}</span></div>` : ''}
+        <div class="flex-1 min-w-0 px-4">
+            <div class="flex items-center justify-between gap-4">
+                <div class="truncate">
+                    <a href="/game/${game.s}/" class="game-title font-bold link link-hover">${this._escapeHtml(game.n)}</a>
+                    <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1" data-year="${game.y}">(${game.y || 'N/A'})</a>
+                </div>
+            </div>
+            <div class="game-row-details text-sm ml-4">
+                ${expanded.developers.length > 0 ? `<div class="truncate"><span class="text-base-content/70">${developerLabel}:</span> ${developersHtml}</div>` : ''}
+                ${expanded.platforms.length > 0 ? `<div class="flex items-center gap-1"><span class="text-base-content/70 shrink-0">${platformLabel}:</span><span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;">${platformsHtml}</span></div>` : ''}
+                ${expanded.genres.length > 0 ? `<div class="flex items-center gap-1"><span class="text-base-content/70 shrink-0">${genreLabel}:</span><span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;">${genresHtml}</span></div>` : ''}
+            </div>
         </div>
     </div>
 </div>`;

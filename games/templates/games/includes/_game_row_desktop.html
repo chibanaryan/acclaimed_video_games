@@ -3,21 +3,23 @@
 {# Props: game (optional), show_rank ('alltime'|'filtered'|'none'), index (filtered rank), highlight (game ID), show_rank_in_details (bool) #}
 {# When game is not provided, renders empty template structure for JS cloning with all elements present #}
 {% load game_filters static %}
-<div class="game-row desktop hidden desktop:grid py-0.5 px-2 {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
+<div class="game-row-wrapper hidden desktop:flex items-center"
      {% if game %}id="game-{{ game.id }}"{% endif %}
-     data-slot="root"
-     style="grid-template-columns: auto 1fr;">
-    {# Star + Rank + Thumbnail #}
-    <div class="flex items-center gap-3 flex-shrink-0">
-        {# Played button - only render container if authenticated (server) or for JS template cloning #}
-        {% if user.is_authenticated or not game %}
-        <div class="w-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center" data-slot="played-button">
-            {% if game %}
-                {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}
-            {% endif %}
-        </div>
+     data-slot="root">
+    {# Played button - outside game-row to avoid hover effect #}
+    {% if user.is_authenticated or not game %}
+    <div class="w-12 min-w-12 max-w-12 shrink-0 flex items-center justify-center" data-slot="played-button">
+        {% if game %}
+            {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}
         {% endif %}
-        {# Rank - always present in template (for JS), conditionally shown for server render #}
+    </div>
+    {% endif %}
+    <div class="game-row desktop flex-1 py-0.5 px-2 grid {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
+         data-slot="game-row"
+         style="grid-template-columns: auto 1fr;">
+        {# Rank + Thumbnail #}
+        <div class="flex items-center gap-3 flex-shrink-0">
+            {# Rank - always present in template (for JS), conditionally shown for server render #}
         {% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}
         <div class="w-14 text-center flex flex-col items-center justify-center {% if show_rank == 'none' and game %}hidden{% endif %}">
             <span class="game-rank text-2xl font-bold text-primary" data-slot="rank">
@@ -78,4 +80,5 @@
             </div>
         </div>
     </div>
-</div>
+    </div>{# Close game-row #}
+</div>{# Close wrapper #}

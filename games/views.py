@@ -286,6 +286,17 @@ def _build_genre_subtitle(selected_genre_ids, option, genres):
     return f"Genre: {connector.join(genre_names)}"
 
 
+def _apply_played_filter(qs, user, played_param):
+    """Apply played status filter. Requires qs to have is_played_by_user annotation."""
+    if not played_param or not user or not user.is_authenticated:
+        return qs
+    if played_param == "yes":
+        return qs.filter(is_played_by_user=True)
+    elif played_param == "no":
+        return qs.filter(is_played_by_user=False)
+    return qs
+
+
 def _build_filter_title(
     filters, genres, platforms, min_year, max_year, series_list=None
 ):
@@ -321,9 +332,17 @@ def _build_filter_title(
                 platform_label = ""
 
     time_suffix = f" of {time_window}" if time_window else ""
-    return (
-        f"Most Acclaimed {platform_label}{genre_label}{series_label} Games{time_suffix}"
-    )
+
+    # Add played status suffix
+    played_suffix = ""
+    played = filters.get("played")
+    if played == "yes":
+        played_suffix = ": Played"
+    elif played == "no":
+        played_suffix = ": Unplayed"
+
+    title = f"Most Acclaimed {platform_label}{genre_label}{series_label} Games"
+    return f"{title}{time_suffix}{played_suffix}"
 
 
 class HomePageView(FormView):
@@ -676,6 +695,10 @@ class GameSearchView(RobustPaginationMixin, ListView):
             series_ids = [int(x) for x in series_param.split(",") if x.strip()]
             qs = utils.apply_series_filter(qs, series_ids)
 
+        # Played status filtering (authenticated users only)
+        played_param = self.request.GET.get("played")
+        qs = _apply_played_filter(qs, self.request.user, played_param)
+
         # Sort order
         sort = self.request.GET.get("sort", "rank")
 
@@ -795,6 +818,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
         genres_param = self.request.GET.get("genres")
         platforms_param = self.request.GET.get("platforms")
         series_param = self.request.GET.get("series")
+        played_param = self.request.GET.get("played")
 
         # Determine if any filter actually narrows results (affects rank display)
         # Year filter only counts if it's narrower than the full range
@@ -810,6 +834,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             or platforms_param
             or series_param
             or sort_param != "rank"
+            or (played_param and self.request.user.is_authenticated)
         )
 
         filters = {
@@ -819,6 +844,7 @@ class GameSearchView(RobustPaginationMixin, ListView):
             "genres": genres_param.split(",") if genres_param else [],
             "platforms": platforms_param.split(",") if platforms_param else [],
             "series": series_param.split(",") if series_param else [],
+            "played": played_param if self.request.user.is_authenticated else "",
             "rank_display": "filtered" if has_any_filter else "alltime",
             "sort": sort_param,
             # Keep legacy params for context
@@ -874,6 +900,10 @@ class GameSearchView(RobustPaginationMixin, ListView):
         # This allows users to see which years have games given their other filters
         base_qs = models.Game.objects.all()
 
+        # Add played status annotation for authenticated users
+        if self.request.user.is_authenticated:
+            base_qs = base_qs.with_played_status(self.request.user)
+
         # Apply search filter (same as get_queryset)
         q = self.request.GET.get("q")
         if q:
@@ -892,6 +922,9 @@ class GameSearchView(RobustPaginationMixin, ListView):
         if platforms_param:
             platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
             base_qs = utils.apply_platform_filter(base_qs, platform_ids)
+
+        # Apply played status filter
+        base_qs = _apply_played_filter(base_qs, self.request.user, played_param)
 
         # Calculate year counts from filtered base queryset
         # Use distinct=True to avoid counting games multiple times when M2M JOINs
@@ -912,6 +945,8 @@ class GameSearchView(RobustPaginationMixin, ListView):
         # FACETED COUNTS FOR GENRES
         # Apply all filters EXCEPT genres (standard faceting for single-select)
         genre_facet_qs = models.Game.objects.all()
+        if self.request.user.is_authenticated:
+            genre_facet_qs = genre_facet_qs.with_played_status(self.request.user)
         if q:
             genre_facet_qs = genre_facet_qs.filter(name__icontains=q)
         genre_facet_qs = utils.apply_year_filters(
@@ -924,6 +959,9 @@ class GameSearchView(RobustPaginationMixin, ListView):
         if platforms_param:
             platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
             genre_facet_qs = utils.apply_platform_filter(genre_facet_qs, platform_ids)
+        genre_facet_qs = _apply_played_filter(
+            genre_facet_qs, self.request.user, played_param
+        )
 
         # Standard faceted counting (single-select mode)
         genre_counts = dict(
@@ -936,6 +974,8 @@ class GameSearchView(RobustPaginationMixin, ListView):
         # FACETED COUNTS FOR PLATFORMS
         # Base: apply all filters EXCEPT platforms (q, year, genres)
         platform_facet_qs = models.Game.objects.all()
+        if self.request.user.is_authenticated:
+            platform_facet_qs = platform_facet_qs.with_played_status(self.request.user)
         if q:
             platform_facet_qs = platform_facet_qs.filter(name__icontains=q)
         platform_facet_qs = utils.apply_year_filters(
@@ -950,6 +990,9 @@ class GameSearchView(RobustPaginationMixin, ListView):
             platform_facet_qs = utils.apply_genre_filter(
                 platform_facet_qs, genre_ids, match_all=False, use_wikipedia=True
             )
+        platform_facet_qs = _apply_played_filter(
+            platform_facet_qs, self.request.user, played_param
+        )
 
         # Count games per platform
         platform_counts = dict(
@@ -2165,10 +2208,20 @@ class AuthModalProfileView(View):
 
         # User fields are now directly on the user model
         user = request.user
+
+        # Get played games stats
+        played_count = user.played_games.count()
+        total_games = models.Game.objects.count()
+
         response = TemplateResponse(
             request,
             self.template_name,
-            {"profile": user, "form": {}},  # Pass user as 'profile' for template compat
+            {
+                "profile": user,
+                "form": {},
+                "played_count": played_count,
+                "total_games": total_games,
+            },
         )
         response["HX-Push-Url"] = "false"
         return response

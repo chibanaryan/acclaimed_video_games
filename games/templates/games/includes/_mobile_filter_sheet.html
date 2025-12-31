@@ -54,9 +54,24 @@
 
     {# Scrollable Filter Content #}
     <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-4" id="mobile-filter-form" x-ref="filterScroll">
-        {# Search Input #}
+        {# Search Input with Played filter #}
         <div class="space-y-2">
-            <span class="text-sm font-semibold text-base-content/85 block mb-2">Search</span>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-sm font-semibold text-base-content/85">Search</span>
+                {% if user.is_authenticated %}
+                <div class="join ml-auto" title="Filter by played status">
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-xs"
+                           aria-label="All" :checked="!filters.played"
+                           @click="filters.played = ''; debouncedFilterUpdate()">
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-xs"
+                           aria-label="Played" :checked="filters.played === 'yes'"
+                           @click="filters.played = 'yes'; debouncedFilterUpdate()">
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-xs"
+                           aria-label="Unplayed" :checked="filters.played === 'no'"
+                           @click="filters.played = 'no'; debouncedFilterUpdate()">
+                </div>
+                {% endif %}
+            </div>
             <label class="input input-bordered w-full">
                 <svg class="h-5 w-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>

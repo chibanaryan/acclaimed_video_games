@@ -79,6 +79,7 @@
                 this.filters.start = params.get('start') ? parseInt(params.get('start')) : {{ min_year }};
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
                 this.filters.sort = params.get('sort') || 'rank';
+                this.filters.played = params.get('played') || '';
                 const genresParam = params.get('genres');
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
                 const platformsParam = params.get('platforms');
@@ -124,7 +125,8 @@
                    (this.filters.series && this.filters.series.length > 0) ||
                    this.filters.start !== {{ min_year }} ||
                    this.filters.end !== {{ max_year }} ||
-                   this.filters.sort !== 'rank';
+                   this.filters.sort !== 'rank' ||
+                   this.filters.played;
         },
         async initClientFiltering() {
             // Wait for deferred scripts to load (retry up to 10 times, 100ms apart)
@@ -204,6 +206,13 @@
             if (seriesLabel) titleParts += ' ' + seriesLabel;
             titleParts += ' Games' + timeSuffix;
 
+            // Add played status suffix
+            if (this.filters.played === 'yes') {
+                titleParts += ': Played';
+            } else if (this.filters.played === 'no') {
+                titleParts += ': Unplayed';
+            }
+
             return titleParts;
         },
         _buildTimeWindow() {
@@ -269,6 +278,10 @@
             this.$dispatch('series-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
+        resetPlayed() {
+            this.filters.played = '';
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
         resetAllFilters() {
             this.filters.q = '';
             this.filters.start = {{ min_year }};
@@ -276,6 +289,7 @@
             this.filters.genres = [];
             this.filters.platforms = [];
             this.filters.series = [];
+            this.filters.played = '';
             this.filters.sort = 'rank';
             // Dispatch reset events to update filter UI components AND reset expanded states
             // These events trigger handleReset() in each component which:
@@ -703,6 +717,13 @@
                 if (seriesLabel) titleParts += ' ' + seriesLabel;
                 titleParts += ' Games' + timeSuffix;
 
+                // Add played status suffix
+                if (filters.played === 'yes') {
+                    titleParts += ': Played';
+                } else if (filters.played === 'no') {
+                    titleParts += ': Unplayed';
+                }
+
                 return titleParts;
             },
 
@@ -778,7 +799,7 @@
                     </div>
                 </div>
 
-                {# Search input #}
+                {# Search input with Played filter in header #}
                 <div class="mb-4 pb-3 border-b border-base-300">
                     <div class="flex items-center gap-2 mb-2">
                         <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -788,6 +809,19 @@
                             </g>
                         </svg>
                         <span class="font-bold text-base">Search</span>
+                        {% if user.is_authenticated %}
+                        <div class="join ml-auto" title="Filter by played status">
+                            <input type="radio" name="played-filter" class="join-item btn btn-xs"
+                                   aria-label="All" :checked="!filters.played"
+                                   @click="filters.played = ''; debouncedFilterUpdate()">
+                            <input type="radio" name="played-filter" class="join-item btn btn-xs"
+                                   aria-label="Played" :checked="filters.played === 'yes'"
+                                   @click="filters.played = 'yes'; debouncedFilterUpdate()">
+                            <input type="radio" name="played-filter" class="join-item btn btn-xs"
+                                   aria-label="Unplayed" :checked="filters.played === 'no'"
+                                   @click="filters.played = 'no'; debouncedFilterUpdate()">
+                        </div>
+                        {% endif %}
                     </div>
                     <div>
                         {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}

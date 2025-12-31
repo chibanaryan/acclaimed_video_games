@@ -105,7 +105,8 @@ class ClientSideFiltering {
             series: (filters.series || []).map(id => parseInt(id, 10)),
             start: filters.start || null,
             end: filters.end || null,
-            sort: filters.sort || 'rank'
+            sort: filters.sort || 'rank',
+            played: filters.played || ''
         };
 
         // Apply filters

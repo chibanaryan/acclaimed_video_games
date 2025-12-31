@@ -691,6 +691,104 @@ class GameSearchViewTest(TestCase):
         self.assertEqual(games[1], self.game3)  # rank 2
 
 
+class GameSearchPlayedFilterTest(TestCase):
+    """Test the played games filter in game search view."""
+
+    def setUp(self):
+        # Create test user
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+
+        # Create test games
+        self.game1 = Game.objects.create(
+            name="Played Game 1", rank=1, year_of_release=2020, igdb_id=1001
+        )
+        self.game2 = Game.objects.create(
+            name="Played Game 2", rank=2, year_of_release=2021, igdb_id=1002
+        )
+        self.game3 = Game.objects.create(
+            name="Unplayed Game", rank=3, year_of_release=2022, igdb_id=1003
+        )
+
+        # Mark games 1 and 2 as played by the user
+        PlayedGame.objects.create(user=self.user, game=self.game1, igdb_id=1001)
+        PlayedGame.objects.create(user=self.user, game=self.game2, igdb_id=1002)
+
+    def test_played_filter_ignored_when_not_authenticated(self):
+        """Test that played filter is ignored for anonymous users."""
+        response = self.client.get(reverse("games-list") + "?played=yes")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should return all games since user is not authenticated
+        self.assertEqual(len(games), 3)
+
+    def test_played_filter_yes_shows_played_games(self):
+        """Test that played=yes filter shows only played games."""
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-list") + "?played=yes")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should only show played games
+        self.assertEqual(len(games), 2)
+        self.assertIn(self.game1, games)
+        self.assertIn(self.game2, games)
+        self.assertNotIn(self.game3, games)
+
+    def test_played_filter_no_shows_unplayed_games(self):
+        """Test that played=no filter shows only unplayed games."""
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-list") + "?played=no")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should only show unplayed games
+        self.assertEqual(len(games), 1)
+        self.assertIn(self.game3, games)
+        self.assertNotIn(self.game1, games)
+        self.assertNotIn(self.game2, games)
+
+    def test_played_filter_empty_shows_all_games(self):
+        """Test that empty played filter shows all games."""
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-list"))
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        # Should show all games
+        self.assertEqual(len(games), 3)
+
+    def test_filter_title_includes_played_suffix(self):
+        """Test that filter title includes ': Played' suffix."""
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-list") + "?played=yes")
+        self.assertEqual(response.status_code, 200)
+        filter_title = response.context["filter_title"]
+        self.assertTrue(filter_title.endswith(": Played"))
+
+    def test_filter_title_includes_unplayed_suffix(self):
+        """Test that filter title includes ': Unplayed' suffix."""
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-list") + "?played=no")
+        self.assertEqual(response.status_code, 200)
+        filter_title = response.context["filter_title"]
+        self.assertTrue(filter_title.endswith(": Unplayed"))
+
+    def test_played_in_filters_context(self):
+        """Test that played parameter is in filters context."""
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("games-list") + "?played=yes")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["filters"]["played"], "yes")
+
+    def test_played_filter_not_in_context_for_anonymous(self):
+        """Test that played filter is empty for anonymous users."""
+        response = self.client.get(reverse("games-list") + "?played=yes")
+        self.assertEqual(response.status_code, 200)
+        # For anonymous users, played should be empty
+        self.assertEqual(response.context["filters"]["played"], "")
+
+
 class GameSearchLoadMoreTest(TestCase):
     """Test the Load More functionality in game search."""
 
@@ -1751,6 +1849,8 @@ class AuthModalViewsTest(TestCase):
         self.assertIn("Edit Profile", content)
         self.assertIn('name="username"', content)
         self.assertIn('name="email_subscribed"', content)
+        # Should show played games count
+        self.assertIn("games played", content)
 
     def test_auth_modal_profile_post_updates_profile(self):
         """Test that profile form POST updates user profile."""

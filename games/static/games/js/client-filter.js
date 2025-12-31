@@ -169,7 +169,8 @@ class GameFilterEngine {
             series = [],
             start = null,
             end = null,
-            sort = 'rank'
+            sort = 'rank',
+            played = ''
         } = filters;
 
         const normalizedQuery = q.toLowerCase().trim();
@@ -257,6 +258,17 @@ class GameFilterEngine {
                 }
             }
 
+            // Played status filter (requires window.playedGameIds and window.isAuthenticated)
+            if (played && window.isAuthenticated && game.i) {
+                const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
+                if (played === 'yes' && !isGamePlayed) {
+                    continue;
+                }
+                if (played === 'no' && isGamePlayed) {
+                    continue;
+                }
+            }
+
             results.push(game);
         }
 
@@ -316,7 +328,7 @@ class GameFilterEngine {
         // For series facets, calculate counts based on filters EXCLUDING series
         // This is standard faceted search behavior
 
-        const { q, start, end, platforms, genres, genreOption, series } = currentFilters;
+        const { q, start, end, platforms, genres, genreOption, series, played } = currentFilters;
         const matchAll = genreOption !== 'any';
 
         // Create base filter functions (without genre/platform)
@@ -330,6 +342,16 @@ class GameFilterEngine {
             }
             if (end !== null && game.y !== null && game.y > end) {
                 return false;
+            }
+            // Played status filter
+            if (played && window.isAuthenticated && game.i) {
+                const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
+                if (played === 'yes' && !isGamePlayed) {
+                    return false;
+                }
+                if (played === 'no' && isGamePlayed) {
+                    return false;
+                }
             }
             return true;
         };
@@ -525,6 +547,13 @@ class GameFilterEngine {
             if (seriesSet.size > 0) {
                 const gameSeries = game.sr || [];
                 if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
+            }
+
+            // Apply played status filter
+            if (played && window.isAuthenticated && game.i) {
+                const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
+                if (played === 'yes' && !isGamePlayed) continue;
+                if (played === 'no' && isGamePlayed) continue;
             }
 
             // Count this game's year

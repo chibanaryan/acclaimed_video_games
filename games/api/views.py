@@ -497,7 +497,8 @@ def _compute_game_data_version():
 
     # Schema version - increment when API response format changes
     # v2: Changed st->dv, studios/companies->developers (commit ac84d07c)
-    SCHEMA_VERSION = "2"
+    # v3: Added 'i' (IGDB ID) field for played game filtering
+    SCHEMA_VERSION = "3"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()

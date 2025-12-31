@@ -2,6 +2,9 @@
 
 ## 2025-12-31
 
+- Add played games filter: three-way toggle (All/Played/Unplayed) in rankings page search section
+- Played filter updates faceted counts (genres, platforms, year heatmap) dynamically
+- Played filter: URL parameter support (?played=yes/no), page title suffix, client-side filtering
 - Unify game row templates: split into desktop/mobile partials with data-slot attributes for JS template cloning
 - Played button: hide star for unauthenticated users (no empty space), show only when logged in
 

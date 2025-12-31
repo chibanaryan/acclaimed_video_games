@@ -2,6 +2,15 @@
 <div>
     <h3 class="text-lg font-bold mb-6">Edit Profile</h3>
 
+    {# Played Games Stats #}
+    <div class="flex items-center gap-2 mb-6 text-base-content/70">
+        <span class="mdi mdi-star text-warning"></span>
+        <span class="text-sm">
+            <span class="font-semibold text-base-content">{{ played_count }}</span>
+            of {{ total_games }} games played
+        </span>
+    </div>
+
     <form hx-post="{% url 'auth-modal-profile' %}"
           hx-target="#auth-modal-content"
           hx-swap="innerHTML">
