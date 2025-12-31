@@ -16,10 +16,18 @@
     var seriesExpanded = localStorage.getItem('seriesExpanded') !== 'false';
     // Add CSS to show/hide filter sections based on initial state
     var style = document.createElement('style');
+    style.id = 'filter-init-styles';
     style.textContent = '[data-filter-init="genres"]{display:' + (genresExpanded ? 'block' : 'none') + '!important}' +
                         '[data-filter-init="platforms"]{display:' + (platformsExpanded ? 'block' : 'none') + '!important}' +
                         '[data-filter-init="series"]{display:' + (seriesExpanded ? 'block' : 'none') + '!important}';
     document.head.appendChild(style);
+    // Remove the style once Alpine has initialized (allows x-show to work)
+    document.addEventListener('alpine:init', function() {
+        setTimeout(function() {
+            var initStyle = document.getElementById('filter-init-styles');
+            if (initStyle) initStyle.remove();
+        }, 50);
+    });
 })();
 </script>
 <div x-data="{
@@ -144,6 +152,15 @@
                 }
             });
 
+            // Listen for mobile filter sheet open to re-dispatch counts (handles race conditions)
+            window.addEventListener('mobile-filter-opened', () => {
+                if (this.clientFilterReady) {
+                    this.updateFacetCounts();
+                } else {
+                    this.dispatchInitialCounts();
+                }
+            });
+
             // Initialize client-side filtering (if scripts are loaded)
             this.initClientFiltering();
         },
@@ -170,6 +187,8 @@
                         return;
                     }
                     console.log('[CSF] Client-side filtering not available after retries');
+                    // Fallback: dispatch initial counts from server-rendered JSON
+                    this.dispatchInitialCounts();
                     return;
                 }
 
@@ -191,6 +210,8 @@
                     });
                 } catch (e) {
                     console.error('[CSF] Failed to initialize:', e);
+                    // Fallback: dispatch initial counts from server-rendered JSON
+                    this.dispatchInitialCounts();
                 }
             };
 
@@ -619,6 +640,55 @@
                 window.dispatchEvent(new CustomEvent('series-counts-update', { detail: result.facets.series }));
             }
         },
+        dispatchInitialCounts() {
+            // Fallback: read initial counts from server-rendered JSON elements
+            // and dispatch events so filters can display their content
+            console.log('[CSF] Dispatching initial counts from server-rendered data');
+
+            // Year counts
+            const yearCountsEl = document.getElementById('year-counts-update');
+            if (yearCountsEl) {
+                try {
+                    const yearCounts = JSON.parse(yearCountsEl.textContent);
+                    window.dispatchEvent(new CustomEvent('year-counts-update', { detail: yearCounts }));
+                } catch (e) {
+                    console.error('Error parsing year counts:', e);
+                }
+            }
+
+            // Genre counts
+            const genreCountsEl = document.getElementById('genre-counts-update');
+            if (genreCountsEl) {
+                try {
+                    const genreCounts = JSON.parse(genreCountsEl.textContent);
+                    window.dispatchEvent(new CustomEvent('genre-counts-update', { detail: genreCounts }));
+                } catch (e) {
+                    console.error('Error parsing genre counts:', e);
+                }
+            }
+
+            // Platform counts
+            const platformCountsEl = document.getElementById('platform-counts-update');
+            if (platformCountsEl) {
+                try {
+                    const platformCounts = JSON.parse(platformCountsEl.textContent);
+                    window.dispatchEvent(new CustomEvent('platform-counts-update', { detail: platformCounts }));
+                } catch (e) {
+                    console.error('Error parsing platform counts:', e);
+                }
+            }
+
+            // Series counts (if available)
+            const seriesCountsEl = document.getElementById('series-counts-update');
+            if (seriesCountsEl) {
+                try {
+                    const seriesCounts = JSON.parse(seriesCountsEl.textContent);
+                    window.dispatchEvent(new CustomEvent('series-counts-update', { detail: seriesCounts }));
+                } catch (e) {
+                    console.error('Error parsing series counts:', e);
+                }
+            }
+        },
         _initClientLoadMore(loadMoreContainer, gameListContainer, countContainer) {
             const button = loadMoreContainer.querySelector('.load-more-button');
             if (!button) return;
@@ -714,8 +784,22 @@
          @filters-updated.window="$refs.mobileTitle.textContent = buildDynamicTitle()"
          x-data="{
             filterOpen: false,
+            hasOpenedBefore: false,
             platforms: JSON.parse(document.getElementById('platforms-data').textContent),
             genres: JSON.parse(document.getElementById('genres-data').textContent),
+            init() {
+                // When filter sheet opens for the first time, re-dispatch counts
+                // to ensure mobile filter components have data (handles race conditions)
+                this.$watch('filterOpen', (open) => {
+                    if (open && !this.hasOpenedBefore) {
+                        this.hasOpenedBefore = true;
+                        // Small delay to ensure components are ready
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('mobile-filter-opened'));
+                        }, 50);
+                    }
+                });
+            },
 
             buildDynamicTitle() {
                 const timeWindow = this.buildTimeWindow();

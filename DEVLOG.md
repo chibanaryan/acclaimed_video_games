@@ -35,6 +35,8 @@
 - Unify game row templates: split into desktop/mobile partials with data-slot attributes for JS template cloning
 - Played button: hide star for unauthenticated users (no empty space), show only when logged in
 - CSV download: support series/played filters, show Played column (Yes/No) for authenticated users
+- Fix mobile filter race condition: re-dispatch facet counts when filter sheet opens for first time
+- Add legal disclaimer link to profile form
 
 ## 2025-12-30
 
