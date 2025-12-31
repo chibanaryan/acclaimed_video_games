@@ -13,6 +13,7 @@ function developerFilter() {
         developerGameMap: {},
         developerChildMap: {},
         developerNameMap: {},
+        gameRankMap: {},
         rootDeveloperName: '',
 
         /**
@@ -62,6 +63,57 @@ function developerFilter() {
                 gameIds.forEach(id => allGameIds.add(id));
             }
             return allGameIds.size;
+        },
+
+        /**
+         * Get visible game IDs based on current filter
+         */
+        getVisibleGameIds() {
+            if (this.selectedDeveloperIds.size === 0) {
+                // All games - return all game IDs from gameRankMap
+                return Object.keys(this.gameRankMap).map(Number);
+            }
+
+            // Get game IDs from selected developers
+            const allGameIds = new Set();
+            for (const developerId of this.selectedDeveloperIds) {
+                const gameIds = this.developerGameMap[developerId] || [];
+                gameIds.forEach(id => allGameIds.add(id));
+            }
+            return Array.from(allGameIds);
+        },
+
+        /**
+         * Calculate rank distribution for currently visible games
+         * Returns { top_100: n, top_500: n, top_1000: n, beyond: n, top_100_pct: n, ... }
+         * Percentages use TOTAL games (not filtered) as denominator for consistent scale
+         */
+        getRankDistribution() {
+            const visibleGameIds = this.getVisibleGameIds();
+            const dist = { top_100: 0, top_500: 0, top_1000: 0, beyond: 0 };
+
+            for (const gameId of visibleGameIds) {
+                const rank = this.gameRankMap[gameId];
+                if (rank && rank <= 100) {
+                    dist.top_100++;
+                } else if (rank && rank <= 500) {
+                    dist.top_500++;
+                } else if (rank && rank <= 1000) {
+                    dist.top_1000++;
+                } else if (rank) {
+                    dist.beyond++;
+                }
+            }
+
+            // Use TOTAL games (not filtered) as denominator for consistent bar scale
+            // This means bars shrink when filtering, showing absolute reduction
+            const totalGames = Object.keys(this.gameRankMap).length || 1;
+            dist.top_100_pct = Math.round(dist.top_100 / totalGames * 100);
+            dist.top_500_pct = Math.round(dist.top_500 / totalGames * 100);
+            dist.top_1000_pct = Math.round(dist.top_1000 / totalGames * 100);
+            dist.beyond_pct = Math.round(dist.beyond / totalGames * 100);
+
+            return dist;
         },
 
         /**
@@ -363,6 +415,7 @@ function developerFilter() {
             this.developerGameMap = window.DEVELOPER_GAME_MAP || {};
             this.developerChildMap = window.DEVELOPER_CHILD_MAP || {};
             this.developerNameMap = window.DEVELOPER_NAME_MAP || {};
+            this.gameRankMap = window.GAME_RANK_MAP || {};
             this.rootDeveloperName = window.ROOT_DEVELOPER_NAME || '';
 
             // Parse URL hash for selection state

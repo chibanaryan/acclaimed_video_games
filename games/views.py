@@ -364,6 +364,16 @@ class HomePageView(FormView):
         # Fetch counts for dynamic tagline
         context["list_count"] = models.List.objects.count()
         context["publication_count"] = models.Publication.objects.count()
+        context["game_count"] = models.Game.objects.count()
+
+        # Year range for coverage display
+        from django.db.models import Min, Max
+
+        year_agg = models.Game.objects.aggregate(
+            min_year=Min("year_of_release"), max_year=Max("year_of_release")
+        )
+        context["min_year"] = year_agg["min_year"]
+        context["max_year"] = year_agg["max_year"]
 
         # Fetch meta data for last update
         # Get last_full_update from SiteMetadata
@@ -650,6 +660,29 @@ class GameDetailView(DetailView):
             .filter(games_count__gte=2)
             .order_by("name")
         )
+
+        # Total game count for rank context (e.g., "#47 of 3,240")
+        total_game_count = models.Game.objects.count()
+        context["total_game_count"] = total_game_count
+
+        # rank_percentile: lower is better (rank 1 = "Top 0.1%", rank 100 = "Top 10%")
+        # rank_position_pct: bar width (rank 1 = full, rank N = empty)
+        if game.rank and total_game_count:
+            context["rank_percentile"] = round(game.rank / total_game_count * 100, 1)
+            context["rank_position_pct"] = round(
+                (1 - game.rank / total_game_count) * 100
+            )
+
+        # Decade and year counts for rank context
+        if game.decade:
+            context["decade_game_count"] = models.Game.objects.filter(
+                year_of_release__gte=game.decade,
+                year_of_release__lte=game.decade + 9,
+            ).count()
+        if game.year_of_release:
+            context["year_game_count"] = models.Game.objects.filter(
+                year_of_release=game.year_of_release
+            ).count()
 
         return context
 
@@ -1566,6 +1599,44 @@ class DeveloperDetailView(DetailView):
         context["developer_child_map_json"] = json.dumps(
             dev_child_map, cls=DjangoJSONEncoder
         )
+
+        # Game rank map for JavaScript to calculate filtered rank distribution
+        game_rank_map = {game.id: game.rank for game in all_games if game.rank}
+        context["game_rank_map_json"] = json.dumps(game_rank_map, cls=DjangoJSONEncoder)
+
+        # Rank distribution for visualization
+        # Bucket games by rank tiers to show developer consistency
+        rank_distribution = {
+            "top_100": 0,
+            "top_500": 0,
+            "top_1000": 0,
+            "beyond": 0,
+        }
+        for game in all_games:
+            if game.rank and game.rank <= 100:
+                rank_distribution["top_100"] += 1
+            elif game.rank and game.rank <= 500:
+                rank_distribution["top_500"] += 1
+            elif game.rank and game.rank <= 1000:
+                rank_distribution["top_1000"] += 1
+            else:
+                rank_distribution["beyond"] += 1
+
+        # Calculate percentages for bar widths
+        total = len(all_games) or 1
+        rank_distribution["top_100_pct"] = round(
+            rank_distribution["top_100"] / total * 100
+        )
+        rank_distribution["top_500_pct"] = round(
+            rank_distribution["top_500"] / total * 100
+        )
+        rank_distribution["top_1000_pct"] = round(
+            rank_distribution["top_1000"] / total * 100
+        )
+        rank_distribution["beyond_pct"] = round(
+            rank_distribution["beyond"] / total * 100
+        )
+        context["rank_distribution"] = rank_distribution
 
         return context
 

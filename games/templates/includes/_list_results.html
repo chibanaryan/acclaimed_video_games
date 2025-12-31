@@ -3,7 +3,7 @@
 {% if items %}
     {# Desktop table view #}
     <div class="hidden md:block overflow-x-auto">
-        <table class="table table-fixed" style="width: 100%; min-width: 1000px;">
+        <table class="table-minimal table-fixed" style="width: 100%; min-width: 1000px;">
             <colgroup>
                 <col style="width: 300px;">
                 <col style="width: 80px;">
@@ -18,9 +18,9 @@
             <thead>
                 <tr>
                     <th>Publication</th>
-                    <th>Year</th>
+                    <th class="text-right">Year</th>
                     {% if show_rank %}
-                    <th>Rank</th>
+                    <th class="text-right">Rank</th>
                     {% endif %}
                     <th>Name</th>
                     {% if show_type %}
@@ -32,9 +32,9 @@
                 {% for list in items %}
                 <tr>
                     <td class="text-base-content/80 truncate" title="{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</td>
-                    <td>{{ list.year }}</td>
+                    <td class="text-right tabular-nums">{{ list.year }}</td>
                     {% if show_rank %}
-                    <td class="font-mono">{{ list.rank|default:'' }}</td>
+                    <td class="text-right tabular-nums">{{ list.rank|default:'' }}</td>
                     {% endif %}
                     <td class="truncate" title="{{ list.name }}">
                         {% if list.url %}

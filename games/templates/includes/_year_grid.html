@@ -156,7 +156,9 @@
 
          getOpacity(count) {
              if (count === 0) return '5%';
-             const opacity = 0.40 + (count / this.maxCount) * 0.60;
+             // Square root scaling for better mid-range differentiation
+             const normalizedSqrt = Math.sqrt(count / this.maxCount);
+             const opacity = 0.30 + normalizedSqrt * 0.70;
              return Math.round(opacity * 100) + '%';
          },
 

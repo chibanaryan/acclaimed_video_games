@@ -185,6 +185,64 @@
   text-decoration-color: var(--color-primary);
 }
 
+/* Minimal table styling - reduced visual noise per Tufte principles */
+@layer components {
+  .table-minimal {
+    @apply w-full;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table-minimal th {
+    @apply text-base-content/60 font-medium text-left pb-2 pr-4 border-b border-base-content/10;
+  }
+
+  .table-minimal th:first-child {
+    @apply pl-0;
+  }
+
+  .table-minimal th:last-child {
+    @apply pr-0;
+  }
+
+  .table-minimal td {
+    @apply py-3 pr-4 align-middle;
+  }
+
+  .table-minimal td:first-child {
+    @apply pl-0;
+  }
+
+  .table-minimal td:last-child {
+    @apply pr-0;
+  }
+
+  .table-minimal tbody tr:hover {
+    @apply bg-base-200/50;
+  }
+
+  /* Right-aligned header for numeric columns */
+  .table-minimal th.text-right {
+    @apply text-right;
+  }
+}
+
+/* Rank position indicator - micro-visualization showing position in distribution */
+@layer components {
+  .rank-indicator {
+    @apply inline-flex items-center gap-2;
+  }
+
+  .rank-indicator-bar {
+    @apply w-24 h-2 bg-base-content/20 rounded-full overflow-hidden;
+  }
+
+  .rank-indicator-fill {
+    @apply h-full bg-primary rounded-full;
+    /* Width set via inline style: (1 - rank/total) * 100 */
+  }
+}
+
 /* Custom state classes for Alpine.js toggling */
 @layer components {
   /* Selection state for filters */
@@ -958,5 +1016,11 @@ input[type="number"] {
   [x-cloak] {
     display: none !important;
   }
+}
+
+/* Ensure tooltips appear above all other content */
+.tooltip::before,
+.tooltip::after {
+  z-index: 50 !important;
 }
 

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load game_filters %}
+{% load humanize %}
 
 {% block title %}Acclaimed Video Games{% endblock %}
 
@@ -80,10 +81,13 @@
     </div>
 </div>
 
-{# Centered Tagline #}
+{# Centered Tagline with enhanced statistics #}
 <div class="text-center mb-8">
-    <p class="text-xl text-base-content/80">
-        The most critically acclaimed video games of all time, based on {{ list_count }} critic lists from {{ publication_count }} publications
+    <p class="text-xl text-base-content/80 mb-2">
+        The definitive ranking: {{ game_count|default:"3,000+"|intcomma }} games evaluated across {{ list_count }} critic lists from {{ publication_count }} publications
+    </p>
+    <p class="text-sm text-base-content/60 tabular-nums">
+        Coverage: {{ min_year|default:"1976" }}–{{ max_year|default:"2024" }}{% if last_update %} · Updated: {{ last_update|date:"F j, Y" }}{% endif %}
     </p>
 </div>
 
@@ -116,16 +120,19 @@
         </h3>
         <div class="inline-flex flex-wrap items-end justify-center">
             {% for game in games %}
-            <a href="{% url 'game-detail' slug=game.slug %}"
-               class="relative group block{% if forloop.counter > 10 %} hidden md:block{% endif %}"
-               style="margin: 10px;">
-                <span class="absolute -top-2 -left-1 bg-primary text-primary-content text-xs font-bold px-1.5 py-0.5 rounded z-10">{{ game.rank }}</span>
-                <img src="{{ game.homepage_thumb }}"
-                     srcset="{{ game.homepage_thumb_small }} 90w, {{ game.homepage_thumb }} 180w, {{ game.homepage_thumb_2x }} 264w"
-                     sizes="(max-width: 640px) 90px, 120px"
-                     alt="{{ game.name }}" width="120" height="171" loading="lazy" decoding="async"
-                     class="w-[120px] h-auto rounded shadow-md hover:shadow-lg transition-shadow">
-            </a>
+            <div class="tooltip tooltip-top{% if forloop.counter > 10 %} hidden md:block{% endif %}"
+                 data-tip="{{ game.name }} ({{ game.year_of_release }})"
+                 style="margin: 10px;">
+                <a href="{% url 'game-detail' slug=game.slug %}"
+                   class="relative group block">
+                    <span class="absolute -top-2 -left-1 bg-primary text-primary-content text-xs font-bold px-1.5 py-0.5 rounded z-10 tabular-nums">{{ game.rank }}</span>
+                    <img src="{{ game.homepage_thumb }}"
+                         srcset="{{ game.homepage_thumb_small }} 90w, {{ game.homepage_thumb }} 180w, {{ game.homepage_thumb_2x }} 264w"
+                         sizes="(max-width: 640px) 90px, 120px"
+                         alt="{{ game.name }}" width="120" height="171" loading="lazy" decoding="async"
+                         class="w-[120px] h-auto rounded shadow-md hover:shadow-lg transition-shadow">
+                </a>
+            </div>
             {% endfor %}
         </div>
         <div class="mt-4">
@@ -134,11 +141,6 @@
                 See the full rankings&hellip;
             </a>
         </div>
-        {% if last_update %}
-        <p class="py-3 text-base-content/60 text-sm">
-            List last updated: {{ last_update|date:"F j, Y" }}
-        </p>
-        {% endif %}
     </div>
 
     {# Right Column: Latest News #}

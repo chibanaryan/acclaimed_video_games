@@ -1,6 +1,7 @@
 {# GameProperties component #}
 {# Props: game (full game object) #}
 {% load game_filters %}
+{% load humanize %}
 
 {% if user.is_authenticated and game.igdb_id %}
 <div class="flex items-center gap-3 mb-4">
@@ -12,26 +13,36 @@
 <table class="text-base">
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">All time rank:</td>
-        <td class="pb-3 align-middle">
-            {% game_rank_url game.rank game.id as rank_url %}
-            <a href="{{ rank_url }}" class="link link-primary font-medium">{{ game.rank }}</a>
+        <td class="pb-3 align-middle tabular-nums">
+            <span class="rank-indicator">
+                {% game_rank_url game.rank game.id as rank_url %}
+                <a href="{{ rank_url }}" class="link link-primary font-medium">{{ game.rank }}</a>
+                {% if total_game_count %}<span class="text-base-content/50 text-sm"> of {{ total_game_count|intcomma }}</span>{% endif %}
+                {% if total_game_count %}
+                <div class="tooltip tooltip-top" data-tip="Top {{ rank_percentile|default:0 }}%">
+                    <progress class="progress progress-primary w-24 h-2" value="{{ rank_position_pct|default:0 }}" max="100"></progress>
+                </div>
+                {% endif %}
+            </span>
         </td>
     </tr>
     {% if game.decade_rank %}
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">{{ game.decade }}s rank:</td>
-        <td class="pb-3 align-middle">
+        <td class="pb-3 align-middle tabular-nums">
             {% game_rank_url game.decade_rank game.id game.decade game.decade|add:9 as decade_url %}
             <a href="{{ decade_url }}" class="link link-primary font-medium">{{ game.decade_rank }}</a>
+            {% if decade_game_count %}<span class="text-base-content/50 text-sm"> of {{ decade_game_count|intcomma }}</span>{% endif %}
         </td>
     </tr>
     {% endif %}
     {% if game.year_rank %}
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">{{ game.year_of_release }} rank:</td>
-        <td class="pb-3 align-middle">
+        <td class="pb-3 align-middle tabular-nums">
             {% game_rank_url game.year_rank game.id game.year_of_release game.year_of_release as year_url %}
             <a href="{{ year_url }}" class="link link-primary font-medium">{{ game.year_rank }}</a>
+            {% if year_game_count %}<span class="text-base-content/50 text-sm"> of {{ year_game_count|intcomma }}</span>{% endif %}
         </td>
     </tr>
     {% endif %}

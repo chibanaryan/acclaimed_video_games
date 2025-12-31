@@ -9,6 +9,7 @@
     // Serialize data for Alpine.js developer filter
     window.DEVELOPER_GAME_MAP = {{ developer_game_map_json|safe }};
     window.DEVELOPER_CHILD_MAP = {{ developer_child_map_json|safe }};
+    window.GAME_RANK_MAP = {{ game_rank_map_json|safe }};
     window.DEVELOPER_NAME_MAP = {
         {% for dev in developers_flat %}{{ dev.id }}: "{{ dev.name|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}
     };
@@ -23,7 +24,7 @@
         <h1 class="text-3xl font-bold mb-4" x-text="getDynamicTitle()">{{ developer.name }}</h1>
 
         {% if total_games %}
-        <p class="text-base-content/70 mb-6">
+        <p class="text-base-content/70 mb-4">
             <template x-if="selectedDeveloperIds.size === 0">
                 <span>{{ total_games }} game{{ total_games|pluralize }} across {{ subsidiaries_count }} developer{{ subsidiaries_count|pluralize }}</span>
             </template>
@@ -31,6 +32,52 @@
                 <span x-text="`${countVisibleGames()} game${countVisibleGames() !== 1 ? 's' : ''} across ${selectedDeveloperIds.size} developer${selectedDeveloperIds.size !== 1 ? 's' : ''}`"></span>
             </template>
         </p>
+
+        {# Rank distribution visualization - shows developer quality consistency #}
+        {# Reactive to filter changes via Alpine.js #}
+        <template x-if="getRankDistribution().top_100 > 0 || getRankDistribution().top_500 > 0 || getRankDistribution().top_1000 > 0">
+            <div class="mb-6 p-4 bg-base-200 rounded-lg max-w-md">
+                <h3 class="text-sm font-semibold text-base-content/70 mb-3">Rank Distribution</h3>
+                <div class="space-y-2 text-sm">
+                    <template x-if="getRankDistribution().top_100 > 0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-20 text-right tabular-nums text-base-content/70">Top 100:</span>
+                            <div class="flex-1 bg-base-300 rounded h-3 overflow-hidden">
+                                <div class="h-full bg-primary" :style="'width: ' + getRankDistribution().top_100_pct + '%'"></div>
+                            </div>
+                            <span class="w-8 tabular-nums" x-text="getRankDistribution().top_100"></span>
+                        </div>
+                    </template>
+                    <template x-if="getRankDistribution().top_500 > 0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-20 text-right tabular-nums text-base-content/70">101–500:</span>
+                            <div class="flex-1 bg-base-300 rounded h-3 overflow-hidden">
+                                <div class="h-full bg-primary/70" :style="'width: ' + getRankDistribution().top_500_pct + '%'"></div>
+                            </div>
+                            <span class="w-8 tabular-nums" x-text="getRankDistribution().top_500"></span>
+                        </div>
+                    </template>
+                    <template x-if="getRankDistribution().top_1000 > 0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-20 text-right tabular-nums text-base-content/70">501–1000:</span>
+                            <div class="flex-1 bg-base-300 rounded h-3 overflow-hidden">
+                                <div class="h-full bg-primary/50" :style="'width: ' + getRankDistribution().top_1000_pct + '%'"></div>
+                            </div>
+                            <span class="w-8 tabular-nums" x-text="getRankDistribution().top_1000"></span>
+                        </div>
+                    </template>
+                    <template x-if="getRankDistribution().beyond > 0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-20 text-right tabular-nums text-base-content/70">1000+:</span>
+                            <div class="flex-1 bg-base-300 rounded h-3 overflow-hidden">
+                                <div class="h-full bg-primary/30" :style="'width: ' + getRankDistribution().beyond_pct + '%'"></div>
+                            </div>
+                            <span class="w-8 tabular-nums" x-text="getRankDistribution().beyond"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
         {% endif %}
 
         {# Mobile filter button #}

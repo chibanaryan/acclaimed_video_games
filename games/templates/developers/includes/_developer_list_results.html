@@ -3,7 +3,7 @@
 {% if developers %}
 {# Desktop table view #}
 <div class="hidden md:block overflow-x-auto">
-    <table class="table table-fixed w-full">
+    <table class="table-minimal table-fixed w-full">
         <colgroup>
             <col style="width: 28%;">
             <col style="width: 7%;">
@@ -14,10 +14,10 @@
         <thead>
             <tr>
                 <th class="font-semibold">Name</th>
-                <th class="font-semibold">Top Rank</th>
+                <th class="font-semibold text-right">Top Rank</th>
                 <th class="font-semibold">Top Game</th>
-                <th class="font-semibold text-center">Subsidiaries</th>
-                <th class="font-semibold text-center">Games</th>
+                <th class="font-semibold text-right">Subsidiaries</th>
+                <th class="font-semibold text-right">Games</th>
             </tr>
         </thead>
         <tbody id="developer-list-body">
@@ -38,7 +38,7 @@
                     {% endif %}
                     {% endwith %}
                 </td>
-                <td>
+                <td class="text-right tabular-nums">
                     {% if dev.top_game %}
                     <span class="text-primary font-bold">#{{ dev.top_game.rank }}</span>
                     {% else %}
@@ -62,8 +62,8 @@
                     </a>
                     {% endif %}
                 </td>
-                <td class="text-lg text-center">{{ dev.recursive_studios_count|default:0 }}</td>
-                <td class="text-lg text-center">{{ dev.recursive_games_count|default:dev.games_count }}</td>
+                <td class="text-lg text-right tabular-nums">{{ dev.recursive_studios_count|default:0 }}</td>
+                <td class="text-lg text-right tabular-nums">{{ dev.recursive_games_count|default:dev.games_count }}</td>
             </tr>
             {% endfor %}
         </tbody>

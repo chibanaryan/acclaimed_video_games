@@ -2,6 +2,8 @@
 
 ## 2025-12-31
 
+- Add rank position indicator bar on game detail page using DaisyUI progress component
+- Change homepage game tooltips to show above covers (avoid rank chip collision)
 - Fix Load More showing filtered rank on unfiltered list after Jump to Rank
 - Fix profile played count to exclude orphaned games (games no longer in rankings)
 - Fix badge opacity on Load More: client-side rendered badges now match server opacity (70%)
