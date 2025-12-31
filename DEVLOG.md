@@ -24,6 +24,7 @@
 - Mandatory email verification: signup requires email confirmation before login, with resend option
 - Login accepts email or username, signup has optional username field and newsletter checkbox
 - Remove Posts feature and old newsletter subscription pages (consolidated into auth flow)
+- Test speed optimization: parallel execution (36s→12s), in-memory SQLite, setUpTestData for fixtures
 
 ## 2025-12-29
 

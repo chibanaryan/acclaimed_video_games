@@ -173,8 +173,9 @@ class ContactThankYouViewTest(TestCase):
 class GameListViewTest(TestCase):
     """Test the game list view (now uses GameSearchView with legacy param support)."""
 
-    def setUp(self):
-        # Create 150 games for pagination testing
+    @classmethod
+    def setUpTestData(cls):
+        # Create 150 games for pagination testing (once per class, not per test)
         for i in range(1, 151):
             Game.objects.create(
                 name=f"Game {i}", rank=i, year_of_release=1990 + (i % 30)

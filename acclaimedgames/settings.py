@@ -154,6 +154,13 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
         "timeout": 20,  # Increase timeout from default 5 seconds to 20 seconds
     }
 
+# Use in-memory SQLite for faster tests (each parallel process gets its own DB)
+if TEST_MODE:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": (

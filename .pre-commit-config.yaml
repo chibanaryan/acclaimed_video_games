@@ -12,7 +12,7 @@ repos:
     hooks:
       - id: django-coverage
         name: Run Django coverage
-        entry: bash -c "source venv/bin/activate && DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// CORS_ALLOWED_ORIGINS=http://localhost COVERAGE_FILE=.coverage.backend coverage run --source=games manage.py test games.tests && COVERAGE_FILE=.coverage.backend coverage report --fail-under=95"
+        entry: bash -c "source venv/bin/activate && DATABASE_URL=sqlite:///db.sqlite3 CACHE_URL=locmemcache:// CORS_ALLOWED_ORIGINS=http://localhost COVERAGE_FILE=.coverage.backend coverage run --source=games --parallel-mode manage.py test games.tests --parallel auto && COVERAGE_FILE=.coverage.backend coverage combine && coverage report --fail-under=95"
         language: system
         pass_filenames: false
       - id: django-tests

@@ -16,4 +16,4 @@ export CACHE_URL="${CACHE_URL:-locmemcache://}"
 export CORS_ALLOWED_ORIGINS="${CORS_ALLOWED_ORIGINS:-http://localhost}"
 
 echo "Running Django tests via pre-commit..."
-"$PYTHON_BIN" manage.py test games.tests
+"$PYTHON_BIN" manage.py test games.tests --parallel auto
