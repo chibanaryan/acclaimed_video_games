@@ -130,7 +130,8 @@
         </div>
         <div class="mt-4">
             <a href="{% url 'games-list' %}" class="btn btn-primary">
-                See the full list&hellip;
+                <span class="mdi mdi-medal"></span>
+                See the full rankings&hellip;
             </a>
         </div>
         {% if last_update %}
@@ -142,7 +143,7 @@
 
     {# Right Column: Latest News #}
     <div>
-        <h3 class="text-xl font-bold mb-4">Latest News</h3>
+        <h3 class="text-xl font-bold mb-4 text-center">Latest News</h3>
 
         {% for post in posts %}
             {% include 'posts/includes/_post_item.html' with post=post %}

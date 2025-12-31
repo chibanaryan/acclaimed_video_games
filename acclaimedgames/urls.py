@@ -52,11 +52,6 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Auth modal partials (HTMX)
     path(
-        "auth/modal/options/",
-        views.AuthModalOptionsView.as_view(),
-        name="auth-modal-options",
-    ),
-    path(
         "auth/modal/login/",
         views.AuthModalLoginView.as_view(),
         name="auth-modal-login",

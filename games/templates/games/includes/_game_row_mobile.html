@@ -3,7 +3,7 @@
 {# Props: game (optional), show_rank ('alltime'|'filtered'|'none'), index (filtered rank), highlight (game ID) #}
 {# When game is not provided, renders empty template structure for JS cloning with all elements present #}
 {% load game_filters static %}
-<div class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
      {% if game %}id="game-{{ game.id }}-mobile"{% endif %}
      data-slot="root"
      {% if game %}onclick="window.location.href='{% url 'game-detail' slug=game.slug %}'"{% endif %}
@@ -11,7 +11,7 @@
 
     {# Played button - only render container if authenticated (server) or for JS template cloning #}
     {% if user.is_authenticated or not game %}
-    <div class="w-11 h-11 min-w-11 max-w-11 shrink-0 flex items-center justify-center" data-slot="played-button">
+    <div class="w-8 h-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center" data-slot="played-button">
         {% if game %}
             {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}
         {% endif %}
@@ -48,9 +48,5 @@
                 {% endif %}
             </div>
         </div>
-        {# Chevron - always show on mobile since global rank moved to left side #}
-        <svg class="w-5 h-5 text-base-content/30 shrink-0 ml-2" data-slot="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-        </svg>
     </div>
 </div>

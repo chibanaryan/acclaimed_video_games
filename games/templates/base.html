@@ -250,7 +250,7 @@
                         e.preventDefault();
                         // Check for specific screen to load
                         const screen = trigger.dataset.authScreen;
-                        let url = '{% url "auth-modal-options" %}';
+                        let url = '{% url "auth-modal-login" %}';
                         if (screen === 'profile') {
                             url = '{% url "auth-modal-profile" %}';
                         } else if (screen === 'signup') {

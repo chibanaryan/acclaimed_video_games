@@ -35,6 +35,13 @@ function initLoadMore() {
         container.addEventListener('click', function(e) {
             const button = e.target.closest('.load-more-button');
             if (button && !button.classList.contains('is-loading')) {
+                // Skip if client-side filtering is handling load more
+                if (typeof getClientSideFiltering === 'function') {
+                    const csf = getClientSideFiltering();
+                    if (csf && csf.isReady()) {
+                        return; // Let client-side filtering handle it
+                    }
+                }
                 handleLoadMore({ currentTarget: button });
             }
         });

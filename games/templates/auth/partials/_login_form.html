@@ -1,15 +1,5 @@
 {# Email login form for auth modal #}
 
-{# Back button #}
-<button type="button"
-        class="btn btn-ghost btn-sm gap-1 mb-4"
-        hx-get="{% url 'auth-modal-options' %}"
-        hx-target="#auth-modal-content"
-        hx-swap="innerHTML">
-    <span class="mdi mdi-arrow-left"></span>
-    Back
-</button>
-
 <h3 class="text-lg font-bold mb-6">Login</h3>
 
 {# Non-field errors (invalid credentials, etc.) #}
@@ -97,4 +87,8 @@
             hx-swap="innerHTML">
         Create an Account
     </button>
+</p>
+
+<p class="text-xs text-base-content/60 mt-4 text-center">
+    By signing in, you agree to our <a href="/legal/" class="link link-hover">Terms of Service and Privacy Policy</a>.
 </p>

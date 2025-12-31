@@ -13,7 +13,7 @@ from django.forms import Form
 from django.http import HttpResponse, StreamingHttpResponse
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect, get_object_or_404, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
@@ -1985,17 +1985,6 @@ class UnsubscribeView(TemplateView):
 # =============================================================================
 
 
-class AuthModalOptionsView(TemplateView):
-    """Render the auth options partial (initial modal screen)."""
-
-    template_name = "auth/partials/_auth_options.html"
-
-    def render_to_response(self, context, **response_kwargs):
-        response = super().render_to_response(context, **response_kwargs)
-        response["HX-Push-Url"] = "false"
-        return response
-
-
 class AuthModalLoginView(View):
     """Handle email login form in the auth modal (HTMX partial)."""
 
@@ -2254,9 +2243,9 @@ class AuthModalProfileView(View):
 
     def get(self, request):
         if not request.user.is_authenticated:
-            # Return to options if not logged in
-            response = TemplateResponse(request, "auth/partials/_auth_options.html", {})
-            response["HX-Push-Url"] = "false"
+            # Redirect to login form via HTMX
+            response = HttpResponse()
+            response["HX-Redirect"] = reverse("auth-modal-login")
             return response
 
         # User fields are now directly on the user model

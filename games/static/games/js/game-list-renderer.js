@@ -389,9 +389,9 @@ class GameListRenderer {
         const csrfToken = this._getCsrfToken();
         const tooltipText = isPlayed ? 'You have played this game!' : 'You have not played this game.';
         const innerHtml = isPlayed
-            ? `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center"><img src="/static/games/images/mario-star.png" srcset="/static/games/images/mario-star.png 1x, /static/games/images/mario-star@2x.png 2x" alt="Played" width="32" height="32" class="w-8 h-8 desktop:w-6 desktop:h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`
-            : `<span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center"><span class="mdi mdi-star-outline text-4xl desktop:text-2xl text-base-content/30"></span></span>`;
-        return `<div class="tooltip tooltip-top played-button-wrapper cursor-pointer" data-tip="${tooltipText}" data-igdb-id="${igdbId}" data-is-played="${isPlayed}" hx-post="/game/${igdbId}/toggle-played/" hx-trigger="click" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "${csrfToken}"}' onclick="event.stopPropagation()"><button class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none">${innerHtml}</button></div>`;
+            ? `<span class="w-6 h-6 flex items-center justify-center"><img src="/static/games/images/mario-star.png" srcset="/static/games/images/mario-star.png 1x, /static/games/images/mario-star@2x.png 2x" alt="Played" width="32" height="32" class="w-6 h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`
+            : `<span class="w-6 h-6 flex items-center justify-center"><span class="mdi mdi-star-outline text-2xl text-base-content/30"></span></span>`;
+        return `<div class="desktop:tooltip desktop:tooltip-top played-button-wrapper cursor-pointer" data-tip="${tooltipText}" data-igdb-id="${igdbId}" data-is-played="${isPlayed}" hx-post="/game/${igdbId}/toggle-played/" hx-trigger="click" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "${csrfToken}"}' onclick="event.stopPropagation()"><button class="played-button flex items-center justify-center h-8 w-8 min-w-8 shrink-0 pointer-events-none">${innerHtml}</button></div>`;
     }
 
     /**
@@ -516,7 +516,7 @@ class GameListRenderer {
 
         const playedButtonHtml = this._renderPlayedButtonString(game);
         // Only include container if authenticated (button exists)
-        const playedContainerHtml = playedButtonHtml ? `<div class="w-11 h-11 min-w-11 max-w-11 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
+        const playedContainerHtml = playedButtonHtml ? `<div class="w-8 h-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
         // Grid columns depend on whether played button and rank are shown
         const hasPlayedButton = !!playedButtonHtml;
         const gridCols = hasPlayedButton
@@ -526,7 +526,7 @@ class GameListRenderer {
 
         const div = document.createElement('div');
         div.innerHTML = `
-<div class="game-row game-card-mobile desktop:hidden grid items-center gap-2 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}-mobile" onclick="window.location.href='/game/${game.s}/'" style="grid-template-columns: ${gridCols};">
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}-mobile" onclick="window.location.href='/game/${game.s}/'" style="grid-template-columns: ${gridCols};">
     ${playedContainerHtml}
     ${showRankColumn ? `<div class="w-10 text-center flex flex-col items-center justify-center"><div class="text-2xl font-bold text-primary">${displayRank}</div>${globalRankHtml}</div>` : ''}
     <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;"><img src="${thumbnail}" alt="${this._escapeHtml(game.n)}" width="90" height="128" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>
@@ -535,7 +535,6 @@ class GameListRenderer {
             <div class="font-bold text-base leading-tight line-clamp-2">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
             <div class="text-xs text-base-content/60 truncate">${metaText}</div>
         </div>
-        <svg class="w-5 h-5 text-base-content/30 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
     </div>
 </div>`;
         return div.firstElementChild;

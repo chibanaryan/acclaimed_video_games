@@ -8,8 +8,7 @@
             <span class="mdi mdi-close"></span>
         </button>
         <div id="auth-modal-content">
-            {# Initial content - auth options #}
-            {% include 'auth/partials/_auth_options.html' %}
+            {# Content loaded via HTMX when modal opens #}
         </div>
     </div>
     <div class="modal-backdrop" onclick="document.getElementById('authModal').close()"></div>

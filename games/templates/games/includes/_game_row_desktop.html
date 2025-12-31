@@ -21,7 +21,7 @@
         <div class="flex items-center gap-3 flex-shrink-0">
             {# Rank - always present in template (for JS), conditionally shown for server render #}
         {% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}
-        <div class="w-14 text-center flex flex-col items-center justify-center {% if show_rank == 'none' and game %}hidden{% endif %}">
+        <div class="w-15 text-center flex flex-col items-center justify-center {% if show_rank == 'none' and game %}hidden{% endif %}">
             <span class="game-rank text-2xl font-bold text-primary" data-slot="rank">
                 {% if game %}{% if show_rank == 'filtered' %}{{ index|default:game.rank }}{% else %}{{ game.rank }}{% endif %}{% endif %}
             </span>
@@ -65,7 +65,7 @@
                 <span class="text-base-content/70 shrink-0" data-slot="platform-label">{% if game %}{% with total=game.platforms.count %}{% if total == 1 %}Platform:{% else %}Platforms:{% endif %}{% endwith %}{% else %}Platforms:{% endif %}</span>
                 <span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;" data-slot="platforms">
                     {% if game %}
-                        {% for p in game.platforms.all %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '{{ p.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ p.name }}">{{ p.code }}</button>{% endfor %}
+                        {% for p in game.platforms.all %}<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '{{ p.id }}', gameId: '{{ game.id }}'} }))" title="Filter by {{ p.name }}">{{ p.code }}</button>{% endfor %}
                     {% endif %}
                 </span>
             </div>
@@ -74,7 +74,7 @@
                 <span class="text-base-content/70 shrink-0" data-slot="genre-label">{% if game %}{% with total=game.wikipedia_genres.count %}{% if total == 1 %}Genre:{% else %}Genres:{% endif %}{% endwith %}{% else %}Genres:{% endif %}</span>
                 <span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;" data-slot="genres">
                     {% if game %}
-                        {% for g in game.wikipedia_genres.all %}<button type="button" class="badge badge-xs badge-outline hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '{{ g.id }}', gameId: '{{ game.id }}'} }))" title="{{ g.name }}">{{ g.name }}</button>{% endfor %}
+                        {% for g in game.wikipedia_genres.all %}<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '{{ g.id }}', gameId: '{{ game.id }}'} }))" title="{{ g.name }}">{{ g.name }}</button>{% endfor %}
                     {% endif %}
                 </span>
             </div>

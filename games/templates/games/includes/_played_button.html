@@ -1,10 +1,10 @@
 {# Played game toggle button - HTMX-enabled #}
 {# Outline when uncollected, Mario Super Star PNG when collected #}
-{# Sizes: Mobile w-8/text-4xl, Desktop w-6/text-2xl, Large w-10/text-5xl #}
+{# Sizes: Default w-6/text-2xl, Large w-10/text-5xl #}
 {# Pass size='large' for bigger button on game detail page #}
 {% load static %}
 {% if user.is_authenticated and game.igdb_id %}
-<div class="tooltip tooltip-top played-button-wrapper cursor-pointer"
+<div class="desktop:tooltip desktop:tooltip-top played-button-wrapper cursor-pointer"
     data-tip="{% if is_played %}You have played this game!{% else %}You have not played this game.{% endif %}"
     data-igdb-id="{{ game.igdb_id }}"
     data-is-played="{% if is_played %}true{% else %}false{% endif %}"
@@ -15,17 +15,17 @@
     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
     onclick="event.stopPropagation()">
 <button
-    class="played-button flex items-center justify-center shrink-0 pointer-events-none {% if size == 'large' %}h-12 w-12 min-w-12{% else %}h-11 w-11 min-w-11 desktop:h-8 desktop:w-8 desktop:min-w-8{% endif %}">
+    class="played-button flex items-center justify-center shrink-0 pointer-events-none {% if size == 'large' %}h-12 w-12 min-w-12{% else %}h-8 w-8 min-w-8{% endif %}">
     {% if is_played %}
-    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-8 h-8 desktop:w-6 desktop:h-6{% endif %}">
+    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}">
         <img src="{% static 'games/images/mario-star.png' %}"
              srcset="{% static 'games/images/mario-star.png' %} 1x, {% static 'games/images/mario-star@2x.png' %} 2x"
              alt="Played" width="32" height="32"
-             class="{% if size == 'large' %}w-10 h-10{% else %}w-8 h-8 desktop:w-6 desktop:h-6{% endif %} drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
+             class="{% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %} drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
     </span>
     {% else %}
-    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-8 h-8 desktop:w-6 desktop:h-6{% endif %}">
-        <span class="mdi mdi-star-outline {% if size == 'large' %}text-5xl{% else %}text-4xl desktop:text-2xl{% endif %} text-base-content/30"></span>
+    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}">
+        <span class="mdi mdi-star-outline {% if size == 'large' %}text-5xl{% else %}text-2xl{% endif %} text-base-content/30"></span>
     </span>
     {% endif %}
 </button>

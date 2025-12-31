@@ -1728,17 +1728,6 @@ class SitemapViewTest(TestCase):
 class AuthModalViewsTest(TestCase):
     """Test auth modal views (HTMX partials)."""
 
-    def test_auth_modal_options_returns_200(self):
-        """Test that auth modal options view returns 200."""
-        response = self.client.get(reverse("auth-modal-options"))
-        self.assertEqual(response.status_code, 200)
-
-    def test_auth_modal_options_contains_email_button(self):
-        """Test that auth options contains email sign-in button."""
-        response = self.client.get(reverse("auth-modal-options"))
-        content = response.content.decode("utf-8")
-        self.assertIn("Continue with Email", content)
-
     def test_auth_modal_login_get_returns_200(self):
         """Test that login form GET returns 200."""
         response = self.client.get(reverse("auth-modal-login"))
@@ -1783,13 +1772,6 @@ class AuthModalViewsTest(TestCase):
         )
         # Should return HX-Redirect header to redirect after login
         self.assertIn("HX-Redirect", response)
-
-    def test_auth_modal_login_back_button(self):
-        """Test that login form has back button to options."""
-        response = self.client.get(reverse("auth-modal-login"))
-        content = response.content.decode("utf-8")
-        self.assertIn("Back", content)
-        self.assertIn(reverse("auth-modal-options"), content)
 
     def test_auth_modal_signup_get_returns_200(self):
         """Test that signup form GET returns 200."""
@@ -1889,11 +1871,11 @@ class AuthModalViewsTest(TestCase):
         self.assertFalse(user.email_subscribed)  # Default False
 
     def test_auth_modal_signup_back_button(self):
-        """Test that signup form has back button to options."""
+        """Test that signup form has back button to login."""
         response = self.client.get(reverse("auth-modal-signup"))
         content = response.content.decode("utf-8")
         self.assertIn("Back", content)
-        self.assertIn(reverse("auth-modal-options"), content)
+        self.assertIn(reverse("auth-modal-login"), content)
 
     def test_auth_modal_signup_has_signin_link(self):
         """Test that signup form has link to sign in form."""
@@ -1919,13 +1901,12 @@ class AuthModalViewsTest(TestCase):
         response = self.client.get(reverse("home"))
         self.assertFalse(response.wsgi_request.user.is_authenticated)
 
-    def test_auth_modal_profile_unauthenticated_shows_options(self):
-        """Test that profile view redirects to options if not authenticated."""
+    def test_auth_modal_profile_unauthenticated_redirects_to_login(self):
+        """Test that profile view redirects to login if not authenticated."""
         response = self.client.get(reverse("auth-modal-profile"))
         self.assertEqual(response.status_code, 200)
-        content = response.content.decode("utf-8")
-        # Should show options screen, not profile
-        self.assertIn("Continue with Email", content)
+        # Should have HX-Redirect header to login
+        self.assertIn("HX-Redirect", response)
 
     def test_auth_modal_profile_authenticated_shows_form(self):
         """Test that profile view shows form when authenticated."""
