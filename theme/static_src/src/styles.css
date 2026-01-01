@@ -914,7 +914,7 @@
 
   /* Active nav item styling for mobile navbar buttons */
   .navbar .btn.btn-active {
-    @apply bg-primary/20 text-primary;
+    @apply bg-accent/20 text-accent;
   }
 }
 
