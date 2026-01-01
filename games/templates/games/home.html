@@ -96,7 +96,7 @@
             </a>
         </div>
         <p class="text-base text-base-content/70 max-w-md">
-            The definitive ranking: {{ game_count|default:"1,000"|intcomma }} games evaluated across {{ list_count|intcomma }} critic lists from {{ publication_count|intcomma }} publications
+            The top {{ game_count|default:"1,000"|intcomma }} most recommended games across {{ list_count|intcomma }} critic lists from {{ publication_count|intcomma }} publications.
         </p>
         {% if last_update %}
         <p class="text-sm text-base-content/60">
