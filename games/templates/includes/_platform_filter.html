@@ -425,8 +425,11 @@
          },
 
          // Check if ALL platforms for form factor are selected (checkbox shows checked)
-         // Shows as selected when all its platforms are selected (additive visual model)
+         // Only shows checked if parent manufacturer is NOT fully selected (hierarchical visual)
          isFormFactorSelected(mfrKey, ffKey) {
+             // If entire manufacturer is selected, form factor shouldn't show as checked
+             if (this.isManufacturerSelected(mfrKey)) return false;
+
              const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
              if (platformIds.length === 0) return false;
              return platformIds.every(id => filters.platforms.includes(id));
@@ -531,12 +534,15 @@
                     <button type="button"
                             class="flex items-center gap-2 flex-1 text-left"
                             @click="toggleManufacturerSelection(mfrKey); debouncedFilterUpdate();">
+                        <template x-if="platformHierarchy[mfrKey].svgFile">
+                            <img :src="platformHierarchy[mfrKey].svgFile" class="w-4 h-4" aria-hidden="true">
+                        </template>
                         <template x-if="platformHierarchy[mfrKey].svgIcon">
                             <svg class="w-4 h-4 fill-current" aria-hidden="true">
                                 <use :href="'{% static 'games/images/platform-icons.svg' %}#' + platformHierarchy[mfrKey].svgIcon"></use>
                             </svg>
                         </template>
-                        <template x-if="platformHierarchy[mfrKey].icon">
+                        <template x-if="platformHierarchy[mfrKey].icon && !platformHierarchy[mfrKey].svgFile">
                             <span class="mdi text-lg" :class="platformHierarchy[mfrKey].icon"></span>
                         </template>
                         <span class="font-medium text-sm" x-text="platformHierarchy[mfrKey].name"></span>
@@ -555,25 +561,37 @@
                         <div class="space-y-1">
                             <template x-for="ffKey in getSortedFormFactorKeys(mfrKey)" :key="ffKey">
                                 <div class="form-factor-group">
-                                    {# Form Factor Header - always visible, no expand/collapse #}
-                                    <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors cursor-pointer"
+                                    {# Form Factor Header - expandable and selectable #}
+                                    <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors"
                                          :class="{
                                              'bg-primary text-primary-content': isFormFactorSelected(mfrKey, ffKey),
                                              'bg-primary/10 text-primary': !isFormFactorSelected(mfrKey, ffKey) && !isManufacturerSelected(mfrKey) && hasFormFactorSelection(mfrKey, ffKey),
                                              'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey),
                                              'opacity-40': !isFormFactorAvailable(mfrKey, ffKey) && !hasFormFactorSelection(mfrKey, ffKey)
-                                         }"
-                                         @click="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();">
-                                        {# Form Factor Name #}
-                                        <span class="text-xs font-medium flex-1"
-                                              :class="isFormFactorSelected(mfrKey, ffKey) ? '' : 'opacity-80'"
-                                              x-text="platformHierarchy[mfrKey].formFactors[ffKey].name"></span>
+                                         }">
+                                        {# Expand/Collapse Arrow #}
+                                        <button type="button"
+                                                class="p-0.5 rounded hover:bg-base-300/50"
+                                                @click.stop="toggleFormFactorExpanded(mfrKey, ffKey)">
+                                            <span class="mdi text-sm transition-transform duration-200"
+                                                  :class="isFormFactorExpanded(mfrKey, ffKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                                        </button>
+                                        {# Form Factor Name - click to toggle selection #}
+                                        <button type="button"
+                                                class="flex items-center gap-2 flex-1 text-left cursor-pointer"
+                                                @click="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();">
+                                            <span class="text-xs font-medium"
+                                                  :class="isFormFactorSelected(mfrKey, ffKey) ? '' : 'opacity-80'"
+                                                  x-text="platformHierarchy[mfrKey].formFactors[ffKey].name"></span>
+                                        </button>
                                         {# Deduplicated form factor count #}
                                         <span class="text-xs opacity-60 tabular-nums" x-text="getFormFactorTotalCount(mfrKey, ffKey)"></span>
                                     </div>
 
-                                    {# Platforms in Form Factor - always visible when manufacturer is expanded #}
-                                    <div class="ml-6 mt-0.5 space-y-0.5">
+                                    {# Platforms in Form Factor - collapsible #}
+                                    <div class="ml-6 mt-0.5 space-y-0.5"
+                                         x-show="isFormFactorExpanded(mfrKey, ffKey)"
+                                         x-collapse>
                                         <template x-for="platform in getFormFactorPlatforms(mfrKey, ffKey)" :key="platform.id">
                                             <div class="platform-item"
                                                  :class="{

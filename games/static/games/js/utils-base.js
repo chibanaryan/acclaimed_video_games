@@ -540,14 +540,19 @@ var PLATFORM_GROUPS = [
     ['PC', ['WIN', 'DOS', 'LIN', 'MAC']],
     ['Arcade, Mobile & VR', ['ARC', 'AND', 'iOS', 'LMD', 'VR', 'BR']],
     ['Retro Consoles', ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'NGP', 'WS']],
-    ['Microcomputers', ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2', 'ARCH', 'E60', 'HP21', 'PDP']],
+    ['Microcomputer', ['VC20', 'C64', 'AMI', 'CD32', 'ZXS', 'CPC', 'BBCM', 'ARCH', 'PC88', 'PC98', 'FM7', 'FMT', 'SX1', 'MSX', 'A8', 'AST', 'A2', 'T80', 'TCC', 'PDP', 'HP21', 'E60']],
     // Form factor groups (checked after manufacturer groups)
     ['Nintendo Handheld', ['GB', 'GBC', 'GBA', 'DS', '3DS']],
     ['Nintendo Home Console', ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW']],
     ['PlayStation Handheld', ['PSP', 'PSV']],
     ['PlayStation Home Console', ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSVR']],
     ['Sega Handheld', ['GG']],
-    ['Sega Home Console', ['SMS', 'GEN', 'SCD', 'SAT', 'DC']]
+    ['Sega Home Console', ['SMS', 'GEN', 'SCD', 'SAT', 'DC']],
+    // Microcomputer form factor groups
+    ['Commodore', ['VC20', 'C64', 'AMI', 'CD32']],
+    ['UK Microcomputer', ['ZXS', 'CPC', 'BBCM', 'ARCH']],
+    ['Japanese Microcomputer', ['PC88', 'PC98', 'FM7', 'FMT', 'SX1', 'MSX']],
+    ['Atari Microcomputer', ['A8', 'AST']]
 ];
 
 /**

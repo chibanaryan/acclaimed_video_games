@@ -338,7 +338,7 @@ FAMILY_INFO = {
     "xbox": ("mdi-microsoft-xbox", "Xbox", 3, None),
     "pc": ("mdi-microsoft-windows", "PC", 4, None),
     "sega": (None, "Sega", 5, "platform-sega"),
-    "retro": ("mdi-gamepad-variant", "Retro", 6, None),
+    "retro": ("mdi-television-classic", "Retro", 6, None),
     "computers": ("mdi-desktop-classic", "Microcomputers", 7, None),
     "arcade": ("mdi-space-invaders", "Arcade+", 8, None),
 }
