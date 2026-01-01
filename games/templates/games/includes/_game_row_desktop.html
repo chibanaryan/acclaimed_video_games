@@ -22,7 +22,7 @@
             {# Rank - always present in template (for JS), conditionally shown for server render #}
         {% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}
         <div class="w-15 text-center flex flex-col items-center justify-center {% if show_rank == 'none' and game %}hidden{% endif %}">
-            <span class="game-rank text-2xl font-bold text-primary tabular-nums" data-slot="rank">
+            <span class="game-rank text-2xl font-bold text-accent tabular-nums" data-slot="rank">
                 {% if game %}{% if show_rank == 'filtered' %}{{ index|default:game.rank }}{% else %}{{ game.rank }}{% endif %}{% endif %}
             </span>
             <span class="game-row-global-rank text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and not show_rank_in_details and game %}hidden{% endif %}" data-slot="global-rank">{% if game %}(#{{ game.rank }}){% endif %}</span>

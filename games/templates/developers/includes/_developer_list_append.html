@@ -21,7 +21,7 @@
     </td>
     <td>
         {% if dev.top_game %}
-        <span class="text-primary font-bold">#{{ dev.top_game.rank }}</span>
+        <span class="text-accent font-bold">#{{ dev.top_game.rank }}</span>
         {% else %}
         <span class="text-base-content/40">—</span>
         {% endif %}
@@ -75,7 +75,7 @@
         {% if dev.top_game %}
         <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-2 group">
             <span class="text-base-content/60 text-sm">Top:</span>
-            <span class="text-primary font-bold text-sm">#{{ dev.top_game.rank }}</span>
+            <span class="text-accent font-bold text-sm">#{{ dev.top_game.rank }}</span>
             {% if dev.top_game.thumbnail %}
             <img src="{{ dev.top_game.thumbnail }}"
                  alt=""

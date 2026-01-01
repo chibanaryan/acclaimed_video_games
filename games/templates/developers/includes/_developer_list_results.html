@@ -40,7 +40,7 @@
                 </td>
                 <td class="text-right tabular-nums">
                     {% if dev.top_game %}
-                    <span class="text-primary font-bold">#{{ dev.top_game.rank }}</span>
+                    <span class="text-accent font-bold">#{{ dev.top_game.rank }}</span>
                     {% else %}
                     <span class="text-base-content/40">—</span>
                     {% endif %}
@@ -83,7 +83,7 @@
             {% if dev.top_game %}
             <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-2 group min-w-0" style="max-width: calc(100vw - 4rem);">
                 <span class="text-base-content/60 text-sm shrink-0">Top:</span>
-                <span class="text-primary font-bold text-sm shrink-0">#{{ dev.top_game.rank }}</span>
+                <span class="text-accent font-bold text-sm shrink-0">#{{ dev.top_game.rank }}</span>
                 {% if dev.top_game.thumbnail %}
                 <img src="{{ dev.top_game.thumbnail }}" alt="" class="w-6 h-8 object-cover rounded shrink-0" loading="lazy">
                 {% else %}

@@ -135,12 +135,12 @@
     <style>@media (min-width: 962px) { #main-wrapper { padding-top: 0 !important; } }</style>
     <div id="main-wrapper" class="flex" style="isolation: isolate; position: relative; z-index: 1; padding-top: 60px;">
         {# Desktop sidebar - fixed position, hidden on mobile #}
-        <aside class="hidden desktop:flex desktop:flex-col desktop:w-48 desktop:fixed desktop:inset-y-0 desktop:left-0 bg-base-100 border-r border-base-content/10 z-40 overflow-visible">
+        <aside class="hidden desktop:flex desktop:flex-col desktop:w-48 desktop:fixed desktop:inset-y-0 desktop:left-0 bg-base-200 border-r border-base-content/10 z-40 overflow-visible">
             {% include 'includes/_sidebar.html' %}
         </aside>
 
         {# Main content area - offset by sidebar width on desktop #}
-        <main id="main-content" class="flex-1 desktop:ml-48 min-h-screen">
+        <main id="main-content" class="flex-1 desktop:ml-48 min-h-screen bg-base-100">
             <div class="container mx-auto px-4 max-w-7xl py-4">
                 {% block content %}{% endblock %}
             </div>

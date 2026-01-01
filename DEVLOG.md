@@ -2,6 +2,7 @@
 
 ## 2026-01-01
 
+- Theme refinements: fix background color (base-200 instead of base-300), use accent color for rankings and sidebar active state
 - Fix developer detail layout shift: server-render game count and rank distribution to reserve space
 - Add visual divider between hero section and filters on home page
 - Fix sign up modal on mobile: add scrolling and compress vertical spacing for small screens
