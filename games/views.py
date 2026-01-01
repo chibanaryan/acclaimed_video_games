@@ -41,6 +41,39 @@ def _get_year_bounds():
     return min_year, max_year
 
 
+def _get_hero_stats():
+    """Return cached hero section statistics (list, publication, game counts)."""
+    cache_key = "homepage_hero_stats"
+    stats = cache.get(cache_key)
+    if stats is None:
+        stats = {
+            "list_count": models.List.objects.count(),
+            "publication_count": models.Publication.objects.count(),
+            "game_count": models.Game.objects.count(),
+        }
+        cache.set(cache_key, stats, config.CACHE_TIMEOUT_24_HOURS)
+    return stats
+
+
+def _get_played_game_ids(user):
+    """Return cached list of played game IGDB IDs for a user."""
+    cache_key = f"played_games_{user.id}"
+    ids = cache.get(cache_key)
+    if ids is None:
+        ids = list(
+            models.PlayedGame.objects.filter(user=user).values_list(
+                "igdb_id", flat=True
+            )
+        )
+        cache.set(cache_key, ids, 300)  # 5 minutes
+    return ids
+
+
+def invalidate_played_games_cache(user_id):
+    """Invalidate the played games cache for a specific user."""
+    cache.delete(f"played_games_{user_id}")
+
+
 def _join_names(names):
     """Join a list of names with commas and an 'and' before the last item."""
     if not names:
@@ -676,17 +709,38 @@ class HomePageView(RobustPaginationMixin, ListView):
         highlight_str = self.request.GET.get("highlight")
         if highlight_str and highlight_str.isdigit():
             highlight_id = int(highlight_str)
-            # Find position of highlighted game in queryset
-            # We need to count how many games come before it
             try:
-                # Get list of game IDs in order to find position
-                game_ids = list(queryset.values_list("id", flat=True))
-                if highlight_id in game_ids:
-                    position = game_ids.index(highlight_id) + 1  # 1-based position
-                    # Round up to nearest 100 to include the game
-                    if position > self.paginate_by:
-                        return ((position - 1) // 100 + 1) * 100
-            except (ValueError, models.Game.DoesNotExist):
+                # Check if the game exists in the filtered queryset
+                if not queryset.filter(id=highlight_id).exists():
+                    return self.paginate_by
+
+                # Get the highlighted game's sort values
+                game = models.Game.objects.values(
+                    "id", "rank", "year_of_release", "name"
+                ).get(id=highlight_id)
+
+                # Build filter for games that come before this one
+                sort = self.request.GET.get("sort", "rank")
+                if sort == "year":
+                    # Order: year_of_release, rank
+                    before_filter = Q(year_of_release__lt=game["year_of_release"]) | (
+                        Q(year_of_release=game["year_of_release"])
+                        & Q(rank__lt=game["rank"])
+                    )
+                elif sort == "name":
+                    # Order: name (use Lower for case-insensitive comparison)
+                    before_filter = Q(name__lt=game["name"])
+                else:
+                    # Default rank order
+                    before_filter = Q(rank__lt=game["rank"])
+
+                # Count how many games come before this one (1-based position)
+                position = queryset.filter(before_filter).count() + 1
+
+                # Round up to nearest 100 to include the game
+                if position > self.paginate_by:
+                    return ((position - 1) // 100 + 1) * 100
+            except models.Game.DoesNotExist:
                 pass
         return self.paginate_by
 
@@ -827,13 +881,9 @@ class HomePageView(RobustPaginationMixin, ListView):
         )
 
         # Get series list with game counts (only show series with 2+ games)
-        # Include version hash in cache key so it invalidates when series data changes
+        # Use version-based cache key (bump CACHE_VERSION in config to invalidate)
         MIN_SERIES_GAMES = 2
-        series_count = models.Series.objects.count()
-        games_with_series = models.Game.objects.filter(series__isnull=False).count()
-        series_cache_key = (
-            f"search_series_list_with_counts:{series_count}:{games_with_series}"
-        )
+        series_cache_key = f"search_series_list_with_counts:{config.CACHE_VERSION}"
         series_list = cache.get(series_cache_key)
         if series_list is None:
             series_list = list(
@@ -1100,18 +1150,15 @@ class HomePageView(RobustPaginationMixin, ListView):
         # Enable client-side filtering for fast subsequent interactions
         context["enable_client_filtering"] = True
 
-        # Add played game IDs for client-side rendering
+        # Add played game IDs for client-side rendering (cached per-user)
         if self.request.user.is_authenticated:
-            context["played_game_ids"] = list(
-                models.PlayedGame.objects.filter(user=self.request.user).values_list(
-                    "igdb_id", flat=True
-                )
-            )
+            context["played_game_ids"] = _get_played_game_ids(self.request.user)
 
         # Hero section context (for homepage at /)
-        context["list_count"] = models.List.objects.count()
-        context["publication_count"] = models.Publication.objects.count()
-        context["game_count"] = models.Game.objects.count()
+        hero_stats = _get_hero_stats()
+        context["list_count"] = hero_stats["list_count"]
+        context["publication_count"] = hero_stats["publication_count"]
+        context["game_count"] = hero_stats["game_count"]
         metadata = models.SiteMetadata.get_instance()
         context["last_update"] = metadata.last_full_update
 
@@ -2539,8 +2586,9 @@ class TogglePlayedGameView(LoginRequiredMixin, View):
         else:
             is_played = True
 
-        # Invalidate percentile distribution cache
+        # Invalidate caches
         cache.delete("user_played_games_distribution")
+        invalidate_played_games_cache(request.user.id)
 
         # Preserve button size (large on game detail page, default elsewhere)
         size = request.GET.get("size")

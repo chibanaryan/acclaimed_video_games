@@ -30,6 +30,9 @@ class HomePageViewTest(TestCase):
     """Test the home page view."""
 
     def setUp(self):
+        # Clear hero stats cache to ensure fresh counts
+        cache.delete("homepage_hero_stats")
+
         # Create test data
         self.site_metadata = SiteMetadata.objects.create()
 

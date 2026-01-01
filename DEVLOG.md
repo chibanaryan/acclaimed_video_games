@@ -2,6 +2,7 @@
 
 ## 2026-01-01
 
+- Optimize home page: cache hero stats, fix highlight pagination N+1, simplify series cache key, cache played games per-user
 - Optimize developers page: add hierarchy caching service to eliminate recursive N+1 queries
 - Theme refinements: fix background color (base-200 instead of base-300), use accent color for rankings and sidebar active state
 - Fix developer detail layout shift: server-render game count and rank distribution to reserve space
