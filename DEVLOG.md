@@ -2,6 +2,13 @@
 
 ## 2026-01-01
 
+- Performance: fix platform filter duplicate results, add missing .distinct()
+- Performance: cache genre hierarchy expansion (24h TTL) with signal-based invalidation
+- Performance: cache game detail counts (total, decade, year) to reduce per-page queries
+- Performance: add HTTP caching to API views (15-30 min TTL)
+- Performance: optimize 404 page image (PNG to WebP, 392KB → 23KB)
+- Fix developer search debounce: increase from 150ms to 300ms to reduce server load
+- Fix CSV export N+1: add wikipedia_genres prefetch
 - Optimize home page: cache hero stats, fix highlight pagination N+1, simplify series cache key, cache played games per-user
 - Optimize developers page: add hierarchy caching service to eliminate recursive N+1 queries
 - Theme refinements: fix background color (base-200 instead of base-300), use accent color for rankings and sidebar active state

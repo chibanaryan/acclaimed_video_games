@@ -51,6 +51,7 @@
                         {% if dev.top_game.thumbnail %}
                         <img src="{{ dev.top_game.thumbnail }}"
                              alt=""
+                             width="32" height="44"
                              class="w-8 h-11 object-cover rounded"
                              loading="lazy">
                         {% else %}
@@ -85,7 +86,7 @@
                 <span class="text-base-content/60 text-sm shrink-0">Top:</span>
                 <span class="text-accent font-bold text-sm shrink-0">#{{ dev.top_game.rank }}</span>
                 {% if dev.top_game.thumbnail %}
-                <img src="{{ dev.top_game.thumbnail }}" alt="" class="w-6 h-8 object-cover rounded shrink-0" loading="lazy">
+                <img src="{{ dev.top_game.thumbnail }}" alt="" width="24" height="32" class="w-6 h-8 object-cover rounded shrink-0" loading="lazy">
                 {% else %}
                 <div class="w-6 h-8 bg-base-300 rounded flex items-center justify-center shrink-0">
                     <span class="mdi mdi-gamepad-variant text-xs text-base-content/30"></span>

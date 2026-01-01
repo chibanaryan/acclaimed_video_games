@@ -440,7 +440,8 @@ class ContactThankYouView(TemplateView):
 def download_games_csv(request):
     """Download games list as CSV, respecting current filters."""
     # Get filtered queryset using same logic as HomePageView
-    qs = models.Game.objects.with_relations()
+    # Include wikipedia_genres prefetch for CSV export
+    qs = models.Game.objects.with_relations().prefetch_related("wikipedia_genres")
 
     # Add played status annotation for authenticated users
     user = request.user
@@ -596,6 +597,7 @@ def download_games_csv(request):
         "Developers",
         "Platforms",
         "Genres",
+        "Series",
     ]
     if is_authenticated:
         header.append("Played")
@@ -605,6 +607,7 @@ def download_games_csv(request):
         developers = ", ".join(d.name for d in game.developers.all())
         platforms = ", ".join(p.name for p in game.platforms.all())
         genres = ", ".join(g.name for g in game.wikipedia_genres.all())
+        series = ", ".join(s.name for s in game.series.all())
         filtered_rank = index if use_filtered_rank else game.rank
         row = [
             filtered_rank,
@@ -614,6 +617,7 @@ def download_games_csv(request):
             developers,
             platforms,
             genres,
+            series,
         ]
         if is_authenticated:
             # Use the annotated is_played_by_user field
@@ -671,7 +675,13 @@ class GameDetailView(DetailView):
         )
 
         # Total game count for rank context (e.g., "#47 of 3,240")
-        total_game_count = models.Game.objects.count()
+        # Cached since it rarely changes
+        total_game_count = cache.get("total_game_count")
+        if total_game_count is None:
+            total_game_count = models.Game.objects.count()
+            cache.set(
+                "total_game_count", total_game_count, config.CACHE_TIMEOUT_24_HOURS
+            )
         context["total_game_count"] = total_game_count
 
         # rank_percentile: lower is better (rank 1 = "Top 0.1%", rank 100 = "Top 10%")
@@ -682,16 +692,27 @@ class GameDetailView(DetailView):
                 (1 - game.rank / total_game_count) * 100
             )
 
-        # Decade and year counts for rank context
+        # Decade and year counts for rank context - cached by decade/year
         if game.decade:
-            context["decade_game_count"] = models.Game.objects.filter(
-                year_of_release__gte=game.decade,
-                year_of_release__lte=game.decade + 9,
-            ).count()
+            cache_key = f"{config.CACHE_VERSION}:decade_count:{game.decade}"
+            decade_count = cache.get(cache_key)
+            if decade_count is None:
+                decade_count = models.Game.objects.filter(
+                    year_of_release__gte=game.decade,
+                    year_of_release__lte=game.decade + 9,
+                ).count()
+                cache.set(cache_key, decade_count, config.CACHE_TIMEOUT_24_HOURS)
+            context["decade_game_count"] = decade_count
+
         if game.year_of_release:
-            context["year_game_count"] = models.Game.objects.filter(
-                year_of_release=game.year_of_release
-            ).count()
+            cache_key = f"{config.CACHE_VERSION}:year_count:{game.year_of_release}"
+            year_count = cache.get(cache_key)
+            if year_count is None:
+                year_count = models.Game.objects.filter(
+                    year_of_release=game.year_of_release
+                ).count()
+                cache.set(cache_key, year_count, config.CACHE_TIMEOUT_24_HOURS)
+            context["year_game_count"] = year_count
 
         return context
 

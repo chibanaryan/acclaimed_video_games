@@ -14,6 +14,7 @@ from .. import config, models, utils
 from . import serializers
 
 
+@method_decorator(cache_page(60 * 15), name="dispatch")  # 15 min cache
 class GameListView(ListAPIView):
 
     serializer_class = serializers.GameSummarySerializer
@@ -61,6 +62,7 @@ class GameListView(ListAPIView):
         return qs.distinct()
 
 
+@method_decorator(cache_page(60 * 30), name="dispatch")  # 30 min cache
 class GameDetailView(RetrieveAPIView):
     lookup_field = "slug"
     serializer_class = serializers.GameDetailSerializer
@@ -77,6 +79,7 @@ class GameDetailView(RetrieveAPIView):
     )
 
 
+@method_decorator(cache_page(60 * 30), name="dispatch")  # 30 min cache
 class DeveloperDetailAPIView(RetrieveAPIView):
     """API endpoint for developer details."""
 

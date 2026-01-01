@@ -28,11 +28,14 @@
         <div class="card-body items-center text-center">
             {# 4 Moon 4 header #}
             <h1 class="text-error font-bold overflow-visible" style="font-size: clamp(4rem, 15vw, 8rem); line-height: 1.2;">
-                4<img src="{% static 'games/zelda-moon.png' %}"
-                     alt="Moon"
-                     width="514" height="498"
-                     class="inline-block align-middle mx-1 animate-moon-shake"
-                     style="height: 1em; width: auto; position: relative; top: -0.05em; aspect-ratio: 514 / 498;">4
+                4<picture class="inline-block align-middle mx-1" style="height: 1em; position: relative; top: -0.05em;">
+                    <source srcset="{% static 'games/zelda-moon.webp' %}" type="image/webp">
+                    <img src="{% static 'games/zelda-moon.png' %}"
+                         alt="Moon"
+                         width="514" height="498"
+                         class="animate-moon-shake"
+                         style="height: 100%; width: auto; aspect-ratio: 514 / 498;">
+                </picture>4
             </h1>
 
             {# Salesman GIF #}

@@ -60,7 +60,7 @@
                x-model="q"
                hx-get="{% url 'developers-list' %}"
                hx-target="#results-container"
-               hx-trigger="input changed delay:150ms, sort-changed"
+               hx-trigger="input changed delay:300ms, sort-changed"
                hx-swap="innerHTML"
                :hx-vals="JSON.stringify({sort: sort})"
                x-on:htmx:after-request="updateUrl($event)"

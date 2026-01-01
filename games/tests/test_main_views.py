@@ -1529,7 +1529,9 @@ class GameDownloadCSVTest(TestCase):
         content = response.content.decode("utf-8")
         lines = content.strip().split("\n")
         # Strip \r from line (CSV uses \r\n line endings)
-        expected = "Filtered Rank,Global Rank,Name,Year,Developers,Platforms,Genres"
+        expected = (
+            "Filtered Rank,Global Rank,Name,Year,Developers,Platforms,Genres,Series"
+        )
         self.assertEqual(lines[0].strip(), expected)
 
     def test_csv_contains_game_data(self):
@@ -1580,10 +1582,9 @@ class GameDownloadCSVTest(TestCase):
         response = self.client.get(reverse("games-download"))
         content = response.content.decode("utf-8")
         lines = content.strip().split("\n")
-        expected = (
-            "Filtered Rank,Global Rank,Name,Year,Developers,Platforms,Genres,Played"
-        )
-        self.assertEqual(lines[0].strip(), expected)
+        header = "Filtered Rank,Global Rank,Name,Year,Developers,Platforms,"
+        header += "Genres,Series,Played"
+        self.assertEqual(lines[0].strip(), header)
 
     def test_csv_shows_yes_for_played_games(self):
         """Test that CSV shows 'Yes' for games user has marked as played."""

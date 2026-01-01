@@ -103,20 +103,32 @@ def _expand_single_genre_with_descendants(genre_id: int) -> List[int]:
     """
     Expand a single genre ID to include itself and all descendant IDs.
 
+    Results are cached for 24 hours to avoid repeated recursive queries.
+
     Args:
         genre_id: A single genre ID to expand
 
     Returns:
         List containing the genre ID and all its descendant IDs
     """
+    from django.core.cache import cache
+
     from games.models import WikipediaGenre
+
+    cache_key = f"{config.CACHE_VERSION}:genre_descendants:{genre_id}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
 
     try:
         genre = WikipediaGenre.objects.get(id=genre_id)
         # Get this genre plus all descendants
-        return genre.get_descendant_ids(include_self=True)
+        result = genre.get_descendant_ids(include_self=True)
     except WikipediaGenre.DoesNotExist:
-        return [genre_id]
+        result = [genre_id]
+
+    cache.set(cache_key, result, config.CACHE_TIMEOUT_24_HOURS)
+    return result
 
 
 def _expand_genre_ids_with_descendants(genre_ids: List[int]) -> List[int]:
@@ -191,7 +203,7 @@ def apply_platform_filter(queryset: QuerySet, platform_ids: List[int]) -> QueryS
     if not platform_ids:
         return queryset
 
-    return queryset.filter(platforms__in=platform_ids)
+    return queryset.filter(platforms__in=platform_ids).distinct()
 
 
 def apply_series_filter(queryset: QuerySet, series_ids: List[int]) -> QuerySet:
