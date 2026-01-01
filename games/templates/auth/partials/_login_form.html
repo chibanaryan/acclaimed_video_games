@@ -62,7 +62,7 @@
     {# Forgot password #}
     <div class="flex justify-end">
         <button type="button"
-                class="link link-primary text-sm"
+                class="link link-accent text-sm"
                 hx-get="{% url 'auth-modal-forgot-password' %}"
                 hx-target="#auth-modal-content"
                 hx-swap="innerHTML">
@@ -82,7 +82,7 @@
     <p class="text-sm">
         Don't have an account?
         <button type="button"
-                class="link link-primary"
+                class="link link-accent"
                 hx-get="{% url 'auth-modal-signup' %}"
                 hx-target="#auth-modal-content"
                 hx-swap="innerHTML">

@@ -916,7 +916,7 @@
                 {# Top-level Filters header with actions #}
                 <div class="flex items-center justify-between mb-3 pb-2 border-b border-base-300">
                     <div class="flex items-center gap-2">
-                        <span class="mdi mdi-filter-variant text-xl text-primary"></span>
+                        <span class="mdi mdi-filter-variant text-xl text-accent"></span>
                         <span class="font-bold text-base">Filters</span>
                     </div>
                     <div class="flex gap-2">
@@ -939,7 +939,7 @@
                 {# Search input with Played filter in header #}
                 <div class="mb-4 pb-3 border-b border-base-300">
                     <div class="flex items-center gap-2 mb-2">
-                        <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <svg class="h-5 w-5 text-accent" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <path d="m21 21-4.3-4.3"></path>
@@ -968,7 +968,7 @@
                 {# Year range heatmap grid #}
                 <div class="mb-4 pb-3 border-b border-base-300 min-h-[15rem]">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="mdi mdi-calendar-range text-xl text-primary"></span>
+                        <span class="mdi mdi-calendar-range text-xl text-accent"></span>
                         <span class="font-bold text-base">Release Year</span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click="resetYears()" title="Clear year filter" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
                             <span class="mdi mdi-close text-xs"></span>
@@ -988,7 +988,7 @@
                 {# Platforms filter - Tiered component #}
                 <div class="mb-4 pb-3 border-b border-base-300">
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="platformsExpanded = !platformsExpanded; localStorage.setItem('platformsExpanded', platformsExpanded)">
-                        <span class="mdi mdi-controller text-xl text-primary"></span>
+                        <span class="mdi mdi-controller text-xl text-accent"></span>
                         <span class="font-bold text-base">Platform</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="platformsExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
@@ -1012,7 +1012,7 @@
                 {# Genres filter - Inventory Grid Style #}
                 <div :class="genresExpanded ? 'mb-3' : 'mb-1'">
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="genresExpanded = !genresExpanded; localStorage.setItem('genresExpanded', genresExpanded)">
-                        <span class="mdi mdi-gamepad-variant text-xl text-primary"></span>
+                        <span class="mdi mdi-gamepad-variant text-xl text-accent"></span>
                         <span class="font-bold text-base">Genre</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="genresExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
@@ -1035,7 +1035,7 @@
                 {# Series filter - Flat list with search #}
                 <div class="mt-4 pt-3 border-t border-base-300" :class="seriesExpanded ? 'mb-3' : 'mb-1'">
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="seriesExpanded = !seriesExpanded; localStorage.setItem('seriesExpanded', seriesExpanded)">
-                        <span class="mdi mdi-mushroom text-xl text-primary"></span>
+                        <span class="mdi mdi-mushroom text-xl text-accent"></span>
                         <span class="font-bold text-base">Series</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="seriesExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>

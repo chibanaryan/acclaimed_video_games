@@ -294,8 +294,8 @@
                 {# Category Header - Selectable and Expandable #}
                 <div class="flex items-center gap-1 py-1 px-2 rounded-lg transition-colors"
                      :class="{
-                         'bg-primary text-primary-content': isCategorySelected(category.id),
-                         'bg-primary/10 text-primary': !isCategorySelected(category.id) && hasSelectedChildren(category.id),
+                         'bg-primary text-accent-content': isCategorySelected(category.id),
+                         'bg-primary/10 text-accent': !isCategorySelected(category.id) && hasSelectedChildren(category.id),
                          'hover:bg-base-300/50': !isCategorySelected(category.id),
                          'opacity-50': !isCategoryAvailable(category.id) && !hasCategoryOrChildrenSelected(category.id)
                      }">
@@ -325,7 +325,7 @@
                     <template x-for="genre in getChildren(category.id)" :key="genre.id">
                         <div class="genre-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
                              :class="{
-                                 'bg-primary text-primary-content': isGenreSelected(genre.id),
+                                 'bg-primary text-accent-content': isGenreSelected(genre.id),
                                  'hover:bg-base-300/50': !isGenreSelected(genre.id),
                                  'opacity-40': !isGenreAvailable(genre.id) && !isGenreSelected(genre.id),
                                  'bg-error/20 text-error': hasZeroResults(genre.id)

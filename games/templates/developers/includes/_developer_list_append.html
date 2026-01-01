@@ -7,11 +7,11 @@
     <td>
         {% with root=dev.root_developer %}
         {% if root.slug %}
-            <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-primary text-lg font-semibold">
+            <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-accent text-lg font-semibold">
                 {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}
             </a>
         {% elif dev.slug %}
-            <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-primary text-lg font-semibold">
+            <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-accent text-lg font-semibold">
                 {{ dev.name }}
             </a>
         {% else %}
@@ -59,11 +59,11 @@
         <div>
             {% with root=dev.root_developer %}
             {% if root.slug %}
-                <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-primary text-lg font-bold">
+                <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-accent text-lg font-bold">
                     {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}
                 </a>
             {% elif dev.slug %}
-                <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-primary text-lg font-bold">
+                <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-accent text-lg font-bold">
                     {{ dev.name }}
                 </a>
             {% else %}

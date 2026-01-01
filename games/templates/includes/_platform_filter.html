@@ -534,8 +534,8 @@
                 {# Manufacturer Header - Expandable and Selectable #}
                 <div class="flex items-center gap-1 py-1 px-2 rounded-lg transition-colors"
                      :class="{
-                         'bg-primary text-primary-content': isManufacturerSelected(mfrKey),
-                         'bg-primary/10 text-primary': !isManufacturerSelected(mfrKey) && hasManufacturerOrChildrenSelected(mfrKey),
+                         'bg-primary text-accent-content': isManufacturerSelected(mfrKey),
+                         'bg-primary/10 text-accent': !isManufacturerSelected(mfrKey) && hasManufacturerOrChildrenSelected(mfrKey),
                          'hover:bg-base-300/50': !isManufacturerSelected(mfrKey),
                          'opacity-40': !isManufacturerAvailable(mfrKey) && !hasManufacturerOrChildrenSelected(mfrKey)
                      }">
@@ -580,8 +580,8 @@
                                     {# Form Factor Header - expandable and selectable #}
                                     <div class="flex items-center gap-1 py-1 px-2 ml-2 rounded transition-colors"
                                          :class="{
-                                             'bg-primary text-primary-content': isFormFactorSelected(mfrKey, ffKey),
-                                             'bg-primary/10 text-primary': !isFormFactorSelected(mfrKey, ffKey) && !isManufacturerSelected(mfrKey) && hasFormFactorSelection(mfrKey, ffKey),
+                                             'bg-primary text-accent-content': isFormFactorSelected(mfrKey, ffKey),
+                                             'bg-primary/10 text-accent': !isFormFactorSelected(mfrKey, ffKey) && !isManufacturerSelected(mfrKey) && hasFormFactorSelection(mfrKey, ffKey),
                                              'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey),
                                              'opacity-40': !isFormFactorAvailable(mfrKey, ffKey) && !hasFormFactorSelection(mfrKey, ffKey)
                                          }">

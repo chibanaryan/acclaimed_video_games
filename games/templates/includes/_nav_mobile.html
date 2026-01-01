@@ -88,7 +88,7 @@
                                 </template>
                                 <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
                                     <li>
-                                        <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
+                                        <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-accent text-sm">
                                             See all game results &hellip;
                                         </a>
                                     </li>
@@ -100,7 +100,7 @@
                                 <template x-for="dev in developers" :key="'dev-' + dev.id">
                                     <li>
                                         <a :href="'/developers/' + dev.root_slug + '/' + (dev.id !== dev.root_id ? '#developer-' + dev.id : '')" class="flex items-center gap-3">
-                                            <span class="mdi mdi-account-group text-xl text-primary"></span>
+                                            <span class="mdi mdi-account-group text-xl text-accent"></span>
                                             <div>
                                                 <div class="font-semibold text-sm" x-text="dev.name"></div>
                                                 <div class="text-xs text-base-content/85" x-text="dev.games_count + ' games'"></div>
@@ -110,7 +110,7 @@
                                 </template>
                                 <template x-if="q && q.trim().length >= 2 && !loading && hasDeveloperResults()">
                                     <li>
-                                        <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary text-sm">
+                                        <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-accent text-sm">
                                             See all developer results &hellip;
                                         </a>
                                     </li>
@@ -122,7 +122,7 @@
                                 <template x-for="s in series" :key="'series-' + s.id">
                                     <li>
                                         <a :href="'{% url 'home' %}?series=' + s.id" class="flex items-center gap-3">
-                                            <span class="mdi mdi-mushroom text-xl text-primary"></span>
+                                            <span class="mdi mdi-mushroom text-xl text-accent"></span>
                                             <div>
                                                 <div class="font-semibold text-sm" x-text="s.name"></div>
                                                 <div class="text-xs text-base-content/85" x-text="s.games_count + ' games'"></div>

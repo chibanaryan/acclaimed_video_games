@@ -142,7 +142,7 @@
             <template x-for="series in filteredSeries" :key="series.id">
                 <div class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors"
                      :class="{
-                         'bg-primary text-primary-content': isSeriesSelected(series.id),
+                         'bg-primary text-accent-content': isSeriesSelected(series.id),
                          'hover:bg-base-300/50': !isSeriesSelected(series.id),
                          'opacity-40': getEffectiveCount(series) === 0 && !isSeriesSelected(series.id)
                      }"

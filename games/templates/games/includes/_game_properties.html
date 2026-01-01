@@ -16,7 +16,7 @@
         <td class="pb-3 align-middle tabular-nums">
             <span class="rank-indicator">
                 {% game_rank_url game.rank game.id as rank_url %}
-                <a href="{{ rank_url }}" class="link link-primary font-medium">{{ game.rank }}</a>
+                <a href="{{ rank_url }}" class="link link-accent font-medium">{{ game.rank }}</a>
                 {% if total_game_count %}<span class="text-base-content/50 text-sm"> of {{ total_game_count|intcomma }}</span>{% endif %}
                 {% if total_game_count %}
                 <div class="tooltip tooltip-top" data-tip="Top {{ rank_percentile|default:0 }}%">
@@ -31,7 +31,7 @@
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">{{ game.decade }}s rank:</td>
         <td class="pb-3 align-middle tabular-nums">
             {% game_rank_url game.decade_rank game.id game.decade game.decade|add:9 as decade_url %}
-            <a href="{{ decade_url }}" class="link link-primary font-medium">{{ game.decade_rank }}</a>
+            <a href="{{ decade_url }}" class="link link-accent font-medium">{{ game.decade_rank }}</a>
             {% if decade_game_count %}<span class="text-base-content/50 text-sm"> of {{ decade_game_count|intcomma }}</span>{% endif %}
         </td>
     </tr>
@@ -41,7 +41,7 @@
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">{{ game.year_of_release }} rank:</td>
         <td class="pb-3 align-middle tabular-nums">
             {% game_rank_url game.year_rank game.id game.year_of_release game.year_of_release as year_url %}
-            <a href="{{ year_url }}" class="link link-primary font-medium">{{ game.year_rank }}</a>
+            <a href="{{ year_url }}" class="link link-accent font-medium">{{ game.year_rank }}</a>
             {% if year_game_count %}<span class="text-base-content/50 text-sm"> of {{ year_game_count|intcomma }}</span>{% endif %}
         </td>
     </tr>
@@ -50,7 +50,7 @@
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if devs|length == 1 %}Developer{% else %}Developers{% endif %}:</td>
         <td class="pb-3">
-            {% for dev in devs %}{% with root=dev.root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-primary">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}" class="link link-primary">{{ dev.name }}</a>{% else %}<span>{{ dev.name }}</span>{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}
+            {% for dev in devs %}{% with root=dev.root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-accent">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}" class="link link-accent">{{ dev.name }}</a>{% else %}<span>{{ dev.name }}</span>{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}
         </td>
     </tr>
     {% endwith %}
@@ -90,7 +90,7 @@
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Wikipedia:</td>
         <td class="pb-3 align-middle">
-            <a href="{{ game.primary_wikipedia_game_data.wikipedia_url }}" target="_blank" class="link link-primary inline-flex items-center gap-1">
+            <a href="{{ game.primary_wikipedia_game_data.wikipedia_url }}" target="_blank" class="link link-accent inline-flex items-center gap-1">
                 Wikipedia <span class="mdi mdi-open-in-new text-sm"></span>
             </a>
         </td>
@@ -100,7 +100,7 @@
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">IGDB:</td>
         <td class="pb-3 align-middle">
-            <a href="{{ game.primary_igdb_game_data.url }}" target="_blank" class="link link-primary inline-flex items-center gap-1">
+            <a href="{{ game.primary_igdb_game_data.url }}" target="_blank" class="link link-accent inline-flex items-center gap-1">
                 IGDB <span class="mdi mdi-open-in-new text-sm"></span>
             </a>
         </td>

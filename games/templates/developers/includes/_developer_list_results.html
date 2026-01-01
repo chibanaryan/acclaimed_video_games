@@ -26,11 +26,11 @@
                 <td>
                     {% with root=dev.root_developer %}
                     {% if root.slug %}
-                        <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-primary text-lg font-semibold">
+                        <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-accent text-lg font-semibold">
                             {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}
                         </a>
                     {% elif dev.slug %}
-                        <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-primary text-lg font-semibold">
+                        <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-accent text-lg font-semibold">
                             {{ dev.name }}
                         </a>
                     {% else %}
@@ -76,7 +76,7 @@
     <div class="developer-row card bg-base-200 p-3">
         <div class="flex flex-col gap-2">
             {# Developer name - truncate long names #}
-            <a href="{% with root=dev.root_developer %}{% if root.slug %}{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}{% elif dev.slug %}{% url 'developer-detail' slug=dev.slug %}{% else %}#{% endif %}{% endwith %}" class="link link-primary text-lg font-bold truncate" style="max-width: calc(100vw - 4rem);">
+            <a href="{% with root=dev.root_developer %}{% if root.slug %}{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}{% elif dev.slug %}{% url 'developer-detail' slug=dev.slug %}{% else %}#{% endif %}{% endwith %}" class="link link-accent text-lg font-bold truncate" style="max-width: calc(100vw - 4rem);">
                 {% with root=dev.root_developer %}{{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}{% endwith %}
             </a>
             {# Top game #}

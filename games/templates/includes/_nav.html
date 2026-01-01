@@ -87,7 +87,7 @@
                         </template>
                         <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
                             <li>
-                                <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
+                                <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-accent">
                                     See all game results &hellip;
                                 </a>
                             </li>
@@ -99,7 +99,7 @@
                         <template x-for="dev in developers" :key="'dev-' + dev.id">
                             <li>
                                 <a :href="'/developers/' + dev.root_slug + '/#developers=' + dev.id" class="flex items-center gap-3">
-                                    <span class="mdi mdi-account-group text-xl text-primary"></span>
+                                    <span class="mdi mdi-account-group text-xl text-accent"></span>
                                     <div>
                                         <div class="font-semibold" x-text="dev.name"></div>
                                         <div class="text-sm text-base-content/85" x-text="dev.games_count + ' games'"></div>
@@ -109,7 +109,7 @@
                         </template>
                         <template x-if="q && q.trim().length >= 2 && !loading && hasDeveloperResults()">
                             <li>
-                                <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
+                                <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-accent">
                                     See all developer results &hellip;
                                 </a>
                             </li>
@@ -121,7 +121,7 @@
                         <template x-for="s in series" :key="'series-' + s.id">
                             <li>
                                 <a :href="'{% url 'home' %}?series=' + s.id" class="flex items-center gap-3">
-                                    <span class="mdi mdi-mushroom text-xl text-primary"></span>
+                                    <span class="mdi mdi-mushroom text-xl text-accent"></span>
                                     <div>
                                         <div class="font-semibold" x-text="s.name"></div>
                                         <div class="text-sm text-base-content/85" x-text="s.games_count + ' games'"></div>
@@ -191,7 +191,7 @@
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && hasGameResults()">
                         <li>
-                            <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
+                            <a :href="'{% url 'home' %}?q=' + encodeURIComponent(q.trim())" class="link link-accent">
                                 See all game results &hellip;
                             </a>
                         </li>
@@ -203,7 +203,7 @@
                     <template x-for="dev in developers" :key="'dev-' + dev.id">
                         <li>
                             <a :href="'/developers/' + dev.root_slug + '/#developers=' + dev.id" class="flex items-center gap-3">
-                                <span class="mdi mdi-account-group text-xl text-primary"></span>
+                                <span class="mdi mdi-account-group text-xl text-accent"></span>
                                 <div>
                                     <div class="font-semibold" x-text="dev.name"></div>
                                     <div class="text-sm text-base-content/85" x-text="dev.games_count + ' games'"></div>
@@ -213,7 +213,7 @@
                     </template>
                     <template x-if="q && q.trim().length >= 2 && !loading && hasDeveloperResults()">
                         <li>
-                            <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-primary">
+                            <a :href="'{% url 'developers-list' %}?q=' + encodeURIComponent(q.trim())" class="link link-accent">
                                 See all developer results &hellip;
                             </a>
                         </li>
@@ -225,7 +225,7 @@
                     <template x-for="s in series" :key="'series-' + s.id">
                         <li>
                             <a :href="'{% url 'home' %}?series=' + s.id" class="flex items-center gap-3">
-                                <span class="mdi mdi-mushroom text-xl text-primary"></span>
+                                <span class="mdi mdi-mushroom text-xl text-accent"></span>
                                 <div>
                                     <div class="font-semibold" x-text="s.name"></div>
                                     <div class="text-sm text-base-content/85" x-text="s.games_count + ' games'"></div>

@@ -355,7 +355,7 @@ class GameListRenderer {
     ${playedContainerHtml}
     <div class="game-row desktop flex-1 py-0.5 px-2 grid ${isHighlighted ? 'is-highlighted' : ''}" style="grid-template-columns: auto 1fr;">
         <div class="flex items-center gap-3 flex-shrink-0">
-            ${showRank !== 'none' ? `<div class="w-14 text-center flex flex-col items-center justify-center"><span class="game-rank text-2xl font-bold text-primary">${displayRank}</span>${globalRankHtml}</div>` : ''}
+            ${showRank !== 'none' ? `<div class="w-14 text-center flex flex-col items-center justify-center"><span class="game-rank text-2xl font-bold text-accent">${displayRank}</span>${globalRankHtml}</div>` : ''}
             <a href="/game/${game.s}/" class="game-thumb-link">
                 <img src="${thumbnail}" srcset="${thumbnail} 1x, ${thumbnail2x} 2x" alt="${this._escapeHtml(game.n)}" width="90" height="128" loading="lazy" decoding="async" class="game-thumb">
             </a>
@@ -528,7 +528,7 @@ class GameListRenderer {
         div.innerHTML = `
 <div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}-mobile" onclick="window.location.href='/game/${game.s}/'" style="grid-template-columns: ${gridCols};">
     ${playedContainerHtml}
-    ${showRankColumn ? `<div class="w-10 text-center flex flex-col items-center justify-center"><div class="text-2xl font-bold text-primary">${displayRank}</div>${globalRankHtml}</div>` : ''}
+    ${showRankColumn ? `<div class="w-10 text-center flex flex-col items-center justify-center"><div class="text-2xl font-bold text-accent">${displayRank}</div>${globalRankHtml}</div>` : ''}
     <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;"><img src="${thumbnail}" alt="${this._escapeHtml(game.n)}" width="90" height="128" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>
     <div class="min-w-0 flex items-center justify-between">
         <div class="min-w-0">
