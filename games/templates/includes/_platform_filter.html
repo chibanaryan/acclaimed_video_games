@@ -233,24 +233,40 @@
              }, 0);
          },
 
-         // Get platforms for a form factor, sorted by game count (descending)
+         // Get platforms for a form factor, sorted by (start year, end year, alphabetical)
          getFormFactorPlatforms(mfrKey, ffKey) {
              const mfr = this.platformHierarchy[mfrKey];
              if (!mfr || !mfr.formFactors || !mfr.formFactors[ffKey]) return [];
              return mfr.formFactors[ffKey].platforms
                  .map(code => this.getPlatformByCode(code))
                  .filter(p => p)
-                 .sort((a, b) => this.getEffectiveCount(b) - this.getEffectiveCount(a));
+                 .sort((a, b) => {
+                     const startA = a.year_start || 9999;
+                     const startB = b.year_start || 9999;
+                     if (startA !== startB) return startA - startB;
+                     const endA = a.year_end || 9999;
+                     const endB = b.year_end || 9999;
+                     if (endA !== endB) return endA - endB;
+                     return (a.name || '').localeCompare(b.name || '');
+                 });
          },
 
-         // Get flat platforms for a manufacturer (no form factors), sorted by game count (descending)
+         // Get flat platforms for a manufacturer (no form factors), sorted by (start year, end year, alphabetical)
          getFlatPlatforms(mfrKey) {
              const mfr = this.platformHierarchy[mfrKey];
              if (!mfr || !mfr.platforms) return [];
              return mfr.platforms
                  .map(code => this.getPlatformByCode(code))
                  .filter(p => p)
-                 .sort((a, b) => this.getEffectiveCount(b) - this.getEffectiveCount(a));
+                 .sort((a, b) => {
+                     const startA = a.year_start || 9999;
+                     const startB = b.year_start || 9999;
+                     if (startA !== startB) return startA - startB;
+                     const endA = a.year_end || 9999;
+                     const endB = b.year_end || 9999;
+                     if (endA !== endB) return endA - endB;
+                     return (a.name || '').localeCompare(b.name || '');
+                 });
          },
 
          // Check if platform has any games with current filters (or is selected)

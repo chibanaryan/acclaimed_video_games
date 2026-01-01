@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-01
+
+- Fix platform filter sorting: individual platforms now sort by (start year, end year, alphabetical) instead of game count
+
 ## 2025-12-31
 
 - Fix layout shift on game list: use CSS Grid with calc() to reserve sidebar space on initial render
