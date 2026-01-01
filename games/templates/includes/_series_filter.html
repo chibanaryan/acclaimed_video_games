@@ -1,4 +1,4 @@
-{# Series filter - Flat list with search, styled like genre filter #}
+{# Series filter - Scrollable list with search, styled like genre filter #}
 {# Uses seriesList from parent AdvancedFilters component #}
 <div class="series-filter"
      x-data="{
@@ -54,13 +54,9 @@
              return count === 0 && this.isSelected(seriesId);
          },
 
-         // Max series to show when not searching
-         maxDisplayed: 20,
-
          get filteredSeries() {
              let list = seriesList;
              if (this.searchQuery) {
-                 // When searching, show all matches
                  const query = this.searchQuery.toLowerCase();
                  list = list.filter(s => s.name.toLowerCase().includes(query));
              }
@@ -70,16 +66,7 @@
                  if (countDiff !== 0) return countDiff;
                  return a.name.localeCompare(b.name);
              });
-             // Limit to maxDisplayed when not searching
-             if (!this.searchQuery) {
-                 list = list.slice(0, this.maxDisplayed);
-             }
              return list;
-         },
-
-         // Check if there are more series beyond the displayed limit
-         get hasMoreSeries() {
-             return !this.searchQuery && seriesList.length > this.maxDisplayed;
          },
 
          toggleSeries(seriesId) {
@@ -102,86 +89,74 @@
      }"
      @series-reset.window="handleReset()">
 
-    {# Search input - using DaisyUI label pattern #}
-    <label class="input input-sm input-bordered w-full bg-base-100 mb-2">
-        <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.3-4.3"></path>
-            </g>
-        </svg>
-        <input type="text"
-               x-model="searchQuery"
-               placeholder="Search series..."
-               class="grow text-sm">
-        <button type="button"
-                @click="searchQuery = ''"
-                class="btn btn-ghost btn-xs btn-circle"
-                style="display: none"
-                :style="{ display: searchQuery.length > 0 ? 'flex' : 'none' }"
-                aria-label="Clear search">
-            <span class="mdi mdi-close"></span>
-        </button>
-    </label>
+   {# Search input - using DaisyUI label pattern #}
+   <label class="input input-sm input-bordered w-full bg-base-100 mb-2">
+       <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+           <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
+               <circle cx="11" cy="11" r="8"></circle>
+               <path d="m21 21-4.3-4.3"></path>
+           </g>
+       </svg>
+       <input type="text"
+              x-model="searchQuery"
+              placeholder="Search series..."
+              class="grow text-sm">
+       <button type="button"
+               @click="searchQuery = ''"
+               class="btn btn-ghost btn-xs btn-circle"
+               style="display: none"
+               :style="{ display: searchQuery.length > 0 ? 'flex' : 'none' }"
+               aria-label="Clear search">
+           <span class="mdi mdi-close"></span>
+       </button>
+   </label>
 
-    {# Loading State - 20 rows to match maxDisplayed series items #}
-    <div x-show="!countsReady" class="space-y-0.5 animate-pulse" style="min-height: 618px;">
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-        <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-    </div>
+   {# Loading State - 15 rows to match visible series items #}
+   <div x-show="!countsReady" class="space-y-0.5 animate-pulse overflow-hidden" style="max-height: 434px;">
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+   </div>
 
-    {# Series list - styled like genre children #}
-    <div class="series-list space-y-0.5" x-show="countsReady" x-cloak>
-        <template x-for="series in filteredSeries" :key="series.id">
-            <div class="series-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
-                 :class="{
-                     'bg-primary text-accent-content': isSelected(series.id),
-                     'hover:bg-base-300/50': !isSelected(series.id),
-                     'opacity-40': !isSeriesAvailable(series.id) && !isSelected(series.id),
-                     'bg-error/20 text-error': hasZeroResults(series.id)
-                 }"
-                 @click="toggleSeries(series.id)"
-                 :title="series.name + ' - ' + getEffectiveCount(series) + ' games'">
-                {# Series Name #}
-                <span class="flex-1 truncate" x-text="series.name"></span>
-                {# Game Count #}
-                <span class="text-xs opacity-60 tabular-nums"
-                      x-text="getEffectiveCount(series)"></span>
-            </div>
-        </template>
+   {# Series list - scrollable, shows all series with 2+ games #}
+   <div class="series-list space-y-0.5 overflow-y-auto" style="max-height: 434px;" x-show="countsReady" x-cloak>
+       <template x-for="series in filteredSeries" :key="series.id">
+           <div class="series-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
+                :class="{
+                    'bg-primary text-accent-content': isSelected(series.id),
+                    'hover:bg-base-300/50': !isSelected(series.id),
+                    'opacity-40': !isSeriesAvailable(series.id) && !isSelected(series.id),
+                    'bg-error/20 text-error': hasZeroResults(series.id)
+                }"
+                @click="toggleSeries(series.id)"
+                :title="series.name + ' - ' + getEffectiveCount(series) + ' games'">
+               {# Series Name #}
+               <span class="flex-1 truncate" x-text="series.name"></span>
+               {# Game Count #}
+               <span class="text-xs opacity-60 tabular-nums"
+                     x-text="getEffectiveCount(series)"></span>
+           </div>
+       </template>
 
-        {# Empty state #}
-        <template x-if="filteredSeries.length === 0">
-            <div class="text-center py-4 text-base-content/60 text-sm">
-                <span x-show="searchQuery">No series matching "<span x-text="searchQuery"></span>"</span>
-                <span x-show="!searchQuery">No series available</span>
-            </div>
-        </template>
-
-        {# Hint for more series #}
-        <template x-if="hasMoreSeries">
-            <div class="text-center pt-2 text-base-content/50 text-xs">
-                Search to find more series...
-            </div>
-        </template>
-    </div>
+       {# Empty state #}
+       <template x-if="filteredSeries.length === 0">
+           <div class="text-center py-4 text-base-content/60 text-sm">
+               <span x-show="searchQuery">No series matching "<span x-text="searchQuery"></span>"</span>
+               <span x-show="!searchQuery">No series available</span>
+           </div>
+       </template>
+   </div>
 
 </div>
