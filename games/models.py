@@ -220,13 +220,16 @@ class Developer(models.Model):
         """True if this developer has a parent."""
         return self.parent is not None
 
-    @property
+    @cached_property
     def root_developer(self) -> "Developer":
         """
         Returns the root (topmost) developer in the ownership hierarchy.
 
         For nested developers like BioWare Edmonton → BioWare → EA,
         this returns the ultimate parent (EA).
+
+        Cached on the instance to avoid repeated DB queries when accessed
+        multiple times on the same instance.
         """
         if not self.parent:
             return self
@@ -241,6 +244,18 @@ class Developer(models.Model):
             current = current.parent
 
         return current
+
+    @property
+    def display_root_developer(self) -> "Developer":
+        """
+        Template-friendly accessor for root developer.
+
+        Uses prefetched root if available (set by views using cached hierarchy),
+        otherwise falls back to the cached_property root_developer.
+        """
+        if hasattr(self, "_prefetched_root"):
+            return self._prefetched_root
+        return self.root_developer
 
     def get_all_subsidiaries(self, include_self: bool = False) -> list:
         """

@@ -5,7 +5,7 @@
 {% for dev in developers %}
 <tr class="developer-row">
     <td>
-        {% with root=dev.root_developer %}
+        {% with root=dev.display_root_developer %}
         {% if root.slug %}
             <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-accent text-lg font-semibold">
                 {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}
@@ -57,7 +57,7 @@
     <div class="flex flex-col gap-2">
         {# Developer name #}
         <div>
-            {% with root=dev.root_developer %}
+            {% with root=dev.display_root_developer %}
             {% if root.slug %}
                 <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-accent text-lg font-bold">
                     {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}

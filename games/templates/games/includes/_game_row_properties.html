@@ -12,7 +12,7 @@
     {% with devs=game.developers.all %}
     <div class="game-property">
         <span>Dev:</span>
-        <span>{% for dev in devs %}{% with root=dev.root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}">{{ dev.name }}</a>{% else %}{{ dev.name }}{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+        <span>{% for dev in devs %}{% with root=dev.display_root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}">{{ dev.name }}</a>{% else %}{{ dev.name }}{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
     </div>
     {% endwith %}
 

@@ -1123,6 +1123,7 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     List view for developers with game counts and hierarchy support.
 
     Uses the unified Developer model with self-referential parent FK for hierarchy.
+    Leverages cached hierarchy data for performance optimization.
     """
 
     model = models.Developer
@@ -1132,24 +1133,6 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     paginate_orphans = 0
     htmx_partial_template = "developers/includes/_developer_list_content.html"
 
-    def _collect_unique_game_ids(self, developer, game_ids_by_dev, visited=None):
-        """Recursively collect unique game IDs for developer + all subsidiaries."""
-        if visited is None:
-            visited = set()
-        if developer.id in visited:
-            return set()
-        visited.add(developer.id)
-
-        # Start with this developer's games
-        unique_ids = set(game_ids_by_dev.get(developer.id, []))
-
-        # Add games from all subsidiaries
-        for sub in developer.subsidiaries.all():
-            unique_ids.update(
-                self._collect_unique_game_ids(sub, game_ids_by_dev, visited)
-            )
-        return unique_ids
-
     def get_template_names(self):
         # Append mode for Load More - returns just rows
         if self.request.GET.get("append") == "true":
@@ -1158,7 +1141,7 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
     def get_paginate_by(self, queryset):
         # Disable Django's pagination when sorting by games, studios, or rank
-        # We'll handle pagination manually after calculating recursive counts
+        # We'll handle pagination manually after sorting with cached counts
         sort = self.request.GET.get("sort", "games")
         if sort in ("games", "studios", "rank"):
             return None
@@ -1169,8 +1152,6 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             models.Developer.objects.annotate(
                 games_count=Count("developed_games"),
             )
-            # Don't filter here - we'll filter after calculating recursive counts
-            # This allows holding companies with subsidiary games to appear
             .select_related("parent")
             .prefetch_related("subsidiaries")
             .distinct()
@@ -1181,8 +1162,8 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         if q:
             qs = qs.filter(name__icontains=q)
 
-        # Sort parameter - "games" and "studios" sorts are handled in get_context_data
-        # because they require recursive counting
+        # Sort parameter - "games", "studios", "rank" sorts are handled in
+        # get_context_data using cached hierarchy data
         sort = self.request.GET.get("sort", "games")
         if sort == "name":
             qs = qs.order_by(Lower("name"))
@@ -1194,64 +1175,58 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         sort = self.request.GET.get("sort", "games")
         context["sort"] = sort
 
-        # Get developers (full list when sorting by games, paginated otherwise)
+        # Get cached hierarchy data (precomputed counts, game IDs, etc.)
+        from games.services.developer_service import get_developer_hierarchy
+
+        hierarchy = get_developer_hierarchy()
+
+        # Get developers list
         developers = list(context.get("developers", []))
 
-        # Build mapping of developer ID to game IDs
-        from collections import defaultdict
-
-        all_dev_ids = set(d.id for d in developers)
-        # Also collect subsidiary IDs
+        # Attach precomputed counts from cache (no recursive queries!)
         for dev in developers:
-            all_dev_ids.update(dev.get_all_subsidiary_ids())
-
-        game_ids_by_dev = defaultdict(list)
-        for dev_id, game_id in models.Developer.objects.filter(
-            id__in=all_dev_ids
-        ).values_list("id", "developed_games__id"):
-            if game_id is not None:
-                game_ids_by_dev[dev_id].append(game_id)
-
-        # Calculate recursive counts and store game IDs for top game lookup
-        for dev in developers:
-            unique_game_ids = self._collect_unique_game_ids(dev, game_ids_by_dev)
-            dev.recursive_games_count = len(unique_game_ids)
-            dev._unique_game_ids = unique_game_ids  # Store for top game lookup
-            # Calculate recursive subsidiary count
-            dev.recursive_studios_count = len(dev.get_all_subsidiary_ids())
+            dev.recursive_games_count = hierarchy["recursive_game_counts"].get(
+                dev.id, 0
+            )
+            dev.recursive_studios_count = hierarchy["recursive_subsidiary_counts"].get(
+                dev.id, 0
+            )
+            dev._cached_game_ids = hierarchy["recursive_game_ids"].get(dev.id, set())
 
         # Filter out developers with no games (direct or through subsidiaries)
         developers = [d for d in developers if d.recursive_games_count > 0]
 
+        # Pre-attach root developers to avoid template N+1 queries
+        root_ids = set(
+            hierarchy["root_developer_id"].get(dev.id, dev.id) for dev in developers
+        )
+        root_devs = {d.id: d for d in models.Developer.objects.filter(id__in=root_ids)}
+        for dev in developers:
+            root_id = hierarchy["root_developer_id"].get(dev.id, dev.id)
+            dev._prefetched_root = root_devs.get(root_id, dev)
+
         # Handle pagination and sorting
         if sort in ("games", "studios", "rank"):
-            # For rank sorting, we need to calculate top_game for all developers first
+            # For rank sorting, fetch top games using cached top_game_id
             if sort == "rank":
-                all_game_ids = set()
-                for dev in developers:
-                    all_game_ids.update(getattr(dev, "_unique_game_ids", set()))
-
-                if all_game_ids:
-                    games_by_id = {
+                top_game_ids = [
+                    hierarchy["top_game_id"].get(dev.id)
+                    for dev in developers
+                    if hierarchy["top_game_id"].get(dev.id) is not None
+                ]
+                if top_game_ids:
+                    top_games = {
                         g.id: g
-                        for g in models.Game.objects.filter(id__in=all_game_ids)
+                        for g in models.Game.objects.filter(id__in=top_game_ids)
                         .select_related("primary_igdb_game_data")
                         .only("id", "name", "slug", "rank", "primary_igdb_game_data")
                     }
                     for dev in developers:
-                        game_ids = getattr(dev, "_unique_game_ids", set())
-                        if game_ids:
-                            dev_games = [
-                                games_by_id[gid]
-                                for gid in game_ids
-                                if gid in games_by_id
-                            ]
-                            if dev_games:
-                                dev.top_game = min(
-                                    dev_games, key=lambda g: g.rank or 9999
-                                )
+                        top_game_id = hierarchy["top_game_id"].get(dev.id)
+                        if top_game_id and top_game_id in top_games:
+                            dev.top_game = top_games[top_game_id]
 
-            # Sort by recursive count (desc), then by name (asc) for ties
+            # Sort by cached counts
             if sort == "games":
                 developers.sort(
                     key=lambda d: (-d.recursive_games_count, d.name.lower())
@@ -1304,30 +1279,29 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
                     0, page_obj.paginator.count - page_obj.end_index()
                 )
 
-        # Fetch top game for each developer on the current page
+        # Fetch top game for each developer on the current page (if not already set)
         page_developers = context.get("developers", [])
-        all_game_ids = set()
-        for dev in page_developers:
-            all_game_ids.update(getattr(dev, "_unique_game_ids", set()))
+        devs_needing_top_game = [
+            dev for dev in page_developers if not hasattr(dev, "top_game")
+        ]
 
-        if all_game_ids:
-            # Batch fetch all games with IGDB data for thumbnails
-            games_by_id = {
-                g.id: g
-                for g in models.Game.objects.filter(id__in=all_game_ids)
-                .select_related("primary_igdb_game_data")
-                .only("id", "name", "slug", "rank", "primary_igdb_game_data")
-            }
-
-            # Find best game (lowest rank) for each developer
-            for dev in page_developers:
-                game_ids = getattr(dev, "_unique_game_ids", set())
-                if game_ids:
-                    dev_games = [
-                        games_by_id[gid] for gid in game_ids if gid in games_by_id
-                    ]
-                    if dev_games:
-                        dev.top_game = min(dev_games, key=lambda g: g.rank or 9999)
+        if devs_needing_top_game:
+            top_game_ids = [
+                hierarchy["top_game_id"].get(dev.id)
+                for dev in devs_needing_top_game
+                if hierarchy["top_game_id"].get(dev.id) is not None
+            ]
+            if top_game_ids:
+                top_games = {
+                    g.id: g
+                    for g in models.Game.objects.filter(id__in=top_game_ids)
+                    .select_related("primary_igdb_game_data")
+                    .only("id", "name", "slug", "rank", "primary_igdb_game_data")
+                }
+                for dev in devs_needing_top_game:
+                    top_game_id = hierarchy["top_game_id"].get(dev.id)
+                    if top_game_id and top_game_id in top_games:
+                        dev.top_game = top_games[top_game_id]
 
         return context
 
@@ -1341,6 +1315,7 @@ class DeveloperDetailView(DetailView):
     Detail view for a developer showing all games and subsidiary hierarchy.
 
     Uses the unified Developer model with self-referential parent FK.
+    Caches expensive context computation for 24 hours.
     """
 
     model = models.Developer
@@ -1365,6 +1340,24 @@ class DeveloperDetailView(DetailView):
             ),
             Prefetch("developed_games", queryset=games_queryset),
         )
+
+    def _get_cached_context(self, developer):
+        """Get cached context for this developer, or None if not cached."""
+        from django.core.cache import cache
+
+        from games import config
+
+        cache_key = f"{config.CACHE_VERSION}:developer_detail:{developer.id}"
+        return cache.get(cache_key)
+
+    def _set_cached_context(self, developer, context_data):
+        """Cache the expensive context data for this developer."""
+        from django.core.cache import cache
+
+        from games import config
+
+        cache_key = f"{config.CACHE_VERSION}:developer_detail:{developer.id}"
+        cache.set(cache_key, context_data, config.CACHE_TIMEOUT_24_HOURS)
 
     def flatten_developers(self, devs_data, parent_id=None, level=0):
         """Flatten recursive developer structure for checkbox tree."""
@@ -1397,6 +1390,12 @@ class DeveloperDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         developer = context["developer"]
+
+        # Try to get cached context first
+        cached = self._get_cached_context(developer)
+        if cached is not None:
+            context.update(cached)
+            return context
 
         # Recursively gather subsidiaries with nested structure
         def gather_subsidiaries(parent_dev, visited=None):
@@ -1627,6 +1626,22 @@ class DeveloperDetailView(DetailView):
         # Store max_bucket for JavaScript to use when filtering
         rank_distribution["max_bucket"] = max_bucket
         context["rank_distribution"] = rank_distribution
+
+        # Cache the expensive context data (excluding objects that can't be cached)
+        # We cache everything that's JSON-serializable or simple Python objects
+        cacheable_context = {
+            "subsidiaries_with_games": subsidiaries_with_games,
+            "root_games": root_games,
+            "total_games": total_games,
+            "subsidiaries_count": context["subsidiaries_count"],
+            "developers_flat": devs_flat,
+            "all_games": all_games,
+            "developer_game_map_json": context["developer_game_map_json"],
+            "developer_child_map_json": context["developer_child_map_json"],
+            "game_rank_map_json": context["game_rank_map_json"],
+            "rank_distribution": rank_distribution,
+        }
+        self._set_cached_context(developer, cacheable_context)
 
         return context
 

@@ -50,7 +50,7 @@
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if devs|length == 1 %}Developer{% else %}Developers{% endif %}:</td>
         <td class="pb-3">
-            {% for dev in devs %}{% with root=dev.root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-accent">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}" class="link link-accent">{{ dev.name }}</a>{% else %}<span>{{ dev.name }}</span>{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}
+            {% for dev in devs %}{% with root=dev.display_root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-accent">{{ dev.name }}</a>{% elif dev.slug %}<a href="{% url 'developer-detail' slug=dev.slug %}#game-{{ game.id }}" class="link link-accent">{{ dev.name }}</a>{% else %}<span>{{ dev.name }}</span>{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}
         </td>
     </tr>
     {% endwith %}

@@ -81,7 +81,7 @@ heroku run -- python manage.py shell
 
 - **acclaimedgames/** - Django project settings and main URL configuration
 - **games/** - Main Django app containing:
-  - **models.py** - Core data models (Game, Company, Studio, Platform, List, etc.)
+  - **models.py** - Core data models (Game, Developer, Platform, List, etc.)
   - **api/** - REST API with views, serializers, and URL routing
   - **views.py** - Django class-based views for all routes
   - **middleware.py** - HTMXPushURLMiddleware for HTMX history support
@@ -124,18 +124,13 @@ heroku run -- python manage.py shell
 
 Core Django models include:
 
-- **Game** - Video games with ranking, IGDB integration, genres, platforms, and studios
-- **Company** - Parent companies that own game development studios
-  - Represents organizational entities (e.g., Nintendo, Activision Blizzard)
-  - Used for hierarchical organization on developer detail pages
-  - Provides company-level slugs for URL routing (`/developers/<slug>/`)
-  - In IGDB's data model, corresponds to "company" records with no parent or that appear as parent of other companies
-- **Studio** - Game development studios that create games
-  - Represents actual development teams (e.g., Nintendo EAD, Respawn Entertainment)
-  - Games link to Studios via `Game.developers` M2M field
-  - Can be independent (no parent company), subsidiary (owned by company), or primary studio (same name as company)
-  - In IGDB's data model, corresponds to "company" records in game's `involved_companies` with `developer=True`
-  - Note: User-facing pages refer to these as "developers" for familiarity
+- **Game** - Video games with ranking, IGDB integration, genres, platforms, and developers
+- **Developer** - Game development entities with hierarchical parent-child relationships
+  - Uses self-referential `parent` FK for ownership hierarchy
+  - Root developers (parent=None) have slugs for URL routing (e.g., Nintendo, Valve)
+  - Subsidiary developers (parent=Developer) are child entities (e.g., Nintendo EAD, Respawn)
+  - Games link to developers via `Game.developers` M2M field
+  - In IGDB's data model, all are "company" records - we add hierarchy on import
 - **Platform** - Gaming platforms (PC, PS5, etc.)
 - **Genre** - Game genres
 - **Publication** - Magazines/websites that publish game lists
@@ -143,26 +138,19 @@ Core Django models include:
 - **Post** - Blog-style news posts with markdown support
 - **Snippet** - Reusable text snippets
 
-**Developer/Studio Terminology:**
-- Internally: Models are named `Company` and `Studio` for semantic clarity
-- User-facing: Pages display "Developers" (familiar term for users)
-- IGDB integration: IGDB calls everything "companies" - we add semantic layer on top
-
 ### API Architecture
 
 Django REST Framework powers the API at `/api/` with endpoints:
 - `/api/games/` - List and search games
 - `/api/games/<slug>/` - Game details with lists appearances
-- `/api/developers/<slug>/` - Company details with studios (legacy endpoint name, returns Company data)
-- `/api/developer-aliases/` - List of studios with games (legacy endpoint name, returns Studio data)
-- `/api/developer-aliases/<igdb_id>/` - Studio details (legacy endpoint name, returns Studio data)
+- `/api/developers/<slug>/` - Root developer details with subsidiary hierarchy
+- `/api/developer-aliases/` - List of all developers with games
+- `/api/developer-aliases/<igdb_id>/` - Developer details by IGDB ID
 - `/api/lists/` - Source lists
 - `/api/platforms/` - Gaming platforms
 - `/api/genres/` - Game genres
 - `/api/posts/` - News posts
 - `/api/meta/` - Metadata about the database
-
-**Note:** API endpoints maintain legacy names (`/developers/`, `/developer-aliases/`) for backward compatibility, but internally use Company and Studio models.
 
 ### Template Architecture
 
@@ -208,8 +196,8 @@ The application uses Django templates with HTMX for dynamic interactions and Alp
 - `/games/` - Game list with filtering and search
 - `/games/<slug>/` - Game detail view
 - `/games/search/` - Game search endpoint (HTMX)
-- `/developers/` - Studio list (user-facing term: "Developers")
-- `/developers/<slug>/` - Company detail view with filterable studios
+- `/developers/` - Developer list with game counts and hierarchy
+- `/developers/<slug>/` - Developer detail view with subsidiary hierarchy and games
 - `/lists/` - Published rankings list
 - `/posts/` - News and blog posts
 - `/page/<slug>/` - Static pages

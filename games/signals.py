@@ -4,10 +4,10 @@ Signals for the games app.
 
 import logging
 
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from games.models import Post
+from games.models import Developer, Game, Post
 
 logger = logging.getLogger(__name__)
 
@@ -65,3 +65,54 @@ def send_notification_after_save(sender, instance, created, **kwargs):
 
         # Clean up the flag
         instance._should_send_notification = False
+
+
+# =============================================================================
+# Developer Hierarchy Cache Invalidation
+# =============================================================================
+
+
+@receiver([post_save, post_delete], sender=Developer)
+def invalidate_developer_cache_on_change(sender, instance, **kwargs):
+    """Invalidate developer hierarchy cache when Developer changes."""
+    from django.core.cache import cache
+
+    from games import config
+    from games.services.developer_service import invalidate_developer_cache
+
+    invalidate_developer_cache()
+
+    # Also invalidate detail page caches for this developer and its root
+    cache.delete(f"{config.CACHE_VERSION}:developer_detail:{instance.id}")
+    if instance.parent_id:
+        # Invalidate root developer's detail cache too
+        root = instance.root_developer
+        cache.delete(f"{config.CACHE_VERSION}:developer_detail:{root.id}")
+
+    logger.debug("Developer hierarchy cache invalidated (Developer changed)")
+
+
+@receiver(m2m_changed, sender=Game.developers.through)
+def invalidate_developer_cache_on_game_change(sender, instance, pk_set, **kwargs):
+    """Invalidate developer hierarchy cache when Game.developers M2M changes."""
+    from django.core.cache import cache
+
+    from games import config
+    from games.services.developer_service import invalidate_developer_cache
+
+    invalidate_developer_cache()
+
+    # Invalidate detail page caches for affected developers
+    if pk_set:
+        for dev_id in pk_set:
+            cache.delete(f"{config.CACHE_VERSION}:developer_detail:{dev_id}")
+            # Also invalidate root developer's cache
+            try:
+                dev = Developer.objects.get(id=dev_id)
+                if dev.parent_id:
+                    root = dev.root_developer
+                    cache.delete(f"{config.CACHE_VERSION}:developer_detail:{root.id}")
+            except Developer.DoesNotExist:
+                pass
+
+    logger.debug("Developer hierarchy cache invalidated (Game.developers changed)")
