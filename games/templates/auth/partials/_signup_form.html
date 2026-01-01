@@ -12,8 +12,8 @@
 </button>
 {% endif %}
 
-<h3 class="text-lg font-bold mb-2">Create an Account</h3>
-<p class="text-sm text-base-content/60 mb-6">Track your played games and subscribe to site updates</p>
+<h3 class="text-lg font-bold mb-1">Create an Account</h3>
+<p class="text-sm text-base-content/60 mb-4">Track your played games and subscribe to site updates</p>
 
 {# Non-field errors (password mismatch, etc.) #}
 {% if form.non_field_errors %}
@@ -30,12 +30,12 @@
 <form hx-post="{% url 'auth-modal-signup' %}"
       hx-target="#auth-modal-content"
       hx-swap="innerHTML"
-      class="flex flex-col gap-4">
+      class="flex flex-col gap-2">
     {% csrf_token %}
 
     {# Email field #}
     <div class="form-control">
-        <label class="label" for="id_email">
+        <label class="label py-1" for="id_email">
             <span class="label-text">Email</span>
         </label>
         <input type="email"
@@ -55,7 +55,7 @@
 
     {# Username field (optional) #}
     <div class="form-control">
-        <label class="label" for="id_username">
+        <label class="label py-1" for="id_username">
             <span class="label-text">Username <span class="text-base-content/50">(optional)</span></span>
         </label>
         <input type="text"
@@ -66,11 +66,11 @@
                value="{{ username_value|default:'' }}"
                autocomplete="username">
         {% if username_error %}
-        <label class="label pt-2">
+        <label class="label py-0">
             <span class="label-text-alt text-error">{{ username_error }}</span>
         </label>
         {% else %}
-        <label class="label pt-2">
+        <label class="label py-0">
             <span class="label-text-alt text-base-content/50">Leave blank to use your email</span>
         </label>
         {% endif %}
@@ -78,7 +78,7 @@
 
     {# Password field #}
     <div class="form-control">
-        <label class="label" for="id_password1">
+        <label class="label py-1" for="id_password1">
             <span class="label-text">Password</span>
         </label>
         <input type="password"
@@ -97,7 +97,7 @@
 
     {# Confirm password field #}
     <div class="form-control">
-        <label class="label" for="id_password2">
+        <label class="label py-1" for="id_password2">
             <span class="label-text">Confirm Password</span>
         </label>
         <input type="password"
@@ -126,14 +126,14 @@
     </div>
 
     {# Submit button #}
-    <button type="submit" class="btn btn-primary w-full mt-2">
+    <button type="submit" class="btn btn-primary w-full mt-3">
         <span class="mdi mdi-account-plus"></span>
         Create Account
     </button>
 </form>
 
 {# Sign in link #}
-<p class="text-center text-sm mt-6">
+<p class="text-center text-sm mt-4">
     Already have an account?
     <button type="button"
             class="link link-primary"
