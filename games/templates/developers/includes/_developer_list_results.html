@@ -2,7 +2,7 @@
 {% load humanize %}
 {% if developers %}
 {# Desktop table view #}
-<div class="hidden md:block overflow-x-auto">
+<div class="hidden desktop:block overflow-x-auto">
     <table class="table-minimal table-fixed w-full">
         <colgroup>
             <col style="width: 28%;">
@@ -71,42 +71,27 @@
 </div>
 
 {# Mobile card view #}
-<div id="developer-mobile-container" class="md:hidden space-y-3">
+<div id="developer-mobile-container" class="desktop:hidden space-y-3">
     {% for dev in developers %}
     <div class="developer-row card bg-base-200 p-3">
         <div class="flex flex-col gap-2">
-            {# Developer name #}
-            <div>
-                {% with root=dev.root_developer %}
-                {% if root.slug %}
-                    <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-primary text-lg font-bold">
-                        {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}
-                    </a>
-                {% elif dev.slug %}
-                    <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-primary text-lg font-bold">
-                        {{ dev.name }}
-                    </a>
-                {% else %}
-                    <span class="text-lg font-bold">{{ dev.name }}</span>
-                {% endif %}
-                {% endwith %}
-            </div>
+            {# Developer name - truncate long names #}
+            <a href="{% with root=dev.root_developer %}{% if root.slug %}{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}{% elif dev.slug %}{% url 'developer-detail' slug=dev.slug %}{% else %}#{% endif %}{% endwith %}" class="link link-primary text-lg font-bold truncate" style="max-width: calc(100vw - 4rem);">
+                {% with root=dev.root_developer %}{{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}{% endwith %}
+            </a>
             {# Top game #}
             {% if dev.top_game %}
-            <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-2 group">
-                <span class="text-base-content/60 text-sm">Top:</span>
-                <span class="text-primary font-bold text-sm">#{{ dev.top_game.rank }}</span>
+            <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-2 group min-w-0" style="max-width: calc(100vw - 4rem);">
+                <span class="text-base-content/60 text-sm shrink-0">Top:</span>
+                <span class="text-primary font-bold text-sm shrink-0">#{{ dev.top_game.rank }}</span>
                 {% if dev.top_game.thumbnail %}
-                <img src="{{ dev.top_game.thumbnail }}"
-                     alt=""
-                     class="w-6 h-8 object-cover rounded"
-                     loading="lazy">
+                <img src="{{ dev.top_game.thumbnail }}" alt="" class="w-6 h-8 object-cover rounded shrink-0" loading="lazy">
                 {% else %}
-                <div class="w-6 h-8 bg-base-300 rounded flex items-center justify-center">
+                <div class="w-6 h-8 bg-base-300 rounded flex items-center justify-center shrink-0">
                     <span class="mdi mdi-gamepad-variant text-xs text-base-content/30"></span>
                 </div>
                 {% endif %}
-                <span class="text-sm truncate group-hover:underline">{{ dev.top_game.name }}</span>
+                <span class="text-sm truncate group-hover:underline min-w-0">{{ dev.top_game.name }}</span>
             </a>
             {% endif %}
             {# Badges #}
