@@ -2,6 +2,7 @@
 
 ## 2026-01-01
 
+- Fix developer detail layout shift: server-render game count and rank distribution to reserve space
 - Add visual divider between hero section and filters on home page
 - Fix sign up modal on mobile: add scrolling and compress vertical spacing for small screens
 - Fix platform filter sorting: individual platforms now sort by (start year, end year, alphabetical) instead of game count
