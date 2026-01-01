@@ -53,7 +53,7 @@ class HomePageViewTest(TestCase):
         """Test that home page loads successfully."""
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "games/game_list.html")
+        self.assertTemplateUsed(response, "games/home.html")
 
     def test_news_page_contains_posts(self):
         """Test that news page includes posts."""
@@ -157,6 +157,12 @@ class HomePageViewTest(TestCase):
             self.assertIn("form", response.context)
             self.assertFalse(response.context["form"].is_valid())
 
+    def test_home_page_shows_signup_for_anonymous(self):
+        """Test that home page shows sign up button for anonymous users."""
+        response = self.client.get(reverse("home"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Sign Up", content)
+
 
 class ContactPageViewTest(TestCase):
     """Test the dedicated contact page view."""
@@ -180,7 +186,7 @@ class ContactThankYouViewTest(TestCase):
 
 
 class GameListViewTest(TestCase):
-    """Test the game list view (now uses GameSearchView with legacy param support)."""
+    """Test the game list view (HomePageView with legacy param support)."""
 
     @classmethod
     def setUpTestData(cls):
@@ -194,7 +200,7 @@ class GameListViewTest(TestCase):
         """Test that game list page loads."""
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "games/game_list.html")
+        self.assertTemplateUsed(response, "games/home.html")
 
     def test_pagination(self):
         """Test that pagination works correctly."""
@@ -452,8 +458,8 @@ class GameDetailViewTest(TestCase):
         self.assertTrue(response.context.get("is_played", False))
 
 
-class GameSearchViewTest(TestCase):
-    """Test the game search view (at / URL)."""
+class HomePageFilterTest(TestCase):
+    """Test the home page filtering and search functionality."""
 
     def setUp(self):
         # Create test games with different attributes
@@ -486,7 +492,7 @@ class GameSearchViewTest(TestCase):
         """Test that search page loads."""
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "games/game_list.html")
+        self.assertTemplateUsed(response, "games/home.html")
 
     def test_old_search_url_redirects(self):
         """Test that old /games/search/ URL redirects to /."""
@@ -2434,67 +2440,3 @@ class AuthModalViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
         self.assertIn("Invalid Verification Link", content)
-
-
-class HomeSubscribeViewTests(TestCase):
-    """Tests for the home page newsletter subscription for logged-in users."""
-
-    def test_home_subscribe_requires_authentication(self):
-        """Test that home subscribe redirects to home for anonymous users."""
-        response = self.client.post(reverse("home-subscribe"))
-        self.assertRedirects(response, reverse("home"))
-
-    def test_home_subscribe_subscribes_user(self):
-        """Test that home subscribe sets email_subscribed for logged-in user."""
-        from django.contrib.auth import get_user_model
-
-        User = get_user_model()
-        user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
-        )
-        self.client.login(username="testuser", password="testpass123")
-
-        # User starts unsubscribed
-        self.assertFalse(user.email_subscribed)
-
-        response = self.client.post(reverse("home-subscribe"))
-        self.assertRedirects(response, reverse("home"))
-
-        # User should now be subscribed
-        user.refresh_from_db()
-        self.assertTrue(user.email_subscribed)
-        self.assertIsNotNone(user.date_subscribed)
-        self.assertIsNotNone(user.unsubscribe_token)
-
-    def test_home_subscribe_already_subscribed_no_change(self):
-        """Test that home subscribe is idempotent for already subscribed users."""
-        from django.contrib.auth import get_user_model
-        from django.utils import timezone
-
-        User = get_user_model()
-        original_date = timezone.now()
-        user = User.objects.create_user(
-            username="testuser",
-            email="test@example.com",
-            password="testpass123",
-            email_subscribed=True,
-            date_subscribed=original_date,
-        )
-        user.generate_unsubscribe_token()
-        user.save()
-        original_token = user.unsubscribe_token
-        self.client.login(username="testuser", password="testpass123")
-
-        response = self.client.post(reverse("home-subscribe"))
-        self.assertRedirects(response, reverse("home"))
-
-        # Date and token should be unchanged
-        user.refresh_from_db()
-        self.assertTrue(user.email_subscribed)
-        self.assertEqual(user.unsubscribe_token, original_token)
-
-    def test_home_page_shows_signup_for_anonymous(self):
-        """Test that home page shows sign up button for anonymous users."""
-        response = self.client.get(reverse("home"))
-        content = response.content.decode("utf-8")
-        self.assertIn("Sign Up", content)

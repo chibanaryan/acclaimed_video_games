@@ -369,66 +369,6 @@ def _build_filter_title(
     return f"{title}{time_suffix}{played_suffix}"
 
 
-class HomePageView(FormView):
-    """Home page with top games, latest news, and contact form."""
-
-    template_name = "home.html"
-    form_class = ContactForm
-    success_url = reverse_lazy("contact_thank_you")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # Fetch latest posts (limit 5 for home page)
-        context["posts"] = models.Post.objects.filter(active=True).order_by("-date")[:5]
-
-        # Fetch top 30 games for display
-        context["games"] = models.Game.objects.with_relations().order_by("rank")[:30]
-
-        # Fetch counts for dynamic tagline
-        context["list_count"] = models.List.objects.count()
-        context["publication_count"] = models.Publication.objects.count()
-        context["game_count"] = models.Game.objects.count()
-
-        # Year range for coverage display
-        from django.db.models import Min, Max
-
-        year_agg = models.Game.objects.aggregate(
-            min_year=Min("year_of_release"), max_year=Max("year_of_release")
-        )
-        context["min_year"] = year_agg["min_year"]
-        context["max_year"] = year_agg["max_year"]
-
-        # Fetch meta data for last update
-        # Get last_full_update from SiteMetadata
-        metadata = models.SiteMetadata.get_instance()
-        context["last_update"] = metadata.last_full_update
-
-        return context
-
-    def form_valid(self, form):
-        """Process valid contact form submission and send email."""
-        name = form.cleaned_data["name"]
-        email = form.cleaned_data["email"]
-        category = form.cleaned_data["category"]
-        message = form.cleaned_data["message"]
-
-        # Send the email
-        email_sent = utils.send_contact_email(name, email, category, message)
-
-        if not email_sent:
-            # If email fails, add an error message and re-render the form
-            form.add_error(
-                None,
-                "We're sorry, but there was an error sending your message. "
-                "Please try again later or email us directly at "
-                "contact@acclaimedvideogames.com",
-            )
-            return self.form_invalid(form)
-
-        return super().form_valid(form)
-
-
 class ContactFormView(FormView):
     """Dedicated contact form handler (for form POST from modal)."""
 
@@ -464,26 +404,9 @@ class ContactThankYouView(TemplateView):
     template_name = "contact_thank_you.html"
 
 
-class HomeSubscribeView(View):
-    """Subscribe to newsletter from home page (for logged-in users)."""
-
-    def post(self, request):
-        if not request.user.is_authenticated:
-            return redirect("home")
-
-        user = request.user
-        if not user.email_subscribed:
-            user.email_subscribed = True
-            user.date_subscribed = timezone.now()
-            user.generate_unsubscribe_token()
-            user.save()
-
-        return redirect("home")
-
-
 def download_games_csv(request):
     """Download games list as CSV, respecting current filters."""
-    # Get filtered queryset using same logic as GameSearchView / GameListView
+    # Get filtered queryset using same logic as HomePageView
     qs = models.Game.objects.with_relations()
 
     # Add played status annotation for authenticated users
@@ -741,9 +664,9 @@ class GameDetailView(DetailView):
 
 
 @method_decorator(vary_on_headers("X-Requested-With", "HX-Request"), name="dispatch")
-class GameSearchView(RobustPaginationMixin, ListView):
+class HomePageView(RobustPaginationMixin, ListView):
     model = models.Game
-    template_name = "games/game_list.html"
+    template_name = "games/home.html"
     context_object_name = "games"
     paginate_by = 100
     paginate_orphans = 0

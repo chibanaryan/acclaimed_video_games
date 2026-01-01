@@ -42,6 +42,8 @@
   --noise: 1;
 }
 
+
+
 @plugin "daisyui/theme" {
   name: "forest";
   default: false;

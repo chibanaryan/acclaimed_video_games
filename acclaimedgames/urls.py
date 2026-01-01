@@ -83,9 +83,8 @@ urlpatterns = [
     ),
     # Main site routes (Django + HTMX + Alpine.js)
     # Rankings is the homepage
-    path("", views.GameSearchView.as_view(), name="home"),
+    path("", views.HomePageView.as_view(), name="home"),
     path("contact/", views.ContactFormView.as_view(), name="contact"),
-    path("subscribe/", views.HomeSubscribeView.as_view(), name="home-subscribe"),
     path(
         "contact/thank-you/",
         views.ContactThankYouView.as_view(),

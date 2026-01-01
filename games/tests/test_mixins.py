@@ -125,7 +125,7 @@ class HTMXPartialMixinTest(TestCase):
 
         class TestView(HTMXPartialMixin, ListView):
             model = models.Game
-            template_name = "games/game_list.html"
+            template_name = "games/home.html"
             htmx_partial_template = "games/includes/_game_list_content.html"
 
         view = TestView()
@@ -140,7 +140,7 @@ class HTMXPartialMixinTest(TestCase):
 
         class TestView(HTMXPartialMixin, ListView):
             model = models.Game
-            template_name = "games/game_list.html"
+            template_name = "games/home.html"
             htmx_partial_template = "games/includes/_game_list_content.html"
 
         view = TestView()
@@ -150,7 +150,7 @@ class HTMXPartialMixinTest(TestCase):
         templates = view.get_template_names()
 
         # Full template should be first (partial not used for non-HTMX)
-        self.assertEqual(templates[0], "games/game_list.html")
+        self.assertEqual(templates[0], "games/home.html")
         self.assertNotIn("games/includes/_game_list_content.html", templates)
 
     def test_htmx_request_without_partial_template_returns_full(self):
@@ -158,7 +158,7 @@ class HTMXPartialMixinTest(TestCase):
 
         class TestView(HTMXPartialMixin, ListView):
             model = models.Game
-            template_name = "games/game_list.html"
+            template_name = "games/home.html"
             # htmx_partial_template not set
 
         view = TestView()
@@ -168,4 +168,4 @@ class HTMXPartialMixinTest(TestCase):
         templates = view.get_template_names()
 
         # Without partial configured, full template is returned
-        self.assertEqual(templates[0], "games/game_list.html")
+        self.assertEqual(templates[0], "games/home.html")
