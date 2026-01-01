@@ -90,7 +90,7 @@
     <div class="divider my-4"></div>
     <form action="{% url 'auth-logout' %}" method="post">
         {% csrf_token %}
-        <button type="submit" class="btn btn-outline btn-error w-full">
+        <button type="submit" class="btn btn-outline btn-primary w-full">
             <span class="mdi mdi-logout"></span>
             Logout
         </button>
