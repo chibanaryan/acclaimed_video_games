@@ -1,5 +1,5 @@
 {# Mobile Genre Filter - Hierarchical Tree with Wikipedia Genres #}
-{# Assumes parent has filters.genres (array, single-select), and genres (list) from main Alpine.js state #}
+{# Assumes parent has filters.genres (array, multi-select), and genres (list) from main Alpine.js state #}
 {% load static %}
 
 <div x-data="{
@@ -52,6 +52,38 @@
             });
         },
 
+        // Get all descendant IDs for a genre (recursive)
+        getDescendantIds(genreId) {
+            const children = this.getChildren(genreId);
+            let ids = children.map(c => String(c.id));
+            for (const child of children) {
+                ids = ids.concat(this.getDescendantIds(child.id));
+            }
+            return ids;
+        },
+
+        // Check if genre has any games with current filters (or is selected)
+        isGenreAvailable(genreId) {
+            const genre = genres.find(g => String(g.id) === String(genreId));
+            if (!genre) return false;
+            const count = this.getEffectiveCount(genre);
+            return count > 0 || this.isGenreSelected(genreId);
+        },
+
+        // Check if all children of a category are selected
+        allChildrenSelected(categoryId) {
+            const children = this.getChildren(categoryId).filter(c => this.isGenreAvailable(c.id));
+            if (children.length === 0) return false;
+            return children.every(c => filters.genres.includes(String(c.id)));
+        },
+
+        // Find the parent of a genre
+        findGenreParent(genreId) {
+            const genre = genres.find(g => String(g.id) === String(genreId));
+            if (!genre || !genre.parent_id) return null;
+            return genres.find(g => String(g.id) === String(genre.parent_id));
+        },
+
         // Get total filtered count for a category (category's own count + sum of all children's effective count)
         getCategoryTotalCount(categoryId) {
             const category = genres.find(g => String(g.id) === String(categoryId));
@@ -87,24 +119,79 @@
             return filters.genres.includes(String(categoryId));
         },
 
-        // Toggle individual genre (single-select)
+        // MULTI-SELECT: Toggle individual genre (add/remove from selection)
+        // Implements drill-down: clicking a child when parent/ancestor is fully selected
+        // switches to just the child instead of removing it
         toggleGenre(genreId) {
             const id = String(genreId);
-            if (filters.genres.includes(id)) {
-                filters.genres = [];  // Deselect
-            } else {
-                filters.genres = [id];  // Replace with single selection
+            const genre = genres.find(g => String(g.id) === id);
+
+            // Check if parent category is selected
+            if (genre && genre.parent_id) {
+                const parentId = String(genre.parent_id);
+
+                // If parent category is directly selected, drill down to just this genre
+                if (filters.genres.includes(parentId)) {
+                    // Remove parent, add just this child
+                    filters.genres = filters.genres.filter(gid => gid !== parentId);
+                    if (!filters.genres.includes(id)) {
+                        filters.genres.push(id);
+                    }
+                    this.dispatchFilterChange();
+                    return;
+                }
+
+                // If all siblings are selected, drill down to just this genre
+                if (this.allChildrenSelected(parentId)) {
+                    const siblingIds = this.getChildren(parentId).map(c => String(c.id));
+                    // Remove all siblings
+                    filters.genres = filters.genres.filter(gid => !siblingIds.includes(gid));
+                    // Add just this genre
+                    filters.genres.push(id);
+                    this.dispatchFilterChange();
+                    return;
+                }
             }
+
+            // Normal toggle behavior
+            const idx = filters.genres.indexOf(id);
+            if (idx > -1) {
+                // Already selected - remove it
+                filters.genres.splice(idx, 1);
+            } else {
+                // Not selected - add it
+                filters.genres.push(id);
+            }
+            this.dispatchFilterChange();
         },
 
-        // Toggle parent category selection (single-select)
+        // MULTI-SELECT: Toggle parent category selection (add/remove from selection)
+        // Implements exclusive selection: selecting parent removes all descendants
         toggleCategorySelection(categoryId) {
             const id = String(categoryId);
-            if (filters.genres.includes(id)) {
-                filters.genres = [];  // Deselect
-            } else {
-                filters.genres = [id];  // Replace with single selection
+            // Preserve current expansion state before selection changes
+            if (this.expandedCategories[id] === undefined) {
+                this.expandedCategories[id] = this.hasCategoryOrChildrenSelected(id);
             }
+            const idx = filters.genres.indexOf(id);
+            if (idx > -1) {
+                // Already selected - remove it
+                filters.genres.splice(idx, 1);
+            } else {
+                // Not selected - add category and remove all descendants (exclusive selection)
+                const descendantIds = this.getDescendantIds(categoryId);
+                // Remove any selected descendants
+                filters.genres = filters.genres.filter(gid => !descendantIds.includes(gid));
+                // Add the category
+                filters.genres.push(id);
+            }
+            this.dispatchFilterChange();
+        },
+
+        // Dispatch filter change event
+        dispatchFilterChange() {
+            const selectedItems = genres.filter(g => filters.genres.includes(String(g.id)));
+            $dispatch('filter-changed', { type: 'genres', items: selectedItems });
         },
 
         selectedCount() {

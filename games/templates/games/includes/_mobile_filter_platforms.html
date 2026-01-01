@@ -1,5 +1,5 @@
 {# Mobile Platform Filter - Hierarchical Tree with Form Factors #}
-{# Assumes parent has filters.platforms (array, single-select), and platforms (list) from main Alpine.js state #}
+{# Assumes parent has filters.platforms (array, multi-select), and platforms (list) from main Alpine.js state #}
 {% load static %}
 
 <div x-data="{
@@ -253,25 +253,44 @@
             return true;
         },
 
-        // SINGLE-SELECT: Toggle platform (replaces selection)
+        // MULTI-SELECT: Toggle platform (add/remove from selection)
+        // Implements drill-down: clicking a child when parent is fully selected
+        // switches to just the child instead of removing it
         togglePlatform(platformId) {
             const id = String(platformId);
-            // Check if this platform is part of a fully selected parent
             const parentInfo = this.findPlatformParent(platformId);
-            const isPartOfFullSelection = parentInfo && (
-                this.isManufacturerSelected(parentInfo.mfrKey) ||
-                (parentInfo.ffKey && this._isFormFactorFullySelected(parentInfo.mfrKey, parentInfo.ffKey))
-            );
 
-            if (isPartOfFullSelection) {
-                // When clicking a platform within a fully selected group, select only that platform
-                filters.platforms = [id];
-            } else if (filters.platforms.length === 1 && filters.platforms.includes(id)) {
-                // Only deselect if this is the only selected platform
-                filters.platforms = [];
+            // Check if clicking a platform whose parent hierarchy is fully selected
+            if (parentInfo) {
+                // If manufacturer is fully selected, drill down to just this platform
+                if (this.isManufacturerSelected(parentInfo.mfrKey)) {
+                    const mfrPlatformIds = this.getAllPlatformIdsForManufacturer(parentInfo.mfrKey);
+                    // Remove all manufacturer platforms, keep others
+                    filters.platforms = filters.platforms.filter(pid => !mfrPlatformIds.includes(pid));
+                    // Add just this platform
+                    filters.platforms.push(id);
+                    return;
+                }
+
+                // If form factor is fully selected, drill down to just this platform
+                if (parentInfo.ffKey && this._isFormFactorFullySelected(parentInfo.mfrKey, parentInfo.ffKey)) {
+                    const ffPlatformIds = this.getAllPlatformIdsForFormFactor(parentInfo.mfrKey, parentInfo.ffKey);
+                    // Remove all form factor platforms, keep others
+                    filters.platforms = filters.platforms.filter(pid => !ffPlatformIds.includes(pid));
+                    // Add just this platform
+                    filters.platforms.push(id);
+                    return;
+                }
+            }
+
+            // Normal toggle behavior
+            const idx = filters.platforms.indexOf(id);
+            if (idx > -1) {
+                // Already selected - remove it
+                filters.platforms.splice(idx, 1);
             } else {
-                // Otherwise select just this platform
-                filters.platforms = [id];
+                // Not selected - add it
+                filters.platforms.push(id);
             }
         },
 
@@ -331,33 +350,51 @@
             return platformIds.every(id => filters.platforms.includes(id));
         },
 
-        // Toggle manufacturer selection (select all platforms if not all selected, clear if all selected)
+        // MULTI-SELECT: Toggle manufacturer selection (add/remove all platforms)
         toggleManufacturerSelection(mfrKey) {
+            // Preserve current expansion state before selection changes
+            if (this.expandedManufacturers[mfrKey] === undefined) {
+                this.expandedManufacturers[mfrKey] = this.hasManufacturerOrChildrenSelected(mfrKey);
+            }
             const platformIds = this.getAllPlatformIdsForManufacturer(mfrKey);
             if (this.isManufacturerSelected(mfrKey)) {
-                filters.platforms = [];  // Deselect all
+                // All selected - remove all manufacturer's platforms
+                filters.platforms = filters.platforms.filter(id => !platformIds.includes(id));
             } else {
-                filters.platforms = [...platformIds];  // Select all manufacturer platforms
+                // Add all manufacturer's platforms that aren't already selected
+                const newIds = platformIds.filter(id => !filters.platforms.includes(id));
+                filters.platforms = [...filters.platforms, ...newIds];
             }
         },
 
-        // Toggle form factor selection (select all platforms if not all selected, clear if all selected)
+        // MULTI-SELECT: Toggle form factor selection (add/remove all platforms)
+        // Implements drill-down: clicking a form factor when manufacturer is fully selected
+        // switches to just that form factor instead of toggling
         toggleFormFactorSelection(mfrKey, ffKey) {
+            const key = mfrKey + '_' + ffKey;
+            // Preserve current expansion state before selection changes
+            if (this.expandedFormFactors[key] === undefined) {
+                this.expandedFormFactors[key] = this.hasFormFactorSelection(mfrKey, ffKey);
+            }
             const platformIds = this.getAllPlatformIdsForFormFactor(mfrKey, ffKey);
-            // If manufacturer is fully selected, clicking form factor selects just that form factor
+
+            // If manufacturer is fully selected, drill down to just this form factor
             if (this.isManufacturerSelected(mfrKey)) {
-                filters.platforms = [...platformIds];
-            } else if (this._isFormFactorFullySelected(mfrKey, ffKey)) {
-                // Only deselect if this form factor is the only thing selected
-                const allFormFactorIds = new Set(platformIds);
-                const allSelected = filters.platforms.every(id => allFormFactorIds.has(id));
-                if (allSelected && filters.platforms.length === platformIds.length) {
-                    filters.platforms = [];  // Deselect all
-                } else {
-                    filters.platforms = [...platformIds];  // Select just this form factor
-                }
+                const mfrPlatformIds = this.getAllPlatformIdsForManufacturer(mfrKey);
+                // Remove all manufacturer platforms, keep others
+                filters.platforms = filters.platforms.filter(id => !mfrPlatformIds.includes(id));
+                // Add just this form factor's platforms
+                filters.platforms = [...filters.platforms, ...platformIds];
+                return;
+            }
+
+            if (this._isFormFactorFullySelected(mfrKey, ffKey)) {
+                // All selected - remove all form factor's platforms
+                filters.platforms = filters.platforms.filter(id => !platformIds.includes(id));
             } else {
-                filters.platforms = [...platformIds];  // Select all form factor platforms
+                // Add all form factor's platforms that aren't already selected
+                const newIds = platformIds.filter(id => !filters.platforms.includes(id));
+                filters.platforms = [...filters.platforms, ...newIds];
             }
         },
 

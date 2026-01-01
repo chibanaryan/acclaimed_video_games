@@ -44,6 +44,7 @@
 - Add Microcomputers sub-grouping: Commodore, UK, Japan, Atari, Other (sorted by game count)
 - Sort all platform filter levels by game count: manufacturers, form factors, and individual platforms
 - Add Microcomputer form factor titles: "UK Microcomputer Games", "Japanese Microcomputer Games", etc.
+- Mobile filters: match desktop multi-select behavior with drill-down and exclusive parent selection
 
 ## 2025-12-30
 
