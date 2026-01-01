@@ -169,20 +169,20 @@
 
 /* Prose typography customization for dark theme */
 .prose {
-  --tw-prose-links: var(--color-primary);
-  --tw-prose-invert-links: var(--color-primary);
+  --tw-prose-links: var(--color-accent);
+  --tw-prose-invert-links: var(--color-accent);
 }
 
 .prose a {
-  color: var(--color-primary);
+  color: var(--color-accent);
   text-decoration: underline;
-  text-decoration-color: color-mix(in oklch, var(--color-primary) 40%, transparent);
+  text-decoration-color: color-mix(in oklch, var(--color-accent) 40%, transparent);
   transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
 .prose a:hover {
-  color: oklch(from var(--color-primary) calc(l + 0.1) c h);
-  text-decoration-color: var(--color-primary);
+  color: oklch(from var(--color-accent) calc(l + 0.1) c h);
+  text-decoration-color: var(--color-accent);
 }
 
 /* Minimal table styling - reduced visual noise per Tufte principles */
