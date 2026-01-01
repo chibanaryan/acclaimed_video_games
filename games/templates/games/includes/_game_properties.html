@@ -2,6 +2,7 @@
 {# Props: game (full game object) #}
 {% load game_filters %}
 {% load humanize %}
+{% load static %}
 
 {% if user.is_authenticated and game.igdb_id %}
 <div class="flex items-center gap-3 mb-4">
@@ -68,7 +69,7 @@
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if platforms|length == 1 %}Platform{% else %}Platforms{% endif %}:</td>
         <td class="pb-3">
             <span class="flex flex-wrap gap-1">
-                {% for platform in platforms %}<a href="{% url 'home' %}?platforms={{ platform.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] overflow-hidden" title="{{ platform.name }}"><span class="truncate">{{ platform.name }}</span></a>{% endfor %}
+                {% for platform in platforms %}<a href="{% url 'home' %}?platforms={{ platform.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] overflow-hidden inline-flex items-center gap-1" title="{{ platform.name }}">{% with svg_icon=platform|platform_svg_icon mdi_icon=platform|platform_icon %}{% if svg_icon %}<svg class="w-3.5 h-3.5 fill-current flex-shrink-0" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ svg_icon }}"></use></svg>{% elif mdi_icon %}<span class="mdi {{ mdi_icon }} text-sm flex-shrink-0"></span>{% endif %}{% endwith %}<span class="truncate">{{ platform.name }}</span></a>{% endfor %}
             </span>
         </td>
     </tr>
@@ -79,7 +80,7 @@
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if genres|length == 1 %}Genre{% else %}Genres{% endif %}:</td>
         <td class="pb-3">
             <span class="flex flex-wrap gap-1">
-                {% for genre in genres %}<a href="{% url 'home' %}?genres={{ genre.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] overflow-hidden" title="{{ genre.name }}"><span class="truncate">{{ genre.name }}</span></a>{% endfor %}
+                {% for genre in genres %}<a href="{% url 'home' %}?genres={{ genre.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] overflow-hidden inline-flex items-center gap-1" title="{{ genre.name }}"><span class="mdi {{ genre|genre_icon }} text-sm flex-shrink-0"></span><span class="truncate">{{ genre.name }}</span></a>{% endfor %}
             </span>
         </td>
     </tr>

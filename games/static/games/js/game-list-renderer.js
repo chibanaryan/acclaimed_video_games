@@ -30,6 +30,91 @@ class GameListRenderer {
     }
 
     /**
+     * Platform family mappings (must match game_filters.py PLATFORM_FAMILIES)
+     * @private
+     */
+    _platformFamilies = {
+        // Nintendo
+        'SW': 'nintendo', 'WiiU': 'nintendo', 'Wii': 'nintendo', 'GC': 'nintendo',
+        'N64': 'nintendo', 'SNES': 'nintendo', 'NES': 'nintendo', 'GB': 'nintendo',
+        'GBC': 'nintendo', 'GBA': 'nintendo', 'DS': 'nintendo', '3DS': 'nintendo', 'FDS': 'nintendo',
+        // PlayStation
+        'PS5': 'playstation', 'PS4': 'playstation', 'PS3': 'playstation',
+        'PS2': 'playstation', 'PS': 'playstation', 'PSP': 'playstation',
+        'PSV': 'playstation', 'PSVR': 'playstation',
+        // Xbox
+        'XBXS': 'xbox', 'XB1': 'xbox', 'X360': 'xbox', 'Xbox': 'xbox',
+        // Sega
+        'GEN': 'sega', 'DC': 'sega', 'SAT': 'sega', 'SMS': 'sega', 'GG': 'sega', 'SCD': 'sega',
+        // PC
+        'WIN': 'pc', 'DOS': 'pc', 'LIN': 'pc', 'MAC': 'pc',
+        // Retro consoles
+        'A26': 'retro', 'A52': 'retro', 'A78': 'retro', 'INTV': 'retro',
+        'CV': 'retro', 'TG16': 'retro', '3DO': 'retro', 'NG': 'retro',
+        'JAG': 'retro', 'LYNX': 'retro',
+        // Microcomputers
+        'C64': 'computers', 'AMI': 'computers', 'CD32': 'computers', 'MSX': 'computers',
+        'CPC': 'computers', 'ZXS': 'computers', 'AST': 'computers', 'BBCM': 'computers',
+        'PC88': 'computers', 'PC98': 'computers', 'FMT': 'computers', 'FM7': 'computers',
+        'SX1': 'computers', 'T80': 'computers', 'TCC': 'computers', 'VC20': 'computers',
+        'A8': 'computers', 'A2': 'computers', 'ARCH': 'computers', 'E60': 'computers',
+        'HP21': 'computers', 'PDP': 'computers',
+        // Arcade/Mobile/VR
+        'ARC': 'arcade', 'AND': 'arcade', 'iOS': 'arcade', 'LMD': 'arcade',
+        'VR': 'arcade', 'BR': 'arcade',
+    };
+
+    /**
+     * Family display info (must match game_filters.py FAMILY_INFO)
+     * @private
+     */
+    _familyInfo = {
+        'nintendo': { icon: 'mdi-nintendo-switch', name: 'Nintendo', svg: null },
+        'playstation': { icon: 'mdi-sony-playstation', name: 'PlayStation', svg: null },
+        'xbox': { icon: 'mdi-microsoft-xbox', name: 'Xbox', svg: null },
+        'pc': { icon: 'mdi-microsoft-windows', name: 'PC', svg: null },
+        'sega': { icon: null, name: 'Sega', svg: 'platform-sega' },
+        'retro': { icon: 'mdi-television-classic', name: 'Retro', svg: null },
+        'computers': { icon: 'mdi-desktop-classic', name: 'Microcomputers', svg: null },
+        'arcade': { icon: 'mdi-space-invaders', name: 'Arcade+', svg: null },
+    };
+
+    /**
+     * Group platforms by family for display
+     * @private
+     * @param {Array} platforms - Array of platform objects with id, code, name
+     * @returns {Array} Array of family objects with icon, count, platformIds, tooltip
+     */
+    _groupPlatformsByFamily(platforms) {
+        const families = {};
+
+        for (const p of platforms) {
+            const familyKey = this._platformFamilies[p.code];
+            const familyInfo = this._familyInfo[familyKey];
+            if (!familyInfo) continue;
+
+            if (!families[familyKey]) {
+                families[familyKey] = {
+                    ...familyInfo,
+                    key: familyKey,
+                    platformIds: [],
+                    platformNames: [],
+                };
+            }
+            families[familyKey].platformIds.push(p.id);
+            families[familyKey].platformNames.push(p.name);
+        }
+
+        // Convert to array and add computed fields
+        return Object.values(families).map(f => ({
+            ...f,
+            count: f.platformNames.length,
+            platformIdsStr: f.platformIds.join(','),
+            tooltip: f.platformNames.join(', '),
+        }));
+    }
+
+    /**
      * Initialize templates from DOM
      * Called lazily on first render
      * @private
@@ -253,7 +338,7 @@ class GameListRenderer {
             }
         }
 
-        // Fill meta row (developer + list count - always visible)
+        // Fill meta row (developer, list count, platforms, genres)
         const metaRow = row.querySelector('[data-slot="meta-row"]');
         if (metaRow) {
             let metaHtml = '';
@@ -277,33 +362,28 @@ class GameListRenderer {
                 }
                 metaHtml += `<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span>`;
             }
-            metaRow.innerHTML = metaHtml;
-        }
-
-        // Fill platforms (hover row)
-        const platsContainer = row.querySelector('[data-slot="platforms"]');
-        if (platsContainer) {
-            if (expanded.platforms.length > 0) {
-                platsContainer.innerHTML = expanded.platforms.map(p =>
-                    `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-24 overflow-hidden" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(p.name)}"><span class="truncate">${this._escapeHtml(p.code)}</span></button>`
-                ).join('');
-                platsContainer.classList.remove('hidden');
-            } else {
-                platsContainer.classList.add('hidden');
+            // Platforms - grouped by family
+            const platformFamilies = this._groupPlatformsByFamily(expanded.platforms);
+            if (platformFamilies.length > 0) {
+                if (metaHtml) metaHtml += ' <span class="text-base-content/30">•</span> ';
+                const platformsHtml = platformFamilies.map(f => {
+                    const iconHtml = f.svg
+                        ? `<svg class="w-3.5 h-3.5" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
+                        : `<span class="mdi ${f.icon} text-sm leading-none" aria-hidden="true"></span>`;
+                    const countHtml = f.count > 1 ? `<span class="tabular-nums font-bold leading-none" style="font-size: 8px; margin-left: 1px; margin-top: -2px;">${f.count}</span>` : '';
+                    return `<span class="tooltip tooltip-top" data-tip="${this._escapeHtml(f.tooltip)}"><button type="button" class="inline-flex items-start hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-platforms', {detail: {platformIds: '${f.platformIdsStr}', gameId: '${game.id}'} }))">${iconHtml}${countHtml}</button></span>`;
+                }).join('');
+                metaHtml += `<span class="inline-flex items-center gap-1" data-slot="platforms">${platformsHtml}</span>`;
             }
-        }
-
-        // Fill genres (hover row)
-        const genresContainer = row.querySelector('[data-slot="genres"]');
-        if (genresContainer) {
+            // Genres - text format with / separators
             if (expanded.genres.length > 0) {
-                genresContainer.innerHTML = expanded.genres.map(g =>
-                    `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 overflow-hidden" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}"><span class="truncate">${this._escapeHtml(g.name)}</span></button>`
+                if (metaHtml) metaHtml += ' <span class="text-base-content/30">•</span> ';
+                const genresHtml = expanded.genres.map((g, i) =>
+                    `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>${i < expanded.genres.length - 1 ? '<span class="text-base-content/30">/</span>' : ''}`
                 ).join('');
-                genresContainer.classList.remove('hidden');
-            } else {
-                genresContainer.classList.add('hidden');
+                metaHtml += `<span class="inline-flex items-center gap-1" data-slot="genres">${genresHtml}</span>`;
             }
+            metaRow.innerHTML = metaHtml;
         }
 
         return row;
@@ -341,18 +421,32 @@ class GameListRenderer {
             metaHtml += `<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span>`;
         }
 
-        const platformsHtml = expanded.platforms.map(p =>
-            `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-24 overflow-hidden" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(p.name)}"><span class="truncate">${this._escapeHtml(p.code)}</span></button>`
-        ).join('');
-        const genresHtml = expanded.genres.map(g =>
-            `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 overflow-hidden" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}"><span class="truncate">${this._escapeHtml(g.name)}</span></button>`
+        // Group platforms by family
+        const platformFamilies = this._groupPlatformsByFamily(expanded.platforms);
+        const platformsHtml = platformFamilies.map(f => {
+            const iconHtml = f.svg
+                ? `<svg class="w-3.5 h-3.5" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
+                : `<span class="mdi ${f.icon} text-sm leading-none" aria-hidden="true"></span>`;
+            const countHtml = f.count > 1 ? `<span class="tabular-nums font-bold leading-none" style="font-size: 8px; margin-left: 1px; margin-top: -2px;">${f.count}</span>` : '';
+            return `<span class="tooltip tooltip-top" data-tip="${this._escapeHtml(f.tooltip)}"><button type="button" class="inline-flex items-start hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-platforms', {detail: {platformIds: '${f.platformIdsStr}', gameId: '${game.id}'} }))">${iconHtml}${countHtml}</button></span>`;
+        }).join('');
+        const genresHtml = expanded.genres.map((g, i) =>
+            `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>${i < expanded.genres.length - 1 ? '<span class="text-base-content/30">/</span>' : ''}`
         ).join('');
         const globalRankHtml = showGlobalRank ? `<span class="game-row-global-rank text-xs text-base-content/50 tabular-nums">(#${game.r})</span>` : '';
         const playedButtonHtml = this._renderPlayedButtonString(game);
         const playedContainerHtml = playedButtonHtml ? `<div class="w-12 min-w-12 max-w-12 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
 
-        // Build separator for hover row
-        const separatorHtml = (expanded.platforms.length > 0 && expanded.genres.length > 0) ? '<span class="text-base-content/30 mx-0.5">•</span>' : '';
+        // Build hover row content
+        let hoverRowHtml = metaHtml;
+        if (platformFamilies.length > 0) {
+            if (hoverRowHtml) hoverRowHtml += ' <span class="text-base-content/30">•</span> ';
+            hoverRowHtml += `<span class="inline-flex items-center gap-1" data-slot="platforms">${platformsHtml}</span>`;
+        }
+        if (expanded.genres.length > 0) {
+            if (hoverRowHtml) hoverRowHtml += ' <span class="text-base-content/30">•</span> ';
+            hoverRowHtml += `<span class="inline-flex items-center gap-1" data-slot="genres">${genresHtml}</span>`;
+        }
 
         const div = document.createElement('div');
         div.innerHTML = `
@@ -370,12 +464,7 @@ class GameListRenderer {
                 <a href="/game/${game.s}/" class="game-title text-2xl font-bold link link-hover">${this._escapeHtml(game.n)}</a>
                 <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1">(${game.y || 'N/A'})</a>
             </div>
-            <div class="text-base-content/50 text-sm ml-4 truncate" data-slot="meta-row">${metaHtml}</div>
-            <div class="game-row-details text-sm flex items-center gap-1 ml-4 mt-1">
-                ${expanded.platforms.length > 0 ? `<span class="flex flex-wrap content-start gap-1 min-w-0" data-slot="platforms">${platformsHtml}</span>` : ''}
-                ${separatorHtml}
-                ${expanded.genres.length > 0 ? `<span class="flex flex-wrap content-start gap-1 min-w-0" data-slot="genres">${genresHtml}</span>` : ''}
-            </div>
+            <div class="game-row-details text-base-content/50 text-sm ml-4 flex items-center gap-1 flex-wrap" data-slot="meta-row">${hoverRowHtml}</div>
         </div>
     </div>
 </div>`;
@@ -431,15 +520,11 @@ class GameListRenderer {
             metaText += `${game.lc} lists`;
         }
 
-        // Build row 2: Platforms + genres
-        const displayPlatforms = expanded.platforms.slice(0, 3);
-        const platformsText = displayPlatforms.map(p => p.code).join(', ');
+        // Build row 2: Platform codes + genres
+        const displayPlatforms = expanded.platforms.slice(0, 2);
+        const extraPlatformCount = expanded.platforms.length - 2;
         const displayGenres = expanded.genres.slice(0, 2);
         const genresText = displayGenres.map(g => g.name).join(', ');
-        let platformsRowText = '';
-        if (platformsText) platformsRowText += platformsText;
-        if (platformsText && genresText) platformsRowText += ' \u2022 ';
-        if (genresText) platformsRowText += genresText;
 
         // Set root element attributes
         row.id = `game-${game.id}-mobile`;
@@ -495,8 +580,19 @@ class GameListRenderer {
         // Fill meta (row 1: developer + list count)
         this._fillSlot(row, 'meta', metaText);
 
-        // Fill platforms-row (row 2: platforms + genres)
-        this._fillSlot(row, 'platforms-row', platformsRowText);
+        // Fill platforms-row (row 2: platform codes + genres)
+        const platformsRowEl = row.querySelector('[data-slot="platforms-row"]');
+        if (platformsRowEl) {
+            let text = displayPlatforms.map(p => p.code).join(', ');
+            if (extraPlatformCount > 0) {
+                text += ` <span class="text-base-content/40">+${extraPlatformCount}</span>`;
+            }
+            if (genresText) {
+                if (expanded.platforms.length > 0) text += ' \u2022 ';
+                text += genresText;
+            }
+            platformsRowEl.innerHTML = text;
+        }
 
         // Show/hide global rank (now under the main rank) based on mode
         const globalRankEl = row.querySelector('[data-slot="global-rank"]');
@@ -534,15 +630,21 @@ class GameListRenderer {
             metaText += `${game.lc} lists`;
         }
 
-        // Build row 2: Platforms + genres
-        const displayPlatforms = expanded.platforms.slice(0, 3);
-        const platformsText = displayPlatforms.map(p => p.code).join(', ');
+        // Build row 2: Platform codes + genres
+        const displayPlatforms = expanded.platforms.slice(0, 2);
+        const extraPlatformCount = expanded.platforms.length - 2;
         const displayGenres = expanded.genres.slice(0, 2);
         const genresText = displayGenres.map(g => g.name).join(', ');
-        let platformsRowText = '';
-        if (platformsText) platformsRowText += platformsText;
-        if (platformsText && genresText) platformsRowText += ' \u2022 ';
-        if (genresText) platformsRowText += genresText;
+
+        // Build platforms text
+        let platformsRowHtml = displayPlatforms.map(p => p.code).join(', ');
+        if (extraPlatformCount > 0) {
+            platformsRowHtml += ` <span class="text-base-content/40">+${extraPlatformCount}</span>`;
+        }
+        if (genresText) {
+            if (expanded.platforms.length > 0) platformsRowHtml += ' \u2022 ';
+            platformsRowHtml += genresText;
+        }
 
         const playedButtonHtml = this._renderPlayedButtonString(game);
         // Only include container if authenticated (button exists)
@@ -564,7 +666,7 @@ class GameListRenderer {
         <div class="min-w-0">
             <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
             <div class="text-xs text-base-content/60 truncate" data-slot="meta">${metaText}</div>
-            <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">${platformsRowText}</div>
+            <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">${platformsRowHtml}</div>
         </div>
     </div>
 </div>`;

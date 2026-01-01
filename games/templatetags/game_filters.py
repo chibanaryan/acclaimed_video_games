@@ -408,6 +408,59 @@ def platform_families(platforms):
 
 
 @register.filter
+def platform_families_grouped(platforms):
+    """
+    Group platforms by family with full metadata for display.
+    Returns list of dicts with:
+    - icon: MDI icon class
+    - svg_icon: SVG symbol ID (if applicable)
+    - name: Family display name (e.g., "PlayStation")
+    - key: Family key
+    - count: Number of platforms in this family
+    - platform_ids_str: Comma-separated platform IDs for filtering
+    - tooltip: Full platform names for tooltip display
+    - order: Sort order
+    """
+    families = {}
+
+    for platform in platforms:
+        code = platform.code if hasattr(platform, "code") else str(platform)
+        family_key = PLATFORM_FAMILIES.get(code)
+
+        if family_key is None or family_key not in FAMILY_INFO:
+            continue
+
+        if family_key not in families:
+            icon, name, order, svg_icon = FAMILY_INFO[family_key]
+            families[family_key] = {
+                "icon": icon,
+                "svg_icon": svg_icon,
+                "name": name,
+                "key": family_key,
+                "order": order,
+                "platform_ids": [],
+                "platform_names": [],
+            }
+
+        platform_id = platform.id if hasattr(platform, "id") else None
+        platform_name = platform.name if hasattr(platform, "name") else code
+
+        if platform_id:
+            families[family_key]["platform_ids"].append(str(platform_id))
+        families[family_key]["platform_names"].append(platform_name)
+
+    # Build final list with computed fields
+    result = []
+    for data in families.values():
+        data["count"] = len(data["platform_names"])
+        data["platform_ids_str"] = ",".join(data["platform_ids"])
+        data["tooltip"] = ", ".join(data["platform_names"])
+        result.append(data)
+
+    return result
+
+
+@register.filter
 def markdown(value):
     """Convert markdown text to HTML."""
     if not value:
@@ -424,3 +477,135 @@ def rank_pct(rank, total):
     if not rank or not total or total <= 1:
         return 0
     return round((1 - (rank - 1) / (total - 1)) * 100)
+
+
+@register.filter
+def platform_icon(platform):
+    """
+    Get the MDI icon class for a platform based on its family.
+
+    Args:
+        platform: Platform object with 'code' attribute
+
+    Returns:
+        MDI icon class string (e.g., 'mdi-nintendo-switch') or None for SVG icons
+    """
+    code = platform.code if hasattr(platform, "code") else str(platform)
+    family_key = PLATFORM_FAMILIES.get(code, "other")
+    if family_key in FAMILY_INFO:
+        icon, _, _, _ = FAMILY_INFO[family_key]
+        return icon
+    return None
+
+
+@register.filter
+def platform_svg_icon(platform):
+    """
+    Get the SVG icon ID for a platform based on its family (for Sega, etc.).
+
+    Args:
+        platform: Platform object with 'code' attribute
+
+    Returns:
+        SVG icon ID string (e.g., 'platform-sega') or None if using MDI icon
+    """
+    code = platform.code if hasattr(platform, "code") else str(platform)
+    family_key = PLATFORM_FAMILIES.get(code, "other")
+    if family_key in FAMILY_INFO:
+        _, _, _, svg_icon = FAMILY_INFO[family_key]
+        return svg_icon
+    return None
+
+
+# Genre category icons - matches the filter components
+GENRE_CATEGORY_ICONS = {
+    "Action": "mdi-crosshairs",
+    "Adventure": "mdi-image-filter-hdr",
+    "Role-Playing": "mdi-wizard-hat",
+    "Strategy": "mdi-chess-knight",
+    "Simulation": "mdi-car-sports",
+    "Sports": "mdi-basketball",
+    "Puzzle": "mdi-puzzle",
+    "Party & Casual": "mdi-party-popper",
+    "Hybrid & Specialized": "mdi-layers",
+}
+
+
+@register.filter
+def genre_categories_grouped(genres):
+    """
+    Group genres by their parent category with metadata for display.
+    Returns list of dicts with:
+    - icon: MDI icon class
+    - name: Category display name
+    - count: Number of genres in this category
+    - genre_ids_str: Comma-separated genre IDs for filtering
+    - tooltip: Full genre names for tooltip display
+    """
+    categories = {}
+
+    for genre in genres:
+        # Determine the category
+        if hasattr(genre, "parent") and genre.parent:
+            category_name = genre.parent.name
+        elif hasattr(genre, "level") and genre.level == 0:
+            category_name = genre.name
+        else:
+            category_name = "Other"
+
+        if category_name not in categories:
+            icon = GENRE_CATEGORY_ICONS.get(category_name, "mdi-gamepad-variant")
+            categories[category_name] = {
+                "icon": icon,
+                "name": category_name,
+                "genre_ids": [],
+                "genre_names": [],
+            }
+
+        genre_id = genre.id if hasattr(genre, "id") else None
+        genre_name = genre.name if hasattr(genre, "name") else str(genre)
+
+        if genre_id:
+            categories[category_name]["genre_ids"].append(str(genre_id))
+        categories[category_name]["genre_names"].append(genre_name)
+
+    # Build final list with computed fields
+    result = []
+    for data in categories.values():
+        data["count"] = len(data["genre_names"])
+        data["genre_ids_str"] = ",".join(data["genre_ids"])
+        data["tooltip"] = ", ".join(data["genre_names"])
+        result.append(data)
+
+    return result
+
+
+@register.filter
+def genre_icon(genre):
+    """
+    Get the MDI icon class for a genre based on its category (parent).
+
+    Args:
+        genre: WikipediaGenre object with 'parent' attribute or category name string
+
+    Returns:
+        MDI icon class string (e.g., 'mdi-crosshairs') or default 'mdi-gamepad-variant'
+    """
+    # If it's a string, check if it's a category name directly
+    if isinstance(genre, str):
+        return GENRE_CATEGORY_ICONS.get(genre, "mdi-gamepad-variant")
+
+    # Check if genre has a parent (category)
+    if hasattr(genre, "parent") and genre.parent:
+        category_name = genre.parent.name
+        return GENRE_CATEGORY_ICONS.get(category_name, "mdi-gamepad-variant")
+
+    # Check if the genre itself is a category (level 0)
+    if hasattr(genre, "level") and genre.level == 0:
+        return GENRE_CATEGORY_ICONS.get(genre.name, "mdi-gamepad-variant")
+
+    # If genre has a name, check if it matches a category
+    if hasattr(genre, "name"):
+        return GENRE_CATEGORY_ICONS.get(genre.name, "mdi-gamepad-variant")
+
+    return "mdi-gamepad-variant"

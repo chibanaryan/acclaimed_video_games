@@ -721,12 +721,12 @@
 
   /* Desktop: Details row hidden by default, shown on hover */
   .game-row.desktop .game-row-details {
-    @apply opacity-0 h-0 overflow-hidden;
-    transition: opacity 0.2s ease, height 0.2s ease;
+    @apply opacity-0 max-h-0 overflow-hidden;
+    transition: opacity 0.2s ease, max-height 0.2s ease;
   }
 
   .game-row.desktop:hover .game-row-details {
-    @apply opacity-100 h-auto;
+    @apply opacity-100 max-h-16 overflow-visible;
   }
 
   /* Mobile: Circular thumbnails (no hover expansion) */

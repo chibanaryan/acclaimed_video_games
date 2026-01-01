@@ -140,9 +140,11 @@
                 this.$dispatch('filters-updated');
             }, { deep: true });
 
-            // Listen for add-platform and add-genre events from game rows
+            // Listen for add-platform, add-platforms, add-genre, and add-genres events from game rows
             document.addEventListener('add-platform', (e) => this.addPlatform(e.detail));
+            document.addEventListener('add-platforms', (e) => this.addPlatforms(e.detail));
             document.addEventListener('add-genre', (e) => this.addGenre(e.detail));
+            document.addEventListener('add-genres', (e) => this.addGenres(e.detail));
 
             // Listen for played status changes and update filter immediately if played filter is active
             window.addEventListener('played-status-changed', (event) => {
@@ -379,6 +381,23 @@
             // Scroll to top to see filtered results
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
+        addPlatforms(data) {
+            const { platformIds, gameId } = data;
+            // Split comma-separated IDs into array
+            const ids = platformIds.split(',').filter(id => id);
+            // Reset all filters and show these platforms
+            this.filters.q = '';
+            this.filters.start = {{ min_year }};
+            this.filters.end = {{ max_year }};
+            this.filters.genres = [];
+            this.filters.platforms = ids;
+            // Dispatch reset events to update filter UI
+            this.$dispatch('genres-reset');
+            this.$dispatch('year-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+            // Scroll to top to see filtered results
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
         addGenre(data) {
             const { genreId, gameId } = data;
             const id = String(genreId);
@@ -387,6 +406,23 @@
             this.filters.start = {{ min_year }};
             this.filters.end = {{ max_year }};
             this.filters.genres = [id];
+            this.filters.platforms = [];
+            // Dispatch reset events to update filter UI
+            this.$dispatch('platforms-reset');
+            this.$dispatch('year-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+            // Scroll to top to see filtered results
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+        addGenres(data) {
+            const { genreIds, gameId } = data;
+            // Split comma-separated IDs into array
+            const ids = genreIds.split(',').filter(id => id);
+            // Reset all filters and show these genres
+            this.filters.q = '';
+            this.filters.start = {{ min_year }};
+            this.filters.end = {{ max_year }};
+            this.filters.genres = ids;
             this.filters.platforms = [];
             // Dispatch reset events to update filter UI
             this.$dispatch('platforms-reset');
