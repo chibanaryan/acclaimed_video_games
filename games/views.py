@@ -788,7 +788,11 @@ class HomePageView(RobustPaginationMixin, ListView):
         return super().get_template_names()
 
     def get_queryset(self):
-        qs = models.Game.objects.with_relations().with_played_status(self.request.user)
+        qs = (
+            models.Game.objects.with_relations()
+            .with_played_status(self.request.user)
+            .with_list_count()
+        )
 
         # Basic search by name
         q = self.request.GET.get("q")

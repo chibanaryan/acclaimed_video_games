@@ -413,3 +413,14 @@ def markdown(value):
     if not value:
         return ""
     return mark_safe(md.markdown(value))
+
+
+@register.filter
+def rank_pct(rank, total):
+    """
+    Calculate rank position as percentage (higher rank = higher percentage).
+    Rank 1 = 100%, Rank N = close to 0%.
+    """
+    if not rank or not total or total <= 1:
+        return 0
+    return round((1 - (rank - 1) / (total - 1)) * 100)

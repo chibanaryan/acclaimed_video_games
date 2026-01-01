@@ -1,8 +1,9 @@
 {# Mobile Game Row Template #}
 {# Single source of truth: Used for both server-side rendering and JS template cloning #}
 {# Props: game (optional), show_rank ('alltime'|'filtered'|'none'), index (filtered rank), highlight (game ID) #}
+{# Context: max_list_count (for list count micro-bar, mobile shows count as text only) #}
 {# When game is not provided, renders empty template structure for JS cloning with all elements present #}
-{% load game_filters static %}
+{% load game_filters static humanize %}
 <div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
      {% if game %}id="game-{{ game.id }}-mobile"{% endif %}
      data-slot="root"
@@ -42,9 +43,16 @@
             <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">
                 {% if game %}{{ game.name }} <span class="font-normal text-base-content/60">({{ game.year_of_release }})</span>{% else %}<span class="font-normal text-base-content/60" data-slot="year"></span>{% endif %}
             </div>
+            {# Row 1: Developer and list count #}
             <div class="text-xs text-base-content/60 truncate" data-slot="meta">
                 {% if game %}
-                    {% with platforms=game.platforms.all|slice:":3" %}{% if platforms %}{% for platform in platforms %}{{ platform.code }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}{% if game.platforms.exists and game.wikipedia_genres.exists %} &bull; {% endif %}{% with genre=game.wikipedia_genres.first %}{% if genre %}{{ genre.name }}{% endif %}{% endwith %}
+                    {% with first_dev=game.developers.first %}{% if first_dev %}{{ first_dev.name }}{% endif %}{% endwith %}{% if game.list_count %}{% if game.developers.first %} &bull; {% endif %}<span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span>{% endif %}
+                {% endif %}
+            </div>
+            {# Row 2: Platforms and genres #}
+            <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">
+                {% if game %}
+                    {% with platforms=game.platforms.all|slice:":3" %}{% if platforms %}{% for platform in platforms %}{{ platform.code }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}{% with genres=game.wikipedia_genres.all|slice:":2" %}{% if genres %}{% if game.platforms.all %} &bull; {% endif %}{% for genre in genres %}{{ genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}
                 {% endif %}
             </div>
         </div>

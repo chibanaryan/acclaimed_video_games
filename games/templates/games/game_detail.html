@@ -94,7 +94,7 @@
     {% endif %}
 
     {% for group_label, group_items in grouped_lists %}
-        <h2 class="text-xl font-bold mt-6 mb-4">{{ group_label }} Lists</h2>
+        <h2 class="text-xl font-bold mt-6 mb-4">{{ group_label }} Lists <span class="text-base font-normal text-base-content/50">({{ group_items|length }})</span></h2>
         {% include 'includes/_list_results.html' with items=group_items show_type=False show_rank=True %}
     {% endfor %}
 {% else %}

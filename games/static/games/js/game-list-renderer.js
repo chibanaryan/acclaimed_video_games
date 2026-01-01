@@ -253,56 +253,57 @@ class GameListRenderer {
             }
         }
 
-        // Fill developers
-        const devsRow = row.querySelector('[data-slot="developers-row"]');
-        const devsContainer = row.querySelector('[data-slot="developers"]');
-        const devLabel = row.querySelector('[data-slot="developer-label"]');
-        if (devsContainer && expanded.developers.length > 0) {
-            if (devLabel) devLabel.textContent = expanded.developers.length === 1 ? 'Developer:' : 'Developers:';
-            devsContainer.innerHTML = expanded.developers.map((dev, i) => {
+        // Fill meta row (developer + list count - always visible)
+        const metaRow = row.querySelector('[data-slot="meta-row"]');
+        if (metaRow) {
+            let metaHtml = '';
+            // Primary developer
+            if (expanded.developers.length > 0) {
+                const dev = expanded.developers[0];
                 const rootDev = this._getRootDeveloper(dev);
                 const devSlug = rootDev?.slug;
-                const separator = i < expanded.developers.length - 1 ? ', ' : '';
+                let devHtml = '';
                 if (devSlug) {
-                    const hash = dev.id !== rootDev?.id
-                        ? `#developer-${dev.id}-game-${game.id}`
-                        : `#game-${game.id}`;
-                    return `<a href="/developers/${devSlug}/${hash}" class="link link-hover">${this._escapeHtml(dev.name)}</a>${separator}`;
-                } else if (dev.slug) {
-                    return `<a href="/developers/${dev.slug}/#game-${game.id}" class="link link-hover">${this._escapeHtml(dev.name)}</a>${separator}`;
+                    devHtml = `<a href="/developers/${devSlug}/" class="link link-hover">${this._escapeHtml(dev.name)}</a>`;
+                } else {
+                    devHtml = this._escapeHtml(dev.name);
                 }
-                return `${this._escapeHtml(dev.name)}${separator}`;
-            }).join('');
-        } else if (devsRow) {
-            devsRow.classList.add('hidden');
+                metaHtml += `<span data-slot="primary-developer">by ${devHtml}</span>`;
+            }
+            // List count
+            if (game.lc) {
+                if (expanded.developers.length > 0) {
+                    metaHtml += ' <span class="text-base-content/30">•</span> ';
+                }
+                metaHtml += `<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span>`;
+            }
+            metaRow.innerHTML = metaHtml;
         }
 
-        // Fill platforms
-        const platsRow = row.querySelector('[data-slot="platforms-row"]');
+        // Fill platforms (hover row)
         const platsContainer = row.querySelector('[data-slot="platforms"]');
-        const platLabel = row.querySelector('[data-slot="platform-label"]');
-        if (platsContainer && expanded.platforms.length > 0) {
-            if (platLabel) platLabel.textContent = expanded.platforms.length === 1 ? 'Platform:' : 'Platforms:';
-            platsContainer.innerHTML = expanded.platforms.map(p =>
-                `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${this._escapeHtml(p.name)}">${this._escapeHtml(p.code)}</button>`
-            ).join('');
-            if (platsRow) platsRow.classList.remove('hidden');
-        } else if (platsRow) {
-            platsRow.classList.add('hidden');
+        if (platsContainer) {
+            if (expanded.platforms.length > 0) {
+                platsContainer.innerHTML = expanded.platforms.map(p =>
+                    `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-24 overflow-hidden" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(p.name)}"><span class="truncate">${this._escapeHtml(p.code)}</span></button>`
+                ).join('');
+                platsContainer.classList.remove('hidden');
+            } else {
+                platsContainer.classList.add('hidden');
+            }
         }
 
-        // Fill genres
-        const genresRow = row.querySelector('[data-slot="genres-row"]');
+        // Fill genres (hover row)
         const genresContainer = row.querySelector('[data-slot="genres"]');
-        const genreLabel = row.querySelector('[data-slot="genre-label"]');
-        if (genresContainer && expanded.genres.length > 0) {
-            if (genreLabel) genreLabel.textContent = expanded.genres.length === 1 ? 'Genre:' : 'Genres:';
-            genresContainer.innerHTML = expanded.genres.map(g =>
-                `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>`
-            ).join('');
-            if (genresRow) genresRow.classList.remove('hidden');
-        } else if (genresRow) {
-            genresRow.classList.add('hidden');
+        if (genresContainer) {
+            if (expanded.genres.length > 0) {
+                genresContainer.innerHTML = expanded.genres.map(g =>
+                    `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 overflow-hidden" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}"><span class="truncate">${this._escapeHtml(g.name)}</span></button>`
+                ).join('');
+                genresContainer.classList.remove('hidden');
+            } else {
+                genresContainer.classList.add('hidden');
+            }
         }
 
         return row;
@@ -320,34 +321,38 @@ class GameListRenderer {
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showGlobalRank = showRank === 'filtered';
 
-        const developersHtml = expanded.developers.map((dev, i) => {
+        // Build primary developer HTML
+        let primaryDevHtml = '';
+        if (expanded.developers.length > 0) {
+            const dev = expanded.developers[0];
             const rootDev = this._getRootDeveloper(dev);
             const devSlug = rootDev?.slug;
-            const separator = i < expanded.developers.length - 1 ? ', ' : '';
             if (devSlug) {
-                const hash = dev.id !== rootDev?.id
-                    ? `#developer-${dev.id}-game-${game.id}`
-                    : `#game-${game.id}`;
-                return `<a href="/developers/${devSlug}/${hash}" class="link link-hover">${dev.name}</a>${separator}`;
-            } else if (dev.slug) {
-                return `<a href="/developers/${dev.slug}/#game-${game.id}" class="link link-hover">${dev.name}</a>${separator}`;
+                primaryDevHtml = `<span data-slot="primary-developer">by <a href="/developers/${devSlug}/" class="link link-hover">${this._escapeHtml(dev.name)}</a></span>`;
+            } else {
+                primaryDevHtml = `<span data-slot="primary-developer">by ${this._escapeHtml(dev.name)}</span>`;
             }
-            return `${dev.name}${separator}`;
-        }).join('');
+        }
 
-        const developerLabel = expanded.developers.length === 1 ? 'Developer' : 'Developers';
+        // Build meta row (developer + list count)
+        let metaHtml = primaryDevHtml;
+        if (game.lc) {
+            if (primaryDevHtml) metaHtml += ' <span class="text-base-content/30">•</span> ';
+            metaHtml += `<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span>`;
+        }
+
         const platformsHtml = expanded.platforms.map(p =>
-            `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="Filter by ${p.name}">${p.code}</button>`
+            `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-24 overflow-hidden" onclick="document.dispatchEvent(new CustomEvent('add-platform', {detail: {platformId: '${p.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(p.name)}"><span class="truncate">${this._escapeHtml(p.code)}</span></button>`
         ).join('');
-        const platformLabel = expanded.platforms.length === 1 ? 'Platform' : 'Platforms';
         const genresHtml = expanded.genres.map(g =>
-            `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 truncate" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${g.name}">${g.name}</button>`
+            `<button type="button" class="badge badge-xs badge-outline opacity-70 hover:opacity-100 hover:badge-primary cursor-pointer transition-colors max-w-36 overflow-hidden" onclick="document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}"><span class="truncate">${this._escapeHtml(g.name)}</span></button>`
         ).join('');
-        const genreLabel = expanded.genres.length === 1 ? 'Genre' : 'Genres';
-        const globalRankHtml = showGlobalRank ? `<span class="game-row-global-rank text-xs text-base-content/50">(#${game.r})</span>` : '';
+        const globalRankHtml = showGlobalRank ? `<span class="game-row-global-rank text-xs text-base-content/50 tabular-nums">(#${game.r})</span>` : '';
         const playedButtonHtml = this._renderPlayedButtonString(game);
-        // Only include container if authenticated (button exists)
-        const playedContainerHtml = playedButtonHtml ? `<div class="w-10 min-w-10 max-w-10 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
+        const playedContainerHtml = playedButtonHtml ? `<div class="w-12 min-w-12 max-w-12 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
+
+        // Build separator for hover row
+        const separatorHtml = (expanded.platforms.length > 0 && expanded.genres.length > 0) ? '<span class="text-base-content/30 mx-0.5">•</span>' : '';
 
         const div = document.createElement('div');
         div.innerHTML = `
@@ -355,22 +360,21 @@ class GameListRenderer {
     ${playedContainerHtml}
     <div class="game-row desktop flex-1 py-0.5 px-2 grid ${isHighlighted ? 'is-highlighted' : ''}" style="grid-template-columns: auto 1fr;">
         <div class="flex items-center gap-3 flex-shrink-0">
-            ${showRank !== 'none' ? `<div class="w-14 text-center flex flex-col items-center justify-center"><span class="game-rank text-2xl font-bold text-accent">${displayRank}</span>${globalRankHtml}</div>` : ''}
+            ${showRank !== 'none' ? `<div class="w-15 text-center flex flex-col items-center justify-center"><span class="game-rank text-2xl font-bold text-accent tabular-nums">${displayRank}</span>${globalRankHtml}</div>` : ''}
             <a href="/game/${game.s}/" class="game-thumb-link">
                 <img src="${thumbnail}" srcset="${thumbnail} 1x, ${thumbnail2x} 2x" alt="${this._escapeHtml(game.n)}" width="90" height="128" loading="lazy" decoding="async" class="game-thumb">
             </a>
         </div>
         <div class="flex-1 min-w-0 px-4">
-            <div class="flex items-center justify-between gap-4">
-                <div class="truncate">
-                    <a href="/game/${game.s}/" class="game-title font-bold link link-hover">${this._escapeHtml(game.n)}</a>
-                    <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1" data-year="${game.y}">(${game.y || 'N/A'})</a>
-                </div>
+            <div class="truncate">
+                <a href="/game/${game.s}/" class="game-title text-2xl font-bold link link-hover">${this._escapeHtml(game.n)}</a>
+                <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1">(${game.y || 'N/A'})</a>
             </div>
-            <div class="game-row-details text-sm ml-4">
-                ${expanded.developers.length > 0 ? `<div class="truncate"><span class="text-base-content/70">${developerLabel}:</span> ${developersHtml}</div>` : ''}
-                ${expanded.platforms.length > 0 ? `<div class="flex items-center gap-1"><span class="text-base-content/70 shrink-0">${platformLabel}:</span><span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;">${platformsHtml}</span></div>` : ''}
-                ${expanded.genres.length > 0 ? `<div class="flex items-center gap-1"><span class="text-base-content/70 shrink-0">${genreLabel}:</span><span class="flex flex-wrap content-start gap-1 min-w-0" style="height: 1.125rem; overflow: hidden;">${genresHtml}</span></div>` : ''}
+            <div class="text-base-content/50 text-sm ml-4 truncate" data-slot="meta-row">${metaHtml}</div>
+            <div class="game-row-details text-sm flex items-center gap-1 ml-4 mt-1">
+                ${expanded.platforms.length > 0 ? `<span class="flex flex-wrap content-start gap-1 min-w-0" data-slot="platforms">${platformsHtml}</span>` : ''}
+                ${separatorHtml}
+                ${expanded.genres.length > 0 ? `<span class="flex flex-wrap content-start gap-1 min-w-0" data-slot="genres">${genresHtml}</span>` : ''}
             </div>
         </div>
     </div>
@@ -417,14 +421,25 @@ class GameListRenderer {
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showRankColumn = showRank !== 'none';
 
-        // Build metadata text
+        // Build row 1: Developer + list count
+        let metaText = '';
+        if (expanded.developers.length > 0) {
+            metaText += expanded.developers[0].name;
+        }
+        if (game.lc) {
+            if (metaText) metaText += ' \u2022 ';
+            metaText += `${game.lc} lists`;
+        }
+
+        // Build row 2: Platforms + genres
         const displayPlatforms = expanded.platforms.slice(0, 3);
         const platformsText = displayPlatforms.map(p => p.code).join(', ');
-        const firstGenre = expanded.genres.length > 0 ? expanded.genres[0].name : '';
-        let metaText = '';
-        if (platformsText) metaText += platformsText;
-        if (platformsText && firstGenre) metaText += ' \u2022 ';
-        if (firstGenre) metaText += firstGenre;
+        const displayGenres = expanded.genres.slice(0, 2);
+        const genresText = displayGenres.map(g => g.name).join(', ');
+        let platformsRowText = '';
+        if (platformsText) platformsRowText += platformsText;
+        if (platformsText && genresText) platformsRowText += ' \u2022 ';
+        if (genresText) platformsRowText += genresText;
 
         // Set root element attributes
         row.id = `game-${game.id}-mobile`;
@@ -477,8 +492,11 @@ class GameListRenderer {
             titleEl.innerHTML = `${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span>`;
         }
 
-        // Fill meta
+        // Fill meta (row 1: developer + list count)
         this._fillSlot(row, 'meta', metaText);
+
+        // Fill platforms-row (row 2: platforms + genres)
+        this._fillSlot(row, 'platforms-row', platformsRowText);
 
         // Show/hide global rank (now under the main rank) based on mode
         const globalRankEl = row.querySelector('[data-slot="global-rank"]');
@@ -506,13 +524,25 @@ class GameListRenderer {
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showRankColumn = showRank !== 'none';
 
+        // Build row 1: Developer + list count
+        let metaText = '';
+        if (expanded.developers.length > 0) {
+            metaText += expanded.developers[0].name;
+        }
+        if (game.lc) {
+            if (metaText) metaText += ' \u2022 ';
+            metaText += `${game.lc} lists`;
+        }
+
+        // Build row 2: Platforms + genres
         const displayPlatforms = expanded.platforms.slice(0, 3);
         const platformsText = displayPlatforms.map(p => p.code).join(', ');
-        const firstGenre = expanded.genres.length > 0 ? expanded.genres[0].name : '';
-        let metaText = '';
-        if (platformsText) metaText += platformsText;
-        if (platformsText && firstGenre) metaText += ' \u2022 ';
-        if (firstGenre) metaText += firstGenre;
+        const displayGenres = expanded.genres.slice(0, 2);
+        const genresText = displayGenres.map(g => g.name).join(', ');
+        let platformsRowText = '';
+        if (platformsText) platformsRowText += platformsText;
+        if (platformsText && genresText) platformsRowText += ' \u2022 ';
+        if (genresText) platformsRowText += genresText;
 
         const playedButtonHtml = this._renderPlayedButtonString(game);
         // Only include container if authenticated (button exists)
@@ -528,12 +558,13 @@ class GameListRenderer {
         div.innerHTML = `
 <div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}-mobile" onclick="window.location.href='/game/${game.s}/'" style="grid-template-columns: ${gridCols};">
     ${playedContainerHtml}
-    ${showRankColumn ? `<div class="w-10 text-center flex flex-col items-center justify-center"><div class="text-2xl font-bold text-accent">${displayRank}</div>${globalRankHtml}</div>` : ''}
+    ${showRankColumn ? `<div class="w-10 text-center flex flex-col items-center justify-center"><div class="text-2xl font-bold text-accent tabular-nums">${displayRank}</div>${globalRankHtml}</div>` : ''}
     <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;"><img src="${thumbnail}" alt="${this._escapeHtml(game.n)}" width="90" height="128" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>
     <div class="min-w-0 flex items-center justify-between">
         <div class="min-w-0">
-            <div class="font-bold text-base leading-tight line-clamp-2">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
-            <div class="text-xs text-base-content/60 truncate">${metaText}</div>
+            <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
+            <div class="text-xs text-base-content/60 truncate" data-slot="meta">${metaText}</div>
+            <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">${platformsRowText}</div>
         </div>
     </div>
 </div>`;

@@ -46,6 +46,15 @@
         </td>
     </tr>
     {% endif %}
+    {% if game.lists.count %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">List appearances:</td>
+        <td class="pb-3 align-middle tabular-nums">
+            <span class="font-medium">{{ game.lists.count }}</span>
+            <span class="text-base-content/50 text-sm">lists</span>
+        </td>
+    </tr>
+    {% endif %}
     {% with devs=game.developers.all %}
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if devs|length == 1 %}Developer{% else %}Developers{% endif %}:</td>
@@ -59,7 +68,7 @@
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if platforms|length == 1 %}Platform{% else %}Platforms{% endif %}:</td>
         <td class="pb-3">
             <span class="flex flex-wrap gap-1">
-                {% for platform in platforms %}<a href="{% url 'home' %}?platforms={{ platform.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors">{{ platform.name }}</a>{% endfor %}
+                {% for platform in platforms %}<a href="{% url 'home' %}?platforms={{ platform.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] overflow-hidden" title="{{ platform.name }}"><span class="truncate">{{ platform.name }}</span></a>{% endfor %}
             </span>
         </td>
     </tr>
@@ -70,7 +79,7 @@
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if genres|length == 1 %}Genre{% else %}Genres{% endif %}:</td>
         <td class="pb-3">
             <span class="flex flex-wrap gap-1">
-                {% for genre in genres %}<a href="{% url 'home' %}?genres={{ genre.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors">{{ genre.name }}</a>{% endfor %}
+                {% for genre in genres %}<a href="{% url 'home' %}?genres={{ genre.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] overflow-hidden" title="{{ genre.name }}"><span class="truncate">{{ genre.name }}</span></a>{% endfor %}
             </span>
         </td>
     </tr>
@@ -81,7 +90,7 @@
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">Series:</td>
         <td class="pb-3">
             <span class="flex flex-wrap gap-1">
-                {% for series in series_list %}<a href="{% url 'home' %}?series={{ series.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] sm:max-w-none" title="{{ series.name }}"><span class="truncate">{{ series.name }}</span></a>{% endfor %}
+                {% for series in series_list %}<a href="{% url 'home' %}?series={{ series.id }}&highlight={{ game.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] sm:max-w-none overflow-hidden" title="{{ series.name }}"><span class="truncate">{{ series.name }}</span></a>{% endfor %}
             </span>
         </td>
     </tr>

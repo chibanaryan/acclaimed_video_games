@@ -2,6 +2,12 @@
 
 ## 2026-01-01
 
+- Improve game list density: show developer and list count by default (not just on hover)
+- Add list appearances row to game detail properties
+- Add list counts to section headers on game detail page (e.g., "All-Time Lists (15)")
+- Fix badge truncation: use overflow-hidden + nested span.truncate pattern
+- Mobile game row: split metadata into two rows (developer/list count, platforms/genres)
+- Sync client-side game rendering with updated server templates
 - Performance: fix platform filter duplicate results, add missing .distinct()
 - Performance: cache genre hierarchy expansion (24h TTL) with signal-based invalidation
 - Performance: cache game detail counts (total, decade, year) to reduce per-page queries
