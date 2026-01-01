@@ -15,6 +15,7 @@ function developerFilter() {
         developerNameMap: {},
         gameRankMap: {},
         rootDeveloperName: '',
+        rootMaxBucket: 1, // Max bucket count at root level for consistent bar scaling
 
         /**
          * Check if a game should be visible based on selected developers
@@ -86,7 +87,7 @@ function developerFilter() {
         /**
          * Calculate rank distribution for currently visible games
          * Returns { top_100: n, top_500: n, top_1000: n, beyond: n, top_100_pct: n, ... }
-         * Percentages use TOTAL games (not filtered) as denominator for consistent scale
+         * Percentages use root-level max bucket count for consistent scale across filtering
          */
         getRankDistribution() {
             const visibleGameIds = this.getVisibleGameIds();
@@ -105,13 +106,12 @@ function developerFilter() {
                 }
             }
 
-            // Use TOTAL games (not filtered) as denominator for consistent bar scale
-            // This means bars shrink when filtering, showing absolute reduction
-            const totalGames = Object.keys(this.gameRankMap).length || 1;
-            dist.top_100_pct = Math.round(dist.top_100 / totalGames * 100);
-            dist.top_500_pct = Math.round(dist.top_500 / totalGames * 100);
-            dist.top_1000_pct = Math.round(dist.top_1000 / totalGames * 100);
-            dist.beyond_pct = Math.round(dist.beyond / totalGames * 100);
+            // Use root-level max bucket count for consistent bar scale
+            // This ensures axes remain consistent when filtering by developers
+            const maxBucket = this.rootMaxBucket || 1;
+            dist.top_100_pct = Math.round(dist.top_100 / maxBucket * 100);
+            dist.top_500_pct = Math.round(dist.top_500 / maxBucket * 100);
+            dist.top_1000_pct = Math.round(dist.top_1000 / maxBucket * 100);
 
             return dist;
         },
@@ -417,6 +417,7 @@ function developerFilter() {
             this.developerNameMap = window.DEVELOPER_NAME_MAP || {};
             this.gameRankMap = window.GAME_RANK_MAP || {};
             this.rootDeveloperName = window.ROOT_DEVELOPER_NAME || '';
+            this.rootMaxBucket = window.ROOT_MAX_BUCKET || 1;
 
             // Parse URL hash for selection state
             const hash = window.location.hash;

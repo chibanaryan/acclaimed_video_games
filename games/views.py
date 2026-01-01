@@ -1605,20 +1605,27 @@ class DeveloperDetailView(DetailView):
             else:
                 rank_distribution["beyond"] += 1
 
-        # Calculate percentages for bar widths
-        total = len(all_games) or 1
+        # Calculate percentages for bar widths based on max bucket count
+        # This makes the largest bucket show as a full bar (100%)
+        max_bucket = (
+            max(
+                rank_distribution["top_100"],
+                rank_distribution["top_500"],
+                rank_distribution["top_1000"],
+            )
+            or 1
+        )
         rank_distribution["top_100_pct"] = round(
-            rank_distribution["top_100"] / total * 100
+            rank_distribution["top_100"] / max_bucket * 100
         )
         rank_distribution["top_500_pct"] = round(
-            rank_distribution["top_500"] / total * 100
+            rank_distribution["top_500"] / max_bucket * 100
         )
         rank_distribution["top_1000_pct"] = round(
-            rank_distribution["top_1000"] / total * 100
+            rank_distribution["top_1000"] / max_bucket * 100
         )
-        rank_distribution["beyond_pct"] = round(
-            rank_distribution["beyond"] / total * 100
-        )
+        # Store max_bucket for JavaScript to use when filtering
+        rank_distribution["max_bucket"] = max_bucket
         context["rank_distribution"] = rank_distribution
 
         return context

@@ -14,6 +14,7 @@
         {% for dev in developers_flat %}{{ dev.id }}: "{{ dev.name|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}
     };
     window.ROOT_DEVELOPER_NAME = "{{ developer.name|escapejs }}";
+    window.ROOT_MAX_BUCKET = {{ rank_distribution.max_bucket }};
 </script>
 <script src="{% static 'games/js/developer-filter.min.js' %}"></script>
 {% endblock %}
