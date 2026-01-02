@@ -882,18 +882,21 @@ class GameSearchLoadMoreTest(TestCase):
         self.assertEqual(len(response.context["games"]), 1)
         self.assertFalse(response.context["has_more"])
 
-    def test_highlight_beyond_100_loads_enough_games(self):
-        """Test that highlighting a game beyond position 100 loads enough games."""
+    def test_highlight_beyond_100_uses_standard_page_size(self):
+        """Test that highlighting a game beyond position 100 still loads standard page.
+
+        Client-side JS handles loading more games via CSF (client-side filtering).
+        The server always returns the standard page size for fast initial load.
+        """
         # Get the game at position 120 (rank 121)
         game_120 = Game.objects.get(rank=121)
 
         response = self.client.get(reverse("home") + f"?highlight={game_120.id}")
         self.assertEqual(response.status_code, 200)
-        # Should load 200 games to include position 121
-        self.assertEqual(len(response.context["games"]), 150)  # All 150 games
-        # Verify the highlighted game is in the results
-        game_ids = [g.id for g in response.context["games"]]
-        self.assertIn(game_120.id, game_ids)
+        # Server returns standard page size - client-side loads more if needed
+        self.assertEqual(len(response.context["games"]), 100)
+        # The highlight parameter is passed to context for client-side handling
+        self.assertEqual(response.context["highlight"], game_120.id)
 
     def test_highlight_within_100_loads_normal_page(self):
         """Test that highlighting a game within position 100 loads normal page size."""
@@ -2419,3 +2422,70 @@ class AuthModalViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
         self.assertIn("Invalid Verification Link", content)
+
+
+class ViewHelperFunctionTests(TestCase):
+    """Tests for helper functions in views.py."""
+
+    def test_join_names_empty(self):
+        """Test _join_names with empty list."""
+        from games.views import _join_names
+
+        result = _join_names([])
+        self.assertEqual(result, "")
+
+    def test_join_names_single(self):
+        """Test _join_names with one name."""
+        from games.views import _join_names
+
+        result = _join_names(["Mario"])
+        self.assertEqual(result, "Mario")
+
+    def test_join_names_two(self):
+        """Test _join_names with two names."""
+        from games.views import _join_names
+
+        result = _join_names(["Mario", "Luigi"])
+        self.assertEqual(result, "Mario and Luigi")
+
+    def test_join_names_three(self):
+        """Test _join_names with three names uses Oxford comma."""
+        from games.views import _join_names
+
+        result = _join_names(["Mario", "Luigi", "Peach"])
+        self.assertEqual(result, "Mario, Luigi, and Peach")
+
+    def test_build_time_window_empty(self):
+        """Test _build_time_window with None values."""
+        from games.views import _build_time_window
+
+        result = _build_time_window(None, None, 1970, 2024)
+        self.assertEqual(result, "")
+
+    def test_build_time_window_all_time(self):
+        """Test _build_time_window returns All Time for full range."""
+        from games.views import _build_time_window
+
+        result = _build_time_window(1970, 2024, 1970, 2024)
+        self.assertEqual(result, "All Time")
+
+    def test_build_time_window_single_year(self):
+        """Test _build_time_window for single year."""
+        from games.views import _build_time_window
+
+        result = _build_time_window(2020, 2020, 1970, 2024)
+        self.assertEqual(result, "2020")
+
+    def test_build_time_window_decade(self):
+        """Test _build_time_window for full decade."""
+        from games.views import _build_time_window
+
+        result = _build_time_window(1990, 1999, 1970, 2024)
+        self.assertEqual(result, "the 1990s")
+
+    def test_build_time_window_custom_range(self):
+        """Test _build_time_window for custom range."""
+        from games.views import _build_time_window
+
+        result = _build_time_window(2015, 2020, 1970, 2024)
+        self.assertEqual(result, "2015-2020")

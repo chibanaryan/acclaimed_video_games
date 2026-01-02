@@ -8,6 +8,8 @@
 - Fix rank distribution chart: position data points at edges to eliminate flat sections at start/end
 - Add peak count indicator to rank distribution chart for scale context on filtered views
 - Add colored badges for list types: BGYR rainbow order (info/success/warning/error) with custom theme colors
+- Fix slow highlight navigation: use client-side filtering for instant jump to deep ranks (10x faster)
+- Increase test coverage from 93.6% to 95%: add 61 new tests for template tags, models, and views
 
 ## 2026-01-01
 

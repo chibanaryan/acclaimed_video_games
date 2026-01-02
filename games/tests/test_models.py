@@ -1076,3 +1076,135 @@ class GameDisplayDevelopersTests(TestCase):
 
         result = game.get_display_developers()
         self.assertEqual(result, [])
+
+
+class UserModelTests(TestCase):
+    """Tests for User model."""
+
+    def test_name_returns_username_when_set(self):
+        """Test name property returns username if set."""
+        user = models.User.objects.create(username="testuser", email="test@example.com")
+        self.assertEqual(user.name, "testuser")
+
+    def test_name_returns_email_prefix_when_no_username(self):
+        """Test name property returns email prefix when username is empty."""
+        user = models.User.objects.create(username="", email="john.doe@example.com")
+        self.assertEqual(user.name, "john.doe")
+
+    def test_name_returns_user_fallback(self):
+        """Test name property returns 'User' when no username or email."""
+        user = models.User.objects.create(username="", email="")
+        self.assertEqual(user.name, "User")
+
+
+class DeveloperPropertyTests(TestCase):
+    """Tests for Developer model properties."""
+
+    def test_is_root_true_for_no_parent(self):
+        """Test is_root is True for developer without parent."""
+        dev = models.Developer.objects.create(name="Root Dev", slug="root-dev")
+        self.assertTrue(dev.is_root)
+
+    def test_is_root_false_for_subsidiary(self):
+        """Test is_root is False for developer with parent."""
+        parent = models.Developer.objects.create(name="Parent", slug="parent")
+        child = models.Developer.objects.create(name="Child", parent=parent)
+        self.assertFalse(child.is_root)
+
+    def test_is_subsidiary_true_for_child(self):
+        """Test is_subsidiary is True for developer with parent."""
+        parent = models.Developer.objects.create(name="Parent", slug="parent")
+        child = models.Developer.objects.create(name="Child", parent=parent)
+        self.assertTrue(child.is_subsidiary)
+
+    def test_is_subsidiary_false_for_root(self):
+        """Test is_subsidiary is False for developer without parent."""
+        dev = models.Developer.objects.create(name="Root Dev", slug="root-dev")
+        self.assertFalse(dev.is_subsidiary)
+
+
+class GameListsGroupedTests(TestCase):
+    """Tests for Game.lists_grouped_by_type method."""
+
+    def test_lists_grouped_by_type_empty(self):
+        """Test lists_grouped_by_type returns empty dict for game with no lists."""
+        game = models.Game.objects.create(name="No Lists Game", rank=1, igdb_id=1)
+        result = game.lists_grouped_by_type
+        self.assertEqual(result, {})
+
+    def test_lists_grouped_by_type_groups_correctly(self):
+        """Test lists_grouped_by_type groups lists by type."""
+        game = models.Game.objects.create(name="Popular Game", rank=1, igdb_id=1)
+
+        # Create publication and lists of different types
+        pub = models.Publication.objects.create(name="Test Pub", slug="test-pub")
+
+        alltime_list = models.List.objects.create(
+            name="Top 100 All Time",
+            publisher=pub,
+            type=constants.LIST_ALLTIME,
+            year=2024,
+        )
+        decade_list = models.List.objects.create(
+            name="Best of 2020s",
+            publisher=pub,
+            type=constants.LIST_DECADE,
+            year=2029,
+        )
+
+        # Add game to both lists
+        models.ListMembership.objects.create(game=game, list=alltime_list, rank=5)
+        models.ListMembership.objects.create(game=game, list=decade_list, rank=3)
+
+        result = game.lists_grouped_by_type
+        self.assertIn("All time", result)
+        self.assertIn("Decade", result)
+        self.assertEqual(len(result["All time"]), 1)
+        self.assertEqual(len(result["Decade"]), 1)
+        self.assertEqual(result["All time"][0]["rank"], 5)
+        self.assertEqual(result["Decade"][0]["rank"], 3)
+
+    def test_lists_grouped_by_type_sorted_order(self):
+        """Test lists_grouped_by_type returns types in correct order."""
+        game = models.Game.objects.create(name="Multi List Game", rank=1, igdb_id=1)
+        pub = models.Publication.objects.create(name="Pub", slug="pub")
+
+        # Create lists in non-sorted order
+        eoy_list = models.List.objects.create(
+            name="EOY", publisher=pub, type=constants.LIST_EOY, year=2023
+        )
+        alltime_list = models.List.objects.create(
+            name="All Time", publisher=pub, type=constants.LIST_ALLTIME, year=2024
+        )
+
+        models.ListMembership.objects.create(game=game, list=eoy_list, rank=1)
+        models.ListMembership.objects.create(game=game, list=alltime_list, rank=2)
+
+        result = game.lists_grouped_by_type
+        keys = list(result.keys())
+        # All time should come before End of year in sorted order
+        self.assertEqual(keys[0], "All time")
+        self.assertEqual(keys[1], "End of year")
+
+
+class GameQuoteModelTests(TestCase):
+    """Tests for GameQuote model."""
+
+    def test_str_truncates_long_text(self):
+        """Test __str__ truncates long quote text."""
+        game = models.Game.objects.create(name="Quotable Game", rank=1, igdb_id=1)
+        long_text = " ".join(["word"] * 20)  # 20 words
+        quote = models.GameQuote.objects.create(game=game, text=long_text)
+
+        result = str(quote)
+        self.assertIn("Quotable Game:", result)
+        # Should be truncated to 10 words (uses ellipsis character)
+        self.assertIn("…", result)
+
+    def test_str_short_text(self):
+        """Test __str__ shows full text when short."""
+        game = models.Game.objects.create(name="Short Game", rank=1, igdb_id=1)
+        quote = models.GameQuote.objects.create(game=game, text="Short quote")
+
+        result = str(quote)
+        self.assertEqual(result, "Short Game: Short quote")

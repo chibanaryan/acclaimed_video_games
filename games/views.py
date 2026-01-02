@@ -798,43 +798,7 @@ class HomePageView(RobustPaginationMixin, ListView):
     paginate_orphans = 0
 
     def get_paginate_by(self, queryset):
-        """Dynamically adjust page size to include highlighted game."""
-        highlight_str = self.request.GET.get("highlight")
-        if highlight_str and highlight_str.isdigit():
-            highlight_id = int(highlight_str)
-            try:
-                # Check if the game exists in the filtered queryset
-                if not queryset.filter(id=highlight_id).exists():
-                    return self.paginate_by
-
-                # Get the highlighted game's sort values
-                game = models.Game.objects.values(
-                    "id", "rank", "year_of_release", "name"
-                ).get(id=highlight_id)
-
-                # Build filter for games that come before this one
-                sort = self.request.GET.get("sort", "rank")
-                if sort == "year":
-                    # Order: year_of_release, rank
-                    before_filter = Q(year_of_release__lt=game["year_of_release"]) | (
-                        Q(year_of_release=game["year_of_release"])
-                        & Q(rank__lt=game["rank"])
-                    )
-                elif sort == "name":
-                    # Order: name (use Lower for case-insensitive comparison)
-                    before_filter = Q(name__lt=game["name"])
-                else:
-                    # Default rank order
-                    before_filter = Q(rank__lt=game["rank"])
-
-                # Count how many games come before this one (1-based position)
-                position = queryset.filter(before_filter).count() + 1
-
-                # Round up to nearest 100 to include the game
-                if position > self.paginate_by:
-                    return ((position - 1) // 100 + 1) * 100
-            except models.Game.DoesNotExist:
-                pass
+        """Always use standard page size - client-side handles deep jumps."""
         return self.paginate_by
 
     def get_template_names(self):

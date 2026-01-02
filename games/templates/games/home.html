@@ -127,35 +127,62 @@
 {% block extra_scripts %}
 {% if highlight %}
 <script nonce="{{ csp_nonce }}">
+    // Wait for page to settle, then trigger highlight navigation
     setTimeout(function() {
-        var desktopElement = document.getElementById('game-{{ highlight }}');
-        var mobileElement = document.getElementById('game-{{ highlight }}-mobile');
-        // Use media query to determine which element to scroll to (avoids forced reflow)
-        var isDesktop = window.matchMedia('(min-width: 962px)').matches;
-        var element = isDesktop ? desktopElement : mobileElement;
+        var gameId = {{ highlight }};
 
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Check if game is already in DOM (position within first page)
+        var desktopElement = document.getElementById('game-' + gameId);
+        var mobileElement = document.getElementById('game-' + gameId + '-mobile');
 
-            // Fade out highlight after 2 seconds
-            var fadeTimeout = setTimeout(function() {
-                if (desktopElement) desktopElement.classList.add('fade-out');
-                if (mobileElement) mobileElement.classList.add('fade-out');
-            }, 2000);
+        if (desktopElement || mobileElement) {
+            // Game loaded - just scroll and highlight
+            var isDesktop = window.matchMedia('(min-width: 962px)').matches;
+            var element = isDesktop ? desktopElement : mobileElement;
 
-            // Also fade out if user hovers over any other game row
-            var gameRows = document.querySelectorAll('.game-row');
-            gameRows.forEach(function(row) {
-                if (row !== desktopElement && row !== mobileElement) {
-                    row.addEventListener('mouseenter', function() {
-                        clearTimeout(fadeTimeout);
-                        if (desktopElement) desktopElement.classList.add('fade-out');
-                        if (mobileElement) mobileElement.classList.add('fade-out');
-                    }, { once: true });
-                }
-            });
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                // Add highlight class for visual feedback
+                if (desktopElement) desktopElement.classList.add('is-highlighted');
+                if (mobileElement) mobileElement.classList.add('is-highlighted');
+
+                // Fade out highlight after 2 seconds
+                var fadeTimeout = setTimeout(function() {
+                    if (desktopElement) desktopElement.classList.add('fade-out');
+                    if (mobileElement) mobileElement.classList.add('fade-out');
+                }, 2000);
+
+                // Also fade out if user hovers over any other game row
+                var gameRows = document.querySelectorAll('.game-row');
+                gameRows.forEach(function(row) {
+                    if (row !== desktopElement && row !== mobileElement) {
+                        row.addEventListener('mouseenter', function() {
+                            clearTimeout(fadeTimeout);
+                            if (desktopElement) desktopElement.classList.add('fade-out');
+                            if (mobileElement) mobileElement.classList.add('fade-out');
+                        }, { once: true });
+                    }
+                });
+            }
+        } else {
+            // Game not loaded yet - use client-side jump
+            // This uses CSF to find the game's position in filtered results and load to that point
+            if (typeof jumpToHighlightedGame === 'function') {
+                jumpToHighlightedGame(gameId);
+            } else {
+                // Wait for utils-loadmore.js to load
+                var waitForUtils = function() {
+                    if (typeof jumpToHighlightedGame === 'function') {
+                        jumpToHighlightedGame(gameId);
+                    } else {
+                        setTimeout(waitForUtils, 100);
+                    }
+                };
+                waitForUtils();
+            }
         }
-    }, 500);
+    }, 300);
 </script>
 {% endif %}
 {% endblock %}

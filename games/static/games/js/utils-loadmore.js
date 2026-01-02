@@ -675,6 +675,95 @@ function updateLoadMoreButton(button, meta) {
     }
 }
 
+/**
+ * Jump to a highlighted game by ID using client-side filtering
+ * Used when navigating from game detail page with ?highlight=<game_id>
+ * @param {number} gameId - The game ID to find and scroll to
+ */
+function jumpToHighlightedGame(gameId) {
+    // Check if game is already loaded in DOM
+    var desktopEl = document.getElementById('game-' + gameId);
+    var mobileEl = document.getElementById('game-' + gameId + '-mobile');
+
+    if (desktopEl || mobileEl) {
+        // Game already loaded - just scroll and highlight
+        scrollToAndHighlightGameById(gameId);
+        return;
+    }
+
+    // Game not loaded - wait for CSF, find position, use jumpToRankClientSide
+    var checkCSF = function() {
+        if (typeof getClientSideFiltering !== 'function') {
+            setTimeout(checkCSF, 100);
+            return;
+        }
+
+        var csf = getClientSideFiltering();
+        if (!csf || !csf.isReady()) {
+            setTimeout(checkCSF, 100);
+            return;
+        }
+
+        // Apply current filters and find the game's position
+        var filters = getFiltersFromURL();
+        var result = csf.applyFilters(filters);
+        if (!result || !result.games) {
+            console.warn('[JumpToHighlight] No games in filtered results');
+            return;
+        }
+
+        // Find the game's position in filtered results (1-based)
+        var position = result.games.findIndex(function(g) {
+            return g.id === gameId;
+        }) + 1;
+
+        if (position <= 0) {
+            console.warn('[JumpToHighlight] Game not found in filtered results:', gameId);
+            return;
+        }
+
+        // Get current loaded count
+        var state = getCurrentState();
+        var loaded = state.loaded;
+        var perPage = 100;
+
+        // Use jumpToRankClientSide directly (same as Jump to Rank)
+        jumpToRankClientSide(csf, position, loaded, perPage);
+
+        // After loading, scroll to the specific game by ID
+        setTimeout(function() {
+            scrollToAndHighlightGameById(gameId);
+        }, 100);
+    };
+
+    checkCSF();
+}
+
+/**
+ * Scroll to and highlight a game by its ID
+ * @param {number} gameId - The game ID
+ */
+function scrollToAndHighlightGameById(gameId) {
+    var desktopEl = document.getElementById('game-' + gameId);
+    var mobileEl = document.getElementById('game-' + gameId + '-mobile');
+
+    var isDesktop = window.matchMedia('(min-width: 962px)').matches;
+    var element = isDesktop ? desktopEl : mobileEl;
+
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (desktopEl) desktopEl.classList.add('is-highlighted');
+        if (mobileEl) mobileEl.classList.add('is-highlighted');
+        setTimeout(function() {
+            if (desktopEl) desktopEl.classList.remove('is-highlighted');
+            if (mobileEl) mobileEl.classList.remove('is-highlighted');
+        }, 3000);
+    }
+}
+
+// Export for use in templates
+window.jumpToHighlightedGame = jumpToHighlightedGame;
+
 // Auto-initialize when script loads
 (function() {
     if (document.readyState === 'loading') {

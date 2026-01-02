@@ -10,11 +10,18 @@ from games.templatetags.game_filters import (
     format_duration,
     from_now,
     game_rank_url,
+    genre_categories_grouped,
+    genre_icon,
+    get_list_type_badge_class,
     get_list_type_label,
     markdown,
     pagination_pages,
     pagination_url,
     platform_families,
+    platform_families_grouped,
+    platform_icon,
+    platform_svg_icon,
+    rank_pct,
     tojson,
 )
 
@@ -563,3 +570,320 @@ class MarkdownFilterTest(TestCase):
         """Test that empty value returns empty string."""
         self.assertEqual(markdown(None), "")
         self.assertEqual(markdown(""), "")
+
+
+class GetListTypeBadgeClassTest(TestCase):
+    """Test the get_list_type_badge_class template filter."""
+
+    def test_all_time_badge(self):
+        """Test that 'A' returns info badge class."""
+        result = get_list_type_badge_class("A")
+        self.assertIn("badge-info", result)
+
+    def test_decade_badge(self):
+        """Test that 'D' returns success badge class."""
+        result = get_list_type_badge_class("D")
+        self.assertIn("badge-success", result)
+
+    def test_misc_badge(self):
+        """Test that 'M' returns warning badge class."""
+        result = get_list_type_badge_class("M")
+        self.assertIn("badge-warning", result)
+
+    def test_eoy_badge(self):
+        """Test that 'E' returns error badge class."""
+        result = get_list_type_badge_class("E")
+        self.assertIn("badge-error", result)
+
+    def test_unknown_type_returns_ghost(self):
+        """Test that unknown type code returns ghost badge."""
+        result = get_list_type_badge_class("X")
+        self.assertEqual(result, "badge-ghost")
+
+
+class RankPctFilterTest(TestCase):
+    """Test the rank_pct template filter."""
+
+    def test_rank_1_is_100_percent(self):
+        """Test that rank 1 equals 100%."""
+        result = rank_pct(1, 100)
+        self.assertEqual(result, 100)
+
+    def test_last_rank_is_near_zero(self):
+        """Test that last rank is close to 0%."""
+        result = rank_pct(100, 100)
+        self.assertEqual(result, 0)
+
+    def test_middle_rank(self):
+        """Test middle rank calculation."""
+        result = rank_pct(50, 100)
+        # Rank 50 of 100: (1 - 49/99) * 100 ≈ 51%
+        self.assertGreater(result, 45)
+        self.assertLess(result, 55)
+
+    def test_none_rank_returns_zero(self):
+        """Test that None rank returns 0."""
+        result = rank_pct(None, 100)
+        self.assertEqual(result, 0)
+
+    def test_none_total_returns_zero(self):
+        """Test that None total returns 0."""
+        result = rank_pct(50, None)
+        self.assertEqual(result, 0)
+
+    def test_total_1_returns_zero(self):
+        """Test that total <= 1 returns 0."""
+        result = rank_pct(1, 1)
+        self.assertEqual(result, 0)
+
+
+class PlatformIconFilterTest(TestCase):
+    """Test the platform_icon template filter."""
+
+    def _make_platform(self, code):
+        """Create a mock platform with code."""
+        p = Mock()
+        p.code = code
+        return p
+
+    def test_playstation_icon(self):
+        """Test PlayStation platform returns correct icon."""
+        platform = self._make_platform("PS5")
+        result = platform_icon(platform)
+        self.assertEqual(result, "mdi-sony-playstation")
+
+    def test_xbox_icon(self):
+        """Test Xbox platform returns correct icon."""
+        platform = self._make_platform("XBXS")
+        result = platform_icon(platform)
+        self.assertEqual(result, "mdi-microsoft-xbox")
+
+    def test_nintendo_switch_icon(self):
+        """Test Nintendo Switch returns correct icon."""
+        platform = self._make_platform("SW")  # SW is the code for Nintendo Switch
+        result = platform_icon(platform)
+        self.assertEqual(result, "mdi-nintendo-switch")
+
+    def test_pc_icon(self):
+        """Test PC platform returns correct icon."""
+        platform = self._make_platform("WIN")  # WIN is the code for Windows/PC
+        result = platform_icon(platform)
+        self.assertEqual(result, "mdi-microsoft-windows")
+
+    def test_string_platform(self):
+        """Test passing string instead of object."""
+        result = platform_icon("PS5")
+        self.assertEqual(result, "mdi-sony-playstation")
+
+    def test_unknown_platform_returns_none(self):
+        """Test unknown platform returns None."""
+        platform = self._make_platform("UNKNOWN_PLATFORM")
+        result = platform_icon(platform)
+        self.assertIsNone(result)
+
+
+class PlatformSvgIconFilterTest(TestCase):
+    """Test the platform_svg_icon template filter."""
+
+    def _make_platform(self, code):
+        """Create a mock platform with code."""
+        p = Mock()
+        p.code = code
+        return p
+
+    def test_sega_returns_svg_icon(self):
+        """Test Sega platform returns SVG icon ID."""
+        platform = self._make_platform("GEN")  # GEN is the code for Genesis
+        result = platform_svg_icon(platform)
+        self.assertEqual(result, "platform-sega")
+
+    def test_playstation_returns_none(self):
+        """Test PlayStation returns None (uses MDI icon)."""
+        platform = self._make_platform("PS5")
+        result = platform_svg_icon(platform)
+        self.assertIsNone(result)
+
+    def test_string_platform(self):
+        """Test passing string instead of object."""
+        result = platform_svg_icon("GEN")  # GEN is the code for Genesis
+        self.assertEqual(result, "platform-sega")
+
+    def test_unknown_platform_returns_none(self):
+        """Test unknown platform returns None."""
+        platform = self._make_platform("UNKNOWN_PLATFORM")
+        result = platform_svg_icon(platform)
+        self.assertIsNone(result)
+
+
+class PlatformFamiliesGroupedFilterTest(TestCase):
+    """Test the platform_families_grouped template filter."""
+
+    def _make_platform(self, code, id, name):
+        """Create a mock platform."""
+        p = Mock()
+        p.code = code
+        p.id = id
+        p.name = name
+        return p
+
+    def test_groups_same_family_platforms(self):
+        """Test that platforms in same family are grouped."""
+        ps4 = self._make_platform("PS4", 1, "PlayStation 4")
+        ps5 = self._make_platform("PS5", 2, "PlayStation 5")
+        result = platform_families_grouped([ps4, ps5])
+        # Should have one group
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["key"], "playstation")
+        self.assertEqual(result[0]["count"], 2)
+        self.assertIn("1", result[0]["platform_ids_str"])
+        self.assertIn("2", result[0]["platform_ids_str"])
+
+    def test_different_families(self):
+        """Test platforms from different families create separate groups."""
+        ps5 = self._make_platform("PS5", 1, "PlayStation 5")
+        xbox = self._make_platform("XBXS", 2, "Xbox Series X")
+        result = platform_families_grouped([ps5, xbox])
+        self.assertEqual(len(result), 2)
+        keys = [r["key"] for r in result]
+        self.assertIn("playstation", keys)
+        self.assertIn("xbox", keys)
+
+    def test_unknown_platform_skipped(self):
+        """Test that platforms with unknown family keys are skipped."""
+        unknown = self._make_platform("UNKNOWN_CODE", 1, "Unknown Platform")
+        result = platform_families_grouped([unknown])
+        self.assertEqual(result, [])
+
+    def test_tooltip_contains_all_names(self):
+        """Test tooltip contains all platform names."""
+        ps4 = self._make_platform("PS4", 1, "PlayStation 4")
+        ps5 = self._make_platform("PS5", 2, "PlayStation 5")
+        result = platform_families_grouped([ps4, ps5])
+        self.assertIn("PlayStation 4", result[0]["tooltip"])
+        self.assertIn("PlayStation 5", result[0]["tooltip"])
+
+    def test_empty_list_returns_empty(self):
+        """Test empty list returns empty result."""
+        result = platform_families_grouped([])
+        self.assertEqual(result, [])
+
+
+class GenreCategoriesGroupedFilterTest(TestCase):
+    """Test the genre_categories_grouped template filter."""
+
+    def _make_genre(self, name, id, parent_name=None, level=1):
+        """Create a mock genre."""
+        g = Mock()
+        g.name = name
+        g.id = id
+        g.level = level
+        if parent_name:
+            g.parent = Mock()
+            g.parent.name = parent_name
+        else:
+            g.parent = None
+        return g
+
+    def test_groups_genres_by_parent(self):
+        """Test genres are grouped by parent category."""
+        shooter = self._make_genre("Shooter", 1, parent_name="Action")
+        fighting = self._make_genre("Fighting", 2, parent_name="Action")
+        result = genre_categories_grouped([shooter, fighting])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["name"], "Action")
+        self.assertEqual(result[0]["count"], 2)
+
+    def test_category_genre_uses_own_name(self):
+        """Test top-level category genre uses its own name."""
+        action = self._make_genre("Action", 1, parent_name=None, level=0)
+        result = genre_categories_grouped([action])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["name"], "Action")
+
+    def test_orphan_genre_uses_other(self):
+        """Test genre without parent or level 0 uses 'Other'."""
+        orphan = self._make_genre("Mystery Genre", 1, parent_name=None, level=1)
+        result = genre_categories_grouped([orphan])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["name"], "Other")
+
+    def test_icon_assigned_correctly(self):
+        """Test category gets correct icon."""
+        shooter = self._make_genre("Shooter", 1, parent_name="Action")
+        result = genre_categories_grouped([shooter])
+        self.assertEqual(result[0]["icon"], "mdi-crosshairs")
+
+    def test_genre_ids_in_result(self):
+        """Test genre IDs are included in result."""
+        shooter = self._make_genre("Shooter", 42, parent_name="Action")
+        result = genre_categories_grouped([shooter])
+        self.assertIn("42", result[0]["genre_ids_str"])
+
+    def test_tooltip_contains_names(self):
+        """Test tooltip contains genre names."""
+        shooter = self._make_genre("Shooter", 1, parent_name="Action")
+        fighting = self._make_genre("Fighting", 2, parent_name="Action")
+        result = genre_categories_grouped([shooter, fighting])
+        self.assertIn("Shooter", result[0]["tooltip"])
+        self.assertIn("Fighting", result[0]["tooltip"])
+
+    def test_empty_list_returns_empty(self):
+        """Test empty list returns empty result."""
+        result = genre_categories_grouped([])
+        self.assertEqual(result, [])
+
+
+class GenreIconFilterTest(TestCase):
+    """Test the genre_icon template filter."""
+
+    def _make_genre(self, name, parent_name=None, level=1):
+        """Create a mock genre."""
+        g = Mock()
+        g.name = name
+        g.level = level
+        if parent_name:
+            g.parent = Mock()
+            g.parent.name = parent_name
+        else:
+            g.parent = None
+        return g
+
+    def test_genre_with_parent_returns_parent_icon(self):
+        """Test genre with parent returns parent's icon."""
+        shooter = self._make_genre("Shooter", parent_name="Action")
+        result = genre_icon(shooter)
+        self.assertEqual(result, "mdi-crosshairs")
+
+    def test_category_genre_returns_own_icon(self):
+        """Test top-level category returns its own icon."""
+        action = self._make_genre("Action", parent_name=None, level=0)
+        result = genre_icon(action)
+        self.assertEqual(result, "mdi-crosshairs")
+
+    def test_string_category_name(self):
+        """Test passing category name string directly."""
+        result = genre_icon("Action")
+        self.assertEqual(result, "mdi-crosshairs")
+
+    def test_unknown_category_returns_default(self):
+        """Test unknown category returns default icon."""
+        unknown = self._make_genre("Unknown Genre", parent_name="Unknown Category")
+        result = genre_icon(unknown)
+        self.assertEqual(result, "mdi-gamepad-variant")
+
+    def test_genre_name_matches_category(self):
+        """Test genre whose name matches category gets correct icon."""
+        # Genre with name that matches a category but no parent
+        rpg = self._make_genre("Role-Playing", parent_name=None, level=1)
+        result = genre_icon(rpg)
+        self.assertEqual(result, "mdi-wizard-hat")
+
+    def test_adventure_icon(self):
+        """Test Adventure category icon."""
+        result = genre_icon("Adventure")
+        self.assertEqual(result, "mdi-image-filter-hdr")
+
+    def test_strategy_icon(self):
+        """Test Strategy category icon."""
+        result = genre_icon("Strategy")
+        self.assertEqual(result, "mdi-chess-knight")
