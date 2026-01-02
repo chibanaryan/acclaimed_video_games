@@ -722,6 +722,14 @@ class GameDetailView(DetailView):
 
         context["grouped_lists"] = sorted_grouped_lists
 
+        # List type counts for colored badges (matches source lists page)
+        context["list_type_counts"] = {
+            "alltime": len(grouped.get("All time", [])),
+            "decade": len(grouped.get("Decade", [])),
+            "misc": len(grouped.get("Miscellaneous", [])),
+            "eoy": len(grouped.get("End of year", [])),
+        }
+
         # Check if current user has marked this game as played
         if self.request.user.is_authenticated and game.igdb_id:
             context["is_played"] = models.PlayedGame.objects.filter(
