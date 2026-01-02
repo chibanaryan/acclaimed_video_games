@@ -1340,6 +1340,41 @@ class Game(models.Model):
             return utils.year_to_decade(self.year_of_release)
         return None
 
+    def get_display_developers(self, max_count: int = 2) -> list:
+        """
+        Get developers for display, filtering out redundant ancestors.
+
+        When a game credits both a parent company and its subsidiary
+        (e.g., Nintendo and Nintendo R&D1), this returns only the most
+        specific developer (the subsidiary).
+
+        Args:
+            max_count: Maximum number of developers to return (default 2)
+
+        Returns:
+            List of Developer objects, filtered and limited
+        """
+        developers = list(self.developers.all())
+
+        if len(developers) <= 1:
+            return developers
+
+        # Build set of all ancestor IDs across all developers
+        ancestor_ids = set()
+        for dev in developers:
+            # Walk up the parent chain and collect ancestor IDs
+            current = dev.parent
+            visited = set()
+            while current and current.id not in visited:
+                ancestor_ids.add(current.id)
+                visited.add(current.id)
+                current = current.parent
+
+        # Filter out any developer that is an ancestor of another
+        filtered = [dev for dev in developers if dev.id not in ancestor_ids]
+
+        return filtered[:max_count]
+
     @property
     def lists_grouped_by_type(self) -> Dict[str, list]:
         """Get lists grouped by type label.

@@ -993,3 +993,86 @@ class DeveloperModelTests(TestCase):
         dev.name = "Updated Root Dev"
         dev.save()
         self.assertEqual(dev.slug, "root-dev")
+
+
+class GameDisplayDevelopersTests(TestCase):
+    """Tests for Game.get_display_developers() method."""
+
+    def test_single_developer_returned_as_is(self):
+        """Test that a single developer is returned unchanged."""
+        dev = models.Developer.objects.create(name="Solo Studio", slug="solo")
+        game = models.Game.objects.create(name="Test Game", rank=1, igdb_id=1)
+        game.developers.add(dev)
+
+        result = game.get_display_developers()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], dev)
+
+    def test_filters_out_parent_when_subsidiary_credited(self):
+        """Test that parent is filtered when both parent and subsidiary credited."""
+        parent = models.Developer.objects.create(name="Nintendo", slug="nintendo")
+        child = models.Developer.objects.create(name="Nintendo R&D1", parent=parent)
+        game = models.Game.objects.create(name="Super Metroid", rank=1, igdb_id=1)
+        game.developers.add(parent, child)
+
+        result = game.get_display_developers()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], child)
+
+    def test_keeps_sibling_developers(self):
+        """Test that sibling developers (same parent) are both kept."""
+        parent = models.Developer.objects.create(name="Rockstar", slug="rockstar")
+        child1 = models.Developer.objects.create(name="Rockstar North", parent=parent)
+        child2 = models.Developer.objects.create(
+            name="Rockstar San Diego", parent=parent
+        )
+        game = models.Game.objects.create(name="Red Dead Redemption", rank=1, igdb_id=1)
+        game.developers.add(child1, child2)
+
+        result = game.get_display_developers()
+        self.assertEqual(len(result), 2)
+        self.assertIn(child1, result)
+        self.assertIn(child2, result)
+
+    def test_keeps_independent_developers(self):
+        """Test that unrelated developers are both kept."""
+        dev1 = models.Developer.objects.create(name="Bird Studio", slug="bird")
+        dev2 = models.Developer.objects.create(name="Square", slug="square")
+        game = models.Game.objects.create(name="Chrono Trigger", rank=1, igdb_id=1)
+        game.developers.add(dev1, dev2)
+
+        result = game.get_display_developers()
+        self.assertEqual(len(result), 2)
+        self.assertIn(dev1, result)
+        self.assertIn(dev2, result)
+
+    def test_filters_grandparent_in_deep_hierarchy(self):
+        """Test filtering with grandparent -> parent -> child hierarchy."""
+        grandparent = models.Developer.objects.create(name="EA", slug="ea")
+        parent = models.Developer.objects.create(name="BioWare", parent=grandparent)
+        child = models.Developer.objects.create(name="BioWare Edmonton", parent=parent)
+        game = models.Game.objects.create(name="Mass Effect 2", rank=1, igdb_id=1)
+        game.developers.add(grandparent, parent, child)
+
+        result = game.get_display_developers()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], child)
+
+    def test_max_count_limits_results(self):
+        """Test that max_count parameter limits returned developers."""
+        devs = [
+            models.Developer.objects.create(name=f"Studio {i}", slug=f"studio-{i}")
+            for i in range(5)
+        ]
+        game = models.Game.objects.create(name="Multi Dev Game", rank=1, igdb_id=1)
+        game.developers.add(*devs)
+
+        result = game.get_display_developers(max_count=2)
+        self.assertEqual(len(result), 2)
+
+    def test_empty_developers_returns_empty_list(self):
+        """Test that game with no developers returns empty list."""
+        game = models.Game.objects.create(name="No Dev Game", rank=1, igdb_id=1)
+
+        result = game.get_display_developers()
+        self.assertEqual(result, [])

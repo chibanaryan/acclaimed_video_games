@@ -46,7 +46,7 @@
             {# Row 1: Developer and list count #}
             <div class="text-xs text-base-content/70 truncate" data-slot="meta">
                 {% if game %}
-                    {% with first_dev=game.developers.first %}{% if first_dev %}{{ first_dev.name }}{% endif %}{% endwith %}{% if game.list_count %}{% if game.developers.first %} &bull; {% endif %}<span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span>{% endif %}
+                    {% with display_devs=game.get_display_developers %}{% for dev in display_devs %}{{ dev.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endwith %}{% if game.list_count %}{% if game.get_display_developers %} &bull; {% endif %}<span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span>{% endif %}
                 {% endif %}
             </div>
             {# Row 2: Platform codes and genres #}
