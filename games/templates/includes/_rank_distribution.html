@@ -1,0 +1,42 @@
+{# Rank Distribution Chart - Smooth SVG area chart showing game distribution across rankings #}
+{# Updates dynamically via rank-distribution-update events #}
+{# Pure vanilla JS - no Alpine.js dependency #}
+{% load game_filters %}
+
+<div class="rank-distribution-section">
+    <div class="rank-distribution-header">
+        <span class="text-xs font-medium text-base-content/60">Rank Distribution</span>
+    </div>
+    <div class="rank-distribution" data-bins="{{ rank_distribution|default:'[]'|tojson }}">
+        {# SVG Chart - uses visibility to reserve space and prevent layout shift #}
+        <svg viewBox="0 0 100 40"
+             preserveAspectRatio="none"
+             class="rank-distribution-svg"
+             style="{% if not rank_distribution %}visibility: hidden;{% endif %}">
+
+            {# Gradient definition for softer edges #}
+            <defs>
+                <linearGradient id="rankGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:currentColor;stop-opacity:0.5" />
+                    <stop offset="100%" style="stop-color:currentColor;stop-opacity:0.15" />
+                </linearGradient>
+            </defs>
+
+            {# Filled area path #}
+            <path class="rank-distribution-fill" fill="url(#rankGradient)" d=""/>
+
+            {# Container for hover regions - populated by JS #}
+            <g class="rank-distribution-rects"></g>
+        </svg>
+
+        {# X-axis labels #}
+        <div class="rank-distribution-axis">
+            <span>1</span>
+            <span>500</span>
+            <span>1000</span>
+        </div>
+
+        {# Tooltip - hidden by default #}
+        <div class="rank-distribution-tooltip" style="display: none;"></div>
+    </div>
+</div>

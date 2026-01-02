@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-02
+
+- Add rank distribution chart: smooth SVG area chart showing game distribution across rankings (1-1000), updates dynamically with filters
+
 ## 2026-01-01
 
 - Show multiple developers in game rows with smart filtering (removes redundant parent companies when subsidiary is also credited)

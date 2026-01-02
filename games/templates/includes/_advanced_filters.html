@@ -534,6 +534,17 @@
                             console.error('Error parsing platform counts:', e);
                         }
                     }
+
+                    // Update rank distribution chart
+                    const rankDistEl = document.getElementById('rank-distribution-update');
+                    if (rankDistEl) {
+                        try {
+                            const rankDist = JSON.parse(rankDistEl.textContent);
+                            window.dispatchEvent(new CustomEvent('rank-distribution-update', { detail: rankDist }));
+                        } catch (e) {
+                            console.error('Error parsing rank distribution:', e);
+                        }
+                    }
                 } else {
                     const contentEl = document.getElementById('content');
                     if (contentEl) {
@@ -632,6 +643,11 @@
                 if (state.facets.series) {
                     window.dispatchEvent(new CustomEvent('series-counts-update', { detail: state.facets.series }));
                 }
+
+                // Rank distribution
+                if (state.facets.rankDistribution) {
+                    window.dispatchEvent(new CustomEvent('rank-distribution-update', { detail: state.facets.rankDistribution }));
+                }
             }
 
             // Update URL
@@ -674,6 +690,11 @@
             // Series counts
             if (result.facets.series) {
                 window.dispatchEvent(new CustomEvent('series-counts-update', { detail: result.facets.series }));
+            }
+
+            // Rank distribution
+            if (result.facets.rankDistribution) {
+                window.dispatchEvent(new CustomEvent('rank-distribution-update', { detail: result.facets.rankDistribution }));
             }
         },
         dispatchInitialCounts() {
@@ -801,18 +822,24 @@
          }
      ">
 
-    {# Page heading above the two-column layout - hidden on mobile (sticky header shows there) #}
-    <div id="search-heading" class="mb-4 hidden desktop:block">
-        <div class="flex justify-between items-center mb-1">
-            <h1 class="text-3xl font-bold" id="search-title">
+    {# Page heading row - title on left, rank distribution aligned with sidebar on right #}
+    {# Fixed height prevents layout shift when chart loads #}
+    <div id="search-heading" class="mb-4 hidden desktop:flex items-center gap-6" style="height: 80px;">
+        {# Left: Title area (matches game results width), vertically centered #}
+        <div class="min-w-0 flex-1 max-w-[calc(100%-357px-1.5rem)] flex flex-col justify-center">
+            <h1 class="text-3xl font-bold line-clamp-2" id="search-title">
                 {{ filter_title|default:"Advanced Search" }}
             </h1>
+            {% if genre_subtitle %}
+                <p class="text-base font-semibold text-base-content/85 -mt-1 truncate" id="genre-subtitle">
+                    {{ genre_subtitle }}
+                </p>
+            {% endif %}
         </div>
-        {% if genre_subtitle %}
-            <p class="text-base font-semibold text-base-content/85" id="genre-subtitle">
-                {{ genre_subtitle }}
-            </p>
-        {% endif %}
+        {# Right: Rank distribution (matches sidebar width) #}
+        <div style="width: 357px; flex-shrink: 0;">
+            {% include 'includes/_rank_distribution.html' %}
+        </div>
     </div>
 
     {# Mobile Sticky Header + Bottom Sheet (shown only on mobile/tablet) #}
@@ -935,9 +962,9 @@
 
     {# Two-column layout: results on left, filters sidebar on right #}
     {# Reserve sidebar space on desktop with calc() to prevent layout shift #}
-    <div class="flex flex-col desktop:flex-row">
+    <div class="flex flex-col desktop:flex-row desktop:gap-6">
         {# Left column - Results (explicit max-width reserves sidebar space) #}
-        <div class="min-w-0 w-full desktop:max-w-[calc(100%-357px)]" style="contain: layout;">
+        <div class="min-w-0 w-full desktop:max-w-[calc(100%-357px-1.5rem)]" style="contain: layout;">
             <div id="game-results-container">
                 {% include 'games/includes/_game_list_results.html' %}
             </div>
@@ -946,8 +973,6 @@
         {# Right sidebar - Filters (fixed 357px width, hidden on mobile) #}
         <div class="hidden desktop:block" style="width: 357px; flex-shrink: 0; contain: layout;">
             <div style="min-height: 1400px;">
-                {# Spacer to align with game list count #}
-                <div class="h-[calc(1rem+0.5rem)]"></div>
                 <div class="bg-base-200 rounded-lg p-4">
                 {# Top-level Filters header with actions #}
                 <div class="flex items-center justify-between mb-3 pb-2 border-b border-base-300">

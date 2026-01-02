@@ -285,6 +285,9 @@ class GameFilterEngine {
         // Calculate faceted counts
         const facets = this._calculateFacets(filters);
 
+        // Add rank distribution of filtered results
+        facets.rankDistribution = this.getRankDistribution(results);
+
         return {
             games: results,
             total: results.length,
@@ -753,6 +756,39 @@ class GameFilterEngine {
         }
 
         return Object.fromEntries(yearCounts);
+    }
+
+    /**
+     * Calculate rank distribution bins from an array of games
+     * @param {Array} games - Array of game objects with rank (r) property
+     * @param {number} binCount - Number of bins (default 10)
+     * @returns {Array} Array of {binStart, binEnd, count} objects
+     */
+    getRankDistribution(games, binCount = 10) {
+        const maxRank = 1000;
+        const binSize = Math.ceil(maxRank / binCount);
+        const bins = [];
+
+        // Initialize bins
+        for (let i = 0; i < binCount; i++) {
+            bins.push({
+                binStart: i * binSize + 1,
+                binEnd: Math.min((i + 1) * binSize, maxRank),
+                count: 0
+            });
+        }
+
+        // Count games per bin
+        for (const game of games) {
+            if (game.r && game.r >= 1 && game.r <= maxRank) {
+                const binIndex = Math.floor((game.r - 1) / binSize);
+                if (binIndex >= 0 && binIndex < binCount) {
+                    bins[binIndex].count++;
+                }
+            }
+        }
+
+        return bins;
     }
 }
 

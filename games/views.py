@@ -1158,6 +1158,21 @@ class HomePageView(RobustPaginationMixin, ListView):
             str(k): v for k, v in platform_counts.items()
         }
 
+        # Rank distribution (10 bins of 100 ranks each)
+        # Uses the filtered queryset to show distribution of current results
+        rank_bins = []
+        bin_size = 100
+        for i in range(10):
+            bin_start = i * bin_size + 1
+            bin_end = (i + 1) * bin_size
+            count = (
+                self.get_queryset()
+                .filter(rank__gte=bin_start, rank__lte=bin_end)
+                .count()
+            )
+            rank_bins.append({"binStart": bin_start, "binEnd": bin_end, "count": count})
+        context["rank_distribution"] = rank_bins
+
         # Load More context
         page_obj = context.get("page_obj")
         if page_obj:
@@ -2621,7 +2636,7 @@ class TogglePlayedGameView(LoginRequiredMixin, View):
         response = render(
             request,
             "games/includes/_played_button.html",
-            {"game": game, "is_played": is_played, "size": size},
+            {"game": game, "is_played": is_played, "size": size, "just_toggled": True},
         )
         # Prevent URL push for this HTMX action
         response["HX-Push-Url"] = "false"

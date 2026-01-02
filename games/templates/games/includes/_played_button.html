@@ -17,14 +17,14 @@
 <button
     class="played-button flex items-center justify-center shrink-0 pointer-events-none {% if size == 'large' %}h-12 w-12 min-w-12{% else %}h-8 w-8 min-w-8{% endif %}">
     {% if is_played %}
-    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}">
+    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-appear{% else %} star-idle{% endif %}">
         <img src="{% static 'games/images/mario-star.png' %}"
              srcset="{% static 'games/images/mario-star.png' %} 1x, {% static 'games/images/mario-star@2x.png' %} 2x"
              alt="Played" width="32" height="32"
              class="{% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %} drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
     </span>
     {% else %}
-    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}">
+    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-disappear{% endif %}">
         <span class="mdi mdi-star-outline {% if size == 'large' %}text-5xl{% else %}text-2xl{% endif %} text-base-content/30"></span>
     </span>
     {% endif %}
