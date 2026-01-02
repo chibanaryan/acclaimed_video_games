@@ -14,52 +14,31 @@
         {% for dev in developers_flat %}{{ dev.id }}: "{{ dev.name|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}
     };
     window.ROOT_DEVELOPER_NAME = "{{ developer.name|escapejs }}";
-    window.ROOT_MAX_BUCKET = {{ rank_distribution.max_bucket }};
 </script>
+<script src="{% static 'games/js/rank-distribution.min.js' %}"></script>
 <script src="{% static 'games/js/developer-filter.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
 {% if developer %}
     <div x-data="developerFilter()">
-        <h1 class="text-3xl font-bold mb-4" x-text="getDynamicTitle()">{{ developer.name }}</h1>
-
-        {% if total_games %}
-        {# Game count - server-rendered with Alpine.js reactivity for filter changes #}
-        <p class="text-base-content/70 mb-4 min-h-6">
-            <span x-show="selectedDeveloperIds.size === 0">{{ total_games }} game{{ total_games|pluralize }} across {{ subsidiaries_count }} developer{{ subsidiaries_count|pluralize }}</span>
-            <span x-show="selectedDeveloperIds.size > 0" x-cloak x-text="`${countVisibleGames()} game${countVisibleGames() !== 1 ? 's' : ''} across ${selectedDeveloperIds.size} developer${selectedDeveloperIds.size !== 1 ? 's' : ''}`"></span>
-        </p>
-
-        {# Rank distribution visualization - server-rendered with Alpine.js reactivity #}
-        {# All 4 buckets always shown for consistent height; values update when filters change #}
-        <div class="mb-6 p-4 bg-base-200 rounded-lg max-w-md">
-            <h3 class="text-sm font-semibold text-base-content/70 mb-3">Rank Distribution</h3>
-            <div class="space-y-2 text-sm">
-                <div class="flex items-center gap-2">
-                    <span class="w-20 text-right tabular-nums text-base-content/70">Top 100:</span>
-                    <div class="flex-1 bg-base-300 rounded h-3 overflow-hidden">
-                        <div class="h-full bg-primary" style="width: {{ rank_distribution.top_100_pct }}%" :style="'width: ' + getRankDistribution().top_100_pct + '%'"></div>
-                    </div>
-                    <span class="w-8 tabular-nums" x-text="getRankDistribution().top_100">{{ rank_distribution.top_100 }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-20 text-right tabular-nums text-base-content/70">101–500:</span>
-                    <div class="flex-1 bg-base-300 rounded h-3 overflow-hidden">
-                        <div class="h-full bg-primary/70" style="width: {{ rank_distribution.top_500_pct }}%" :style="'width: ' + getRankDistribution().top_500_pct + '%'"></div>
-                    </div>
-                    <span class="w-8 tabular-nums" x-text="getRankDistribution().top_500">{{ rank_distribution.top_500 }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-20 text-right tabular-nums text-base-content/70">501–1000:</span>
-                    <div class="flex-1 bg-base-300 rounded h-3 overflow-hidden">
-                        <div class="h-full bg-primary/50" style="width: {{ rank_distribution.top_1000_pct }}%" :style="'width: ' + getRankDistribution().top_1000_pct + '%'"></div>
-                    </div>
-                    <span class="w-8 tabular-nums" x-text="getRankDistribution().top_1000">{{ rank_distribution.top_1000 }}</span>
-                </div>
+        {# Header row: Developer name + game count on left, rank distribution on right (desktop only) #}
+        <div class="flex items-start justify-between gap-6 mb-4">
+            {# Left: Developer info #}
+            <div class="flex-1 min-w-0">
+                <h1 class="text-3xl font-bold mb-2" x-text="getDynamicTitle()">{{ developer.name }}</h1>
+                {% if total_games %}
+                <p class="text-base-content/70 min-h-6">
+                    <span x-show="selectedDeveloperIds.size === 0">{{ total_games }} game{{ total_games|pluralize }} across {{ subsidiaries_count }} developer{{ subsidiaries_count|pluralize }}</span>
+                    <span x-show="selectedDeveloperIds.size > 0" x-cloak x-text="`${countVisibleGames()} game${countVisibleGames() !== 1 ? 's' : ''} across ${selectedDeveloperIds.size} developer${selectedDeveloperIds.size !== 1 ? 's' : ''}`"></span>
+                </p>
+                {% endif %}
+            </div>
+            {# Right: Rank distribution (matches sidebar width, hidden on mobile) #}
+            <div class="hidden desktop:block" style="width: 357px; flex-shrink: 0;">
+                {% include 'includes/_rank_distribution.html' %}
             </div>
         </div>
-        {% endif %}
 
         {# Mobile filter button #}
         <div class="desktop:hidden mb-4">

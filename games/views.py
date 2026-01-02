@@ -1673,46 +1673,18 @@ class DeveloperDetailView(DetailView):
         game_rank_map = {game.id: game.rank for game in all_games if game.rank}
         context["game_rank_map_json"] = json.dumps(game_rank_map, cls=DjangoJSONEncoder)
 
-        # Rank distribution for visualization
-        # Bucket games by rank tiers to show developer consistency
-        rank_distribution = {
-            "top_100": 0,
-            "top_500": 0,
-            "top_1000": 0,
-            "beyond": 0,
-        }
-        for game in all_games:
-            if game.rank and game.rank <= 100:
-                rank_distribution["top_100"] += 1
-            elif game.rank and game.rank <= 500:
-                rank_distribution["top_500"] += 1
-            elif game.rank and game.rank <= 1000:
-                rank_distribution["top_1000"] += 1
-            else:
-                rank_distribution["beyond"] += 1
-
-        # Calculate percentages for bar widths based on max bucket count
-        # This makes the largest bucket show as a full bar (100%)
-        max_bucket = (
-            max(
-                rank_distribution["top_100"],
-                rank_distribution["top_500"],
-                rank_distribution["top_1000"],
+        # Rank distribution for visualization (10 bins of 100 ranks each)
+        # Same format as games list page for visual consistency
+        rank_bins = []
+        bin_size = 100
+        for i in range(10):
+            bin_start = i * bin_size + 1
+            bin_end = (i + 1) * bin_size
+            count = sum(
+                1 for g in all_games if g.rank and bin_start <= g.rank <= bin_end
             )
-            or 1
-        )
-        rank_distribution["top_100_pct"] = round(
-            rank_distribution["top_100"] / max_bucket * 100
-        )
-        rank_distribution["top_500_pct"] = round(
-            rank_distribution["top_500"] / max_bucket * 100
-        )
-        rank_distribution["top_1000_pct"] = round(
-            rank_distribution["top_1000"] / max_bucket * 100
-        )
-        # Store max_bucket for JavaScript to use when filtering
-        rank_distribution["max_bucket"] = max_bucket
-        context["rank_distribution"] = rank_distribution
+            rank_bins.append({"binStart": bin_start, "binEnd": bin_end, "count": count})
+        context["rank_distribution"] = rank_bins
 
         # Cache the expensive context data (excluding objects that can't be cached)
         # We cache everything that's JSON-serializable or simple Python objects
@@ -1726,7 +1698,7 @@ class DeveloperDetailView(DetailView):
             "developer_game_map_json": context["developer_game_map_json"],
             "developer_child_map_json": context["developer_child_map_json"],
             "game_rank_map_json": context["game_rank_map_json"],
-            "rank_distribution": rank_distribution,
+            "rank_distribution": rank_bins,
         }
         self._set_cached_context(developer, cacheable_context)
 

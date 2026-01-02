@@ -15,7 +15,6 @@ function developerFilter() {
         developerNameMap: {},
         gameRankMap: {},
         rootDeveloperName: '',
-        rootMaxBucket: 1, // Max bucket count at root level for consistent bar scaling
 
         /**
          * Check if a game should be visible based on selected developers
@@ -85,35 +84,28 @@ function developerFilter() {
         },
 
         /**
-         * Calculate rank distribution for currently visible games
-         * Returns { top_100: n, top_500: n, top_1000: n, beyond: n, top_100_pct: n, ... }
-         * Percentages use root-level max bucket count for consistent scale across filtering
+         * Dispatch rank distribution update event for the SVG chart component
+         * Uses 10 bins of 100 ranks each (same format as games list page)
          */
-        getRankDistribution() {
+        dispatchRankDistribution() {
             const visibleGameIds = this.getVisibleGameIds();
-            const dist = { top_100: 0, top_500: 0, top_1000: 0, beyond: 0 };
+            const bins = [];
+            const binSize = 100;
 
-            for (const gameId of visibleGameIds) {
-                const rank = this.gameRankMap[gameId];
-                if (rank && rank <= 100) {
-                    dist.top_100++;
-                } else if (rank && rank <= 500) {
-                    dist.top_500++;
-                } else if (rank && rank <= 1000) {
-                    dist.top_1000++;
-                } else if (rank) {
-                    dist.beyond++;
+            for (let i = 0; i < 10; i++) {
+                const binStart = i * binSize + 1;
+                const binEnd = (i + 1) * binSize;
+                let count = 0;
+                for (const gameId of visibleGameIds) {
+                    const rank = this.gameRankMap[gameId];
+                    if (rank && rank >= binStart && rank <= binEnd) {
+                        count++;
+                    }
                 }
+                bins.push({ binStart, binEnd, count });
             }
 
-            // Use root-level max bucket count for consistent bar scale
-            // This ensures axes remain consistent when filtering by developers
-            const maxBucket = this.rootMaxBucket || 1;
-            dist.top_100_pct = Math.round(dist.top_100 / maxBucket * 100);
-            dist.top_500_pct = Math.round(dist.top_500 / maxBucket * 100);
-            dist.top_1000_pct = Math.round(dist.top_1000 / maxBucket * 100);
-
-            return dist;
+            window.dispatchEvent(new CustomEvent('rank-distribution-update', { detail: bins }));
         },
 
         /**
@@ -273,6 +265,7 @@ function developerFilter() {
             this.selectedDeveloperIds = newSelection;
             this.updateURL();
             this.updateIndeterminateStates();
+            this.dispatchRankDistribution();
         },
 
         /**
@@ -417,7 +410,6 @@ function developerFilter() {
             this.developerNameMap = window.DEVELOPER_NAME_MAP || {};
             this.gameRankMap = window.GAME_RANK_MAP || {};
             this.rootDeveloperName = window.ROOT_DEVELOPER_NAME || '';
-            this.rootMaxBucket = window.ROOT_MAX_BUCKET || 1;
 
             // Parse URL hash for selection state
             const hash = window.location.hash;
@@ -469,12 +461,16 @@ function developerFilter() {
                     this.selectedDeveloperIds = new Set();
                 }
                 this.updateIndeterminateStates();
+                this.dispatchRankDistribution();
             });
 
-            // Sort games on initial load
+            // Sort games on initial load and initialize chart
             this.$nextTick(() => {
                 this.sortGames();
                 this.updateIndeterminateStates();
+                // Always dispatch rank distribution to ensure chart is in sync
+                // (chart may have server-rendered data, but this ensures consistency)
+                this.dispatchRankDistribution();
             });
         }
     };

@@ -2,6 +2,7 @@
 
 ## 2026-01-02
 
+- Add rank distribution chart to developer detail page (same 10-bin SVG visualization as home page, updates with filters)
 - Fix modal triggers adding "#" to URL when clicked before JS loads (use button elements instead of anchor tags)
 - Show all leaf-level developers in game rows (removed 2-developer limit)
 - Change default theme from light (lofi) to dark (forest)
