@@ -46,18 +46,21 @@
 
         var width = 100;
         var height = 40;
-        var binWidth = width / this.bins.length;
         var maxCount = this.getMaxCount();
+        var numBins = this.bins.length;
 
+        // Position points at edges: first at x=0, last at x=width
+        // This eliminates flat sections at start/end of the chart
         var points = this.bins.map(function(bin, i) {
+            var x = numBins === 1 ? width / 2 : (i / (numBins - 1)) * width;
             return {
-                x: i * binWidth + binWidth / 2,
+                x: x,
                 y: height - (bin.count / maxCount) * (height - 6) - 2
             };
         });
 
-        // Start path from bottom-left, up to first point
-        var path = 'M0,' + height + ' L0,' + points[0].y + ' L' + points[0].x + ',' + points[0].y;
+        // Start path from bottom-left, up to first point (which is now at x=0)
+        var path = 'M0,' + height + ' L' + points[0].x + ',' + points[0].y;
 
         // Use Catmull-Rom to Bezier conversion for smooth curve through all points
         if (points.length > 1) {
@@ -78,8 +81,8 @@
             }
         }
 
-        // Close path to bottom-right and back
-        path += ' L' + width + ',' + points[points.length - 1].y + ' L' + width + ',' + height + ' Z';
+        // Close path to bottom-right (last point is now at x=width) and back
+        path += ' L' + width + ',' + height + ' Z';
         return path;
     };
 

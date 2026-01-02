@@ -3,6 +3,7 @@
 ## 2026-01-02
 
 - Add rank distribution chart: smooth SVG area chart showing game distribution across rankings (1-1000), updates dynamically with filters
+- Fix rank distribution chart: position data points at edges to eliminate flat sections at start/end
 
 ## 2026-01-01
 
