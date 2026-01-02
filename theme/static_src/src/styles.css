@@ -198,11 +198,11 @@
   }
 
   .table-minimal th:first-child {
-    @apply pl-0;
+    @apply pl-3;
   }
 
   .table-minimal th:last-child {
-    @apply pr-0;
+    @apply pr-3;
   }
 
   .table-minimal td {
@@ -210,11 +210,11 @@
   }
 
   .table-minimal td:first-child {
-    @apply pl-0;
+    @apply pl-3;
   }
 
   .table-minimal td:last-child {
-    @apply pr-0;
+    @apply pr-3;
   }
 
   .table-minimal tbody tr:hover {

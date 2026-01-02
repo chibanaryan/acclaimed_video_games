@@ -455,6 +455,22 @@
         resetExpanded() {
             this.expandedManufacturers = {};
             this.expandedFormFactors = {};
+        },
+
+        // Check if all nested dropdowns are expanded
+        areAllExpanded() {
+            for (const mfrKey of Object.keys(this.platformHierarchy)) {
+                if (!this.expandedManufacturers[mfrKey]) return false;
+            }
+            return true;
+        },
+
+        // Toggle all nested dropdowns expanded/collapsed
+        toggleAllExpanded() {
+            const shouldExpand = !this.areAllExpanded();
+            for (const mfrKey of Object.keys(this.platformHierarchy)) {
+                this.expandedManufacturers[mfrKey] = shouldExpand;
+            }
         }
      }"
      @platforms-reset.window="filters.platforms = []; resetExpanded();"
@@ -473,14 +489,24 @@
             <span class="badge badge-primary badge-sm ml-2" x-text="selectedCount()"></span>
         </template>
         <div class="flex-1"></div>
-        <button type="button"
-                x-show="selectedCount() > 0"
-                x-cloak
-                @click.stop="clearPlatforms(); resetExpanded(); debouncedFilterUpdate();"
-                class="btn btn-ghost btn-xs ml-2 text-base-content/60 hover:text-error">
-            <span class="mdi mdi-close text-xs"></span>
-            <span class="text-xs">Clear Platforms</span>
-        </button>
+        <div class="flex items-center gap-1">
+            <button type="button"
+                    x-show="selectedCount() > 0"
+                    x-cloak
+                    @click.stop="clearPlatforms(); resetExpanded(); debouncedFilterUpdate();"
+                    class="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
+                <span class="mdi mdi-close text-xs"></span>
+                <span class="text-xs">Clear</span>
+            </button>
+            <button type="button"
+                    x-show="expanded"
+                    x-cloak
+                    @click.stop="toggleAllExpanded()"
+                    class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-300"
+                    title="Expand/collapse all">
+                <span class="mdi mdi-unfold-more-horizontal"></span>
+            </button>
+        </div>
     </div>
 
     {# Accordion Content #}

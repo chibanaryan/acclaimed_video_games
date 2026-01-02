@@ -511,9 +511,41 @@
              this.expandedFormFactors = {};
              localStorage.removeItem('platformManufacturersExpanded');
              localStorage.removeItem('platformFormFactorsExpanded');
+         },
+
+         // Check if all nested dropdowns are expanded
+         areAllExpanded() {
+             for (const mfrKey of Object.keys(this.platformHierarchy)) {
+                 if (!this.expandedManufacturers[mfrKey]) return false;
+                 const mfr = this.platformHierarchy[mfrKey];
+                 if (mfr.formFactors) {
+                     for (const ffKey of Object.keys(mfr.formFactors)) {
+                         const key = mfrKey + '_' + ffKey;
+                         if (!this.expandedFormFactors[key]) return false;
+                     }
+                 }
+             }
+             return true;
+         },
+
+         // Toggle all nested dropdowns expanded/collapsed
+         toggleAllExpanded() {
+             const shouldExpand = !this.areAllExpanded();
+             for (const mfrKey of Object.keys(this.platformHierarchy)) {
+                 this.expandedManufacturers[mfrKey] = shouldExpand;
+                 const mfr = this.platformHierarchy[mfrKey];
+                 if (mfr.formFactors) {
+                     for (const ffKey of Object.keys(mfr.formFactors)) {
+                         const key = mfrKey + '_' + ffKey;
+                         this.expandedFormFactors[key] = shouldExpand;
+                     }
+                 }
+             }
+             this.saveExpandedState();
          }
      }"
-     @platforms-reset.window="handleReset()">
+     @platforms-reset.window="handleReset()"
+     @platforms-toggle-expand.window="toggleAllExpanded()">
 
     {# Loading State - matches actual rendered height of 8 manufacturer headers #}
     <div x-show="!countsReady" class="space-y-1 animate-pulse" style="min-height: 316px;">

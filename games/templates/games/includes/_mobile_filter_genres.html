@@ -230,6 +230,22 @@
         // Reset expanded states (called on Clear All Filters)
         resetExpanded() {
             this.expandedCategories = {};
+        },
+
+        // Check if all categories are expanded
+        areAllExpanded() {
+            for (const category of this.rootCategories) {
+                if (!this.expandedCategories[category.id]) return false;
+            }
+            return true;
+        },
+
+        // Toggle all categories expanded/collapsed
+        toggleAllExpanded() {
+            const shouldExpand = !this.areAllExpanded();
+            for (const category of this.rootCategories) {
+                this.expandedCategories[category.id] = shouldExpand;
+            }
         }
      }"
      @genres-reset.window="filters.genres = []; resetExpanded();"
@@ -248,14 +264,24 @@
             <span class="badge badge-primary badge-sm ml-2" x-text="selectedCount()"></span>
         </template>
         <div class="flex-1"></div>
-        <button type="button"
-                x-show="selectedCount() > 0"
-                x-cloak
-                @click.stop="clearGenres(); resetExpanded(); debouncedFilterUpdate();"
-                class="btn btn-ghost btn-xs ml-2 text-base-content/60 hover:text-error">
-            <span class="mdi mdi-close text-xs"></span>
-            <span class="text-xs">Clear Genres</span>
-        </button>
+        <div class="flex items-center gap-1">
+            <button type="button"
+                    x-show="selectedCount() > 0"
+                    x-cloak
+                    @click.stop="clearGenres(); resetExpanded(); debouncedFilterUpdate();"
+                    class="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
+                <span class="mdi mdi-close text-xs"></span>
+                <span class="text-xs">Clear</span>
+            </button>
+            <button type="button"
+                    x-show="expanded"
+                    x-cloak
+                    @click.stop="toggleAllExpanded()"
+                    class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-300"
+                    title="Expand/collapse all">
+                <span class="mdi mdi-unfold-more-horizontal"></span>
+            </button>
+        </div>
     </div>
 
     {# Accordion Content #}

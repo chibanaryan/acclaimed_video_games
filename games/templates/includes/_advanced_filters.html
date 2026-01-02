@@ -1028,10 +1028,15 @@
                         <span class="font-bold text-base">Platform</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="platformsExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetPlatforms()" title="Clear platform filter" x-cloak x-show="filters.platforms.length > 0">
-                            <span class="mdi mdi-close text-xs"></span>
-                            <span class="text-xs">Clear Platform Filter</span>
-                        </button>
+                        <div class="ml-auto flex items-center gap-1">
+                            <button type="button" class="btn btn-ghost btn-xs text-base-content/60 hover:text-error" @click.stop="resetPlatforms()" title="Clear platform filter" x-cloak x-show="filters.platforms.length > 0">
+                                <span class="mdi mdi-close text-xs"></span>
+                                <span class="text-xs">Clear</span>
+                            </button>
+                            <button type="button" class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-300" @click.stop="$dispatch('platforms-toggle-expand')" title="Expand/collapse all" x-cloak x-show="platformsExpanded">
+                                <span class="mdi mdi-unfold-more-horizontal"></span>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="platformsExpanded"
                          x-collapse
@@ -1052,10 +1057,15 @@
                         <span class="font-bold text-base">Genre</span>
                         <span class="mdi text-base-content/60 ml-1"
                               :class="genresExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetGenres()" title="Clear genre filter" x-cloak x-show="filters.genres.length > 0">
-                            <span class="mdi mdi-close text-xs"></span>
-                            <span class="text-xs">Clear Genre Filter</span>
-                        </button>
+                        <div class="ml-auto flex items-center gap-1">
+                            <button type="button" class="btn btn-ghost btn-xs text-base-content/60 hover:text-error" @click.stop="resetGenres()" title="Clear genre filter" x-cloak x-show="filters.genres.length > 0">
+                                <span class="mdi mdi-close text-xs"></span>
+                                <span class="text-xs">Clear</span>
+                            </button>
+                            <button type="button" class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-300" @click.stop="$dispatch('genres-toggle-expand')" title="Expand/collapse all" x-cloak x-show="genresExpanded">
+                                <span class="mdi mdi-unfold-more-horizontal"></span>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="genresExpanded"
                          x-collapse

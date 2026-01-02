@@ -270,9 +270,27 @@
              // Reset expanded states to defaults (collapsed)
              this.expandedCategories = {};
              localStorage.removeItem('genreCategoriesExpanded');
+         },
+
+         // Check if all categories are expanded
+         areAllExpanded() {
+             for (const category of this.rootCategories) {
+                 if (!this.expandedCategories[category.id]) return false;
+             }
+             return true;
+         },
+
+         // Toggle all categories expanded/collapsed
+         toggleAllExpanded() {
+             const shouldExpand = !this.areAllExpanded();
+             for (const category of this.rootCategories) {
+                 this.expandedCategories[category.id] = shouldExpand;
+             }
+             this.saveExpandedState();
          }
      }"
-     @genres-reset.window="handleReset()">
+     @genres-reset.window="handleReset()"
+     @genres-toggle-expand.window="toggleAllExpanded()">
 
     {# Loading State - matches actual rendered height of 9 genre category headers #}
     <div x-show="!countsReady" class="space-y-1 animate-pulse" style="min-height: 356px;">
