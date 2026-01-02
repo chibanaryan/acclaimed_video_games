@@ -86,8 +86,12 @@ def invalidate_developer_cache_on_change(sender, instance, **kwargs):
     cache.delete(f"{config.CACHE_VERSION}:developer_detail:{instance.id}")
     if instance.parent_id:
         # Invalidate root developer's detail cache too
-        root = instance.root_developer
-        cache.delete(f"{config.CACHE_VERSION}:developer_detail:{root.id}")
+        # Use try-except because parent may already be deleted during bulk deletion
+        try:
+            root = instance.root_developer
+            cache.delete(f"{config.CACHE_VERSION}:developer_detail:{root.id}")
+        except Developer.DoesNotExist:
+            pass
 
     logger.debug("Developer hierarchy cache invalidated (Developer changed)")
 

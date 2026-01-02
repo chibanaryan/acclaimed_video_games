@@ -2,6 +2,9 @@
 
 ## 2026-01-01
 
+- Fix sync_from_prod: add missing models (Series, WikipediaGenre, GameQuote, IGDBGameData, WikipediaGameData)
+- Fix signal handler crash during bulk deletion when parent developer already deleted
+- Bump cache version to v3
 - Improve game list density: show developer and list count by default (not just on hover)
 - Add list appearances row to game detail properties
 - Add list counts to section headers on game detail page (e.g., "All-Time Lists (15)")
