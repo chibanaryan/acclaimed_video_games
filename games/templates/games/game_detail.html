@@ -96,10 +96,10 @@
     {% if grouped_lists %}
     <div class="flex flex-wrap items-center gap-2 mt-6 mb-4">
         <h2 class="text-xl font-bold">Source Lists</h2>
-        {% if list_type_counts.alltime %}<span class="badge badge-sm badge-success opacity-75">{{ list_type_counts.alltime }} All-time</span>{% endif %}
-        {% if list_type_counts.decade %}<span class="badge badge-sm badge-info opacity-75">{{ list_type_counts.decade }} Decade</span>{% endif %}
-        {% if list_type_counts.misc %}<span class="badge badge-sm badge-warning opacity-75">{{ list_type_counts.misc }} Misc</span>{% endif %}
-        {% if list_type_counts.eoy %}<span class="badge badge-sm badge-error opacity-75">{{ list_type_counts.eoy }} EOY</span>{% endif %}
+        {% if list_type_counts.alltime %}<span class="badge badge-sm badge-success opacity-85">{{ list_type_counts.alltime }} All-time</span>{% endif %}
+        {% if list_type_counts.decade %}<span class="badge badge-sm badge-info opacity-85">{{ list_type_counts.decade }} Decade</span>{% endif %}
+        {% if list_type_counts.misc %}<span class="badge badge-sm badge-warning opacity-85">{{ list_type_counts.misc }} Misc</span>{% endif %}
+        {% if list_type_counts.eoy %}<span class="badge badge-sm badge-error opacity-85">{{ list_type_counts.eoy }} EOY</span>{% endif %}
     </div>
     <div class="space-y-3">
         {% for group_label, group_items in grouped_lists %}

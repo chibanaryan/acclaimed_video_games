@@ -21,10 +21,10 @@ def get_list_type_label(type_code):
 def get_list_type_badge_class(type_code):
     """Return DaisyUI badge class for list type."""
     badge_classes = {
-        constants.LIST_ALLTIME: "badge-success opacity-75",
-        constants.LIST_DECADE: "badge-info opacity-75",
-        constants.LIST_MISC: "badge-warning opacity-75",
-        constants.LIST_EOY: "badge-error opacity-75",
+        constants.LIST_ALLTIME: "badge-success opacity-85",
+        constants.LIST_DECADE: "badge-info opacity-85",
+        constants.LIST_MISC: "badge-warning opacity-85",
+        constants.LIST_EOY: "badge-error opacity-85",
     }
     return badge_classes.get(type_code, "badge-ghost")
 
