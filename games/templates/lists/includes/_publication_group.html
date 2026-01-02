@@ -22,10 +22,10 @@
         {# Publication name and type counts as colored badges (fixed-width for alignment) #}
         <span class="font-semibold text-base flex-1">{{ group.publication.name }}</span>
         <span class="flex items-center gap-0.5">
-            <span class="w-7 text-center">{% if group.alltime_count %}<span class="badge badge-xs badge-primary">{{ group.alltime_count }}</span>{% endif %}</span>
-            <span class="w-7 text-center">{% if group.decade_count %}<span class="badge badge-xs badge-secondary">{{ group.decade_count }}</span>{% endif %}</span>
-            <span class="w-7 text-center">{% if group.misc_count %}<span class="badge badge-xs badge-info">{{ group.misc_count }}</span>{% endif %}</span>
-            <span class="w-7 text-center">{% if group.eoy_count %}<span class="badge badge-xs badge-ghost">{{ group.eoy_count }}</span>{% endif %}</span>
+            <span class="w-7 text-center">{% if group.alltime_count %}<span class="badge badge-xs badge-success opacity-75">{{ group.alltime_count }}</span>{% endif %}</span>
+            <span class="w-7 text-center">{% if group.decade_count %}<span class="badge badge-xs badge-info opacity-75">{{ group.decade_count }}</span>{% endif %}</span>
+            <span class="w-7 text-center">{% if group.misc_count %}<span class="badge badge-xs badge-warning opacity-75">{{ group.misc_count }}</span>{% endif %}</span>
+            <span class="w-7 text-center">{% if group.eoy_count %}<span class="badge badge-xs badge-error opacity-75">{{ group.eoy_count }}</span>{% endif %}</span>
         </span>
     </button>
 
