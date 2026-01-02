@@ -16,6 +16,9 @@
         this.path = container.querySelector('.rank-distribution-fill');
         this.tooltip = container.querySelector('.rank-distribution-tooltip');
         this.rectsContainer = container.querySelector('.rank-distribution-rects');
+        // Peak indicator is in the parent section's header
+        var section = container.closest('.rank-distribution-section');
+        this.peakLabel = section ? section.querySelector('.rank-distribution-peak') : null;
 
         this.init();
     }
@@ -92,9 +95,16 @@
         // Update visibility (use visibility instead of display to reserve space)
         if (this.bins.length === 0) {
             this.svg.style.visibility = 'hidden';
+            if (this.peakLabel) this.peakLabel.textContent = '';
             return;
         }
         this.svg.style.visibility = 'visible';
+
+        // Update peak indicator
+        var maxCount = this.getMaxCount();
+        if (this.peakLabel) {
+            this.peakLabel.textContent = 'Peak: ' + maxCount;
+        }
 
         // Update path
         this.path.setAttribute('d', this.computePath());

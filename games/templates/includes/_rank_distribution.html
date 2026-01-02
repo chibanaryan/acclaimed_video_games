@@ -6,6 +6,7 @@
 <div class="rank-distribution-section">
     <div class="rank-distribution-header">
         <span class="text-xs font-medium text-base-content/60">Rank Distribution</span>
+        <span class="rank-distribution-peak text-xs text-base-content/40"></span>
     </div>
     <div class="rank-distribution" data-bins="{{ rank_distribution|default:'[]'|tojson }}">
         {# SVG Chart - uses visibility to reserve space and prevent layout shift #}

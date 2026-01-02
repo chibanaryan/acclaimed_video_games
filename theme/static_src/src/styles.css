@@ -1021,7 +1021,7 @@ input[type="number"] {
   }
 
   .rank-distribution-header {
-    @apply mb-0;
+    @apply mb-0 flex justify-between items-center;
   }
 
   .rank-distribution {
