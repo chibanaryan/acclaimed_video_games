@@ -7,7 +7,7 @@
 
 @plugin "daisyui/theme" {
   name: "lofi";
-  default: true;
+  default: false;
   prefersdark: false;
   color-scheme: "light";
   --color-base-100: oklch(92% 0.004 286.32);
@@ -44,7 +44,7 @@
 
 @plugin "daisyui/theme" {
   name: "forest";
-  default: false;
+  default: true;
   prefersdark: true;
   color-scheme: "dark";
   --color-base-100: oklch(14% 0.005 285.823);

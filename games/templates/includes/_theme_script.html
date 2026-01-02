@@ -1,2 +1,2 @@
 {# Critical theme init - MUST be first in <head> to prevent FOUC #}
-<script nonce="{{ csp_nonce }}">(function(){var t=localStorage.getItem('theme');if(t!=='lofi'&&t!=='forest'){t=matchMedia('(prefers-color-scheme:dark)').matches?'forest':'lofi';localStorage.setItem('theme',t)}document.documentElement.setAttribute('data-theme',t)})()</script>
+<script nonce="{{ csp_nonce }}">(function(){var t=localStorage.getItem('theme');if(t!=='lofi'&&t!=='forest'){t=matchMedia('(prefers-color-scheme:light)').matches?'lofi':'forest';localStorage.setItem('theme',t)}document.documentElement.setAttribute('data-theme',t)})()</script>

@@ -2,6 +2,7 @@
 
 ## 2026-01-02
 
+- Change default theme from light (lofi) to dark (forest)
 - Refactor game detail source lists: sort by publication importance, group by type with expand/collapse
 - Refactor Lists page: group lists by publication with expand/collapse, sort years descending
 - Add rank distribution chart: smooth SVG area chart showing game distribution across rankings (1-1000), updates dynamically with filters
