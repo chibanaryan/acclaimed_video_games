@@ -2,6 +2,7 @@
 
 ## 2026-01-02
 
+- Fix modal triggers adding "#" to URL when clicked before JS loads (use button elements instead of anchor tags)
 - Show all leaf-level developers in game rows (removed 2-developer limit)
 - Change default theme from light (lofi) to dark (forest)
 - Simplify game detail: move played star to title, remove top% progress bar and list type legend
