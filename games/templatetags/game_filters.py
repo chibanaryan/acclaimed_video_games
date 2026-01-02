@@ -17,6 +17,18 @@ def get_list_type_label(type_code):
     return type_dict.get(type_code, type_code)
 
 
+@register.filter
+def get_list_type_badge_class(type_code):
+    """Return DaisyUI badge class for list type."""
+    badge_classes = {
+        constants.LIST_ALLTIME: "badge-primary",
+        constants.LIST_DECADE: "badge-secondary",
+        constants.LIST_MISC: "badge-info",
+        constants.LIST_EOY: "badge-ghost",
+    }
+    return badge_classes.get(type_code, "badge-ghost")
+
+
 @register.simple_tag
 def pagination_pages(page_obj, show_all_pages=False):
     """

@@ -19,9 +19,14 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
 
-        {# Publication name and type counts #}
+        {# Publication name and type counts as colored badges #}
         <span class="font-semibold text-base">{{ group.publication.name }}</span>
-        <span class="text-sm text-base-content/60">({% if group.alltime_count %}{{ group.alltime_count }} All-time{% endif %}{% if group.decade_count %}{% if group.alltime_count %}, {% endif %}{{ group.decade_count }} Decade{% endif %}{% if group.misc_count %}{% if group.alltime_count or group.decade_count %}, {% endif %}{{ group.misc_count }} Misc{% endif %}{% if group.eoy_count %}{% if group.alltime_count or group.decade_count or group.misc_count %}, {% endif %}{{ group.eoy_count }} EOY{% endif %})</span>
+        <span class="flex items-center gap-1">
+            {% if group.alltime_count %}<span class="badge badge-xs badge-primary">{{ group.alltime_count }} All-time</span>{% endif %}
+            {% if group.decade_count %}<span class="badge badge-xs badge-secondary">{{ group.decade_count }} Decade</span>{% endif %}
+            {% if group.misc_count %}<span class="badge badge-xs badge-info">{{ group.misc_count }} Misc</span>{% endif %}
+            {% if group.eoy_count %}<span class="badge badge-xs badge-ghost">{{ group.eoy_count }} EOY</span>{% endif %}
+        </span>
     </button>
 
     {# Collapsible content - lists #}
@@ -49,7 +54,7 @@
                     {% for list in group.lists %}
                     <tr class="list-row hover:bg-base-200/30">
                         <td class="py-2">
-                            <span class="badge badge-sm badge-ghost">{{ list.type|get_list_type_label }}</span>
+                            <span class="badge badge-sm {{ list.type|get_list_type_badge_class }}">{{ list.type|get_list_type_label }}</span>
                         </td>
                         <td class="py-2 tabular-nums">{{ list.year }}</td>
                         <td class="py-2">
@@ -73,7 +78,7 @@
             {% for list in group.lists %}
             <div class="list-row py-2 border-b border-base-content/5 last:border-0">
                 <div class="flex items-baseline gap-2">
-                    <span class="badge badge-xs badge-ghost">{{ list.type|get_list_type_label }}</span>
+                    <span class="badge badge-xs {{ list.type|get_list_type_badge_class }}">{{ list.type|get_list_type_label }}</span>
                     <span class="tabular-nums text-base-content/60 text-sm">{{ list.year }}</span>
                 </div>
                 <div class="text-sm mt-1">
