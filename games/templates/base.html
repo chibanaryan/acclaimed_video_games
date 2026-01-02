@@ -5,34 +5,8 @@
     {# Include centralized theme initialization script - MUST be first to prevent FOUC #}
     {% include 'includes/_theme_script.html' %}
 
-    <script nonce="{{ csp_nonce }}">
-        // Non-critical theme functions - will execute after HTML parse
-        function setTheme(t) {
-            localStorage.setItem('theme', t);
-            document.documentElement.setAttribute('data-theme', t);
-            updateThemeToggle(t);
-        }
-
-        function updateThemeToggle(t) {
-            var dark = t === 'forest';
-            var toggles = ['theme-toggle', 'theme-toggle-mobile'];
-            toggles.forEach(function(id) {
-                var el = document.getElementById(id);
-                if (el) el.checked = dark;
-            });
-        }
-
-        document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('theme-controller')) {
-                setTheme(e.target.checked ? 'forest' : 'lofi');
-            }
-        });
-
-        // Initialize toggles after DOM ready
-        document.addEventListener('DOMContentLoaded', function() {
-            updateThemeToggle(localStorage.getItem('theme') || 'lofi');
-        });
-    </script>
+    {# Theme toggle functions - compact for faster parsing #}
+    <script nonce="{{ csp_nonce }}">function setTheme(t){localStorage.setItem('theme',t);document.documentElement.setAttribute('data-theme',t);updateThemeToggle(t)}function updateThemeToggle(t){var d=t==='forest';['theme-toggle','theme-toggle-mobile'].forEach(function(id){var e=document.getElementById(id);if(e)e.checked=d})}document.addEventListener('change',function(e){if(e.target.classList.contains('theme-controller'))setTheme(e.target.checked?'forest':'lofi')});document.addEventListener('DOMContentLoaded',function(){updateThemeToggle(localStorage.getItem('theme')||'lofi')})</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{% block meta_description %}Discover the most critically acclaimed video games of all time, ranked by aggregating hundreds of critic lists from major gaming publications.{% endblock %}">
@@ -60,8 +34,6 @@
     <meta name="twitter:image" content="{% block twitter_image %}https://www.acclaimedvideogames.com{% static 'games/avg_og_image.png' %}{% endblock %}">
 
     {# Preconnect to external domains for faster resource loading #}
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://unpkg.com" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
     <link rel="dns-prefetch" href="https://images.igdb.com">
 
@@ -86,15 +58,15 @@
 .mdi-bullseye-arrow::before{content:"\F08C9"}.mdi-image-filter-hdr::before{content:"\F02F5"}.mdi-wizard-hat::before{content:"\F1477"}.mdi-chess-knight::before{content:"\F0858"}.mdi-crosshairs::before{content:"\F01A3"}.mdi-car-sports::before{content:"\F07AC"}.mdi-airplane-takeoff::before{content:"\F05D5"}.mdi-basketball::before{content:"\F0806"}.mdi-puzzle::before{content:"\F0431"}.mdi-party-popper::before{content:"\F1056"}.mdi-layers::before{content:"\F0328"}.mdi-mushroom::before{content:"\F07DF"}
     </style>
 
-    {# HTMX - defer to prevent render blocking #}
-    <script defer src="https://unpkg.com/htmx.org@1.9.10" nonce="{{ csp_nonce }}"></script>
+    {# HTMX - self-hosted for faster loading (no CDN latency) #}
+    <script defer src="{% static 'games/js/vendor/htmx.min.js' %}" nonce="{{ csp_nonce }}"></script>
 
     {# Base Utilities - Essential functions that must be available before Alpine.js initializes #}
     <script defer src="{% static 'games/js/utils-base.min.js' %}" nonce="{{ csp_nonce }}"></script>
 
-    {# Alpine.js with Collapse plugin - Pinned versions for 1-year cache (vs 7-day with 3.x.x) #}
-    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.3/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js" nonce="{{ csp_nonce }}"></script>
+    {# Alpine.js with Collapse plugin - self-hosted for faster loading #}
+    <script defer src="{% static 'games/js/vendor/alpine-collapse.min.js' %}" nonce="{{ csp_nonce }}"></script>
+    <script defer src="{% static 'games/js/vendor/alpine.min.js' %}" nonce="{{ csp_nonce }}"></script>
 
     {% block extra_head %}{% endblock %}
 
@@ -234,108 +206,21 @@
         <source src="{% static 'audio/navi_fly.mp3' %}" type="audio/mpeg">
     </audio>
 
+    {# Modal handlers - deferred loading for better performance #}
     <script nonce="{{ csp_nonce }}">
-        // Contact modal functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('contactModal');
-            const sound = document.getElementById('naviSound');
-
-            // Auth modal trigger
-            const authModal = document.getElementById('authModal');
-            const authModalContent = document.getElementById('auth-modal-content');
-            if (authModal && authModalContent) {
-                document.addEventListener('click', function(e) {
-                    const trigger = e.target.closest('.auth-modal-trigger');
-                    if (trigger) {
-                        e.preventDefault();
-                        // Check for specific screen to load
-                        const screen = trigger.dataset.authScreen;
-                        let url = '{% url "auth-modal-login" %}';
-                        if (screen === 'profile') {
-                            url = '{% url "auth-modal-profile" %}';
-                        } else if (screen === 'signup') {
-                            url = '{% url "auth-modal-signup" %}?direct=1';
-                        }
-                        htmx.ajax('GET', url, {target: '#auth-modal-content', swap: 'innerHTML'});
-                        authModal.showModal();
-
-                        // Close mobile menu if open
-                        const mobileMenu = document.querySelector('[x-data]');
-                        if (mobileMenu && mobileMenu.__x) {
-                            mobileMenu.__x.$data.expanded = false;
-                        }
-                    }
-                });
-
-                // Ensure HTMX processes content after swaps into auth modal
-                document.body.addEventListener('htmx:afterSwap', function(e) {
-                    if (e.detail.target.id === 'auth-modal-content') {
-                        htmx.process(e.detail.target);
-                    }
-                });
-            }
-
-            if (modal) {
-                // Handle contact modal trigger clicks
-                document.addEventListener('click', function(e) {
-                    const trigger = e.target.closest('.contact-modal-trigger');
-                    if (trigger) {
-                        e.preventDefault();
-
-                        // Pre-fill form fields from data attributes
-                        const category = trigger.dataset.category;
-                        const message = trigger.dataset.message;
-
-                        if (category) {
-                            const categorySelect = document.getElementById('id_category');
-                            if (categorySelect) categorySelect.value = category;
-                        }
-                        if (message) {
-                            const messageField = document.getElementById('id_message');
-                            if (messageField) messageField.value = message;
-                        }
-
-                        modal.showModal();
-
-                        // Close mobile menu if open
-                        const mobileMenu = document.querySelector('[x-data]');
-                        if (mobileMenu && mobileMenu.__x) {
-                            mobileMenu.__x.$data.expanded = false;
-                        }
-                    }
-
-                    // Handle close button
-                    if (e.target.closest('.contact-modal-close')) {
-                        modal.close();
-                    }
-                });
-
-                // Create a MutationObserver to detect when dialog opens (for sound)
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.attributeName === 'open' && modal.hasAttribute('open')) {
-                            if (sound) {
-                                sound.volume = 0.3;
-                                sound.currentTime = 0;
-                                sound.play().catch(function() {
-                                    // Autoplay might be blocked by browser
-                                });
-                            }
-                        }
-                    });
-                });
-
-                observer.observe(modal, { attributes: true });
-
-                // Auto-open if hash is #contact
-                if (window.location.hash === '#contact') {
-                    setTimeout(function() {
-                        modal.showModal();
-                        history.replaceState(null, '', window.location.pathname);
-                    }, 100);
-                }
-            }
-        });
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(function() {
+                var s = document.createElement('script');
+                s.src = '{% static "games/js/modal-handlers.min.js" %}';
+                document.head.appendChild(s);
+            });
+        } else {
+            setTimeout(function() {
+                var s = document.createElement('script');
+                s.src = '{% static "games/js/modal-handlers.min.js" %}';
+                document.head.appendChild(s);
+            }, 100);
+        }
     </script>
 
     {% block extra_scripts %}{% endblock %}

@@ -2,6 +2,7 @@
 
 ## 2026-01-01
 
+- Performance: reduce main-thread work by self-hosting HTMX/Alpine.js, bundling client-filtering scripts, deferring modal handlers
 - Fix sync_from_prod: add missing models (Series, WikipediaGenre, GameQuote, IGDBGameData, WikipediaGameData)
 - Fix signal handler crash during bulk deletion when parent developer already deleted
 - Bump cache version to v3
