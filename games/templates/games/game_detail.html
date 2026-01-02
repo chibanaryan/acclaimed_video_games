@@ -93,10 +93,14 @@
     </div>
     {% endif %}
 
-    {% for group_label, group_items in grouped_lists %}
-        <h2 class="text-xl font-bold mt-6 mb-4">{{ group_label }} Lists <span class="text-base font-normal text-base-content/50">({{ group_items|length }})</span></h2>
-        {% include 'includes/_list_results.html' with items=group_items show_type=False show_rank=True %}
-    {% endfor %}
+    {% if grouped_lists %}
+    <h2 class="text-xl font-bold mt-6 mb-4">Source Lists</h2>
+    <div class="space-y-3">
+        {% for group_label, group_items in grouped_lists %}
+            {% include 'games/includes/_list_type_group.html' with group_label=group_label group_items=group_items expanded_default=forloop.first %}
+        {% endfor %}
+    </div>
+    {% endif %}
 {% else %}
     <div class="alert alert-error">
         <span class="mdi mdi-alert-circle"></span>

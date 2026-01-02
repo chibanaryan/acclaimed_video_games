@@ -2,7 +2,8 @@
 
 ## 2026-01-02
 
-- Refactor Lists page: group lists by publication with expand/collapse, add importance-based sorting
+- Refactor game detail source lists: sort by publication importance, group by type with expand/collapse
+- Refactor Lists page: group lists by publication with expand/collapse, sort years descending
 - Add rank distribution chart: smooth SVG area chart showing game distribution across rankings (1-1000), updates dynamically with filters
 - Fix rank distribution chart: position data points at edges to eliminate flat sections at start/end
 - Add peak count indicator to rank distribution chart for scale context on filtered views

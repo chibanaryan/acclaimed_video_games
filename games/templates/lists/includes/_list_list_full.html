@@ -36,26 +36,6 @@
     {# Separator #}
     <div class="w-px h-6 bg-base-content/20"></div>
 
-    {# Year filter #}
-    <select id="filter-list-year"
-            name="year"
-            class="select select-bordered select-sm bg-base-200"
-            style="width: fit-content; max-width: 100%;"
-            hx-get="{% url 'list-list' %}"
-            hx-target="#filter-results-wrapper"
-            hx-trigger="change"
-            hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort']"
-            hx-on:htmx:before-request="this.blur()"
-            x-on:htmx:after-request="updateUrl($event)">
-        <option value="">All years</option>
-        {% for year_data in meta.lists.years %}
-        <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>
-            {{ year_data.year }} ({{ year_data.count }})
-        </option>
-        {% endfor %}
-    </select>
-
     {# Type filter #}
     <select id="filter-list-type"
             name="type"
@@ -72,6 +52,26 @@
         {% for type_data in type_counts %}
         <option value="{{ type_data.slug }}" {% if filters.type == type_data.slug %}selected{% endif %}>
             {{ type_data.type|get_list_type_label }} ({{ type_data.count }})
+        </option>
+        {% endfor %}
+    </select>
+
+    {# Year filter #}
+    <select id="filter-list-year"
+            name="year"
+            class="select select-bordered select-sm bg-base-200"
+            style="width: fit-content; max-width: 100%;"
+            hx-get="{% url 'list-list' %}"
+            hx-target="#filter-results-wrapper"
+            hx-trigger="change"
+            hx-swap="innerHTML"
+            hx-include="[name='year'], [name='type'], [name='sort']"
+            hx-on:htmx:before-request="this.blur()"
+            x-on:htmx:after-request="updateUrl($event)">
+        <option value="">All years</option>
+        {% for year_data in meta.lists.years %}
+        <option value="{{ year_data.year }}" {% if filters.year == year_data.year|stringformat:"s" %}selected{% endif %}>
+            {{ year_data.year }} ({{ year_data.count }})
         </option>
         {% endfor %}
     </select>

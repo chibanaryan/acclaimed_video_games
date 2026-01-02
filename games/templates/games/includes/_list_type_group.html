@@ -1,16 +1,12 @@
-{# Publication group with expand/collapse for lists #}
+{# List type group with expand/collapse for game detail page #}
 {% load game_filters %}
-{% load humanize %}
 
-<div class="publication-group border border-base-content/10 rounded-lg"
-     x-data="{ expanded: false }"
-     @publications-toggle-expand.window="expanded = !expanded"
-     @publications-expand-all.window="expanded = true"
-     @publications-collapse-all.window="expanded = false">
-    {# Publication header - always visible #}
+<div class="list-type-group border border-base-content/10 rounded-lg"
+     x-data="{ expanded: {{ expanded_default|yesno:'true,false' }} }">
+    {# Type header - always visible #}
     <button @click="expanded = !expanded"
             class="w-full flex items-center gap-3 p-3 hover:bg-base-200/50 transition-colors rounded-lg cursor-pointer text-left"
-            aria-label="Toggle {{ group.publication.name }} lists">
+            aria-label="Toggle {{ group_label }} lists">
         {# Expand/collapse chevron #}
         <svg xmlns="http://www.w3.org/2000/svg"
              class="h-5 w-5 shrink-0 text-base-content/60 transition-transform duration-200"
@@ -19,12 +15,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
 
-        {# Publication name and type counts #}
-        <span class="font-semibold text-base">{{ group.publication.name }}</span>
-        <span class="text-sm text-base-content/60">({% if group.alltime_count %}{{ group.alltime_count }} All-time{% endif %}{% if group.decade_count %}{% if group.alltime_count %}, {% endif %}{{ group.decade_count }} Decade{% endif %}{% if group.misc_count %}{% if group.alltime_count or group.decade_count %}, {% endif %}{{ group.misc_count }} Misc{% endif %}{% if group.eoy_count %}{% if group.alltime_count or group.decade_count or group.misc_count %}, {% endif %}{{ group.eoy_count }} EOY{% endif %})</span>
+        {# Type label and count #}
+        <span class="font-semibold text-base">{{ group_label }}</span>
+        <span class="text-sm text-base-content/60">({{ group_items|length }})</span>
     </button>
 
-    {# Collapsible content - lists #}
+    {# Collapsible content - lists table #}
     <div x-show="expanded"
          x-collapse
          x-cloak
@@ -34,25 +30,25 @@
         <div class="hidden md:block" style="margin-left: 3rem;">
             <table class="table table-fixed w-full">
                 <colgroup>
-                    <col style="width: 18%;">
+                    <col style="width: 28%;">
                     <col style="width: 10%;">
-                    <col style="width: 72%;">
+                    <col style="width: 52%;">
+                    <col style="width: 10%;">
                 </colgroup>
                 <thead>
                     <tr class="text-xs text-base-content/60">
-                        <th class="py-2">Type</th>
+                        <th class="py-2">Publication</th>
                         <th class="py-2">Year</th>
                         <th class="py-2">Name</th>
+                        <th class="py-2">Rank</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for list in group.lists %}
+                    {% for list in group_items %}
                     <tr class="list-row hover:bg-base-200/30">
-                        <td class="py-2">
-                            <span class="badge badge-sm badge-ghost">{{ list.type|get_list_type_label }}</span>
-                        </td>
+                        <td class="py-2 truncate" title="{{ list.publication }}">{{ list.publication }}</td>
                         <td class="py-2 tabular-nums">{{ list.year }}</td>
-                        <td class="py-2">
+                        <td class="py-2 truncate" title="{{ list.name }}">
                             {% if list.url %}
                             <a href="{{ list.url }}" target="_blank" rel="noopener" class="link link-hover inline-flex items-center gap-1">
                                 {{ list.name }}
@@ -62,18 +58,19 @@
                             {{ list.name }}
                             {% endif %}
                         </td>
+                        <td class="py-2 tabular-nums">{{ list.rank|default:'' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        {# Mobile card view - matches column order: Type, Year, Name #}
+        {# Mobile card view - matches column order: Publication, Year, Name, Rank #}
         <div class="md:hidden py-3 space-y-2" style="margin-left: 1rem;">
-            {% for list in group.lists %}
+            {% for list in group_items %}
             <div class="list-row py-2 border-b border-base-content/5 last:border-0">
                 <div class="flex items-baseline gap-2">
-                    <span class="badge badge-xs badge-ghost">{{ list.type|get_list_type_label }}</span>
+                    <span class="text-sm font-medium">{{ list.publication }}</span>
                     <span class="tabular-nums text-base-content/60 text-sm">{{ list.year }}</span>
                 </div>
                 <div class="text-sm mt-1">
@@ -84,6 +81,9 @@
                     </a>
                     {% else %}
                     {{ list.name }}
+                    {% endif %}
+                    {% if list.rank %}
+                    <span class="text-base-content/50 ml-1">#{{ list.rank }}</span>
                     {% endif %}
                 </div>
             </div>

@@ -12,8 +12,10 @@ from django.db.models import (
     Count,
     Min,
     Max,
+    OuterRef,
     Prefetch,
     Q,
+    Subquery,
     When,
     Value,
     IntegerField,
@@ -646,7 +648,23 @@ class GameDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        # Prefetch lists with publisher for ListResultsComponent
+        # Compute publisher importance score via subquery
+        # All-time: 1000 pts, Decade: 100 pts, Misc: 10 pts, EOY: 1 pt
+        publisher_importance = (
+            models.Publication.objects.filter(pk=OuterRef("list__publisher_id"))
+            .annotate(
+                score=(
+                    1000 * Count("lists", filter=Q(lists__type=constants.LIST_ALLTIME))
+                    + 100 * Count("lists", filter=Q(lists__type=constants.LIST_DECADE))
+                    + 10 * Count("lists", filter=Q(lists__type=constants.LIST_MISC))
+                    + Count("lists", filter=Q(lists__type=constants.LIST_EOY))
+                )
+            )
+            .values("score")
+        )
+
+        # Prefetch lists with publisher, sorted by column order:
+        # Publication (importance), Year (desc), Name, Rank
         return models.Game.objects.prefetch_related(
             "developers",
             "developers__parent",
@@ -657,7 +675,14 @@ class GameDetailView(DetailView):
                 "lists",
                 queryset=models.ListMembership.objects.select_related(
                     "list__publisher",
-                ).order_by("list__publisher__name", "list__year"),
+                )
+                .annotate(publisher_importance=Subquery(publisher_importance))
+                .order_by(
+                    "-publisher_importance",  # Publication (by importance)
+                    "-list__year",  # Year (descending)
+                    "list__name",  # Name
+                    "rank",  # Rank
+                ),
             ),
         )
 
@@ -665,21 +690,35 @@ class GameDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         game = context["game"]
 
-        # Get lists grouped by type using model property
-        grouped_lists = list(game.lists_grouped_by_type.items())
+        # Build grouped lists from prefetched data (preserves prefetch ordering:
+        # publication importance desc, year desc, name, rank)
+        from collections import defaultdict
 
-        # Sort lists within each type group by rank, year (desc), then publication name
-        sorted_grouped_lists = []
-        for label, items in grouped_lists:
-            sorted_items = sorted(
-                items,
-                key=lambda x: (
-                    x["rank"] or 9999,  # Lower rank is better (None ranks last)
-                    -(x["year"] or 0),  # Most recent year first
-                    x["publication"],  # Then alphabetically by publication
-                ),
+        grouped = defaultdict(list)
+        for membership in game.lists.all():
+            list_type = membership.list.type
+            label = constants.get_list_type_label(list_type)
+            grouped[label].append(
+                {
+                    "id": membership.list.id,
+                    "name": membership.list.name,
+                    "publication": (
+                        membership.list.publisher.name
+                        if membership.list.publisher
+                        else ""
+                    ),
+                    "publisher": membership.list.publisher,
+                    "type": list_type,
+                    "type_name": label,
+                    "url": membership.list.url,
+                    "year": membership.list.year,
+                    "rank": membership.rank,
+                }
             )
-            sorted_grouped_lists.append((label, sorted_items))
+
+        # Order groups by type importance (All-time, Decade, Misc, EOY)
+        type_order = ["All time", "Decade", "Miscellaneous", "End of year"]
+        sorted_grouped_lists = [(k, grouped[k]) for k in type_order if k in grouped]
 
         context["grouped_lists"] = sorted_grouped_lists
 
@@ -1955,7 +1994,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             year_base_qs = year_base_qs.filter(type=type_code)
 
         list_year_counts = list(
-            year_base_qs.values("year").annotate(count=Count("id")).order_by("year")
+            year_base_qs.values("year").annotate(count=Count("id")).order_by("-year")
         )
 
         # Filter years: include count > 0 OR currently selected
@@ -1979,6 +2018,11 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             t["slug"] = constants.LIST_TYPE_SLUGS.get(t["type"], t["type"])
             if t["count"] > 0 or t["type"] == type_code:
                 filtered_types.append(t)
+
+        # Sort by importance priority (All-time > Decade > Misc > EOY)
+        filtered_types.sort(
+            key=lambda t: constants.LIST_TYPE_PRIORITY.get(t["type"], 99)
+        )
 
         # Build context
         context["meta"] = {"lists": {"years": filtered_years}}
