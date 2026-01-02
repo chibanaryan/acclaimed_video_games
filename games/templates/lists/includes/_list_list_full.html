@@ -5,31 +5,38 @@
 
 <h2 id="results-count" class="text-xl text-base-content/85 mb-4">
     {% if page_obj %}
-    Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} list{{ total_count|pluralize }}
+    <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} publication{{ total_count|pluralize }}
+    (<span id="loaded-list-count">{{ total_list_count|intcomma }}</span> of {{ grand_total_list_count|intcomma }} list{{ grand_total_list_count|pluralize }})
     {% else %}
-    Showing 0
+    No publications found
     {% endif %}
 </h2>
 
-<div class="flex flex-wrap gap-2 mb-6 min-h-[2.5rem]">
-    <select id="filter-publisher"
-            name="publisher"
-            class="select select-bordered select-sm bg-base-200"
-            style="width: fit-content; max-width: 100%;"
-            hx-get="{% url 'list-list' %}"
-            hx-target="#filter-results-wrapper"
-            hx-trigger="change"
-            hx-swap="innerHTML"
-            hx-include="[name='publisher'], [name='year'], [name='type']"
-            hx-on:htmx:before-request="this.blur()"
-            x-on:htmx:after-request="updateUrl($event)">
-        <option value="">All publishers</option>
-        {% for publisher in publishers %}
-        <option value="{{ publisher.id }}" {% if filters.publisher == publisher.id|stringformat:"s" %}selected{% endif %}>
-            {{ publisher.name }} ({{ publisher.list_count }})
-        </option>
-        {% endfor %}
-    </select>
+<div class="flex flex-wrap items-center gap-2 mb-6 min-h-[2.5rem]"
+     x-data="{ allExpanded: false }">
+    {# Sort toggle - far left #}
+    <div class="flex items-center gap-1">
+        <span class="mdi mdi-sort text-base text-base-content/60"></span>
+        <select id="sort-select"
+                name="sort"
+                class="select select-sm select-bordered bg-base-200"
+                style="width: fit-content; max-width: 100%;"
+                hx-get="{% url 'list-list' %}"
+                hx-target="#filter-results-wrapper"
+                hx-trigger="change"
+                hx-swap="innerHTML"
+                hx-include="[name='year'], [name='type'], [name='sort']"
+                hx-on:htmx:before-request="this.blur()"
+                x-on:htmx:after-request="updateUrl($event)">
+            <option value="importance" {% if sort == 'importance' %}selected{% endif %}>By Importance</option>
+            <option value="alpha" {% if sort == 'alpha' %}selected{% endif %}>Alphabetical</option>
+        </select>
+    </div>
+
+    {# Separator #}
+    <div class="w-px h-6 bg-base-content/20"></div>
+
+    {# Year filter #}
     <select id="filter-list-year"
             name="year"
             class="select select-bordered select-sm bg-base-200"
@@ -38,7 +45,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='publisher'], [name='year'], [name='type']"
+            hx-include="[name='year'], [name='type'], [name='sort']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All years</option>
@@ -48,6 +55,8 @@
         </option>
         {% endfor %}
     </select>
+
+    {# Type filter #}
     <select id="filter-list-type"
             name="type"
             class="select select-bordered select-sm bg-base-200"
@@ -56,7 +65,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='publisher'], [name='year'], [name='type']"
+            hx-include="[name='year'], [name='type'], [name='sort']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All list types</option>
@@ -66,12 +75,27 @@
         </option>
         {% endfor %}
     </select>
-    {% if filters.publisher or filters.year or filters.type %}
-    <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm">
+
+    {# Clear filters button #}
+    {% if filters.year or filters.type %}
+    <a href="{% url 'list-list' %}{% if sort != 'importance' %}?sort={{ sort }}{% endif %}"
+       class="btn btn-ghost btn-sm">
         <span class="mdi mdi-close"></span>
         <span>Clear filters</span>
     </a>
     {% endif %}
+
+    {# Spacer to push expand button to right #}
+    <div class="flex-grow"></div>
+
+    {# Expand/Collapse All button - far right #}
+    <button type="button"
+            class="btn btn-ghost btn-sm text-base-content/60"
+            @click="allExpanded = !allExpanded; $dispatch(allExpanded ? 'publications-expand-all' : 'publications-collapse-all')"
+            :title="allExpanded ? 'Collapse all publications' : 'Expand all publications'">
+        <span class="mdi" :class="allExpanded ? 'mdi-unfold-less-horizontal' : 'mdi-unfold-more-horizontal'"></span>
+        <span x-text="allExpanded ? 'Collapse All' : 'Expand All'"></span>
+    </button>
 </div>
 
 <div id="results-container">

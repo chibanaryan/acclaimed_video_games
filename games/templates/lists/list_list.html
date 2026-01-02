@@ -9,21 +9,26 @@
 <div id="content" x-data="{
     updateUrl(event) {
         // Get all current filter values from the form
-        const publisher = document.querySelector('[name=publisher]').value;
-        const year = document.querySelector('[name=year]').value;
-        const type = document.querySelector('[name=type]').value;
+        const yearEl = document.querySelector('[name=year]');
+        const typeEl = document.querySelector('[name=type]');
+        const sortEl = document.querySelector('#sort-select');
+
+        const year = yearEl ? yearEl.value : '';
+        const type = typeEl ? typeEl.value : '';
+        const sort = sortEl ? sortEl.value : 'importance';
 
         const url = new URL(window.location);
 
         // Update URL parameters based on filter values
-        if (publisher) url.searchParams.set('publisher', publisher);
-        else url.searchParams.delete('publisher');
-
         if (year) url.searchParams.set('year', year);
         else url.searchParams.delete('year');
 
         if (type) url.searchParams.set('type', type);
         else url.searchParams.delete('type');
+
+        // Only add sort if not default
+        if (sort && sort !== 'importance') url.searchParams.set('sort', sort);
+        else url.searchParams.delete('sort');
 
         // Reset to page 1 on filter change
         url.searchParams.delete('page');
@@ -54,7 +59,7 @@ Year published: ">
 </div>
 
 <script nonce="{{ csp_nonce }}">
-// Generic Load More handler for lists
+// Load More handler for publication groups
 function initListLoadMore() {
     const container = document.getElementById('results-container');
     if (!container) return;
@@ -72,8 +77,6 @@ async function handleListLoadMore(event) {
     const button = event.currentTarget;
     const nextPage = button.dataset.nextPage;
 
-    console.log('Load More clicked, nextPage:', nextPage);
-
     if (!nextPage || button.classList.contains('loading')) return;
 
     // Set loading state
@@ -87,8 +90,6 @@ async function handleListLoadMore(event) {
 
     const url = window.location.pathname + '?' + params.toString();
 
-    console.log('Fetching:', url);
-
     try {
         const response = await fetch(url, {
             cache: 'no-store',
@@ -98,14 +99,11 @@ async function handleListLoadMore(event) {
             }
         });
 
-        console.log('Response status:', response.status);
-
         if (!response.ok) throw new Error('Failed to load more');
 
         const html = await response.text();
-        console.log('Response HTML length:', html.length);
 
-        // Parse the response to separate rows from metadata
+        // Parse the response to separate groups from metadata
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
@@ -116,27 +114,21 @@ async function handleListLoadMore(event) {
         // Remove the metadata script from the parsed doc
         if (metaScript) metaScript.remove();
 
-        // Append desktop rows to table body with staggered cascade animation
-        const tbody = document.getElementById('list-table-body');
-        const appendContainer = doc.getElementById('append-rows-container');
-        if (tbody && appendContainer) {
-            const newRows = appendContainer.querySelectorAll('tr.list-row');
+        // Append publication groups with staggered animation
+        const groupsContainer = document.getElementById('publication-groups-container');
+        const appendContainer = doc.getElementById('append-groups-container');
+        if (groupsContainer && appendContainer) {
+            const newGroups = appendContainer.querySelectorAll('.publication-group');
             let index = 0;
-            newRows.forEach(row => {
-                row.classList.add('game-row-enter');
-                row.style.animationDelay = `${index * 8}ms`;
+            newGroups.forEach(group => {
+                group.classList.add('game-row-enter');
+                group.style.animationDelay = `${index * 30}ms`;
                 index++;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Append mobile rows to mobile container (no animation on mobile for performance)
-        const mobileContainer = document.getElementById('list-mobile-container');
-        const appendMobileContainer = doc.getElementById('append-mobile-container');
-        if (mobileContainer && appendMobileContainer) {
-            const newMobileRows = appendMobileContainer.querySelectorAll('div.list-row');
-            newMobileRows.forEach(row => {
-                mobileContainer.appendChild(row);
+                groupsContainer.appendChild(group);
+                // Initialize Alpine.js on the new element
+                if (window.Alpine) {
+                    Alpine.initTree(group);
+                }
             });
         }
 
@@ -147,13 +139,18 @@ async function handleListLoadMore(event) {
                 loadedCountEl.textContent = meta.loadedCount.toLocaleString();
             }
 
+            const loadedListCountEl = document.getElementById('loaded-list-count');
+            if (loadedListCountEl) {
+                loadedListCountEl.textContent = meta.totalListCount.toLocaleString();
+            }
+
             button.classList.remove('loading');
 
             if (!meta.hasMore) {
                 const container = button.parentElement;
                 container.innerHTML = `
                     <div class="text-base-content/85 text-center">
-                        All ${meta.totalCount.toLocaleString()} results loaded
+                        All ${meta.totalCount.toLocaleString()} publications loaded
                     </div>
                 `;
             } else {

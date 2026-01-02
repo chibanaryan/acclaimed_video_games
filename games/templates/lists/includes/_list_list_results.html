@@ -1,36 +1,10 @@
-{# List search results partial - used for both initial render and HTMX updates #}
+{# List search results partial - publication groups with expand/collapse #}
 {% load humanize %}
 {% load game_filters %}
-{% if lists %}
-{# Desktop table view #}
-<div class="hidden md:block">
-    <table class="table table-fixed w-full">
-        <colgroup>
-            <col style="width: 22%;">
-            <col style="width: 8%;">
-            <col style="width: 14%;">
-            <col style="width: 56%;">
-        </colgroup>
-        <thead>
-            <tr>
-                <th>Publication</th>
-                <th>Year</th>
-                <th>Type</th>
-                <th>Name</th>
-            </tr>
-        </thead>
-        <tbody id="list-table-body">
-            {% for list in lists %}
-            {% include 'lists/includes/_list_row.html' %}
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-{# Mobile card view #}
-<div id="list-mobile-container" class="md:hidden space-y-3">
-    {% for list in lists %}
-    {% include 'lists/includes/_list_card.html' %}
+{% if publication_groups %}
+<div id="publication-groups-container" class="space-y-2">
+    {% for group in publication_groups %}
+    {% include 'lists/includes/_publication_group.html' %}
     {% endfor %}
 </div>
 
@@ -50,6 +24,6 @@
 {% else %}
 <div class="alert">
     <span class="mdi mdi-information-outline"></span>
-    <span>No lists found.</span>
+    <span>No publications found matching your filters.</span>
 </div>
 {% endif %}

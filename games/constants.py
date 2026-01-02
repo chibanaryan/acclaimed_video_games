@@ -27,6 +27,13 @@ LIST_TYPE_SLUGS = {
 # Reverse mapping: slug -> code
 LIST_TYPE_CODES = {slug: code for code, slug in LIST_TYPE_SLUGS.items()}
 
+# Importance order for list types (most important first)
+# Used for sorting lists within publications and publications by importance
+LIST_TYPE_IMPORTANCE_ORDER = (LIST_ALLTIME, LIST_DECADE, LIST_MISC, LIST_EOY)
+
+# Mapping from type code to sort priority (lower = more important)
+LIST_TYPE_PRIORITY = {code: idx for idx, code in enumerate(LIST_TYPE_IMPORTANCE_ORDER)}
+
 # Contact form categories
 CONTACT_CATEGORIES = [
     ("feature", "Feature Request"),

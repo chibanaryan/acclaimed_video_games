@@ -7,7 +7,17 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.flatpages.models import FlatPage
 from django.core.cache import cache
-from django.db.models import Count, Min, Max, Prefetch, Q
+from django.db.models import (
+    Case,
+    Count,
+    Min,
+    Max,
+    Prefetch,
+    Q,
+    When,
+    Value,
+    IntegerField,
+)
 from django.db.models.functions import Lower
 from django.forms import Form
 from django.http import HttpResponse, StreamingHttpResponse
@@ -656,7 +666,22 @@ class GameDetailView(DetailView):
         game = context["game"]
 
         # Get lists grouped by type using model property
-        context["grouped_lists"] = list(game.lists_grouped_by_type.items())
+        grouped_lists = list(game.lists_grouped_by_type.items())
+
+        # Sort lists within each type group by rank, year (desc), then publication name
+        sorted_grouped_lists = []
+        for label, items in grouped_lists:
+            sorted_items = sorted(
+                items,
+                key=lambda x: (
+                    x["rank"] or 9999,  # Lower rank is better (None ranks last)
+                    -(x["year"] or 0),  # Most recent year first
+                    x["publication"],  # Then alphabetically by publication
+                ),
+            )
+            sorted_grouped_lists.append((label, sorted_items))
+
+        context["grouped_lists"] = sorted_grouped_lists
 
         # Check if current user has marked this game as played
         if self.request.user.is_authenticated and game.igdb_id:
@@ -1746,78 +1771,186 @@ class DeveloperRedirectView(View):
 
 
 class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
-    model = models.List
+    """
+    Source Lists page - displays lists grouped by publication.
+
+    Publications are paginated (30 per page) and can be sorted by:
+    - importance (default): weighted score based on list type counts
+    - alpha: alphabetical by name
+
+    Lists within each publication are sorted by type importance
+    (All-time > Decade > Misc > EOY) then by year descending.
+    """
+
+    model = models.Publication
     template_name = "lists/list_list.html"
-    context_object_name = "lists"
-    paginate_by = 150
+    context_object_name = "publication_groups"
+    paginate_by = 30
     paginate_orphans = 0
     htmx_partial_template = "lists/includes/_list_list_content.html"
 
     def get_template_names(self):
-        # Append mode for Load More - returns just rows
+        # Append mode for Load More - returns just publication groups
         if self.request.GET.get("append") == "true":
             return ["lists/includes/_list_list_append.html"]
         return super().get_template_names()
 
-    def get_queryset(self):
-        qs = models.List.objects.select_related("publisher").order_by(
-            "publisher__name",
-            "year",
-            "name",
-        )
-
-        # Apply filters
-        publisher = self.request.GET.get("publisher")
-        if publisher:
-            try:
-                qs = qs.filter(publisher_id=int(publisher))
-            except (ValueError, TypeError):
-                pass  # Invalid publisher ID, skip filter
-
-        year = self.request.GET.get("year")
-        if year:
-            try:
-                qs = qs.filter(year=int(year))
-            except (ValueError, TypeError):
-                pass  # Invalid year, skip filter
-
-        # Convert URL slug to type code for filtering
-        type_slug = self.request.GET.get("type")
-        if type_slug:
-            type_code = constants.LIST_TYPE_CODES.get(type_slug)
-            if type_code:
-                qs = qs.filter(type=type_code)
-
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # Extract and validate filter values
-        publisher_id = self.request.GET.get("publisher")
+    def _get_list_filters(self):
+        """Parse and validate filter parameters from request."""
         year_value = self.request.GET.get("year")
         type_slug = self.request.GET.get("type")
-
-        try:
-            publisher_id = int(publisher_id) if publisher_id else None
-        except (ValueError, TypeError):
-            publisher_id = None
 
         try:
             year_value = int(year_value) if year_value else None
         except (ValueError, TypeError):
             year_value = None
 
-        # Convert URL slug to type code for database queries
         type_code = constants.LIST_TYPE_CODES.get(type_slug) if type_slug else None
 
-        # --- FACETED COUNTS ---
-        # Each dropdown shows counts based on OTHER filters applied
+        return year_value, type_slug, type_code
 
-        # 1. Year counts: filtered by publisher + type (NOT year)
+    def _get_filtered_list_queryset(self, year_value, type_code):
+        """Build base list queryset with filters applied."""
+        qs = models.List.objects.all()
+        if year_value:
+            qs = qs.filter(year=year_value)
+        if type_code:
+            qs = qs.filter(type=type_code)
+        return qs
+
+    def get_queryset(self):
+        """Get publications with list counts, filtered and sorted."""
+        year_value, type_slug, type_code = self._get_list_filters()
+        sort = self.request.GET.get("sort", "importance")
+
+        # Base list queryset for filtering
+        list_filter = Q()
+        if year_value:
+            list_filter &= Q(lists__year=year_value)
+        if type_code:
+            list_filter &= Q(lists__type=type_code)
+
+        # Annotate publications with list counts by type
+        # Only count lists that match the current filters
+        count_filter = Q()
+        if year_value:
+            count_filter &= Q(year=year_value)
+        if type_code:
+            count_filter &= Q(type=type_code)
+
+        qs = models.Publication.objects.annotate(
+            # Filtered counts for display
+            alltime_count=Count(
+                "lists",
+                filter=Q(lists__type=constants.LIST_ALLTIME)
+                & (Q(lists__year=year_value) if year_value else Q()),
+            ),
+            decade_count=Count(
+                "lists",
+                filter=Q(lists__type=constants.LIST_DECADE)
+                & (Q(lists__year=year_value) if year_value else Q()),
+            ),
+            misc_count=Count(
+                "lists",
+                filter=Q(lists__type=constants.LIST_MISC)
+                & (Q(lists__year=year_value) if year_value else Q()),
+            ),
+            eoy_count=Count(
+                "lists",
+                filter=Q(lists__type=constants.LIST_EOY)
+                & (Q(lists__year=year_value) if year_value else Q()),
+            ),
+            # Total filtered count
+            total_count=Count("lists", filter=list_filter if list_filter else Q()),
+            # Importance score for sorting
+            # All-time: 1000 pts, Decade: 100 pts, Misc: 10 pts, EOY: 1 pt
+            importance_score=Count(
+                "lists",
+                filter=Q(lists__type=constants.LIST_ALLTIME)
+                & (Q(lists__year=year_value) if year_value else Q()),
+            )
+            * 1000
+            + Count(
+                "lists",
+                filter=Q(lists__type=constants.LIST_DECADE)
+                & (Q(lists__year=year_value) if year_value else Q()),
+            )
+            * 100
+            + Count(
+                "lists",
+                filter=Q(lists__type=constants.LIST_MISC)
+                & (Q(lists__year=year_value) if year_value else Q()),
+            )
+            * 10
+            + Count(
+                "lists",
+                filter=Q(lists__type=constants.LIST_EOY)
+                & (Q(lists__year=year_value) if year_value else Q()),
+            ),
+        )
+
+        # Only include publications with matching lists
+        qs = qs.filter(total_count__gt=0)
+
+        # Sort by importance or alphabetically
+        if sort == "alpha":
+            qs = qs.order_by(Lower("name"))
+        else:
+            # Sort by importance score descending, then alphabetically
+            qs = qs.order_by("-importance_score", Lower("name"))
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        year_value, type_slug, type_code = self._get_list_filters()
+        sort = self.request.GET.get("sort", "importance")
+
+        # Build the publication groups with their lists
+        publication_groups = []
+        publications = context.get("publication_groups", [])
+
+        # Build type priority ordering for lists
+        type_priority = Case(
+            *[
+                When(type=code, then=Value(idx))
+                for idx, code in enumerate(constants.LIST_TYPE_IMPORTANCE_ORDER)
+            ],
+            default=Value(99),
+            output_field=IntegerField(),
+        )
+
+        for pub in publications:
+            # Get lists for this publication, filtered and sorted
+            lists_qs = models.List.objects.filter(publisher=pub)
+            if year_value:
+                lists_qs = lists_qs.filter(year=year_value)
+            if type_code:
+                lists_qs = lists_qs.filter(type=type_code)
+
+            # Sort by type importance, then year descending
+            lists_qs = lists_qs.annotate(type_priority=type_priority).order_by(
+                "type_priority", "-year", "name"
+            )
+
+            publication_groups.append(
+                {
+                    "publication": pub,
+                    "alltime_count": pub.alltime_count,
+                    "decade_count": pub.decade_count,
+                    "misc_count": pub.misc_count,
+                    "eoy_count": pub.eoy_count,
+                    "total_count": pub.total_count,
+                    "lists": list(lists_qs),
+                }
+            )
+
+        context["publication_groups"] = publication_groups
+
+        # --- FACETED COUNTS FOR FILTERS ---
+        # Year counts: filtered by type only (NOT year)
         year_base_qs = models.List.objects.all()
-        if publisher_id:
-            year_base_qs = year_base_qs.filter(publisher_id=publisher_id)
         if type_code:
             year_base_qs = year_base_qs.filter(type=type_code)
 
@@ -1831,31 +1964,8 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             y for y in list_year_counts if y["count"] > 0 or str(y["year"]) == year_str
         ]
 
-        # 2. Publisher counts: filtered by year + type (NOT publisher)
-        publisher_base_qs = models.List.objects.all()
-        if year_value:
-            publisher_base_qs = publisher_base_qs.filter(year=year_value)
-        if type_code:
-            publisher_base_qs = publisher_base_qs.filter(type=type_code)
-
-        publisher_ids_with_counts = dict(
-            publisher_base_qs.values("publisher_id")
-            .annotate(count=Count("id"))
-            .values_list("publisher_id", "count")
-        )
-
-        # Include publishers with count > 0 OR currently selected
-        publishers = []
-        for pub in models.Publication.objects.order_by("name"):
-            count = publisher_ids_with_counts.get(pub.id, 0)
-            if count > 0 or pub.id == publisher_id:
-                pub.list_count = count
-                publishers.append(pub)
-
-        # 3. Type counts: filtered by publisher + year (NOT type)
+        # Type counts: filtered by year only (NOT type)
         type_base_qs = models.List.objects.all()
-        if publisher_id:
-            type_base_qs = type_base_qs.filter(publisher_id=publisher_id)
         if year_value:
             type_base_qs = type_base_qs.filter(year=year_value)
 
@@ -1872,23 +1982,34 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
         # Build context
         context["meta"] = {"lists": {"years": filtered_years}}
-        context["publishers"] = publishers
         context["list_types"] = constants.LIST_TYPES
         context["type_counts"] = filtered_types
         context["filters"] = {
-            "publisher": str(publisher_id) if publisher_id else None,
             "year": str(year_value) if year_value else None,
             "type": type_slug,  # Keep as slug for template comparison
         }
+        context["sort"] = sort
 
-        # Load More context
+        # Total list count for display (loaded publications only)
+        total_lists = sum(g["total_count"] for g in publication_groups)
+        context["total_list_count"] = total_lists
+
+        # Grand total list count across ALL publications (for "X of Y lists")
+        grand_total_qs = models.List.objects.all()
+        if year_value:
+            grand_total_qs = grand_total_qs.filter(year=year_value)
+        if type_code:
+            grand_total_qs = grand_total_qs.filter(type=type_code)
+        context["grand_total_list_count"] = grand_total_qs.count()
+
+        # Load More context (paginating publications)
         page_obj = context.get("page_obj")
         if page_obj:
             context["has_more"] = page_obj.has_next()
             context["next_page"] = (
                 page_obj.next_page_number() if page_obj.has_next() else None
             )
-            context["total_count"] = page_obj.paginator.count
+            context["total_count"] = page_obj.paginator.count  # Total publications
             context["loaded_count"] = page_obj.end_index()
             context["remaining_count"] = max(
                 0, page_obj.paginator.count - page_obj.end_index()

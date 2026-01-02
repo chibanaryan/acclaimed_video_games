@@ -1,0 +1,97 @@
+{# Publication group with expand/collapse for lists #}
+{% load game_filters %}
+{% load humanize %}
+
+<div class="publication-group border border-base-content/10 rounded-lg"
+     x-data="{ expanded: false }"
+     @publications-toggle-expand.window="expanded = !expanded"
+     @publications-expand-all.window="expanded = true"
+     @publications-collapse-all.window="expanded = false">
+    {# Publication header - always visible #}
+    <button @click="expanded = !expanded"
+            class="w-full flex items-center gap-3 p-3 hover:bg-base-200/50 transition-colors rounded-lg cursor-pointer text-left"
+            aria-label="Toggle {{ group.publication.name }} lists">
+        {# Expand/collapse chevron #}
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="h-5 w-5 shrink-0 text-base-content/60 transition-transform duration-200"
+             :class="{ 'rotate-90': expanded }"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+
+        {# Publication name #}
+        <span class="font-semibold text-base flex-grow">{{ group.publication.name }}</span>
+
+        {# Type counts summary #}
+        <span class="text-sm text-base-content/60">
+            {% if group.alltime_count %}{{ group.alltime_count }} All-time{% endif %}{% if group.decade_count %}{% if group.alltime_count %}, {% endif %}{{ group.decade_count }} Decade{% endif %}{% if group.misc_count %}{% if group.alltime_count or group.decade_count %}, {% endif %}{{ group.misc_count }} Misc{% endif %}{% if group.eoy_count %}{% if group.alltime_count or group.decade_count or group.misc_count %}, {% endif %}{{ group.eoy_count }} EOY{% endif %}
+        </span>
+    </button>
+
+    {# Collapsible content - lists #}
+    <div x-show="expanded"
+         x-collapse
+         x-cloak
+         class="border-t border-base-content/10">
+
+        {# Desktop table view #}
+        <div class="hidden md:block" style="margin-left: 3rem;">
+            <table class="table table-fixed w-full">
+                <colgroup>
+                    <col style="width: 10%;">
+                    <col style="width: 18%;">
+                    <col style="width: 72%;">
+                </colgroup>
+                <thead>
+                    <tr class="text-xs text-base-content/60">
+                        <th class="py-2">Year</th>
+                        <th class="py-2">Type</th>
+                        <th class="py-2">Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for list in group.lists %}
+                    <tr class="list-row hover:bg-base-200/30">
+                        <td class="py-2 tabular-nums">{{ list.year }}</td>
+                        <td class="py-2">
+                            <span class="badge badge-sm badge-ghost">{{ list.type|get_list_type_label }}</span>
+                        </td>
+                        <td class="py-2">
+                            {% if list.url %}
+                            <a href="{{ list.url }}" target="_blank" rel="noopener" class="link link-hover inline-flex items-center gap-1">
+                                {{ list.name }}
+                                <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
+                            </a>
+                            {% else %}
+                            {{ list.name }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Mobile card view #}
+        <div class="md:hidden py-3 space-y-2" style="margin-left: 1rem;">
+            {% for list in group.lists %}
+            <div class="list-row flex items-start gap-2 py-2 border-b border-base-content/5 last:border-0">
+                <span class="tabular-nums text-base-content/60 text-sm w-12 shrink-0">{{ list.year }}</span>
+                <div class="flex-grow min-w-0">
+                    <div class="text-sm">
+                        {% if list.url %}
+                        <a href="{{ list.url }}" target="_blank" rel="noopener" class="link link-hover">
+                            {{ list.name }}
+                            <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
+                        </a>
+                        {% else %}
+                        {{ list.name }}
+                        {% endif %}
+                    </div>
+                    <span class="badge badge-xs badge-ghost mt-1">{{ list.type|get_list_type_label }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

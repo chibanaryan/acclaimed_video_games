@@ -1,19 +1,11 @@
-{# Append-only partial - returns just list rows for Load More #}
+{# Append-only partial - returns publication groups for Load More #}
 {% load game_filters %}
-{# Wrap in table so DOMParser doesn't discard tr elements #}
-<table id="append-rows-container">
-<tbody>
-{# Desktop table rows #}
-{% for list in lists %}
-{% include 'lists/includes/_list_row.html' %}
-{% endfor %}
-</tbody>
-</table>
+{% load humanize %}
 
-{# Mobile card rows in a container div #}
-<div id="append-mobile-container">
-{% for list in lists %}
-{% include 'lists/includes/_list_card.html' %}
+{# Publication groups container #}
+<div id="append-groups-container">
+{% for group in publication_groups %}
+{% include 'lists/includes/_publication_group.html' %}
 {% endfor %}
 </div>
 
@@ -24,6 +16,8 @@
     "nextPage": {{ next_page|default:"null" }},
     "loadedCount": {{ loaded_count }},
     "totalCount": {{ total_count }},
-    "remainingCount": {{ remaining_count }}
+    "remainingCount": {{ remaining_count }},
+    "totalListCount": {{ total_list_count }},
+    "grandTotalListCount": {{ grand_total_list_count }}
 }
 </script>

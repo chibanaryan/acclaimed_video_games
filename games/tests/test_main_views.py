@@ -1192,7 +1192,7 @@ class DeveloperAliasRedirectViewTest(TestCase):
 
 
 class ListListViewTest(TestCase):
-    """Test the list list view."""
+    """Test the list list view with grouped publications."""
 
     def setUp(self):
         self.pub1 = Publication.objects.create(name="IGN")
@@ -1211,68 +1211,59 @@ class ListListViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "lists/list_list.html")
 
-    def test_context_contains_lists(self):
-        """Test that context includes lists."""
+    def test_context_contains_publication_groups(self):
+        """Test that context includes publication_groups with lists."""
         response = self.client.get(reverse("list-list"))
-        lists = list(response.context["lists"])
-        self.assertEqual(len(lists), 2)
-
-    def test_filter_by_publisher(self):
-        """Test filtering lists by publisher."""
-        response = self.client.get(reverse("list-list") + f"?publisher={self.pub1.id}")
-        self.assertEqual(response.status_code, 200)
-        lists = list(response.context["lists"])
-        self.assertEqual(len(lists), 1)
-        self.assertEqual(lists[0].publisher, self.pub1)
+        groups = response.context["publication_groups"]
+        self.assertEqual(len(groups), 2)  # Two publishers
+        # Check that each group has lists
+        total_lists = sum(len(g["lists"]) for g in groups)
+        self.assertEqual(total_lists, 2)
 
     def test_filter_by_year(self):
         """Test filtering lists by year."""
         response = self.client.get(reverse("list-list") + "?year=2020")
         self.assertEqual(response.status_code, 200)
-        lists = list(response.context["lists"])
-        self.assertEqual(len(lists), 1)
-        self.assertEqual(lists[0].year, 2020)
+        groups = response.context["publication_groups"]
+        # Only IGN has lists in 2020
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["publication"].name, "IGN")
+        self.assertEqual(len(groups[0]["lists"]), 1)
+        self.assertEqual(groups[0]["lists"][0].year, 2020)
 
     def test_filter_by_type(self):
         """Test filtering lists by type using URL slug."""
         response = self.client.get(reverse("list-list") + "?type=all-time")
         self.assertEqual(response.status_code, 200)
-        lists = list(response.context["lists"])
-        self.assertEqual(len(lists), 1)
-        self.assertEqual(lists[0].type, "A")
-
-    def test_filter_by_invalid_publisher_is_ignored(self):
-        """Test that invalid (non-numeric) publisher ID is ignored."""
-        response = self.client.get(reverse("list-list") + "?publisher=invalid")
-        self.assertEqual(response.status_code, 200)
-        # All lists should be returned since invalid filter is ignored
-        lists = list(response.context["lists"])
-        self.assertEqual(len(lists), 2)
+        groups = response.context["publication_groups"]
+        # Only IGN has all-time lists
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["publication"].name, "IGN")
+        self.assertEqual(groups[0]["lists"][0].type, "A")
 
     def test_filter_by_invalid_year_is_ignored(self):
         """Test that invalid (non-numeric) year is ignored."""
         response = self.client.get(reverse("list-list") + "?year=invalid")
         self.assertEqual(response.status_code, 200)
-        # All lists should be returned since invalid filter is ignored
-        lists = list(response.context["lists"])
-        self.assertEqual(len(lists), 2)
+        # All publications should be returned since invalid filter is ignored
+        groups = response.context["publication_groups"]
+        self.assertEqual(len(groups), 2)
 
     def test_context_has_meta_data(self):
         """Test that context includes metadata."""
         response = self.client.get(reverse("list-list"))
         self.assertIn("meta", response.context)
-        self.assertIn("publishers", response.context)
         self.assertIn("list_types", response.context)
+        self.assertIn("type_counts", response.context)
+        self.assertIn("sort", response.context)
 
-    def test_publishers_have_list_counts(self):
-        """Test that publishers in context have list_count attribute."""
+    def test_publication_groups_have_type_counts(self):
+        """Test that publication groups have type counts."""
         response = self.client.get(reverse("list-list"))
-        publishers = response.context["publishers"]
-        # pub1 has 1 list, pub2 has 1 list
-        pub1_count = next(p.list_count for p in publishers if p.name == "IGN")
-        pub2_count = next(p.list_count for p in publishers if p.name == "GameSpot")
-        self.assertEqual(pub1_count, 1)
-        self.assertEqual(pub2_count, 1)
+        groups = response.context["publication_groups"]
+        ign_group = next(g for g in groups if g["publication"].name == "IGN")
+        self.assertEqual(ign_group["alltime_count"], 1)
+        self.assertEqual(ign_group["eoy_count"], 0)
 
     def test_type_counts_in_context(self):
         """Test that type_counts is in context with correct structure."""
@@ -1299,6 +1290,28 @@ class ListListViewTest(TestCase):
         """Test that out of range page returns last page."""
         response = self.client.get(reverse("list-list") + "?page=999")
         self.assertEqual(response.status_code, 200)
+
+    def test_sort_by_importance(self):
+        """Test that default sort is by importance."""
+        # Add more all-time lists to GameSpot so it ranks higher
+        List.objects.create(
+            name="GS All-time 1", publisher=self.pub2, year=2020, type="A"
+        )
+        List.objects.create(
+            name="GS All-time 2", publisher=self.pub2, year=2020, type="A"
+        )
+        response = self.client.get(reverse("list-list"))
+        groups = response.context["publication_groups"]
+        # GameSpot should be first (more all-time lists)
+        self.assertEqual(groups[0]["publication"].name, "GameSpot")
+
+    def test_sort_by_alpha(self):
+        """Test alphabetical sort."""
+        response = self.client.get(reverse("list-list") + "?sort=alpha")
+        groups = response.context["publication_groups"]
+        # GameSpot comes before IGN alphabetically
+        self.assertEqual(groups[0]["publication"].name, "GameSpot")
+        self.assertEqual(groups[1]["publication"].name, "IGN")
 
 
 class ListListFacetedFilterTest(TestCase):
@@ -1332,18 +1345,6 @@ class ListListFacetedFilterTest(TestCase):
             name="Polygon 2021", publisher=self.pub_polygon, year=2021, type="A"
         )
 
-    def test_year_counts_filter_by_publisher(self):
-        """Year counts should reflect publisher filter."""
-        response = self.client.get(
-            reverse("list-list") + f"?publisher={self.pub_ign.id}"
-        )
-        years = response.context["meta"]["lists"]["years"]
-        year_dict = {y["year"]: y["count"] for y in years}
-
-        # IGN has 1 list in 2020, 1 in 2021
-        self.assertEqual(year_dict.get(2020), 1)
-        self.assertEqual(year_dict.get(2021), 1)
-
     def test_year_counts_filter_by_type(self):
         """Year counts should reflect type filter."""
         response = self.client.get(reverse("list-list") + "?type=all-time")
@@ -1354,39 +1355,27 @@ class ListListFacetedFilterTest(TestCase):
         self.assertEqual(year_dict.get(2020), 1)
         self.assertEqual(year_dict.get(2021), 1)
 
-    def test_publisher_counts_filter_by_year(self):
-        """Publisher counts should reflect year filter."""
+    def test_publication_groups_filter_by_year(self):
+        """Publication groups should reflect year filter."""
         response = self.client.get(reverse("list-list") + "?year=2020")
-        publishers = response.context["publishers"]
-        pub_dict = {p.name: p.list_count for p in publishers}
+        groups = response.context["publication_groups"]
+        pub_names = [g["publication"].name for g in groups]
 
         # 2020: IGN has 1, GameSpot has 1, Polygon has 0 (should be hidden)
-        self.assertEqual(pub_dict.get("IGN"), 1)
-        self.assertEqual(pub_dict.get("GameSpot"), 1)
-        self.assertNotIn("Polygon", pub_dict)  # 0 count, not selected
+        self.assertIn("IGN", pub_names)
+        self.assertIn("GameSpot", pub_names)
+        self.assertNotIn("Polygon", pub_names)  # 0 count in 2020
 
-    def test_publisher_counts_filter_by_type(self):
-        """Publisher counts should reflect type filter."""
+    def test_publication_groups_filter_by_type(self):
+        """Publication groups should reflect type filter."""
         response = self.client.get(reverse("list-list") + "?type=end-of-year")
-        publishers = response.context["publishers"]
-        pub_dict = {p.name: p.list_count for p in publishers}
+        groups = response.context["publication_groups"]
+        pub_names = [g["publication"].name for g in groups]
 
         # End-of-year: IGN has 1, GameSpot has 2, Polygon has 0
-        self.assertEqual(pub_dict.get("IGN"), 1)
-        self.assertEqual(pub_dict.get("GameSpot"), 2)
-        self.assertNotIn("Polygon", pub_dict)
-
-    def test_type_counts_filter_by_publisher(self):
-        """Type counts should reflect publisher filter."""
-        response = self.client.get(
-            reverse("list-list") + f"?publisher={self.pub_ign.id}"
-        )
-        type_counts = response.context["type_counts"]
-        type_dict = {t["type"]: t["count"] for t in type_counts}
-
-        # IGN: 1 All-time, 1 End-of-year
-        self.assertEqual(type_dict.get("A"), 1)
-        self.assertEqual(type_dict.get("E"), 1)
+        self.assertIn("IGN", pub_names)
+        self.assertIn("GameSpot", pub_names)
+        self.assertNotIn("Polygon", pub_names)
 
     def test_type_counts_filter_by_year(self):
         """Type counts should reflect year filter."""
@@ -1398,50 +1387,36 @@ class ListListFacetedFilterTest(TestCase):
         self.assertEqual(type_dict.get("A"), 1)
         self.assertEqual(type_dict.get("E"), 1)
 
-    def test_combined_filters_affect_all_counts(self):
-        """Multiple filters should combine to affect all counts."""
-        response = self.client.get(
-            reverse("list-list") + f"?publisher={self.pub_ign.id}&year=2020"
-        )
+    def test_combined_filters_affect_counts(self):
+        """Multiple filters should combine to affect counts."""
+        response = self.client.get(reverse("list-list") + "?year=2020&type=all-time")
 
-        # Year counts (filtered by publisher only)
+        # Only IGN 2020 All-time should match
+        groups = response.context["publication_groups"]
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["publication"].name, "IGN")
+        self.assertEqual(len(groups[0]["lists"]), 1)
+
+        # Year counts (filtered by type only)
         years = response.context["meta"]["lists"]["years"]
         year_dict = {y["year"]: y["count"] for y in years}
-        self.assertEqual(year_dict.get(2020), 1)  # IGN 2020
-        self.assertEqual(year_dict.get(2021), 1)  # IGN 2021
+        self.assertEqual(year_dict.get(2020), 1)  # IGN all-time
+        self.assertEqual(year_dict.get(2021), 1)  # Polygon all-time
 
-        # Publisher counts (filtered by year only)
-        publishers = response.context["publishers"]
-        pub_dict = {p.name: p.list_count for p in publishers}
-        self.assertEqual(pub_dict.get("IGN"), 1)
-        self.assertEqual(pub_dict.get("GameSpot"), 1)
-
-        # Type counts (filtered by publisher + year)
+        # Type counts (filtered by year only)
         type_counts = response.context["type_counts"]
         type_dict = {t["type"]: t["count"] for t in type_counts}
-        self.assertEqual(type_dict.get("A"), 1)  # IGN 2020 is All-time
-        self.assertNotIn("E", type_dict)  # No End-of-year for IGN 2020
+        self.assertEqual(type_dict.get("A"), 1)  # IGN 2020 All-time
+        self.assertEqual(type_dict.get("E"), 1)  # GameSpot 2020 EOY
 
-    def test_zero_count_options_hidden(self):
-        """Options with 0 count should be hidden (unless selected)."""
+    def test_publications_with_zero_lists_hidden(self):
+        """Publications with 0 matching lists should be hidden."""
         response = self.client.get(reverse("list-list") + "?year=2020")
-        publishers = response.context["publishers"]
+        groups = response.context["publication_groups"]
 
-        # Polygon has 0 lists in 2020 and is not selected
-        pub_names = [p.name for p in publishers]
+        # Polygon has 0 lists in 2020
+        pub_names = [g["publication"].name for g in groups]
         self.assertNotIn("Polygon", pub_names)
-
-    def test_selected_zero_count_remains_visible(self):
-        """Currently selected option should remain visible even with 0 count."""
-        response = self.client.get(
-            reverse("list-list") + f"?publisher={self.pub_polygon.id}&year=2020"
-        )
-        publishers = response.context["publishers"]
-        pub_dict = {p.name: p.list_count for p in publishers}
-
-        # Polygon should still be visible (selected) but with 0 count
-        self.assertIn("Polygon", pub_dict)
-        self.assertEqual(pub_dict["Polygon"], 0)
 
 
 class PageDetailViewTest(TestCase):
