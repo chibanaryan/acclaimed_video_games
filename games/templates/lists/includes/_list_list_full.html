@@ -13,23 +13,58 @@
 </h2>
 
 <div class="flex flex-wrap items-center gap-2 mb-6 min-h-[2.5rem]"
-     x-data="{ allExpanded: false }">
+     x-data="{
+        allExpanded: false,
+        sort: '{{ sort|default:'importance' }}',
+        sortOpen: false,
+        updateSort(newSort) {
+            this.sort = newSort;
+            this.sortOpen = false;
+            const url = new URL(window.location);
+            if (newSort !== 'importance') {
+                url.searchParams.set('sort', newSort);
+            } else {
+                url.searchParams.delete('sort');
+            }
+            url.searchParams.delete('page');
+            window.history.pushState({}, '', url);
+            htmx.ajax('GET', '{% url 'list-list' %}', {
+                target: '#filter-results-wrapper',
+                swap: 'innerHTML',
+                values: {
+                    sort: newSort,
+                    type: document.getElementById('filter-list-type')?.value || '',
+                    year: document.getElementById('filter-list-year')?.value || ''
+                }
+            });
+        }
+     }">
     {# Sort toggle - far left #}
-    <div class="flex items-center gap-1">
+    {# Desktop: Custom dropdown #}
+    <div class="hidden desktop:block dropdown" @click.away="sortOpen = false">
+        <button type="button"
+                class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                @click="sortOpen = !sortOpen">
+            <span class="mdi mdi-sort text-base"></span>
+            <span class="text-sm" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"></span>
+            <span class="mdi mdi-chevron-down text-xs"></span>
+        </button>
+        <ul x-show="sortOpen" x-cloak
+            class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1">
+            <li><button type="button" @click="updateSort('importance')" :class="sort === 'importance' ? 'active' : ''"># Lists</button></li>
+            <li><button type="button" @click="updateSort('alpha')" :class="sort === 'alpha' ? 'active' : ''">Alphabetical</button></li>
+        </ul>
+    </div>
+    {# Mobile: Native select for touch compatibility #}
+    <div class="desktop:hidden flex items-center gap-1">
         <span class="mdi mdi-sort text-base text-base-content/60"></span>
         <select id="sort-select"
                 name="sort"
                 class="select select-sm select-bordered bg-base-200"
                 style="width: fit-content; max-width: 100%;"
-                hx-get="{% url 'list-list' %}"
-                hx-target="#filter-results-wrapper"
-                hx-trigger="change"
-                hx-swap="innerHTML"
-                hx-include="[name='year'], [name='type'], [name='sort']"
-                hx-on:htmx:before-request="this.blur()"
-                x-on:htmx:after-request="updateUrl($event)">
-            <option value="importance" {% if sort == 'importance' %}selected{% endif %}>By Importance</option>
-            <option value="alpha" {% if sort == 'alpha' %}selected{% endif %}>Alphabetical</option>
+                @change="updateSort($event.target.value)">
+            <option value="importance" :selected="sort === 'importance'"># Lists</option>
+            <option value="alpha" :selected="sort === 'alpha'">Alphabetical</option>
         </select>
     </div>
 

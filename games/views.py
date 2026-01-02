@@ -12,10 +12,8 @@ from django.db.models import (
     Count,
     Min,
     Max,
-    OuterRef,
     Prefetch,
     Q,
-    Subquery,
     When,
     Value,
     IntegerField,
@@ -648,23 +646,7 @@ class GameDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        # Compute publisher importance score via subquery
-        # All-time: 1000 pts, Decade: 100 pts, Misc: 10 pts, EOY: 1 pt
-        publisher_importance = (
-            models.Publication.objects.filter(pk=OuterRef("list__publisher_id"))
-            .annotate(
-                score=(
-                    1000 * Count("lists", filter=Q(lists__type=constants.LIST_ALLTIME))
-                    + 100 * Count("lists", filter=Q(lists__type=constants.LIST_DECADE))
-                    + 10 * Count("lists", filter=Q(lists__type=constants.LIST_MISC))
-                    + Count("lists", filter=Q(lists__type=constants.LIST_EOY))
-                )
-            )
-            .values("score")
-        )
-
-        # Prefetch lists with publisher, sorted by column order:
-        # Publication (importance), Year (desc), Name, Rank
+        # Prefetch lists with publisher, sorted by year (desc), publication, list name
         return models.Game.objects.prefetch_related(
             "developers",
             "developers__parent",
@@ -675,13 +657,11 @@ class GameDetailView(DetailView):
                 "lists",
                 queryset=models.ListMembership.objects.select_related(
                     "list__publisher",
-                )
-                .annotate(publisher_importance=Subquery(publisher_importance))
-                .order_by(
-                    "-publisher_importance",  # Publication (by importance)
+                ).order_by(
                     "-list__year",  # Year (descending)
-                    "list__name",  # Name
-                    "rank",  # Rank
+                    "list__publisher__name",  # Publication name (alphabetical)
+                    "list__name",  # List name (alphabetical)
+                    "rank",  # Rank within list
                 ),
             ),
         )
@@ -722,14 +702,6 @@ class GameDetailView(DetailView):
 
         context["grouped_lists"] = sorted_grouped_lists
 
-        # List type counts for colored badges (matches source lists page)
-        context["list_type_counts"] = {
-            "alltime": len(grouped.get("All time", [])),
-            "decade": len(grouped.get("Decade", [])),
-            "misc": len(grouped.get("Miscellaneous", [])),
-            "eoy": len(grouped.get("End of year", [])),
-        }
-
         # Check if current user has marked this game as played
         if self.request.user.is_authenticated and game.igdb_id:
             context["is_played"] = models.PlayedGame.objects.filter(
@@ -755,14 +727,6 @@ class GameDetailView(DetailView):
                 "total_game_count", total_game_count, config.CACHE_TIMEOUT_24_HOURS
             )
         context["total_game_count"] = total_game_count
-
-        # rank_percentile: lower is better (rank 1 = "Top 0.1%", rank 100 = "Top 10%")
-        # rank_position_pct: bar width (rank 1 = full, rank N = empty)
-        if game.rank and total_game_count:
-            context["rank_percentile"] = round(game.rank / total_game_count * 100, 1)
-            context["rank_position_pct"] = round(
-                (1 - game.rank / total_game_count) * 100
-            )
 
         # Decade and year counts for rank context - cached by decade/year
         if game.decade:

@@ -29,7 +29,12 @@
 
 {% block content %}
 {% if game %}
-    <h1 class="text-3xl font-bold mb-4">{{ game.name }} ({{ game.year_of_release }})</h1>
+    <h1 class="text-3xl font-bold mb-4 flex items-center gap-3">
+        <span>{{ game.name }} ({{ game.year_of_release }})</span>
+        {% if user.is_authenticated and game.igdb_id %}
+            {% include 'games/includes/_played_button.html' with size='large' %}
+        {% endif %}
+    </h1>
     {% block extra_head %}
         {% if game.image %}
             <link rel="preload"
@@ -94,16 +99,10 @@
     {% endif %}
 
     {% if grouped_lists %}
-    <div class="flex flex-wrap items-center gap-2 mt-6 mb-4">
-        <h2 class="text-xl font-bold">Source Lists</h2>
-        {% if list_type_counts.alltime %}<span class="badge badge-info font-semibold">{{ list_type_counts.alltime }} All time</span>{% endif %}
-        {% if list_type_counts.decade %}<span class="badge badge-success font-semibold">{{ list_type_counts.decade }} Decade</span>{% endif %}
-        {% if list_type_counts.misc %}<span class="badge badge-warning font-semibold">{{ list_type_counts.misc }} Miscellaneous</span>{% endif %}
-        {% if list_type_counts.eoy %}<span class="badge badge-error font-semibold">{{ list_type_counts.eoy }} End of year</span>{% endif %}
-    </div>
+    <h2 class="text-xl font-bold mt-6 mb-4">Source Lists</h2>
     <div class="space-y-3">
         {% for group_label, group_items in grouped_lists %}
-            {% include 'games/includes/_list_type_group.html' with group_label=group_label group_items=group_items expanded_default=forloop.first %}
+            {% include 'games/includes/_list_type_group.html' with group_label=group_label group_items=group_items %}
         {% endfor %}
     </div>
     {% endif %}

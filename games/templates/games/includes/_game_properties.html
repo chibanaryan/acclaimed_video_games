@@ -4,13 +4,6 @@
 {% load humanize %}
 {% load static %}
 
-{% if user.is_authenticated and game.igdb_id %}
-<div class="flex items-center gap-3 mb-4">
-    <span class="text-lg text-base-content/70 font-semibold">Played?:</span>
-    {% include 'games/includes/_played_button.html' with size='large' %}
-</div>
-{% endif %}
-
 <table class="text-base">
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">All time rank:</td>
@@ -19,11 +12,6 @@
                 {% game_rank_url game.rank game.id as rank_url %}
                 <a href="{{ rank_url }}" class="link link-accent font-medium">{{ game.rank }}</a>
                 {% if total_game_count %}<span class="text-base-content/50 text-sm"> of {{ total_game_count|intcomma }}</span>{% endif %}
-                {% if total_game_count %}
-                <div class="tooltip tooltip-top" data-tip="Top {{ rank_percentile|default:0 }}%">
-                    <progress class="progress progress-primary w-24 h-2" value="{{ rank_position_pct|default:0 }}" max="100"></progress>
-                </div>
-                {% endif %}
             </span>
         </td>
     </tr>
@@ -121,7 +109,7 @@
             <a href="#contact"
                class="contact-modal-trigger link link-hover text-base-content/60 hover:text-warning inline-flex items-center gap-1 text-sm"
                data-category="data"
-               data-message="Game: {{ game.name }}">
+               data-message="Game: {{ game.name }}{% if game.primary_igdb_game_data.igdb_id %} (IGDB ID: {{ game.primary_igdb_game_data.igdb_id }}){% endif %}">
                 <span class="mdi mdi-alert-circle"></span>
                 Report incorrect data
             </a>

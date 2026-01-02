@@ -1,44 +1,28 @@
-{# List type group with expand/collapse for game detail page #}
+{# List type group for game detail page #}
 {% load game_filters %}
 
-<div class="list-type-group border border-base-content/10 rounded-lg"
-     x-data="{ expanded: {{ expanded_default|yesno:'true,false' }} }">
-    {# Type header - always visible #}
-    <button @click="expanded = !expanded"
-            class="w-full flex items-center gap-3 p-3 hover:bg-base-200/50 transition-colors rounded-lg cursor-pointer text-left"
-            aria-label="Toggle {{ group_label }} lists">
-        {# Expand/collapse chevron #}
-        <svg xmlns="http://www.w3.org/2000/svg"
-             class="h-5 w-5 shrink-0 text-base-content/60 transition-transform duration-200"
-             :class="{ 'rotate-90': expanded }"
-             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-
-        {# Type label #}
+<div class="list-type-group border border-base-content/10 rounded-lg">
+    {# Section header #}
+    <div class="flex items-center gap-3 p-3">
         <span class="font-semibold text-base">{{ group_label }}</span>
         <span class="text-sm text-base-content/60">{{ group_items|length }}</span>
-    </button>
+    </div>
 
-    {# Collapsible content - lists table #}
-    <div x-show="expanded"
-         x-collapse
-         x-cloak
-         class="border-t border-base-content/10">
-
+    {# Lists content #}
+    <div class="border-t border-base-content/10">
         {# Desktop table view #}
-        <div class="hidden md:block" style="margin-left: 3rem;">
+        <div class="hidden md:block px-3">
             <table class="table table-fixed w-full">
                 <colgroup>
-                    <col style="width: 28%;">
                     <col style="width: 10%;">
+                    <col style="width: 28%;">
                     <col style="width: 52%;">
                     <col style="width: 10%;">
                 </colgroup>
                 <thead>
                     <tr class="text-xs text-base-content/60">
-                        <th class="py-2">Publication</th>
                         <th class="py-2">Year</th>
+                        <th class="py-2">Publication</th>
                         <th class="py-2">Name</th>
                         <th class="py-2">Rank</th>
                     </tr>
@@ -46,8 +30,8 @@
                 <tbody>
                     {% for list in group_items %}
                     <tr class="list-row hover:bg-base-200/30">
-                        <td class="py-2 truncate" title="{{ list.publication }}">{{ list.publication }}</td>
                         <td class="py-2 tabular-nums">{{ list.year }}</td>
+                        <td class="py-2 truncate" title="{{ list.publication }}">{{ list.publication }}</td>
                         <td class="py-2 truncate" title="{{ list.name }}">
                             {% if list.url %}
                             <a href="{{ list.url }}" target="_blank" rel="noopener" class="link link-hover inline-flex items-center gap-1">
@@ -65,13 +49,13 @@
             </table>
         </div>
 
-        {# Mobile card view - matches column order: Publication, Year, Name, Rank #}
-        <div class="md:hidden py-3 space-y-2" style="margin-left: 1rem;">
+        {# Mobile card view #}
+        <div class="md:hidden py-3 px-3 space-y-2">
             {% for list in group_items %}
             <div class="list-row py-2 border-b border-base-content/5 last:border-0">
                 <div class="flex items-baseline gap-2">
-                    <span class="text-sm font-medium">{{ list.publication }}</span>
                     <span class="tabular-nums text-base-content/60 text-sm">{{ list.year }}</span>
+                    <span class="text-sm font-medium">{{ list.publication }}</span>
                 </div>
                 <div class="text-sm mt-1">
                     {% if list.url %}

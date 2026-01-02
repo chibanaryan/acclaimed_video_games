@@ -4,7 +4,7 @@
 {# Pass size='large' for bigger button on game detail page #}
 {% load static %}
 {% if user.is_authenticated and game.igdb_id %}
-<div class="desktop:tooltip desktop:tooltip-top played-button-wrapper cursor-pointer"
+<div class="desktop:tooltip {% if size == 'large' %}desktop:tooltip-bottom{% else %}desktop:tooltip-top{% endif %} played-button-wrapper cursor-pointer z-10"
     data-tip="{% if is_played %}You have played this game!{% else %}You have not played this game.{% endif %}"
     data-igdb-id="{{ game.igdb_id }}"
     data-is-played="{% if is_played %}true{% else %}false{% endif %}"

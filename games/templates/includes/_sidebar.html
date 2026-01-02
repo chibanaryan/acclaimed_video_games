@@ -162,15 +162,15 @@
             <ul class="menu gap-1">
                 <li>
                     {% if user.is_authenticated %}
-                    <a href="#" class="auth-modal-trigger" data-auth-screen="profile">
+                    <button type="button" class="auth-modal-trigger w-full text-left" data-auth-screen="profile">
                         <span class="mdi mdi-account-circle text-xl"></span>
                         {{ user.name|default:user.email|default:"Account" }}
-                    </a>
+                    </button>
                     {% else %}
-                    <a href="#" class="auth-modal-trigger">
+                    <button type="button" class="auth-modal-trigger w-full text-left">
                         <span class="mdi mdi-login text-xl"></span>
                         Login
-                    </a>
+                    </button>
                     {% endif %}
                 </li>
                 <li>

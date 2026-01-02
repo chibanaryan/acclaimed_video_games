@@ -190,7 +190,8 @@
                 {# Overflow nav items - shown when they don't fit in the navbar #}
                 <template x-for="item in overflowItems" :key="item.id">
                     <li x-show="item.hidden" :class="{ 'menu-active': item.active }">
-                        <a :href="item.href || '#'" :class="{ 'contact-modal-trigger': item.isContactModal, 'auth-modal-trigger': item.isAuthModal }" :data-auth-screen="item.authScreen" x-text="item.label"></a>
+                        <a x-show="item.href && !item.isContactModal && !item.isAuthModal" :href="item.href" x-text="item.label"></a>
+                        <button x-show="item.isContactModal || item.isAuthModal" type="button" :class="{ 'contact-modal-trigger': item.isContactModal, 'auth-modal-trigger': item.isAuthModal }" :data-auth-screen="item.authScreen" x-text="item.label" class="w-full text-left"></button>
                     </li>
                 </template>
                 {# Theme and social links #}
