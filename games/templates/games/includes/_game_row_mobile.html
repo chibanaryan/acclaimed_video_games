@@ -44,13 +44,13 @@
                 {% if game %}{{ game.name }} <span class="font-normal text-base-content/60">({{ game.year_of_release }})</span>{% else %}<span class="font-normal text-base-content/60" data-slot="year"></span>{% endif %}
             </div>
             {# Row 1: Developer and list count #}
-            <div class="text-xs text-base-content/60 truncate" data-slot="meta">
+            <div class="text-xs text-base-content/70 truncate" data-slot="meta">
                 {% if game %}
                     {% with first_dev=game.developers.first %}{% if first_dev %}{{ first_dev.name }}{% endif %}{% endwith %}{% if game.list_count %}{% if game.developers.first %} &bull; {% endif %}<span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span>{% endif %}
                 {% endif %}
             </div>
             {# Row 2: Platform codes and genres #}
-            <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">
+            <div class="text-xs text-base-content/70 truncate" data-slot="platforms-row">
                 {% if game %}
                     {% with platforms=game.platforms.all %}{% for p in platforms|slice:":2" %}{{ p.code }}{% if not forloop.last %}, {% endif %}{% endfor %}{% with extra=platforms|length %}{% if extra > 2 %} <span class="text-base-content/40">+{{ extra|add:"-2" }}</span>{% endif %}{% endwith %}{% endwith %}{% with genres=game.wikipedia_genres.all|slice:":2" %}{% if genres %}{% if game.platforms.all %} &bull; {% endif %}{% for genre in genres %}{{ genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}
                 {% endif %}
