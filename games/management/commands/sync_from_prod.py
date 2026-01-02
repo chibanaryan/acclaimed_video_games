@@ -71,7 +71,8 @@ class Command(BaseCommand):
             "--app",
             app_name,
             "--no-tty",
-            "python manage.py dumpdata games --indent 2",
+            "python manage.py dumpdata games "
+            "--exclude games.User --exclude games.PlayedGame --indent 2",
         ]
 
         try:
