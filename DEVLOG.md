@@ -2,6 +2,7 @@
 
 ## 2026-01-02
 
+- Show all leaf-level developers in game rows (removed 2-developer limit)
 - Change default theme from light (lofi) to dark (forest)
 - Refactor game detail source lists: sort by publication importance, group by type with expand/collapse
 - Refactor Lists page: group lists by publication with expand/collapse, sort years descending

@@ -1340,7 +1340,7 @@ class Game(models.Model):
             return utils.year_to_decade(self.year_of_release)
         return None
 
-    def get_display_developers(self, max_count: int = 2) -> list:
+    def get_display_developers(self, max_count: int = None) -> list:
         """
         Get developers for display, filtering out redundant ancestors.
 
@@ -1349,10 +1349,10 @@ class Game(models.Model):
         specific developer (the subsidiary).
 
         Args:
-            max_count: Maximum number of developers to return (default 2)
+            max_count: Maximum number of developers to return (None = no limit)
 
         Returns:
-            List of Developer objects, filtered and limited
+            List of Developer objects, filtered and optionally limited
         """
         developers = list(self.developers.all())
 
@@ -1373,7 +1373,9 @@ class Game(models.Model):
         # Filter out any developer that is an ancestor of another
         filtered = [dev for dev in developers if dev.id not in ancestor_ids]
 
-        return filtered[:max_count]
+        if max_count is not None:
+            return filtered[:max_count]
+        return filtered
 
     @property
     def lists_grouped_by_type(self) -> Dict[str, list]:

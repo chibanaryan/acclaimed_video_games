@@ -718,18 +718,20 @@ class PlatformSvgIconFilterTest(TestCase):
 class PlatformFamiliesGroupedFilterTest(TestCase):
     """Test the platform_families_grouped template filter."""
 
-    def _make_platform(self, code, id, name):
-        """Create a mock platform."""
+    def _make_platform(self, code, id, name, year_start=None, year_end=None):
+        """Create a mock platform with year data."""
         p = Mock()
         p.code = code
         p.id = id
         p.name = name
+        p.year_start = year_start
+        p.year_end = year_end
         return p
 
     def test_groups_same_family_platforms(self):
         """Test that platforms in same family are grouped."""
-        ps4 = self._make_platform("PS4", 1, "PlayStation 4")
-        ps5 = self._make_platform("PS5", 2, "PlayStation 5")
+        ps4 = self._make_platform("PS4", 1, "PlayStation 4", 2013, 2027)
+        ps5 = self._make_platform("PS5", 2, "PlayStation 5", 2020, None)
         result = platform_families_grouped([ps4, ps5])
         # Should have one group
         self.assertEqual(len(result), 1)
@@ -740,8 +742,8 @@ class PlatformFamiliesGroupedFilterTest(TestCase):
 
     def test_different_families(self):
         """Test platforms from different families create separate groups."""
-        ps5 = self._make_platform("PS5", 1, "PlayStation 5")
-        xbox = self._make_platform("XBXS", 2, "Xbox Series X")
+        ps5 = self._make_platform("PS5", 1, "PlayStation 5", 2020, None)
+        xbox = self._make_platform("XBXS", 2, "Xbox Series X", 2020, None)
         result = platform_families_grouped([ps5, xbox])
         self.assertEqual(len(result), 2)
         keys = [r["key"] for r in result]
@@ -756,8 +758,8 @@ class PlatformFamiliesGroupedFilterTest(TestCase):
 
     def test_tooltip_contains_all_names(self):
         """Test tooltip contains all platform names."""
-        ps4 = self._make_platform("PS4", 1, "PlayStation 4")
-        ps5 = self._make_platform("PS5", 2, "PlayStation 5")
+        ps4 = self._make_platform("PS4", 1, "PlayStation 4", 2013, 2027)
+        ps5 = self._make_platform("PS5", 2, "PlayStation 5", 2020, None)
         result = platform_families_grouped([ps4, ps5])
         self.assertIn("PlayStation 4", result[0]["tooltip"])
         self.assertIn("PlayStation 5", result[0]["tooltip"])
@@ -766,6 +768,29 @@ class PlatformFamiliesGroupedFilterTest(TestCase):
         """Test empty list returns empty result."""
         result = platform_families_grouped([])
         self.assertEqual(result, [])
+
+    def test_platforms_sorted_by_year_start(self):
+        """Test platforms within a family are sorted by year_start, year_end, name."""
+        # Create platforms out of order
+        ps5 = self._make_platform("PS5", 1, "PlayStation 5", 2020, None)
+        ps2 = self._make_platform("PS2", 2, "PlayStation 2", 2000, 2013)
+        ps4 = self._make_platform("PS4", 3, "PlayStation 4", 2013, 2027)
+        result = platform_families_grouped([ps5, ps2, ps4])
+        # Should be sorted: PS2 (2000), PS4 (2013), PS5 (2020)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["platforms"][0]["code"], "PS2")
+        self.assertEqual(result[0]["platforms"][1]["code"], "PS4")
+        self.assertEqual(result[0]["platforms"][2]["code"], "PS5")
+
+    def test_families_sorted_by_first_platform(self):
+        """Test families are ordered by their first platform's sort position."""
+        # PlayStation 5 (2020) vs NES (1983) - NES should come first
+        ps5 = self._make_platform("PS5", 1, "PlayStation 5", 2020, None)
+        nes = self._make_platform("NES", 2, "Nintendo Entertainment System", 1983, 2003)
+        result = platform_families_grouped([ps5, nes])
+        # Nintendo (NES 1983) should come before PlayStation (PS5 2020)
+        self.assertEqual(result[0]["key"], "nintendo")
+        self.assertEqual(result[1]["key"], "playstation")
 
 
 class GenreCategoriesGroupedFilterTest(TestCase):

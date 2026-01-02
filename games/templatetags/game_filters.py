@@ -419,10 +419,24 @@ def platform_families(platforms):
     return families
 
 
+def _platform_sort_key(platform):
+    """
+    Sort key for platforms: (year_start, year_end, name).
+    None values sort to end (9999).
+    """
+    year_start = getattr(platform, "year_start", None) or 9999
+    year_end = getattr(platform, "year_end", None) or 9999
+    name = getattr(platform, "name", "") or ""
+    return (year_start, year_end, name)
+
+
 @register.filter
 def platform_families_grouped(platforms):
     """
     Group platforms by family with full metadata for display.
+    Platforms within each family are sorted by (year_start, year_end, name).
+    Families are ordered by their first platform's sort position.
+
     Returns list of dicts with:
     - icon: MDI icon class
     - svg_icon: SVG symbol ID (if applicable)
@@ -452,22 +466,57 @@ def platform_families_grouped(platforms):
                 "order": order,
                 "platform_ids": [],
                 "platform_names": [],
+                "platform_codes": [],
+                "platforms": [],  # Individual platform data for text display
+                "_platform_objects": [],  # Keep originals for sorting
             }
 
-        platform_id = platform.id if hasattr(platform, "id") else None
-        platform_name = platform.name if hasattr(platform, "name") else code
+        families[family_key]["_platform_objects"].append(platform)
 
-        if platform_id:
-            families[family_key]["platform_ids"].append(str(platform_id))
-        families[family_key]["platform_names"].append(platform_name)
-
-    # Build final list with computed fields
+    # Sort platforms within each family and build display data
     result = []
     for data in families.values():
+        # Sort platforms by (year_start, year_end, name)
+        sorted_platforms = sorted(data["_platform_objects"], key=_platform_sort_key)
+
+        # Build display data from sorted platforms
+        for platform in sorted_platforms:
+            code = platform.code if hasattr(platform, "code") else str(platform)
+            platform_id = platform.id if hasattr(platform, "id") else None
+            platform_name = platform.name if hasattr(platform, "name") else code
+
+            if platform_id:
+                data["platform_ids"].append(str(platform_id))
+            data["platform_names"].append(platform_name)
+            data["platform_codes"].append(code)
+            data["platforms"].append(
+                {
+                    "code": code,
+                    "id": str(platform_id) if platform_id else "",
+                    "name": platform_name,
+                }
+            )
+
         data["count"] = len(data["platform_names"])
         data["platform_ids_str"] = ",".join(data["platform_ids"])
         data["tooltip"] = ", ".join(data["platform_names"])
+
+        # Store first platform's sort key for family ordering
+        if sorted_platforms:
+            data["_first_sort_key"] = _platform_sort_key(sorted_platforms[0])
+        else:
+            data["_first_sort_key"] = (9999, 9999, "")
+
+        # Clean up internal fields
+        del data["_platform_objects"]
         result.append(data)
+
+    # Sort families by their first platform's sort position
+    result.sort(key=lambda f: f["_first_sort_key"])
+
+    # Clean up sort key from output
+    for data in result:
+        del data["_first_sort_key"]
 
     return result
 

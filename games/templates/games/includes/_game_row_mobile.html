@@ -52,7 +52,7 @@
             {# Row 2: Platform codes and genres #}
             <div class="text-xs text-base-content/70 truncate" data-slot="platforms-row">
                 {% if game %}
-                    {% with platforms=game.platforms.all %}{% for p in platforms|slice:":2" %}{{ p.code }}{% if not forloop.last %}, {% endif %}{% endfor %}{% with extra=platforms|length %}{% if extra > 2 %} <span class="text-base-content/40">+{{ extra|add:"-2" }}</span>{% endif %}{% endwith %}{% endwith %}{% with genres=game.wikipedia_genres.all|slice:":2" %}{% if genres %}{% if game.platforms.all %} &bull; {% endif %}{% for genre in genres %}{{ genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}
+                    {% for family in game.platforms.all|platform_families_grouped %}{% if family.count >= 3 %}<span class="inline-flex items-center" title="{{ family.tooltip }}">{% if family.svg_icon %}<svg class="w-3 h-3" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ family.svg_icon }}"></use></svg>{% elif family.icon %}<span class="mdi {{ family.icon }}" aria-hidden="true"></span>{% endif %}<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">{{ family.count }}</span></span>{% else %}{% for p in family.platforms %}<span title="{{ p.name }}">{{ p.code }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}{% with genres=game.wikipedia_genres.all|slice:":2" %}{% if genres %}{% if game.platforms.all %} &bull; {% endif %}{% for genre in genres %}{{ genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}
                 {% endif %}
             </div>
         </div>

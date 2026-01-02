@@ -502,7 +502,8 @@ def _compute_game_data_version():
     # v2: Changed st->dv, studios/companies->developers (commit ac84d07c)
     # v3: Added 'i' (IGDB ID) field for played game filtering
     # v4: Added 'lc' (list_count) field for displaying list appearances
-    SCHEMA_VERSION = "4"
+    # v5: Added 'ys' (year_start) and 'ye' (year_end) to platforms for sorting
+    SCHEMA_VERSION = "5"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()
@@ -554,7 +555,7 @@ class GameAllDataView(APIView):
         "data": {
             "games": [{id, n, s, r, y, a, dv, p, g, sr, lc}, ...],
             "developers": {id: {n, pa, s}, ...},
-            "platforms": {id: {n, c}, ...},
+            "platforms": {id: {n, c, ys, ye}, ...},
             "genres": [{id, n, s, p, l, d}, ...]
         }
     }
@@ -613,6 +614,8 @@ class GameAllDataView(APIView):
                     platforms_dict[platform.id] = {
                         "n": platform.name,
                         "c": platform.code,
+                        "ys": platform.year_start,
+                        "ye": platform.year_end,
                     }
 
             # Collect genre IDs

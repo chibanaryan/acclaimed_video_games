@@ -259,6 +259,39 @@ document.body.addEventListener('htmx:afterSwap', function(event) {
 - Template reloading works in development via Django's non-cached template loaders
 - In production, template caching is enabled for performance
 
+### Home Page Client/Server Rendering Consistency
+
+The home page game rankings use a **dual-rendering architecture** that requires careful coordination:
+
+**How It Works:**
+1. **Server-side rendering**: Django templates render game rows with actual data on initial page load
+2. **Client-side rendering**: JavaScript clones `<template>` elements and fills them with data for filtered/paginated results
+3. **Single source of truth**: The same Django templates (`_game_row_desktop.html`, `_game_row_mobile.html`) serve both purposes
+
+**Template Structure:**
+- When `game` context is provided → server renders with data
+- When `game` is absent (inside `<template>` tags) → renders empty structure with `data-slot` attributes for JS
+
+**Files That Must Stay In Sync:**
+
+| Server-Side (Python/Django) | Client-Side (JavaScript) |
+|----------------------------|--------------------------|
+| `games/templates/games/includes/_game_row_desktop.html` | `games/static/games/js/game-list-renderer.js` |
+| `games/templates/games/includes/_game_row_mobile.html` | (fallback string methods: `_renderDesktopRowString`, `_renderMobileRowString`) |
+| `games/templatetags/game_filters.py` | `_platformFamilies`, `_familyInfo` objects |
+
+**When Modifying Game Rows:**
+1. Update the Django template for server-rendered output
+2. Update the JavaScript renderer's DOM-cloning logic (uses `data-slot` attributes)
+3. Update the JavaScript fallback string-rendering methods to match
+4. Ensure `PLATFORM_FAMILIES` and `FAMILY_INFO` constants match between Python and JS
+
+**Key Data Slots:** `rank`, `global-rank`, `thumbnail`, `name`, `year`, `title-link`, `thumb-link`, `year-link`, `meta-row`, `platforms`, `genres`, `list-count`, `primary-developer`, `played-button`
+
+**Testing:** After changes, verify both:
+- Fresh page load (server-rendered)
+- Filtered results (client-rendered via JS template cloning)
+
 ## IGDB Integration
 
 The `games/igdb.py` module handles IGDB API integration with multiple optimization strategies:

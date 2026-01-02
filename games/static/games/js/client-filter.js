@@ -670,7 +670,9 @@ class GameFilterEngine {
             return platform ? {
                 id: pid,
                 name: platform.n,
-                code: platform.c
+                code: platform.c,
+                year_start: platform.ys,
+                year_end: platform.ye
             } : null;
         }).filter(Boolean);
 
