@@ -22,10 +22,10 @@
         {# Publication name and type counts as colored badges (fixed-width for alignment) #}
         <span class="font-semibold text-base flex-1">{{ group.publication.name }}</span>
         <span class="flex items-center gap-0.5">
-            <span class="w-7 text-center">{% if group.alltime_count %}<span class="badge badge-xs badge-success opacity-85">{{ group.alltime_count }}</span>{% endif %}</span>
-            <span class="w-7 text-center">{% if group.decade_count %}<span class="badge badge-xs badge-info opacity-85">{{ group.decade_count }}</span>{% endif %}</span>
-            <span class="w-7 text-center">{% if group.misc_count %}<span class="badge badge-xs badge-warning opacity-85">{{ group.misc_count }}</span>{% endif %}</span>
-            <span class="w-7 text-center">{% if group.eoy_count %}<span class="badge badge-xs badge-error opacity-85">{{ group.eoy_count }}</span>{% endif %}</span>
+            <span class="w-8 text-center">{% if group.alltime_count %}<span class="badge badge-sm badge-info font-semibold">{{ group.alltime_count }}</span>{% endif %}</span>
+            <span class="w-8 text-center">{% if group.decade_count %}<span class="badge badge-sm badge-success font-semibold">{{ group.decade_count }}</span>{% endif %}</span>
+            <span class="w-8 text-center">{% if group.misc_count %}<span class="badge badge-sm badge-warning font-semibold">{{ group.misc_count }}</span>{% endif %}</span>
+            <span class="w-8 text-center">{% if group.eoy_count %}<span class="badge badge-sm badge-error font-semibold">{{ group.eoy_count }}</span>{% endif %}</span>
         </span>
     </button>
 
@@ -51,20 +51,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for list in group.lists %}
+                    {% for item in group.lists %}
                     <tr class="list-row hover:bg-base-200/30">
                         <td class="py-2">
-                            <span class="badge badge-sm {{ list.type|get_list_type_badge_class }}">{{ list.type|get_list_type_label }}</span>
+                            {% if item.type == 'A' %}
+                            <span class="badge badge-sm badge-info font-semibold">{{ item.type|get_list_type_label }}</span>
+                            {% elif item.type == 'D' %}
+                            <span class="badge badge-sm badge-success font-semibold">{{ item.type|get_list_type_label }}</span>
+                            {% elif item.type == 'M' %}
+                            <span class="badge badge-sm badge-warning font-semibold">{{ item.type|get_list_type_label }}</span>
+                            {% elif item.type == 'E' %}
+                            <span class="badge badge-sm badge-error font-semibold">{{ item.type|get_list_type_label }}</span>
+                            {% else %}
+                            <span class="badge badge-sm badge-ghost">{{ item.type|get_list_type_label }}</span>
+                            {% endif %}
                         </td>
-                        <td class="py-2 tabular-nums">{{ list.year }}</td>
+                        <td class="py-2 tabular-nums">{{ item.year }}</td>
                         <td class="py-2">
-                            {% if list.url %}
-                            <a href="{{ list.url }}" target="_blank" rel="noopener" class="link link-hover inline-flex items-center gap-1">
-                                {{ list.name }}
+                            {% if item.url %}
+                            <a href="{{ item.url }}" target="_blank" rel="noopener" class="link link-hover inline-flex items-center gap-1">
+                                {{ item.name }}
                                 <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
                             </a>
                             {% else %}
-                            {{ list.name }}
+                            {{ item.name }}
                             {% endif %}
                         </td>
                     </tr>
@@ -75,20 +85,30 @@
 
         {# Mobile card view - matches column order: Type, Year, Name #}
         <div class="md:hidden py-3 space-y-2" style="margin-left: 1rem;">
-            {% for list in group.lists %}
+            {% for item in group.lists %}
             <div class="list-row py-2 border-b border-base-content/5 last:border-0">
                 <div class="flex items-baseline gap-2">
-                    <span class="badge badge-xs {{ list.type|get_list_type_badge_class }}">{{ list.type|get_list_type_label }}</span>
-                    <span class="tabular-nums text-base-content/60 text-sm">{{ list.year }}</span>
+                    {% if item.type == 'A' %}
+                    <span class="badge badge-xs badge-info font-semibold">{{ item.type|get_list_type_label }}</span>
+                    {% elif item.type == 'D' %}
+                    <span class="badge badge-xs badge-success font-semibold">{{ item.type|get_list_type_label }}</span>
+                    {% elif item.type == 'M' %}
+                    <span class="badge badge-xs badge-warning font-semibold">{{ item.type|get_list_type_label }}</span>
+                    {% elif item.type == 'E' %}
+                    <span class="badge badge-xs badge-error font-semibold">{{ item.type|get_list_type_label }}</span>
+                    {% else %}
+                    <span class="badge badge-xs badge-ghost">{{ item.type|get_list_type_label }}</span>
+                    {% endif %}
+                    <span class="tabular-nums text-base-content/60 text-sm">{{ item.year }}</span>
                 </div>
                 <div class="text-sm mt-1">
-                    {% if list.url %}
-                    <a href="{{ list.url }}" target="_blank" rel="noopener" class="link link-hover">
-                        {{ list.name }}
+                    {% if item.url %}
+                    <a href="{{ item.url }}" target="_blank" rel="noopener" class="link link-hover">
+                        {{ item.name }}
                         <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
                     </a>
                     {% else %}
-                    {{ list.name }}
+                    {{ item.name }}
                     {% endif %}
                 </div>
             </div>
