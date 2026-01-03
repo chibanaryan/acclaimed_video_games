@@ -6,6 +6,8 @@
 - Blog admin: live markdown preview (iframe-isolated), Cloudinary upload widget for images
 - Blog views: /blog/ list page with pagination, /blog/<slug>/ detail page (staff can preview drafts)
 - Add Blog link to sidebar and mobile navigation
+- Saved Filters: logged-in users can save up to 10 filter sets with API, dropdown UI, and mobile support
+- Mobile saved filters: collapsible section with large touch targets, rename/delete actions
 
 ## 2026-01-02
 

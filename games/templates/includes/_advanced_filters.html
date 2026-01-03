@@ -50,6 +50,43 @@
         _debouncedDisplay: null,
         clientFilterReady: false,
         _csf: null,
+        // Saved filters state
+        savedFiltersOpen: false,
+        savedFiltersLoading: false,
+        savedFilters: [],
+        savedFiltersLoaded: false,
+        // Save filter modal state
+        saveFilterModalOpen: false,
+        saveFilterName: '',
+        saveFilterError: '',
+        saveFilterSaving: false,
+        applyingSavedFilter: false,  // Suppress visual updates during saved filter application
+        // Rename filter modal state
+        renameFilterModalOpen: false,
+        renameFilterName: '',
+        renameFilterError: '',
+        renameFilterSaving: false,
+        renameFilterTarget: null,
+        // Delete filter modal state
+        deleteFilterModalOpen: false,
+        deleteFilterTarget: null,
+        deleteFilterDeleting: false,
+        _getCsrfToken() {
+            // Get CSRF token from cookie (Django's standard approach for AJAX)
+            const name = 'csrftoken';
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        },
         init() {
             // Default sort to rank if not specified
             if (!this.filters.sort || this.filters.sort === '') {
@@ -220,6 +257,217 @@
             };
 
             tryInit();
+        },
+        // Saved filters methods
+        async loadSavedFilters() {
+            if (this.savedFiltersLoading) return;
+            this.savedFiltersOpen = true;
+            if (this.savedFiltersLoaded) return;  // Already loaded
+
+            this.savedFiltersLoading = true;
+            try {
+                const response = await fetch('/api/saved-filters/');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.savedFilters = data.filter_sets || [];
+                    this.savedFiltersLoaded = true;
+                }
+            } catch (e) {
+                console.error('[SavedFilters] Failed to load:', e);
+            } finally {
+                this.savedFiltersLoading = false;
+            }
+        },
+        applySavedFilter(filter) {
+            // Suppress visual updates (like year grid highlighting) until filter is fully applied
+            this.applyingSavedFilter = true;
+
+            // Apply the saved filter values to current filters
+            const f = filter.filters;
+            this.filters.q = f.q || '';
+            this.filters.start = f.start || {{ min_year }};
+            this.filters.end = f.end || {{ max_year }};
+            this.filters.genres = f.genres || [];
+            this.filters.platforms = f.platforms || [];
+            this.filters.series = f.series || [];
+            this.filters.sort = f.sort || 'rank';
+            this.filters.played = f.played || '';
+
+            this.savedFiltersOpen = false;
+            this.debouncedFilterUpdate();
+
+            // Re-enable visual updates after filter results load
+            const resetFlag = () => {
+                this.applyingSavedFilter = false;
+                document.removeEventListener('htmx:afterSwap', resetFlag);
+            };
+            document.addEventListener('htmx:afterSwap', resetFlag, { once: true });
+            // Fallback timeout in case htmx:afterSwap doesn't fire (e.g., client-side filtering)
+            setTimeout(() => { this.applyingSavedFilter = false; }, 500);
+        },
+        saveCurrentFilters() {
+            // Open the save filter modal with default name
+            this.saveFilterName = this._buildDynamicTitle();
+            this.saveFilterError = '';
+            this.saveFilterSaving = false;
+            this.saveFilterModalOpen = true;
+            this.savedFiltersOpen = false;
+            // Focus the input after modal opens
+            this.$nextTick(() => {
+                const input = document.getElementById('save-filter-name-input');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            });
+        },
+        async submitSaveFilter() {
+            const name = this.saveFilterName.trim();
+            if (!name) {
+                this.saveFilterError = 'Filter name is required';
+                return;
+            }
+            if (name.length > 255) {
+                this.saveFilterError = 'Filter name must be 255 characters or less';
+                return;
+            }
+
+            this.saveFilterSaving = true;
+            this.saveFilterError = '';
+
+            const csrfToken = this._getCsrfToken();
+            try {
+                const response = await fetch('/api/saved-filters/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        filters: {
+                            q: this.filters.q,
+                            start: this.filters.start,
+                            end: this.filters.end,
+                            genres: this.filters.genres,
+                            platforms: this.filters.platforms,
+                            series: this.filters.series,
+                            sort: this.filters.sort,
+                            played: this.filters.played,
+                        },
+                    }),
+                });
+
+                if (response.ok) {
+                    const newFilter = await response.json();
+                    this.savedFilters.unshift(newFilter);
+                    this.saveFilterModalOpen = false;
+                } else {
+                    let errorMsg = 'Failed to save filter';
+                    try {
+                        const error = await response.json();
+                        errorMsg = error.error || errorMsg;
+                    } catch (e) {
+                        errorMsg = 'Error ' + response.status + ': ' + response.statusText;
+                    }
+                    this.saveFilterError = errorMsg;
+                }
+            } catch (e) {
+                console.error('[SavedFilters] Failed to save:', e);
+                this.saveFilterError = 'Network error - please try again';
+            } finally {
+                this.saveFilterSaving = false;
+            }
+        },
+        renameSavedFilter(filter) {
+            // Open rename modal
+            this.renameFilterTarget = filter;
+            this.renameFilterName = filter.name;
+            this.renameFilterError = '';
+            this.renameFilterSaving = false;
+            this.renameFilterModalOpen = true;
+            this.savedFiltersOpen = false;
+            // Focus the input after modal opens
+            this.$nextTick(() => {
+                const input = document.getElementById('rename-filter-name-input');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            });
+        },
+        async submitRenameFilter() {
+            const name = this.renameFilterName.trim();
+            if (!name) {
+                this.renameFilterError = 'Filter name is required';
+                return;
+            }
+            if (name === this.renameFilterTarget.name) {
+                this.renameFilterModalOpen = false;
+                return;
+            }
+
+            this.renameFilterSaving = true;
+            this.renameFilterError = '';
+
+            const csrfToken = this._getCsrfToken();
+            try {
+                const response = await fetch('/api/saved-filters/' + this.renameFilterTarget.id + '/', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({ name: name }),
+                });
+
+                if (response.ok) {
+                    this.renameFilterTarget.name = name;
+                    this.renameFilterModalOpen = false;
+                } else {
+                    let errorMsg = 'Failed to rename filter';
+                    try {
+                        const error = await response.json();
+                        errorMsg = error.error || errorMsg;
+                    } catch (e) {
+                        errorMsg = 'Error ' + response.status + ': ' + response.statusText;
+                    }
+                    this.renameFilterError = errorMsg;
+                }
+            } catch (e) {
+                console.error('[SavedFilters] Failed to rename:', e);
+                this.renameFilterError = 'Network error - please try again';
+            } finally {
+                this.renameFilterSaving = false;
+            }
+        },
+        deleteSavedFilter(filter) {
+            // Open delete confirmation modal
+            this.deleteFilterTarget = filter;
+            this.deleteFilterDeleting = false;
+            this.deleteFilterModalOpen = true;
+            this.savedFiltersOpen = false;
+        },
+        async confirmDeleteFilter() {
+            this.deleteFilterDeleting = true;
+
+            const csrfToken = this._getCsrfToken();
+            try {
+                const response = await fetch('/api/saved-filters/' + this.deleteFilterTarget.id + '/', {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': csrfToken },
+                });
+
+                if (response.ok) {
+                    const index = this.savedFilters.indexOf(this.deleteFilterTarget);
+                    if (index > -1) this.savedFilters.splice(index, 1);
+                    this.deleteFilterModalOpen = false;
+                }
+            } catch (e) {
+                console.error('[SavedFilters] Failed to delete:', e);
+            } finally {
+                this.deleteFilterDeleting = false;
+            }
         },
         _buildDynamicTitle() {
             // Build dynamic page title based on active filters
@@ -982,12 +1230,91 @@
                         <span class="mdi mdi-filter-variant text-xl text-accent"></span>
                         <span class="font-bold text-base">Filters</span>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 relative">
+                        {% if user.is_authenticated %}
+                        {# Saved Filters Dropdown #}
+                        <button type="button"
+                                class="btn btn-ghost btn-xs text-base-content/70 hover:text-info"
+                                @click="loadSavedFilters()"
+                                title="Saved filters">
+                            <span class="mdi mdi-bookmark-outline text-sm"></span>
+                            <span>Saved</span>
+                        </button>
+                        <ul class="absolute right-0 top-full menu bg-base-100 rounded-box w-96 p-2 shadow-lg z-50 mt-2 overflow-hidden"
+                            x-show="savedFiltersOpen"
+                            @click.away="savedFiltersOpen = false"
+                            x-cloak>
+                            {# Save current filters option - shown when filters are active #}
+                            <template x-if="hasActiveFilters() && savedFiltersLoaded && savedFilters.length < 10">
+                                <li class="border-b border-base-200 mb-1 pb-1">
+                                    <button type="button"
+                                            class="flex items-center gap-2 text-info font-medium"
+                                            @click="saveCurrentFilters()">
+                                        <span class="mdi mdi-bookmark-plus"></span>
+                                        Save current filters
+                                    </button>
+                                </li>
+                            </template>
+                            {# Limit reached message #}
+                            <template x-if="hasActiveFilters() && savedFiltersLoaded && savedFilters.length >= 10">
+                                <li class="border-b border-base-200 mb-1 pb-1">
+                                    <span class="text-base-content/50 text-sm pointer-events-none">
+                                        <span class="mdi mdi-bookmark-off"></span>
+                                        Limit reached (10/10)
+                                    </span>
+                                </li>
+                            </template>
+                            {# Loading state #}
+                            <li x-show="savedFiltersLoading" class="p-4 text-center">
+                                <span class="loading loading-spinner loading-sm"></span>
+                            </li>
+                            {# Empty state - only show after loading is complete #}
+                            <template x-if="savedFiltersLoaded && !savedFiltersLoading && savedFilters.length === 0 && !hasActiveFilters()">
+                                <li class="p-3 text-center text-base-content/60 text-sm pointer-events-none">
+                                    No saved filters yet
+                                </li>
+                            </template>
+                            {# Saved filters list #}
+                            <template x-for="filter in savedFilters" :key="filter.id">
+                                <li>
+                                    <div class="flex items-start gap-2 py-1.5 px-2 hover:bg-base-200 rounded">
+                                        <button type="button"
+                                                class="flex-1 text-left text-sm break-words"
+                                                @click="applySavedFilter(filter)"
+                                                x-text="filter.name">
+                                        </button>
+                                        <div class="flex gap-0.5 shrink-0 ml-auto">
+                                            <button type="button"
+                                                    class="btn btn-ghost btn-xs text-base-content/50 hover:text-info hover:bg-transparent"
+                                                    @click.stop="renameSavedFilter(filter)"
+                                                    title="Rename">
+                                                <span class="mdi mdi-pencil text-sm"></span>
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-ghost btn-xs text-base-content/50 hover:text-error hover:bg-transparent"
+                                                    @click.stop="deleteSavedFilter(filter)"
+                                                    title="Delete">
+                                                <span class="mdi mdi-delete text-sm"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                        {% else %}
+                        <button type="button"
+                                class="btn btn-ghost btn-xs text-base-content/40 cursor-not-allowed"
+                                title="Sign in to save filters"
+                                disabled>
+                            <span class="mdi mdi-bookmark-outline text-sm"></span>
+                            <span>Saved</span>
+                        </button>
+                        {% endif %}
                         <a :href="'{% url 'games-download' %}?' + buildFilterParams(filters).toString()"
                            class="btn btn-ghost btn-xs text-base-content/70 hover:text-success"
                            title="Download CSV">
                             <span class="mdi mdi-download"></span>
-                            <span>Download CSV</span>
+                            <span>CSV</span>
                         </a>
                         <button type="button"
                            @click="resetAllFilters()"
@@ -1134,4 +1461,130 @@
             </div>
         </div>
     </div>
+
+    {# Save Filter Modal #}
+    <dialog class="modal"
+            :class="{ 'modal-open': saveFilterModalOpen }"
+            @keydown.escape.window="saveFilterModalOpen = false">
+        <div class="modal-box max-w-sm">
+            <h3 class="font-bold text-lg mb-4">
+                <span class="mdi mdi-bookmark-plus text-info"></span>
+                Save Filter
+            </h3>
+            <form @submit.prevent="submitSaveFilter()">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Filter name</span>
+                    </label>
+                    <input type="text"
+                           id="save-filter-name-input"
+                           x-model="saveFilterName"
+                           class="input input-bordered w-full"
+                           :class="{ 'input-error': saveFilterError }"
+                           placeholder="e.g., Nintendo Switch Games 2020"
+                           maxlength="255"
+                           autocomplete="off">
+                    <label class="label" x-show="saveFilterError" x-cloak>
+                        <span class="label-text-alt text-error" x-text="saveFilterError"></span>
+                    </label>
+                </div>
+                <div class="modal-action">
+                    <button type="button"
+                            class="btn btn-ghost"
+                            @click="saveFilterModalOpen = false"
+                            :disabled="saveFilterSaving">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="btn btn-info"
+                            :disabled="saveFilterSaving || !saveFilterName.trim()">
+                        <span class="loading loading-spinner loading-sm" x-show="saveFilterSaving"></span>
+                        <span x-show="!saveFilterSaving">Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button @click="saveFilterModalOpen = false">close</button>
+        </form>
+    </dialog>
+
+    {# Rename Filter Modal #}
+    <dialog class="modal"
+            :class="{ 'modal-open': renameFilterModalOpen }"
+            @keydown.escape.window="renameFilterModalOpen = false">
+        <div class="modal-box max-w-sm">
+            <h3 class="font-bold text-lg mb-4">
+                <span class="mdi mdi-pencil text-info"></span>
+                Rename Filter
+            </h3>
+            <form @submit.prevent="submitRenameFilter()">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Filter name</span>
+                    </label>
+                    <input type="text"
+                           id="rename-filter-name-input"
+                           x-model="renameFilterName"
+                           class="input input-bordered w-full"
+                           :class="{ 'input-error': renameFilterError }"
+                           maxlength="255"
+                           autocomplete="off">
+                    <label class="label" x-show="renameFilterError" x-cloak>
+                        <span class="label-text-alt text-error" x-text="renameFilterError"></span>
+                    </label>
+                </div>
+                <div class="modal-action">
+                    <button type="button"
+                            class="btn btn-ghost"
+                            @click="renameFilterModalOpen = false"
+                            :disabled="renameFilterSaving">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="btn btn-info"
+                            :disabled="renameFilterSaving || !renameFilterName.trim()">
+                        <span class="loading loading-spinner loading-sm" x-show="renameFilterSaving"></span>
+                        <span x-show="!renameFilterSaving">Rename</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button @click="renameFilterModalOpen = false">close</button>
+        </form>
+    </dialog>
+
+    {# Delete Filter Modal #}
+    <dialog class="modal"
+            :class="{ 'modal-open': deleteFilterModalOpen }"
+            @keydown.escape.window="deleteFilterModalOpen = false">
+        <div class="modal-box max-w-sm">
+            <h3 class="font-bold text-lg mb-4">
+                <span class="mdi mdi-delete text-error"></span>
+                Delete Filter
+            </h3>
+            <p class="py-2">
+                Are you sure you want to delete "<span x-text="deleteFilterTarget?.name" class="font-semibold"></span>"?
+            </p>
+            <div class="modal-action">
+                <button type="button"
+                        class="btn btn-ghost"
+                        @click="deleteFilterModalOpen = false"
+                        :disabled="deleteFilterDeleting">
+                    Cancel
+                </button>
+                <button type="button"
+                        class="btn btn-error"
+                        @click="confirmDeleteFilter()"
+                        :disabled="deleteFilterDeleting">
+                    <span class="loading loading-spinner loading-sm" x-show="deleteFilterDeleting"></span>
+                    <span x-show="!deleteFilterDeleting">Delete</span>
+                </button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button @click="deleteFilterModalOpen = false">close</button>
+        </form>
+    </dialog>
 </div>

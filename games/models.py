@@ -104,6 +104,39 @@ class PlayedGame(models.Model):
         return f"{self.user.username} played {game_name}"
 
 
+class SavedFilterSet(models.Model):
+    """
+    Saved filter configuration for quick access.
+
+    Stores filter state as JSON, allowing users to save and
+    quickly restore complex filter combinations.
+    Maximum 10 saved filters per user (enforced in API).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="saved_filter_sets",
+    )
+    name = models.CharField(
+        max_length=255, help_text="User-defined or auto-generated filter name"
+    )
+    filters = models.JSONField(
+        help_text="Filter configuration: q, start, end, genres, platforms, etc."
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-modified"]
+        indexes = [
+            models.Index(fields=["user", "-modified"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username}: {self.name}"
+
+
 class Snippet(models.Model):
     """A reusable piece of text"""
 

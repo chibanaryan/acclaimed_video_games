@@ -11,6 +11,11 @@
              // Listen for reset events
              window.addEventListener('series-reset', () => this.handleReset());
 
+             // Sync with parent filters when they change (e.g., saved filters applied)
+             this.$watch('filters.series', (value) => {
+                 this.selectedSeries = value || [];
+             });
+
              // Listen for filtered count updates from client-side filtering
              window.addEventListener('series-counts-update', (event) => {
                  this.updateFilteredCounts(event.detail);

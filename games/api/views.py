@@ -7,7 +7,10 @@ from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView, Response
 
 from .. import config, models, utils
@@ -684,3 +687,139 @@ class GameAllDataView(APIView):
                 },
             }
         )
+
+
+class SavedFilterSetListCreateView(APIView):
+    """
+    List saved filter sets for current user (GET).
+    Create new saved filter set (POST).
+
+    Enforces maximum of 10 saved filters per user.
+    """
+
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """List all saved filter sets for current user."""
+        filter_sets = models.SavedFilterSet.objects.filter(user=request.user).order_by(
+            "-modified"
+        )[:10]
+
+        data = [
+            {
+                "id": fs.id,
+                "name": fs.name,
+                "filters": fs.filters,
+                "modified": fs.modified.isoformat(),
+            }
+            for fs in filter_sets
+        ]
+        return Response({"filter_sets": data, "count": len(data)})
+
+    def post(self, request):
+        """Create a new saved filter set."""
+        current_count = models.SavedFilterSet.objects.filter(user=request.user).count()
+
+        if current_count >= 10:
+            return Response(
+                {
+                    "error": "Maximum of 10 saved filters allowed. "
+                    "Delete one to save a new filter."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        name = request.data.get("name", "").strip()
+        filters = request.data.get("filters", {})
+
+        if not name:
+            return Response(
+                {"error": "Filter name is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(name) > 255:
+            return Response(
+                {"error": "Filter name must be 255 characters or less."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check for duplicate name
+        if models.SavedFilterSet.objects.filter(user=request.user, name=name).exists():
+            return Response(
+                {"error": "A filter with this name already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        filter_set = models.SavedFilterSet.objects.create(
+            user=request.user,
+            name=name,
+            filters=filters,
+        )
+
+        return Response(
+            {
+                "id": filter_set.id,
+                "name": filter_set.name,
+                "filters": filter_set.filters,
+                "modified": filter_set.modified.isoformat(),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class SavedFilterSetDetailView(APIView):
+    """
+    Update (PATCH) or delete (DELETE) a saved filter set.
+    """
+
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk, user):
+        return get_object_or_404(models.SavedFilterSet, pk=pk, user=user)
+
+    def patch(self, request, pk):
+        """Rename saved filter set."""
+        filter_set = self.get_object(pk, request.user)
+
+        name = request.data.get("name", "").strip()
+        if not name:
+            return Response(
+                {"error": "Name is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(name) > 255:
+            return Response(
+                {"error": "Filter name must be 255 characters or less."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check for duplicate name (excluding current filter)
+        if (
+            models.SavedFilterSet.objects.filter(user=request.user, name=name)
+            .exclude(pk=pk)
+            .exists()
+        ):
+            return Response(
+                {"error": "A filter with this name already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        filter_set.name = name
+        filter_set.save(update_fields=["name", "modified"])
+
+        return Response(
+            {
+                "id": filter_set.id,
+                "name": filter_set.name,
+            }
+        )
+
+    def delete(self, request, pk):
+        """Delete saved filter set."""
+        filter_set = self.get_object(pk, request.user)
+        filter_set.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

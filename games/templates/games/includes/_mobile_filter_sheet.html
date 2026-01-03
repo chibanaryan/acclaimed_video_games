@@ -54,6 +54,79 @@
 
     {# Scrollable Filter Content #}
     <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-4" id="mobile-filter-form" x-ref="filterScroll">
+        {# Saved Filters Section (logged-in users only) - Collapsible #}
+        {% if user.is_authenticated %}
+        <div class="pb-3 border-b border-base-100" x-data="{ expanded: false }">
+            {# Collapsible Header #}
+            <button type="button"
+                    class="flex items-center justify-between w-full py-1"
+                    @click="expanded = !expanded; if (expanded && !savedFiltersLoaded) loadSavedFilters();">
+                <span class="text-sm font-semibold text-base-content/85 flex items-center gap-1">
+                    <span class="mdi mdi-bookmark text-info"></span>
+                    Saved Filters
+                    <span x-show="savedFiltersLoaded && savedFilters.length > 0"
+                          class="badge badge-sm badge-info"
+                          x-text="savedFilters.length"></span>
+                </span>
+                <span class="mdi text-lg transition-transform duration-200"
+                      :class="expanded ? 'mdi-chevron-up' : 'mdi-chevron-down'"></span>
+            </button>
+
+            {# Collapsible Content #}
+            <div x-show="expanded" x-collapse class="space-y-2 mt-2">
+                {# Loading state #}
+                <div x-show="savedFiltersLoading && !savedFiltersLoaded" class="py-2 text-center">
+                    <span class="loading loading-spinner loading-sm"></span>
+                </div>
+
+                {# Saved filters list #}
+                <div x-show="savedFiltersLoaded && savedFilters.length > 0"
+                     class="space-y-1">
+                    <template x-for="filter in savedFilters" :key="filter.id">
+                        <div class="flex items-start gap-2 py-2 px-3 bg-base-200 rounded-lg">
+                            <button type="button"
+                                    class="flex-1 text-left text-sm break-words"
+                                    @click="applySavedFilter(filter); filterOpen = false;"
+                                    x-text="filter.name">
+                            </button>
+                            <div class="flex shrink-0">
+                                <button type="button"
+                                        class="btn btn-ghost btn-sm btn-square text-base-content/50 active:text-info"
+                                        @click.stop="renameSavedFilter(filter)"
+                                        title="Rename">
+                                    <span class="mdi mdi-pencil text-lg"></span>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-ghost btn-sm btn-square text-base-content/50 active:text-error"
+                                        @click.stop="deleteSavedFilter(filter)"
+                                        title="Delete">
+                                    <span class="mdi mdi-delete text-lg"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                {# Empty state #}
+                <p x-show="savedFiltersLoaded && savedFilters.length === 0"
+                   class="text-sm text-base-content/50">
+                    No saved filters yet
+                </p>
+
+                {# Save current filters button #}
+                <button type="button"
+                        x-show="hasActiveFilters() && savedFiltersLoaded"
+                        @click="saveCurrentFilters()"
+                        class="btn btn-sm btn-info btn-outline w-full"
+                        :disabled="savedFilters.length >= 10">
+                    <span class="mdi mdi-bookmark-plus"></span>
+                    <span x-show="savedFilters.length < 10">Save Current Filters</span>
+                    <span x-show="savedFilters.length >= 10">Limit Reached (10/10)</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
         {# Search Input with Played filter #}
         <div class="space-y-2">
             <div class="flex items-center gap-2 mb-2">

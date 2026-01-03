@@ -198,6 +198,10 @@
                  const max = Math.max(this.dragStart, this.dragAnchorEnd, this.dragEnd);
                  return year >= min && year <= max;
              }
+             // Suppress during saved filter application (wait for results to load)
+             if (typeof applyingSavedFilter !== 'undefined' && applyingSavedFilter) {
+                 return false;
+             }
              // Don't show selection when full range is selected (show heatmap instead)
              if (filters.start === {{ min_year }} && filters.end === {{ max_year }}) {
                  return false;
@@ -208,6 +212,10 @@
          isDecadeSelected(decadeStart) {
              // Don't show previous selection while dragging
              if (this.isDragging) return false;
+             // Suppress during saved filter application (wait for results to load)
+             if (typeof applyingSavedFilter !== 'undefined' && applyingSavedFilter) {
+                 return false;
+             }
              // Don't show decade as selected when full range is selected
              if (filters.start === {{ min_year }} && filters.end === {{ max_year }}) {
                  return false;

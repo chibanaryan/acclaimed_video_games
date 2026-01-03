@@ -387,6 +387,35 @@ class PlayedGameAdmin(admin.ModelAdmin):
         return "Connected" if obj.game else "Orphaned"
 
 
+@admin.register(models.SavedFilterSet)
+class SavedFilterSetAdmin(admin.ModelAdmin):
+    """Admin interface for SavedFilterSet records."""
+
+    list_display = ["name", "user", "filter_summary", "modified", "created"]
+    list_filter = ["modified", "created"]
+    search_fields = ["name", "user__username", "user__email"]
+    raw_id_fields = ["user"]
+    readonly_fields = ["created", "modified"]
+    ordering = ["-modified"]
+
+    @admin.display(description="Filters")
+    def filter_summary(self, obj):
+        """Display a summary of the filter configuration."""
+        f = obj.filters or {}
+        parts = []
+        if f.get("q"):
+            parts.append(f"search: {f['q'][:20]}")
+        if f.get("genres"):
+            parts.append(f"{len(f['genres'])} genres")
+        if f.get("platforms"):
+            parts.append(f"{len(f['platforms'])} platforms")
+        if f.get("series"):
+            parts.append(f"{len(f['series'])} series")
+        if f.get("start") or f.get("end"):
+            parts.append(f"{f.get('start', '?')}-{f.get('end', '?')}")
+        return ", ".join(parts) if parts else "(no filters)"
+
+
 class PlayedGameInline(admin.TabularInline):
     """Inline admin for PlayedGame on User admin."""
 

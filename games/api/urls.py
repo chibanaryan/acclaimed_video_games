@@ -52,4 +52,14 @@ urlpatterns = [
         name="wikipedia-genre-tree",
     ),
     path("platforms/", views.PlatformListView.as_view(), name="platform-list"),
+    path(
+        "saved-filters/",
+        views.SavedFilterSetListCreateView.as_view(),
+        name="saved-filter-list",
+    ),
+    path(
+        "saved-filters/<int:pk>/",
+        views.SavedFilterSetDetailView.as_view(),
+        name="saved-filter-detail",
+    ),
 ]
