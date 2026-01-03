@@ -2,6 +2,8 @@
 
 ## 2026-01-02
 
+- Add spaces around "/" separator between genres in game row properties
+- Make platform/genre links on developer page redirect to home rankings with filters applied
 - Add rank distribution chart to developer detail page (same 10-bin SVG visualization as home page, updates with filters)
 - Fix modal triggers adding "#" to URL when clicked before JS loads (use button elements instead of anchor tags)
 - Show all leaf-level developers in game rows (removed 2-developer limit)

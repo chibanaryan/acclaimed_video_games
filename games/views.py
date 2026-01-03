@@ -1560,6 +1560,8 @@ class DeveloperDetailView(DetailView):
                         }
                     )
 
+            # Sort by total_games_count descending at each level
+            devs_data.sort(key=lambda d: d["total_games_count"], reverse=True)
             return devs_data
 
         # Get root developer's direct games

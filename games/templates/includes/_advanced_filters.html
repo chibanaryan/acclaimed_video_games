@@ -28,6 +28,8 @@
             if (initStyle) initStyle.remove();
         }, 50);
     });
+    // Mark filter component as active to prevent fallback redirect handlers
+    window.filterComponentActive = true;
 })();
 </script>
 <div x-data="{

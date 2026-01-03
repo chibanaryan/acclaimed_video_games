@@ -9,8 +9,9 @@ Acclaimed Games is a video game ranking and aggregation website that combines da
 ## Available Skills
 
 Use these skills for common workflows:
-- `/commit` - Commit and push to git (builds CSS, collects static, pushes to main)
+- `/commit` - Commit and push to git (builds CSS, minifies JS, collects static, pushes to main)
 - `/deploy` - Deploy to Heroku production (all commit steps + push to Heroku)
+- `/minify` - Minify JavaScript files and regenerate bundles
 - `/igdb` - Import IGDB game data
 - `/wikipedia` - Fetch Wikipedia metadata and genres
 - `/refresh-metadata` - Weekly metadata refresh (IGDB + Wikipedia)
@@ -414,6 +415,31 @@ Themes are defined in `theme/static_src/src/styles.css` using DaisyUI's `@plugin
 }
 ```
 The theme switcher in the navigation allows users to change themes, with the selection persisted in localStorage.
+
+### JavaScript Workflow
+
+JavaScript files in `games/static/games/js/` follow a specific workflow:
+
+**Source and Minified Files:**
+- Source files (e.g., `game-list-renderer.js`) contain the readable code
+- Minified files (e.g., `game-list-renderer.min.js`) are generated from source files
+- **Always edit the source `.js` file, never the `.min.js` file directly**
+
+**Bundle File:**
+- `client-side-filtering.bundle.min.js` combines multiple minified files for the home page
+- Bundle is created from: `game-cache.min.js`, `client-filter.min.js`, `game-list-renderer.min.js`, `client-filtering.min.js`
+
+**After Editing JavaScript:**
+Run `/minify` or `./scripts/minify_js.sh`
+
+The minify skill/script:
+1. Minifies any source `.js` files that are newer than their `.min.js` counterparts
+2. Regenerates the bundle if any of its source files changed
+3. Stages updated files for git
+
+**Important:** When modifying client-side game rendering (e.g., `game-list-renderer.js`), changes must be reflected in both:
+- The Django template (server-side rendering)
+- The JavaScript file (client-side rendering on home page)
 
 ## Design Guidelines
 

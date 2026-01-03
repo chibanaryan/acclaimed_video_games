@@ -312,6 +312,19 @@
                 window.location.reload();
             }
         });
+
+        // Fallback handler for platform/genre clicks on pages without the filter component
+        // (e.g., developer detail page) - redirects to home with filters applied
+        document.addEventListener('add-platforms', function(e) {
+            if (window.filterComponentActive) return;
+            var platformIds = e.detail.platformIds;
+            window.location.href = '/games/?platforms=' + encodeURIComponent(platformIds);
+        });
+        document.addEventListener('add-genre', function(e) {
+            if (window.filterComponentActive) return;
+            var genreId = e.detail.genreId;
+            window.location.href = '/games/?genres=' + encodeURIComponent(genreId);
+        });
     </script>
 
     {# Floating Back to Top Button #}

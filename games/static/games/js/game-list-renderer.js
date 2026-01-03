@@ -461,7 +461,7 @@ class GameListRenderer {
             if (expanded.genres.length > 0) {
                 if (metaHtml) metaHtml += ' <span class="text-base-content/30">•</span> ';
                 const genresHtml = expanded.genres.map((g, i) =>
-                    `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>${i < expanded.genres.length - 1 ? '<span class="text-base-content/30">/</span>' : ''}`
+                    `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>${i < expanded.genres.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
                 ).join('');
                 metaHtml += `<span data-slot="genres">${genresHtml}</span>`;
             }
@@ -523,7 +523,7 @@ class GameListRenderer {
             }
         }).join('');
         const genresHtml = expanded.genres.map((g, i) =>
-            `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>${i < expanded.genres.length - 1 ? '<span class="text-base-content/30">/</span>' : ''}`
+            `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>${i < expanded.genres.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
         ).join('');
         const globalRankHtml = showGlobalRank ? `<span class="game-row-global-rank text-xs text-base-content/50 tabular-nums">(#${game.r})</span>` : '';
         const playedButtonHtml = this._renderPlayedButtonString(game);
