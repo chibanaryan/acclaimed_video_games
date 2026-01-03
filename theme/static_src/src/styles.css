@@ -72,8 +72,8 @@
   --color-warning-content: oklch(41% 0.112 45.904);
   --color-error: oklch(63% 0.237 25.331);
   --color-error-content: oklch(25% 0.092 26.042);
-    /* Heatmap color - darker for light theme (better white text contrast) */
-  --color-heatmap: oklch(52% 0.16 65);
+    /* Heatmap color - darker magenta-pink for light theme (40-100% opacity range) */
+  --color-heatmap: oklch(45% 0.15 318);
   --radius-selector: 0.25rem;
   --radius-field: 2rem;
   --radius-box: 0.5rem;
@@ -109,8 +109,8 @@
   --color-warning-content: oklch(0% 0 0);
   --color-error: oklch(57% 0.245 27.325);
   --color-error-content: oklch(0% 0 0);
-    /* Heatmap color - lighter for dark theme */
-  --color-heatmap: oklch(72% 0.14 70);
+    /* Heatmap color - lighter magenta-pink for dark theme */
+  --color-heatmap: oklch(70% 0.12 318);
   --radius-selector: 0.25rem;
   --radius-field: 2rem;
   --radius-box: 0.5rem;

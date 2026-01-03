@@ -705,6 +705,13 @@ class WikipediaGameData(models.Model):
         db_index=True,
         help_text="Wikidata entity ID (e.g., 'Q12345')",
     )
+    hltb_id = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="HowLongToBeat ID from Wikidata property P2816",
+    )
     page_title = models.CharField(
         max_length=300, db_index=True, help_text="Wikipedia page title"
     )
@@ -745,6 +752,113 @@ class WikipediaGameData(models.Model):
         """Generate Wikipedia article URL from page title."""
         if self.page_title:
             return f"https://en.wikipedia.org/wiki/{self.page_title.replace(' ', '_')}"
+        return None
+
+
+class HLTBGameData(models.Model):
+    """
+    Supplemental HowLongToBeat playtime data.
+    Stores completion time estimates from howlongtobeat.com.
+
+    Metadata persists when games are deleted (SET_NULL) to allow reconnection
+    when games are re-imported (using igdb_id for matching).
+    """
+
+    game = models.ForeignKey(
+        "Game",
+        on_delete=models.SET_NULL,
+        related_name="hltb_game_data_set",
+        null=True,
+        blank=True,
+    )
+    igdb_id = models.IntegerField(
+        db_index=True,
+        help_text="IGDB game ID for reconnection after reimport",
+    )
+    hltb_id = models.CharField(
+        max_length=20,
+        db_index=True,
+        help_text="HowLongToBeat internal game ID",
+    )
+    hltb_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Game name as listed on HowLongToBeat",
+    )
+    fetch_method = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        help_text="How the game was matched (wikidata, name_search)",
+    )
+    similarity = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Name similarity score (0.00-1.00)",
+    )
+    fetch_error = models.TextField(
+        blank=True,
+        default="",
+        help_text="Error message if fetch failed",
+    )
+    main_story_hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        help_text="Hours to complete main story",
+    )
+    main_extra_hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        help_text="Hours to complete main story + extras",
+    )
+    completionist_hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        help_text="Hours for 100% completion",
+    )
+    is_primary = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Primary HLTB record for display (only one per game)",
+    )
+    fetched_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "games_hltbgamedata"
+        verbose_name = "HLTB Game Data"
+        verbose_name_plural = "HLTB Game Data"
+        indexes = [
+            models.Index(fields=["game", "is_primary"]),
+            models.Index(fields=["igdb_id"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["game"],
+                condition=models.Q(is_primary=True) & models.Q(game__isnull=False),
+                name="unique_primary_hltb_per_game",
+            )
+        ]
+
+    def __str__(self) -> str:
+        if self.game:
+            return f"HLTB data for {self.game.name} ({self.main_story_hours}h)"
+        return f"Orphaned HLTB data (IGDB: {self.igdb_id})"
+
+    @property
+    def hltb_url(self) -> Optional[str]:
+        """Generate HowLongToBeat game URL."""
+        if self.hltb_id:
+            return f"https://howlongtobeat.com/game/{self.hltb_id}"
         return None
 
 
@@ -839,6 +953,14 @@ class Game(models.Model):
         blank=True,
         related_name="primary_game",
         help_text="Primary Wikipedia game data for display",
+    )
+    primary_hltb_game_data = models.OneToOneField(
+        "HLTBGameData",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="primary_game",
+        help_text="Primary HLTB game data for playtime display",
     )
 
     # Wikidata ID for linking to Wikipedia/Wikidata

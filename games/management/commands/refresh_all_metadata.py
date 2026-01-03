@@ -1,25 +1,29 @@
 """
-Management command to refresh all metadata (IGDB + Wikipedia) for games.
+Management command to refresh all metadata (IGDB + Wikipedia + HLTB) for games.
 
-This command combines IGDB and Wikipedia data refreshes into one unified operation,
-designed for weekly scheduled execution via Heroku Scheduler.
+This command combines IGDB, Wikipedia, and HLTB data refreshes into one
+unified operation, designed for weekly scheduled execution via Heroku Scheduler.
 
 It performs:
 1. IGDB data refresh (cover art, descriptions, studios, genres)
 2. Wikipedia page lookup + genre scraping
+3. HowLongToBeat playtime data
 
-Both operations force-refresh all games regardless of existing data.
+All operations force-refresh games regardless of existing data.
 """
 
+import asyncio
 import logging
 import time
 from datetime import datetime
+from decimal import Decimal
 
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from games import config
-from games.models import Game, WikipediaGameData
+from games.models import Game, HLTBGameData, WikipediaGameData
 from games.services.genre_normalizer import get_or_create_genre, normalize_genre
 from games.services.igdb_importer import IGDBImportService
 from games.services.wiki_genre_service import WikiGenreService
@@ -30,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        "Weekly metadata refresh - force update IGDB and Wikipedia data for all games. "
-        "Designed for Heroku Scheduler execution."
+        "Weekly metadata refresh - force update IGDB, Wikipedia, and HLTB "
+        "data for all games. Designed for Heroku Scheduler execution."
     )
 
     def __init__(self, *args, **kwargs):
@@ -39,6 +43,7 @@ class Command(BaseCommand):
         self.start_time = None
         self.igdb_start_time = None
         self.wikipedia_start_time = None
+        self.hltb_start_time = None
 
         # Statistics
         self.igdb_processed = 0
@@ -47,17 +52,24 @@ class Command(BaseCommand):
         self.wikipedia_pages_failed = 0
         self.genres_scraped = 0
         self.genres_failed = 0
+        self.hltb_found = 0
+        self.hltb_not_found = 0
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--igdb-only",
             action="store_true",
-            help="Only refresh IGDB data (skip Wikipedia)",
+            help="Only refresh IGDB data (skip Wikipedia and HLTB)",
         )
         parser.add_argument(
             "--wikipedia-only",
             action="store_true",
-            help="Only refresh Wikipedia data (skip IGDB)",
+            help="Only refresh Wikipedia data (skip IGDB and HLTB)",
+        )
+        parser.add_argument(
+            "--hltb-only",
+            action="store_true",
+            help="Only refresh HLTB data (skip IGDB and Wikipedia)",
         )
         parser.add_argument(
             "--limit",
@@ -104,17 +116,24 @@ class Command(BaseCommand):
                 return
 
         # Validate flags
-        if options.get("igdb_only") and options.get("wikipedia_only"):
+        exclusive_flags = [
+            options.get("igdb_only"),
+            options.get("wikipedia_only"),
+            options.get("hltb_only"),
+        ]
+        if sum(bool(f) for f in exclusive_flags) > 1:
             self.stdout.write(
-                self.style.ERROR("Cannot use --igdb-only and --wikipedia-only together")
+                self.style.ERROR(
+                    "Cannot use --igdb-only, --wikipedia-only, and --hltb-only together"
+                )
             )
             return
 
         # Print header
         self._print_header(options)
 
-        # [1/2] IGDB Refresh
-        if not options.get("wikipedia_only"):
+        # [1/3] IGDB Refresh
+        if not options.get("wikipedia_only") and not options.get("hltb_only"):
             try:
                 self._refresh_igdb(options)
             except Exception as e:
@@ -122,8 +141,8 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"\n  IGDB refresh failed: {e}"))
                 self.igdb_errors = -1  # Flag for total failure
 
-        # [2/2] Wikipedia Refresh
-        if not options.get("igdb_only"):
+        # [2/3] Wikipedia Refresh
+        if not options.get("igdb_only") and not options.get("hltb_only"):
             try:
                 self._refresh_wikipedia(options)
             except Exception as e:
@@ -132,6 +151,46 @@ class Command(BaseCommand):
                     self.style.ERROR(f"\n  Wikipedia refresh failed: {e}")
                 )
                 self.wikipedia_pages_failed = -1  # Flag for total failure
+
+        # [3/3] HLTB Refresh
+        if not options.get("igdb_only") and not options.get("wikipedia_only"):
+            try:
+                # Prepare games data before async context
+                games_qs = Game.objects.prefetch_related("platforms").order_by("rank")
+                if options.get("limit"):
+                    games_qs = games_qs[: options["limit"]]
+
+                # Convert to list with platform data
+                games_list = []
+                for game in games_qs:
+                    platform_names = list(game.platforms.values_list("name", flat=True))
+                    games_list.append(
+                        {
+                            "id": game.id,
+                            "name": game.name,
+                            "rank": game.rank,
+                            "year_of_release": game.year_of_release,
+                            "igdb_id": game.igdb_id,
+                            "platforms": platform_names,
+                            "primary_wikipedia_game_data__hltb_id": (
+                                game.primary_wikipedia_game_data.hltb_id
+                                if game.primary_wikipedia_game_data
+                                else None
+                            ),
+                            "primary_wikipedia_game_data__page_title": (
+                                game.primary_wikipedia_game_data.page_title
+                                if game.primary_wikipedia_game_data
+                                else None
+                            ),
+                        }
+                    )
+
+                # Run async handler with pre-fetched data
+                asyncio.run(self._refresh_hltb_async(games_list, options))
+            except Exception as e:
+                logger.exception("HLTB refresh failed")
+                self.stdout.write(self.style.ERROR(f"\n  HLTB refresh failed: {e}"))
+                self.hltb_not_found = -1  # Flag for total failure
 
         # Print summary
         self._print_summary()
@@ -154,7 +213,7 @@ class Command(BaseCommand):
 
     def _refresh_igdb(self, options):
         """Refresh IGDB data for all games using IGDBImportService."""
-        self.stdout.write("\n[1/2] Refreshing IGDB Data")
+        self.stdout.write("\n[1/3] Refreshing IGDB Data")
         self.stdout.write("-" * 40)
 
         self.igdb_start_time = time.time()
@@ -238,7 +297,7 @@ class Command(BaseCommand):
 
     def _refresh_wikipedia(self, options):
         """Refresh Wikipedia data for all games."""
-        self.stdout.write("\n[2/2] Refreshing Wikipedia Data")
+        self.stdout.write("\n[2/3] Refreshing Wikipedia Data")
         self.stdout.write("-" * 40)
 
         self.wikipedia_start_time = time.time()
@@ -427,6 +486,310 @@ class Command(BaseCommand):
 
         return wiki_game_data
 
+    async def _refresh_hltb_async(self, games_list, options):
+        """Refresh HLTB data for all games using HowLongToBeat API."""
+        from howlongtobeatpy import HowLongToBeat
+
+        self.stdout.write("\n[3/3] Refreshing HLTB Data")
+        self.stdout.write("-" * 40)
+
+        self.hltb_start_time = time.time()
+
+        total_games = len(games_list)
+
+        if total_games == 0:
+            self.stdout.write(self.style.WARNING("No games found"))
+            return
+
+        self.stdout.write(
+            f"Processing {total_games} games "
+            f"(concurrency: 5, delay: 1.0s, min similarity: 0.85)"
+        )
+
+        if options.get("dry_run"):
+            self.stdout.write(
+                self.style.WARNING("  DRY RUN: Would process HLTB data for games")
+            )
+            return
+
+        # Import HLTB fetching logic from fetch_hltb_data
+        from games.management.commands.fetch_hltb_data import (
+            convert_numerals,
+            platform_matches,
+        )
+
+        hltb = HowLongToBeat()
+        concurrency = 5
+        delay = 1.0
+        min_similarity = 0.85
+
+        # Create semaphore for rate limiting
+        semaphore = asyncio.Semaphore(concurrency)
+        counter_lock = asyncio.Lock()
+
+        async def process_game(idx, game_data):
+            """Process a single game with rate limiting."""
+            nonlocal self
+
+            async with semaphore:
+                hltb_id = ""
+                hltb_name = ""
+                similarity = 0.0
+                main_story = None
+                main_extra = None
+                completionist = None
+                fetch_method = ""
+
+                game_name = game_data["name"]
+                game_year = game_data["year_of_release"]
+                game_igdb_id = game_data["igdb_id"]
+                game_id = game_data["id"]
+                game_platforms = game_data.get("platforms", [])
+                wikidata_hltb_id = game_data.get("primary_wikipedia_game_data__hltb_id")
+                wiki_page_title = game_data.get(
+                    "primary_wikipedia_game_data__page_title"
+                )
+
+                try:
+                    best_match = None
+
+                    # Try direct ID lookup if we have HLTB ID from Wikidata
+                    if wikidata_hltb_id:
+                        try:
+                            direct_result = await hltb.async_search_from_id(
+                                int(wikidata_hltb_id)
+                            )
+                            if direct_result:
+                                best_match = direct_result
+                                fetch_method = "wikidata"
+                        except Exception as e:
+                            logger.debug(
+                                "Direct HLTB lookup failed for ID %s: %s",
+                                wikidata_hltb_id,
+                                e,
+                            )
+
+                    # Fall back to name search if direct lookup failed
+                    if not best_match:
+                        search_names = []
+                        if wiki_page_title and wiki_page_title != game_name:
+                            search_names.append(wiki_page_title)
+                            search_names.extend(convert_numerals(wiki_page_title))
+
+                        search_names.append(game_name)
+                        search_names.extend(convert_numerals(game_name))
+
+                        # Remove duplicates while preserving order
+                        seen = set()
+                        search_names = [
+                            x for x in search_names if not (x in seen or seen.add(x))
+                        ]
+
+                        for search_name in search_names:
+                            results = await hltb.async_search(search_name)
+
+                            if results:
+                                good_matches = [
+                                    r for r in results if r.similarity >= min_similarity
+                                ]
+
+                                if not good_matches:
+                                    continue
+
+                                # Year filtering
+                                if game_year and len(good_matches) > 1:
+                                    year_matches = []
+                                    for result in good_matches:
+                                        if (
+                                            hasattr(result, "release_world")
+                                            and result.release_world
+                                        ):
+                                            try:
+                                                result_year = int(result.release_world)
+                                                if abs(result_year - game_year) <= 1:
+                                                    year_matches.append(result)
+                                            except (ValueError, TypeError):
+                                                pass
+
+                                    if year_matches:
+                                        good_matches = year_matches
+
+                                # Platform filtering
+                                if game_platforms and len(good_matches) > 1:
+                                    platform_matches_list = []
+                                    for result in good_matches:
+                                        if hasattr(result, "profile_platform"):
+                                            hltb_platform = result.profile_platform
+                                            if platform_matches(
+                                                hltb_platform, game_platforms
+                                            ):
+                                                platform_matches_list.append(result)
+
+                                    if platform_matches_list:
+                                        good_matches = platform_matches_list
+
+                                best_match = max(
+                                    good_matches, key=lambda r: r.similarity
+                                )
+                                fetch_method = "name_search"
+                                break
+
+                    if best_match:
+                        async with counter_lock:
+                            self.hltb_found += 1
+                        hltb_id = str(best_match.game_id)
+                        hltb_name = best_match.game_name
+                        similarity = getattr(best_match, "similarity", 1.0)
+
+                        # Extract playtime values
+                        main_story = self._get_hours(best_match, "main_story")
+                        main_extra = self._get_hours(best_match, "main_extra")
+                        completionist = self._get_hours(best_match, "completionist")
+
+                        # Save to database
+                        await sync_to_async(self._save_hltb_data)(
+                            game_id,
+                            game_igdb_id,
+                            hltb_id,
+                            hltb_name,
+                            fetch_method,
+                            similarity,
+                            main_story,
+                            main_extra,
+                            completionist,
+                        )
+                    else:
+                        async with counter_lock:
+                            self.hltb_not_found += 1
+
+                except Exception as e:
+                    async with counter_lock:
+                        self.hltb_not_found += 1
+                    logger.warning(
+                        "Failed to fetch HLTB data for '%s': %s", game_name, e
+                    )
+
+                # Progress checkpoint every 100 games
+                if idx % 100 == 0:
+                    elapsed = time.time() - self.hltb_start_time
+                    rate = idx / elapsed if elapsed > 0 else 0
+                    self.stdout.write(f"  [{idx}/{total_games}] ({rate:.1f} games/sec)")
+
+                # Rate limiting delay
+                await asyncio.sleep(delay)
+
+        # Process all games concurrently
+        tasks = [
+            process_game(idx, game_data)
+            for idx, game_data in enumerate(games_list, start=1)
+        ]
+        await asyncio.gather(*tasks)
+
+        # Print HLTB completion
+        elapsed = time.time() - self.hltb_start_time
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\n  HLTB Complete: {self.hltb_found} found, "
+                f"{self.hltb_not_found} not found in {elapsed:.0f}s"
+            )
+        )
+
+    def _get_hours(self, result, field_name):
+        """Extract hours from HLTB result, handling various attribute names."""
+        possible_attrs = [
+            field_name,
+            f"{field_name}_seconds",
+            f"gameplay_{field_name}",
+        ]
+
+        for attr in possible_attrs:
+            value = getattr(result, attr, None)
+            if value is not None and value > 0:
+                if "seconds" in attr:
+                    return round(value / 3600, 1)
+                return round(value, 1)
+
+        return None
+
+    def _save_hltb_data(
+        self,
+        game_id,
+        game_igdb_id,
+        hltb_id,
+        hltb_name,
+        fetch_method,
+        similarity,
+        main_story,
+        main_extra,
+        completionist,
+    ):
+        """Save HLTB data to database (sync version for this command)."""
+        game = Game.objects.get(id=game_id)
+
+        # First, check for orphaned record with same igdb_id
+        orphaned_record = HLTBGameData.objects.filter(
+            igdb_id=game_igdb_id,
+            game__isnull=True,
+            is_primary=True,
+        ).first()
+
+        if orphaned_record:
+            # Reconnect and update orphaned record
+            HLTBGameData.objects.filter(game=game, is_primary=True).update(
+                is_primary=False
+            )
+
+            orphaned_record.game = game
+            orphaned_record.hltb_id = hltb_id
+            orphaned_record.hltb_name = hltb_name
+            orphaned_record.fetch_method = fetch_method
+            orphaned_record.similarity = (
+                Decimal(str(similarity)) if similarity else None
+            )
+            orphaned_record.main_story_hours = (
+                Decimal(str(main_story)) if main_story else None
+            )
+            orphaned_record.main_extra_hours = (
+                Decimal(str(main_extra)) if main_extra else None
+            )
+            orphaned_record.completionist_hours = (
+                Decimal(str(completionist)) if completionist else None
+            )
+            orphaned_record.save()
+            hltb_data = orphaned_record
+        else:
+            # No orphaned record, create or update
+            HLTBGameData.objects.filter(game=game, is_primary=True).update(
+                is_primary=False
+            )
+
+            hltb_data, created = HLTBGameData.objects.update_or_create(
+                game=game,
+                igdb_id=game_igdb_id,
+                defaults={
+                    "hltb_id": hltb_id,
+                    "hltb_name": hltb_name,
+                    "fetch_method": fetch_method,
+                    "similarity": Decimal(str(similarity)) if similarity else None,
+                    "main_story_hours": (
+                        Decimal(str(main_story)) if main_story else None
+                    ),
+                    "main_extra_hours": (
+                        Decimal(str(main_extra)) if main_extra else None
+                    ),
+                    "completionist_hours": (
+                        Decimal(str(completionist)) if completionist else None
+                    ),
+                    "is_primary": True,
+                },
+            )
+
+        # Set primary relationship
+        game.primary_hltb_game_data = hltb_data
+        game.save(update_fields=["primary_hltb_game_data"])
+
+        return hltb_data
+
     def _print_summary(self):
         """Print final execution summary."""
         total_elapsed = time.time() - self.start_time
@@ -500,11 +863,33 @@ class Command(BaseCommand):
                         f"({genre_pct:.1f}%)"
                     )
 
+        # HLTB stats
+        if self.hltb_found > 0 or self.hltb_not_found != 0:
+            if self.hltb_not_found == -1:
+                self.stdout.write(self.style.ERROR("HLTB:      FAILED"))
+            else:
+                total_hltb = self.hltb_found + self.hltb_not_found
+                success_pct = (
+                    (self.hltb_found / total_hltb * 100) if total_hltb > 0 else 0
+                )
+                status = (
+                    self.style.SUCCESS
+                    if self.hltb_not_found == 0
+                    else self.style.WARNING
+                )
+                self.stdout.write(
+                    status(
+                        f"HLTB:      {self.hltb_found}/{total_hltb} found "
+                        f"({self.hltb_not_found} not found, {success_pct:.1f}%)"
+                    )
+                )
+
         # Overall status
         has_errors = (
             self.igdb_errors > 0
             or self.wikipedia_pages_failed > 0
             or self.genres_failed > 0
+            or self.hltb_not_found > 0
         )
         overall_status = "SUCCESS" if not has_errors else "COMPLETED WITH ERRORS"
         style = self.style.SUCCESS if not has_errors else self.style.WARNING

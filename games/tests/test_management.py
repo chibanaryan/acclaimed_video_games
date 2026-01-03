@@ -789,10 +789,13 @@ class RefreshAllMetadataCommandTests(TestCase):
         self.assertIn("Weekly Metadata Refresh", output)
 
         # Verify IGDB section
-        self.assertIn("[1/2] Refreshing IGDB Data", output)
+        self.assertIn("[1/3] Refreshing IGDB Data", output)
 
         # Verify Wikipedia section
-        self.assertIn("[2/2] Refreshing Wikipedia Data", output)
+        self.assertIn("[2/3] Refreshing Wikipedia Data", output)
+
+        # Verify HLTB section
+        self.assertIn("[3/3] Refreshing HLTB Data", output)
 
         # Verify summary
         self.assertIn("Summary", output)
@@ -818,10 +821,11 @@ class RefreshAllMetadataCommandTests(TestCase):
         output = out.getvalue()
 
         # Should have IGDB section
-        self.assertIn("[1/2] Refreshing IGDB Data", output)
+        self.assertIn("[1/3] Refreshing IGDB Data", output)
 
-        # Should NOT have Wikipedia section
-        self.assertNotIn("[2/2] Refreshing Wikipedia Data", output)
+        # Should NOT have Wikipedia or HLTB sections
+        self.assertNotIn("[2/3] Refreshing Wikipedia Data", output)
+        self.assertNotIn("[3/3] Refreshing HLTB Data", output)
 
         # IGDB service should be called
         mock_igdb_instance.import_games.assert_called_once()
@@ -845,11 +849,12 @@ class RefreshAllMetadataCommandTests(TestCase):
         call_command("refresh_all_metadata", wikipedia_only=True, limit=1, stdout=out)
         output = out.getvalue()
 
-        # Should NOT have IGDB section
-        self.assertNotIn("[1/2] Refreshing IGDB Data", output)
+        # Should NOT have IGDB or HLTB sections
+        self.assertNotIn("[1/3] Refreshing IGDB Data", output)
+        self.assertNotIn("[3/3] Refreshing HLTB Data", output)
 
         # Should have Wikipedia section
-        self.assertIn("[2/2] Refreshing Wikipedia Data", output)
+        self.assertIn("[2/3] Refreshing Wikipedia Data", output)
 
         # Wikipedia service should be called
         mock_page_instance.lookup_page.assert_called()
@@ -864,7 +869,9 @@ class RefreshAllMetadataCommandTests(TestCase):
         )
         output = out.getvalue()
 
-        self.assertIn("Cannot use --igdb-only and --wikipedia-only together", output)
+        self.assertIn(
+            "Cannot use --igdb-only, --wikipedia-only, and --hltb-only together", output
+        )
 
     @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
     def test_dry_run_mode(self, mock_igdb_service):
@@ -935,8 +942,9 @@ class RefreshAllMetadataCommandTests(TestCase):
         self.assertIn("Failed to initialize IGDB service", output)
         self.assertIn("IGDB API failed", output)
 
-        # Should still run Wikipedia refresh
-        self.assertIn("[2/2] Refreshing Wikipedia Data", output)
+        # Should still run Wikipedia and HLTB refresh
+        self.assertIn("[2/3] Refreshing Wikipedia Data", output)
+        self.assertIn("[3/3] Refreshing HLTB Data", output)
 
     @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
     def test_progress_callback(self, mock_igdb_service):

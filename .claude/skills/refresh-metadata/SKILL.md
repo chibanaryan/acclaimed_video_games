@@ -1,11 +1,11 @@
 ---
 name: refresh-metadata
-description: Refresh all metadata from IGDB and Wikipedia. Use for weekly maintenance or full data refresh.
+description: Refresh all metadata from IGDB, Wikipedia, and HLTB. Use for weekly maintenance or full data refresh.
 ---
 
 # Weekly Metadata Refresh
 
-Combines `get_igdb --force` and `fetch_wikipedia_metadata --force --save` into one unified operation, designed for weekly scheduled execution.
+Combines `get_igdb --force`, `fetch_wikipedia_metadata --force --save`, and `fetch_hltb_data --save --force` into one unified operation, designed for weekly scheduled execution.
 
 ## Usage
 
@@ -18,6 +18,9 @@ python3 manage.py refresh_all_metadata --igdb-only
 
 # Wikipedia only
 python3 manage.py refresh_all_metadata --wikipedia-only
+
+# HLTB only
+python3 manage.py refresh_all_metadata --hltb-only
 
 # Test with limited games
 python3 manage.py refresh_all_metadata --limit 100
@@ -33,8 +36,9 @@ python3 manage.py refresh_all_metadata --pro
 
 | Option | Description |
 |--------|-------------|
-| `--igdb-only` | Only refresh IGDB data (skip Wikipedia) |
-| `--wikipedia-only` | Only refresh Wikipedia data (skip IGDB) |
+| `--igdb-only` | Only refresh IGDB data (skip Wikipedia and HLTB) |
+| `--wikipedia-only` | Only refresh Wikipedia data (skip IGDB and HLTB) |
+| `--hltb-only` | Only refresh HLTB data (skip IGDB and Wikipedia) |
 | `--limit N` | Process only first N games (for testing) |
 | `--dry-run` | Preview operations without database changes |
 | `--concurrency N` | Override IGDB concurrency (default: 8) |
@@ -42,12 +46,13 @@ python3 manage.py refresh_all_metadata --pro
 
 ## Performance
 
-| Mode | Duration |
-|------|----------|
-| Full refresh (3000+ games, authenticated) | ~40 minutes |
+| Mode | Duration (1000 games) |
+|------|-----------------------|
+| Full refresh (authenticated) | ~60-70 minutes |
 | IGDB only (free tier) | ~30 seconds |
 | IGDB only (pro tier) | ~3 seconds |
 | Wikipedia only (authenticated) | ~38 minutes |
+| HLTB only | ~20-25 minutes |
 
 ## Heroku Scheduler Setup
 
@@ -59,8 +64,8 @@ heroku addons:create scheduler:standard
 Configure in Heroku Dashboard (https://dashboard.heroku.com):
 - **Command:** `python3 manage.py refresh_all_metadata`
 - **Schedule:** Weekly (Sunday 2:00 AM UTC recommended)
-- **Dyno:** Performance-M (recommended for 40-minute job)
-- **Duration:** ~40 minutes
+- **Dyno:** Performance-M (recommended for 60-70 minute job)
+- **Duration:** ~60-70 minutes (IGDB + Wikipedia + HLTB)
 
 ## Required Environment Variables
 

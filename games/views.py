@@ -647,7 +647,11 @@ class GameDetailView(DetailView):
 
     def get_queryset(self):
         # Prefetch lists with publisher, sorted by year (desc), publication, list name
-        return models.Game.objects.prefetch_related(
+        return models.Game.objects.select_related(
+            "primary_igdb_game_data",
+            "primary_wikipedia_game_data",
+            "primary_hltb_game_data",
+        ).prefetch_related(
             "developers",
             "developers__parent",
             "platforms",
@@ -839,6 +843,24 @@ class HomePageView(RobustPaginationMixin, ListView):
         # Played status filtering (authenticated users only)
         played_param = self.request.GET.get("played")
         qs = _apply_played_filter(qs, self.request.user, played_param)
+
+        # Playtime range filtering (main story hours)
+        pt_min = self.request.GET.get("pt_min")
+        pt_max = self.request.GET.get("pt_max")
+        if pt_min:
+            try:
+                qs = qs.filter(
+                    primary_hltb_game_data__main_story_hours__gte=int(pt_min)
+                )
+            except (ValueError, TypeError):
+                pass
+        if pt_max:
+            try:
+                qs = qs.filter(
+                    primary_hltb_game_data__main_story_hours__lte=int(pt_max)
+                )
+            except (ValueError, TypeError):
+                pass
 
         # Sort order
         sort = self.request.GET.get("sort", "rank")

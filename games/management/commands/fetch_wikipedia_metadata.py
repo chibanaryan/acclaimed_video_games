@@ -412,7 +412,12 @@ class Command(BaseCommand):
             # Update wikidata_id if available
             if wikidata_id:
                 orphaned_record.wikidata_id = wikidata_id
-            orphaned_record.save(update_fields=["game", "lookup_source", "wikidata_id"])
+            # Update hltb_id if available from Wikidata P2816
+            if page_result.hltb_id:
+                orphaned_record.hltb_id = page_result.hltb_id
+            orphaned_record.save(
+                update_fields=["game", "lookup_source", "wikidata_id", "hltb_id"]
+            )
             wiki_game_data = orphaned_record
         else:
             # No orphaned record found, create or update
@@ -428,6 +433,8 @@ class Command(BaseCommand):
             }
             if wikidata_id:
                 defaults["wikidata_id"] = wikidata_id
+            if page_result.hltb_id:
+                defaults["hltb_id"] = page_result.hltb_id
 
             wiki_game_data, created = WikipediaGameData.objects.update_or_create(
                 game=game,

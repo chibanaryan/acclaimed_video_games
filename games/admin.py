@@ -101,6 +101,7 @@ class GameAdmin(admin.ModelAdmin):
         "wikidata_id",
         "_igdb_data_link",
         "_wikipedia_data_link",
+        "_hltb_data_link",
         "_igdb_genres",
         "_wikipedia_genres",
     ]
@@ -120,7 +121,11 @@ class GameAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("primary_igdb_game_data", "primary_wikipedia_game_data")
+            .select_related(
+                "primary_igdb_game_data",
+                "primary_wikipedia_game_data",
+                "primary_hltb_game_data",
+            )
             .prefetch_related("genres", "wikipedia_genres")
         )
 
@@ -168,6 +173,15 @@ class GameAdmin(admin.ModelAdmin):
 
     _wikipedia_data_link.short_description = "Wikipedia Data"
 
+    def _hltb_data_link(self, obj: models.Game) -> str:
+        """Display link to HLTB data admin page."""
+        if obj.primary_hltb_game_data:
+            url = f"/admin/games/hltbgamedata/{obj.primary_hltb_game_data.id}/change/"
+            return format_html('<a href="{}">View HLTB Data</a>', url)
+        return "-"
+
+    _hltb_data_link.short_description = "HLTB Data"
+
 
 @admin.register(models.IGDBGameData)
 class IGDBGameDataAdmin(admin.ModelAdmin):
@@ -213,6 +227,7 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
         "game",
         "page_title",
         "wikidata_id",
+        "hltb_id",
         "primary_genre",
         "_all_genres_preview",
         "lookup_source",
@@ -226,6 +241,7 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
         "game__name",
         "page_title",
         "wikidata_id",
+        "hltb_id",
         "primary_genre",
         "lookup_source",
     ]
@@ -250,6 +266,38 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
         return "-"
 
     _wikipedia_link.short_description = "Wikipedia Link"
+
+
+@admin.register(models.HLTBGameData)
+class HLTBGameDataAdmin(admin.ModelAdmin):
+    """Admin interface for HowLongToBeat game data records."""
+
+    list_display = [
+        "game",
+        "igdb_id",
+        "hltb_id",
+        "main_story_hours",
+        "main_extra_hours",
+        "completionist_hours",
+        "_hltb_link",
+        "is_primary",
+        "fetched_at",
+        "updated_at",
+    ]
+    list_filter = ["is_primary", "fetched_at", "updated_at"]
+    search_fields = ["game__name", "igdb_id", "hltb_id"]
+    raw_id_fields = ["game"]
+    readonly_fields = ["fetched_at", "updated_at"]
+
+    def _hltb_link(self, obj: models.HLTBGameData) -> str:
+        """Display clickable HowLongToBeat URL."""
+        if obj.hltb_url:
+            return format_html(
+                '<a href="{}" target="_blank">View on HLTB</a>', obj.hltb_url
+            )
+        return "-"
+
+    _hltb_link.short_description = "HLTB Link"
 
 
 @admin.register(models.GameQuote)

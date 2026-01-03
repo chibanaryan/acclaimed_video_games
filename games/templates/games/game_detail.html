@@ -63,22 +63,6 @@
                      class="rounded-lg shadow-lg w-full h-auto">
             </figure>
             {% endif %}
-            {% if game.primary_igdb_game_data.youtube_video_id %}
-            <div class="w-[504px] max-w-full">
-                <div class="aspect-video">
-                    <iframe
-                        src="https://www.youtube-nocookie.com/embed/{{ game.primary_igdb_game_data.youtube_video_id }}"
-                        title="{{ game.name }} video"
-                        class="w-full h-full rounded-lg shadow-lg"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        referrerpolicy="strict-origin-when-cross-origin"
-                        allowfullscreen
-                        loading="lazy">
-                    </iframe>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
 

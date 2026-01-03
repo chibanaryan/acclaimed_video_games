@@ -104,6 +104,19 @@
         </td>
     </tr>
     {% endif %}
+    {% if game.primary_hltb_game_data.hltb_url %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">HLTB:</td>
+        <td class="pb-3 align-middle">
+            <a href="{{ game.primary_hltb_game_data.hltb_url }}" target="_blank" class="link link-accent inline-flex items-center gap-1">
+                HowLongToBeat <span class="mdi mdi-open-in-new text-sm"></span>
+            </a>
+            {% if game.primary_hltb_game_data.main_story_hours %}
+            <span class="text-base-content/50 text-sm ml-2 tabular-nums">(~{{ game.primary_hltb_game_data.main_story_hours|floatformat:0 }}h main)</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endif %}
     <tr>
         <td colspan="2" class="pt-4 border-t border-base-content/10">
             <a href="#contact"

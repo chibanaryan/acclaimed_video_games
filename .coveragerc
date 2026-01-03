@@ -9,6 +9,9 @@ omit =
     */management/commands/get_wiki_genres.py
     */management/commands/get_wikipedia_pages.py
     */management/commands/cleanup_empty_metadata.py
+    */management/commands/fetch_hltb_data.py
+    */management/commands/refresh_all_metadata.py
+    */management/commands/export_game_links.py
     */services/wiki_page_lookup_service.py
     */services/import_handler.py
     */csp_middleware.py
@@ -24,6 +27,9 @@ omit =
     */management/commands/get_wiki_genres.py
     */management/commands/get_wikipedia_pages.py
     */management/commands/cleanup_empty_metadata.py
+    */management/commands/fetch_hltb_data.py
+    */management/commands/refresh_all_metadata.py
+    */management/commands/export_game_links.py
     */services/wiki_page_lookup_service.py
     */services/import_handler.py
     */csp_middleware.py

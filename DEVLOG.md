@@ -10,6 +10,8 @@
 - Mobile saved filters: collapsible section with large touch targets, rename/delete actions
 - Add YouTube video embeds to game detail page (fetched from IGDB, privacy-enhanced mode)
 - Update CSP to allow YouTube iframe embedding with proper referrer policy
+- Add HLTB integration: playtime data fetched from HowLongToBeat API, displayed on game detail pages
+- Integrate HLTB into weekly metadata refresh with Wikidata P2816 property lookups
 
 ## 2026-01-02
 

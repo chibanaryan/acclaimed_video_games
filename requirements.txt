@@ -25,3 +25,4 @@ Brotli
 django-cors-headers
 anthropic>=0.39.0
 django-allauth[socialaccount]
+howlongtobeatpy>=1.0.19

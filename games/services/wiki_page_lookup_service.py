@@ -28,6 +28,7 @@ class PageLookupResult:
     page_title: Optional[str] = None
     lookup_source: Optional[str] = None
     error_message: Optional[str] = None
+    hltb_id: Optional[str] = None  # HowLongToBeat ID from Wikidata P2816
 
     @property
     def success(self) -> bool:
@@ -178,15 +179,18 @@ class WikiPageLookupService:
 
         return None
 
-    def _lookup_via_wikidata(self, wikidata_id: str) -> Optional[str]:
+    def _lookup_via_wikidata(
+        self, wikidata_id: str
+    ) -> Optional[tuple[str, Optional[str]]]:
         """
-        Look up English Wikipedia page title via Wikidata API.
+        Look up English Wikipedia page title and HLTB ID via Wikidata API.
 
         Args:
             wikidata_id: Wikidata ID (e.g., "Q12345")
 
         Returns:
-            Wikipedia page title, or None if not found
+            Tuple of (page_title, hltb_id), or None if page not found.
+            hltb_id may be None even if page is found.
         """
         if not wikidata_id:
             return None
@@ -194,7 +198,7 @@ class WikiPageLookupService:
         params = {
             "action": "wbgetentities",
             "format": "json",
-            "props": "sitelinks",
+            "props": "sitelinks|claims",
             "ids": wikidata_id,
             "sitefilter": "enwiki",
         }
@@ -207,12 +211,30 @@ class WikiPageLookupService:
 
         try:
             data = response.json()
-            # Extract enwiki sitelink
+            # Extract entity data
             entities = data.get("entities", {})
             entity = entities.get(wikidata_id, {})
+
+            # Extract enwiki sitelink
             sitelinks = entity.get("sitelinks", {})
             enwiki = sitelinks.get("enwiki", {})
             page_title = enwiki.get("title")
+
+            # Extract HLTB ID from P2816 claim (HowLongToBeat ID property)
+            hltb_id = None
+            claims = entity.get("claims", {})
+            p2816 = claims.get("P2816", [])
+            if p2816:
+                # Get the first (preferred) value
+                mainsnak = p2816[0].get("mainsnak", {})
+                datavalue = mainsnak.get("datavalue", {})
+                hltb_id = datavalue.get("value")
+                if hltb_id:
+                    logger.debug(
+                        "Found HLTB ID via Wikidata P2816: %s -> %s",
+                        wikidata_id,
+                        hltb_id,
+                    )
 
             if page_title:
                 logger.debug(
@@ -220,7 +242,7 @@ class WikiPageLookupService:
                     wikidata_id,
                     page_title,
                 )
-                return page_title
+                return (page_title, hltb_id)
             else:
                 logger.debug("No enwiki sitelink for %s", wikidata_id)
                 return None
@@ -301,12 +323,14 @@ class WikiPageLookupService:
         """
         # Try Wikidata first
         if wikidata_id:
-            page_title = self._lookup_via_wikidata(wikidata_id)
-            if page_title:
+            wikidata_result = self._lookup_via_wikidata(wikidata_id)
+            if wikidata_result:
+                page_title, hltb_id = wikidata_result
                 return PageLookupResult(
                     game_name=game_name,
                     page_title=page_title,
                     lookup_source=config.WIKI_LOOKUP_SOURCE_WIKIDATA,
+                    hltb_id=hltb_id,
                 )
 
         # Try OpenSearch with year

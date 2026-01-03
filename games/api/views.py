@@ -507,7 +507,8 @@ def _compute_game_data_version():
     # v4: Added 'lc' (list_count) field for displaying list appearances
     # v5: Added 'ys' (year_start) and 'ye' (year_end) to platforms for sorting
     # v6: Force cache refresh after list_count data update
-    SCHEMA_VERSION = "6"
+    # v7: Added 'pt' (playtime) field for HLTB filtering
+    SCHEMA_VERSION = "7"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()
@@ -570,7 +571,10 @@ class GameAllDataView(APIView):
 
         # Fetch all games with required relations
         games = (
-            models.Game.objects.select_related("primary_igdb_game_data")
+            models.Game.objects.select_related(
+                "primary_igdb_game_data",
+                "primary_hltb_game_data",
+            )
             .prefetch_related(
                 "developers__parent",
                 "platforms",
@@ -640,6 +644,14 @@ class GameAllDataView(APIView):
             if game.primary_igdb_game_data:
                 artwork_id = game.primary_igdb_game_data.artwork_id
 
+            # Get playtime from HLTB data (integer hours for filtering)
+            playtime = None
+            if (
+                game.primary_hltb_game_data
+                and game.primary_hltb_game_data.main_story_hours
+            ):
+                playtime = int(game.primary_hltb_game_data.main_story_hours)
+
             games_data.append(
                 {
                     "id": game.id,
@@ -654,6 +666,7 @@ class GameAllDataView(APIView):
                     "g": genre_ids,
                     "sr": series_ids,
                     "lc": game.list_count,  # List count for display
+                    "pt": playtime,  # Playtime in hours from HLTB
                 }
             )
 

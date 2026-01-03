@@ -1411,6 +1411,22 @@ def import_games(
                         if wikipedia_genres:
                             game.wikipedia_genres.set(wikipedia_genres)
 
+            # Reconnect HLTB data if available and not already linked
+            if igdb_id and not game.primary_hltb_game_data:
+                # Look for orphaned metadata (game=None) or metadata for this game
+                hltb_data = (
+                    models.HLTBGameData.objects.filter(igdb_id=igdb_id, is_primary=True)
+                    .filter(Q(game__isnull=True) | Q(game=game))
+                    .first()
+                )
+                if hltb_data:
+                    # Reconnect to game
+                    hltb_data.game = game
+                    hltb_data.save(update_fields=["game"])
+                    game.primary_hltb_game_data = hltb_data
+                    update_fields.append("primary_hltb_game_data")
+                    needs_save = True
+
             # Save if we reconnected any metadata
             if needs_save:
                 game.save(update_fields=update_fields)
@@ -1448,6 +1464,7 @@ def import_games(
             models.WikipediaGameData.objects.filter(game__in=stale_games).update(
                 game=None
             )
+            models.HLTBGameData.objects.filter(game__in=stale_games).update(game=None)
             models.PlayedGame.objects.filter(game__in=stale_games).update(game=None)
             stale_games.delete()
 
