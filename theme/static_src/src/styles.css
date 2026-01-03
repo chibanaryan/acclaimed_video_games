@@ -30,8 +30,8 @@
   --color-warning-content: oklch(41% 0.112 45.904);
   --color-error: oklch(63% 0.237 25.331);
   --color-error-content: oklch(25% 0.092 26.042);
-    /* Heatmap color - darker for light theme */
-  --color-heatmap: oklch(64% 0.14 70);
+    /* Heatmap color - darker for light theme (better white text contrast) */
+  --color-heatmap: oklch(52% 0.16 65);
   --radius-selector: 0.25rem;
   --radius-field: 2rem;
   --radius-box: 0.5rem;
