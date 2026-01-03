@@ -1,4 +1,5 @@
 {# Filtered Game List - Pre-rendered games with visibility toggling #}
+{% load game_filters %}
 <div class="filtered-game-list">
     {# Compact sort dropdown #}
     <div class="mb-4">
@@ -47,6 +48,10 @@
              data-year="{{ game.year_of_release }}"
              data-rank="{{ game.rank }}"
              data-name="{{ game.name }}">
+            {# Hidden anchors for developer-specific links (e.g., from game properties page) #}
+            {% for dev_id in game_developer_map|get_developer_ids:game.id %}
+            <span id="developer-{{ dev_id }}-game-{{ game.id }}" class="hidden"></span>
+            {% endfor %}
             {% include 'games/includes/_game_row.html' with game=game show_rank='alltime' hide_played_button=True %}
         </div>
         {% endfor %}

@@ -670,3 +670,20 @@ def genre_icon(genre):
         return GENRE_CATEGORY_ICONS.get(genre.name, "mdi-gamepad-variant")
 
     return "mdi-gamepad-variant"
+
+
+@register.filter
+def get_developer_ids(game_developer_map, game_id):
+    """
+    Get the list of developer IDs for a game from the game->developer mapping.
+
+    Args:
+        game_developer_map: Dict mapping game_id -> list of developer_ids
+        game_id: The game ID to look up
+
+    Returns:
+        List of developer IDs, or empty list if not found
+    """
+    if not game_developer_map or not isinstance(game_developer_map, dict):
+        return []
+    return game_developer_map.get(game_id, [])

@@ -1675,6 +1675,16 @@ class DeveloperDetailView(DetailView):
         game_rank_map = {game.id: game.rank for game in all_games if game.rank}
         context["game_rank_map_json"] = json.dumps(game_rank_map, cls=DjangoJSONEncoder)
 
+        # Build game -> developer IDs map for anchor links
+        # This maps each game_id to the list of developer_ids that have it
+        game_developer_map = {}
+        for dev_id, game_ids in dev_game_map.items():
+            for game_id in game_ids:
+                if game_id not in game_developer_map:
+                    game_developer_map[game_id] = []
+                game_developer_map[game_id].append(dev_id)
+        context["game_developer_map"] = game_developer_map
+
         # Rank distribution for visualization (10 bins of 100 ranks each)
         # Same format as games list page for visual consistency
         rank_bins = []
@@ -1700,6 +1710,7 @@ class DeveloperDetailView(DetailView):
             "developer_game_map_json": context["developer_game_map_json"],
             "developer_child_map_json": context["developer_child_map_json"],
             "game_rank_map_json": context["game_rank_map_json"],
+            "game_developer_map": game_developer_map,
             "rank_distribution": rank_bins,
         }
         self._set_cached_context(developer, cacheable_context)

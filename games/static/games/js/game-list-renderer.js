@@ -419,7 +419,11 @@ class GameListRenderer {
                     const rootDev = this._getRootDeveloper(dev);
                     const devSlug = rootDev?.slug;
                     if (devSlug) {
-                        return `<a href="/developers/${devSlug}/" class="link link-hover">${this._escapeHtml(dev.name)}</a>`;
+                        // Add anchor to scroll to game on developer page
+                        const anchor = (dev.id !== rootDev?.id)
+                            ? `#developer-${dev.id}-game-${game.id}`
+                            : `#game-${game.id}`;
+                        return `<a href="/developers/${devSlug}/${anchor}" class="link link-hover">${this._escapeHtml(dev.name)}</a>`;
                     } else {
                         return this._escapeHtml(dev.name);
                     }
@@ -490,7 +494,11 @@ class GameListRenderer {
                 const rootDev = this._getRootDeveloper(dev);
                 const devSlug = rootDev?.slug;
                 if (devSlug) {
-                    return `<a href="/developers/${devSlug}/" class="link link-hover">${this._escapeHtml(dev.name)}</a>`;
+                    // Add anchor to scroll to game on developer page
+                    const anchor = (dev.id !== rootDev?.id)
+                        ? `#developer-${dev.id}-game-${game.id}`
+                        : `#game-${game.id}`;
+                    return `<a href="/developers/${devSlug}/${anchor}" class="link link-hover">${this._escapeHtml(dev.name)}</a>`;
                 } else {
                     return this._escapeHtml(dev.name);
                 }
@@ -556,7 +564,7 @@ class GameListRenderer {
                 <a href="/game/${game.s}/" class="game-title text-2xl font-bold link link-hover">${this._escapeHtml(game.n)}</a>
                 <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1">(${game.y || 'N/A'})</a>
             </div>
-            <div class="game-row-details text-base-content/70 text-sm ml-4 truncate" data-slot="meta-row">${hoverRowHtml}</div>
+            <div class="game-row-details text-base-content/80 text-sm ml-4 truncate" data-slot="meta-row">${hoverRowHtml}</div>
         </div>
     </div>
 </div>`;
