@@ -726,7 +726,8 @@
   }
 
   .game-row.desktop:hover .game-row-details {
-    @apply opacity-100 max-h-16 overflow-visible;
+    @apply opacity-100 max-h-16;
+    overflow: visible !important;
   }
 
   /* Mobile: Circular thumbnails (no hover expansion) */

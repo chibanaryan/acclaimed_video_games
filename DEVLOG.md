@@ -2,21 +2,14 @@
 
 ## 2026-01-02
 
-- Add spaces around "/" separator between genres in game row properties
-- Make platform/genre links on developer page redirect to home rankings with filters applied
-- Add rank distribution chart to developer detail page (same 10-bin SVG visualization as home page, updates with filters)
-- Fix modal triggers adding "#" to URL when clicked before JS loads (use button elements instead of anchor tags)
+- Add rank distribution chart to developer detail and home page (SVG area chart with peak indicator, updates with filters)
+- Simplify game detail page: move played star to title, sort lists by year desc, remove accordions and progress bar
+- Add colored badges for list types using BGYR rainbow order with custom theme colors
+- Fix slow highlight navigation with client-side filtering (10x faster jump to deep ranks)
+- Make platform/genre links on developer page redirect to filtered home rankings
 - Show all leaf-level developers in game rows (removed 2-developer limit)
 - Change default theme from light (lofi) to dark (forest)
-- Simplify game detail: move played star to title, remove top% progress bar and list type legend
-- Game detail lists: sort by year desc → publication → name, remove collapsible accordions
-- Source lists page: use custom dropdown sorter on desktop (matches developers page)
-- Add rank distribution chart: smooth SVG area chart showing game distribution across rankings (1-1000), updates dynamically with filters
-- Fix rank distribution chart: position data points at edges to eliminate flat sections at start/end
-- Add peak count indicator to rank distribution chart for scale context on filtered views
-- Add colored badges for list types: BGYR rainbow order (info/success/warning/error) with custom theme colors
-- Fix slow highlight navigation: use client-side filtering for instant jump to deep ranks (10x faster)
-- Increase test coverage from 93.6% to 95%: add 61 new tests for template tags, models, and views
+- Increase test coverage from 93.6% to 95% with 61 new tests
 
 ## 2026-01-01
 
