@@ -73,17 +73,15 @@ class Command(BaseCommand):
         parser.add_argument(
             "--output",
             type=str,
-            help="Output CSV file path (default: wikipedia_metadata_TIMESTAMP.csv)",
-        )
-        parser.add_argument(
-            "--no-output",
-            action="store_true",
-            help="Skip CSV output (console only)",
+            help=(
+                "Output CSV file path "
+                "(optional, default: wikipedia_metadata_TIMESTAMP.csv)"
+            ),
         )
         parser.add_argument(
             "--save",
             action="store_true",
-            help="Save results to database (default: CSV only)",
+            help="Save results to database (default: console only)",
         )
         parser.add_argument(
             "--skip-existing",
@@ -136,10 +134,11 @@ class Command(BaseCommand):
         page_service = WikiPageLookupService(delay=options.get("delay"))
         genre_service = WikiGenreService()
 
-        # Prepare CSV output
+        # Prepare CSV output (only if --output is specified)
         csv_file = None
         csv_writer = None
-        if not options.get("no_output"):
+        csv_path = None
+        if options.get("output"):
             csv_path = self._get_csv_path(options.get("output"))
             csv_file = open(csv_path, "w", newline="", encoding="utf-8")
             csv_writer = csv.writer(csv_file)
@@ -328,7 +327,8 @@ class Command(BaseCommand):
 
         if options.get("save"):
             self.stdout.write(self.style.SUCCESS("\n✓ Results saved to database"))
-        elif not options.get("no_output"):
+
+        if csv_path:
             self.stdout.write(f"\n✓ Results written to {csv_path}")
 
         # Cleanup orphan WikipediaGenre records if requested

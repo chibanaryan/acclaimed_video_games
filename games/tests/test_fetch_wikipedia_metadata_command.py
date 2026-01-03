@@ -52,9 +52,7 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 all_genres=["Action", "Adventure"],
             )
 
-            call_command(
-                "fetch_wikipedia_metadata", "--no-output", "--save", stdout=out
-            )
+            call_command("fetch_wikipedia_metadata", "--save", stdout=out)
 
         # Should process both games
         self.assertEqual(mock_page_service.lookup_page.call_count, 2)
@@ -77,7 +75,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "fetch_wikipedia_metadata",
                 "--game",
                 "Test Game 1",
-                "--no-output",
                 stdout=out,
             )
 
@@ -113,7 +110,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -150,7 +146,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -190,7 +185,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -228,7 +222,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
             call_command(
                 "fetch_wikipedia_metadata",
                 "--skip-existing",
-                "--no-output",
                 stdout=out,
             )
 
@@ -273,7 +266,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -352,7 +344,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "fetch_wikipedia_metadata",
                 "--limit",
                 "1",
-                "--no-output",
                 stdout=out,
             )
 
@@ -389,7 +380,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -425,7 +415,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -447,7 +436,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
             "fetch_wikipedia_metadata",
             "--game",
             "NonExistentGame",
-            "--no-output",
             stdout=out,
         )
 
@@ -486,7 +474,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -532,7 +519,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -571,7 +557,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--save",
-                "--no-output",
                 stdout=out,
             )
 
@@ -610,7 +595,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--cleanup-orphans",
-                "--no-output",
                 stdout=out,
             )
 
@@ -647,7 +631,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 "--game",
                 "Test Game 1",
                 "--cleanup-orphans",
-                "--no-output",
                 stdout=out,
             )
 
