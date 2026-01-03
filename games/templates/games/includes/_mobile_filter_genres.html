@@ -277,7 +277,7 @@
                     x-show="expanded"
                     x-cloak
                     @click.stop="toggleAllExpanded()"
-                    class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-300"
+                    class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-100"
                     title="Expand/collapse all">
                 <span class="mdi mdi-unfold-more-horizontal"></span>
             </button>
@@ -293,9 +293,9 @@
 
         {# Loading State - Show until client counts are ready #}
         <div x-show="!countsReady" class="space-y-2 animate-pulse">
-            <div class="h-8 bg-base-300/50 rounded-lg"></div>
-            <div class="h-8 bg-base-300/50 rounded-lg"></div>
-            <div class="h-8 bg-base-300/50 rounded-lg"></div>
+            <div class="h-8 bg-base-100/50 rounded-lg"></div>
+            <div class="h-8 bg-base-100/50 rounded-lg"></div>
+            <div class="h-8 bg-base-100/50 rounded-lg"></div>
         </div>
 
         {# Genre Categories - Hierarchical (only show after counts ready) #}
@@ -306,12 +306,12 @@
                          :class="{
                              'bg-primary text-accent-content': isCategorySelected(category.id),
                              'bg-primary/10 text-accent': !isCategorySelected(category.id) && hasSelectedChildren(category.id),
-                             'hover:bg-base-300/50': !isCategorySelected(category.id),
+                             'hover:bg-base-content/10': !isCategorySelected(category.id),
                              'opacity-40': getCategoryTotalCount(category.id) === 0 && !hasCategoryOrChildrenSelected(category.id)
                          }">
                         {# Expand/Collapse Arrow #}
                         <button type="button"
-                                class="p-0.5 rounded hover:bg-base-300/50"
+                                class="p-0.5 rounded hover:bg-base-content/10"
                                 @click.stop="toggleCategoryExpansion(category.id)">
                             <span class="mdi text-base transition-transform duration-200"
                                   :class="isCategoryExpanded(category.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
@@ -337,7 +337,7 @@
                             <div class="flex items-center gap-2 py-1 px-2 rounded-md cursor-pointer transition-colors"
                                  :class="{
                                      'bg-primary text-accent-content': isGenreSelected(genre.id),
-                                     'hover:bg-base-300/50': !isGenreSelected(genre.id),
+                                     'hover:bg-base-content/10': !isGenreSelected(genre.id),
                                      'opacity-40': getEffectiveCount(genre) === 0 && !isGenreSelected(genre.id)
                                  }"
                                  @click="toggleGenre(genre.id); debouncedFilterUpdate();">

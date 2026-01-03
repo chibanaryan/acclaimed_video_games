@@ -67,11 +67,17 @@
                autocomplete="off">
         <button type="button"
                 @click="q = ''; $nextTick(() => { document.getElementById('developer-search').dispatchEvent(new Event('input', { bubbles: true })); })"
+                title="Clear search"
                 class="btn btn-ghost btn-xs btn-circle"
                 style="display: none"
                 :style="{ display: q.length > 0 ? 'flex' : 'none' }"
                 aria-label="Clear search">
-            <span class="mdi mdi-close"></span>
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                </g>
+            </svg>
         </button>
     </label>
 

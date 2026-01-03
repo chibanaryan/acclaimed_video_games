@@ -549,14 +549,14 @@
 
     {# Loading State - matches actual rendered height of 8 manufacturer headers #}
     <div x-show="!countsReady" class="space-y-1 animate-pulse" style="min-height: 316px;">
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
     </div>
 
     {# Hierarchical Platform Tree - Only show after counts are ready #}
@@ -568,12 +568,12 @@
                      :class="{
                          'bg-primary text-accent-content': isManufacturerSelected(mfrKey),
                          'bg-primary/10 text-accent': !isManufacturerSelected(mfrKey) && hasManufacturerOrChildrenSelected(mfrKey),
-                         'hover:bg-base-300/50': !isManufacturerSelected(mfrKey),
+                         'hover:bg-base-content/10': !isManufacturerSelected(mfrKey),
                          'opacity-40': !isManufacturerAvailable(mfrKey) && !hasManufacturerOrChildrenSelected(mfrKey)
                      }">
                     {# Expand/Collapse Arrow #}
                     <button type="button"
-                            class="p-0.5 rounded hover:bg-base-300/50"
+                            class="p-0.5 rounded hover:bg-base-content/10"
                             @click.stop="toggleManufacturerExpanded(mfrKey)">
                         <span class="mdi text-base transition-transform duration-200"
                               :class="isManufacturerExpanded(mfrKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
@@ -614,12 +614,12 @@
                                          :class="{
                                              'bg-primary text-accent-content': isFormFactorSelected(mfrKey, ffKey),
                                              'bg-primary/10 text-accent': !isFormFactorSelected(mfrKey, ffKey) && !isManufacturerSelected(mfrKey) && hasFormFactorSelection(mfrKey, ffKey),
-                                             'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey),
+                                             'hover:bg-base-content/10': !isFormFactorSelected(mfrKey, ffKey),
                                              'opacity-40': !isFormFactorAvailable(mfrKey, ffKey) && !hasFormFactorSelection(mfrKey, ffKey)
                                          }">
                                         {# Expand/Collapse Arrow #}
                                         <button type="button"
-                                                class="p-0.5 rounded hover:bg-base-300/50"
+                                                class="p-0.5 rounded hover:bg-base-content/10"
                                                 @click.stop="toggleFormFactorExpanded(mfrKey, ffKey)">
                                             <span class="mdi text-sm transition-transform duration-200"
                                                   :class="isFormFactorExpanded(mfrKey, ffKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>

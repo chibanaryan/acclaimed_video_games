@@ -10,6 +10,8 @@
 - Show all leaf-level developers in game rows (removed 2-developer limit)
 - Change default theme from light (lofi) to dark (forest)
 - Increase test coverage from 93.6% to 95% with 61 new tests
+- Fix DaisyUI theme base colors (base-100/200/300 hierarchy was inverted)
+- Improve filter UI contrast: visible hover effects, consistent input backgrounds, subtle borders
 
 ## 2026-01-01
 

@@ -89,7 +89,7 @@
     }{% endblock %}
     </script>
 </head>
-<body class="min-h-screen bg-base-300" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="min-h-screen bg-base-100" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     {# Skip navigation link for accessibility #}
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -115,7 +115,7 @@
         </aside>
 
         {# Main content area - offset by sidebar width on desktop #}
-        <main id="main-content" class="flex-1 desktop:ml-48 min-h-screen bg-base-100">
+        <main id="main-content" class="flex-1 desktop:ml-48 min-h-screen bg-base-300">
             <div class="container mx-auto px-4 max-w-7xl py-4">
                 {% block content %}{% endblock %}
             </div>

@@ -334,7 +334,7 @@
             <!-- Platforms File -->
             <div class="import-step{% if counts.platforms > 0 %} completed{% endif %}" data-step="1">
                 <h3>Platforms (PlatformDB.txt)</h3>
-                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">CODE&lt;tab&gt;Name</code></p>
+                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-100 px-2 py-1 rounded">CODE&lt;tab&gt;Name</code></p>
                 <div class="form-control">
                     <label class="input input-bordered flex items-center gap-2 cursor-pointer">
                         <input type="file" name="platforms_file" id="id_platforms_file" accept=".txt" class="hidden">
@@ -350,7 +350,7 @@
             <!-- Source Lists File -->
             <div class="import-step{% if counts.lists > 0 %} completed{% endif %}" data-step="2">
                 <h3>Source Lists (SourceLists.txt)</h3>
-                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">Publisher&lt;tab&gt;Year&lt;tab&gt;Type&lt;tab&gt;Name&lt;tab&gt;URL</code></p>
+                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-100 px-2 py-1 rounded">Publisher&lt;tab&gt;Year&lt;tab&gt;Type&lt;tab&gt;Name&lt;tab&gt;URL</code></p>
                 <div class="form-control">
                     <label class="input input-bordered flex items-center gap-2 cursor-pointer">
                         <input type="file" name="lists_file" id="id_lists_file" accept=".txt" class="hidden">
@@ -366,7 +366,7 @@
             <!-- Games File -->
             <div class="import-step{% if counts.games > 0 %} completed{% endif %}" data-step="3">
                 <h3>Games (Top1000.txt)</h3>
-                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">Rank&lt;tab&gt;Name&lt;tab&gt;Year&lt;tab&gt;Platforms&lt;tab&gt;IGDB_ID&lt;tab&gt;Wikidata_ID</code></p>
+                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-100 px-2 py-1 rounded">Rank&lt;tab&gt;Name&lt;tab&gt;Year&lt;tab&gt;Platforms&lt;tab&gt;IGDB_ID&lt;tab&gt;Wikidata_ID</code></p>
                 <div class="form-control">
                     <label class="input input-bordered flex items-center gap-2 cursor-pointer">
                         <input type="file" name="games_file" id="id_games_file" accept=".txt" class="hidden">
@@ -382,7 +382,7 @@
             <!-- Game Positions File -->
             <div class="import-step{% if counts.memberships > 0 %} completed{% endif %}" data-step="4">
                 <h3>Game Positions (GamePositions.txt)</h3>
-                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-300 px-2 py-1 rounded">ListID:Position&lt;tab&gt;ListID:Position&lt;tab&gt;...</code></p>
+                <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-100 px-2 py-1 rounded">ListID:Position&lt;tab&gt;ListID:Position&lt;tab&gt;...</code></p>
                 <div class="form-control">
                     <label class="input input-bordered flex items-center gap-2 cursor-pointer">
                         <input type="file" name="memberships_file" id="id_memberships_file" accept=".txt" class="hidden">
@@ -514,7 +514,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Fetch IGDB Data -->
-            <div class="card bg-base-300">
+            <div class="card bg-base-100">
                 <div class="card-body">
                     <h3 class="card-title text-lg">
                         <span class="mdi mdi-refresh"></span>
@@ -538,7 +538,7 @@
             </div>
 
             <!-- Fetch Wikipedia Pages -->
-            <div class="card bg-base-300">
+            <div class="card bg-base-100">
                 <div class="card-body">
                     <h3 class="card-title text-lg">
                         <span class="mdi mdi-wikipedia"></span>
@@ -565,7 +565,7 @@
             </div>
 
             <!-- Force Refresh Options -->
-            <div class="card bg-base-300">
+            <div class="card bg-base-100">
                 <div class="card-body">
                     <h3 class="card-title text-lg">
                         <span class="mdi mdi-reload"></span>
@@ -589,7 +589,7 @@
 
         <!-- Progress Indicators -->
         <!-- IGDB Loading (initially hidden) -->
-        <div id="progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-300 rounded-lg">
+        <div id="progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-100 rounded-lg">
             <span class="loading loading-spinner loading-md text-accent"></span>
             <div>
                 <div class="font-semibold">Processing IGDB Data...</div>
@@ -598,7 +598,7 @@
         </div>
 
         <!-- Wikipedia Loading (initially hidden) -->
-        <div id="wikipedia-progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-300 rounded-lg">
+        <div id="wikipedia-progress-container" style="display: none;" class="mt-6 flex items-center gap-3 p-4 bg-base-100 rounded-lg">
             <span class="loading loading-spinner loading-md text-secondary"></span>
             <div>
                 <div class="font-semibold">Fetching Wikipedia Pages...</div>
@@ -619,7 +619,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Delete Game Data -->
-            <div class="card bg-base-300">
+            <div class="card bg-base-100">
                 <div class="card-body">
                     <h3 class="card-title text-lg">
                         <span class="mdi mdi-delete"></span>
@@ -640,7 +640,7 @@
             </div>
 
             <!-- Clear IGDB Metadata -->
-            <div class="card bg-base-300">
+            <div class="card bg-base-100">
                 <div class="card-body">
                     <h3 class="card-title text-lg">
                         <span class="mdi mdi-database-remove"></span>
@@ -661,7 +661,7 @@
             </div>
 
             <!-- Clear Wikipedia Metadata -->
-            <div class="card bg-base-300">
+            <div class="card bg-base-100">
                 <div class="card-body">
                     <h3 class="card-title text-lg">
                         <span class="mdi mdi-wikipedia"></span>
@@ -683,7 +683,7 @@
 
             {% if debug %}
             <!-- Load Test Data (Dev Only) -->
-            <div class="card bg-base-300">
+            <div class="card bg-base-100">
                 <div class="card-body">
                     <h3 class="card-title text-lg">
                         <span class="mdi mdi-package"></span>

@@ -977,7 +977,7 @@
             <div style="min-height: 1400px;">
                 <div class="bg-base-200 rounded-lg p-4">
                 {# Top-level Filters header with actions #}
-                <div class="flex items-center justify-between mb-3 pb-2 border-b border-base-300">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-base-100">
                     <div class="flex items-center gap-2">
                         <span class="mdi mdi-filter-variant text-xl text-accent"></span>
                         <span class="font-bold text-base">Filters</span>
@@ -1000,7 +1000,7 @@
                 </div>
 
                 {# Search input with Played filter in header #}
-                <div class="mb-4 pb-3 border-b border-base-300">
+                <div class="mb-4 pb-3 border-b border-base-100">
                     <div class="flex items-center gap-2 mb-2">
                         <svg class="h-5 w-5 text-accent" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
@@ -1036,7 +1036,7 @@
                 </div>
 
                 {# Year range heatmap grid #}
-                <div class="mb-4 pb-3 border-b border-base-300 min-h-[15rem]">
+                <div class="mb-4 pb-3 border-b border-base-100 min-h-[15rem]">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="mdi mdi-calendar-range text-xl text-accent"></span>
                         <span class="font-bold text-base">Release Year</span>
@@ -1052,7 +1052,7 @@
 
                 {% if platforms %}
                 {# Platforms filter - Tiered component #}
-                <div class="mb-4 pb-3 border-b border-base-300">
+                <div class="mb-4 pb-3 border-b border-base-100">
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="platformsExpanded = !platformsExpanded; localStorage.setItem('platformsExpanded', platformsExpanded)">
                         <span class="mdi mdi-controller text-xl text-accent"></span>
                         <span class="font-bold text-base">Platform</span>
@@ -1063,7 +1063,7 @@
                                 <span class="mdi mdi-close text-xs"></span>
                                 <span class="text-xs">Clear</span>
                             </button>
-                            <button type="button" class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-300" @click.stop="$dispatch('platforms-toggle-expand')" title="Expand/collapse all" x-cloak x-show="platformsExpanded">
+                            <button type="button" class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-100" @click.stop="$dispatch('platforms-toggle-expand')" title="Expand/collapse all" x-cloak x-show="platformsExpanded">
                                 <span class="mdi mdi-unfold-more-horizontal"></span>
                             </button>
                         </div>
@@ -1092,7 +1092,7 @@
                                 <span class="mdi mdi-close text-xs"></span>
                                 <span class="text-xs">Clear</span>
                             </button>
-                            <button type="button" class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-300" @click.stop="$dispatch('genres-toggle-expand')" title="Expand/collapse all" x-cloak x-show="genresExpanded">
+                            <button type="button" class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-100" @click.stop="$dispatch('genres-toggle-expand')" title="Expand/collapse all" x-cloak x-show="genresExpanded">
                                 <span class="mdi mdi-unfold-more-horizontal"></span>
                             </button>
                         </div>
@@ -1109,7 +1109,7 @@
                 {% endif %}
                 {% if series_list %}
                 {# Series filter - Flat list with search #}
-                <div class="mt-4 pt-3 border-t border-base-300" :class="seriesExpanded ? 'mb-3' : 'mb-1'">
+                <div class="mt-4 pt-3 border-t border-base-100" :class="seriesExpanded ? 'mb-3' : 'mb-1'">
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="seriesExpanded = !seriesExpanded; localStorage.setItem('seriesExpanded', seriesExpanded)">
                         <span class="mdi mdi-mushroom text-xl text-accent"></span>
                         <span class="font-bold text-base">Series</span>

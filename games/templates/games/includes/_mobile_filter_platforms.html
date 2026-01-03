@@ -502,7 +502,7 @@
                     x-show="expanded"
                     x-cloak
                     @click.stop="toggleAllExpanded()"
-                    class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-300"
+                    class="btn btn-ghost btn-xs text-base-content/40 hover:text-base-content hover:bg-base-100"
                     title="Expand/collapse all">
                 <span class="mdi mdi-unfold-more-horizontal"></span>
             </button>
@@ -518,9 +518,9 @@
 
         {# Loading State - Show until client counts are ready #}
         <div x-show="!countsReady" class="space-y-2 animate-pulse">
-            <div class="h-8 bg-base-300/50 rounded-lg"></div>
-            <div class="h-8 bg-base-300/50 rounded-lg"></div>
-            <div class="h-8 bg-base-300/50 rounded-lg"></div>
+            <div class="h-8 bg-base-100/50 rounded-lg"></div>
+            <div class="h-8 bg-base-100/50 rounded-lg"></div>
+            <div class="h-8 bg-base-100/50 rounded-lg"></div>
         </div>
 
         {# Platform Hierarchy (only show after counts ready) #}
@@ -532,12 +532,12 @@
                          :class="{
                              'bg-primary text-accent-content': isManufacturerSelected(mfrKey),
                              'bg-primary/10 text-accent': !isManufacturerSelected(mfrKey) && hasManufacturerOrChildrenSelected(mfrKey),
-                             'hover:bg-base-300/50': !isManufacturerSelected(mfrKey),
+                             'hover:bg-base-content/10': !isManufacturerSelected(mfrKey),
                              'opacity-40': getManufacturerTotalCount(mfrKey) === 0 && !hasManufacturerOrChildrenSelected(mfrKey)
                          }">
                         {# Expand/Collapse Arrow #}
                         <button type="button"
-                                class="p-0.5 rounded hover:bg-base-300/50"
+                                class="p-0.5 rounded hover:bg-base-content/10"
                                 @click.stop="toggleManufacturerExpansion(mfrKey)">
                             <span class="mdi text-base transition-transform duration-200"
                                   :class="isManufacturerExpanded(mfrKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
@@ -580,7 +580,7 @@
                                              :class="{
                                                  'bg-primary text-accent-content': isFormFactorSelected(mfrKey, ffKey),
                                                  'bg-primary/10 text-accent': !isFormFactorSelected(mfrKey, ffKey) && !isManufacturerSelected(mfrKey) && hasFormFactorSelection(mfrKey, ffKey),
-                                                 'hover:bg-base-300/50': !isFormFactorSelected(mfrKey, ffKey),
+                                                 'hover:bg-base-content/10': !isFormFactorSelected(mfrKey, ffKey),
                                                  'opacity-40': getFormFactorTotalCount(mfrKey, ffKey) === 0 && !hasFormFactorSelection(mfrKey, ffKey)
                                              }"
                                              @click="toggleFormFactorSelection(mfrKey, ffKey); debouncedFilterUpdate();">
@@ -597,7 +597,7 @@
                                                 <div class="flex items-center gap-2 py-1 px-2 rounded-md cursor-pointer transition-colors"
                                                      :class="{
                                                          'bg-primary text-accent-content': isPlatformSelected(platform.id),
-                                                         'hover:bg-base-300/50': !isPlatformSelected(platform.id),
+                                                         'hover:bg-base-content/10': !isPlatformSelected(platform.id),
                                                          'opacity-40': !isPlatformAvailable(platform.id) && !isPlatformSelected(platform.id)
                                                      }"
                                                      @click="togglePlatform(platform.id); debouncedFilterUpdate();">
@@ -621,7 +621,7 @@
                                     <div class="flex items-center gap-2 py-1 px-2 rounded-md cursor-pointer transition-colors"
                                          :class="{
                                              'bg-primary text-accent-content': isPlatformSelected(platform.id),
-                                             'hover:bg-base-300/50': !isPlatformSelected(platform.id),
+                                             'hover:bg-base-content/10': !isPlatformSelected(platform.id),
                                              'opacity-40': !isPlatformAvailable(platform.id) && !isPlatformSelected(platform.id)
                                          }"
                                          @click="togglePlatform(platform.id); debouncedFilterUpdate();">

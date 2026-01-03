@@ -4,7 +4,7 @@
 {% load static %}
 <a href="{% url 'game-detail' slug=game.slug %}"
    id="game-{{ game.id }}-mobile-card"
-   class="game-card-mobile flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors {% if highlight and game.id == highlight %}is-highlighted{% endif %}">
+   class="game-card-mobile flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-100 transition-colors {% if highlight and game.id == highlight %}is-highlighted{% endif %}">
 
     {# Rank Number #}
     {% if show_rank == 'alltime' or show_rank == 'filtered' %}
@@ -14,7 +14,7 @@
     {% endif %}
 
     {# Thumbnail #}
-    <div class="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-base-300">
+    <div class="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-base-100">
         <img src="{{ game.thumbnail }}"
              srcset="{{ game.thumbnail }} 1x, {{ game.thumbnail_2x }} 2x"
              alt="{{ game.name }}"

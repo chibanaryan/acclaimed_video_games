@@ -294,15 +294,15 @@
 
     {# Loading State - matches actual rendered height of 9 genre category headers #}
     <div x-show="!countsReady" class="space-y-1 animate-pulse" style="min-height: 356px;">
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
-        <div class="bg-base-300/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
     </div>
 
     {# Hierarchical Genre Tree - Only show after counts are ready #}
@@ -314,12 +314,12 @@
                      :class="{
                          'bg-primary text-accent-content': isCategorySelected(category.id),
                          'bg-primary/10 text-accent': !isCategorySelected(category.id) && hasSelectedChildren(category.id),
-                         'hover:bg-base-300/50': !isCategorySelected(category.id),
+                         'hover:bg-base-content/10': !isCategorySelected(category.id),
                          'opacity-50': !isCategoryAvailable(category.id) && !hasCategoryOrChildrenSelected(category.id)
                      }">
                     {# Expand/Collapse Arrow #}
                     <button type="button"
-                            class="p-0.5 rounded hover:bg-base-300/50"
+                            class="p-0.5 rounded hover:bg-base-content/10"
                             @click.stop="toggleCategoryExpanded(category.id)">
                         <span class="mdi text-base transition-transform duration-200"
                               :class="isCategoryExpanded(category.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
@@ -344,7 +344,7 @@
                         <div class="genre-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
                              :class="{
                                  'bg-primary text-accent-content': isGenreSelected(genre.id),
-                                 'hover:bg-base-300/50': !isGenreSelected(genre.id),
+                                 'hover:bg-base-content/10': !isGenreSelected(genre.id),
                                  'opacity-40': !isGenreAvailable(genre.id) && !isGenreSelected(genre.id),
                                  'bg-error/20 text-error': hasZeroResults(genre.id)
                              }"

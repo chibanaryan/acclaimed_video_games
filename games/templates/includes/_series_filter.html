@@ -90,7 +90,7 @@
      @series-reset.window="handleReset()">
 
    {# Search input - using DaisyUI label pattern #}
-   <label class="input input-sm input-bordered w-full bg-base-100 mb-2">
+   <label class="input input-bordered w-full bg-base-100 mb-2">
        <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
                <circle cx="11" cy="11" r="8"></circle>
@@ -99,35 +99,41 @@
        </svg>
        <input type="text"
               x-model="searchQuery"
-              placeholder="Search series..."
-              class="grow text-sm">
+              placeholder="Filter series..."
+              class="grow">
        <button type="button"
                @click="searchQuery = ''"
+               title="Clear search"
                class="btn btn-ghost btn-xs btn-circle"
                style="display: none"
                :style="{ display: searchQuery.length > 0 ? 'flex' : 'none' }"
                aria-label="Clear search">
-           <span class="mdi mdi-close"></span>
+           <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+               <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+                   <path d="M18 6 6 18"></path>
+                   <path d="m6 6 12 12"></path>
+               </g>
+           </svg>
        </button>
    </label>
 
    {# Loading State - 15 rows to match visible series items #}
    <div x-show="!countsReady" class="space-y-0.5 animate-pulse overflow-hidden" style="max-height: 434px;">
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-300/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
    </div>
 
    {# Series list - scrollable, shows all series with 2+ games #}
@@ -136,7 +142,7 @@
            <div class="series-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
                 :class="{
                     'bg-primary text-accent-content': isSelected(series.id),
-                    'hover:bg-base-300/50': !isSelected(series.id),
+                    'hover:bg-base-content/10': !isSelected(series.id),
                     'opacity-40': !isSeriesAvailable(series.id) && !isSelected(series.id),
                     'bg-error/20 text-error': hasZeroResults(series.id)
                 }"

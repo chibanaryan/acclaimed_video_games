@@ -4,7 +4,7 @@
 {# Context: max_list_count (for list count micro-bar, mobile shows count as text only) #}
 {# When game is not provided, renders empty template structure for JS cloning with all elements present #}
 {% load game_filters static humanize %}
-<div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-300 transition-colors mb-2 cursor-pointer {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-100 transition-colors mb-2 cursor-pointer {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
      {% if game %}id="game-{{ game.id }}-mobile"{% endif %}
      data-slot="root"
      {% if game %}onclick="window.location.href='{% url 'game-detail' slug=game.slug %}'"{% endif %}
@@ -30,7 +30,7 @@
     {% endif %}
 
     {# Thumbnail #}
-    <div class="w-10 mx-1 rounded overflow-hidden bg-base-300" style="aspect-ratio: 90/128;">
+    <div class="w-10 mx-1 rounded overflow-hidden bg-base-100" style="aspect-ratio: 90/128;">
         <img {% if game %}src="{{ game.thumbnail }}" alt="{{ game.name }}"{% endif %}
              width="90" height="128"
              class="w-full h-full object-cover" loading="lazy" decoding="async"
