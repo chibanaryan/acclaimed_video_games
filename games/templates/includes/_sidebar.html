@@ -57,7 +57,7 @@
              x-data="createUnifiedSearchData('{% url 'api-unified-search' %}', 3, 5)"
              x-init="window.addEventListener('reset-search-state', () => reset())"
              @click.away="showMenu = false">
-            <label for="sidebar-search" class="sr-only">Search games and developers</label>
+            <label for="sidebar-search" class="sr-only">Search games, developers, and series</label>
             <label class="input input-bordered input-sm w-full bg-base-100 border-base-content/20">
                 <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
@@ -68,7 +68,7 @@
                 <input type="text"
                        id="sidebar-search"
                        name="q"
-                       placeholder="Search..."
+                       placeholder="Search all..."
                        class="grow"
                        x-model="q"
                        @focus="showMenu = true"

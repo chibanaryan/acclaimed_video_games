@@ -33,7 +33,7 @@
                 <div x-show="showSearchDropdown" x-cloak
                      class="fixed left-4 right-4 top-24 bg-base-200 rounded-box shadow-lg z-[99999]">
                     <div class="p-4">
-                        <label for="nav-search-mobile" class="sr-only">Search games and developers</label>
+                        <label for="nav-search-mobile" class="sr-only">Search games, developers, and series</label>
                         <label class="input input-bordered input-sm w-full bg-base-100">
                             <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                 <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
@@ -49,7 +49,7 @@
                                    @focus="showMenu = true"
                                    @input.debounce.300ms="if(q.trim().length >= 2) { loadResults(); } else { developers = []; games = []; series = []; loading = false; }"
                                    @keydown.enter="if(q.trim().length >= 2) window.location.href = '{% url 'home' %}?q=' + encodeURIComponent(q.trim())"
-                                   placeholder="Search games & developers"
+                                   placeholder="Games, developers, series..."
                                    class="grow"
                                    autocomplete="off">
                             <button type="button"

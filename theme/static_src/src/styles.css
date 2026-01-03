@@ -1,3 +1,45 @@
+/*
+ * ============================================================================
+ * DESIGN TOKENS & CONVENTIONS
+ * ============================================================================
+ *
+ * SPACING (Tailwind units, 1 unit = 0.25rem)
+ *   Micro:    1, 1.5, 2         (gaps, inline spacing)
+ *   Small:    3, 4              (component padding)
+ *   Medium:   6, 8              (section spacing)
+ *   Large:    12, 16            (page-level spacing)
+ *
+ * TEXT OPACITY (use with text-base-content/XX)
+ *   100%  - Primary text (headings, body)
+ *   70%   - Secondary text (metadata, labels)
+ *   50%   - Tertiary/disabled text
+ *   30%   - Muted (placeholders, hints)
+ *
+ * BORDER OPACITY (use with border-base-content/XX)
+ *   20%   - Subtle dividers
+ *   10%   - Very subtle separators
+ *
+ * BORDER RADIUS
+ *   rounded-sm   - Tight elements (year grid cells)
+ *   rounded      - Interactive elements (buttons, chips, inputs)
+ *   rounded-lg   - Containers (cards, modals, dropdowns)
+ *   rounded-full - Circular elements (avatars, badges)
+ *
+ * BOX SHADOWS
+ *   shadow       - Subtle elevation (hover states)
+ *   shadow-lg    - Floating elements (dropdowns, popovers)
+ *   shadow-xl    - Primary focus (modals, featured cards)
+ *
+ * BREAKPOINTS
+ *   xxs: 360px   - Extra-small phones
+ *   xs: 480px    - Small phones
+ *   md: 768px    - Tablets (Tailwind default)
+ *   desktop: 962px - Sidebar layout threshold
+ *   lg: 1024px   - Large tablets (Tailwind default)
+ *
+ * ============================================================================
+ */
+
 @import "tailwindcss";
 
 @plugin "daisyui" {
@@ -772,26 +814,6 @@
     object-position: center top;
   }
 
-  /* Genre icon colors based on category */
-  .game-row span[data-group="combat"] {
-    color: #c77872 !important;
-  }
-
-  .game-row span[data-group="brain"] {
-    color: #6b9db8 !important;
-  }
-
-  .game-row span[data-group="world"] {
-    color: #6bb894 !important;
-  }
-
-  .game-row span[data-group="sim"] {
-    color: #d4ba6f !important;
-  }
-
-  .game-row span[data-group="arcade"] {
-    color: #c99268 !important;
-  }
 }
 
 /* Animation for new game rows loaded via HTMX */
