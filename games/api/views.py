@@ -503,7 +503,8 @@ def _compute_game_data_version():
     # v3: Added 'i' (IGDB ID) field for played game filtering
     # v4: Added 'lc' (list_count) field for displaying list appearances
     # v5: Added 'ys' (year_start) and 'ye' (year_end) to platforms for sorting
-    SCHEMA_VERSION = "5"
+    # v6: Force cache refresh after list_count data update
+    SCHEMA_VERSION = "6"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()

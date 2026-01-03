@@ -2,6 +2,8 @@
 
 ## 2026-01-02
 
+- Fix list count doubling on server render (add distinct=True to annotation with prefetch_related)
+- Fix client-side developer filtering to match server-side logic (filter out ancestor companies)
 - Refactor developer filter tree to use DaisyUI menu component with nested structure (cleaner hierarchy display)
 - Add rank distribution chart to developer detail and home page (SVG area chart with peak indicator, updates with filters)
 - Simplify game detail page: move played star to title, sort lists by year desc, remove accordions and progress bar

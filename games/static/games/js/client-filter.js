@@ -656,6 +656,7 @@ class GameFilterEngine {
                 id: devId,
                 name: developer.n,
                 slug: developer.s || null,
+                parentId: developer.pa || null,
                 root: rootDev ? {
                     id: currentId,
                     name: rootDev.n,
@@ -663,6 +664,20 @@ class GameFilterEngine {
                 } : null
             };
         }).filter(Boolean);
+
+        // Filter out ancestor developers (like get_display_developers in Python)
+        // When both parent and subsidiary are credited, show only the subsidiary
+        const ancestorIds = new Set();
+        for (const dev of developerList) {
+            // Walk up the parent chain and collect ancestor IDs
+            let currentDev = this.developers[dev.id];
+            while (currentDev && currentDev.pa) {
+                ancestorIds.add(currentDev.pa);
+                currentDev = this.developers[currentDev.pa];
+            }
+        }
+        // Filter out any developer that is an ancestor of another
+        const filteredDeveloperList = developerList.filter(d => !ancestorIds.has(d.id));
 
         // Resolve platforms
         const platformList = game.p.map(pid => {
@@ -693,7 +708,7 @@ class GameFilterEngine {
             rank: game.r,
             year: game.y,
             artworkId: game.a,
-            developers: developerList,
+            developers: filteredDeveloperList,
             platforms: platformList,
             genres: genreList
         };

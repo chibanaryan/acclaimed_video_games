@@ -734,7 +734,7 @@ class GameQuerySet(models.QuerySet):
         """Annotate games with count of list appearances."""
         from django.db.models import Count
 
-        return self.annotate(list_count=Count("lists"))
+        return self.annotate(list_count=Count("lists", distinct=True))
 
 
 class Game(models.Model):
