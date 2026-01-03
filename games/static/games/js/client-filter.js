@@ -177,7 +177,10 @@ class GameFilterEngine {
             start = null,
             end = null,
             sort = 'rank',
-            played = ''
+            played = '',
+            hltb_mode = 'main',
+            hltb_min = null,
+            hltb_max = null
         } = filters;
 
         const normalizedQuery = q.toLowerCase().trim();
@@ -276,6 +279,23 @@ class GameFilterEngine {
                 }
             }
 
+            // HLTB playtime filter
+            if (hltb_min !== null || hltb_max !== null) {
+                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
+
+                // Exclude games without HLTB data
+                if (playtime === null || playtime === undefined) {
+                    continue;
+                }
+
+                if (hltb_min !== null && playtime < hltb_min) {
+                    continue;
+                }
+                if (hltb_max !== null && playtime > hltb_max) {
+                    continue;
+                }
+            }
+
             results.push(game);
         }
 
@@ -338,10 +358,10 @@ class GameFilterEngine {
         // For series facets, calculate counts based on filters EXCLUDING series
         // This is standard faceted search behavior
 
-        const { q, start, end, platforms, genres, genreOption, series, played } = currentFilters;
+        const { q, start, end, platforms, genres, genreOption, series, played, hltb_mode = 'main', hltb_min = null, hltb_max = null } = currentFilters;
         const matchAll = genreOption !== 'any';
 
-        // Create base filter functions (without genre/platform)
+        // Create base filter functions (without genre/platform/series/HLTB)
         const passesBaseFilters = (game) => {
             const normalizedQuery = (q || '').toLowerCase().trim();
             if (normalizedQuery && !game.n.toLowerCase().includes(normalizedQuery)) {
@@ -383,6 +403,20 @@ class GameFilterEngine {
             if (seriesSet.size > 0) {
                 const gameSeries = game.sr || [];
                 if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
+            }
+
+            // Apply HLTB filter
+            if (hltb_min !== null || hltb_max !== null) {
+                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
+                if (playtime === null || playtime === undefined) {
+                    continue;
+                }
+                if (hltb_min !== null && playtime < hltb_min) {
+                    continue;
+                }
+                if (hltb_max !== null && playtime > hltb_max) {
+                    continue;
+                }
             }
 
             // For Match All mode with existing selections, only count genres on matching games
@@ -463,6 +497,20 @@ class GameFilterEngine {
             if (seriesSet.size > 0) {
                 const gameSeries = game.sr || [];
                 if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
+            }
+
+            // Apply HLTB filter
+            if (hltb_min !== null || hltb_max !== null) {
+                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
+                if (playtime === null || playtime === undefined) {
+                    continue;
+                }
+                if (hltb_min !== null && playtime < hltb_min) {
+                    continue;
+                }
+                if (hltb_max !== null && playtime > hltb_max) {
+                    continue;
+                }
             }
 
             // Count platforms for this game and track group membership
@@ -566,6 +614,20 @@ class GameFilterEngine {
                 if (played === 'no' && isGamePlayed) continue;
             }
 
+            // Apply HLTB filter
+            if (hltb_min !== null || hltb_max !== null) {
+                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
+                if (playtime === null || playtime === undefined) {
+                    continue;
+                }
+                if (hltb_min !== null && playtime < hltb_min) {
+                    continue;
+                }
+                if (hltb_max !== null && playtime > hltb_max) {
+                    continue;
+                }
+            }
+
             // Count this game's year
             if (game.y !== null) {
                 yearCounts.set(game.y, (yearCounts.get(game.y) || 0) + 1);
@@ -615,6 +677,20 @@ class GameFilterEngine {
                 }
             }
 
+            // Apply HLTB filter
+            if (hltb_min !== null || hltb_max !== null) {
+                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
+                if (playtime === null || playtime === undefined) {
+                    continue;
+                }
+                if (hltb_min !== null && playtime < hltb_min) {
+                    continue;
+                }
+                if (hltb_max !== null && playtime > hltb_max) {
+                    continue;
+                }
+            }
+
             // Count series for this game (series filter NOT applied)
             const gameSeries = game.sr || [];
             for (const sid of gameSeries) {
@@ -622,12 +698,87 @@ class GameFilterEngine {
             }
         }
 
+        // Calculate HLTB preset counts (apply all filters except HLTB)
+        const hltbPresetCounts = {
+            'short': 0,    // Under 10h
+            'medium': 0,   // 10-25h
+            'long': 0      // 25+ hours
+        };
+
+        for (const game of this.games) {
+            // Apply base filters (text, year, played)
+            if (!passesBaseFilters(game)) continue;
+
+            // Apply platform filter
+            if (platformSet.size > 0) {
+                if (!game.p.some(pid => platformSet.has(pid))) continue;
+            }
+
+            // Apply genre filter
+            if (genreIds.length > 0) {
+                const gameGenreSet = new Set(game.g);
+                if (matchAll) {
+                    let matchesAll = true;
+                    for (const expandedSet of expandedGenreSets) {
+                        let hasMatch = false;
+                        for (const gid of gameGenreSet) {
+                            if (expandedSet.has(gid)) {
+                                hasMatch = true;
+                                break;
+                            }
+                        }
+                        if (!hasMatch) {
+                            matchesAll = false;
+                            break;
+                        }
+                    }
+                    if (!matchesAll) continue;
+                } else {
+                    let hasAnyMatch = false;
+                    for (const expandedSet of expandedGenreSets) {
+                        for (const gid of gameGenreSet) {
+                            if (expandedSet.has(gid)) {
+                                hasAnyMatch = true;
+                                break;
+                            }
+                        }
+                        if (hasAnyMatch) break;
+                    }
+                    if (!hasAnyMatch) continue;
+                }
+            }
+
+            // Apply series filter
+            if (seriesSet.size > 0) {
+                const gameSeries = game.sr || [];
+                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
+            }
+
+            // Count for HLTB presets (HLTB filter NOT applied)
+            const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
+            if (playtime !== null && playtime !== undefined) {
+                if (playtime < 10) {
+                    hltbPresetCounts['short']++;
+                } else if (playtime < 30) {
+                    hltbPresetCounts['medium']++;
+                } else {
+                    hltbPresetCounts['long']++;
+                }
+            }
+        }
+
+        // Dispatch HLTB counts update event for the UI
+        window.dispatchEvent(new CustomEvent('hltb-counts-update', {
+            detail: hltbPresetCounts
+        }));
+
         return {
             genres: Object.fromEntries(genreCounts),
             platforms: Object.fromEntries(platformCounts),
             platformGroups: platformGroupCounts,
             years: Object.fromEntries(yearCounts),
-            series: Object.fromEntries(seriesCounts)
+            series: Object.fromEntries(seriesCounts),
+            hltbPresets: hltbPresetCounts
         };
     }
 

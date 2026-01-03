@@ -192,6 +192,25 @@
 
         {# Series Filter #}
         {% include 'games/includes/_mobile_filter_series.html' %}
+
+        {# HLTB Playtime Filter #}
+        <div class="pb-3 border-b border-base-100"
+             @filter-changed="debouncedFilterUpdate()">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="mdi mdi-clock-outline text-lg"></span>
+                <span class="text-sm font-semibold text-base-content/85">Playtime (HLTB)</span>
+                <button type="button"
+                        @click="filters.hltb_mode = 'main'; filters.hltb_preset = ''; filters.hltb_min = null; filters.hltb_max = null; window.dispatchEvent(new CustomEvent('hltb-reset')); debouncedFilterUpdate();"
+                        class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error"
+                        title="Clear playtime filter"
+                        x-cloak
+                        x-show="filters.hltb_preset || filters.hltb_min !== null">
+                    <span class="mdi mdi-close text-xs"></span>
+                    <span class="text-xs">Clear</span>
+                </button>
+            </div>
+            {% include 'includes/_hltb_filter.html' %}
+        </div>
     </div>
 
     {# Sticky Footer with Close Button #}

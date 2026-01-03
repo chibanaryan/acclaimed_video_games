@@ -228,6 +228,22 @@ function buildFilterParams(filters, options = {}) {
     if (filters.played) params.set('played', filters.played);
     if (filters.highlight) params.set('highlight', filters.highlight);
 
+    // HLTB filter parameters
+    if (filters.hltb_mode && filters.hltb_mode !== 'main') {
+        params.set('hltb_mode', filters.hltb_mode);
+    }
+    if (filters.hltb_min !== null && filters.hltb_min !== undefined) {
+        params.set('hltb_min', filters.hltb_min);
+        // If min is set but max is null, use "unlimited" for no upper limit
+        const maxValue = (filters.hltb_max !== null && filters.hltb_max !== undefined)
+            ? filters.hltb_max
+            : 'unlimited';
+        params.set('hltb_max', maxValue);
+    } else if (filters.hltb_max !== null && filters.hltb_max !== undefined) {
+        // If only max is set (no min), still include it
+        params.set('hltb_max', filters.hltb_max);
+    }
+
     return params;
 }
 

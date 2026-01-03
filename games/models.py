@@ -876,6 +876,7 @@ class GameQuerySet(models.QuerySet):
         ).select_related(
             "primary_igdb_game_data",
             "primary_wikipedia_game_data",
+            "primary_hltb_game_data",
         )
 
     def with_played_status(self, user):

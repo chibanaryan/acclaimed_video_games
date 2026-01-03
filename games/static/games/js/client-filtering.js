@@ -110,6 +110,30 @@ class ClientSideFiltering {
         this.currentFilters = filters;
 
         // Convert Alpine filter format to engine format (single-select, always use 'any')
+        // Parse HLTB filters with default min=0 when max is set
+        let hltb_min = filters.hltb_min !== undefined ? filters.hltb_min : null;
+        let hltb_max = filters.hltb_max !== undefined ? filters.hltb_max : null;
+
+        // Ensure non-negative values
+        if (hltb_min !== null && hltb_min < 0) {
+            hltb_min = 0;
+        }
+        if (hltb_max !== null && hltb_max < 0) {
+            hltb_max = 0;
+        }
+
+        // If max is set but min is not, default min to 0
+        if (hltb_max !== null && hltb_min === null) {
+            hltb_min = 0;
+        }
+
+        // Ensure max >= min (if both are set)
+        if (hltb_min !== null && hltb_max !== null) {
+            if (hltb_max < hltb_min) {
+                hltb_max = hltb_min;
+            }
+        }
+
         const engineFilters = {
             q: filters.q || '',
             genres: (filters.genres || []).map(id => parseInt(id, 10)),
@@ -119,7 +143,10 @@ class ClientSideFiltering {
             start: filters.start || null,
             end: filters.end || null,
             sort: filters.sort || 'rank',
-            played: filters.played || ''
+            played: filters.played || '',
+            hltb_mode: filters.hltb_mode || 'main',
+            hltb_min: hltb_min,
+            hltb_max: hltb_max
         };
 
         // Apply filters
@@ -203,7 +230,7 @@ class ClientSideFiltering {
 
         const state = this.renderResults(result, gameListContainer, {
             highlightId,
-            showRank: 'filtered'
+            showRank: this._computeShowRank()
         });
 
         // Update count display
@@ -248,6 +275,15 @@ class ClientSideFiltering {
         const end = params.get('end') ? parseInt(params.get('end')) : null;
         if (start && start > bounds.min) return 'filtered';
         if (end && end < bounds.max) return 'filtered';
+
+        // Check HLTB filters (only if they narrow the range from defaults)
+        // Default range is 0 to ∞, so only filter if min > 0 or max is explicitly set
+        const hltb_min_str = params.get('hltb_min');
+        const hltb_max_str = params.get('hltb_max');
+        const hltb_min = hltb_min_str ? parseInt(hltb_min_str) : null;
+        const hltb_max = (hltb_max_str && hltb_max_str !== 'unlimited') ? parseInt(hltb_max_str) : null;
+        if (hltb_min && hltb_min > 0) return 'filtered';
+        if (hltb_max !== null && !isNaN(hltb_max)) return 'filtered';
 
         return 'alltime';
     }

@@ -106,13 +106,33 @@
     {% endif %}
     {% if game.primary_hltb_game_data.hltb_url %}
     <tr>
-        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">HLTB:</td>
-        <td class="pb-3 align-middle">
-            <a href="{{ game.primary_hltb_game_data.hltb_url }}" target="_blank" class="link link-accent inline-flex items-center gap-1">
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">HLTB:</td>
+        <td class="pb-3">
+            <a href="{{ game.primary_hltb_game_data.hltb_url }}" target="_blank"
+               class="link link-accent inline-flex items-center gap-1">
                 HowLongToBeat <span class="mdi mdi-open-in-new text-sm"></span>
             </a>
-            {% if game.primary_hltb_game_data.main_story_hours %}
-            <span class="text-base-content/50 text-sm ml-2 tabular-nums">(~{{ game.primary_hltb_game_data.main_story_hours|floatformat:0 }}h main)</span>
+            {% if game.primary_hltb_game_data.main_story_hours or game.primary_hltb_game_data.completionist_hours %}
+            <div class="text-base-content/50 text-sm mt-1 space-y-0.5 tabular-nums">
+                {% if game.primary_hltb_game_data.main_story_hours %}
+                <div>
+                    <span class="mdi mdi-gamepad-variant text-xs"></span>
+                    Main: ~{{ game.primary_hltb_game_data.main_story_hours|floatformat:0 }}h
+                </div>
+                {% endif %}
+                {% if game.primary_hltb_game_data.main_extra_hours %}
+                <div>
+                    <span class="mdi mdi-star-outline text-xs"></span>
+                    Main+Extra: ~{{ game.primary_hltb_game_data.main_extra_hours|floatformat:0 }}h
+                </div>
+                {% endif %}
+                {% if game.primary_hltb_game_data.completionist_hours %}
+                <div>
+                    <span class="mdi mdi-trophy text-xs"></span>
+                    100%: ~{{ game.primary_hltb_game_data.completionist_hours|floatformat:0 }}h
+                </div>
+                {% endif %}
+            </div>
             {% endif %}
         </td>
     </tr>

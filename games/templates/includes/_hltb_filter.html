@@ -1,0 +1,222 @@
+{# HLTB Playtime Filter - Simple Short/Medium/Long buckets with dual-range slider #}
+<div class="hltb-filter"
+     x-data="{
+         countsReady: false,
+         presetCounts: {
+             'short': 0,
+             'medium': 0,
+             'long': 0
+         },
+         showCustomRange: false,
+
+         init() {
+             // Listen for count updates from client-side filtering
+             window.addEventListener('hltb-counts-update', (event) => {
+                 this.presetCounts = event.detail;
+                 this.countsReady = true;
+             });
+
+             // Listen for reset events
+             window.addEventListener('hltb-reset', () => this.handleReset());
+
+             // Show custom range if min/max are set but no preset matches
+             this.$watch('filters.hltb_min', () => this.updateCustomVisibility());
+             this.$watch('filters.hltb_max', () => this.updateCustomVisibility());
+
+             // Initialize countsReady after short delay
+             setTimeout(() => { this.countsReady = true; }, 150);
+         },
+
+         handleReset() {
+             this.showCustomRange = false;
+         },
+
+         updateCustomVisibility() {
+             // Show custom range if user has set values but no preset is active
+             const hasValues = (this.filters.hltb_min !== null && this.filters.hltb_min !== undefined) ||
+                             (this.filters.hltb_max !== null && this.filters.hltb_max !== undefined);
+             const hasPreset = this.filters.hltb_preset && this.filters.hltb_preset !== 'custom';
+             this.showCustomRange = hasValues && !hasPreset;
+         },
+
+         selectPreset(preset) {
+             // Toggle off if clicking the same preset
+             if (filters.hltb_preset === preset) {
+                 filters.hltb_preset = '';
+                 filters.hltb_min = null;
+                 filters.hltb_max = null;
+             } else {
+                 // Parse preset into min/max
+                 const ranges = {
+                     'short': [0, 10],      // Under 10 hours
+                     'medium': [10, 30],    // 10-30 hours
+                     'long': [30, null]     // 30+ hours (no upper bound)
+                 };
+                 const [min, max] = ranges[preset] || [null, null];
+                 filters.hltb_preset = preset;
+                 filters.hltb_min = min;
+                 filters.hltb_max = max;
+             }
+             this.dispatchFilterChange();
+         },
+
+         updateSlider() {
+             // Ensure non-negative values
+             if (filters.hltb_min !== null && filters.hltb_min < 0) {
+                 filters.hltb_min = 0;
+             }
+             if (filters.hltb_max !== null && filters.hltb_max < 0) {
+                 filters.hltb_max = 0;
+             }
+
+             // Ensure max >= min (if both are set)
+             if (filters.hltb_min !== null && filters.hltb_max !== null) {
+                 if (filters.hltb_max < filters.hltb_min) {
+                     filters.hltb_max = filters.hltb_min;
+                 }
+             }
+
+             filters.hltb_preset = 'custom';
+             this.dispatchFilterChange();
+         },
+
+         toggleCompletionist() {
+             filters.hltb_mode = filters.hltb_mode === 'completionist' ? 'main' : 'completionist';
+             this.dispatchFilterChange();
+         },
+
+         dispatchFilterChange() {
+             this.$dispatch('filter-changed', {
+                 type: 'hltb',
+                 mode: filters.hltb_mode,
+                 min: filters.hltb_min,
+                 max: filters.hltb_max
+             });
+         },
+
+         isPresetActive(preset) {
+             return filters.hltb_preset === preset;
+         },
+
+         getPresetCount(preset) {
+             return this.presetCounts[preset] || 0;
+         },
+
+         getRangeText() {
+             const min = filters.hltb_min ?? 0;
+             const max = filters.hltb_max ?? 100;
+             if (max >= 100) return `${min}+ hours`;
+             return `${min}-${max} hours`;
+         }
+     }"
+     @hltb-reset.window="handleReset()">
+
+    {# Two-column layout: Presets on left, Custom range on right #}
+    <div class="flex gap-3 items-stretch">
+        {# Left column: Preset Length Chips - Short/Medium/Long #}
+        <div class="flex-1 flex flex-col">
+            <label class="text-xs text-base-content/70 font-medium block mb-2">Presets</label>
+
+            {# Loading State #}
+            <div x-show="!countsReady" class="space-y-1 animate-pulse">
+                <div class="bg-base-100/50 rounded-md h-9"></div>
+                <div class="bg-base-100/50 rounded-md h-9"></div>
+                <div class="bg-base-100/50 rounded-md h-9"></div>
+            </div>
+
+            {# Preset Buttons - Stacked vertically #}
+            <div x-show="countsReady" x-cloak class="space-y-1">
+                {# Short (Under 10h) #}
+                <div @click="selectPreset('short')"
+                     class="flex items-center gap-2 py-1 px-2 rounded-md text-sm transition-colors cursor-pointer"
+                     :class="{
+                         'bg-primary text-accent-content': isPresetActive('short'),
+                         'hover:bg-base-content/10': !isPresetActive('short')
+                     }"
+                     title="Under 10 hours">
+                    <span class="mdi mdi-rabbit text-base"></span>
+                    <span class="flex-1">Short</span>
+                    <span class="text-xs opacity-60 tabular-nums" x-text="getPresetCount('short')"></span>
+                </div>
+
+                {# Medium (10-30h) #}
+                <div @click="selectPreset('medium')"
+                     class="flex items-center gap-2 py-1 px-2 rounded-md text-sm transition-colors cursor-pointer"
+                     :class="{
+                         'bg-primary text-accent-content': isPresetActive('medium'),
+                         'hover:bg-base-content/10': !isPresetActive('medium')
+                     }"
+                     title="10-30 hours">
+                    <span class="mdi mdi-walk text-base"></span>
+                    <span class="flex-1">Medium</span>
+                    <span class="text-xs opacity-60 tabular-nums" x-text="getPresetCount('medium')"></span>
+                </div>
+
+                {# Long (30+ hours) #}
+                <div @click="selectPreset('long')"
+                     class="flex items-center gap-2 py-1 px-2 rounded-md text-sm transition-colors cursor-pointer"
+                     :class="{
+                         'bg-primary text-accent-content': isPresetActive('long'),
+                         'hover:bg-base-content/10': !isPresetActive('long')
+                     }"
+                     title="30+ hours">
+                    <span class="mdi mdi-tortoise text-base"></span>
+                    <span class="flex-1">Long</span>
+                    <span class="text-xs opacity-60 tabular-nums" x-text="getPresetCount('long')"></span>
+                </div>
+            </div>
+        </div>
+
+        {# Right column: Custom Range Inputs #}
+        <div class="flex-1 flex flex-col">
+            <label class="text-xs text-base-content/70 font-medium block mb-2">Range (hours)</label>
+
+            {# Min and Max fields side by side #}
+            <div class="flex items-center gap-2">
+                {# Min input #}
+                <div class="flex-1">
+                    <label class="text-xs text-base-content/70 font-medium block mb-1">Min</label>
+                    <input type="number"
+                           x-model.number="filters.hltb_min"
+                           @input="updateSlider()"
+                           min="0"
+                           max="100"
+                           placeholder="0"
+                           class="input input-bordered input-sm w-full bg-base-100 tabular-nums">
+                </div>
+
+                <span class="text-base-content/40 mt-5 text-xs">to</span>
+
+                {# Max input #}
+                <div class="flex-1">
+                    <label class="text-xs text-base-content/70 font-medium block mb-1">Max</label>
+                    <input type="number"
+                           x-model.number="filters.hltb_max"
+                           @input="updateSlider()"
+                           min="0"
+                           max="100"
+                           placeholder="∞"
+                           class="input input-bordered input-sm w-full bg-base-100 tabular-nums">
+                </div>
+            </div>
+
+            {# Spacer to push button to bottom #}
+            <div class="flex-grow"></div>
+
+            {# 100% completion button - bottom right corner #}
+            <div class="flex justify-end">
+                <div @click="toggleCompletionist()"
+                     class="flex items-center gap-1 py-1 px-2 rounded-md text-xs transition-colors cursor-pointer border"
+                     :class="{
+                         'bg-primary text-accent-content border-primary': filters.hltb_mode === 'completionist',
+                         'bg-base-200 border-base-300 hover:bg-base-300': filters.hltb_mode !== 'completionist'
+                     }"
+                     title="Filter by 100% completion time">
+                    <span class="mdi mdi-trophy text-sm"></span>
+                    <span>100% Completion</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

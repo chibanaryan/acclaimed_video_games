@@ -3,7 +3,7 @@
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
 {% load humanize %}
-{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "series": [], "rank_display": "filtered", "sort": "rank"}</script>{% endif %}
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "series": [], "rank_display": "filtered", "sort": "rank", "hltb_mode": "main", "hltb_min": null, "hltb_max": null}</script>{% endif %}
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 {% if series_list %}{{ series_list|json_script:"series-data" }}{% else %}<script id="series-data" type="application/json">[]</script>{% endif %}
@@ -14,12 +14,14 @@
     var genresExpanded = localStorage.getItem('genresExpanded') !== 'false';
     var platformsExpanded = localStorage.getItem('platformsExpanded') !== 'false';
     var seriesExpanded = localStorage.getItem('seriesExpanded') !== 'false';
+    var hltbExpanded = localStorage.getItem('hltbExpanded') !== 'false';
     // Add CSS to show/hide filter sections based on initial state
     var style = document.createElement('style');
     style.id = 'filter-init-styles';
     style.textContent = '[data-filter-init="genres"]{display:' + (genresExpanded ? 'block' : 'none') + '!important}' +
                         '[data-filter-init="platforms"]{display:' + (platformsExpanded ? 'block' : 'none') + '!important}' +
-                        '[data-filter-init="series"]{display:' + (seriesExpanded ? 'block' : 'none') + '!important}';
+                        '[data-filter-init="series"]{display:' + (seriesExpanded ? 'block' : 'none') + '!important}' +
+                        '[data-filter-init="hltb"]{display:' + (hltbExpanded ? 'block' : 'none') + '!important}';
     document.head.appendChild(style);
     // Remove the style once Alpine has initialized (allows x-show to work)
     document.addEventListener('alpine:init', function() {
@@ -43,6 +45,7 @@
         genresExpanded: localStorage.getItem('genresExpanded') !== 'false',
         platformsExpanded: localStorage.getItem('platformsExpanded') !== 'false',
         seriesExpanded: localStorage.getItem('seriesExpanded') !== 'false',
+        hltbExpanded: localStorage.getItem('hltbExpanded') !== 'false',
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
@@ -154,6 +157,10 @@
                 this.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
                 const seriesParam = params.get('series');
                 this.filters.series = seriesParam ? seriesParam.split(',').filter(id => id) : [];
+                this.filters.hltb_mode = params.get('hltb_mode') || 'main';
+                this.filters.hltb_min = params.get('hltb_min') ? parseInt(params.get('hltb_min')) : null;
+                this.filters.hltb_max = params.get('hltb_max') ? parseInt(params.get('hltb_max')) : null;
+                this.filters.hltb_preset = this.calculateHltbPreset(this.filters.hltb_min, this.filters.hltb_max);
                 // Use client-side filtering if ready, otherwise show loading state
                 if (this.clientFilterReady) {
                     this.performClientUpdate();
@@ -213,7 +220,9 @@
                    this.filters.start !== {{ min_year }} ||
                    this.filters.end !== {{ max_year }} ||
                    this.filters.sort !== 'rank' ||
-                   this.filters.played;
+                   this.filters.played ||
+                   this.filters.hltb_min !== null ||
+                   this.filters.hltb_max !== null;
         },
         async initClientFiltering() {
             // Wait for deferred scripts to load (retry up to 10 times, 100ms apart)
@@ -292,6 +301,11 @@
             this.filters.series = f.series || [];
             this.filters.sort = f.sort || 'rank';
             this.filters.played = f.played || '';
+            this.filters.hltb_mode = f.hltb_mode || 'main';
+            this.filters.hltb_min = f.hltb_min || null;
+            this.filters.hltb_max = f.hltb_max || null;
+            // Calculate preset from min/max (not stored in URL)
+            this.filters.hltb_preset = this.calculateHltbPreset(this.filters.hltb_min, this.filters.hltb_max);
 
             this.savedFiltersOpen = false;
             this.debouncedFilterUpdate();
@@ -354,6 +368,9 @@
                             series: this.filters.series,
                             sort: this.filters.sort,
                             played: this.filters.played,
+                            hltb_mode: this.filters.hltb_mode,
+                            hltb_min: this.filters.hltb_min,
+                            hltb_max: this.filters.hltb_max,
                         },
                     }),
                 });
@@ -495,17 +512,57 @@
                 }
             }
 
+            // Build HLTB playtime label
+            let hltbLabel = '';
+            if (this.filters.hltb_min !== null || this.filters.hltb_max !== null) {
+                let timeDesc = '';
+                const mode = this.filters.hltb_mode || 'main';
+                const modeSuffix = mode === 'completionist' ? ' (100%)' : '';
+
+                const min = this.filters.hltb_min;
+                const max = this.filters.hltb_max;
+
+                // Recognize preset patterns from min/max values
+                // Short: 0-10, Medium: 10-30, Long: 30+
+                if (min === 0 && max === 10) {
+                    timeDesc = 'Short (<10 Hour)';
+                } else if (min === 10 && max === 30) {
+                    timeDesc = 'Medium (10-30 Hour)';
+                } else if (min === 30 && max === null) {
+                    timeDesc = 'Long (30+ Hour)';
+                }
+                // Custom ranges
+                else if (min === 0 && max !== null) {
+                    timeDesc = `<${max} Hour`;
+                } else if (min !== null && max !== null) {
+                    if (min === max) {
+                        timeDesc = `~${min} Hour`;
+                    } else {
+                        timeDesc = `${min}-${max} Hour`;
+                    }
+                } else if (min !== null) {
+                    timeDesc = `${min}+ Hour`;
+                } else if (max !== null) {
+                    timeDesc = `<${max} Hour`;
+                }
+
+                if (timeDesc) {
+                    hltbLabel = ' ' + timeDesc + modeSuffix;
+                }
+            }
+
             const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
             let platform = platformLabel;
 
-            // Omit 'Video' prefix when genre or series is selected
-            if ((genreLabel || seriesLabel) && platform === 'Video') {
+            // Omit 'Video' prefix when genre, series, or playtime is selected
+            if ((genreLabel || seriesLabel || hltbLabel) && platform === 'Video') {
                 platform = '';
             }
 
-            // Build combined title: 'Most Acclaimed [Platform] [Genre] [Series] Games of [time]'
-            // Platform comes first if present, then genre, then series
+            // Build combined title: 'Most Acclaimed [HLTB] [Platform] [Genre] [Series] Games of [time]'
+            // HLTB comes first (matches server-side ordering)
             let titleParts = 'Most Acclaimed';
+            if (hltbLabel) titleParts += hltbLabel;  // HLTB first (hltbLabel has leading space)
             if (platform) titleParts += ' ' + platform;
             if (genreLabel) titleParts += genreLabel;  // genreLabel already has leading space
             if (seriesLabel) titleParts += ' ' + seriesLabel;
@@ -543,19 +600,29 @@
             if (names.length === 2) return names.join(' and ');
             return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
         },
-        handleFilterChange(type, items) {
-            const itemIds = items.map(item => {
-                if (typeof item === 'object' && item !== null && item.id !== undefined) {
-                    return String(item.id);
+        handleFilterChange(type, data) {
+            if (type === 'hltb') {
+                // HLTB passes an object with mode, min, max
+                this.filters.hltb_mode = data.mode;
+                this.filters.hltb_min = data.min;
+                this.filters.hltb_max = data.max;
+                // Calculate preset from min/max
+                this.filters.hltb_preset = this.calculateHltbPreset(data.min, data.max);
+            } else {
+                // Other filters pass an array of items
+                const itemIds = data.map(item => {
+                    if (typeof item === 'object' && item !== null && item.id !== undefined) {
+                        return String(item.id);
+                    }
+                    return String(item);
+                });
+                if (type === 'genres') {
+                    this.filters.genres = itemIds;
+                } else if (type === 'platforms') {
+                    this.filters.platforms = itemIds;
+                } else if (type === 'series') {
+                    this.filters.series = itemIds;
                 }
-                return String(item);
-            });
-            if (type === 'genres') {
-                this.filters.genres = itemIds;
-            } else if (type === 'platforms') {
-                this.filters.platforms = itemIds;
-            } else if (type === 'series') {
-                this.filters.series = itemIds;
             }
             if (this.initialized) {
                 this.debouncedFilterUpdate();
@@ -590,6 +657,22 @@
             this.$dispatch('series-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
+        calculateHltbPreset(min, max) {
+            // Calculate preset from min/max values
+            if (min === null && max === null) return '';
+            if (min === 0 && max === 10) return 'short';
+            if (min === 10 && max === 30) return 'medium';
+            if (min === 30 && max === null) return 'long';
+            return 'custom';
+        },
+        resetHltb() {
+            this.filters.hltb_mode = 'main';
+            this.filters.hltb_preset = '';
+            this.filters.hltb_min = null;
+            this.filters.hltb_max = null;
+            window.dispatchEvent(new CustomEvent('hltb-reset'));
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
         resetPlayed() {
             this.filters.played = '';
             if (this.initialized) this.debouncedFilterUpdate();
@@ -603,6 +686,10 @@
             this.filters.series = [];
             this.filters.played = '';
             this.filters.sort = 'rank';
+            this.filters.hltb_mode = 'main';
+            this.filters.hltb_preset = '';
+            this.filters.hltb_min = null;
+            this.filters.hltb_max = null;
             // Dispatch reset events to update filter UI components AND reset expanded states
             // These events trigger handleReset() in each component which:
             // - Genre: clears expandedCategories, removes from localStorage
@@ -612,6 +699,7 @@
             this.$dispatch('genres-reset');
             this.$dispatch('series-reset');
             this.$dispatch('year-reset');
+            window.dispatchEvent(new CustomEvent('hltb-reset'));
             if (this.initialized) this.debouncedFilterUpdate();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
@@ -1143,16 +1231,57 @@
                     }
                 }
 
+                // Build HLTB playtime label
+                let hltbLabel = '';
+                if (filters.hltb_min !== null || filters.hltb_max !== null) {
+                    let timeDesc = '';
+                    const mode = filters.hltb_mode || 'main';
+                    const modeSuffix = mode === 'completionist' ? ' (100%)' : '';
+
+                    const min = filters.hltb_min;
+                    const max = filters.hltb_max;
+
+                    // Recognize preset patterns from min/max values
+                    // Short: 0-10, Medium: 10-30, Long: 30+
+                    if (min === 0 && max === 10) {
+                        timeDesc = 'Short (<10 Hour)';
+                    } else if (min === 10 && max === 30) {
+                        timeDesc = 'Medium (10-30 Hour)';
+                    } else if (min === 30 && max === null) {
+                        timeDesc = 'Long (30+ Hour)';
+                    }
+                    // Custom ranges
+                    else if (min === 0 && max !== null) {
+                        timeDesc = `<${max} Hour`;
+                    } else if (min !== null && max !== null) {
+                        if (min === max) {
+                            timeDesc = `~${min} Hour`;
+                        } else {
+                            timeDesc = `${min}-${max} Hour`;
+                        }
+                    } else if (min !== null) {
+                        timeDesc = `${min}+ Hour`;
+                    } else if (max !== null) {
+                        timeDesc = `<${max} Hour`;
+                    }
+
+                    if (timeDesc) {
+                        hltbLabel = ' ' + timeDesc + modeSuffix;
+                    }
+                }
+
                 const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
                 let platform = platformLabel;
 
-                // Omit 'Video' prefix when genre or series is selected
-                if ((genreLabel || seriesLabel) && platform === 'Video') {
+                // Omit 'Video' prefix when genre, series, or playtime is selected
+                if ((genreLabel || seriesLabel || hltbLabel) && platform === 'Video') {
                     platform = '';
                 }
 
-                // Build combined title
+                // Build combined title: 'Most Acclaimed [HLTB] [Platform] [Genre] [Series] Games of [time]'
+                // HLTB comes first (matches server-side ordering)
                 let titleParts = 'Most Acclaimed';
+                if (hltbLabel) titleParts += hltbLabel;  // HLTB first (hltbLabel has leading space)
                 if (platform) titleParts += ' ' + platform;
                 if (genreLabel) titleParts += genreLabel;
                 if (seriesLabel) titleParts += ' ' + seriesLabel;
@@ -1200,7 +1329,7 @@
             <button type="button" class="btn btn-primary btn-sm shrink-0" @click="filterOpen = true">
                 <span class="mdi mdi-tune"></span>
                 Filters
-                <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || (filters.series && filters.series.length > 0) || filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
+                <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || (filters.series && filters.series.length > 0) || filters.start !== {{ min_year }} || filters.end !== {{ max_year }} || filters.hltb_preset || filters.hltb_min !== null">
                     <span class="badge badge-xs badge-secondary">!</span>
                 </template>
             </button>
@@ -1457,6 +1586,28 @@
                     </div>
                 </div>
                 {% endif %}
+
+                {# HLTB Playtime filter #}
+                <div class="mt-4 pt-3 border-t border-base-100" :class="hltbExpanded ? 'mb-3' : 'mb-1'">
+                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="hltbExpanded = !hltbExpanded; localStorage.setItem('hltbExpanded', hltbExpanded)">
+                        <span class="mdi mdi-clock-outline text-xl text-accent"></span>
+                        <span class="font-bold text-base">Playtime (HLTB)</span>
+                        <span class="mdi text-base-content/60 ml-1"
+                              :class="hltbExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetHltb()" title="Clear playtime filter" x-cloak x-show="filters.hltb_preset || filters.hltb_min !== null">
+                            <span class="mdi mdi-close text-xs"></span>
+                            <span class="text-xs">Clear</span>
+                        </button>
+                    </div>
+                    <div x-show="hltbExpanded"
+                         x-collapse
+                         data-filter-init="hltb"
+                         data-filter-type="hltb"
+                         @filter-changed="handleFilterChange($event.detail.type, $event.detail)">
+                        {% include 'includes/_hltb_filter.html' %}
+                    </div>
+                </div>
+
                 </div>
             </div>
         </div>

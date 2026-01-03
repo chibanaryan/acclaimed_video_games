@@ -508,7 +508,9 @@ def _compute_game_data_version():
     # v5: Added 'ys' (year_start) and 'ye' (year_end) to platforms for sorting
     # v6: Force cache refresh after list_count data update
     # v7: Added 'pt' (playtime) field for HLTB filtering
-    SCHEMA_VERSION = "7"
+    # v8: Added 'ptc' (playtime_completionist) field for HLTB 100% filtering
+    # v9: Updated HLTB bucket boundaries (short: 0-10h, medium: 10-30h, long: 30+h)
+    SCHEMA_VERSION = "9"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()
@@ -644,13 +646,16 @@ class GameAllDataView(APIView):
             if game.primary_igdb_game_data:
                 artwork_id = game.primary_igdb_game_data.artwork_id
 
-            # Get playtime from HLTB data (integer hours for filtering)
+            # Get playtime from HLTB data (as decimal for precise filtering)
             playtime = None
-            if (
-                game.primary_hltb_game_data
-                and game.primary_hltb_game_data.main_story_hours
-            ):
-                playtime = int(game.primary_hltb_game_data.main_story_hours)
+            playtime_completionist = None
+            if game.primary_hltb_game_data:
+                if game.primary_hltb_game_data.main_story_hours:
+                    playtime = float(game.primary_hltb_game_data.main_story_hours)
+                if game.primary_hltb_game_data.completionist_hours:
+                    playtime_completionist = float(
+                        game.primary_hltb_game_data.completionist_hours
+                    )
 
             games_data.append(
                 {
@@ -666,7 +671,8 @@ class GameAllDataView(APIView):
                     "g": genre_ids,
                     "sr": series_ids,
                     "lc": game.list_count,  # List count for display
-                    "pt": playtime,  # Playtime in hours from HLTB
+                    "pt": playtime,  # Main story playtime in hours from HLTB
+                    "ptc": playtime_completionist,  # Completionist playtime
                 }
             )
 

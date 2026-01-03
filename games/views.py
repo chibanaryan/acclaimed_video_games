@@ -382,9 +382,6 @@ def _build_filter_title(
         ]
         if genre_names:
             genre_label = f" {_join_names(genre_names)}"
-            # Omit "Video" prefix when genre selected ("Action Games")
-            if platform_label == "Video":
-                platform_label = ""
 
     # If exactly one series is selected, fold it into the title
     series_label = ""
@@ -394,9 +391,44 @@ def _build_filter_title(
         series_name = name_lookup.get(str(selected_series[0]), "").strip()
         if series_name:
             series_label = f" {series_name}"
-            # Omit "Video" prefix when series selected
-            if platform_label == "Video":
-                platform_label = ""
+
+    # Build HLTB playtime label
+    hltb_label = ""
+    hltb_mode = filters.get("hltb_mode", "main")
+    hltb_min = filters.get("hltb_min")
+    hltb_max = filters.get("hltb_max")
+
+    if hltb_min is not None or hltb_max is not None:
+        mode_suffix = " (100%)" if hltb_mode == "completionist" else ""
+        time_desc = ""
+
+        # Recognize preset patterns from min/max values
+        # Short: 0-10, Medium: 10-30, Long: 30+
+        if hltb_min == 0 and hltb_max == 10:
+            time_desc = "Short (<10 Hour)"
+        elif hltb_min == 10 and hltb_max == 30:
+            time_desc = "Medium (10-30 Hour)"
+        elif hltb_min == 30 and hltb_max is None:
+            time_desc = "Long (30+ Hour)"
+        # Custom ranges
+        elif hltb_min == 0 and hltb_max is not None:
+            time_desc = f"<{int(hltb_max)} Hour"
+        elif hltb_min is not None and hltb_max is not None:
+            if hltb_min == hltb_max:
+                time_desc = f"~{int(hltb_min)} Hour"
+            else:
+                time_desc = f"{int(hltb_min)}-{int(hltb_max)} Hour"
+        elif hltb_min is not None:
+            time_desc = f"{int(hltb_min)}+ Hour"
+        elif hltb_max is not None:
+            time_desc = f"<{int(hltb_max)} Hour"
+
+        if time_desc:
+            hltb_label = f"{time_desc}{mode_suffix}"
+
+    # Omit "Video" prefix when genre, series, or playtime is selected
+    if platform_label == "Video" and (genre_label or series_label or hltb_label):
+        platform_label = ""
 
     time_suffix = f" of {time_window}" if time_window else ""
 
@@ -408,7 +440,15 @@ def _build_filter_title(
     elif played == "no":
         played_suffix = ": Unplayed"
 
-    title = f"Most Acclaimed {platform_label}{genre_label}{series_label} Games"
+    # Build title with playtime before platform
+    # Add space after hltb_label only if it exists
+    if hltb_label:
+        title = (
+            f"Most Acclaimed {hltb_label} "
+            f"{platform_label}{genre_label}{series_label} Games"
+        )
+    else:
+        title = f"Most Acclaimed {platform_label}{genre_label}{series_label} Games"
     return f"{title}{time_suffix}{played_suffix}"
 
 
@@ -469,6 +509,41 @@ def download_games_csv(request):
     series_param = request.GET.get("series")
     played_param = request.GET.get("played")
 
+    # Parse HLTB parameters early (needed for filtering below)
+    hltb_mode = request.GET.get("hltb_mode", "main")
+    hltb_preset = request.GET.get("hltb_preset", "")
+    hltb_min_param = request.GET.get("hltb_min")
+    hltb_max_param = request.GET.get("hltb_max")
+
+    # Convert to int or None
+    hltb_min = None
+    hltb_max = None
+    if hltb_min_param:
+        try:
+            hltb_min = int(hltb_min_param)
+            # Ensure non-negative
+            if hltb_min < 0:
+                hltb_min = 0
+        except (ValueError, TypeError):
+            pass
+    if hltb_max_param and hltb_max_param != "unlimited":
+        try:
+            hltb_max = int(hltb_max_param)
+            # Ensure non-negative
+            if hltb_max < 0:
+                hltb_max = 0
+        except (ValueError, TypeError):
+            pass
+
+    # If max is set but min is not, default min to 0
+    if hltb_max is not None and hltb_min is None:
+        hltb_min = 0
+
+    # Ensure max >= min (if both are set)
+    if hltb_min is not None and hltb_max is not None:
+        if hltb_max < hltb_min:
+            hltb_max = hltb_min
+
     if q:
         qs = qs.filter(name__icontains=q)
 
@@ -504,6 +579,41 @@ def download_games_csv(request):
 
     # Apply played status filter (authenticated users only)
     qs = _apply_played_filter(qs, user, played_param)
+
+    # Apply HLTB playtime filtering (reuse logic from GameSearchView)
+    # Parse preset into min/max if provided
+    pt_min = hltb_min
+    pt_max = hltb_max
+    if hltb_preset:
+        preset_ranges = {
+            "short": (0, 10),  # Under 10 hours
+            "medium": (10, 30),  # 10-30 hours
+            "long": (30, None),  # 30+ hours (no upper bound)
+        }
+        if hltb_preset in preset_ranges:
+            pt_min, pt_max = preset_ranges[hltb_preset]
+
+    # Determine field based on mode
+    if hltb_mode == "completionist":
+        field_prefix = "primary_hltb_game_data__completionist_hours"
+    else:
+        field_prefix = "primary_hltb_game_data__main_story_hours"
+
+    # Apply filters and exclude games without HLTB data when filter is active
+    # Filter on exact decimal values (no rounding in logic)
+    if pt_min is not None or pt_max is not None:
+        if pt_min is not None:
+            try:
+                qs = qs.filter(**{f"{field_prefix}__gte": int(pt_min)})
+                qs = qs.exclude(**{field_prefix: None})
+            except (ValueError, TypeError):
+                pass
+        if pt_max is not None:
+            try:
+                qs = qs.filter(**{f"{field_prefix}__lte": int(pt_max)})
+                qs = qs.exclude(**{field_prefix: None})
+            except (ValueError, TypeError):
+                pass
 
     qs = qs.distinct().order_by("rank")
 
@@ -570,6 +680,8 @@ def download_games_csv(request):
     if series_param:
         series_ids_for_filter = [str(x) for x in series_param.split(",") if x.strip()]
 
+    # HLTB parameters already parsed at top of function
+
     filters_for_title = {
         "q": q or "",
         "start": start_for_title,
@@ -579,6 +691,10 @@ def download_games_csv(request):
         "series": series_ids_for_filter,
         "played": played_param or "",
         "rank_display": "filtered",
+        "hltb_mode": hltb_mode,
+        "hltb_preset": hltb_preset,
+        "hltb_min": hltb_min,
+        "hltb_max": hltb_max,
     }
     filter_title = _build_filter_title(
         filters_for_title,
@@ -608,6 +724,9 @@ def download_games_csv(request):
         "Platforms",
         "Genres",
         "Series",
+        "HLTB Main (hours)",
+        "HLTB Main+Extra (hours)",
+        "HLTB 100% (hours)",
     ]
     if is_authenticated:
         header.append("Played")
@@ -619,6 +738,21 @@ def download_games_csv(request):
         genres = ", ".join(g.name for g in game.wikipedia_genres.all())
         series = ", ".join(s.name for s in game.series.all())
         filtered_rank = index if use_filtered_rank else game.rank
+
+        # Get HLTB data
+        hltb_main = ""
+        hltb_main_extra = ""
+        hltb_completionist = ""
+        if game.primary_hltb_game_data:
+            if game.primary_hltb_game_data.main_story_hours:
+                hltb_main = f"{game.primary_hltb_game_data.main_story_hours:.1f}"
+            if game.primary_hltb_game_data.main_extra_hours:
+                hltb_main_extra = f"{game.primary_hltb_game_data.main_extra_hours:.1f}"
+            if game.primary_hltb_game_data.completionist_hours:
+                hltb_completionist = (
+                    f"{game.primary_hltb_game_data.completionist_hours:.1f}"
+                )
+
         row = [
             filtered_rank,
             game.rank,
@@ -628,6 +762,9 @@ def download_games_csv(request):
             platforms,
             genres,
             series,
+            hltb_main,
+            hltb_main_extra,
+            hltb_completionist,
         ]
         if is_authenticated:
             # Use the annotated is_played_by_user field
@@ -844,23 +981,76 @@ class HomePageView(RobustPaginationMixin, ListView):
         played_param = self.request.GET.get("played")
         qs = _apply_played_filter(qs, self.request.user, played_param)
 
-        # Playtime range filtering (main story hours)
-        pt_min = self.request.GET.get("pt_min")
-        pt_max = self.request.GET.get("pt_max")
-        if pt_min:
+        # HLTB playtime filtering
+        hltb_mode = self.request.GET.get("hltb_mode", "main")
+        hltb_preset = self.request.GET.get("hltb_preset")
+        pt_min_param = self.request.GET.get("pt_min") or self.request.GET.get(
+            "hltb_min"
+        )
+        pt_max_param = self.request.GET.get("pt_max") or self.request.GET.get(
+            "hltb_max"
+        )
+
+        # Convert to int or None
+        pt_min = None
+        pt_max = None
+        if pt_min_param:
             try:
-                qs = qs.filter(
-                    primary_hltb_game_data__main_story_hours__gte=int(pt_min)
-                )
+                pt_min = int(pt_min_param)
+                # Ensure non-negative
+                if pt_min < 0:
+                    pt_min = 0
             except (ValueError, TypeError):
                 pass
-        if pt_max:
+        if pt_max_param and pt_max_param != "unlimited":
             try:
-                qs = qs.filter(
-                    primary_hltb_game_data__main_story_hours__lte=int(pt_max)
-                )
+                pt_max = int(pt_max_param)
+                # Ensure non-negative
+                if pt_max < 0:
+                    pt_max = 0
             except (ValueError, TypeError):
                 pass
+
+        # Parse preset into min/max if provided (overrides manual values)
+        if hltb_preset:
+            preset_ranges = {
+                "short": (0, 10),  # Under 10 hours
+                "medium": (10, 30),  # 10-30 hours
+                "long": (30, None),  # 30+ hours (no upper bound)
+            }
+            if hltb_preset in preset_ranges:
+                pt_min, pt_max = preset_ranges[hltb_preset]
+
+        # If max is set but min is not, default min to 0
+        if pt_max is not None and pt_min is None:
+            pt_min = 0
+
+        # Ensure max >= min (if both are set)
+        if pt_min is not None and pt_max is not None:
+            if pt_max < pt_min:
+                pt_max = pt_min
+
+        # Determine field based on mode
+        if hltb_mode == "completionist":
+            field_prefix = "primary_hltb_game_data__completionist_hours"
+        else:
+            field_prefix = "primary_hltb_game_data__main_story_hours"
+
+        # Apply filters and exclude games without HLTB data when filter is active
+        # Filter on exact decimal values (no rounding in logic)
+        if pt_min is not None or pt_max is not None:
+            if pt_min is not None:
+                try:
+                    qs = qs.filter(**{f"{field_prefix}__gte": int(pt_min)})
+                    qs = qs.exclude(**{field_prefix: None})
+                except (ValueError, TypeError):
+                    pass
+            if pt_max is not None:
+                try:
+                    qs = qs.filter(**{f"{field_prefix}__lte": int(pt_max)})
+                    qs = qs.exclude(**{field_prefix: None})
+                except (ValueError, TypeError):
+                    pass
 
         # Sort order
         sort = self.request.GET.get("sort", "rank")
@@ -979,6 +1169,42 @@ class HomePageView(RobustPaginationMixin, ListView):
         series_param = self.request.GET.get("series")
         played_param = self.request.GET.get("played")
 
+        # Parse HLTB parameters
+        hltb_mode = self.request.GET.get("hltb_mode", "main")
+        hltb_min_param = self.request.GET.get("hltb_min")
+        hltb_max_param = self.request.GET.get("hltb_max")
+
+        # Convert hltb_min and hltb_max to int or None
+        hltb_min = None
+        hltb_max = None
+        if hltb_min_param:
+            try:
+                hltb_min = int(hltb_min_param)
+                # Ensure non-negative
+                if hltb_min < 0:
+                    hltb_min = 0
+            except (ValueError, TypeError):
+                pass
+        if hltb_max_param and hltb_max_param != "unlimited":
+            try:
+                hltb_max = int(hltb_max_param)
+                # Ensure non-negative
+                if hltb_max < 0:
+                    hltb_max = 0
+            except (ValueError, TypeError):
+                pass
+        # If hltb_max_param is "unlimited", leave hltb_max as None
+
+        # If max is set but min is not, default min to 0
+        # This ensures "under 10 hours" means "0-10 hours" not "any-10 hours"
+        if hltb_max is not None and hltb_min is None:
+            hltb_min = 0
+
+        # Ensure max >= min (if both are set)
+        if hltb_min is not None and hltb_max is not None:
+            if hltb_max < hltb_min:
+                hltb_max = hltb_min
+
         # Determine if any filter actually narrows results (affects rank display)
         # Year filter only counts if it's narrower than the full range
         has_year_filter = (
@@ -994,6 +1220,8 @@ class HomePageView(RobustPaginationMixin, ListView):
             or series_param
             or sort_param != "rank"
             or (played_param and self.request.user.is_authenticated)
+            or hltb_min is not None
+            or hltb_max is not None
         )
 
         filters = {
@@ -1006,6 +1234,9 @@ class HomePageView(RobustPaginationMixin, ListView):
             "played": played_param if self.request.user.is_authenticated else "",
             "rank_display": "filtered" if has_any_filter else "alltime",
             "sort": sort_param,
+            "hltb_mode": hltb_mode,
+            "hltb_min": hltb_min,
+            "hltb_max": hltb_max,
             # Keep legacy params for context
             "year": year_param,
             "decade": decade_param,

@@ -40,7 +40,7 @@
     </script>
     {% if enable_client_filtering %}
     {# Client-side filtering - bundled for single HTTP request #}
-    <script src="{% static 'games/js/client-side-filtering.bundle.min.js' %}" defer nonce="{{ csp_nonce }}"></script>
+    <script src="{% static 'games/js/client-side-filtering.bundle.min.js' %}?v=7" defer nonce="{{ csp_nonce }}"></script>
     {% endif %}
 {% endblock %}
 

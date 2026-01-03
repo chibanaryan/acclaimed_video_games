@@ -122,15 +122,8 @@
        </button>
    </label>
 
-   {# Loading State - 15 rows to match visible series items #}
-   <div x-show="!countsReady" class="space-y-0.5 animate-pulse overflow-hidden" style="max-height: 434px;">
-       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
-       <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
+   {# Loading State - 8 rows to match visible series items #}
+   <div x-show="!countsReady" class="space-y-0.5 animate-pulse overflow-hidden" style="max-height: 224px;">
        <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
        <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
        <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
@@ -141,8 +134,8 @@
        <div class="bg-base-100/50 rounded-md" style="height: 28px;"></div>
    </div>
 
-   {# Series list - scrollable, shows all series with 2+ games #}
-   <div class="series-list space-y-0.5 overflow-y-auto" style="max-height: 434px;" x-show="countsReady" x-cloak>
+   {# Series list - scrollable, shows 8 series at a time #}
+   <div class="series-list space-y-0.5 overflow-y-auto" style="max-height: 224px;" x-show="countsReady" x-cloak>
        <template x-for="series in filteredSeries" :key="series.id">
            <div class="series-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
                 :class="{

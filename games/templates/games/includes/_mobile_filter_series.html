@@ -5,7 +5,6 @@
 <div x-data="{
         expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_series') || 'true'),
         searchQuery: '',
-        maxDisplayed: 20,
 
         init() {
             // Watch for expansion changes and persist to localStorage
@@ -50,16 +49,7 @@
                 return a.name.localeCompare(b.name);
             });
 
-            // Limit to maxDisplayed when not searching
-            if (!this.searchQuery) {
-                list = list.slice(0, this.maxDisplayed);
-            }
-
             return list;
-        },
-
-        get hasMoreSeries() {
-            return !this.searchQuery && (seriesList || []).length > this.maxDisplayed;
         },
 
         isSeriesSelected(seriesId) {
@@ -148,8 +138,8 @@
             </button>
         </label>
 
-        {# Series List #}
-        <div class="space-y-1">
+        {# Series List - scrollable, shows 8 series at a time #}
+        <div class="space-y-1 overflow-y-auto" style="max-height: 224px;">
             <template x-for="series in filteredSeries" :key="series.id">
                 <div class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors"
                      :class="{
@@ -168,13 +158,6 @@
                 <div class="text-center py-4 text-base-content/60 text-sm">
                     <span x-show="searchQuery">No series matching "<span x-text="searchQuery"></span>"</span>
                     <span x-show="!searchQuery">No series available</span>
-                </div>
-            </template>
-
-            {# Hint for more series #}
-            <template x-if="hasMoreSeries">
-                <div class="text-center pt-2 text-base-content/50 text-xs">
-                    Search to find more series...
                 </div>
             </template>
         </div>

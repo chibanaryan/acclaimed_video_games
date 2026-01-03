@@ -12,6 +12,8 @@
 - Update CSP to allow YouTube iframe embedding with proper referrer policy
 - Add HLTB integration: playtime data fetched from HowLongToBeat API, displayed on game detail pages
 - Integrate HLTB into weekly metadata refresh with Wikidata P2816 property lookups
+- Fix HLTB filtering: server/client now use exact decimal values (API sends floats, filtering uses precise comparisons)
+- Fix Load More/Jump to Rank with HLTB filters (parse hltb_mode, hltb_min, hltb_max from URL)
 - Fix rank distribution chart flash on page load (hide with inline CSS until Alpine.js initializes)
 
 ## 2026-01-02

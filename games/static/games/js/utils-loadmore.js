@@ -104,6 +104,13 @@ function initJumpToRank() {
  */
 function getFiltersFromURL() {
     const params = new URLSearchParams(window.location.search);
+
+    // Parse HLTB parameters
+    const hltb_min_str = params.get('hltb_min');
+    const hltb_max_str = params.get('hltb_max');
+    const hltb_min = hltb_min_str ? parseInt(hltb_min_str) : null;
+    const hltb_max = (hltb_max_str && hltb_max_str !== 'unlimited') ? parseInt(hltb_max_str) : null;
+
     return {
         q: params.get('q') || '',
         start: params.get('start') ? parseInt(params.get('start')) : null,
@@ -112,7 +119,10 @@ function getFiltersFromURL() {
         platforms: params.get('platforms') ? params.get('platforms').split(',') : [],
         series: params.get('series') ? params.get('series').split(',') : [],
         sort: params.get('sort') || 'rank',
-        played: params.get('played') || ''
+        played: params.get('played') || '',
+        hltb_mode: params.get('hltb_mode') || 'main',
+        hltb_min: hltb_min,
+        hltb_max: hltb_max
     };
 }
 
@@ -191,6 +201,11 @@ function hasActiveFilters(filters, csf) {
         if (filters.start) return true;
         if (filters.end) return true;
     }
+
+    // Check HLTB filters (only if they narrow the range from defaults)
+    // Default range is 0 to ∞, so only filter if min > 0 or max is explicitly set
+    if (filters.hltb_min !== null && filters.hltb_min !== undefined && filters.hltb_min > 0) return true;
+    if (filters.hltb_max !== null && filters.hltb_max !== undefined) return true;
 
     return false;
 }
