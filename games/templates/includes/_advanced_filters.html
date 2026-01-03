@@ -1087,7 +1087,7 @@
             {% endif %}
         </div>
         {# Right: Rank distribution (matches sidebar width) - only shown when filters are active #}
-        <div style="width: 357px; flex-shrink: 0;" x-show="hasActiveFilters()">
+        <div style="width: 357px; flex-shrink: 0; display: none;" x-show="hasActiveFilters()">
             {% include 'includes/_rank_distribution.html' %}
         </div>
     </div>
