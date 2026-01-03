@@ -2053,6 +2053,49 @@ class NewsListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         return context
 
 
+class ArticleListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
+    """Blog article list with pagination."""
+
+    model = models.Article
+    template_name = "articles/article_list.html"
+    context_object_name = "articles"
+    paginate_by = 10
+    paginate_orphans = 0
+    htmx_partial_template = "articles/includes/_article_list_content.html"
+
+    def get_queryset(self):
+        return (
+            models.Article.objects.filter(status=models.Article.Status.PUBLISHED)
+            .select_related("author")
+            .order_by("-published_at")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page_obj = context.get("page_obj")
+        if page_obj:
+            context["total_count"] = page_obj.paginator.count
+            context["loaded_count"] = page_obj.end_index()
+        return context
+
+
+class ArticleDetailView(DetailView):
+    """Individual article detail page."""
+
+    model = models.Article
+    template_name = "articles/article_detail.html"
+    context_object_name = "article"
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
+
+    def get_queryset(self):
+        qs = models.Article.objects.select_related("author")
+        # Staff can preview drafts
+        if self.request.user.is_staff:
+            return qs
+        return qs.filter(status=models.Article.Status.PUBLISHED)
+
+
 class NotFoundView(TemplateView):
     """
     Custom 404 page with auto-redirect.

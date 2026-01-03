@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load game_filters static %}
+
+{% block title %}{{ article.title }} | Blog | Acclaimed Video Games{% endblock %}
+{% block meta_description %}{{ article.excerpt|default:article.title }}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ article.title }}{% endblock %}
+{% block og_description %}{{ article.excerpt|default:article.title }}{% endblock %}
+{% if article.featured_image %}{% block og_image %}{{ article.featured_image }}{% endblock %}{% endif %}
+
+{% block structured_data %}{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "{{ article.title|escapejs }}",
+    "description": "{{ article.excerpt|default:article.title|escapejs }}",
+    {% if article.featured_image %}"image": "{{ article.featured_image }}",{% endif %}
+    "datePublished": "{{ article.published_at|date:'c' }}",
+    "dateModified": "{{ article.updated_at|date:'c' }}",
+    {% if article.author %}"author": {
+        "@type": "Person",
+        "name": "{{ article.author.get_full_name|default:article.author.username|escapejs }}"
+    },{% endif %}
+    "publisher": {
+        "@type": "Organization",
+        "name": "Acclaimed Video Games",
+        "url": "https://www.acclaimedvideogames.com"
+    }
+}{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto px-4 py-8">
+    {# Draft indicator for staff #}
+    {% if article.status == 'draft' %}
+    <div class="alert alert-warning mb-6">
+        <span class="mdi mdi-alert-circle"></span>
+        <span>This article is a draft and not publicly visible.</span>
+    </div>
+    {% endif %}
+
+    {# Article header #}
+    <header class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold mb-4">{{ article.title }}</h1>
+        <div class="flex items-center gap-4 text-base-content/70">
+            {% if article.author %}
+            <span>By {{ article.author.get_full_name|default:article.author.username }}</span>
+            <span>·</span>
+            {% endif %}
+            <time datetime="{{ article.published_at|date:'c' }}">
+                {{ article.published_at|date:"F j, Y" }}
+            </time>
+        </div>
+    </header>
+
+    {# Featured image #}
+    {% if article.featured_image %}
+    <figure class="mb-8 -mx-4 md:mx-0">
+        <img src="{{ article.featured_image }}"
+             alt="{{ article.title }}"
+             class="w-full rounded-lg shadow-lg"
+             loading="eager"
+             fetchpriority="high">
+    </figure>
+    {% endif %}
+
+    {# Article content #}
+    <div class="prose prose-lg prose-invert max-w-none pb-4">
+        {{ article.content_rendered|safe }}
+    </div>
+
+    {# Back to blog #}
+    <div class="mt-12 pt-4 border-t border-base-content/10">
+        <a href="{% url 'article-list' %}" class="btn btn-ghost">
+            <span class="mdi mdi-arrow-left"></span>
+            Back to Blog
+        </a>
+    </div>
+</article>
+{% endblock %}

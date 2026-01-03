@@ -703,3 +703,11 @@ def child_developer_ids(sub_developers):
     if not sub_developers:
         return []
     return [d["developer"].id for d in sub_developers if "developer" in d]
+
+
+@register.simple_tag
+def has_published_articles():
+    """Check if there are any published articles."""
+    from games.models import Article
+
+    return Article.objects.filter(status=Article.Status.PUBLISHED).exists()

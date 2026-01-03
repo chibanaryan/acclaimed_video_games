@@ -304,6 +304,51 @@ class PostAdmin(admin.ModelAdmin):
     readonly_fields = ["notification_sent"]
 
 
+@admin.register(models.Article)
+class ArticleAdmin(admin.ModelAdmin):
+    """Admin interface for blog articles with markdown preview."""
+
+    list_display = [
+        "title",
+        "author",
+        "status",
+        "published_at",
+        "created_at",
+    ]
+    list_filter = ["status", "author", "published_at"]
+    search_fields = ["title", "content"]
+    prepopulated_fields = {"slug": ("title",)}
+    readonly_fields = ["created_at", "updated_at"]
+    date_hierarchy = "published_at"
+
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": ("title", "slug", "author", "status"),
+            },
+        ),
+        (
+            "Content",
+            {
+                "fields": ("excerpt", "content", "featured_image"),
+                "classes": ("wide",),
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("published_at", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    class Media:
+        js = ("games/js/admin/markdown-preview.js",)
+        css = {"all": ("games/css/admin-article.css",)}
+
+
 @admin.register(models.SiteMetadata)
 class SiteMetadataAdmin(admin.ModelAdmin):
     list_display = ["__str__", "last_full_update"]

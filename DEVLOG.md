@@ -1,5 +1,12 @@
 # Developer Log
 
+## 2026-01-03
+
+- Add Blog feature: Article model with markdown content, draft/published status, auto-publish date
+- Blog admin: live markdown preview (iframe-isolated), Cloudinary upload widget for images
+- Blog views: /blog/ list page with pagination, /blog/<slug>/ detail page (staff can preview drafts)
+- Add Blog link to sidebar and mobile navigation
+
 ## 2026-01-02
 
 - Mobile: inline rank next to title (saves ~40px horizontal space, larger accent-colored rank number)

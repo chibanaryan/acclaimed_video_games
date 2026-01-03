@@ -1,0 +1,30 @@
+{# ArticleCard component #}
+{# Props: article #}
+{% load game_filters %}
+
+<article class="card bg-base-200 shadow-sm mb-6 hover:shadow-md transition-shadow">
+    {% if article.featured_image %}
+    <figure class="aspect-video overflow-hidden">
+        <a href="{{ article.get_absolute_url }}">
+            <img src="{{ article.featured_image }}"
+                 alt="{{ article.title }}"
+                 class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                 loading="lazy">
+        </a>
+    </figure>
+    {% endif %}
+    <div class="card-body">
+        <h2 class="card-title">
+            <a href="{{ article.get_absolute_url }}" class="link link-hover">
+                {{ article.title }}
+            </a>
+        </h2>
+        {% if article.excerpt %}
+        <p class="text-base-content/85">{{ article.excerpt }}</p>
+        {% endif %}
+        <div class="text-sm text-base-content/70 mt-2">
+            {% if article.author %}{{ article.author.get_full_name|default:article.author.username }} · {% endif %}
+            {{ article.published_at|from_now }}
+        </div>
+    </div>
+</article>

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static game_filters %}
 <div class="flex flex-col h-full">
     {# TOP CONTAINER: Logo + Navigation + Search - Always visible #}
     <div class="shrink-0 p-4">
@@ -185,6 +185,15 @@
                         Source Lists
                     </a>
                 </li>
+                {% has_published_articles as show_blog %}
+                {% if show_blog %}
+                <li>
+                    <a href="{% url 'article-list' %}" class="{% if request.resolver_match.url_name == 'article-list' or request.resolver_match.url_name == 'article-detail' %}active{% endif %}">
+                        <span class="mdi mdi-newspaper text-xl"></span>
+                        Blog
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </nav>
     </div>

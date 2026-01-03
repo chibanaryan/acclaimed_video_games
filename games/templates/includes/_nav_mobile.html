@@ -1,4 +1,4 @@
-{% load static %}
+{% load static game_filters %}
 <nav class="navbar bg-transparent px-0" role="navigation" aria-label="main navigation"
      x-data="priorityNav()" x-init="init()">
 
@@ -158,6 +158,13 @@
             <a href="{% url 'list-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'list-list' %} btn-active{% endif %}" data-nav-item="lists" data-menu-label="Source Lists">
                 Lists
             </a>
+
+            {% has_published_articles as show_blog %}
+            {% if show_blog %}
+            <a href="{% url 'article-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'article-list' or request.resolver_match.url_name == 'article-detail' %} btn-active{% endif %}" data-nav-item="blog" data-menu-label="Blog">
+                Blog
+            </a>
+            {% endif %}
 
             <a href="{% url 'page-detail' slug='about' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'about' %} btn-active{% endif %}" data-nav-item="about" data-menu-label="About">
                 About

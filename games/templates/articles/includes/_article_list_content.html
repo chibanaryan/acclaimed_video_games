@@ -1,0 +1,51 @@
+{# Article list content partial - for HTMX responses #}
+{% load game_filters humanize %}
+
+{% if total_count %}
+<p class="text-base-content/70 mb-4">
+    Showing {{ loaded_count|intcomma }} of {{ total_count|intcomma }} article{{ total_count|pluralize }}
+</p>
+{% endif %}
+
+{% if articles %}
+    {% for article in articles %}
+        {% include 'articles/includes/_article_card.html' with article=article %}
+    {% endfor %}
+
+    {# Simple prev/next pagination #}
+    {% if page_obj.has_previous or page_obj.has_next %}
+    <div class="flex justify-between items-center mt-8">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}"
+           hx-get="?page={{ page_obj.previous_page_number }}"
+           hx-target="#content"
+           hx-push-url="true"
+           class="btn btn-outline btn-sm">
+            Back
+        </a>
+        {% else %}
+        <span></span>
+        {% endif %}
+
+        <span class="text-base-content/70 text-sm">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}"
+           hx-get="?page={{ page_obj.next_page_number }}"
+           hx-target="#content"
+           hx-push-url="true"
+           class="btn btn-outline btn-sm">
+            Next
+        </a>
+        {% else %}
+        <span></span>
+        {% endif %}
+    </div>
+    {% endif %}
+{% else %}
+    <div class="text-center py-12 text-base-content/70">
+        <p>No articles published yet. Check back soon!</p>
+    </div>
+{% endif %}

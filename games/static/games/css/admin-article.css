@@ -1,0 +1,36 @@
+/* Admin styles for Article markdown preview */
+
+/* Toolbar row - mirrors Django admin form-row structure */
+.article-toolbar-row {
+    padding: 10px 0;
+}
+
+.insert-image-btn {
+    background: #417690;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.insert-image-btn:hover {
+    background: #205067;
+}
+
+.insert-image-btn:active {
+    background: #1a4050;
+}
+
+/* Preview iframe - isolated from admin styles */
+.article-preview-frame {
+    width: 100%;
+    min-height: 120px;
+    max-height: 600px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #171212;  /* forest theme base-100 */
+    margin-top: 8px;
+}

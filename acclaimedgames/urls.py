@@ -130,6 +130,9 @@ urlpatterns = [
     ),
     path("lists/", views.ListListView.as_view(), name="list-list"),
     path("news/", views.NewsListView.as_view(), name="news-list"),
+    # Blog/Articles
+    path("blog/", views.ArticleListView.as_view(), name="article-list"),
+    path("blog/<slug:slug>/", views.ArticleDetailView.as_view(), name="article-detail"),
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
 ]
 
