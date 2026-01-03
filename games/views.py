@@ -1446,11 +1446,24 @@ class DeveloperDetailView(DetailView):
         cache_key = f"{config.CACHE_VERSION}:developer_detail:{developer.id}"
         cache.set(cache_key, context_data, config.CACHE_TIMEOUT_24_HOURS)
 
-    def flatten_developers(self, devs_data, parent_id=None, level=0):
-        """Flatten recursive developer structure for checkbox tree."""
+    def flatten_developers(
+        self, devs_data, parent_id=None, level=0, continues_at_levels=None
+    ):
+        """Flatten recursive developer structure for checkbox tree.
+
+        Tracks tree structure for proper tree line rendering:
+        - is_last_child: whether item is last sibling (vertical line stops at 50%)
+        - continues_at_levels: ancestor levels with more siblings (need vertical lines)
+        """
+        if continues_at_levels is None:
+            continues_at_levels = []
+
         flat = []
-        for dev_data in devs_data:
+        total = len(devs_data)
+        for idx, dev_data in enumerate(devs_data):
+            is_last = idx == total - 1
             child_ids = [s["developer"].id for s in dev_data["sub_developers"]]
+
             flat.append(
                 {
                     "id": dev_data["developer"].id,
@@ -1462,14 +1475,21 @@ class DeveloperDetailView(DetailView):
                     "parent_id": parent_id,
                     "level": level,
                     "child_ids": child_ids,
+                    "is_last_child": is_last,
+                    "continues_at_levels": list(continues_at_levels),
                 }
             )
+
+            # For children: if this item is NOT the last, add current level to continues
+            child_continues = continues_at_levels + ([level] if not is_last else [])
+
             # Recursively flatten sub-developers
             flat.extend(
                 self.flatten_developers(
                     dev_data["sub_developers"],
                     parent_id=dev_data["developer"].id,
                     level=level + 1,
+                    continues_at_levels=child_continues,
                 )
             )
         return flat

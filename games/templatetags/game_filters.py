@@ -687,3 +687,19 @@ def get_developer_ids(game_developer_map, game_id):
     if not game_developer_map or not isinstance(game_developer_map, dict):
         return []
     return game_developer_map.get(game_id, [])
+
+
+@register.filter
+def child_developer_ids(sub_developers):
+    """
+    Extract developer IDs from a list of sub_developer dicts.
+
+    Args:
+        sub_developers: List of dicts with 'developer' key containing Developer objects
+
+    Returns:
+        List of developer IDs
+    """
+    if not sub_developers:
+        return []
+    return [d["developer"].id for d in sub_developers if "developer" in d]

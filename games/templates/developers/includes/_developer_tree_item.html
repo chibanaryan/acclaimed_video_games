@@ -1,0 +1,25 @@
+{# Recursive developer tree item for menu-based tree view #}
+{# Expects: dev_data (dict with developer, games, sub_developers, total_games_count) #}
+{% load game_filters %}
+
+{% with dev=dev_data.developer child_ids=dev_data.sub_developers|child_developer_ids %}
+<li>
+    <label class="flex items-center gap-2 py-1 cursor-pointer hover:bg-base-100 rounded px-2">
+        <input type="checkbox"
+               data-developer-id="{{ dev.id }}"
+               :checked="shouldBeChecked({{ dev.id }}, {{ child_ids|tojson }})"
+               @change="toggleDeveloper({{ dev.id }}, {{ child_ids|tojson }})"
+               x-effect="$el.indeterminate = isIndeterminate({{ dev.id }}, {{ child_ids|tojson }})"
+               class="checkbox checkbox-md checkbox-primary">
+        <span class="flex-1 text-sm">{{ dev.name }}</span>
+        <span class="text-xs text-base-content/50">{{ dev_data.total_games_count }}</span>
+    </label>
+    {% if dev_data.sub_developers %}
+    <ul>
+        {% for sub_dev in dev_data.sub_developers %}
+            {% include "developers/includes/_developer_tree_item.html" with dev_data=sub_dev %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</li>
+{% endwith %}

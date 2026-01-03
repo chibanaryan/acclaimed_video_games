@@ -2,6 +2,7 @@
 
 ## 2026-01-02
 
+- Refactor developer filter tree to use DaisyUI menu component with nested structure (cleaner hierarchy display)
 - Add rank distribution chart to developer detail and home page (SVG area chart with peak indicator, updates with filters)
 - Simplify game detail page: move played star to title, sort lists by year desc, remove accordions and progress bar
 - Add colored badges for list types using BGYR rainbow order with custom theme colors

@@ -1,4 +1,5 @@
 {# Developer Filter Panel - Vertical tree in right sidebar #}
+{% load game_filters %}
 <div class="bg-base-200 rounded-lg p-4">
     {# Header with title and action buttons #}
     <div class="mb-4 pb-4 border-b border-base-100">
@@ -10,25 +11,35 @@
         <p class="text-sm text-base-content/60" x-text="countSelectedDevelopers() > 0 ? `${countSelectedDevelopers()} developer${countSelectedDevelopers() !== 1 ? 's' : ''} selected` : 'All developers shown'"></p>
     </div>
 
-    {# Checkbox tree - vertical list with indentation #}
-    <div class="developer-tree-list">
-        {% for developer in developers_flat %}
-        <label class="developer-tree-item" style="--level: {{ developer.level }};">
-            <input type="checkbox"
-                   data-developer-id="{{ developer.id }}"
-                   :checked="shouldBeChecked({{ developer.id }}, {{ developer.child_ids|safe }})"
-                   @change="toggleDeveloper({{ developer.id }}, {{ developer.child_ids|safe }})"
-                   x-effect="$el.indeterminate = isIndeterminate({{ developer.id }}, {{ developer.child_ids|safe }})"
-                   class="checkbox checkbox-md checkbox-primary flex-shrink-0">
-            <span class="text-sm flex-1">{{ developer.name }}</span>
-            <span class="text-xs text-base-content/50">{{ developer.total_game_count }}</span>
-        </label>
-        {% endfor %}
-    </div>
+    {# Checkbox tree using DaisyUI menu for proper nesting #}
+    {% with top_level_ids=subsidiaries_with_games|child_developer_ids %}
+    <ul class="menu menu-sm p-0 [&_ul]:pl-4">
+        {# Root developer entry #}
+        <li>
+            <label class="flex items-center gap-2 py-1 cursor-pointer hover:bg-base-100 rounded px-2">
+                <input type="checkbox"
+                       data-developer-id="0"
+                       :checked="shouldBeChecked(0, {{ top_level_ids|tojson }})"
+                       @change="toggleDeveloper(0, {{ top_level_ids|tojson }})"
+                       x-effect="$el.indeterminate = isIndeterminate(0, {{ top_level_ids|tojson }})"
+                       class="checkbox checkbox-md checkbox-primary">
+                <span class="flex-1 text-sm font-medium">{{ developer.name }}</span>
+                <span class="text-xs text-base-content/50">{{ total_games }}</span>
+            </label>
+            {% if subsidiaries_with_games %}
+            <ul>
+                {% for dev_data in subsidiaries_with_games %}
+                    {% include "developers/includes/_developer_tree_item.html" with dev_data=dev_data %}
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </li>
+    </ul>
+    {% endwith %}
 
-    {# Empty state message when no developers #}
-    {% if not developers_flat %}
-    <div class="alert alert-info text-sm">
+    {# Empty state message when no subsidiaries #}
+    {% if not subsidiaries_with_games %}
+    <div class="alert alert-info text-sm mt-4">
         <span>This developer has no subsidiaries in our database.</span>
     </div>
     {% endif %}

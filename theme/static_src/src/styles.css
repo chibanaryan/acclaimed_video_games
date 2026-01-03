@@ -999,50 +999,8 @@ input[type="number"] {
   padding-bottom: 0.5rem;
 }
 
-/* Developer Filter Panel Components - Vertical Tree in Right Sidebar */
+/* Developer Filter Panel Components */
 @layer components {
-  /* Vertical tree list container */
-  .developer-tree-list {
-    @apply flex flex-col gap-0.5;
-  }
-
-  /* Individual tree item with hierarchical indentation and borders */
-  .developer-tree-item {
-    @apply flex items-center gap-2 py-2 px-2 hover:bg-base-100 rounded cursor-pointer transition-colors relative;
-    /* Use CSS custom property for level-based indentation */
-    padding-left: calc(0.5rem + (var(--level, 0) * 1.25rem));
-  }
-
-  /* Add visual hierarchy with left border for nested items */
-  .developer-tree-item[style*="--level: 1"]::before,
-  .developer-tree-item[style*="--level: 2"]::before,
-  .developer-tree-item[style*="--level: 3"]::before {
-    content: '';
-    position: absolute;
-    left: calc(0.5rem + (var(--level) * 1.25rem) - 0.75rem);
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--fallback-bc, oklch(var(--bc) / 0.1));
-  }
-
-  /* Add connecting line to parent for nested items */
-  .developer-tree-item[style*="--level: 1"]::after,
-  .developer-tree-item[style*="--level: 2"]::after,
-  .developer-tree-item[style*="--level: 3"]::after {
-    content: '';
-    position: absolute;
-    left: calc(0.5rem + (var(--level) * 1.25rem) - 0.75rem);
-    top: 50%;
-    width: 0.5rem;
-    height: 2px;
-    background: var(--fallback-bc, oklch(var(--bc) / 0.1));
-  }
-
-  .developer-tree-item input[type="checkbox"] {
-    @apply checkbox checkbox-md checkbox-primary flex-shrink-0;
-  }
-
   /* Filtered game list container */
   .filtered-game-list {
     @apply space-y-1;
