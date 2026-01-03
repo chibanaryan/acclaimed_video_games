@@ -574,6 +574,12 @@ class IGDBGameData(models.Model):
     )
     url = models.URLField(help_text="IGDB game detail page URL")
     description = models.TextField(null=True, blank=True)
+    youtube_video_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="YouTube video ID from IGDB (first video)",
+    )
     is_primary = models.BooleanField(
         default=False,
         db_index=True,
@@ -665,6 +671,13 @@ class IGDBGameData(models.Model):
         if self.artwork_id:
             base = "https://images.igdb.com/igdb/image/upload"
             return f"{base}/t_thumb/{self.artwork_id}"
+        return None
+
+    @property
+    def youtube_url(self) -> Optional[str]:
+        """Get full YouTube URL from video ID."""
+        if self.youtube_video_id:
+            return f"https://www.youtube.com/watch?v={self.youtube_video_id}"
         return None
 
 
@@ -965,6 +978,7 @@ class Game(models.Model):
                         if x
                     ]
                 )
+                orphaned_record.youtube_video_id = game_data.get("youtube_video_id")
                 orphaned_record.is_primary = idx == 0  # First record is primary
                 orphaned_record.save(
                     update_fields=[
@@ -972,6 +986,7 @@ class Game(models.Model):
                         "artwork_id",
                         "url",
                         "description",
+                        "youtube_video_id",
                         "is_primary",
                     ]
                 )
@@ -995,6 +1010,7 @@ class Game(models.Model):
                                 if x
                             ]
                         ),
+                        "youtube_video_id": game_data.get("youtube_video_id"),
                         "is_primary": (idx == 0),  # First record is primary
                     },
                 )

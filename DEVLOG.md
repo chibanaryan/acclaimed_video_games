@@ -8,6 +8,8 @@
 - Add Blog link to sidebar and mobile navigation
 - Saved Filters: logged-in users can save up to 10 filter sets with API, dropdown UI, and mobile support
 - Mobile saved filters: collapsible section with large touch targets, rename/delete actions
+- Add YouTube video embeds to game detail page (fetched from IGDB, privacy-enhanced mode)
+- Update CSP to allow YouTube iframe embedding with proper referrer policy
 
 ## 2026-01-02
 

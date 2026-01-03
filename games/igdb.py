@@ -11,6 +11,83 @@ from games import config
 
 logger = logging.getLogger(__name__)
 
+
+YOUTUBE_API_KEY = getattr(
+    settings, "YOUTUBE_API_KEY", "AIzaSyBhUFykcuzqSXNNYd_yLeW9M-XURqjOlTU"
+)
+
+
+def is_youtube_video_embeddable(video_id: str, timeout: float = 5.0) -> bool:
+    """
+    Check if a YouTube video can be embedded using the YouTube Data API v3.
+
+    Args:
+        video_id: YouTube video ID (e.g., 'dQw4w9WgXcQ')
+        timeout: Request timeout in seconds
+
+    Returns:
+        True if the video exists and is embeddable, False otherwise
+    """
+    if not video_id:
+        return False
+    try:
+        url = (
+            f"https://www.googleapis.com/youtube/v3/videos"
+            f"?id={video_id}&part=status&key={YOUTUBE_API_KEY}"
+        )
+        response = requests.get(url, timeout=timeout)
+        if response.status_code != 200:
+            return False
+        data = response.json()
+        items = data.get("items", [])
+        if not items:
+            return False  # Video doesn't exist
+        return items[0].get("status", {}).get("embeddable", False)
+    except requests.RequestException:
+        return False
+
+
+def check_youtube_videos_embeddable(video_ids: list, timeout: float = 10.0) -> dict:
+    """
+    Batch check if YouTube videos can be embedded (up to 50 at a time).
+
+    Args:
+        video_ids: List of YouTube video IDs
+        timeout: Request timeout in seconds
+
+    Returns:
+        Dict mapping video_id -> bool (embeddable status)
+    """
+    if not video_ids:
+        return {}
+
+    results = {}
+    # YouTube API allows up to 50 IDs per request
+    for i in range(0, len(video_ids), 50):
+        batch = video_ids[i : i + 50]
+        ids_str = ",".join(batch)
+        try:
+            url = (
+                f"https://www.googleapis.com/youtube/v3/videos"
+                f"?id={ids_str}&part=status&key={YOUTUBE_API_KEY}"
+            )
+            response = requests.get(url, timeout=timeout)
+            if response.status_code == 200:
+                data = response.json()
+                for item in data.get("items", []):
+                    vid_id = item.get("id")
+                    embeddable = item.get("status", {}).get("embeddable", False)
+                    results[vid_id] = embeddable
+                for vid_id in batch:
+                    if vid_id not in results:
+                        results[vid_id] = False
+        except requests.RequestException:
+            for vid_id in batch:
+                results[vid_id] = False
+
+    return results
+
+
 # Genre themes that match our curated genre list
 # Imported from config for centralized management
 genre_themes = config.IGDB_GENRE_THEMES
@@ -594,7 +671,8 @@ class IgbdApi:
                 data=(
                     f"where id = ({ids_str}); "
                     "fields slug,cover.*,genres.*,first_release_date,"
-                    "summary,storyline,url,themes,involved_companies.*,collections.*; "
+                    "summary,storyline,url,themes,involved_companies.*,"
+                    "collections.*,videos.*; "
                     "limit 500;"
                 ),
             )
@@ -738,6 +816,12 @@ class IgbdApi:
                         with self.cache_lock:
                             self._set_in_series_cache(collection_obj["id"], series_info)
 
+            # Extract first video's YouTube ID
+            videos = data.get("videos", [])
+            youtube_video_id = None
+            if videos and isinstance(videos[0], dict):
+                youtube_video_id = videos[0].get("video_id")
+
             game_data = {
                 "cover": cover_filename,
                 "developers": developer_objs,
@@ -747,6 +831,7 @@ class IgbdApi:
                 "summary": data.get("summary"),
                 "url": data.get("url"),
                 "slug": data.get("slug"),
+                "youtube_video_id": youtube_video_id,
             }
 
             games_dict[game_id] = game_data
@@ -795,7 +880,8 @@ class IgbdApi:
             data=(
                 "where id="
                 f"{game_id}; fields slug,cover.*,genres.*,first_release_date,"
-                "summary,storyline,url,themes,involved_companies.*,collections.*;"
+                "summary,storyline,url,themes,involved_companies.*,"
+                "collections.*,videos.*;"
             ),
         )
 
@@ -935,6 +1021,12 @@ class IgbdApi:
                     with self.cache_lock:
                         self._set_in_series_cache(collection_obj["id"], series_info)
 
+        # Extract first video's YouTube ID
+        videos = data.get("videos", [])
+        youtube_video_id = None
+        if videos and isinstance(videos[0], dict):
+            youtube_video_id = videos[0].get("video_id")
+
         game_data = {
             "cover": cover_filename,
             "developers": developer_objs,
@@ -944,6 +1036,7 @@ class IgbdApi:
             "summary": data.get("summary"),
             "url": data.get("url"),
             "slug": data.get("slug"),
+            "youtube_video_id": youtube_video_id,
         }
 
         if cache_results:
