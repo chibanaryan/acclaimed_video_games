@@ -608,7 +608,7 @@ class GameListRenderer {
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const thumbnail = this._getThumbnail(game.a);
         const displayRank = showRank === 'filtered' ? index : game.r;
-        const showRankColumn = showRank !== 'none';
+        const showRankInline = showRank !== 'none';
 
         // Build row 1: All developers + list count (as HTML for tabular-nums span)
         let metaHtml = '';
@@ -644,24 +644,8 @@ class GameListRenderer {
             }
         }
 
-        // Update grid columns based on played button and rank visibility
-        if (hasPlayedButton) {
-            row.style.gridTemplateColumns = showRankColumn ? 'auto auto auto 1fr' : 'auto auto 1fr';
-        } else {
-            row.style.gridTemplateColumns = showRankColumn ? 'auto auto 1fr' : 'auto 1fr';
-        }
-
-        // Fill rank (now just the inner span, parent div controls visibility)
-        const rankEl = row.querySelector('[data-slot="rank"]');
-        const rankParent = rankEl?.parentElement;
-        if (rankEl) {
-            rankEl.textContent = displayRank;
-        }
-        if (rankParent) {
-            if (!showRankColumn) {
-                rankParent.style.display = 'none';
-            }
-        }
+        // Update grid columns (no more rank column - rank is inline with title)
+        row.style.gridTemplateColumns = hasPlayedButton ? 'auto auto 1fr' : 'auto 1fr';
 
         // Fill thumbnail
         const thumbImg = row.querySelector('[data-slot="thumbnail"]');
@@ -670,10 +654,25 @@ class GameListRenderer {
             thumbImg.alt = game.n;
         }
 
-        // Fill title (includes year span)
+        // Fill rank inline with title
+        const rankEl = row.querySelector('[data-slot="rank"]');
+        if (rankEl) {
+            if (showRankInline) {
+                rankEl.textContent = `#${displayRank}`;
+            } else {
+                rankEl.style.display = 'none';
+            }
+        }
+
+        // Fill title (rank is now inline, so we just add name and year after rank slot)
         const titleEl = row.querySelector('[data-slot="title"]');
         if (titleEl) {
-            titleEl.innerHTML = `${this._escapeHtml(game.n)} <span class="font-normal text-sm text-base-content/60">(${game.y || 'N/A'})</span>`;
+            // Build title HTML: rank (handled above) + name + year + global rank
+            const globalRankHtml = showRank === 'filtered'
+                ? `<span class="font-normal text-xs text-base-content/50 tabular-nums" data-slot="global-rank"> (#${game.r})</span>`
+                : '';
+            const rankHtml = showRankInline ? `<span class="text-accent tabular-nums text-lg" data-slot="rank">#${displayRank}</span> ` : '';
+            titleEl.innerHTML = `${rankHtml}${this._escapeHtml(game.n)} <span class="font-normal text-sm text-base-content/60">(${game.y || 'N/A'})</span>${globalRankHtml}`;
         }
 
         // Fill meta (row 1: developer + list count) - use innerHTML for tabular-nums span
@@ -712,18 +711,6 @@ class GameListRenderer {
             platformsRowEl.innerHTML = rowHtml;
         }
 
-        // Show/hide global rank (now under the main rank) based on mode
-        const globalRankEl = row.querySelector('[data-slot="global-rank"]');
-
-        if (showRank === 'filtered') {
-            if (globalRankEl) {
-                globalRankEl.textContent = `(#${game.r})`;
-                globalRankEl.classList.remove('hidden');
-            }
-        } else {
-            if (globalRankEl) globalRankEl.classList.add('hidden');
-        }
-
         return row;
     }
 
@@ -736,7 +723,7 @@ class GameListRenderer {
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const thumbnail = this._getThumbnail(game.a);
         const displayRank = showRank === 'filtered' ? index : game.r;
-        const showRankColumn = showRank !== 'none';
+        const showRankInline = showRank !== 'none';
 
         // Build row 1: All developers + list count (as HTML for tabular-nums span)
         let metaHtml = '';
@@ -779,22 +766,21 @@ class GameListRenderer {
         const playedButtonHtml = this._renderPlayedButtonString(game);
         // Only include container if authenticated (button exists)
         const playedContainerHtml = playedButtonHtml ? `<div class="w-8 h-8 min-w-8 max-w-8 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
-        // Grid columns depend on whether played button and rank are shown
+        // Grid columns: no more rank column (rank is inline with title)
         const hasPlayedButton = !!playedButtonHtml;
-        const gridCols = hasPlayedButton
-            ? (showRankColumn ? 'auto auto auto 1fr' : 'auto auto 1fr')
-            : (showRankColumn ? 'auto auto 1fr' : 'auto 1fr');
-        const globalRankHtml = showRank === 'filtered' ? `<span class="text-xs text-base-content/50">(#${game.r})</span>` : '';
+        const gridCols = hasPlayedButton ? 'auto auto 1fr' : 'auto 1fr';
+        // Inline rank and global rank in title
+        const rankHtml = showRankInline ? `<span class="text-accent tabular-nums text-lg">#${displayRank}</span> ` : '';
+        const globalRankHtml = showRank === 'filtered' ? `<span class="font-normal text-xs text-base-content/50 tabular-nums"> (#${game.r})</span>` : '';
 
         const div = document.createElement('div');
         div.innerHTML = `
-<div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-100 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}-mobile" onclick="window.location.href='/game/${game.s}/'" style="grid-template-columns: ${gridCols};">
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-3 p-2 bg-base-200 rounded-lg hover:bg-base-100 transition-colors mb-2 cursor-pointer ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}-mobile" onclick="window.location.href='/game/${game.s}/'" style="grid-template-columns: ${gridCols};">
     ${playedContainerHtml}
-    ${showRankColumn ? `<div class="w-10 text-center flex flex-col items-center justify-center"><div class="text-2xl font-bold text-accent tabular-nums">${displayRank}</div>${globalRankHtml}</div>` : ''}
-    <div class="w-12 mx-1 rounded overflow-hidden bg-base-100" style="aspect-ratio: 90/128;"><img src="${thumbnail}" alt="${this._escapeHtml(game.n)}" width="90" height="128" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>
+    <div class="w-12 rounded overflow-hidden bg-base-100" style="aspect-ratio: 90/128;"><img src="${thumbnail}" alt="${this._escapeHtml(game.n)}" width="90" height="128" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>
     <div class="min-w-0 flex items-center justify-between">
         <div class="min-w-0">
-            <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">${this._escapeHtml(game.n)} <span class="font-normal text-sm text-base-content/60">(${game.y || 'N/A'})</span></div>
+            <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">${rankHtml}${this._escapeHtml(game.n)} <span class="font-normal text-sm text-base-content/60">(${game.y || 'N/A'})</span>${globalRankHtml}</div>
             <div class="text-xs text-base-content/50 truncate" data-slot="meta">${metaHtml}</div>
             <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">${platformsRowHtml}</div>
         </div>

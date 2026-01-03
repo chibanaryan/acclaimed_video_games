@@ -2,6 +2,7 @@
 
 ## 2026-01-02
 
+- Mobile: inline rank next to title (saves ~40px horizontal space, larger accent-colored rank number)
 - Fix list count doubling on server render (add distinct=True to annotation with prefetch_related)
 - Fix client-side developer filtering to match server-side logic (filter out ancestor companies)
 - Refactor developer filter tree to use DaisyUI menu component with nested structure (cleaner hierarchy display)

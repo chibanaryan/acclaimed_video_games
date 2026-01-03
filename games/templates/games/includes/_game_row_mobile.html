@@ -4,11 +4,11 @@
 {# Context: max_list_count (for list count micro-bar, mobile shows count as text only) #}
 {# When game is not provided, renders empty template structure for JS cloning with all elements present #}
 {% load game_filters static humanize %}
-<div class="game-row game-card-mobile desktop:hidden grid items-center gap-1.5 p-2 bg-base-200 rounded-lg hover:bg-base-100 transition-colors mb-2 cursor-pointer {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
+<div class="game-row game-card-mobile desktop:hidden grid items-center gap-3 p-2 bg-base-200 rounded-lg hover:bg-base-100 transition-colors mb-2 cursor-pointer {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
      {% if game %}id="game-{{ game.id }}-mobile"{% endif %}
      data-slot="root"
      {% if game %}onclick="window.location.href='{% url 'game-detail' slug=game.slug %}'"{% endif %}
-     style="grid-template-columns: {% if not hide_played_button and user.is_authenticated or not game %}auto {% endif %}{% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}auto {% endif %}auto 1fr;">
+     style="grid-template-columns: {% if not hide_played_button and user.is_authenticated or not game %}auto {% endif %}auto 1fr;">
 
     {# Played button - only render container if authenticated (server) or for JS template cloning #}
     {% if not hide_played_button and user.is_authenticated or not game %}
@@ -19,29 +19,20 @@
     </div>
     {% endif %}
 
-    {# Rank Number - always present in template (for JS), conditionally shown for server render #}
-    {% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}
-    <div class="w-10 text-center flex flex-col items-center justify-center">
-        <div class="text-2xl font-bold text-accent tabular-nums" data-slot="rank">
-            {% if game %}{% if show_rank == 'filtered' %}{{ index|default:game.rank }}{% else %}{{ game.rank }}{% endif %}{% endif %}
-        </div>
-        <span class="text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and game %}hidden{% endif %}" data-slot="global-rank">{% if game %}(#{{ game.rank }}){% endif %}</span>
-    </div>
-    {% endif %}
-
     {# Thumbnail #}
-    <div class="w-12 mx-1 rounded overflow-hidden bg-base-100" style="aspect-ratio: 90/128;">
+    <div class="w-12 rounded overflow-hidden bg-base-100" style="aspect-ratio: 90/128;">
         <img {% if game %}src="{{ game.thumbnail }}" alt="{{ game.name }}"{% endif %}
              width="90" height="128"
              class="w-full h-full object-cover" loading="lazy" decoding="async"
              data-slot="thumbnail">
     </div>
 
-    {# Game Info #}
+    {# Game Info with inline rank #}
     <div class="min-w-0 flex items-center justify-between">
         <div class="min-w-0">
             <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">
-                {% if game %}{{ game.name }} <span class="font-normal text-sm text-base-content/60">({{ game.year_of_release }})</span>{% else %}<span class="font-normal text-sm text-base-content/60" data-slot="year"></span>{% endif %}
+                {# Inline rank - always present in template for JS, conditionally shown for server render #}
+                {% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}<span class="text-accent tabular-nums text-lg" data-slot="rank">{% if game %}#{% if show_rank == 'filtered' %}{{ index|default:game.rank }}{% else %}{{ game.rank }}{% endif %}{% endif %}</span> {% endif %}{% if game %}{{ game.name }} <span class="font-normal text-sm text-base-content/60">({{ game.year_of_release }})</span>{% else %}<span class="font-normal text-sm text-base-content/60" data-slot="year"></span>{% endif %}{% if show_rank == 'filtered' or not game %}<span class="font-normal text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and game %}hidden{% endif %}" data-slot="global-rank">{% if game %} (#{{ game.rank }}){% endif %}</span>{% endif %}
             </div>
             {# Row 1: Developer and list count #}
             <div class="text-xs text-base-content/50 truncate" data-slot="meta">
