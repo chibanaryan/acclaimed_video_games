@@ -44,13 +44,13 @@
                 {% if game %}{{ game.name }} <span class="font-normal text-base-content/60">({{ game.year_of_release }})</span>{% else %}<span class="font-normal text-base-content/60" data-slot="year"></span>{% endif %}
             </div>
             {# Row 1: Developer and list count #}
-            <div class="text-xs text-base-content/70 truncate" data-slot="meta">
+            <div class="text-xs text-base-content/50 truncate" data-slot="meta">
                 {% if game %}
                     {% with display_devs=game.get_display_developers %}{% for dev in display_devs %}{{ dev.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endwith %}{% if game.list_count %}{% if game.get_display_developers %} &bull; {% endif %}<span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span>{% endif %}
                 {% endif %}
             </div>
             {# Row 2: Platform codes and genres #}
-            <div class="text-xs text-base-content/70 truncate" data-slot="platforms-row">
+            <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">
                 {% if game %}
                     {% for family in game.platforms.all|platform_families_grouped %}{% if family.count >= 3 %}<span class="inline-flex items-center" title="{{ family.tooltip }}">{% if family.svg_icon %}<svg class="w-3 h-3" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ family.svg_icon }}"></use></svg>{% elif family.icon %}<span class="mdi {{ family.icon }}" aria-hidden="true"></span>{% endif %}<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">{{ family.count }}</span></span>{% else %}{% for p in family.platforms %}<span title="{{ p.name }}">{{ p.code }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}{% with genres=game.wikipedia_genres.all|slice:":2" %}{% if genres %}{% if game.platforms.all %} &bull; {% endif %}{% for genre in genres %}{{ genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}
                 {% endif %}

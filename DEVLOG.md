@@ -13,179 +13,67 @@
 
 ## 2026-01-01
 
-- Show multiple developers in game rows with smart filtering (removes redundant parent companies when subsidiary is also credited)
-- Performance: reduce main-thread work by self-hosting HTMX/Alpine.js, bundling client-filtering scripts, deferring modal handlers
-- Fix sync_from_prod: add missing models (Series, WikipediaGenre, GameQuote, IGDBGameData, WikipediaGameData)
-- Fix signal handler crash during bulk deletion when parent developer already deleted
-- Bump cache version to v3
-- Improve game list density: show developer and list count by default (not just on hover)
-- Add list appearances row to game detail properties
-- Add list counts to section headers on game detail page (e.g., "All-Time Lists (15)")
-- Fix badge truncation: use overflow-hidden + nested span.truncate pattern
-- Mobile game row: split metadata into two rows (developer/list count, platforms/genres)
-- Sync client-side game rendering with updated server templates
-- Performance: fix platform filter duplicate results, add missing .distinct()
-- Performance: cache genre hierarchy expansion (24h TTL) with signal-based invalidation
-- Performance: cache game detail counts (total, decade, year) to reduce per-page queries
-- Performance: add HTTP caching to API views (15-30 min TTL)
-- Performance: optimize 404 page image (PNG to WebP, 392KB → 23KB)
-- Fix developer search debounce: increase from 150ms to 300ms to reduce server load
-- Fix CSV export N+1: add wikipedia_genres prefetch
-- Optimize home page: cache hero stats, fix highlight pagination N+1, simplify series cache key, cache played games per-user
+- Show multiple developers in game rows with smart filtering (removes redundant parent companies)
+- Performance: extensive caching (genre hierarchy, game counts, hero stats, API views) and query optimizations
+- Performance: reduce main-thread work by self-hosting HTMX/Alpine.js, bundling scripts, deferring modal handlers
+- Improve game list density: show developer and list count by default, add list appearances to game detail
+- Mobile improvements: split game row metadata into two rows, fix signup modal scrolling, truncate overflow
+- Fix developer detail layout shift: server-render game count and rank distribution
 - Optimize developers page: add hierarchy caching service to eliminate recursive N+1 queries
-- Theme refinements: fix background color (base-200 instead of base-300), use accent color for rankings and sidebar active state
-- Fix developer detail layout shift: server-render game count and rank distribution to reserve space
-- Add visual divider between hero section and filters on home page
-- Fix sign up modal on mobile: add scrolling and compress vertical spacing for small screens
-- Fix platform filter sorting: individual platforms now sort by (start year, end year, alphabetical) instead of game count
-- Fix mobile developers page overflow: truncate long developer names and game titles in cards
-- Add expand/collapse all button for platform and genre filter dropdowns
+- Theme refinements: fix background color (base-200), use accent color for rankings and sidebar
 
 ## 2025-12-31
 
-- Fix layout shift on game list: use CSS Grid with calc() to reserve sidebar space on initial render
-- Fix filter skeleton loading states: match actual rendered heights to prevent layout shift on load
-- Add player rank/percentile to profile: shows "#X of Y players" for small groups, percentile for 10+
-- Fix hierarchical filter drill-down: clicking child when parent selected shifts selection down, not toggle
+- Add played games filter: three-way toggle (All/Played/Unplayed) with URL params and client-side filtering
+- Developers page redesign: add Top Rank, Top Game, Subsidiaries columns with new sort options
 - Make rankings page the homepage (redirect /rankings/ and /games/ to /)
-- Add dedicated contact page at /contact/ with form fallback for modal errors
-- Add news page at /news/ for blog post listing
-- Filter title now shows all selected genres (not just first one)
-- Various home page layout refinements: tighter spacing, reordered sections
-- Add rank position indicator bar on game detail page using DaisyUI progress component
-- Change homepage game tooltips to show above covers (avoid rank chip collision)
-- Fix Load More showing filtered rank on unfiltered list after Jump to Rank
-- Fix profile played count to exclude orphaned games (games no longer in rankings)
-- Fix badge opacity on Load More: client-side rendered badges now match server opacity (70%)
-- Add opt-in notification for posts: new send_notification checkbox, publish without notifying subscribers
-- Developers page redesign: add Top Rank, Top Game (with thumbnail), and Subsidiaries columns
-- Add sort options for subsidiaries count and top game rank on developers list
-- Wider developers layout (max-w-5xl), pagination reduced to 100 per page
-- Fix series badge truncation on mobile: prevent text wrap/overflow with ellipsis and max-width
-- Fix Load More button: use CSF's loadMore when ready, initialize renderer state from server-rendered content
-- Fix Jump to Rank: centralize state management, get authoritative loaded count from CSF/DOM
-- Fix rank display: show 'alltime' rank (no global rank indicator) when no filters active
-- Fix logout button reliability: restructure to match DaisyUI menu pattern, separate hidden form
-- Sidebar vertical squish: scrollable bottom section for short viewports, tightened margins throughout
-- Consolidate Terms/Privacy into single Legal link (sidebar, mobile nav, login modal)
-- Add series display to game properties: clickable badges link to filtered game list with highlight
-- Fix played button on game detail page: preserve large size when toggling played status
-- Add played games filter: three-way toggle (All/Played/Unplayed) in rankings page search section
-- Played filter updates faceted counts (genres, platforms, year heatmap) dynamically
-- Played filter: URL parameter support (?played=yes/no), page title suffix, client-side filtering
-- Reorder navigation: Home → Search → Login → Developers → Lists (consistent across sidebar and mobile)
-- Mobile nav priority system: more items show outside hamburger when space permits (About, Contact, Donate)
-- Move login/account to primary nav area, add logout button to Account modal
-- Remove News and Legal from navigation (link Legal from About page instead)
-- Unify game row templates: split into desktop/mobile partials with data-slot attributes for JS template cloning
-- Played button: hide star for unauthenticated users (no empty space), show only when logged in
-- CSV download: support series/played filters, show Played column (Yes/No) for authenticated users
-- Fix mobile filter race condition: re-dispatch facet counts when filter sheet opens for first time
-- Add legal disclaimer link to profile form
-- Add Microcomputers sub-grouping: Commodore, UK, Japan, Atari, Other (sorted by game count)
-- Sort all platform filter levels by game count: manufacturers, form factors, and individual platforms
-- Add Microcomputer form factor titles: "UK Microcomputer Games", "Japanese Microcomputer Games", etc.
-- Mobile filters: match desktop multi-select behavior with drill-down and exclusive parent selection
+- Add player rank/percentile to profile: shows ranking among players who've played the same games
+- Navigation overhaul: reorder nav items, mobile priority system, consolidate Terms/Privacy into Legal
+- Fix layout shift issues: CSS Grid for sidebar, filter skeleton heights, Load More state management
+- Add Microcomputers sub-grouping in platform filters (Commodore, UK, Japan, Atari, Other)
+- Unify game row templates: desktop/mobile partials with data-slot attributes for JS template cloning
 
 ## 2025-12-30
 
-- Add PlayedGame model for tracking user's played games with IGDB ID-based reconnection across re-imports
-- Add toggle-played-game API endpoint with HTMX partial response
-- Jump to Rank: use client-side filtering for instant navigation (no network requests)
-- Jump to Rank: validate against filtered total, show error if rank exceeds list size
-- Jump to Rank: use event delegation for reliable button handling, auto-initialize on script load
-- Added django-allauth for user authentication (email/username login, social auth providers ready)
-- Add UserProfile model with auto-creation signal for display name and email subscription preferences
-- Add auth modal structure with HTMX-powered multi-step flow (feature-flagged, disabled in production)
-- Auth modal Phase 4: working email login form with allauth LoginForm, HTMX submission, error display
-- Auth modal: login redirects to previous page, logout via POST with immediate redirect
-- Sidebar auth section: shows Sign In button (logged out) or user email + logout (logged in), behind feature flag
-- Added MDI icons: arrow-left, login, logout, account-circle
-- Auth modal Phase 5: user dropdown in sidebar/mobile, Edit Profile form with display name and email subscription
-- Subscriber sync: profile checkbox syncs with Subscriber model, new users inherit existing subscription state
-- Auth modal Phase 6: signup form with email/password, HTMX navigation between login/signup forms
-- Custom allauth adapter sets username=email for guaranteed uniqueness and cleaner admin display
-- Auth modal Phase 7: forgot password flow with HTMX, shows success message in modal, reset link via email
-- Auth modal Phase 8: profile form shows read-only email field for user reference
-- Auth modal Phase 9: custom adapters for modal-friendly redirects, comprehensive adapter tests
-- Fix sign out button: add @click.stop to prevent menu from closing before form submits
+- Implement user authentication with django-allauth: email/username login, signup, forgot password, email verification
 - Custom User model: consolidate auth.User, Subscriber, and UserProfile into single games.User model
-- Mandatory email verification: signup requires email confirmation before login, with resend option
-- Login accepts email or username, signup has optional username field and newsletter checkbox
-- Remove Posts feature and old newsletter subscription pages (consolidated into auth flow)
-- Test speed optimization: parallel execution (36s→12s), in-memory SQLite, setUpTestData for fixtures
-- Fix client-side renderer to match Django template exactly (desktop:grid, game-rank/game-title classes, hover effects)
-- Played button: fix star glow clipping, add DaisyUI tooltip, fix HTMX swap on client-rendered rows
-- Played button UI: Mario star PNG when played, MDI outline when not, in game rows and detail page
-- Played button: HTMX toggle, desktop/mobile sync, no layout shift with fixed-size wrappers
-- Client-side renderer: add played button rendering with playedGameIds state sync
-- Fix played buttons on Load More: add htmx.process() to reinitialize HTMX for dynamically rendered content
+- Add PlayedGame model and played button UI (Mario star when played, HTMX toggle, client-side sync)
+- Auth modal: multi-step HTMX flow for login, signup, profile editing, and password reset
+- Jump to Rank: client-side filtering for instant navigation with validation
+- Test speed optimization: parallel execution (36s→12s), in-memory SQLite, setUpTestData
+- Fix client-side renderer to match Django template (desktop:grid, hover effects, played button)
+- Remove Posts feature and old newsletter pages (consolidated into auth flow)
 
 ## 2025-12-29
 
-- Year grid heatmap: orange color scheme with theme-specific variants, smart corner rounding based on adjacency
-- Game row hover: title shrinks on hover to make room for properties, properties indented under title
-- Game row hover: rank scales up, thumbnail shows full cover art and expands, gradient background fades right, removed borders
-- Platform filters: add 4 missing platforms (ARCH, E60, HP21, PDP) to Microcomputers, remove phantom NGP/WS from Retro
-- Platform year ranges: move from hardcoded JS to database fields (year_start, year_end) for admin management
-- Search bar clear buttons: standardize all inputs using DaisyUI label pattern, show X immediately on typing
-- Mobile filter clear buttons: add text labels ("Clear Years", "Clear Platforms", etc.) to match desktop UX
-- Fix mobile filter Range tab: add year_range (1970-present) to context, fix From/To dropdowns not populating
-- Mobile filters: dim zero-count items (opacity-40), simplify decade selection to exact match only
-- Fix mobile filter loading state: dispatch facet counts even when game-list-container not found
-- Mobile filter sheet: hide nav when open, full-screen layout, fix overflow issues
+- Redesigned game row hover: title shrinks, rank scales up, thumbnail expands with full cover art
+- Year grid heatmap: orange color scheme with theme variants, smart corner rounding based on adjacency
+- Mobile filter improvements: full-screen sheet, dim zero-count items, clear buttons with labels
+- Platform year ranges: move from hardcoded JS to database fields for admin management
+- Responsive layout: reduce filter width 15%, lower breakpoint (1088px→962px) for narrower desktops
+- Fix N+1 query issue in developers page: use prefetch cache (reduces queries ~16 to ~3)
+- Fix IGDB import: developer parent chains now correctly set (e.g., Nintendo EAD → Nintendo)
 - Filter sections: default collapsed, remember expansion state in localStorage
-- Compact filter headers: short year format ('79-'81), badge shows count only, X button for clear
-- Fix mobile nav active state: only highlight list pages (not detail pages) to match desktop sidebar behavior
-- Fix mobile sort dropdowns: replace DaisyUI dropdown with native select for touch compatibility (Games, Developers, Developer detail)
-- Source Lists: fix table column reflow on Load More, use percentage-based widths with table-fixed, add ellipsis truncation for long names
-- Responsive layout: reduce filter width by 15% (420px→357px), lower breakpoint (1088px→962px) for narrower desktop support
-- Mobile nav: add active state highlighting, cache overflow state in sessionStorage to prevent layout shift
-- Mobile game row: plain text metadata (no badges), platforms • genre format, improved truncation
-- Controls row: reorder to Sort | Count | Jump on both mobile and desktop, more compact mobile inputs
-- Contact modal: fix scrollability on small screens with max-height constraint
-- Source lists filters: blur select on change to dismiss mobile dropdown
-- 404 page: handle mobile autoplay blocking gracefully (navigate immediately if audio can't play)
-- Dynamic developer detail page title: updates based on checkbox selection (e.g., "Nintendo EAD (Nintendo)" or "Nintendo (3 developers selected)")
-- Fix developer links in search bar: now matches Developers list page format (#developer-X for subsidiaries, no hash for root)
-- Add "Submit a list" link to Source Lists page (opens contact modal with List Submission category)
-- Desktop rankings: always show global rank (#N format) when filtered, matching mobile behavior
-- Fix N+1 query issue in developers page: use prefetch cache instead of values_list (reduces queries from ~16 to ~3)
-- Fix IGDB import bug: developer parent chains now correctly set (e.g., Nintendo EAD → Nintendo)
-- Clear slugs from non-root developers: only root developers need slugs (children accessed via hash anchors)
-- Fix developers missing in client-side filtered results (stale IndexedDB cache after schema change)
 
 ## 2025-12-28
 
-- Fixed icon issues: updated filter icons (Action, Simulation, Retro, Strategy), sidebar icons, replaced MDI subset with full font
-- Platform filters: added canonical year ranges (e.g., "NES 1983-1995"), fixed count double-counting, improved sorting
-- Filter appearance: removed checkboxes, unavailable options now dimmed instead of hidden (years, platforms, genres)
-- Client-side filtering: loading skeleton for counts, client-side sorting, pure client-side filtering (removed server fallback)
-- Developer search: unified games + developers in nav search bar with "See all results" links
-- Added "Report incorrect data" link to game detail pages (opens contact modal with pre-filled info)
-- Genre system: added mappings (Bullet hell→Shooter, Roguelite→Roguelike), fixed orphan genre hierarchy bug
-- Bug fixes: mobile rankings flash, studio filter checkbox clipping, mobile search "No results" bug, year heatmap clearing
-- Tablet layout: narrowed sidebar, compact controls, fixed game row breakpoint (was 768px, now 1024px like navbar)
-- Jump-to-game: now works for all sort modes (position-based), fixed mobile scroll offset for fixed header
-- Desktop breakpoint: changed to 1088px (when game list equals filter sidebar width), narrower nav sidebar (192px)
-- Mobile nav: added Devs/Lists/News links (responsive), larger buttons, active page indicator
-- Fix blurry sidebar logo by using high-resolution images (548w/1092w) instead of small variants
-- Developers list: added sort options (# Games default, Name A-Z), recursive game counting, secondary alpha sort for ties
-- Series filter: bidirectional count responsiveness, integration in dynamic title, mushroom icon
-- Genre category counts now include root-level games (e.g., games tagged "Role-Playing" directly)
+- Client-side filtering: pure client-side with loading skeleton, removed server fallback
+- Developer search: unified games + developers + series in nav search bar with "See all results" links
+- Platform filters: added canonical year ranges, fixed count double-counting, improved sorting
+- Filter appearance: removed checkboxes, unavailable options now dimmed instead of hidden
+- Developers list: added sort options (# Games, Name A-Z), recursive game counting
+- Tablet/Desktop layout: narrowed sidebar, compact controls, fixed breakpoints (1024px/1088px)
+- Genre system: added mappings (Bullet hell→Shooter, Roguelite→Roguelike), fixed orphan hierarchy bug
 - Add pre-commit hook for automatic JS minification (prevents stale .min.js files)
-- Add Series to unified search: navbar/sidebar search now shows series with game counts, links to filtered rankings
 
 ## 2025-12-27
 
-- Changed badge filter behavior: scroll to top instead of highlighting clicked game (cleaner UX)
+- Added client-side filtering with IndexedDB caching for Rankings page (instant filter updates)
+- Simplified genre filtering from multi-select to single-select with clear (×) buttons
 - Fixed genre normalization bug: management commands now normalize Wikipedia genres consistently
 - Added --cleanup-orphans flag to fetch_wikipedia_metadata to remove orphan WikipediaGenre records
-- Simplified genre filtering from multi-select to single-select for better UX
-- Removed "Match All" / "Match Any" toggle (no longer needed with single-select)
-- Added clear (×) buttons next to selected genres for easy deselection
+- Changed badge filter behavior: scroll to top instead of highlighting clicked game
 - Updated desktop and mobile genre filter components with new single-select behavior
-- Added client-side filtering with IndexedDB caching for Rankings page (instant filter updates)
 - Replaced Select All/Clear All buttons with company checkbox at top of developer studio filter tree
 
 ## 2025-12-16
@@ -194,18 +82,14 @@
 
 ## 2025-12-15
 
-- Added sorting options (Rank, Release Year, Alphabetical) to Rankings page
-- Server-side implementation with URL parameter state management for persistence
-- Responsive layout with separate mobile/tablet/desktop dropdown positions
-- Added comprehensive test coverage for all sorting modes and filter combinations
+- Added sorting options (Rank, Release Year, Alphabetical) to Rankings page with URL persistence
 - Implemented Wikipedia genre hierarchy with multi-level filtering (replaces IGDB genres)
 - Added genre normalization service to consolidate variant names (e.g., "MMORPG" variants → "MMORPG")
 - Redesigned game row hover: square thumbnails, Global Rank on title row, smoother transitions
+- Made platform and genre badges clickable to filter games with game highlighting
 - Filter dropdown now excludes genres with 0 games while preserving parent categories
 - Fixed Global Rank display on developer detail pages (now shows on filtered game lists)
-- Made platform and genre badges clickable to filter games (resets other filters for simplicity)
-- Added game highlighting when filtering via badges (scrolls to game, fades after 4 seconds)
-- Badge clicks now trigger HTMX filter updates with smooth transitions
+- Added comprehensive test coverage for all sorting modes and filter combinations
 
 ## 2025-12-14
 
@@ -245,41 +129,14 @@
 
 ## 2025-12-04
 
+- Implemented Wikipedia page lookup with Wikidata API (10x faster), fallback to OpenSearch
+- Implemented newsletter subscription: double opt-in, email notifications on publish, token-based unsubscribe
 - Removed Game of the Day feature (model fields, service, templates, views, tests)
-- Home page now shows 5 latest posts instead of 3
-- "All posts" button on home page now links to page 2 (skipping first 5 posts)
-- Mobile home page now shows only top 10 games (desktop still shows 30)
-- Removed Subscribe page links from sidebar and mobile navigation
-- Implemented Wikipedia page lookup feature with Wikidata ID integration
-- Added "Fetch Wikipedia Pages" button to /import/ page with real-time SSE progress tracking
-- Primary lookup via Wikidata API (10x faster with authentication), fallback to OpenSearch API
-- Authentication support via WIKIDATA_ACCESS_TOKEN environment variable (0.75s vs 2.0s delay)
-- New database fields: wikipedia_page_title, wikipedia_lookup_source (wikidata/opensearch)
 - Created get_wikipedia_pages management command with CSV output and --save option
-- Wikipedia page lookup separate from genre scraping (enables future optimization)
-- Added wikipedia_page_title and wikipedia_lookup_source to Game admin display/search
-- Fixed Wikipedia page lookup bug (changed "year" to "year_of_release" field reference)
-- Added time estimates next to IGDB and Wikipedia import buttons with format_duration filter
-- Simplified import progress UI: replaced detailed progress bars with loading spinners
-- Simplified backend progress reporting: removed unused percentage/time calculations
-- Fixed redundant text in database status cards ("data data" and "pages pages")
-- Fixed Wikipedia API response handling: added type checking for None/list responses preventing AttributeError crashes
-- Implemented newsletter subscription feature with double opt-in email confirmation
-- Email notifications automatically sent to confirmed subscribers when posts are published (active=True)
-- One-time notification per post using notification_sent field to prevent duplicate emails
-- Subscribe form added to home page (next to Latest News) and sidebar navigation
-- Multipart emails (HTML + plain text) with full post content and working markdown links
-- Token-based unsubscribe links for easy opt-out
-- Admin interface for managing subscribers (view-only, no manual additions)
-- CSP exemption added for Django admin to fix script loading issues
-- Fixed 404 page formatting: increased card width to max-w-2xl, removed width/height attrs from button icon, sized button appropriately
-- Added post author name to notification emails (displays full name or username)
-- Fixed theme persistence issue: removed hardcoded data-theme attribute, added validation to prevent invalid theme values
-- Theme now auto-detects system preference when localStorage contains invalid values (like 'auto')
-- Restricted DaisyUI configuration to only load lofi and forest themes (prevents "auto" theme from being available)
-- Removed stale 'night' theme references from theme toggle logic (fixes theme switching issues)
-- Changed Open Graph image from light logo to dark logo (affects social media previews)
-- Removed old theme references (night, nord, synthwave) from CSS and template toggles to prevent theme confusion
+- Fixed theme persistence: validate localStorage, auto-detect system preference, restrict to lofi/forest themes
+- Added time estimates and simplified progress UI for IGDB and Wikipedia imports
+- Mobile home page now shows only top 10 games (desktop still shows 30)
+- Fixed Wikipedia API response handling to prevent AttributeError crashes
 
 ## 2025-12-03
 
@@ -334,35 +191,25 @@
 
 ## 2025-11-26
 
-- MDI CSS subset: reduced 53KB CDN file to ~1KB by including only 10 used icons (98% reduction)
-- Deferred Google Analytics loading with requestIdleCallback to eliminate 39ms forced reflow on mobile
-- Self-hosted CSS: combined Bulma + Bulmaswatch + custom styles into single file (~600ms render-blocking reduction)
+- PageSpeed optimizations: self-hosted CSS (~600ms faster), deferred scripts, async MDI CSS, preconnect hints
 - Fixed mobile CLS (0.31→target <0.1): logo aspect-ratio, icon sizing, x-cloak on hidden elements
-- PageSpeed optimizations: deferred HTMX/Alpine.js scripts, async MDI CSS loading, preconnect hints
-- Self-hosted MDI font with font-display: swap to eliminate FOIT (~40ms FCP improvement)
-- Image optimization: lazy loading, explicit dimensions, fetchpriority for hero image
-- Accessibility: skip navigation link, screen-reader labels for search, ARIA labels on buttons
-- SEO: meta descriptions, canonical URLs, Open Graph/Twitter Cards, JSON-LD structured data
-- Added XML sitemap with games, developers, and static pages (/sitemap.xml)
+- MDI CSS subset: reduced 53KB CDN file to ~1KB (98% reduction), self-hosted font with font-display: swap
+- SEO: meta descriptions, canonical URLs, Open Graph/Twitter Cards, JSON-LD structured data, XML sitemap
+- Security headers: HSTS, X-Frame-Options, Secure cookies; WhiteNoise Brotli/gzip compression
+- Accessibility: skip navigation link, ARIA labels, improved text contrast for WCAG AA compliance
+- Image optimization: lazy loading, explicit dimensions, fetchpriority, 2x retina support for covers
 - Added robots.txt with sitemap reference (/robots.txt)
-- Security headers: HSTS, X-Frame-Options, Secure cookies (production only)
-- WhiteNoise optimization: Brotli/gzip compression, 1-year cache headers with hash-based cache busting
-- Accessibility contrast fixes: improved text contrast for WCAG AA compliance
-- Responsive hero logo with srcset for optimized image delivery
-- IGDB cover images: added 2x retina support with srcset for crisp thumbnails on high-DPI displays
 
 ## 2025-11-25
 
 - Added `sync_from_prod` management command for syncing production PostgreSQL to local SQLite
-- Added Enter key navigation to nav search bar (goes to full search results page)
-- Added optional author field to Posts (ForeignKey to User, displays as "Author · 2 hours ago")
 - Added contact form with Navi theme, Brevo SMTP email integration (console in dev, SMTP in prod)
-- Redesigned thank you page with Portal theme (animated envelope flying into glowing portal)
-- Backend refactoring: split utils.py (~1150 lines) into focused service modules (import_handler, ranking_service, query_filters, game_filter_service)
-- CSS: added custom properties for theming, extracted dual-range slider styles from template
-- UI fixes: download CSV button shows text label, disabled browser autocomplete on search input
-- JavaScript refactoring: created utils.js with shared utilities, consolidated duplicate fetch functions (~430 lines removed)
+- Backend refactoring: split utils.py (~1150 lines) into focused service modules
+- JavaScript refactoring: created utils.js, consolidated duplicate fetch functions (~430 lines removed)
 - CSS refactoring: extracted ~1000 lines from base.html to external stylesheets (main.css, import.css)
+- Redesigned thank you page with Portal theme (animated envelope flying into glowing portal)
+- Added optional author field to Posts (ForeignKey to User, displays as "Author · 2 hours ago")
+- UI fixes: download CSV button shows text label, disabled browser autocomplete on search input
 
 ## 2025-11-24
 
@@ -386,14 +233,13 @@
 
 ## 2025-11-22
 
-- Implemented dynamic tagline with real-time database counts
-- Added game counts to decade filters
 - Optimized IGDB import for maximum performance (100+ games/sec, 75x improvement with Pro tier)
-- Fixed developer list search double-load and implemented real-time search
-- Enhanced import page with file validation fixes, completion indicators, and auto-IGDB trigger
 - Achieved 95% overall test coverage with comprehensive test suite expansion
-- Upgraded to Heroku-24 stack
-- Migrated repository from BitBucket to GitHub
+- Enhanced import page with file validation fixes, completion indicators, and auto-IGDB trigger
+- Implemented dynamic tagline with real-time database counts
+- Fixed developer list search double-load and implemented real-time search
+- Added game counts to decade filters
+- Upgraded to Heroku-24 stack and migrated repository from BitBucket to GitHub
 
 ## 2025-11-19
 

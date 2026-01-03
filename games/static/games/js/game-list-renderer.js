@@ -784,7 +784,7 @@ class GameListRenderer {
     <div class="min-w-0 flex items-center justify-between">
         <div class="min-w-0">
             <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">${this._escapeHtml(game.n)} <span class="font-normal text-base-content/60">(${game.y || 'N/A'})</span></div>
-            <div class="text-xs text-base-content/60 truncate" data-slot="meta">${metaText}</div>
+            <div class="text-xs text-base-content/50 truncate" data-slot="meta">${metaText}</div>
             <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">${platformsRowHtml}</div>
         </div>
     </div>
