@@ -401,6 +401,33 @@
   .year-grid-cell-label {
     @apply text-[0.7rem] font-bold text-white pointer-events-none;
   }
+
+  /* Header row with legend and hint */
+  .year-grid-header {
+    @apply flex items-center justify-between mb-2 text-xs text-base-content/60;
+  }
+
+  .year-grid-hint {
+    @apply text-base-content/60;
+  }
+
+  /* Legend showing color scale */
+  .year-grid-legend {
+    @apply flex items-center gap-1.5;
+  }
+
+  .year-grid-legend-value {
+    @apply tabular-nums min-w-[1.5rem] text-center;
+  }
+
+  .year-grid-legend-bar {
+    @apply h-2.5 w-20 rounded-sm;
+    background: linear-gradient(
+      to right,
+      color-mix(in oklch, var(--color-heatmap) 30%, transparent),
+      var(--color-heatmap)
+    );
+  }
 }
 
 /* Genre Filter Component */

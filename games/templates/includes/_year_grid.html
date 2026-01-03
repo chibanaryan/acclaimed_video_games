@@ -96,6 +96,12 @@
              this.lastClicked = null;
          },
 
+         // Get min count (excluding zeros) for legend
+         getMinCount() {
+             const nonZero = this.originalYearCounts.filter(yc => yc.count > 0);
+             return nonZero.length > 0 ? Math.min(...nonZero.map(yc => yc.count)) : 0;
+         },
+
          buildDecades() {
              // Build structure from ORIGINAL data (decades always visible)
              // All years in a decade are shown (dimmed if 0 results in current filters)
@@ -175,7 +181,7 @@
 
          getOpacity(count) {
              if (count === 0) return '5%';
-             // Linear scaling
+             // Linear scaling from 30% to 100%
              const normalized = count / this.maxCount;
              const opacity = 0.30 + normalized * 0.70;
              return Math.round(opacity * 100) + '%';
@@ -403,6 +409,16 @@
      @mouseleave="cancelDrag()"
      @mouseup.window="endDrag()"
      @year-reset.window="handleReset()">
+
+    {# Header row with hint and legend #}
+    <div class="year-grid-header">
+        <span class="year-grid-hint">Drag or shift+click for ranges</span>
+        <div class="year-grid-legend">
+            <span class="year-grid-legend-value" x-text="getMinCount()"></span>
+            <div class="year-grid-legend-bar"></div>
+            <span class="year-grid-legend-value" x-text="originalMaxCount"></span>
+        </div>
+    </div>
 
     <div class="year-grid">
         <template x-for="decade in decades" :key="decade.start">
