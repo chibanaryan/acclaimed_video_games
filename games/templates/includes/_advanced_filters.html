@@ -1009,19 +1009,26 @@
                             </g>
                         </svg>
                         <span class="font-bold text-base">Search</span>
-                        {% if user.is_authenticated %}
                         <div class="join ml-auto" title="Filter by played status">
                             <input type="radio" name="played-filter" class="join-item btn btn-xs"
                                    aria-label="All" :checked="!filters.played"
                                    @click="filters.played = ''; debouncedFilterUpdate()">
+                            {% if user.is_authenticated %}
                             <input type="radio" name="played-filter" class="join-item btn btn-xs"
                                    aria-label="Played" :checked="filters.played === 'yes'"
                                    @click="filters.played = 'yes'; debouncedFilterUpdate()">
                             <input type="radio" name="played-filter" class="join-item btn btn-xs"
                                    aria-label="Unplayed" :checked="filters.played === 'no'"
                                    @click="filters.played = 'no'; debouncedFilterUpdate()">
+                            {% else %}
+                            <input type="radio" name="played-filter" class="join-item btn btn-xs opacity-40 cursor-not-allowed"
+                                   aria-label="Played" title="Sign in to track played games"
+                                   onclick="return false;">
+                            <input type="radio" name="played-filter" class="join-item btn btn-xs opacity-40 cursor-not-allowed"
+                                   aria-label="Unplayed" title="Sign in to track played games"
+                                   onclick="return false;">
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
                     <div>
                         {% include 'includes/_search_input.html' with value=filters.q placeholder='Filter results' %}
