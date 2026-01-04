@@ -45,6 +45,38 @@ class WikipediaGenreAdmin(admin.ModelAdmin):
         return obj.games_with_wikipedia_genre.count()
 
 
+@admin.register(models.WikipediaCountry)
+class WikipediaCountryAdmin(admin.ModelAdmin):
+    list_display = ["name", "wikidata_id", "slug", "game_count"]
+    search_fields = ["name", "wikidata_id"]
+    ordering = ["name"]
+    readonly_fields = ["game_count"]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(_game_count=Count("games"))
+
+    @admin.display(description="Games", ordering="_game_count")
+    def game_count(self, obj):
+        return getattr(obj, "_game_count", obj.games.count())
+
+
+@admin.register(models.WikipediaGameMode)
+class WikipediaGameModeAdmin(admin.ModelAdmin):
+    list_display = ["name", "wikidata_id", "slug", "game_count"]
+    search_fields = ["name", "wikidata_id"]
+    ordering = ["name"]
+    readonly_fields = ["game_count"]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(_game_count=Count("games"))
+
+    @admin.display(description="Games", ordering="_game_count")
+    def game_count(self, obj):
+        return getattr(obj, "_game_count", obj.games.count())
+
+
 @admin.register(models.Series)
 class SeriesAdmin(admin.ModelAdmin):
     list_display = ["name", "slug", "igdb_id", "game_count"]
@@ -112,6 +144,8 @@ class GameAdmin(admin.ModelAdmin):
         "platforms",
         "genres",
         "wikipedia_genres",
+        "wikipedia_countries",
+        "wikipedia_game_modes",
         "series",
     ]
     inlines = [GameQuoteInline]
@@ -126,7 +160,12 @@ class GameAdmin(admin.ModelAdmin):
                 "primary_wikipedia_game_data",
                 "primary_hltb_game_data",
             )
-            .prefetch_related("genres", "wikipedia_genres")
+            .prefetch_related(
+                "genres",
+                "wikipedia_genres",
+                "wikipedia_countries",
+                "wikipedia_game_modes",
+            )
         )
 
     def save_model(
@@ -228,6 +267,7 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
         "page_title",
         "wikidata_id",
         "hltb_id",
+        "wikiquote_page_title",
         "primary_genre",
         "_all_genres_preview",
         "lookup_source",
@@ -242,6 +282,7 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
         "page_title",
         "wikidata_id",
         "hltb_id",
+        "wikiquote_page_title",
         "primary_genre",
         "lookup_source",
     ]
