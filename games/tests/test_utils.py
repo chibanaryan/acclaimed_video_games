@@ -296,6 +296,29 @@ class SendContactEmailTests(TestCase):
             # Should return False on exception
             self.assertFalse(result)
 
+    def test_send_contact_email_without_at_symbol_in_base_email(self):
+        """Test email when CONTACT_EMAIL doesn't contain @ symbol."""
+        from django.core import mail
+        from django.test import override_settings
+
+        # Use override_settings to test with CONTACT_EMAIL without @ symbol
+        with override_settings(
+            CONTACT_EMAIL="contact",  # No @ symbol
+            SITE_URL="https://test.com",
+            DEFAULT_FROM_EMAIL="from@example.com",
+        ):
+            result = utils.send_contact_email(
+                name="Test User",
+                email="test@example.com",
+                category="general",
+                message="Test message.",
+            )
+
+            self.assertTrue(result)
+            self.assertEqual(len(mail.outbox), 1)
+            # Should use base_email directly without modification
+            self.assertEqual(mail.outbox[0].to, ["contact"])
+
 
 class ApplyYearFiltersTests(TestCase):
     """Tests for apply_year_filters utility function."""
@@ -520,6 +543,34 @@ class SendPostNotificationEmailTests(TestCase):
         ):
             result = utils.send_post_notification_email(post, subscriber)
             self.assertFalse(result)
+
+    def test_post_without_author_uses_default_name(self):
+        """Test notification email for post without author."""
+        from django.core import mail
+
+        from games.models import Post, User
+
+        # Create post without author
+        post = Post.objects.create(
+            title="Test Post",
+            text="Test content",
+            author=None,  # No author
+        )
+
+        subscriber = User.objects.create_user(
+            username="subscriber",
+            email="subscriber@example.com",
+            email_subscribed=True,
+        )
+        subscriber.generate_unsubscribe_token()
+        subscriber.save()
+
+        result = utils.send_post_notification_email(post, subscriber)
+
+        self.assertTrue(result)
+        self.assertEqual(len(mail.outbox), 1)
+        # Should use default author name
+        self.assertIn("Acclaimed Video Games", mail.outbox[0].body)
 
 
 class NotifySubscribersOfNewPostTests(TestCase):

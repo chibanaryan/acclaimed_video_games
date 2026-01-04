@@ -55,6 +55,41 @@ class RankingUtilsTests(TestCase):
         self.assertEqual(games_updated, 0)
         self.assertEqual(years_processed, 0)
 
+    @mock.patch("games.services.ranking_service.connection")
+    def test_update_year_decade_ranks_postgresql_path(self, mock_connection):
+        """Test that PostgreSQL path uses window functions for ranking.
+
+        Note: This test requires an actual PostgreSQL database to properly test
+        the window function path. When running on SQLite, we simply verify that
+        the PostgreSQL code path is attempted when vendor is 'postgresql'.
+        """
+        import unittest
+
+        from django.db import connection
+
+        from games.services.ranking_service import update_year_decade_ranks
+
+        # Skip on SQLite as window functions in UPDATE subqueries aren't supported
+        if connection.vendor == "sqlite":
+            raise unittest.SkipTest(
+                "PostgreSQL window functions not supported on SQLite"
+            )
+
+        # Create test games
+        models.Game.objects.create(
+            name="Game 1", rank=1, igdb_id=1, year_of_release=1990
+        )
+        models.Game.objects.create(
+            name="Game 2", rank=2, igdb_id=2, year_of_release=1990
+        )
+
+        mock_connection.vendor = "postgresql"
+        games_updated, years_processed = update_year_decade_ranks()
+
+        # Verify results
+        self.assertEqual(games_updated, 2)
+        self.assertEqual(years_processed, 1)
+
 
 class GameIgdbTests(TestCase):
 

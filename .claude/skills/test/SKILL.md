@@ -7,6 +7,10 @@ description: Run Django tests with coverage reporting. Use when asked to test, r
 
 Run the Django test suite with coverage reporting.
 
+## IMPORTANT: No Parallel Coverage Runs
+
+**Never run coverage or pytest with coverage in parallel with other agents.** Coverage writes to a shared `.coverage` file, so concurrent runs will corrupt data and cause failures. Wait for any running test/coverage process to complete before starting another.
+
 ## Basic Commands
 
 ```bash

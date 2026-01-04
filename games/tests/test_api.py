@@ -582,3 +582,326 @@ class GameAllDataViewTests(TestCase):
         platform_data = platforms[str(self.platform.id)]
         self.assertEqual(platform_data["n"], "PC")
         self.assertEqual(platform_data["c"], "PC")
+
+
+class IdNameSerializerTests(TestCase):
+    """Tests for IdNameSerializer get_id method."""
+
+    def test_get_id_with_igdb_id(self):
+        """Test that get_id returns igdb_id when available."""
+        developer = models.Developer.objects.create(
+            name="Test Dev", slug="test-dev", igdb_id=12345
+        )
+        serializer = serializers.IdNameSerializer(developer)
+        self.assertEqual(serializer.data["id"], 12345)
+
+    def test_get_id_falls_back_to_id(self):
+        """Test that get_id falls back to regular id when no igdb_id."""
+        # IGDBGenre has id but no igdb_id attribute
+        genre = models.IGDBGenre.objects.create(name="Test Genre")
+        serializer = serializers.IdNameSerializer(genre)
+        self.assertEqual(serializer.data["id"], genre.id)
+
+
+class GameSummarySerializerTests(TestCase):
+    """Tests for GameSummarySerializer methods."""
+
+    def test_get_igdb_artwork_id_with_primary_data(self):
+        """Test that artwork_id is returned from primary_igdb_game_data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1001, slug="test-game-sm1"
+        )
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game, igdb_id=1001, artwork_id="cover123", is_primary=True
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save()
+
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertEqual(serializer.data["igdb_artwork_id"], "cover123")
+
+    def test_get_igdb_artwork_id_returns_none_without_primary_data(self):
+        """Test that artwork_id returns None when no primary_igdb_game_data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1002, slug="test-game-sm2"
+        )
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertIsNone(serializer.data["igdb_artwork_id"])
+
+    def test_get_igdb_url_with_primary_data(self):
+        """Test that URL is returned from primary_igdb_game_data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1003, slug="test-game-sm3"
+        )
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=1003,
+            url="https://igdb.com/games/test",
+            is_primary=True,
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save()
+
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertEqual(serializer.data["igdb_url"], "https://igdb.com/games/test")
+
+    def test_get_igdb_url_returns_none_without_primary_data(self):
+        """Test that URL returns None when no primary_igdb_game_data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1004, slug="test-game-sm4"
+        )
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertIsNone(serializer.data["igdb_url"])
+
+    def test_get_description_with_primary_data(self):
+        """Test that description is returned from primary_igdb_game_data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1005, slug="test-game-sm5"
+        )
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=1005,
+            description="A great game",
+            is_primary=True,
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save()
+
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertEqual(serializer.data["description"], "A great game")
+
+    def test_get_description_returns_none_without_primary_data(self):
+        """Test that description returns None when no primary_igdb_game_data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1006, slug="test-game-sm6"
+        )
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertIsNone(serializer.data["description"])
+
+    def test_get_protondb_tier_with_primary_data(self):
+        """Test that protondb_tier is returned from primary_protondb_game_data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1007, slug="test-game-sm7"
+        )
+        protondb_data = models.ProtonDBGameData.objects.create(
+            game=game, igdb_id=1007, steam_app_id="12345", tier="gold", is_primary=True
+        )
+        game.primary_protondb_game_data = protondb_data
+        game.save()
+
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertEqual(serializer.data["protondb_tier"], "gold")
+
+    def test_get_protondb_tier_returns_none_without_primary_data(self):
+        """Test that protondb_tier returns None when no primary_protondb_game_data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1008, slug="test-game-sm8"
+        )
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertIsNone(serializer.data["protondb_tier"])
+
+    def test_get_steam_deck_compatible_with_primary_data(self):
+        """Test that steam_deck_compatible is returned correctly."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1009, slug="test-game-sm9"
+        )
+        protondb_data = models.ProtonDBGameData.objects.create(
+            game=game,
+            igdb_id=1009,
+            steam_app_id="12346",
+            tier="platinum",
+            is_primary=True,
+        )
+        game.primary_protondb_game_data = protondb_data
+        game.save()
+
+        serializer = serializers.GameSummarySerializer(game)
+        # Platinum tier should be Steam Deck compatible
+        self.assertTrue(serializer.data["steam_deck_compatible"])
+
+    def test_get_steam_deck_compatible_returns_none_without_primary_data(self):
+        """Test that steam_deck_compatible returns None without data."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=1010, slug="test-game-sm10"
+        )
+        serializer = serializers.GameSummarySerializer(game)
+        self.assertIsNone(serializer.data["steam_deck_compatible"])
+
+
+class DeveloperSerializerTests(TestCase):
+    """Tests for DeveloperSerializer get_games_count method."""
+
+    def test_get_games_count_with_annotated_count(self):
+        """Test that annotated games_count is used when available."""
+        from django.db.models import Count
+
+        developer = models.Developer.objects.create(
+            name="Test Dev", slug="test-dev-ds", igdb_id=100
+        )
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=2001, slug="test-game-ds"
+        )
+        game.developers.add(developer)
+
+        # Annotate the queryset
+        developer_annotated = models.Developer.objects.annotate(
+            games_count=Count("developed_games")
+        ).get(pk=developer.pk)
+
+        serializer = serializers.DeveloperSerializer(developer_annotated)
+        self.assertEqual(serializer.data["games_count"], 1)
+
+    def test_get_games_count_fallback_to_computed(self):
+        """Test that games_count is computed when not annotated."""
+        developer = models.Developer.objects.create(
+            name="Test Dev 2", slug="test-dev-ds2", igdb_id=101
+        )
+        game = models.Game.objects.create(
+            name="Test Game 2", rank=1, igdb_id=2002, slug="test-game-ds2"
+        )
+        game.developers.add(developer)
+
+        # Get developer without annotation
+        serializer = serializers.DeveloperSerializer(developer)
+        self.assertEqual(serializer.data["games_count"], 1)
+
+
+class PostSerializerTests(TestCase):
+    """Tests for PostSerializer get_author method."""
+
+    def test_get_author_with_full_name(self):
+        """Test that author's full name is returned when available."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="testuser-ps", first_name="John", last_name="Doe"
+        )
+        post = models.Post.objects.create(
+            title="Test Post", text="Content", author=user, active=True
+        )
+        serializer = serializers.PostSerializer(post)
+        self.assertEqual(serializer.data["author"], "John Doe")
+
+    def test_get_author_fallback_to_username(self):
+        """Test that author's username is used when full name is empty."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(username="testuser2-ps")
+        post = models.Post.objects.create(
+            title="Test Post 2", text="Content", author=user, active=True
+        )
+        serializer = serializers.PostSerializer(post)
+        self.assertEqual(serializer.data["author"], "testuser2-ps")
+
+    def test_get_author_returns_none_when_no_author(self):
+        """Test that None is returned when post has no author."""
+        post = models.Post.objects.create(
+            title="Test Post 3", text="Content", active=True
+        )
+        serializer = serializers.PostSerializer(post)
+        self.assertIsNone(serializer.data["author"])
+
+
+class WikipediaGenreTreeSerializerTests(TestCase):
+    """Tests for WikipediaGenreTreeSerializer methods."""
+
+    def test_get_children_returns_nested_children(self):
+        """Test that children are serialized recursively."""
+        parent = models.WikipediaGenre.objects.create(
+            name="Action Ser", slug="action-ser", level=0, display_order=1
+        )
+        models.WikipediaGenre.objects.create(
+            name="Shooter Ser",
+            slug="shooter-ser",
+            parent=parent,
+            level=1,
+            display_order=1,
+        )
+        models.WikipediaGenre.objects.create(
+            name="Platformer Ser",
+            slug="platformer-ser",
+            parent=parent,
+            level=1,
+            display_order=2,
+        )
+
+        serializer = serializers.WikipediaGenreTreeSerializer(parent)
+        data = serializer.data
+
+        self.assertEqual(len(data["children"]), 2)
+        self.assertEqual(data["children"][0]["name"], "Shooter Ser")
+        self.assertEqual(data["children"][1]["name"], "Platformer Ser")
+
+    def test_get_game_count_with_annotated_count(self):
+        """Test that annotated game count is used when available."""
+        from django.db.models import Count
+
+        genre = models.WikipediaGenre.objects.create(
+            name="RPG Ser", slug="rpg-ser", level=0
+        )
+        game = models.Game.objects.create(
+            name="RPG Game", rank=1, igdb_id=3001, slug="rpg-game-ser"
+        )
+        game.wikipedia_genres.add(genre)
+
+        # Annotate the queryset
+        genre_annotated = models.WikipediaGenre.objects.annotate(
+            game_count_annotated=Count("games_with_wikipedia_genre")
+        ).get(pk=genre.pk)
+
+        serializer = serializers.WikipediaGenreTreeSerializer(genre_annotated)
+        self.assertEqual(serializer.data["game_count"], 1)
+
+    def test_get_game_count_fallback_to_computed(self):
+        """Test that game count is computed when not annotated."""
+        genre = models.WikipediaGenre.objects.create(
+            name="Strategy Ser", slug="strategy-ser", level=0
+        )
+        game = models.Game.objects.create(
+            name="Strategy Game", rank=1, igdb_id=3002, slug="strategy-game-ser"
+        )
+        game.wikipedia_genres.add(genre)
+
+        serializer = serializers.WikipediaGenreTreeSerializer(genre)
+        self.assertEqual(serializer.data["game_count"], 1)
+
+
+class DeveloperSearchSerializerTests(TestCase):
+    """Tests for DeveloperSearchSerializer get_root_slug method."""
+
+    def test_get_root_slug_with_root_developer(self):
+        """Test that root_slug is returned for developer with root_developer."""
+        from django.db.models import Count
+
+        root = models.Developer.objects.create(
+            name="Nintendo SS", slug="nintendo-ss", igdb_id=500
+        )
+        subsidiary = models.Developer.objects.create(
+            parent=root, name="Nintendo EAD SS", igdb_id=501
+        )
+
+        # Annotate with games_count for the serializer
+        subsidiary_annotated = models.Developer.objects.annotate(
+            games_count=Count("developed_games")
+        ).get(pk=subsidiary.pk)
+
+        serializer = serializers.DeveloperSearchSerializer(subsidiary_annotated)
+        self.assertEqual(serializer.data["root_slug"], "nintendo-ss")
+
+    def test_get_root_slug_fallback_to_own_slug(self):
+        """Test that own slug is used when no root_developer."""
+        from django.db.models import Count
+
+        # Root developer (parent=None, so root_developer is self)
+        root = models.Developer.objects.create(
+            name="Valve SS", slug="valve-ss", igdb_id=600
+        )
+
+        root_annotated = models.Developer.objects.annotate(
+            games_count=Count("developed_games")
+        ).get(pk=root.pk)
+
+        serializer = serializers.DeveloperSearchSerializer(root_annotated)
+        self.assertEqual(serializer.data["root_slug"], "valve-ss")

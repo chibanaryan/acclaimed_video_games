@@ -869,9 +869,7 @@ class RefreshAllMetadataCommandTests(TestCase):
         )
         output = out.getvalue()
 
-        self.assertIn(
-            "Cannot use --igdb-only, --wikipedia-only, and --hltb-only together", output
-        )
+        self.assertIn("Cannot use multiple --*-only flags together", output)
 
     @mock.patch("games.management.commands.refresh_all_metadata.IGDBImportService")
     def test_dry_run_mode(self, mock_igdb_service):

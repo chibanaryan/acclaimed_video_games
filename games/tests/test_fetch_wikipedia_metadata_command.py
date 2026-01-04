@@ -761,7 +761,7 @@ class WikiPageLookupServiceTests(TestCase):
 
         # Should return the normal (non-deprecated) HLTB ID
         self.assertIsNotNone(result)
-        page_title, hltb_id, game_modes, countries, wikiquote = result
+        page_title, hltb_id, steam_app_id, game_modes, countries, wikiquote = result
         self.assertEqual(page_title, "NHL 94")
         self.assertEqual(hltb_id, "15544")  # The normal rank ID, not deprecated
 
@@ -806,7 +806,7 @@ class WikiPageLookupServiceTests(TestCase):
 
         # Should return the preferred HLTB ID
         self.assertIsNotNone(result)
-        page_title, hltb_id, game_modes, countries, wikiquote = result
+        page_title, hltb_id, steam_app_id, game_modes, countries, wikiquote = result
         self.assertEqual(hltb_id, "222")  # Preferred rank
 
     def test_returns_none_when_all_hltb_ids_deprecated(self):
@@ -850,6 +850,6 @@ class WikiPageLookupServiceTests(TestCase):
 
         # Page should be found but HLTB ID should be None
         self.assertIsNotNone(result)
-        page_title, hltb_id, game_modes, countries, wikiquote = result
+        page_title, hltb_id, steam_app_id, game_modes, countries, wikiquote = result
         self.assertEqual(page_title, "All Deprecated Game")
         self.assertIsNone(hltb_id)  # No valid HLTB ID

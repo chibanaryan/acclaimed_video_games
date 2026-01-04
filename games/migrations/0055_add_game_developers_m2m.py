@@ -4,6 +4,41 @@
 from django.db import migrations, models
 
 
+def rename_m2m_table_if_needed(apps, schema_editor):
+    """
+    SQLite's RenameField doesn't rename M2M through tables.
+    After migration 0044 renamed developers->studios, the table is still
+    games_game_developers. We need to rename it to games_game_studios
+    before adding the new developers M2M field.
+    """
+    connection = schema_editor.connection
+    # Check if we're on SQLite
+    if connection.vendor == "sqlite":
+        cursor = connection.cursor()
+        # Check if games_game_developers exists (old name from 0001)
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='games_game_developers'"
+        )
+        if cursor.fetchone():
+            # Check if it has developeralias_id (old structure) vs developer_id (new)
+            cursor.execute("PRAGMA table_info(games_game_developers)")
+            columns = [row[1] for row in cursor.fetchall()]
+            # If the table exists and doesn't have developer_id, it's the old table
+            # that needs to be renamed to make room for the new developers M2M
+            if "developer_id" not in columns:
+                # Drop old indexes first (SQLite doesn't auto-rename them)
+                cursor.execute(
+                    "SELECT name FROM sqlite_master WHERE type='index' "
+                    "AND tbl_name='games_game_developers' AND name NOT LIKE 'sqlite_%'"
+                )
+                for (index_name,) in cursor.fetchall():
+                    cursor.execute(f"DROP INDEX IF EXISTS {index_name}")
+                # Rename the table
+                cursor.execute(
+                    "ALTER TABLE games_game_developers RENAME TO games_game_studios"
+                )
+
+
 def migrate_game_studios_to_developers(apps, schema_editor):
     """
     Migrate Game.studios M2M relationships to Game.developers.
@@ -67,6 +102,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Step 0: Rename old M2M table if on SQLite (PostgreSQL handles this automatically)
+        migrations.RunPython(rename_m2m_table_if_needed, migrations.RunPython.noop),
         # Step 1: Add Game.developers M2M field
         migrations.AddField(
             model_name="game",

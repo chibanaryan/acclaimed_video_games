@@ -150,6 +150,7 @@ class FetchHltbDataCommandTests(TestCase):
                 "fetch_hltb_data",
                 "--game",
                 "Test Game With HLTB ID",
+                "--no-name-search",  # Disable fallback to get the error message
                 stdout=out,
             )
 

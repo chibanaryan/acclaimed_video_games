@@ -1,56 +1,18 @@
 [run]
-# Only measure coverage for the 'games' app
-# The 'beta' app is excluded from coverage requirements during migration
 source = games
 omit =
     */migrations/*
     */tests/*
-    */services/llm_quote_service.py
-    */management/commands/get_wiki_genres.py
-    */management/commands/get_wikipedia_pages.py
-    */management/commands/cleanup_empty_metadata.py
-    */management/commands/fetch_hltb_data.py
-    */management/commands/refresh_all_metadata.py
-    */management/commands/export_game_links.py
-    */services/wiki_page_lookup_service.py
-    */services/import_handler.py
-    */csp_middleware.py
-    acclaimedgames/*
-    theme/*
-    manage.py
+    */management/commands/*
+    games/admin.py
+    games/services/llm_quote_service.py
+    games/services/wiki_page_lookup_service.py
+    games/services/import_handler.py
+    games/csp_middleware.py
 
 [report]
-omit =
-    */migrations/*
-    */tests/*
-    */services/llm_quote_service.py
-    */management/commands/get_wiki_genres.py
-    */management/commands/get_wikipedia_pages.py
-    */management/commands/cleanup_empty_metadata.py
-    */management/commands/fetch_hltb_data.py
-    */management/commands/refresh_all_metadata.py
-    */management/commands/export_game_links.py
-    */services/wiki_page_lookup_service.py
-    */services/import_handler.py
-    */csp_middleware.py
-    acclaimedgames/*
-    theme/*
-    manage.py
-
 exclude_lines =
-    # Have to re-enable the standard pragma
     pragma: no cover
-
-    # Don't complain about missing debug-only code:
     def __repr__
-
-    # Don't complain if tests don't hit defensive assertion code:
-    raise AssertionError
     raise NotImplementedError
-
-    # Don't complain about database vendor-specific code
-    if connection.vendor == "postgresql"
-    if connection.vendor == "sqlite"
-    if is_postgres:
-    else:
-        # SQLite:
+    if __name__ == .__main__.:

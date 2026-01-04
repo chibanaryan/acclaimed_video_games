@@ -912,3 +912,163 @@ class GenreIconFilterTest(TestCase):
         """Test Strategy category icon."""
         result = genre_icon("Strategy")
         self.assertEqual(result, "mdi-chess-knight")
+
+    def test_genre_without_name_attribute_returns_default(self):
+        """Test genre object without name attribute returns default icon."""
+        # Create an object that has no 'name' attribute
+        genre_without_name = Mock(spec=[])  # Empty spec means no attributes
+        result = genre_icon(genre_without_name)
+        self.assertEqual(result, "mdi-gamepad-variant")
+
+    def test_none_genre_returns_default(self):
+        """Test None returns default icon."""
+        result = genre_icon(None)
+        self.assertEqual(result, "mdi-gamepad-variant")
+
+
+class FormatPlaytimeFilterTest(TestCase):
+    """Test the format_playtime template filter."""
+
+    def test_hours_formatting(self):
+        """Test formatting hours as hours."""
+        from games.templatetags.game_filters import format_playtime
+
+        self.assertEqual(format_playtime(10), "~10h")
+        self.assertEqual(format_playtime(100), "~100h")
+        self.assertEqual(format_playtime(1.5), "~2h")  # Rounds to nearest hour
+
+    def test_minutes_formatting(self):
+        """Test formatting partial hours as minutes."""
+        from games.templatetags.game_filters import format_playtime
+
+        self.assertEqual(format_playtime(0.5), "~30m")
+        self.assertEqual(format_playtime(0.25), "~15m")
+        self.assertEqual(format_playtime(0.1), "~6m")
+
+    def test_none_returns_empty(self):
+        """Test that None returns empty string."""
+        from games.templatetags.game_filters import format_playtime
+
+        self.assertEqual(format_playtime(None), "")
+
+    def test_invalid_type_returns_empty(self):
+        """Test that invalid type returns empty string."""
+        from games.templatetags.game_filters import format_playtime
+
+        self.assertEqual(format_playtime("invalid"), "")
+        self.assertEqual(format_playtime([1, 2, 3]), "")
+
+    def test_exact_one_hour(self):
+        """Test formatting exactly 1 hour."""
+        from games.templatetags.game_filters import format_playtime
+
+        self.assertEqual(format_playtime(1), "~1h")
+
+
+class GetDeveloperIdsFilterTest(TestCase):
+    """Test the get_developer_ids template filter."""
+
+    def test_returns_developer_ids(self):
+        """Test getting developer IDs from mapping."""
+        from games.templatetags.game_filters import get_developer_ids
+
+        game_dev_map = {1: [10, 20, 30], 2: [40, 50]}
+        result = get_developer_ids(game_dev_map, 1)
+        self.assertEqual(result, [10, 20, 30])
+
+    def test_missing_game_returns_empty(self):
+        """Test missing game ID returns empty list."""
+        from games.templatetags.game_filters import get_developer_ids
+
+        game_dev_map = {1: [10, 20]}
+        result = get_developer_ids(game_dev_map, 999)
+        self.assertEqual(result, [])
+
+    def test_none_map_returns_empty(self):
+        """Test None mapping returns empty list."""
+        from games.templatetags.game_filters import get_developer_ids
+
+        result = get_developer_ids(None, 1)
+        self.assertEqual(result, [])
+
+    def test_non_dict_returns_empty(self):
+        """Test non-dict mapping returns empty list."""
+        from games.templatetags.game_filters import get_developer_ids
+
+        result = get_developer_ids([1, 2, 3], 1)
+        self.assertEqual(result, [])
+
+
+class ChildDeveloperIdsFilterTest(TestCase):
+    """Test the child_developer_ids template filter."""
+
+    def test_extracts_developer_ids(self):
+        """Test extracting IDs from sub_developers list."""
+        from games.templatetags.game_filters import child_developer_ids
+
+        sub_devs = [
+            {"developer": Mock(id=1)},
+            {"developer": Mock(id=2)},
+            {"developer": Mock(id=3)},
+        ]
+        result = child_developer_ids(sub_devs)
+        self.assertEqual(result, [1, 2, 3])
+
+    def test_empty_list_returns_empty(self):
+        """Test empty list returns empty list."""
+        from games.templatetags.game_filters import child_developer_ids
+
+        result = child_developer_ids([])
+        self.assertEqual(result, [])
+
+    def test_none_returns_empty(self):
+        """Test None returns empty list."""
+        from games.templatetags.game_filters import child_developer_ids
+
+        result = child_developer_ids(None)
+        self.assertEqual(result, [])
+
+
+class HasPublishedArticlesTagTest(TestCase):
+    """Test the has_published_articles template tag."""
+
+    def test_returns_false_when_no_articles(self):
+        """Test returns False when no published articles exist."""
+        from games.templatetags.game_filters import has_published_articles
+
+        result = has_published_articles()
+        self.assertFalse(result)
+
+    def test_returns_true_with_published_article(self):
+        """Test returns True when published article exists."""
+        from games.models import Article, User
+        from games.templatetags.game_filters import has_published_articles
+
+        author = User.objects.create_user(username="author", email="author@test.com")
+        Article.objects.create(
+            title="Test Article",
+            slug="test-article",
+            content="Test content",
+            author=author,
+            status=Article.Status.PUBLISHED,
+        )
+
+        result = has_published_articles()
+        self.assertTrue(result)
+
+    def test_returns_false_with_only_draft(self):
+        """Test returns False when only draft articles exist."""
+        from games.models import Article, User
+        from games.templatetags.game_filters import has_published_articles
+
+        author = User.objects.create_user(username="author2", email="author2@test.com")
+        Article.objects.create(
+            title="Draft Article",
+            slug="draft-article",
+            content="Draft content",
+            author=author,
+            status=Article.Status.DRAFT,
+        )
+
+        result = has_published_articles()
+        self.assertFalse(result)

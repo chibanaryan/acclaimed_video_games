@@ -113,6 +113,36 @@ class RobustPaginationMixinTest(TestCase):
 
         self.assertEqual(page_obj.number, 1)
 
+    def test_empty_paginator_with_page_error_returns_none(self):
+        """Test graceful handling when paginator has no pages and page 1 fails."""
+        from unittest import mock
+
+        from django.core.paginator import EmptyPage
+
+        class TestView(RobustPaginationMixin, ListView):
+            model = models.Game
+            paginate_by = 10
+            paginate_orphans = 0
+
+        view = TestView()
+        view.request = self.factory.get("/?page=999")
+        queryset = models.Game.objects.none()  # Empty queryset
+
+        # Mock Paginator to simulate edge case where page(1) also fails
+        with mock.patch("games.mixins.Paginator") as MockPaginator:
+            mock_paginator = MockPaginator.return_value
+            mock_paginator.num_pages = 0
+            mock_paginator.page.side_effect = EmptyPage("No results")
+
+            paginator, page_obj, object_list, has_other_pages = view.paginate_queryset(
+                queryset, 10
+            )
+
+            # Should return None page_obj and empty list
+            self.assertIsNone(page_obj)
+            self.assertEqual(object_list, [])
+            self.assertFalse(has_other_pages)
+
 
 class HTMXPartialMixinTest(TestCase):
     """Tests for HTMXPartialMixin."""

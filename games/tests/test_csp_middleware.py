@@ -78,3 +78,59 @@ class CSPMiddlewareTest(TestCase):
         self.middleware(request2)
 
         self.assertNotEqual(request1.csp_nonce, request2.csp_nonce)
+
+
+class CSPNonceContextProcessorTest(TestCase):
+    """Test csp_nonce context processor."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_returns_nonce_when_present(self):
+        """Test that csp_nonce returns the nonce from request."""
+        from games.context_processors import csp_nonce
+
+        request = self.factory.get("/")
+        request.csp_nonce = "test-nonce-12345"
+
+        result = csp_nonce(request)
+
+        self.assertEqual(result, {"csp_nonce": "test-nonce-12345"})
+
+    def test_returns_empty_string_when_no_nonce(self):
+        """Test that csp_nonce returns empty string when nonce is not set."""
+        from games.context_processors import csp_nonce
+
+        request = self.factory.get("/")
+        # Don't set csp_nonce attribute
+
+        result = csp_nonce(request)
+
+        self.assertEqual(result, {"csp_nonce": ""})
+
+
+class FeatureFlagsContextProcessorTest(TestCase):
+    """Test feature_flags context processor."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_returns_empty_dict(self):
+        """Test that feature_flags returns an empty dict."""
+        from games.context_processors import feature_flags
+
+        request = self.factory.get("/")
+
+        result = feature_flags(request)
+
+        self.assertEqual(result, {})
+
+    def test_returns_dict_type(self):
+        """Test that feature_flags returns a dict type."""
+        from games.context_processors import feature_flags
+
+        request = self.factory.get("/")
+
+        result = feature_flags(request)
+
+        self.assertIsInstance(result, dict)

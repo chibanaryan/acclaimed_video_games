@@ -12,7 +12,9 @@ from django.test import TestCase
 from games.models import Game, WikipediaGenre
 from games.services.genre_normalizer import (
     GENRE_MAPPING,
+    get_genre_parent_name,
     get_mapping_stats,
+    get_or_create_genre,
     normalize_genre,
     normalize_genres,
 )
@@ -114,6 +116,80 @@ class GenreNormalizerTest(TestCase):
         self.assertIn("MMORPG", GENRE_MAPPING)
         # Check mapping count is reasonable
         self.assertGreater(len(GENRE_MAPPING), 100)
+
+
+class GetGenreParentNameTest(TestCase):
+    """Tests for the get_genre_parent_name function."""
+
+    def test_returns_parent_for_child_genre(self):
+        """Test that child genres return their parent category."""
+        # First-Person Shooter should be under Action
+        self.assertEqual(get_genre_parent_name("First-Person Shooter"), "Action")
+        # Platform should be under Adventure
+        self.assertEqual(get_genre_parent_name("Platform"), "Adventure")
+        # Action RPG should be under Role-Playing
+        self.assertEqual(get_genre_parent_name("Action RPG"), "Role-Playing")
+
+    def test_returns_none_for_root_category(self):
+        """Test that root categories return None."""
+        self.assertIsNone(get_genre_parent_name("Action"))
+        self.assertIsNone(get_genre_parent_name("Adventure"))
+        self.assertIsNone(get_genre_parent_name("Role-Playing"))
+
+    def test_returns_none_for_unknown_genre(self):
+        """Test that unknown genres return None."""
+        self.assertIsNone(get_genre_parent_name("Unknown Genre"))
+        self.assertIsNone(get_genre_parent_name("Made Up Category"))
+
+
+class GetOrCreateGenreTest(TestCase):
+    """Tests for the get_or_create_genre function."""
+
+    def test_returns_existing_genre(self):
+        """Test that existing genres are returned."""
+        # Create a genre first with a unique name
+        existing = WikipediaGenre.objects.create(
+            name="Existing Test Genre GCT",
+            slug="existing-test-genre-gct",
+            level=0,
+        )
+        # Should return the existing genre
+        result = get_or_create_genre("Existing Test Genre GCT")
+        self.assertEqual(result.id, existing.id)
+
+    def test_creates_new_root_genre(self):
+        """Test creating a new root-level genre."""
+        # Use a name that's not in GENRE_HIERARCHY
+        result = get_or_create_genre("Completely New Genre GCT")
+
+        self.assertEqual(result.name, "Completely New Genre GCT")
+        self.assertEqual(result.slug, "completely-new-genre-gct")
+        self.assertEqual(result.level, 0)
+        self.assertIsNone(result.parent)
+        self.assertEqual(result.path, "Completely New Genre GCT")
+
+    def test_creates_child_genre_with_parent(self):
+        """Test creating a child genre with proper parent from hierarchy."""
+        # First-Person Shooter is under Action in GENRE_HIERARCHY
+        # get_or_create_genre should create Action parent if it doesn't exist
+        fps = get_or_create_genre("First-Person Shooter")
+
+        self.assertEqual(fps.name, "First-Person Shooter")
+        # Verify parent exists and is Action
+        self.assertIsNotNone(fps.parent)
+        self.assertEqual(fps.parent.name, "Action")
+        self.assertEqual(fps.level, 1)
+        self.assertIn("Action", fps.path)
+        self.assertIn("First-Person Shooter", fps.path)
+
+    def test_creates_root_genre_for_category(self):
+        """Test that root categories are created at level 0."""
+        # Action is a root category in GENRE_HIERARCHY
+        action = get_or_create_genre("Action")
+
+        self.assertEqual(action.name, "Action")
+        self.assertIsNone(action.parent)
+        self.assertEqual(action.level, 0)
 
 
 class WikipediaGenreHierarchyTest(TestCase):

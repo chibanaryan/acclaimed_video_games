@@ -94,6 +94,68 @@ class GameAdminTests(TestCase):
         value = self.admin._wikipedia_data_link(game)
         self.assertEqual(value, "-")
 
+    def test_wikipedia_genres_with_genres(self):
+        """Test _wikipedia_genres displays comma-separated genre names."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        genre1 = models.WikipediaGenre.objects.create(
+            name="Test Action", slug="test-action-admin"
+        )
+        genre2 = models.WikipediaGenre.objects.create(
+            name="Test RPG", slug="test-rpg-admin"
+        )
+        game.wikipedia_genres.add(genre1, genre2)
+
+        value = self.admin._wikipedia_genres(game)
+        self.assertIn("Test Action", value)
+        self.assertIn("Test RPG", value)
+
+    def test_wikipedia_genres_without_genres(self):
+        """Test _wikipedia_genres returns '-' when no genres."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        value = self.admin._wikipedia_genres(game)
+        self.assertEqual(value, "-")
+
+    def test_hltb_data_link_with_data(self):
+        """Test _hltb_data_link displays admin link to HLTB data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        hltb_data = models.HLTBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            hltb_id="12345",
+            main_story_hours=10.5,
+            is_primary=True,
+        )
+        game.primary_hltb_game_data = hltb_data
+        game.save(update_fields=["primary_hltb_game_data"])
+
+        value = self.admin._hltb_data_link(game)
+        self.assertIn(f"/admin/games/hltbgamedata/{hltb_data.id}/change/", value)
+        self.assertIn("View HLTB Data", value)
+        self.assertIn("<a href=", value)
+
+    def test_hltb_data_link_without_data(self):
+        """Test _hltb_data_link returns '-' when no HLTB data."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        value = self.admin._hltb_data_link(game)
+        self.assertEqual(value, "-")
+
 
 class SiteMetadataAdminTests(TestCase):
 
@@ -282,3 +344,516 @@ class WikipediaGameDataAdminTests(TestCase):
 
         value = self.admin._all_genres_preview(wiki_data)
         self.assertEqual(value, "-")
+
+
+class HLTBGameDataAdminTests(TestCase):
+    """Tests for HLTBGameData admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.HLTBGameDataAdmin(models.HLTBGameData, self.site)
+
+    def test_hltb_link_with_url(self):
+        """Test _hltb_link displays clickable HLTB URL."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        hltb_data = models.HLTBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            hltb_id="12345",
+            main_story_hours=10.5,
+            is_primary=True,
+        )
+
+        value = self.admin._hltb_link(hltb_data)
+        self.assertIn("howlongtobeat.com", value)
+        self.assertIn("<a href=", value)
+        self.assertIn("View on HLTB", value)
+
+    def test_hltb_link_without_url(self):
+        """Test _hltb_link returns '-' when no hltb_id (no URL)."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        hltb_data = models.HLTBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            hltb_id="",
+            is_primary=True,
+        )
+
+        value = self.admin._hltb_link(hltb_data)
+        self.assertEqual(value, "-")
+
+
+class ProtonDBGameDataAdminTests(TestCase):
+    """Tests for ProtonDBGameData admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.ProtonDBGameDataAdmin(models.ProtonDBGameData, self.site)
+
+    def test_protondb_link_with_steam_app_id(self):
+        """Test _protondb_link displays clickable ProtonDB URL."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        protondb_data = models.ProtonDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            steam_app_id=12345,
+            tier="gold",
+            is_primary=True,
+        )
+
+        value = self.admin._protondb_link(protondb_data)
+        self.assertIn("protondb.com", value)
+        self.assertIn("<a href=", value)
+        self.assertIn("View on ProtonDB", value)
+
+    def test_protondb_link_without_steam_app_id(self):
+        """Test _protondb_link returns '-' when steam_app_id is empty."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=123,
+            year_of_release=2020,
+        )
+        protondb_data = models.ProtonDBGameData.objects.create(
+            game=game,
+            igdb_id=123,
+            steam_app_id="",
+            tier="gold",
+            is_primary=True,
+        )
+
+        # Empty steam_app_id should return "-"
+        value = self.admin._protondb_link(protondb_data)
+        self.assertEqual(value, "-")
+
+
+class GameQuoteAdminTests(TestCase):
+    """Tests for GameQuote admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.GameQuoteAdmin(models.GameQuote, self.site)
+
+    def test_quote_preview_truncates_long_quote(self):
+        """Test quote_preview truncates long quotes to 15 words."""
+        game = models.Game.objects.create(
+            name="Test Game",
+            rank=1,
+            year_of_release=2020,
+        )
+        long_quote = "This is a very long quote that has many more words " * 5
+        quote = models.GameQuote.objects.create(
+            game=game,
+            text=long_quote,
+            attribution="Test Source",
+        )
+
+        value = self.admin.quote_preview(quote)
+        # Should be truncated, so shorter than original
+        word_count = len(value.replace("…", "").split())
+        self.assertLessEqual(word_count, 16)
+
+
+class WikipediaGenreAdminTests(TestCase):
+    """Tests for WikipediaGenre admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.WikipediaGenreAdmin(models.WikipediaGenre, self.site)
+
+    def test_game_count_returns_count(self):
+        """Test game_count returns the number of games with this genre."""
+        genre = models.WikipediaGenre.objects.create(
+            name="Test Admin Genre", slug="test-admin-genre"
+        )
+        game1 = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
+        game2 = models.Game.objects.create(name="Game 2", rank=2, year_of_release=2021)
+        game1.wikipedia_genres.add(genre)
+        game2.wikipedia_genres.add(genre)
+
+        count = self.admin.game_count(genre)
+        self.assertEqual(count, 2)
+
+
+class WikipediaCountryAdminTests(TestCase):
+    """Tests for WikipediaCountry admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.WikipediaCountryAdmin(models.WikipediaCountry, self.site)
+
+    def test_get_queryset_annotates_game_count(self):
+        """Test get_queryset annotates _game_count."""
+        country = models.WikipediaCountry.objects.create(
+            name="Japan", wikidata_id="Q17", slug="japan"
+        )
+        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
+        game.wikipedia_countries.add(country)
+
+        qs = self.admin.get_queryset(request=None)
+        country_from_qs = qs.get(pk=country.pk)
+        self.assertEqual(country_from_qs._game_count, 1)
+
+    def test_game_count_uses_annotation(self):
+        """Test game_count uses the _game_count annotation."""
+        country = models.WikipediaCountry.objects.create(
+            name="Japan", wikidata_id="Q17", slug="japan"
+        )
+        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
+        game.wikipedia_countries.add(country)
+
+        qs = self.admin.get_queryset(request=None)
+        country_from_qs = qs.get(pk=country.pk)
+        count = self.admin.game_count(country_from_qs)
+        self.assertEqual(count, 1)
+
+    def test_game_count_fallback_without_annotation(self):
+        """Test game_count falls back to queryset when no annotation."""
+        country = models.WikipediaCountry.objects.create(
+            name="USA", wikidata_id="Q30", slug="usa"
+        )
+        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
+        game.wikipedia_countries.add(country)
+
+        count = self.admin.game_count(country)
+        self.assertEqual(count, 1)
+
+
+class WikipediaGameModeAdminTests(TestCase):
+    """Tests for WikipediaGameMode admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.WikipediaGameModeAdmin(models.WikipediaGameMode, self.site)
+
+    def test_get_queryset_annotates_game_count(self):
+        """Test get_queryset annotates _game_count."""
+        mode = models.WikipediaGameMode.objects.create(
+            name="Single-player", wikidata_id="Q208850", slug="single-player"
+        )
+        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
+        game.wikipedia_game_modes.add(mode)
+
+        qs = self.admin.get_queryset(request=None)
+        mode_from_qs = qs.get(pk=mode.pk)
+        self.assertEqual(mode_from_qs._game_count, 1)
+
+    def test_game_count_uses_annotation(self):
+        """Test game_count uses the _game_count annotation."""
+        mode = models.WikipediaGameMode.objects.create(
+            name="Multiplayer", wikidata_id="Q6895044", slug="multiplayer"
+        )
+        game1 = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
+        game2 = models.Game.objects.create(name="Game 2", rank=2, year_of_release=2021)
+        game1.wikipedia_game_modes.add(mode)
+        game2.wikipedia_game_modes.add(mode)
+
+        qs = self.admin.get_queryset(request=None)
+        mode_from_qs = qs.get(pk=mode.pk)
+        count = self.admin.game_count(mode_from_qs)
+        self.assertEqual(count, 2)
+
+
+class SeriesAdminTests(TestCase):
+    """Tests for Series admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.SeriesAdmin(models.Series, self.site)
+
+    def test_get_queryset_annotates_game_count(self):
+        """Test get_queryset annotates _game_count."""
+        series = models.Series.objects.create(
+            name="Test Series Admin", slug="test-series-admin", igdb_id=99991
+        )
+        game = models.Game.objects.create(
+            name="Test Series Game", rank=1, year_of_release=2020
+        )
+        game.series.add(series)
+
+        qs = self.admin.get_queryset(request=None)
+        series_from_qs = qs.get(pk=series.pk)
+        self.assertEqual(series_from_qs._game_count, 1)
+
+    def test_game_count_uses_annotation(self):
+        """Test game_count uses the _game_count annotation."""
+        series = models.Series.objects.create(
+            name="Test Series Admin 2", slug="test-series-admin-2", igdb_id=99992
+        )
+        game1 = models.Game.objects.create(
+            name="Test Series Game 1", rank=1, year_of_release=2020
+        )
+        game2 = models.Game.objects.create(
+            name="Test Series Game 2", rank=2, year_of_release=2021
+        )
+        game1.series.add(series)
+        game2.series.add(series)
+
+        qs = self.admin.get_queryset(request=None)
+        series_from_qs = qs.get(pk=series.pk)
+        count = self.admin.game_count(series_from_qs)
+        self.assertEqual(count, 2)
+
+
+class DeveloperAdminTests(TestCase):
+    """Tests for Developer admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.DeveloperAdmin(models.Developer, self.site)
+
+    def test_get_queryset_annotates_game_count(self):
+        """Test get_queryset annotates _game_count and selects parent."""
+        parent = models.Developer.objects.create(
+            name="Nintendo", slug="nintendo", igdb_id=1
+        )
+        dev = models.Developer.objects.create(
+            name="Nintendo EAD", slug="nintendo-ead", igdb_id=2, parent=parent
+        )
+        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
+        game.developers.add(dev)
+
+        qs = self.admin.get_queryset(request=None)
+        dev_from_qs = qs.get(pk=dev.pk)
+        self.assertEqual(dev_from_qs._game_count, 1)
+        self.assertEqual(dev_from_qs.parent.name, "Nintendo")
+
+    def test_game_count_uses_annotation(self):
+        """Test game_count uses the _game_count annotation."""
+        dev = models.Developer.objects.create(name="Valve", slug="valve", igdb_id=3)
+        game1 = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
+        game2 = models.Game.objects.create(name="Game 2", rank=2, year_of_release=2021)
+        game1.developers.add(dev)
+        game2.developers.add(dev)
+
+        qs = self.admin.get_queryset(request=None)
+        dev_from_qs = qs.get(pk=dev.pk)
+        count = self.admin.game_count(dev_from_qs)
+        self.assertEqual(count, 2)
+
+
+class PlayedGameAdminTests(TestCase):
+    """Tests for PlayedGame admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.PlayedGameAdmin(models.PlayedGame, self.site)
+        self.user = models.User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+
+    def test_game_name_with_game(self):
+        """Test game_name returns game name when game is connected."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=123, year_of_release=2020
+        )
+        played = models.PlayedGame.objects.create(
+            user=self.user, game=game, igdb_id=123
+        )
+
+        value = self.admin.game_name(played)
+        self.assertEqual(value, "Test Game")
+
+    def test_game_name_orphaned(self):
+        """Test game_name returns orphaned message when game is None."""
+        played = models.PlayedGame.objects.create(
+            user=self.user, game=None, igdb_id=456
+        )
+
+        value = self.admin.game_name(played)
+        self.assertEqual(value, "(orphaned) IGDB:456")
+
+    def test_game_status_connected(self):
+        """Test game_status returns 'Connected' when game exists."""
+        game = models.Game.objects.create(
+            name="Test Game", rank=1, igdb_id=123, year_of_release=2020
+        )
+        played = models.PlayedGame.objects.create(
+            user=self.user, game=game, igdb_id=123
+        )
+
+        value = self.admin.game_status(played)
+        self.assertEqual(value, "Connected")
+
+    def test_game_status_orphaned(self):
+        """Test game_status returns 'Orphaned' when game is None."""
+        played = models.PlayedGame.objects.create(
+            user=self.user, game=None, igdb_id=789
+        )
+
+        value = self.admin.game_status(played)
+        self.assertEqual(value, "Orphaned")
+
+
+class WantToPlayGameAdminTests(TestCase):
+    """Tests for WantToPlayGame admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.WantToPlayGameAdmin(models.WantToPlayGame, self.site)
+        self.user = models.User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+
+    def test_game_name_with_game(self):
+        """Test game_name returns game name when game is connected."""
+        game = models.Game.objects.create(
+            name="Want Game", rank=1, igdb_id=123, year_of_release=2020
+        )
+        want = models.WantToPlayGame.objects.create(
+            user=self.user, game=game, igdb_id=123
+        )
+
+        value = self.admin.game_name(want)
+        self.assertEqual(value, "Want Game")
+
+    def test_game_name_orphaned(self):
+        """Test game_name returns orphaned message when game is None."""
+        want = models.WantToPlayGame.objects.create(
+            user=self.user, game=None, igdb_id=456
+        )
+
+        value = self.admin.game_name(want)
+        self.assertEqual(value, "(orphaned) IGDB:456")
+
+    def test_game_status_connected(self):
+        """Test game_status returns 'Connected' when game exists."""
+        game = models.Game.objects.create(
+            name="Want Game", rank=1, igdb_id=123, year_of_release=2020
+        )
+        want = models.WantToPlayGame.objects.create(
+            user=self.user, game=game, igdb_id=123
+        )
+
+        value = self.admin.game_status(want)
+        self.assertEqual(value, "Connected")
+
+    def test_game_status_orphaned(self):
+        """Test game_status returns 'Orphaned' when game is None."""
+        want = models.WantToPlayGame.objects.create(
+            user=self.user, game=None, igdb_id=789
+        )
+
+        value = self.admin.game_status(want)
+        self.assertEqual(value, "Orphaned")
+
+
+class SavedFilterSetAdminTests(TestCase):
+    """Tests for SavedFilterSet admin interface."""
+
+    def setUp(self):
+        self.site = AdminSite()
+        self.admin = admin.SavedFilterSetAdmin(models.SavedFilterSet, self.site)
+        self.user = models.User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+
+    def test_filter_summary_empty_filters(self):
+        """Test filter_summary returns '(no filters)' for empty filters."""
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user, name="Empty Filter", filters={}
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertEqual(value, "(no filters)")
+
+    def test_filter_summary_with_search(self):
+        """Test filter_summary includes search query."""
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user, name="Search Filter", filters={"q": "zelda games test"}
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertIn("search:", value)
+        self.assertIn("zelda games test", value)
+
+    def test_filter_summary_truncates_long_search(self):
+        """Test filter_summary truncates long search queries."""
+        long_query = "this is a very long search query that should be truncated"
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user, name="Long Search", filters={"q": long_query}
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertIn("search:", value)
+        self.assertNotIn(long_query, value)
+
+    def test_filter_summary_with_genres(self):
+        """Test filter_summary includes genre count."""
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user, name="Genre Filter", filters={"genres": [1, 2, 3]}
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertIn("3 genres", value)
+
+    def test_filter_summary_with_platforms(self):
+        """Test filter_summary includes platform count."""
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user, name="Platform Filter", filters={"platforms": [1, 2]}
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertIn("2 platforms", value)
+
+    def test_filter_summary_with_series(self):
+        """Test filter_summary includes series count."""
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user, name="Series Filter", filters={"series": [1]}
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertIn("1 series", value)
+
+    def test_filter_summary_with_year_range(self):
+        """Test filter_summary includes year range."""
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user, name="Year Filter", filters={"start": 1990, "end": 1999}
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertIn("1990-1999", value)
+
+    def test_filter_summary_with_partial_year_range(self):
+        """Test filter_summary handles partial year range."""
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user, name="Start Only", filters={"start": 2000}
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertIn("2000-?", value)
+
+    def test_filter_summary_multiple_filters(self):
+        """Test filter_summary combines multiple filters."""
+        saved = models.SavedFilterSet.objects.create(
+            user=self.user,
+            name="Complex Filter",
+            filters={
+                "q": "mario",
+                "genres": [1, 2],
+                "platforms": [3],
+                "start": 1990,
+                "end": 2020,
+            },
+        )
+
+        value = self.admin.filter_summary(saved)
+        self.assertIn("search:", value)
+        self.assertIn("2 genres", value)
+        self.assertIn("1 platforms", value)
+        self.assertIn("1990-2020", value)
