@@ -2,6 +2,7 @@
 
 ## 2026-01-04
 
+- Fix sitemap.xml 500 error: exclude subsidiary developers without slugs from DeveloperSitemap
 - Add grid view toggle: responsive cover art grid with dual ranking (filtered + global), hover overlays
 - Add IGDB links to developer detail pages (dynamic link updates based on filter selection)
 - Add ProtonDB Steam Deck compatibility integration (data stored, display coming later)

@@ -103,12 +103,22 @@ class DeveloperSitemapTests(TestCase):
         self.dev1 = Developer.objects.create(name="Test Dev 1", slug="test-dev-1")
         self.dev2 = Developer.objects.create(name="Test Dev 2", slug="test-dev-2")
 
-    def test_items_returns_all_developers(self):
-        """Test that items() returns all developers."""
+    def test_items_returns_developers_with_slugs(self):
+        """Test that items() returns only developers with slugs."""
         items = list(self.sitemap.items())
         self.assertEqual(len(items), 2)
         self.assertIn(self.dev1, items)
         self.assertIn(self.dev2, items)
+
+    def test_items_excludes_developers_without_slugs(self):
+        """Test that items() excludes subsidiary developers without slugs."""
+        # Create a subsidiary developer without a slug
+        subsidiary = Developer.objects.create(
+            name="Subsidiary Dev", slug="", parent=self.dev1
+        )
+        items = list(self.sitemap.items())
+        self.assertEqual(len(items), 2)
+        self.assertNotIn(subsidiary, items)
 
     def test_location_returns_developer_detail_url(self):
         """Test that location() returns the correct developer detail URL."""

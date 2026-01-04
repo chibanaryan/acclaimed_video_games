@@ -63,6 +63,66 @@ Downloads all game data from production Heroku and loads it into local SQLite. A
 python3 manage.py collectstatic
 ```
 
+### Parallel Development with Git Worktrees
+
+For running multiple Claude Code sessions in parallel, use git worktrees. Each worktree is an independent working directory with its own branch.
+
+**Setup (already configured):**
+- 8 worker directories: `~/Development/acclaimedgames-worker-1` through `worker-8`
+- VS Code workspace: `~/Development/acclaimedgames-workers.code-workspace`
+- Launch script: `~/Development/start-workers.sh`
+
+**Daily startup:**
+```bash
+~/Development/start-workers.sh
+```
+This opens VS Code with all folders and 8 Terminal windows. Run `claude --dangerously-skip-permissions` in each terminal.
+
+**Starting a new feature in a worker:**
+```bash
+cd ~/Development/acclaimedgames-worker-3
+git fetch origin
+git checkout -b feature-name origin/main
+claude --dangerously-skip-permissions
+```
+
+**Merging a completed feature:**
+```bash
+# From any directory
+git checkout main
+git merge feature-name
+git push origin main
+
+# Or create a PR
+git push origin feature-name
+gh pr create
+```
+
+**Reusing a worker after merge:**
+```bash
+cd ~/Development/acclaimedgames-worker-3
+git fetch origin
+git checkout -b new-feature origin/main
+```
+
+**Managing worktrees:**
+```bash
+# List all worktrees
+git worktree list
+
+# Remove a worktree (if needed)
+git worktree remove ../acclaimedgames-worker-3
+
+# Add a new worktree
+git worktree add ../acclaimedgames-worker-9 -b worker-9-base
+```
+
+**Key concepts:**
+- Worktrees are directories, branches are pointers—they're independent
+- A branch can only be checked out in one worktree at a time
+- Merging a branch doesn't affect the worktree; it stays intact
+- After merging, rebase or checkout a new branch to continue working
+
 ### Heroku Commands
 
 **Important:** When running commands on Heroku, use `--` after `run` to separate Heroku flags from the command:

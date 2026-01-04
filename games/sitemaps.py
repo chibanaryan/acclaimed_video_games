@@ -46,7 +46,8 @@ class DeveloperSitemap(Sitemap):
     priority = 0.6
 
     def items(self):
-        return models.Developer.objects.all()
+        # Subsidiary developers don't have slugs or detail pages
+        return models.Developer.objects.exclude(slug="")
 
     def location(self, obj):
         return reverse("developer-detail", kwargs={"slug": obj.slug})
