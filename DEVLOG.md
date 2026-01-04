@@ -2,6 +2,8 @@
 
 ## 2026-01-03
 
+- Add Wikidata metadata during Wikipedia import: game modes (P404), country of origin (P495), Wikiquote links
+- Add WikipediaCountry and WikipediaGameMode models with M2M relationships for efficient filtering
 - Add "Want to Play" game status: three-way filter becomes four-way (All/Unplayed/Want/Played)
 - Fix mobile filter sheet: Game Status section now matches desktop styling (icon, buttons, centering)
 - Fix "Last 5/10 years" presets: now show previous complete years (2021-2025) instead of including current year

@@ -20,7 +20,13 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from games import config
-from games.models import Game, WikipediaGameData, WikipediaGenre
+from games.models import (
+    Game,
+    WikipediaCountry,
+    WikipediaGameData,
+    WikipediaGameMode,
+    WikipediaGenre,
+)
 from games.services.genre_normalizer import get_or_create_genre, normalize_genre
 from games.services.wiki_page_lookup_service import WikiPageLookupService
 from games.services.wiki_genre_service import WikiGenreService
@@ -415,8 +421,17 @@ class Command(BaseCommand):
             # Update hltb_id if available from Wikidata P2816
             if page_result.hltb_id:
                 orphaned_record.hltb_id = page_result.hltb_id
+            # Update wikiquote_page_title if available
+            if page_result.wikiquote_page_title:
+                orphaned_record.wikiquote_page_title = page_result.wikiquote_page_title
             orphaned_record.save(
-                update_fields=["game", "lookup_source", "wikidata_id", "hltb_id"]
+                update_fields=[
+                    "game",
+                    "lookup_source",
+                    "wikidata_id",
+                    "hltb_id",
+                    "wikiquote_page_title",
+                ]
             )
             wiki_game_data = orphaned_record
         else:
@@ -435,6 +450,8 @@ class Command(BaseCommand):
                 defaults["wikidata_id"] = wikidata_id
             if page_result.hltb_id:
                 defaults["hltb_id"] = page_result.hltb_id
+            if page_result.wikiquote_page_title:
+                defaults["wikiquote_page_title"] = page_result.wikiquote_page_title
 
             wiki_game_data, created = WikipediaGameData.objects.update_or_create(
                 game=game,
@@ -445,6 +462,41 @@ class Command(BaseCommand):
         # Set primary relationship
         game.primary_wikipedia_game_data = wiki_game_data
         game.save(update_fields=["primary_wikipedia_game_data"])
+
+        # Set M2M relationships for countries and game modes
+        if page_result.country_of_origin:
+            countries = []
+            for country_name in page_result.country_of_origin:
+                # Get the Q-ID from the mapping (reverse lookup)
+                qid = None
+                for q, name in config.WIKIDATA_COUNTRY_MAPPING.items():
+                    if name == country_name:
+                        qid = q
+                        break
+                if qid:
+                    country, _ = WikipediaCountry.objects.get_or_create(
+                        wikidata_id=qid,
+                        defaults={"name": country_name},
+                    )
+                    countries.append(country)
+            game.wikipedia_countries.set(countries)
+
+        if page_result.game_modes:
+            modes = []
+            for mode_name in page_result.game_modes:
+                # Get the Q-ID from the mapping (reverse lookup)
+                qid = None
+                for q, name in config.WIKIDATA_GAME_MODE_MAPPING.items():
+                    if name == mode_name:
+                        qid = q
+                        break
+                if qid:
+                    mode, _ = WikipediaGameMode.objects.get_or_create(
+                        wikidata_id=qid,
+                        defaults={"name": mode_name},
+                    )
+                    modes.append(mode)
+            game.wikipedia_game_modes.set(modes)
 
         return wiki_game_data
 

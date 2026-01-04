@@ -566,6 +566,68 @@ class WikipediaGenre(models.Model):
         return not self.children.exists()
 
 
+class WikipediaCountry(models.Model):
+    """
+    A country of origin for video games from Wikidata P495.
+    Simple model for filtering games by country of development.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=110, unique=True, db_index=True)
+    wikidata_id = models.CharField(
+        max_length=20,
+        unique=True,
+        db_index=True,
+        help_text="Wikidata Q-ID (e.g., 'Q17' for Japan)",
+    )
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Wikipedia Country"
+        verbose_name_plural = "Wikipedia Countries"
+
+    def __str__(self) -> str:
+        return self.name
+
+    def save(self, *args, **kwargs):
+        from django.utils.text import slugify
+
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
+class WikipediaGameMode(models.Model):
+    """
+    A game mode from Wikidata P404 (single-player, multiplayer, etc.).
+    Simple model for filtering games by game mode.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=110, unique=True, db_index=True)
+    wikidata_id = models.CharField(
+        max_length=20,
+        unique=True,
+        db_index=True,
+        help_text="Wikidata Q-ID (e.g., 'Q208850' for Single-player)",
+    )
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Wikipedia Game Mode"
+        verbose_name_plural = "Wikipedia Game Modes"
+
+    def __str__(self) -> str:
+        return self.name
+
+    def save(self, *args, **kwargs):
+        from django.utils.text import slugify
+
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
 class Series(models.Model):
     """
     A video game series from IGDB (called 'Collection' in IGDB API).
@@ -750,6 +812,12 @@ class WikipediaGameData(models.Model):
         db_index=True,
         help_text="HowLongToBeat ID from Wikidata property P2816",
     )
+    wikiquote_page_title = models.CharField(
+        max_length=300,
+        null=True,
+        blank=True,
+        help_text="Wikiquote page title from enwikiquote sitelink",
+    )
     page_title = models.CharField(
         max_length=300, db_index=True, help_text="Wikipedia page title"
     )
@@ -790,6 +858,14 @@ class WikipediaGameData(models.Model):
         """Generate Wikipedia article URL from page title."""
         if self.page_title:
             return f"https://en.wikipedia.org/wiki/{self.page_title.replace(' ', '_')}"
+        return None
+
+    @property
+    def wikiquote_url(self) -> Optional[str]:
+        """Generate Wikiquote article URL from page title."""
+        if self.wikiquote_page_title:
+            title = self.wikiquote_page_title.replace(" ", "_")
+            return f"https://en.wikiquote.org/wiki/{title}"
         return None
 
 
@@ -954,6 +1030,18 @@ class Game(models.Model):
         "WikipediaGenre",
         blank=True,
         related_name="games_with_wikipedia_genre",
+    )
+    wikipedia_countries = models.ManyToManyField(
+        "WikipediaCountry",
+        blank=True,
+        related_name="games",
+        help_text="Countries of origin from Wikidata P495",
+    )
+    wikipedia_game_modes = models.ManyToManyField(
+        "WikipediaGameMode",
+        blank=True,
+        related_name="games",
+        help_text="Game modes from Wikidata P404",
     )
     description = models.TextField(null=True, blank=True)
     rank = models.IntegerField(db_index=True)

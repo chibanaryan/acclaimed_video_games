@@ -29,6 +29,13 @@ class PageLookupResult:
     lookup_source: Optional[str] = None
     error_message: Optional[str] = None
     hltb_id: Optional[str] = None  # HowLongToBeat ID from Wikidata P2816
+    game_modes: Optional[List[str]] = None  # Game modes from Wikidata P404
+    country_of_origin: Optional[List[str]] = (
+        None  # Country of origin from Wikidata P495
+    )
+    wikiquote_page_title: Optional[str] = (
+        None  # Wikiquote page from enwikiquote sitelink
+    )
 
     @property
     def success(self) -> bool:
@@ -181,16 +188,21 @@ class WikiPageLookupService:
 
     def _lookup_via_wikidata(
         self, wikidata_id: str
-    ) -> Optional[tuple[str, Optional[str]]]:
+    ) -> Optional[
+        tuple[
+            str, Optional[str], Optional[List[str]], Optional[List[str]], Optional[str]
+        ]
+    ]:
         """
-        Look up English Wikipedia page title and HLTB ID via Wikidata API.
+        Look up Wikipedia/Wikiquote page titles and metadata via Wikidata API.
 
         Args:
             wikidata_id: Wikidata ID (e.g., "Q12345")
 
         Returns:
-            Tuple of (page_title, hltb_id), or None if page not found.
-            hltb_id may be None even if page is found.
+            Tuple of (page_title, hltb_id, game_modes, countries, wikiquote_title),
+            or None if Wikipedia page not found.
+            All fields except page_title may be None.
         """
         if not wikidata_id:
             return None
@@ -200,7 +212,7 @@ class WikiPageLookupService:
             "format": "json",
             "props": "sitelinks|claims",
             "ids": wikidata_id,
-            "sitefilter": "enwiki",
+            "sitefilter": "enwiki|enwikiquote",
         }
 
         response = self._make_request(
@@ -220,9 +232,14 @@ class WikiPageLookupService:
             enwiki = sitelinks.get("enwiki", {})
             page_title = enwiki.get("title")
 
+            # Extract enwikiquote sitelink
+            enwikiquote = sitelinks.get("enwikiquote", {})
+            wikiquote_title = enwikiquote.get("title")
+
+            claims = entity.get("claims", {})
+
             # Extract HLTB ID from P2816 claim (HowLongToBeat ID property)
             hltb_id = None
-            claims = entity.get("claims", {})
             p2816 = claims.get("P2816", [])
             if p2816:
                 # Get the first (preferred) value
@@ -236,13 +253,57 @@ class WikiPageLookupService:
                         hltb_id,
                     )
 
+            # Extract game modes from P404 claim
+            game_modes = []
+            for claim in claims.get("P404", []):
+                mainsnak = claim.get("mainsnak", {})
+                datavalue = mainsnak.get("datavalue", {})
+                value = datavalue.get("value", {})
+                qid = value.get("id") if isinstance(value, dict) else None
+                if qid:
+                    label = config.WIKIDATA_GAME_MODE_MAPPING.get(qid)
+                    if label and label not in game_modes:
+                        game_modes.append(label)
+                    elif not label:
+                        logger.warning(
+                            "Unknown game mode Q-ID %s for %s - "
+                            "add to WIKIDATA_GAME_MODE_MAPPING",
+                            qid,
+                            wikidata_id,
+                        )
+
+            # Extract country of origin from P495 claim
+            countries = []
+            for claim in claims.get("P495", []):
+                mainsnak = claim.get("mainsnak", {})
+                datavalue = mainsnak.get("datavalue", {})
+                value = datavalue.get("value", {})
+                qid = value.get("id") if isinstance(value, dict) else None
+                if qid:
+                    label = config.WIKIDATA_COUNTRY_MAPPING.get(qid)
+                    if label and label not in countries:
+                        countries.append(label)
+                    elif not label:
+                        logger.warning(
+                            "Unknown country Q-ID %s for %s - "
+                            "add to WIKIDATA_COUNTRY_MAPPING",
+                            qid,
+                            wikidata_id,
+                        )
+
             if page_title:
                 logger.debug(
                     "Found Wikipedia page via Wikidata: %s -> %s",
                     wikidata_id,
                     page_title,
                 )
-                return (page_title, hltb_id)
+                return (
+                    page_title,
+                    hltb_id,
+                    game_modes if game_modes else None,
+                    countries if countries else None,
+                    wikiquote_title,
+                )
             else:
                 logger.debug("No enwiki sitelink for %s", wikidata_id)
                 return None
@@ -325,12 +386,17 @@ class WikiPageLookupService:
         if wikidata_id:
             wikidata_result = self._lookup_via_wikidata(wikidata_id)
             if wikidata_result:
-                page_title, hltb_id = wikidata_result
+                page_title, hltb_id, game_modes, countries, wikiquote_title = (
+                    wikidata_result
+                )
                 return PageLookupResult(
                     game_name=game_name,
                     page_title=page_title,
                     lookup_source=config.WIKI_LOOKUP_SOURCE_WIKIDATA,
                     hltb_id=hltb_id,
+                    game_modes=game_modes,
+                    country_of_origin=countries,
+                    wikiquote_page_title=wikiquote_title,
                 )
 
         # Try OpenSearch with year
