@@ -223,10 +223,10 @@ class Command(BaseCommand):
             help="Number of concurrent requests (default: 1, recommend 5-10 for speed)",
         )
         parser.add_argument(
-            "--use-name-search",
+            "--no-name-search",
             action="store_true",
-            help="Enable name search fallback when Wikidata HLTB ID is not available. "
-            "Disabled by default to avoid incorrect matches.",
+            help="Disable name search fallback. By default, name search is used "
+            "when Wikidata HLTB ID is not available or lookup fails.",
         )
 
     def handle(self, *args, **options):
@@ -320,15 +320,15 @@ class Command(BaseCommand):
         delay = options.get("delay", 1.0)
         min_similarity = options.get("min_similarity", 0.85)
         concurrency = options.get("concurrency", 1)
-        use_name_search = options.get("use_name_search", False)
+        use_name_search = not options.get("no_name_search", False)
 
         self.stdout.write(f"\nProcessing {game_count} games...")
         self.stdout.write(
             f"Delay: {delay}s, Min similarity: {min_similarity}, "
             f"Concurrency: {concurrency}"
         )
-        if use_name_search:
-            self.stdout.write(" (name search ENABLED)")
+        if not use_name_search:
+            self.stdout.write(" (name search DISABLED)")
         self.stdout.write("\n")
 
         # Prepare CSV output - only if explicitly requested with --output
