@@ -457,7 +457,7 @@ def _build_filter_title(
     if played == "yes":
         played_suffix = ": Played"
     elif played == "no":
-        played_suffix = ": Unplayed"
+        played_suffix = ": Untracked"
 
     # Build title with playtime before platform
     # Add space after hltb_label only if it exists

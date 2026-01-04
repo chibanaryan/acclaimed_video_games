@@ -6,7 +6,7 @@
 {% load static %}
 {% if user.is_authenticated and game.igdb_id %}
 <div class="desktop:tooltip {% if size == 'large' %}desktop:tooltip-bottom{% else %}desktop:tooltip-top{% endif %} played-button-wrapper cursor-pointer z-10"
-    data-tip="{% if is_played %}You have played this game!{% elif is_want_to_play %}You want to play this game!{% else %}You haven't played this game.{% endif %}"
+    data-tip="{% if is_played %}You have played this game!{% elif is_want_to_play %}You want to play this game!{% else %}You aren't tracking this game.{% endif %}"
     data-igdb-id="{{ game.igdb_id }}"
     data-status="{% if is_played %}played{% elif is_want_to_play %}want{% else %}none{% endif %}"
     {% if size == 'large' %}data-size="large"{% endif %}

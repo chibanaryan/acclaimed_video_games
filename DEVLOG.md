@@ -22,6 +22,7 @@
 - Fix rank distribution chart flash on page load (hide with inline CSS until Alpine.js initializes)
 - Fix rank distribution showing when only sort option changed (sorting doesn't count as active filter)
 - Show "want to play" backlog count in profile modal (with star-plus icon)
+- Rename "Unplayed" to "Untracked" in filter buttons and tooltips (clearer terminology)
 
 ## 2026-01-02
 

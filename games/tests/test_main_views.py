@@ -803,13 +803,13 @@ class GameSearchPlayedFilterTest(TestCase):
         filter_title = response.context["filter_title"]
         self.assertTrue(filter_title.endswith(": Played"))
 
-    def test_filter_title_includes_unplayed_suffix(self):
-        """Test that filter title includes ': Unplayed' suffix."""
+    def test_filter_title_includes_untracked_suffix(self):
+        """Test that filter title includes ': Untracked' suffix."""
         self.client.login(username="testuser", password="testpass123")
         response = self.client.get(reverse("home") + "?played=no")
         self.assertEqual(response.status_code, 200)
         filter_title = response.context["filter_title"]
-        self.assertTrue(filter_title.endswith(": Unplayed"))
+        self.assertTrue(filter_title.endswith(": Untracked"))
 
     def test_played_in_filters_context(self):
         """Test that played parameter is in filters context."""

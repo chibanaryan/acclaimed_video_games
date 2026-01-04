@@ -146,7 +146,7 @@
                     <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm"
                            :checked="filters.played === 'no'"
                            @click="filters.played = 'no'; debouncedFilterUpdate()"
-                           aria-label="☆ Unplayed">
+                           aria-label="☆ Untracked">
                     <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm"
                            :checked="filters.played === 'want'"
                            @click="filters.played = 'want'; debouncedFilterUpdate()"
@@ -157,7 +157,7 @@
                            aria-label="★ Played">
                     {% else %}
                     <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
-                           aria-label="☆ Unplayed" title="Sign in to track games"
+                           aria-label="☆ Untracked" title="Sign in to track games"
                            onclick="return false;">
                     <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
                            aria-label="★+ Want" title="Sign in to track games"

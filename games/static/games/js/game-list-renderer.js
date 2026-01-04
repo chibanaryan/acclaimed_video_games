@@ -307,7 +307,7 @@ class GameListRenderer {
         const tooltips = {
             'played': 'You have played this game!',
             'want': 'You want to play this game!',
-            'none': "You haven't played this game."
+            'none': "You aren't tracking this game."
         };
         wrapper.dataset.tip = tooltips[status];
         wrapper.dataset.igdbId = igdbId;
@@ -642,7 +642,7 @@ class GameListRenderer {
         const tooltips = {
             'played': 'You have played this game!',
             'want': 'You want to play this game!',
-            'none': "You haven't played this game."
+            'none': "You aren't tracking this game."
         };
         const tooltipText = tooltips[status];
 
