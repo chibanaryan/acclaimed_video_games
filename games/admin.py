@@ -311,12 +311,21 @@ class WikipediaGameDataAdmin(admin.ModelAdmin):
 
 @admin.register(models.HLTBGameData)
 class HLTBGameDataAdmin(admin.ModelAdmin):
-    """Admin interface for HowLongToBeat game data records."""
+    """Admin interface for HowLongToBeat game data records.
+
+    Fetch Methods:
+    - wikidata: HLTB ID was found via Wikidata external identifiers (most reliable)
+    - name_search: HLTB ID was found by searching HLTB by game name (fallback)
+
+    Typical distribution: ~87% wikidata, ~13% name_search
+    """
 
     list_display = [
         "game",
         "igdb_id",
         "hltb_id",
+        "hltb_name",
+        "fetch_method",
         "main_story_hours",
         "main_extra_hours",
         "completionist_hours",
@@ -325,7 +334,7 @@ class HLTBGameDataAdmin(admin.ModelAdmin):
         "fetched_at",
         "updated_at",
     ]
-    list_filter = ["is_primary", "fetched_at", "updated_at"]
+    list_filter = ["fetch_method", "is_primary", "fetched_at", "updated_at"]
     search_fields = ["game__name", "igdb_id", "hltb_id"]
     raw_id_fields = ["game"]
     readonly_fields = ["fetched_at", "updated_at"]
