@@ -2997,7 +2997,28 @@ class AuthModalProfileView(View):
 
         # Get played games stats (only count non-orphaned games)
         played_count = user.played_games.filter(game__isnull=False).count()
+        want_to_play_count = user.want_to_play_games.filter(game__isnull=False).count()
         total_games = models.Game.objects.count()
+
+        # Calculate estimated playtime for want-to-play backlog
+        backlog_playtime = {"main": None, "completionist": None}
+        if want_to_play_count > 0:
+            from django.db.models import Sum
+
+            # Get games in user's want-to-play list that have HLTB data
+            want_to_play_game_ids = user.want_to_play_games.filter(
+                game__isnull=False
+            ).values_list("game_id", flat=True)
+
+            playtime_totals = models.HLTBGameData.objects.filter(
+                game_id__in=want_to_play_game_ids, is_primary=True
+            ).aggregate(
+                main_total=Sum("main_story_hours"),
+                completionist_total=Sum("completionist_hours"),
+            )
+
+            backlog_playtime["main"] = playtime_totals["main_total"]
+            backlog_playtime["completionist"] = playtime_totals["completionist_total"]
 
         # Calculate percentile ranking
         percentile_data = calculate_percentile(played_count)
@@ -3009,6 +3030,8 @@ class AuthModalProfileView(View):
                 "profile": user,
                 "form": {},
                 "played_count": played_count,
+                "want_to_play_count": want_to_play_count,
+                "backlog_playtime": backlog_playtime,
                 "total_games": total_games,
                 "percentile": percentile_data["percentile"],
                 "percentile_message": percentile_data["message"],
@@ -3050,12 +3073,45 @@ class AuthModalProfileView(View):
                 username_error = "This username is already taken."
 
             if username_error:
+                # Re-render with full context including stats
+                from django.db.models import Sum
+
+                played_count = user.played_games.filter(game__isnull=False).count()
+                want_to_play_count = user.want_to_play_games.filter(
+                    game__isnull=False
+                ).count()
+                total_games = models.Game.objects.count()
+                percentile_data = calculate_percentile(played_count)
+
+                # Calculate backlog playtime for error re-render
+                backlog_playtime = {"main": None, "completionist": None}
+                if want_to_play_count > 0:
+                    want_to_play_game_ids = user.want_to_play_games.filter(
+                        game__isnull=False
+                    ).values_list("game_id", flat=True)
+                    playtime_totals = models.HLTBGameData.objects.filter(
+                        game_id__in=want_to_play_game_ids, is_primary=True
+                    ).aggregate(
+                        main_total=Sum("main_story_hours"),
+                        completionist_total=Sum("completionist_hours"),
+                    )
+                    backlog_playtime["main"] = playtime_totals["main_total"]
+                    backlog_playtime["completionist"] = playtime_totals[
+                        "completionist_total"
+                    ]
+
                 return render(
                     request,
                     "auth/partials/_profile_form.html",
                     {
                         "profile": user,
                         "form": {"username": {"errors": [username_error]}},
+                        "played_count": played_count,
+                        "want_to_play_count": want_to_play_count,
+                        "backlog_playtime": backlog_playtime,
+                        "total_games": total_games,
+                        "percentile": percentile_data["percentile"],
+                        "percentile_message": percentile_data["message"],
                     },
                 )
             user.username = new_username

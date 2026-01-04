@@ -74,7 +74,7 @@
                     class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="sortOpen = !sortOpen">
                 <span class="mdi mdi-sort text-base"></span>
-                <span class="text-sm" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"></span>
+                <span class="text-sm min-w-[5.5rem]" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"></span>
                 <span class="mdi mdi-chevron-down text-xs"></span>
             </button>
             <ul x-show="sortOpen" x-cloak

@@ -55,6 +55,29 @@
             </div>
         </div>
 
+        {# Want to Play Games Stats #}
+        {% if want_to_play_count %}
+        <div class="flex flex-col gap-1 mb-4">
+            <div class="flex items-center gap-2 text-base-content/70">
+                <span class="mdi mdi-star-plus-outline text-xl text-warning"></span>
+                <span class="text-sm">
+                    <span class="font-semibold text-base-content">{{ want_to_play_count }}</span>
+                    game{{ want_to_play_count|pluralize }} on your backlog
+                </span>
+            </div>
+            {% if backlog_playtime.main or backlog_playtime.completionist %}
+            <div class="pl-7 text-xs text-base-content/60">
+                {% if backlog_playtime.main %}
+                ~{{ backlog_playtime.main|floatformat:0 }}h main story{% if backlog_playtime.completionist %}, {{ backlog_playtime.completionist|floatformat:0 }}h 100%{% endif %}
+                {% elif backlog_playtime.completionist %}
+                ~{{ backlog_playtime.completionist|floatformat:0 }}h 100%
+                {% endif %}
+                <span class="text-base-content/40">(HLTB estimates)</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         {# Email Subscription #}
         <div class="form-control mb-6">
             <label class="label cursor-pointer justify-start gap-3 pb-1">

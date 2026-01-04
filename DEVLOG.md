@@ -19,6 +19,7 @@
 - Fix Load More/Jump to Rank with HLTB filters (parse hltb_mode, hltb_min, hltb_max from URL)
 - Fix rank distribution chart flash on page load (hide with inline CSS until Alpine.js initializes)
 - Fix rank distribution showing when only sort option changed (sorting doesn't count as active filter)
+- Show "want to play" backlog count in profile modal (with star-plus icon)
 
 ## 2026-01-02
 
