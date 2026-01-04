@@ -63,27 +63,57 @@ Downloads all game data from production Heroku and loads it into local SQLite. A
 python3 manage.py collectstatic
 ```
 
-### Parallel Development with Git Worktrees
+### Parallel Development with Git Worktrees + Beads
 
-For running multiple Claude Code sessions in parallel, use git worktrees. Each worktree is an independent working directory with its own branch.
+For running multiple Claude Code sessions in parallel, use git worktrees for code isolation and Beads for task coordination.
+
+**Components:**
+- **Git worktrees**: 8 independent working directories for parallel code changes
+- **Beads (`bd`)**: AI-native issue tracker for task coordination between workers
+- **VS Code workspace**: View all workers in one window
+- **Launch script**: Starts everything with one command
 
 **Setup (already configured):**
 - 8 worker directories: `~/Development/acclaimedgames-worker-1` through `worker-8`
 - VS Code workspace: `~/Development/acclaimedgames-workers.code-workspace`
 - Launch script: `./start-workers.sh` (in repo root)
+- Beads database: `.beads/` (shared across all worktrees)
 
 **Daily startup:**
 ```bash
 ./start-workers.sh
 ```
-This opens VS Code with all folders and 8 Terminal windows. Run `claude --dangerously-skip-permissions` in each terminal.
+This:
+1. Starts the beads daemon for shared task coordination
+2. Opens VS Code with all worker folders
+3. Opens 8 Terminal windows, each running Claude with `BD_ACTOR=worker-N`
+
+**Beads workflow for parallel tasks:**
+```bash
+# 1. Create tasks (from main repo or any worker)
+bd create "Add user authentication"
+bd create "Fix pagination bug"
+bd create "Update API docs"
+
+# 2. Each worker checks for available tasks
+bd ready --unassigned
+
+# 3. Worker claims a task (atomic - prevents conflicts)
+bd update acclaimedgames-abc --claim
+
+# 4. Worker completes the task
+bd close acclaimedgames-abc
+
+# 5. Monitor all worker activity
+bd activity --follow
+```
 
 **Starting a new feature in a worker:**
 ```bash
 cd ~/Development/acclaimedgames-worker-3
 git fetch origin
 git checkout -b feature-name origin/main
-claude --dangerously-skip-permissions
+# Claude is already running via start-workers.sh
 ```
 
 **Merging a completed feature:**
@@ -122,6 +152,7 @@ git worktree add ../acclaimedgames-worker-9 -b worker-9-base
 - A branch can only be checked out in one worktree at a time
 - Merging a branch doesn't affect the worktree; it stays intact
 - After merging, rebase or checkout a new branch to continue working
+- Beads tracks who's working on what; worktrees isolate their code changes
 
 ### Heroku Commands
 
