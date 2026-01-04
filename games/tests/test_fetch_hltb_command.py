@@ -35,44 +35,8 @@ class FetchHltbDataCommandTests(TestCase):
             rank=2,
         )
 
-    def test_name_search_disabled_by_default(self):
-        """Test that name search is disabled by default."""
-        out = StringIO()
-
-        # Mock HowLongToBeat at the module where it's imported
-        with mock.patch("howlongtobeatpy.HowLongToBeat") as mock_hltb_class:
-            mock_hltb = mock_hltb_class.return_value
-
-            # Direct ID lookup succeeds for game with HLTB ID
-            mock_result = mock.MagicMock()
-            mock_result.game_id = 12345
-            mock_result.game_name = "Test Game"
-            mock_result.main_story = 10.0
-            mock_result.main_extra = 15.0
-            mock_result.completionist = 20.0
-            mock_result.similarity = 1.0
-            mock_hltb.async_search_from_id = mock.AsyncMock(return_value=mock_result)
-
-            # Name search should NOT be called for game without HLTB ID
-            mock_hltb.async_search = mock.AsyncMock(return_value=[])
-
-            call_command(
-                "fetch_hltb_data",
-                "--game",
-                "Test Game Without HLTB ID",
-                stdout=out,
-            )
-
-        output = out.getvalue()
-
-        # Name search should not be called when --use-name-search is not specified
-        mock_hltb.async_search.assert_not_called()
-
-        # Output should indicate no Wikidata HLTB ID
-        self.assertIn("No Wikidata HLTB ID available", output)
-
-    def test_name_search_enabled_with_flag(self):
-        """Test that name search is enabled when --use-name-search is specified."""
+    def test_name_search_enabled_by_default(self):
+        """Test that name search is enabled by default."""
         out = StringIO()
 
         with mock.patch("howlongtobeatpy.HowLongToBeat") as mock_hltb_class:
@@ -92,17 +56,56 @@ class FetchHltbDataCommandTests(TestCase):
                 "fetch_hltb_data",
                 "--game",
                 "Test Game Without HLTB ID",
-                "--use-name-search",
                 stdout=out,
             )
 
         output = out.getvalue()
 
-        # Name search should be called
+        # Name search should be called by default
         mock_hltb.async_search.assert_called()
 
-        # Output should indicate name search enabled
-        self.assertIn("name search ENABLED", output)
+        # Output should NOT indicate name search disabled
+        self.assertNotIn("name search DISABLED", output)
+
+    def test_name_search_disabled_with_flag(self):
+        """Test that name search is disabled when --no-name-search is specified."""
+        out = StringIO()
+
+        # Mock HowLongToBeat at the module where it's imported
+        with mock.patch("howlongtobeatpy.HowLongToBeat") as mock_hltb_class:
+            mock_hltb = mock_hltb_class.return_value
+
+            # Direct ID lookup succeeds for game with HLTB ID
+            mock_result = mock.MagicMock()
+            mock_result.game_id = 12345
+            mock_result.game_name = "Test Game"
+            mock_result.main_story = 10.0
+            mock_result.main_extra = 15.0
+            mock_result.completionist = 20.0
+            mock_result.similarity = 1.0
+            mock_hltb.async_search_from_id = mock.AsyncMock(return_value=mock_result)
+
+            # Name search should NOT be called when --no-name-search is specified
+            mock_hltb.async_search = mock.AsyncMock(return_value=[])
+
+            call_command(
+                "fetch_hltb_data",
+                "--game",
+                "Test Game Without HLTB ID",
+                "--no-name-search",
+                stdout=out,
+            )
+
+        output = out.getvalue()
+
+        # Name search should not be called when --no-name-search is specified
+        mock_hltb.async_search.assert_not_called()
+
+        # Output should indicate name search is disabled
+        self.assertIn("name search DISABLED", output)
+
+        # Output should indicate no Wikidata HLTB ID
+        self.assertIn("No Wikidata HLTB ID available", output)
 
     def test_wikidata_lookup_used_when_id_available(self):
         """Test that Wikidata HLTB ID is used for direct lookup."""
