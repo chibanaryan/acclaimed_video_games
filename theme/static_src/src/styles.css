@@ -367,20 +367,39 @@
 
   .year-grid-decade.is-selected {
     @apply bg-primary text-primary-content rounded-sm;
+    /* CSS custom properties for directional and corner gap-bridging shadows */
+    --gap-bridge-right: 0 0 0 0 transparent;
+    --gap-bridge-top: 0 0 0 0 transparent;
+    --gap-bridge-bottom: 0 0 0 0 transparent;
+    --gap-bridge-corner-tr: 0 0 0 0 transparent;
+    --gap-bridge-corner-br: 0 0 0 0 transparent;
+    box-shadow: var(--gap-bridge-right), var(--gap-bridge-top), var(--gap-bridge-bottom),
+                var(--gap-bridge-corner-tr), var(--gap-bridge-corner-br);
   }
 
-  /* Sharp corner classes for decade labels - remove corners when adjacent to other selected cells */
+  /* Sharp corner classes for decade labels - remove corners and bridge gaps when adjacent to other selected cells */
   .year-grid-decade.is-selected.sharp-top {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+    --gap-bridge-top: 0 -2px 0 0 var(--color-primary);
   }
   .year-grid-decade.is-selected.sharp-bottom {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+    --gap-bridge-bottom: 0 2px 0 0 var(--color-primary);
   }
   .year-grid-decade.is-selected.sharp-right {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+    --gap-bridge-right: 2px 0 0 0 var(--color-primary);
+  }
+
+  /* Corner gap fills for decade labels - requires all 4 surrounding cells selected */
+  .year-grid-decade.is-selected.corner-tr {
+    --gap-bridge-corner-tr: 2px -2px 0 0 var(--color-primary);
+  }
+  .year-grid-decade.is-selected.corner-br {
+    --gap-bridge-corner-br: 2px 2px 0 0 var(--color-primary);
   }
 
   /* Year cell with heatmap background */
@@ -398,28 +417,63 @@
   .year-grid-cell.is-selected,
   .year-grid-cell.is-dragging {
     @apply !bg-primary text-primary-content rounded-sm;
+    /* CSS custom properties for directional and corner gap-bridging shadows */
+    --gap-bridge-right: 0 0 0 0 transparent;
+    --gap-bridge-left: 0 0 0 0 transparent;
+    --gap-bridge-top: 0 0 0 0 transparent;
+    --gap-bridge-bottom: 0 0 0 0 transparent;
+    --gap-bridge-corner-br: 0 0 0 0 transparent;
+    --gap-bridge-corner-bl: 0 0 0 0 transparent;
+    --gap-bridge-corner-tr: 0 0 0 0 transparent;
+    --gap-bridge-corner-tl: 0 0 0 0 transparent;
+    box-shadow: var(--gap-bridge-right), var(--gap-bridge-left),
+                var(--gap-bridge-top), var(--gap-bridge-bottom),
+                var(--gap-bridge-corner-br), var(--gap-bridge-corner-bl),
+                var(--gap-bridge-corner-tr), var(--gap-bridge-corner-tl);
   }
 
-  /* Sharp corner classes for year cells - remove corners when adjacent to other selected cells */
+  /* Sharp corner classes for year cells - remove corners and bridge gaps when adjacent to other selected cells */
   .year-grid-cell.is-selected.sharp-top,
   .year-grid-cell.is-dragging.sharp-top {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+    --gap-bridge-top: 0 -2px 0 0 var(--color-primary);
   }
   .year-grid-cell.is-selected.sharp-bottom,
   .year-grid-cell.is-dragging.sharp-bottom {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+    --gap-bridge-bottom: 0 2px 0 0 var(--color-primary);
   }
   .year-grid-cell.is-selected.sharp-left,
   .year-grid-cell.is-dragging.sharp-left {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
+    --gap-bridge-left: -2px 0 0 0 var(--color-primary);
   }
   .year-grid-cell.is-selected.sharp-right,
   .year-grid-cell.is-dragging.sharp-right {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+    --gap-bridge-right: 2px 0 0 0 var(--color-primary);
+  }
+
+  /* Corner gap fills - only when all 4 tiles around the corner are selected (requires diagonal check) */
+  .year-grid-cell.is-selected.corner-br,
+  .year-grid-cell.is-dragging.corner-br {
+    --gap-bridge-corner-br: 2px 2px 0 0 var(--color-primary);
+  }
+  .year-grid-cell.is-selected.corner-bl,
+  .year-grid-cell.is-dragging.corner-bl {
+    --gap-bridge-corner-bl: -2px 2px 0 0 var(--color-primary);
+  }
+  .year-grid-cell.is-selected.corner-tr,
+  .year-grid-cell.is-dragging.corner-tr {
+    --gap-bridge-corner-tr: 2px -2px 0 0 var(--color-primary);
+  }
+  .year-grid-cell.is-selected.corner-tl,
+  .year-grid-cell.is-dragging.corner-tl {
+    --gap-bridge-corner-tl: -2px -2px 0 0 var(--color-primary);
   }
 
   .year-grid-cell-empty {

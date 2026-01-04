@@ -412,6 +412,36 @@
          decadeHasSelectedRight(decadeStart) {
              // Check if first year of this decade is in range
              return this.isInRange(decadeStart);
+         },
+
+         // Diagonal adjacency checks - for corner gap fills (only fill corner when all 4 tiles meet)
+         hasSelectedDiagonalBR(year) {
+             // Bottom-right diagonal: need tile at year+1-10 selected
+             const diagYear = year + 1 - 10;
+             const position = year % 10;
+             if (position === 9) return false;  // No tile to right
+             return this.yearExists(diagYear) && this.isInRange(diagYear);
+         },
+         hasSelectedDiagonalBL(year) {
+             // Bottom-left diagonal: need tile at year-1-10 selected
+             const diagYear = year - 1 - 10;
+             const position = year % 10;
+             if (position === 0) return false;  // No tile to left
+             return this.yearExists(diagYear) && this.isInRange(diagYear);
+         },
+         hasSelectedDiagonalTR(year) {
+             // Top-right diagonal: need tile at year+1+10 selected
+             const diagYear = year + 1 + 10;
+             const position = year % 10;
+             if (position === 9) return false;  // No tile to right
+             return this.yearExists(diagYear) && this.isInRange(diagYear);
+         },
+         hasSelectedDiagonalTL(year) {
+             // Top-left diagonal: need tile at year-1+10 selected
+             const diagYear = year - 1 + 10;
+             const position = year % 10;
+             if (position === 0) return false;  // No tile to left
+             return this.yearExists(diagYear) && this.isInRange(diagYear);
          }
      }"
      @mouseleave="cancelDrag()"
@@ -437,7 +467,9 @@
                          'is-selected': isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start),
                          'sharp-top': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedAbove(decade.start),
                          'sharp-bottom': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedBelow(decade.start),
-                         'sharp-right': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedRight(decade.start)
+                         'sharp-right': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedRight(decade.start),
+                         'corner-tr': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedAbove(decade.start) && decadeHasSelectedRight(decade.start) && isInRange(decade.start + 10),
+                         'corner-br': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedBelow(decade.start) && decadeHasSelectedRight(decade.start) && isInRange(decade.start - 10)
                      }"
                      @mousedown="startDragDecade(decade.start, $event)"
                      @mouseenter="updateDragDecade(decade.start)"
@@ -456,6 +488,10 @@
                              'sharp-bottom': cell && cell.year && isInRange(cell.year) && hasSelectedBelow(cell.year),
                              'sharp-left': cell && cell.year && isInRange(cell.year) && hasSelectedLeft(cell.year),
                              'sharp-right': cell && cell.year && isInRange(cell.year) && hasSelectedRight(cell.year),
+                             'corner-br': cell && cell.year && isInRange(cell.year) && hasSelectedRight(cell.year) && hasSelectedBelow(cell.year) && hasSelectedDiagonalBR(cell.year),
+                             'corner-bl': cell && cell.year && isInRange(cell.year) && hasSelectedLeft(cell.year) && hasSelectedBelow(cell.year) && hasSelectedDiagonalBL(cell.year),
+                             'corner-tr': cell && cell.year && isInRange(cell.year) && hasSelectedRight(cell.year) && hasSelectedAbove(cell.year) && hasSelectedDiagonalTR(cell.year),
+                             'corner-tl': cell && cell.year && isInRange(cell.year) && hasSelectedLeft(cell.year) && hasSelectedAbove(cell.year) && hasSelectedDiagonalTL(cell.year),
                              'year-grid-cell-empty': !cell,
                              'year-grid-cell-hidden': cell && cell.hidden,
                              'is-unavailable': cell && cell.year && !cell.available && !isInRange(cell.year)
