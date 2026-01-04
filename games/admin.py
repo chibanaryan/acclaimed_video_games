@@ -341,6 +341,38 @@ class HLTBGameDataAdmin(admin.ModelAdmin):
     _hltb_link.short_description = "HLTB Link"
 
 
+@admin.register(models.ProtonDBGameData)
+class ProtonDBGameDataAdmin(admin.ModelAdmin):
+    """Admin interface for ProtonDB Steam Deck compatibility data records."""
+
+    list_display = [
+        "game",
+        "igdb_id",
+        "steam_app_id",
+        "tier",
+        "trending_tier",
+        "report_count",
+        "_protondb_link",
+        "is_primary",
+        "fetched_at",
+        "updated_at",
+    ]
+    list_filter = ["tier", "is_primary", "fetched_at", "updated_at"]
+    search_fields = ["game__name", "igdb_id", "steam_app_id"]
+    raw_id_fields = ["game"]
+    readonly_fields = ["fetched_at", "updated_at"]
+
+    def _protondb_link(self, obj: models.ProtonDBGameData) -> str:
+        """Display clickable ProtonDB URL."""
+        if obj.protondb_url:
+            return format_html(
+                '<a href="{}" target="_blank">View on ProtonDB</a>', obj.protondb_url
+            )
+        return "-"
+
+    _protondb_link.short_description = "ProtonDB Link"
+
+
 @admin.register(models.GameQuote)
 class GameQuoteAdmin(admin.ModelAdmin):
     """Admin interface for game quotes."""

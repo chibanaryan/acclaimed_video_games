@@ -29,6 +29,7 @@ class PageLookupResult:
     lookup_source: Optional[str] = None
     error_message: Optional[str] = None
     hltb_id: Optional[str] = None  # HowLongToBeat ID from Wikidata P2816
+    steam_app_id: Optional[str] = None  # Steam AppID from Wikidata P1733
     game_modes: Optional[List[str]] = None  # Game modes from Wikidata P404
     country_of_origin: Optional[List[str]] = (
         None  # Country of origin from Wikidata P495
@@ -317,11 +318,14 @@ class WikiPageLookupService:
             logger.warning("Failed to create country %s: %s", qid, e)
             return None
 
-    def _lookup_via_wikidata(
-        self, wikidata_id: str
-    ) -> Optional[
+    def _lookup_via_wikidata(self, wikidata_id: str) -> Optional[
         tuple[
-            str, Optional[str], Optional[List[str]], Optional[List[str]], Optional[str]
+            str,
+            Optional[str],
+            Optional[str],
+            Optional[List[str]],
+            Optional[List[str]],
+            Optional[str],
         ]
     ]:
         """
@@ -331,8 +335,8 @@ class WikiPageLookupService:
             wikidata_id: Wikidata ID (e.g., "Q12345")
 
         Returns:
-            Tuple of (page_title, hltb_id, game_modes, countries, wikiquote_title),
-            or None if Wikipedia page not found.
+            Tuple of (page_title, hltb_id, steam_app_id, game_modes, countries,
+            wikiquote_title), or None if Wikipedia page not found.
             All fields except page_title may be None.
         """
         if not wikidata_id:
@@ -395,6 +399,32 @@ class WikiPageLookupService:
                             hltb_id,
                         )
 
+            # Extract Steam AppID from P1733 claim
+            # Filter out deprecated claims and prefer "preferred" rank over "normal"
+            steam_app_id = None
+            p1733 = claims.get("P1733", [])
+            if p1733:
+                # Filter out deprecated claims and sort by rank preference
+                valid_claims = []
+                for claim in p1733:
+                    rank = claim.get("rank", "normal")
+                    if rank != "deprecated":
+                        valid_claims.append((claim, rank))
+
+                if valid_claims:
+                    # Sort by rank preference (preferred first, then normal)
+                    valid_claims.sort(key=lambda x: 0 if x[1] == "preferred" else 1)
+                    best_claim = valid_claims[0][0]
+                    mainsnak = best_claim.get("mainsnak", {})
+                    datavalue = mainsnak.get("datavalue", {})
+                    steam_app_id = datavalue.get("value")
+                    if steam_app_id:
+                        logger.debug(
+                            "Found Steam AppID via Wikidata P1733: %s -> %s",
+                            wikidata_id,
+                            steam_app_id,
+                        )
+
             # Extract game modes from P404 claim
             # Uses database cache with Wikidata API fallback for labels
             game_modes = []
@@ -430,6 +460,7 @@ class WikiPageLookupService:
                 return (
                     page_title,
                     hltb_id,
+                    steam_app_id,
                     game_modes if game_modes else None,
                     countries if countries else None,
                     wikiquote_title,
@@ -516,14 +547,20 @@ class WikiPageLookupService:
         if wikidata_id:
             wikidata_result = self._lookup_via_wikidata(wikidata_id)
             if wikidata_result:
-                page_title, hltb_id, game_modes, countries, wikiquote_title = (
-                    wikidata_result
-                )
+                (
+                    page_title,
+                    hltb_id,
+                    steam_app_id,
+                    game_modes,
+                    countries,
+                    wikiquote_title,
+                ) = wikidata_result
                 return PageLookupResult(
                     game_name=game_name,
                     page_title=page_title,
                     lookup_source=config.WIKI_LOOKUP_SOURCE_WIKIDATA,
                     hltb_id=hltb_id,
+                    steam_app_id=steam_app_id,
                     game_modes=game_modes,
                     country_of_origin=countries,
                     wikiquote_page_title=wikiquote_title,

@@ -977,9 +977,11 @@ def delete_existing_data() -> Tuple[bool, str]:
 
     with transaction.atomic():
         # Orphan metadata records before deleting games
-        # This preserves IGDB and Wikipedia data for reconnection on re-import
+        # This preserves IGDB, Wikipedia, HLTB, and ProtonDB data for reconnection on re-import
         models.IGDBGameData.objects.all().update(game=None)
         models.WikipediaGameData.objects.all().update(game=None)
+        models.HLTBGameData.objects.all().update(game=None)
+        models.ProtonDBGameData.objects.all().update(game=None)
 
         # Delete objects
         total = 0
@@ -1427,6 +1429,24 @@ def import_games(
                     update_fields.append("primary_hltb_game_data")
                     needs_save = True
 
+            # Reconnect ProtonDB data if available and not already linked
+            if igdb_id and not game.primary_protondb_game_data:
+                # Look for orphaned metadata (game=None) or metadata for this game
+                protondb_data = (
+                    models.ProtonDBGameData.objects.filter(
+                        igdb_id=igdb_id, is_primary=True
+                    )
+                    .filter(Q(game__isnull=True) | Q(game=game))
+                    .first()
+                )
+                if protondb_data:
+                    # Reconnect to game
+                    protondb_data.game = game
+                    protondb_data.save(update_fields=["game"])
+                    game.primary_protondb_game_data = protondb_data
+                    update_fields.append("primary_protondb_game_data")
+                    needs_save = True
+
             # Save if we reconnected any metadata
             if needs_save:
                 game.save(update_fields=update_fields)
@@ -1465,6 +1485,9 @@ def import_games(
                 game=None
             )
             models.HLTBGameData.objects.filter(game__in=stale_games).update(game=None)
+            models.ProtonDBGameData.objects.filter(game__in=stale_games).update(
+                game=None
+            )
             models.PlayedGame.objects.filter(game__in=stale_games).update(game=None)
             stale_games.delete()
 

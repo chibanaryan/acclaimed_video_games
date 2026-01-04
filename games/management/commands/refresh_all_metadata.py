@@ -1,13 +1,14 @@
 """
-Management command to refresh all metadata (IGDB + Wikipedia + HLTB) for games.
+Management command to refresh all metadata (IGDB + Wikipedia + HLTB + ProtonDB) for games.
 
-This command combines IGDB, Wikipedia, and HLTB data refreshes into one
+This command combines IGDB, Wikipedia, HLTB, and ProtonDB data refreshes into one
 unified operation, designed for weekly scheduled execution via Heroku Scheduler.
 
 It performs:
 1. IGDB data refresh (cover art, descriptions, studios, genres)
 2. Wikipedia page lookup + genre scraping
 3. HowLongToBeat playtime data
+4. ProtonDB Steam Deck compatibility data
 
 All operations force-refresh games regardless of existing data.
 """
@@ -23,7 +24,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from games import config
-from games.models import Game, HLTBGameData, WikipediaGameData
+from games.models import Game, HLTBGameData, ProtonDBGameData, WikipediaGameData
 from games.services.genre_normalizer import get_or_create_genre, normalize_genre
 from games.services.igdb_importer import IGDBImportService
 from games.services.wiki_genre_service import WikiGenreService
@@ -44,6 +45,7 @@ class Command(BaseCommand):
         self.igdb_start_time = None
         self.wikipedia_start_time = None
         self.hltb_start_time = None
+        self.protondb_start_time = None
 
         # Statistics
         self.igdb_processed = 0
@@ -54,22 +56,30 @@ class Command(BaseCommand):
         self.genres_failed = 0
         self.hltb_found = 0
         self.hltb_not_found = 0
+        self.protondb_found = 0
+        self.protondb_not_found = 0
+        self.protondb_errors = 0
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--igdb-only",
             action="store_true",
-            help="Only refresh IGDB data (skip Wikipedia and HLTB)",
+            help="Only refresh IGDB data (skip Wikipedia, HLTB, and ProtonDB)",
         )
         parser.add_argument(
             "--wikipedia-only",
             action="store_true",
-            help="Only refresh Wikipedia data (skip IGDB and HLTB)",
+            help="Only refresh Wikipedia data (skip IGDB, HLTB, and ProtonDB)",
         )
         parser.add_argument(
             "--hltb-only",
             action="store_true",
-            help="Only refresh HLTB data (skip IGDB and Wikipedia)",
+            help="Only refresh HLTB data (skip IGDB, Wikipedia, and ProtonDB)",
+        )
+        parser.add_argument(
+            "--protondb-only",
+            action="store_true",
+            help="Only refresh ProtonDB data (skip IGDB, Wikipedia, and HLTB)",
         )
         parser.add_argument(
             "--limit",
@@ -120,20 +130,23 @@ class Command(BaseCommand):
             options.get("igdb_only"),
             options.get("wikipedia_only"),
             options.get("hltb_only"),
+            options.get("protondb_only"),
         ]
         if sum(bool(f) for f in exclusive_flags) > 1:
             self.stdout.write(
-                self.style.ERROR(
-                    "Cannot use --igdb-only, --wikipedia-only, and --hltb-only together"
-                )
+                self.style.ERROR("Cannot use multiple --*-only flags together")
             )
             return
 
         # Print header
         self._print_header(options)
 
-        # [1/3] IGDB Refresh
-        if not options.get("wikipedia_only") and not options.get("hltb_only"):
+        # [1/4] IGDB Refresh
+        if (
+            not options.get("wikipedia_only")
+            and not options.get("hltb_only")
+            and not options.get("protondb_only")
+        ):
             try:
                 self._refresh_igdb(options)
             except Exception as e:
@@ -141,8 +154,12 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"\n  IGDB refresh failed: {e}"))
                 self.igdb_errors = -1  # Flag for total failure
 
-        # [2/3] Wikipedia Refresh
-        if not options.get("igdb_only") and not options.get("hltb_only"):
+        # [2/4] Wikipedia Refresh
+        if (
+            not options.get("igdb_only")
+            and not options.get("hltb_only")
+            and not options.get("protondb_only")
+        ):
             try:
                 self._refresh_wikipedia(options)
             except Exception as e:
@@ -152,8 +169,12 @@ class Command(BaseCommand):
                 )
                 self.wikipedia_pages_failed = -1  # Flag for total failure
 
-        # [3/3] HLTB Refresh
-        if not options.get("igdb_only") and not options.get("wikipedia_only"):
+        # [3/4] HLTB Refresh
+        if (
+            not options.get("igdb_only")
+            and not options.get("wikipedia_only")
+            and not options.get("protondb_only")
+        ):
             try:
                 # Prepare games data before async context
                 games_qs = Game.objects.prefetch_related("platforms").order_by("rank")
@@ -191,6 +212,46 @@ class Command(BaseCommand):
                 logger.exception("HLTB refresh failed")
                 self.stdout.write(self.style.ERROR(f"\n  HLTB refresh failed: {e}"))
                 self.hltb_not_found = -1  # Flag for total failure
+
+        # [4/4] ProtonDB Refresh
+        if (
+            not options.get("igdb_only")
+            and not options.get("wikipedia_only")
+            and not options.get("hltb_only")
+        ):
+            try:
+                # Prepare games data before async context (same pattern as HLTB)
+                games_qs = (
+                    Game.objects.filter(
+                        primary_wikipedia_game_data__steam_app_id__isnull=False
+                    )
+                    .exclude(primary_wikipedia_game_data__steam_app_id="")
+                    .select_related(
+                        "primary_wikipedia_game_data",
+                    )
+                    .order_by("rank")
+                )
+
+                if options.get("limit"):
+                    games_qs = games_qs[: options["limit"]]
+
+                # Convert to list before async
+                games_list = []
+                for game in games_qs:
+                    games_list.append(
+                        {
+                            "id": game.id,
+                            "igdb_id": game.igdb_id,
+                            "name": game.name,
+                            "steam_app_id": game.primary_wikipedia_game_data.steam_app_id,
+                        }
+                    )
+
+                asyncio.run(self._refresh_protondb_async(games_list, options))
+            except Exception as e:
+                logger.exception("ProtonDB refresh failed")
+                self.stdout.write(self.style.ERROR(f"\n  ProtonDB refresh failed: {e}"))
+                self.protondb_errors = -1  # Flag for total failure
 
         # Print summary
         self._print_summary()
@@ -790,6 +851,128 @@ class Command(BaseCommand):
 
         return hltb_data
 
+    async def _refresh_protondb_async(self, games_list, options):
+        """Refresh ProtonDB Steam Deck compatibility data for games with Steam AppIDs."""
+        import aiohttp
+
+        self.stdout.write("\n[4/4] Refreshing ProtonDB Data")
+        self.stdout.write("-" * 40)
+
+        self.protondb_start_time = time.time()
+
+        total_games = len(games_list)
+
+        if total_games == 0:
+            self.stdout.write(self.style.WARNING("No games with Steam AppIDs found"))
+            return
+
+        self.stdout.write(
+            f"Processing {total_games} games (concurrency: 5, delay: 0.5s)"
+        )
+
+        if options.get("dry_run"):
+            self.stdout.write(
+                self.style.WARNING("  DRY RUN: Would fetch ProtonDB data for games")
+            )
+            return
+
+        # ProtonDB API URL
+        PROTONDB_API_URL = (
+            "https://www.protondb.com/api/v1/reports/summaries/{steam_app_id}.json"
+        )
+
+        concurrency = 5
+        delay = 0.5
+        semaphore = asyncio.Semaphore(concurrency)
+
+        async def fetch_game(session, idx, game_data):
+            async with semaphore:
+                steam_app_id = game_data["steam_app_id"]
+                url = PROTONDB_API_URL.format(steam_app_id=steam_app_id)
+
+                try:
+                    async with session.get(url) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            tier = data.get("tier", "pending")
+                            trending_tier = data.get("trendingTier")
+                            report_count = data.get("total", 0)
+
+                            # Save to database
+                            await sync_to_async(self._save_protondb_data)(
+                                game_data,
+                                steam_app_id,
+                                tier,
+                                trending_tier,
+                                report_count,
+                            )
+                            self.protondb_found += 1
+
+                        elif response.status == 404:
+                            self.protondb_not_found += 1
+
+                        else:
+                            self.protondb_errors += 1
+
+                except Exception as e:
+                    logger.warning(
+                        "ProtonDB fetch failed for %s: %s", game_data["name"], e
+                    )
+                    self.protondb_errors += 1
+
+                # Progress checkpoint every 100 games
+                if idx % 100 == 0:
+                    elapsed = time.time() - self.protondb_start_time
+                    rate = idx / elapsed if elapsed > 0 else 0
+                    self.stdout.write(f"  [{idx}/{total_games}] ({rate:.1f} games/sec)")
+
+                await asyncio.sleep(delay)
+
+        async with aiohttp.ClientSession() as session:
+            tasks = [
+                fetch_game(session, idx, game_data)
+                for idx, game_data in enumerate(games_list, start=1)
+            ]
+            await asyncio.gather(*tasks)
+
+        # Print completion
+        elapsed = time.time() - self.protondb_start_time
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\n  ProtonDB Complete: {self.protondb_found} found, "
+                f"{self.protondb_not_found} not on ProtonDB, "
+                f"{self.protondb_errors} errors in {elapsed:.0f}s"
+            )
+        )
+
+    def _save_protondb_data(
+        self, game_data, steam_app_id, tier, trending_tier, report_count
+    ):
+        """Save ProtonDB data to database."""
+        game = Game.objects.get(id=game_data["id"])
+
+        # Unset existing primary
+        ProtonDBGameData.objects.filter(game=game, is_primary=True).update(
+            is_primary=False
+        )
+
+        # Create or update
+        protondb_data, created = ProtonDBGameData.objects.update_or_create(
+            game=game,
+            steam_app_id=steam_app_id,
+            defaults={
+                "igdb_id": game_data["igdb_id"],
+                "tier": tier,
+                "trending_tier": trending_tier,
+                "report_count": report_count,
+                "is_primary": True,
+            },
+        )
+
+        # Set as primary on game
+        game.primary_protondb_game_data = protondb_data
+        game.save(update_fields=["primary_protondb_game_data"])
+
     def _print_summary(self):
         """Print final execution summary."""
         total_elapsed = time.time() - self.start_time
@@ -884,12 +1067,42 @@ class Command(BaseCommand):
                     )
                 )
 
+        # ProtonDB stats
+        if (
+            self.protondb_found > 0
+            or self.protondb_not_found > 0
+            or self.protondb_errors != 0
+        ):
+            if self.protondb_errors == -1:
+                self.stdout.write(self.style.ERROR("ProtonDB:  FAILED"))
+            else:
+                total_protondb = (
+                    self.protondb_found + self.protondb_not_found + self.protondb_errors
+                )
+                success_pct = (
+                    (self.protondb_found / total_protondb * 100)
+                    if total_protondb > 0
+                    else 0
+                )
+                status = (
+                    self.style.SUCCESS
+                    if self.protondb_errors == 0
+                    else self.style.WARNING
+                )
+                self.stdout.write(
+                    status(
+                        f"ProtonDB:  {self.protondb_found}/{total_protondb} found "
+                        f"({self.protondb_not_found} not on ProtonDB, {success_pct:.1f}%)"
+                    )
+                )
+
         # Overall status
         has_errors = (
             self.igdb_errors > 0
             or self.wikipedia_pages_failed > 0
             or self.genres_failed > 0
             or self.hltb_not_found > 0
+            or self.protondb_errors > 0
         )
         overall_status = "SUCCESS" if not has_errors else "COMPLETED WITH ERRORS"
         style = self.style.SUCCESS if not has_errors else self.style.WARNING

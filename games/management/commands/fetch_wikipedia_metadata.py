@@ -463,6 +463,9 @@ class Command(BaseCommand):
             # Update hltb_id if available from Wikidata P2816
             if page_result.hltb_id:
                 orphaned_record.hltb_id = page_result.hltb_id
+            # Update steam_app_id if available from Wikidata P1733
+            if page_result.steam_app_id:
+                orphaned_record.steam_app_id = page_result.steam_app_id
             # Update wikiquote_page_title if available
             if page_result.wikiquote_page_title:
                 orphaned_record.wikiquote_page_title = page_result.wikiquote_page_title
@@ -472,6 +475,7 @@ class Command(BaseCommand):
                     "lookup_source",
                     "wikidata_id",
                     "hltb_id",
+                    "steam_app_id",
                     "wikiquote_page_title",
                 ]
             )
@@ -492,6 +496,8 @@ class Command(BaseCommand):
                 defaults["wikidata_id"] = wikidata_id
             if page_result.hltb_id:
                 defaults["hltb_id"] = page_result.hltb_id
+            if page_result.steam_app_id:
+                defaults["steam_app_id"] = page_result.steam_app_id
             if page_result.wikiquote_page_title:
                 defaults["wikiquote_page_title"] = page_result.wikiquote_page_title
 
@@ -558,9 +564,14 @@ class Command(BaseCommand):
             wikidata_result = page_service._lookup_via_wikidata(wiki_data.wikidata_id)
 
             if wikidata_result:
-                page_title, hltb_id, game_modes, countries, wikiquote_title = (
-                    wikidata_result
-                )
+                (
+                    page_title,
+                    hltb_id,
+                    steam_app_id,
+                    game_modes,
+                    countries,
+                    wikiquote_title,
+                ) = wikidata_result
 
                 # Update the record with new metadata
                 update_fields = []
@@ -574,6 +585,16 @@ class Command(BaseCommand):
                         game.name,
                         wiki_data.wikidata_id,
                         hltb_id,
+                    )
+
+                if steam_app_id and steam_app_id != wiki_data.steam_app_id:
+                    wiki_data.steam_app_id = steam_app_id
+                    update_fields.append("steam_app_id")
+                    logger.info(
+                        "Updated Steam AppID for %s (Wikidata %s): %s",
+                        game.name,
+                        wiki_data.wikidata_id,
+                        steam_app_id,
                     )
 
                 if (
