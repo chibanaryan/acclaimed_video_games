@@ -104,6 +104,15 @@ class Command(BaseCommand):
             action="store_true",
             help="Delete WikipediaGenre records with no linked games after processing",
         )
+        parser.add_argument(
+            "--skip-alternate-wikidata",
+            action="store_true",
+            help=(
+                "Skip refreshing metadata for alternate WikipediaGameData records. "
+                "By default, all WikipediaGameData records are refreshed to update "
+                "HLTB IDs from alternate Wikidata entries."
+            ),
+        )
 
     def handle(self, *args, **options):
         self.start_time = time.time()
@@ -282,6 +291,24 @@ class Command(BaseCommand):
                                 )
                             )
 
+                        # Refresh all alternate WikipediaGameData records by default
+                        if not options.get("skip_alternate_wikidata"):
+                            alt_updated, alt_hltb = (
+                                self._refresh_alternate_wikidata_records(
+                                    game, page_service
+                                )
+                            )
+                            if alt_updated > 0:
+                                self.stdout.write(
+                                    f"  └─ Refreshed {alt_updated} alternate "
+                                    f"Wikidata record(s)"
+                                    + (
+                                        f" ({alt_hltb} with HLTB ID)"
+                                        if alt_hltb
+                                        else ""
+                                    )
+                                )
+
                 else:
                     failure_count += 1
                     error_message = page_result.error_message
@@ -290,6 +317,21 @@ class Command(BaseCommand):
                             f"[{idx}/{game_count}] ✗ {game.name}: {error_message}"
                         )
                     )
+
+                    # Still refresh alternate records even if primary failed
+                    # (they might have their own valid Wikidata IDs with HLTB IDs)
+                    if options.get("save") and not options.get(
+                        "skip_alternate_wikidata"
+                    ):
+                        alt_updated, alt_hltb = (
+                            self._refresh_alternate_wikidata_records(game, page_service)
+                        )
+                        if alt_updated > 0:
+                            self.stdout.write(
+                                f"  └─ Refreshed {alt_updated} alternate "
+                                f"Wikidata record(s)"
+                                + (f" ({alt_hltb} with HLTB ID)" if alt_hltb else "")
+                            )
 
                 # Write to CSV
                 if csv_writer:
@@ -487,3 +529,62 @@ class Command(BaseCommand):
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"wikipedia_metadata_{timestamp}.csv"
+
+    def _refresh_alternate_wikidata_records(self, game, page_service):
+        """
+        Refresh metadata for all non-primary WikipediaGameData records.
+
+        This updates HLTB IDs and other Wikidata metadata for alternate
+        WikipediaGameData entries (not the primary, which is handled separately).
+
+        Args:
+            game: Game instance
+            page_service: WikiPageLookupService instance
+
+        Returns:
+            Tuple of (records_updated, records_with_hltb_id)
+        """
+        records_updated = 0
+        records_with_hltb_id = 0
+
+        # Get all non-primary WikipediaGameData records with wikidata_ids
+        alternate_records = game.wikipedia_game_data_set.filter(
+            is_primary=False,
+            wikidata_id__isnull=False,
+        ).exclude(wikidata_id="")
+
+        for wiki_data in alternate_records:
+            # Look up metadata via Wikidata API
+            wikidata_result = page_service._lookup_via_wikidata(wiki_data.wikidata_id)
+
+            if wikidata_result:
+                page_title, hltb_id, game_modes, countries, wikiquote_title = (
+                    wikidata_result
+                )
+
+                # Update the record with new metadata
+                update_fields = []
+
+                if hltb_id and hltb_id != wiki_data.hltb_id:
+                    wiki_data.hltb_id = hltb_id
+                    update_fields.append("hltb_id")
+                    records_with_hltb_id += 1
+                    logger.info(
+                        "Updated HLTB ID for %s (Wikidata %s): %s",
+                        game.name,
+                        wiki_data.wikidata_id,
+                        hltb_id,
+                    )
+
+                if (
+                    wikiquote_title
+                    and wikiquote_title != wiki_data.wikiquote_page_title
+                ):
+                    wiki_data.wikiquote_page_title = wikiquote_title
+                    update_fields.append("wikiquote_page_title")
+
+                if update_fields:
+                    wiki_data.save(update_fields=update_fields)
+                    records_updated += 1
+
+        return records_updated, records_with_hltb_id

@@ -153,4 +153,132 @@ class FetchHltbDataCommandTests(TestCase):
         output = out.getvalue()
 
         # Should indicate lookup failed
-        self.assertIn("Wikidata HLTB ID 12345 lookup failed", output)
+        self.assertIn("Wikidata HLTB ID(s) [12345] lookup failed", output)
+
+    def test_multi_wikidata_fallback_to_alternate_hltb_id(self):
+        """Test that command iterates through multiple WikipediaGameData records.
+
+        When primary WikipediaGameData doesn't have an HLTB ID but an alternate
+        record does (like Counter-Strike), the command should find and use it.
+        """
+        # Create a game with multiple WikipediaGameData records
+        game = Game.objects.create(
+            name="Counter-Strike",
+            rank=100,
+            igdb_id=99999,
+        )
+
+        # Primary record - NO HLTB ID (like Counter-Strike's main Wikidata entry)
+        primary_wiki = WikipediaGameData.objects.create(
+            game=game,
+            page_title="Counter-Strike",
+            wikidata_id="Q1111111",  # Main Wikidata entry without HLTB
+            hltb_id=None,  # No HLTB ID
+            is_primary=True,
+        )
+        game.primary_wikipedia_game_data = primary_wiki
+        game.save()
+
+        # Alternate record - HAS HLTB ID (specific version entry in Wikidata)
+        WikipediaGameData.objects.create(
+            game=game,
+            page_title="Counter-Strike (video game)",
+            wikidata_id="Q2222222",  # Alternate Wikidata entry with HLTB
+            hltb_id="5555",  # Has HLTB ID
+            is_primary=False,
+        )
+
+        out = StringIO()
+
+        with mock.patch("howlongtobeatpy.HowLongToBeat") as mock_hltb_class:
+            mock_hltb = mock_hltb_class.return_value
+
+            # Direct lookup succeeds for the alternate HLTB ID
+            # Create a proper mock object that won't create auto-attributes
+            class MockHLTBResult:
+                game_id = 5555
+                game_name = "Counter-Strike"
+                main_story = 0.0
+                main_extra = 0.0
+                completionist = 0.0
+                similarity = 1.0
+                release_world = None
+                profile_platform = None
+
+            mock_result = MockHLTBResult()
+            mock_hltb.async_search_from_id = mock.AsyncMock(return_value=mock_result)
+
+            call_command(
+                "fetch_hltb_data",
+                "--game",
+                "Counter-Strike",
+                stdout=out,
+            )
+
+        output = out.getvalue()
+
+        # Should find HLTB data via alternate record
+        mock_hltb.async_search_from_id.assert_called_once_with(5555)
+        self.assertIn("Direct lookup via Wikidata HLTB ID 5555", output)
+        self.assertIn("via alternate Wikidata Q2222222", output)
+
+    def test_multi_wikidata_primary_used_first(self):
+        """Test that primary WikipediaGameData is checked first.
+
+        If primary has an HLTB ID, it should be used without checking alternates.
+        """
+        # Create a game with multiple WikipediaGameData records
+        game = Game.objects.create(
+            name="Test Multi Game",
+            rank=101,
+            igdb_id=88888,
+        )
+
+        # Primary record - HAS HLTB ID
+        primary_wiki = WikipediaGameData.objects.create(
+            game=game,
+            page_title="Test Multi Game",
+            wikidata_id="Q3333333",
+            hltb_id="1111",  # Primary has HLTB ID
+            is_primary=True,
+        )
+        game.primary_wikipedia_game_data = primary_wiki
+        game.save()
+
+        # Alternate record - also has HLTB ID (but should not be used)
+        WikipediaGameData.objects.create(
+            game=game,
+            page_title="Test Multi Game (alternate)",
+            wikidata_id="Q4444444",
+            hltb_id="2222",  # Alternate also has HLTB ID
+            is_primary=False,
+        )
+
+        out = StringIO()
+
+        with mock.patch("howlongtobeatpy.HowLongToBeat") as mock_hltb_class:
+            mock_hltb = mock_hltb_class.return_value
+
+            mock_result = mock.MagicMock()
+            mock_result.game_id = 1111
+            mock_result.game_name = "Test Multi Game"
+            mock_result.main_story = 10.0
+            mock_result.main_extra = 15.0
+            mock_result.completionist = 20.0
+            mock_result.similarity = 1.0
+            mock_hltb.async_search_from_id = mock.AsyncMock(return_value=mock_result)
+
+            call_command(
+                "fetch_hltb_data",
+                "--game",
+                "Test Multi Game",
+                stdout=out,
+            )
+
+        output = out.getvalue()
+
+        # Should use primary's HLTB ID (1111), not alternate's (2222)
+        mock_hltb.async_search_from_id.assert_called_once_with(1111)
+        self.assertIn("Direct lookup via Wikidata HLTB ID 1111", output)
+        # Should NOT mention alternate Wikidata
+        self.assertNotIn("via alternate Wikidata", output)

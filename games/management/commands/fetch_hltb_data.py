@@ -245,10 +245,44 @@ class Command(BaseCommand):
         # Prefetch platforms for better matching
         games_qs = games_qs.prefetch_related("platforms")
 
-        # Convert to list with platform data
+        # Prefetch WikipediaGameData for all games
+        games_qs = games_qs.prefetch_related("wikipedia_game_data_set")
+
+        # Convert to list with platform data and all Wikidata HLTB IDs
         games_list = []
         for game in games_qs:
             platform_names = list(game.platforms.values_list("name", flat=True))
+
+            # Collect HLTB IDs from ALL WikipediaGameData records (not just primary)
+            # This allows fallback when primary record doesn't have an HLTB ID
+            # Order: primary first (if it has hltb_id), then other records
+            all_hltb_ids = []
+            all_wikidata_ids = []  # Track which Wikidata IDs the HLTB IDs came from
+            is_from_primary = []  # Track whether each HLTB ID is from primary
+
+            # Track primary's wikidata_id for display purposes
+            primary_wikidata_id = (
+                game.primary_wikipedia_game_data.wikidata_id
+                if game.primary_wikipedia_game_data
+                else None
+            )
+
+            # First add primary if it has an HLTB ID
+            if (
+                game.primary_wikipedia_game_data
+                and game.primary_wikipedia_game_data.hltb_id
+            ):
+                all_hltb_ids.append(game.primary_wikipedia_game_data.hltb_id)
+                all_wikidata_ids.append(game.primary_wikipedia_game_data.wikidata_id)
+                is_from_primary.append(True)
+
+            # Then add other WikipediaGameData records that have HLTB IDs
+            for wiki_data in game.wikipedia_game_data_set.all():
+                if wiki_data.hltb_id and wiki_data.hltb_id not in all_hltb_ids:
+                    all_hltb_ids.append(wiki_data.hltb_id)
+                    all_wikidata_ids.append(wiki_data.wikidata_id)
+                    is_from_primary.append(False)
+
             games_list.append(
                 {
                     "id": game.id,
@@ -257,11 +291,15 @@ class Command(BaseCommand):
                     "rank": game.rank,
                     "year_of_release": game.year_of_release,
                     "igdb_id": game.igdb_id,
+                    # Backwards compatible: primary hltb_id (if any)
                     "primary_wikipedia_game_data__hltb_id": (
-                        game.primary_wikipedia_game_data.hltb_id
-                        if game.primary_wikipedia_game_data
-                        else None
+                        all_hltb_ids[0] if all_hltb_ids else None
                     ),
+                    # New: all HLTB IDs from all WikipediaGameData records
+                    "all_wikidata_hltb_ids": all_hltb_ids,
+                    "all_wikidata_ids": all_wikidata_ids,
+                    "is_from_primary": is_from_primary,  # Track which are from primary
+                    "primary_wikidata_id": primary_wikidata_id,
                     "primary_wikipedia_game_data__page_title": (
                         game.primary_wikipedia_game_data.page_title
                         if game.primary_wikipedia_game_data
@@ -351,16 +389,23 @@ class Command(BaseCommand):
                 game_igdb_id = game_data["igdb_id"]
                 game_id = game_data["id"]
                 game_platforms = game_data.get("platforms", [])
-                wikidata_hltb_id = game_data.get("primary_wikipedia_game_data__hltb_id")
+                # Get all HLTB IDs from all WikipediaGameData records
+                all_wikidata_hltb_ids = game_data.get("all_wikidata_hltb_ids", [])
+                all_wikidata_ids = game_data.get("all_wikidata_ids", [])
+                is_from_primary_list = game_data.get("is_from_primary", [])
                 wiki_page_title = game_data.get(
                     "primary_wikipedia_game_data__page_title"
                 )
+                # Track which wikidata ID was used for successful lookup
+                used_wikidata_id = None
 
                 try:
                     best_match = None
 
-                    # Try direct ID lookup if we have HLTB ID from Wikidata
-                    if wikidata_hltb_id:
+                    # Try direct ID lookup with ALL HLTB IDs from Wikidata
+                    # Iterates through the list until one works (handles cases
+                    # like Counter-Strike where primary doesn't have HLTB ID)
+                    for idx_hltb, wikidata_hltb_id in enumerate(all_wikidata_hltb_ids):
                         try:
                             direct_result = await hltb.async_search_from_id(
                                 int(wikidata_hltb_id)
@@ -368,19 +413,39 @@ class Command(BaseCommand):
                             if direct_result:
                                 best_match = direct_result
                                 fetch_method = "wikidata"
+                                used_wikidata_id = (
+                                    all_wikidata_ids[idx_hltb]
+                                    if idx_hltb < len(all_wikidata_ids)
+                                    else None
+                                )
+                                # Check if this HLTB ID is from primary or alternate
+                                is_from_primary = (
+                                    is_from_primary_list[idx_hltb]
+                                    if idx_hltb < len(is_from_primary_list)
+                                    else True
+                                )
+                                # Log which Wikidata ID was used (especially useful
+                                # when it's not the primary)
+                                extra_info = ""
+                                if not is_from_primary:
+                                    extra_info = (
+                                        f" (via alternate Wikidata {used_wikidata_id})"
+                                    )
                                 self.stdout.write(
                                     self.style.SUCCESS(
                                         f"[{idx}/{game_count}] ★ {game_name}: "
                                         f"Direct lookup via Wikidata HLTB ID "
-                                        f"{wikidata_hltb_id}"
+                                        f"{wikidata_hltb_id}{extra_info}"
                                     )
                                 )
+                                break  # Found a working HLTB ID, stop iterating
                         except Exception as e:
                             logger.debug(
                                 "Direct HLTB lookup failed for ID %s: %s",
                                 wikidata_hltb_id,
                                 e,
                             )
+                            # Continue to next HLTB ID in the list
 
                     # Fall back to name search if direct lookup failed
                     # (only if --use-name-search was specified)
@@ -475,8 +540,8 @@ class Command(BaseCommand):
                         main_extra = self._get_hours(best_match, "main_extra")
                         completionist = self._get_hours(best_match, "completionist")
 
-                        # Only print match details if not from direct lookup
-                        if not wikidata_hltb_id:
+                        # Only print match details if not from direct Wikidata lookup
+                        if not all_wikidata_hltb_ids:
                             self.stdout.write(
                                 f"[{idx}/{game_count}] \u2713 {game_name}: "
                                 f"{hltb_name} ({similarity:.2f}) - "
@@ -500,9 +565,11 @@ class Command(BaseCommand):
                     else:
                         async with counter_lock:
                             failure_count += 1
-                        if wikidata_hltb_id:
+                        if all_wikidata_hltb_ids:
+                            # Tried all Wikidata HLTB IDs but none worked
+                            ids_tried = ", ".join(all_wikidata_hltb_ids)
                             error_message = (
-                                f"Wikidata HLTB ID {wikidata_hltb_id} lookup failed"
+                                f"Wikidata HLTB ID(s) [{ids_tried}] lookup failed"
                             )
                         elif use_name_search:
                             error_message = "No results found via name search"
