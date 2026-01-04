@@ -1016,6 +1016,17 @@ class GameListRenderer {
             }
         }
 
+        // Playtime (HLTB)
+        const playtimeEl = card.querySelector('[data-slot="playtime"]');
+        if (playtimeEl) {
+            if (game.pt !== null && game.pt !== undefined) {
+                playtimeEl.textContent = this._formatPlaytime(game.pt);
+                playtimeEl.title = 'HowLongToBeat playtime';
+            } else {
+                playtimeEl.remove();
+            }
+        }
+
         // List count
         const listEl = card.querySelector('[data-slot="list-count"]');
         if (listEl) {
@@ -1057,6 +1068,9 @@ class GameListRenderer {
         }
         if (expanded.genres.length > 0) {
             overlayContent += `<div class="game-card-genres">${this._escapeHtml(expanded.genres.map(g => g.name).join(' / '))}</div>`;
+        }
+        if (game.pt !== null && game.pt !== undefined) {
+            overlayContent += `<div class="game-card-playtime" title="HowLongToBeat playtime">${this._formatPlaytime(game.pt)}</div>`;
         }
         if (game.lc) {
             overlayContent += `<div class="game-card-lists">${game.lc} lists</div>`;

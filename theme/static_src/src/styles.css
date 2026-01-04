@@ -1325,6 +1325,10 @@ input[type="number"] {
     overflow: hidden;
   }
 
+  .game-card-playtime {
+    @apply text-white/60 tabular-nums;
+  }
+
   .game-card-lists {
     @apply text-white/60 tabular-nums;
   }

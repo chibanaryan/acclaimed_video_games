@@ -45,6 +45,9 @@
                     {% if game.wikipedia_genres.count > 0 %}
                     <div class="game-card-genres" data-slot="genres">{% for g in game.wikipedia_genres.all %}{{ g.name }}{% if not forloop.last %} / {% endif %}{% endfor %}</div>
                     {% endif %}
+                    {% if game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours %}
+                    <div class="game-card-playtime" data-slot="playtime" title="HowLongToBeat playtime">{{ game.primary_hltb_game_data.main_story_hours|format_playtime }}</div>
+                    {% endif %}
                     {% if game.list_count %}
                     <div class="game-card-lists" data-slot="list-count">{{ game.list_count }} lists</div>
                     {% endif %}
@@ -53,6 +56,7 @@
                     <div class="game-card-dev" data-slot="developer"></div>
                     <div class="game-card-platforms" data-slot="platforms"></div>
                     <div class="game-card-genres" data-slot="genres"></div>
+                    <div class="game-card-playtime" data-slot="playtime"></div>
                     <div class="game-card-lists" data-slot="list-count"></div>
                 {% endif %}
             </div>
