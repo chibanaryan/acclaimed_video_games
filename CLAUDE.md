@@ -36,8 +36,10 @@ source venv/Scripts/activate
 
 **Run development server:**
 ```bash
-python3 manage.py runserver
+DEBUG=True python3 manage.py runserver
 ```
+
+**Note:** Always include `DEBUG=True` when running the development server locally to enable template reloading, detailed error pages, and the Django Debug Toolbar.
 
 **Database migrations:**
 ```bash

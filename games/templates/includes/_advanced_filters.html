@@ -253,6 +253,8 @@
                         onLoadComplete: () => {
                             console.log('[CSF] Game data loaded, client filtering ready');
                             self.clientFilterReady = true;
+                            // Sync viewMode in case user changed it while CSF was initializing
+                            self._csf.setViewMode(self.viewMode);
                             // Only re-render if filters are active (prevents flash on default page)
                             if (self.hasActiveFilters()) {
                                 self.performClientUpdate({ historyMethod: 'replaceState' });
@@ -1175,9 +1177,12 @@
         setViewMode(mode) {
             this.viewMode = mode;
             localStorage.setItem('gameViewMode', mode);
-            // If client filtering is active, re-render with new view mode
-            if (this.clientFilterReady && this._csf) {
+            // Always sync CSF's viewMode if CSF exists (even during init)
+            if (this._csf) {
                 this._csf.setViewMode(mode);
+            }
+            // Only re-render if client filtering is fully ready
+            if (this.clientFilterReady && this._csf) {
                 this.performClientUpdate({ historyMethod: 'replaceState' });
             }
         },
