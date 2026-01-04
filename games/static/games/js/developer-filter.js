@@ -14,9 +14,11 @@ function developerFilter() {
         developerGameMap: {},
         developerChildMap: {},
         developerNameMap: {},
+        developerIgdbUrlMap: {},
         gameRankMap: {},
         gameMap: new Map(),  // Map of game ID -> game data with playtime
         rootDeveloperName: '',
+        rootIgdbUrl: '',
 
         /**
          * Check if a game should be visible based on selected developers
@@ -136,6 +138,58 @@ function developerFilter() {
 
             // Multiple top-level selections - show count
             return `${this.rootDeveloperName} (${count} developers selected)`;
+        },
+
+        /**
+         * Get the IGDB URL for the currently selected developer(s)
+         * Returns URL if exactly one developer is effectively selected, null otherwise
+         */
+        getIgdbUrl() {
+            // Nothing selected - show root developer's URL
+            if (this.selectedDeveloperIds.size === 0) {
+                return this.rootIgdbUrl || null;
+            }
+
+            // Find the effective selection
+            const effectiveSelection = this.getEffectiveSelection();
+
+            if (effectiveSelection !== null) {
+                // If root (id 0), use root URL
+                if (effectiveSelection === 0) {
+                    return this.rootIgdbUrl || null;
+                }
+                // Otherwise, look up the URL for this developer
+                return this.developerIgdbUrlMap[effectiveSelection] || null;
+            }
+
+            // Multiple selections - no single URL to show
+            return null;
+        },
+
+        /**
+         * Get the name of the developer for the IGDB link
+         * Follows same logic as getDynamicTitle to determine which developer is selected
+         */
+        getIgdbDeveloperName() {
+            // Nothing selected - show root developer's name
+            if (this.selectedDeveloperIds.size === 0) {
+                return this.rootDeveloperName;
+            }
+
+            // Find the effective selection (same logic as getDynamicTitle)
+            const effectiveSelection = this.getEffectiveSelection();
+
+            if (effectiveSelection !== null) {
+                // If root (id 0), use root name
+                if (effectiveSelection === 0) {
+                    return this.rootDeveloperName;
+                }
+                // Otherwise, look up the name for this developer
+                return this.developerNameMap[effectiveSelection] || this.rootDeveloperName;
+            }
+
+            // Multiple selections - no single developer
+            return null;
         },
 
         /**
@@ -431,8 +485,10 @@ function developerFilter() {
             this.developerGameMap = window.DEVELOPER_GAME_MAP || {};
             this.developerChildMap = window.DEVELOPER_CHILD_MAP || {};
             this.developerNameMap = window.DEVELOPER_NAME_MAP || {};
+            this.developerIgdbUrlMap = window.DEVELOPER_IGDB_URL_MAP || {};
             this.gameRankMap = window.GAME_RANK_MAP || {};
             this.rootDeveloperName = window.ROOT_DEVELOPER_NAME || '';
+            this.rootIgdbUrl = window.ROOT_DEVELOPER_IGDB_URL || '';
 
             // Initialize game data map for playtime sorting
             const gameDataMap = window.GAME_DATA_MAP || {};

@@ -1875,6 +1875,7 @@ class DeveloperDetailView(DetailView):
                 {
                     "id": dev_data["developer"].id,
                     "name": dev_data["developer"].name,
+                    "igdb_url": dev_data["developer"].igdb_url,
                     "game_ids": [g.id for g in dev_data["games"]],
                     "total_game_count": dev_data[
                         "total_games_count"

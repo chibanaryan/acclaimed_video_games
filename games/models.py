@@ -263,6 +263,11 @@ class Developer(models.Model):
         db_index=True,
         help_text="IGDB developer ID (from companies endpoint)",
     )
+    igdb_url = models.URLField(
+        null=True,
+        blank=True,
+        help_text="IGDB company detail page URL",
+    )
     parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
@@ -1343,6 +1348,10 @@ class Game(models.Model):
         # Determine if this is a root developer
         is_root = parent is None
 
+        # Build IGDB URL from slug if available
+        igdb_slug = dev_data.get("slug")
+        igdb_url = f"https://www.igdb.com/companies/{igdb_slug}" if igdb_slug else None
+
         # update_or_create prevents duplicates - matches on igdb_id
         developer, _ = Developer.objects.update_or_create(
             igdb_id=dev_data["id"],  # Lookup key - ensures no duplicates
@@ -1350,7 +1359,8 @@ class Game(models.Model):
                 "name": dev_data["name"],
                 "parent": parent,
                 # Only root developers get slugs
-                "slug": dev_data.get("slug") if is_root else None,
+                "slug": igdb_slug if is_root else None,
+                "igdb_url": igdb_url,
             },
         )
         return developer
