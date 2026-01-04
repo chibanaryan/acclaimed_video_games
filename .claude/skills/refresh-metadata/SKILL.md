@@ -1,11 +1,11 @@
 ---
 name: refresh-metadata
-description: Refresh all metadata from IGDB, Wikipedia, and HLTB. Use for weekly maintenance or full data refresh.
+description: Refresh all metadata from IGDB, Wikipedia, HLTB, and ProtonDB. Use for weekly maintenance or full data refresh.
 ---
 
 # Weekly Metadata Refresh
 
-Combines `get_igdb --force`, `fetch_wikipedia_metadata --force --save`, and `fetch_hltb_data --save --force` into one unified operation, designed for weekly scheduled execution.
+Combines `get_igdb --force`, `fetch_wikipedia_metadata --force --save`, `fetch_hltb_data --save --force`, and `fetch_protondb_data --save` into one unified operation, designed for weekly scheduled execution.
 
 ## Usage
 
@@ -22,6 +22,9 @@ python3 manage.py refresh_all_metadata --wikipedia-only
 # HLTB only
 python3 manage.py refresh_all_metadata --hltb-only
 
+# ProtonDB only
+python3 manage.py refresh_all_metadata --protondb-only
+
 # Test with limited games
 python3 manage.py refresh_all_metadata --limit 100
 
@@ -36,9 +39,10 @@ python3 manage.py refresh_all_metadata --pro
 
 | Option | Description |
 |--------|-------------|
-| `--igdb-only` | Only refresh IGDB data (skip Wikipedia and HLTB) |
-| `--wikipedia-only` | Only refresh Wikipedia data (skip IGDB and HLTB) |
-| `--hltb-only` | Only refresh HLTB data (skip IGDB and Wikipedia) |
+| `--igdb-only` | Only refresh IGDB data |
+| `--wikipedia-only` | Only refresh Wikipedia data |
+| `--hltb-only` | Only refresh HLTB data |
+| `--protondb-only` | Only refresh ProtonDB data |
 | `--limit N` | Process only first N games (for testing) |
 | `--dry-run` | Preview operations without database changes |
 | `--concurrency N` | Override IGDB concurrency (default: 8) |
@@ -48,11 +52,12 @@ python3 manage.py refresh_all_metadata --pro
 
 | Mode | Duration (1000 games) |
 |------|-----------------------|
-| Full refresh (authenticated) | ~60-70 minutes |
+| Full refresh (authenticated) | ~62-72 minutes |
 | IGDB only (free tier) | ~30 seconds |
 | IGDB only (pro tier) | ~3 seconds |
 | Wikipedia only (authenticated) | ~38 minutes |
 | HLTB only | ~20-25 minutes |
+| ProtonDB only | ~2 minutes |
 
 ## Heroku Scheduler Setup
 
