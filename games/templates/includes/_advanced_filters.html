@@ -285,8 +285,9 @@
                 }
 
                 // Defer heavy initialization until browser is idle
+                // No timeout - let browser fully control when to run for better main-thread yielding
                 if ('requestIdleCallback' in window) {
-                    requestIdleCallback(doInit, { timeout: 2000 });
+                    requestIdleCallback(doInit);
                 } else {
                     setTimeout(doInit, 50);
                 }

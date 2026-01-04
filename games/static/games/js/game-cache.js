@@ -21,6 +21,7 @@ class GameDataCache {
         this.CACHE_KEY = 'allgames';
         this.VERSION_URL = '/api/games/version/';
         this.DATA_URL = '/api/games/all/';
+        this.CACHE_TTL = 5 * 60 * 1000; // 5 minutes - skip version check if cache is fresher
         this._db = null;
         this._initPromise = null;
     }
@@ -141,16 +142,33 @@ class GameDataCache {
     async getData(options = {}) {
         const { forceRefresh = false, onCacheHit, onCacheMiss } = options;
 
+        if (forceRefresh) {
+            if (onCacheMiss) onCacheMiss();
+            const response = await this._fetchData();
+            const { version, data } = response;
+            await this._setCached(version, data);
+            return data;
+        }
+
         // Try to get cached data
-        const cached = !forceRefresh ? await this._getCached() : null;
+        const cached = await this._getCached();
 
         if (cached) {
-            // Validate cache version
+            // Quick win: skip version check if cache is fresh (< 5 min old)
+            const cacheAge = Date.now() - cached.timestamp;
+            if (cacheAge < this.CACHE_TTL) {
+                if (onCacheHit) onCacheHit(cached.data);
+                return cached.data;
+            }
+
+            // Cache exists but may be stale - check version in parallel with preparing fallback
             const serverVersion = await this._fetchVersion();
 
             if (serverVersion && cached.version === serverVersion) {
-                // Cache is valid
+                // Cache version matches - update timestamp and return cached data
                 if (onCacheHit) onCacheHit(cached.data);
+                // Refresh timestamp in background (don't await)
+                this._setCached(cached.version, cached.data);
                 return cached.data;
             }
         }
