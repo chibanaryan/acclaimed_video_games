@@ -999,12 +999,6 @@ class HomePageView(RobustPaginationMixin, ListView):
             series_ids = [int(x) for x in series_param.split(",") if x.strip()]
             qs = utils.apply_series_filter(qs, series_ids)
 
-        # Game mode filtering
-        game_modes_param = self.request.GET.get("game_modes")
-        if game_modes_param:
-            game_mode_ids = [int(x) for x in game_modes_param.split(",") if x.strip()]
-            qs = qs.filter(wikipedia_game_modes__id__in=game_mode_ids)
-
         # Played status filtering (authenticated users only)
         played_param = self.request.GET.get("played")
         qs = _apply_played_filter(qs, self.request.user, played_param)
@@ -1165,26 +1159,6 @@ class HomePageView(RobustPaginationMixin, ListView):
                 config.CACHE_TIMEOUT_DEFAULT,
             )
 
-        # Get game modes list with game counts
-        game_modes_cache_key = (
-            f"search_game_modes_list_with_counts:{config.CACHE_VERSION}"
-        )
-        game_modes_list = cache.get(game_modes_cache_key)
-        if game_modes_list is None:
-            game_modes_list = list(
-                models.WikipediaGameMode.objects.annotate(game_count=Count("games"))
-                .filter(game_count__gt=0)
-                .values("id", "name", "slug", "game_count")
-                .order_by("-game_count", "name")
-            )
-            # Convert IDs to strings for Alpine.js
-            game_modes_list = [{**gm, "id": str(gm["id"])} for gm in game_modes_list]
-            cache.set(
-                game_modes_cache_key,
-                game_modes_list,
-                config.CACHE_TIMEOUT_DEFAULT,
-            )
-
         min_year, max_year = _get_year_bounds()
 
         # Parse year/decade params and convert to start/end
@@ -1216,7 +1190,6 @@ class HomePageView(RobustPaginationMixin, ListView):
         genres_param = self.request.GET.get("genres")
         platforms_param = self.request.GET.get("platforms")
         series_param = self.request.GET.get("series")
-        game_modes_param = self.request.GET.get("game_modes")
         played_param = self.request.GET.get("played")
 
         # Parse HLTB parameters
@@ -1268,7 +1241,6 @@ class HomePageView(RobustPaginationMixin, ListView):
             or genres_param
             or platforms_param
             or series_param
-            or game_modes_param
             or sort_param != "rank"
             or dir_param != "asc"
             or (played_param and self.request.user.is_authenticated)
@@ -1283,7 +1255,6 @@ class HomePageView(RobustPaginationMixin, ListView):
             "genres": genres_param.split(",") if genres_param else [],
             "platforms": platforms_param.split(",") if platforms_param else [],
             "series": series_param.split(",") if series_param else [],
-            "game_modes": game_modes_param.split(",") if game_modes_param else [],
             "played": played_param if self.request.user.is_authenticated else "",
             "rank_display": "filtered" if has_any_filter else "alltime",
             "sort": sort_param,
@@ -1299,7 +1270,6 @@ class HomePageView(RobustPaginationMixin, ListView):
         context["genres"] = genres
         context["platforms"] = platforms
         context["series_list"] = series_list
-        context["game_modes_list"] = game_modes_list
         context["filters"] = filters
         context["download_query"] = urlencode(
             {
@@ -1316,11 +1286,6 @@ class HomePageView(RobustPaginationMixin, ListView):
                 ),
                 **(
                     {"series": ",".join(filters["series"])} if filters["series"] else {}
-                ),
-                **(
-                    {"game_modes": ",".join(filters["game_modes"])}
-                    if filters["game_modes"]
-                    else {}
                 ),
                 **(
                     {"sort": filters["sort"]}
@@ -1376,11 +1341,6 @@ class HomePageView(RobustPaginationMixin, ListView):
         # Apply played status filter
         base_qs = _apply_played_filter(base_qs, self.request.user, played_param)
 
-        # Apply game mode filter
-        if game_modes_param:
-            game_mode_ids = [int(x) for x in game_modes_param.split(",")]
-            base_qs = base_qs.filter(wikipedia_game_modes__id__in=game_mode_ids)
-
         # Calculate year counts from filtered base queryset
         # Use distinct=True to avoid counting games multiple times when M2M JOINs
         # cause duplicate rows (e.g., a game with WIN+MAC platforms matched twice)
@@ -1417,11 +1377,6 @@ class HomePageView(RobustPaginationMixin, ListView):
         genre_facet_qs = _apply_played_filter(
             genre_facet_qs, self.request.user, played_param
         )
-        if game_modes_param:
-            game_mode_ids = [int(x) for x in game_modes_param.split(",")]
-            genre_facet_qs = genre_facet_qs.filter(
-                wikipedia_game_modes__id__in=game_mode_ids
-            )
 
         # Standard faceted counting (single-select mode)
         genre_counts = dict(
@@ -1453,11 +1408,6 @@ class HomePageView(RobustPaginationMixin, ListView):
         platform_facet_qs = _apply_played_filter(
             platform_facet_qs, self.request.user, played_param
         )
-        if game_modes_param:
-            game_mode_ids = [int(x) for x in game_modes_param.split(",")]
-            platform_facet_qs = platform_facet_qs.filter(
-                wikipedia_game_modes__id__in=game_mode_ids
-            )
 
         # Count games per platform
         platform_counts = dict(
@@ -1467,45 +1417,7 @@ class HomePageView(RobustPaginationMixin, ListView):
             .values_list("platforms__id", "count")
         )
 
-        # FACETED COUNTS FOR GAME MODES
-        # Apply all filters EXCEPT game_modes
-        game_mode_facet_qs = models.Game.objects.all()
-        if self.request.user.is_authenticated:
-            game_mode_facet_qs = game_mode_facet_qs.with_played_status(
-                self.request.user
-            )
-        if q:
-            game_mode_facet_qs = game_mode_facet_qs.filter(name__icontains=q)
-        game_mode_facet_qs = utils.apply_year_filters(
-            game_mode_facet_qs,
-            decade=decade_param,
-            year=year_param,
-            start=start_param,
-            end=end_param,
-        )
-        if genres_param:
-            genre_ids = [int(x) for x in genres_param.split(",")]
-            game_mode_facet_qs = utils.apply_genre_filter(
-                game_mode_facet_qs, genre_ids, match_all=False, use_wikipedia=True
-            )
-        if platforms_param:
-            platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
-            game_mode_facet_qs = utils.apply_platform_filter(
-                game_mode_facet_qs, platform_ids
-            )
-        game_mode_facet_qs = _apply_played_filter(
-            game_mode_facet_qs, self.request.user, played_param
-        )
-
-        # Count games per game mode
-        game_mode_counts = dict(
-            game_mode_facet_qs.values("wikipedia_game_modes__id")
-            .exclude(wikipedia_game_modes__id__isnull=True)
-            .annotate(count=Count("id", distinct=True))
-            .values_list("wikipedia_game_modes__id", "count")
-        )
-
-        # Merge filtered counts into genres/platforms/game_modes lists
+        # Merge filtered counts into genres/platforms lists
         genres_with_filtered = [
             {**g, "filtered_count": genre_counts.get(int(g["id"]), 0)} for g in genres
         ]
@@ -1513,23 +1425,15 @@ class HomePageView(RobustPaginationMixin, ListView):
             {**p, "filtered_count": platform_counts.get(int(p["id"]), 0)}
             for p in platforms
         ]
-        game_modes_with_filtered = [
-            {**gm, "filtered_count": game_mode_counts.get(int(gm["id"]), 0)}
-            for gm in game_modes_list
-        ]
 
         # Replace context with filtered versions
         context["genres"] = genres_with_filtered
         context["platforms"] = platforms_with_filtered
-        context["game_modes_list"] = game_modes_with_filtered
 
         # JSON for HTMX partial updates (keyed by string ID)
         context["genre_counts_json"] = {str(k): v for k, v in genre_counts.items()}
         context["platform_counts_json"] = {
             str(k): v for k, v in platform_counts.items()
-        }
-        context["game_mode_counts_json"] = {
-            str(k): v for k, v in game_mode_counts.items()
         }
 
         # Rank distribution (10 bins of 100 ranks each)
