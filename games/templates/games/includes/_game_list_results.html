@@ -18,21 +18,37 @@
 {# Desktop: Sort + result count + jump to rank (horizontal row at desktop+) #}
 <div class="hidden desktop:flex items-center justify-between gap-4 mb-2 text-sm">
     {# Sort - Left side #}
-    <div class="dropdown flex-shrink-0" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+    <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+            <button type="button"
+                    class="flex items-center gap-1 text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    @click="sortOpen = !sortOpen">
+                <span class="mdi mdi-sort text-base"></span>
+                <span class="text-sm min-w-9" x-text="
+                    filters.sort === 'rank' ? 'Rank' :
+                    filters.sort === 'year' ? 'Year' :
+                    filters.sort === 'name' ? 'A-Z' :
+                    filters.sort === 'playtime' ? (filters.hltb_mode === 'completionist' ? 'Playtime (100%)' : 'Playtime') :
+                    'Rank'
+                "></span>
+                <span class="mdi mdi-chevron-down text-xs"></span>
+            </button>
+            <ul x-show="sortOpen" x-cloak
+                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                @click="sortOpen = false">
+                <li><button type="button" @click="updateSort('rank')" :class="filters.sort === 'rank' ? 'active' : ''">Rank</button></li>
+                <li><button type="button" @click="updateSort('year')" :class="filters.sort === 'year' ? 'active' : ''">Year</button></li>
+                <li><button type="button" @click="updateSort('name')" :class="filters.sort === 'name' ? 'active' : ''">A-Z</button></li>
+                <li><button type="button" @click="updateSort('playtime')" :class="filters.sort === 'playtime' ? 'active' : ''">Playtime</button></li>
+            </ul>
+        </div>
+        {# Direction flip button #}
         <button type="button"
-                class="flex items-center gap-1 text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
-                @click="sortOpen = !sortOpen">
-            <span class="mdi mdi-sort text-base"></span>
-            <span class="text-sm min-w-9" x-text="filters.sort === 'rank' ? 'Rank' : filters.sort === 'year' ? 'Year' : 'A-Z'"></span>
-            <span class="mdi mdi-chevron-down text-xs"></span>
+                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                @click="toggleSortDirection()"
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
+            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
         </button>
-        <ul x-show="sortOpen" x-cloak
-            class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
-            @click="sortOpen = false">
-            <li><button type="button" @click="updateSort('rank')" :class="filters.sort === 'rank' ? 'active' : ''">Rank</button></li>
-            <li><button type="button" @click="updateSort('year')" :class="filters.sort === 'year' ? 'active' : ''">Year</button></li>
-            <li><button type="button" @click="updateSort('name')" :class="filters.sort === 'name' ? 'active' : ''">A-Z</button></li>
-        </ul>
     </div>
     {# Result count - Middle #}
     <div class="result-count text-base-content/60 whitespace-nowrap">
@@ -66,7 +82,15 @@
             <option value="rank" :selected="filters.sort === 'rank'">Rank</option>
             <option value="year" :selected="filters.sort === 'year'">Year</option>
             <option value="name" :selected="filters.sort === 'name'">A-Z</option>
+            <option value="playtime" :selected="filters.sort === 'playtime'">Playtime</option>
         </select>
+        {# Direction flip button #}
+        <button type="button"
+                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                @click="toggleSortDirection()"
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
+            <span class="mdi text-sm" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+        </button>
     </div>
     {# Result count - middle, can shrink #}
     <div class="result-count text-base-content/60 text-xs truncate min-w-0">

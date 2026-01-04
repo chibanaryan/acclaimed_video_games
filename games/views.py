@@ -1164,6 +1164,7 @@ class HomePageView(RobustPaginationMixin, ListView):
         # Build filters dict from query params
         q_param = self.request.GET.get("q", "")
         sort_param = self.request.GET.get("sort", "rank")
+        dir_param = self.request.GET.get("dir", "asc")
         genres_param = self.request.GET.get("genres")
         platforms_param = self.request.GET.get("platforms")
         series_param = self.request.GET.get("series")
@@ -1219,6 +1220,7 @@ class HomePageView(RobustPaginationMixin, ListView):
             or platforms_param
             or series_param
             or sort_param != "rank"
+            or dir_param != "asc"
             or (played_param and self.request.user.is_authenticated)
             or hltb_min is not None
             or hltb_max is not None
@@ -1234,6 +1236,7 @@ class HomePageView(RobustPaginationMixin, ListView):
             "played": played_param if self.request.user.is_authenticated else "",
             "rank_display": "filtered" if has_any_filter else "alltime",
             "sort": sort_param,
+            "sortDirection": dir_param,
             "hltb_mode": hltb_mode,
             "hltb_min": hltb_min,
             "hltb_max": hltb_max,
@@ -1505,14 +1508,19 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         # Sort parameter - "games", "studios", "rank" sorts are handled in
         # get_context_data using cached hierarchy data
         sort = self.request.GET.get("sort", "games")
+        direction = self.request.GET.get("dir", "asc")
         if sort == "name":
-            qs = qs.order_by(Lower("name"))
+            if direction == "desc":
+                qs = qs.order_by(Lower("name").desc())
+            else:
+                qs = qs.order_by(Lower("name"))
 
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sort = self.request.GET.get("sort", "games")
+        direction = self.request.GET.get("dir", "asc")
         context["sort"] = sort
 
         # Get cached hierarchy data (precomputed counts, game IDs, etc.)
@@ -1566,20 +1574,45 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
                         if top_game_id and top_game_id in top_games:
                             dev.top_game = top_games[top_game_id]
 
-            # Sort by cached counts
+            # Sort by cached counts (with direction support)
+            is_desc = direction == "desc"
             if sort == "games":
                 developers.sort(
-                    key=lambda d: (-d.recursive_games_count, d.name.lower())
+                    key=lambda d: (
+                        (
+                            -d.recursive_games_count
+                            if not is_desc
+                            else d.recursive_games_count
+                        ),
+                        d.name.lower(),
+                    )
                 )
             elif sort == "studios":
                 developers.sort(
-                    key=lambda d: (-d.recursive_studios_count, d.name.lower())
+                    key=lambda d: (
+                        (
+                            -d.recursive_studios_count
+                            if not is_desc
+                            else d.recursive_studios_count
+                        ),
+                        d.name.lower(),
+                    )
                 )
             else:  # rank
                 developers.sort(
                     key=lambda d: (
-                        getattr(d, "top_game", None) is None,  # No game = last
-                        getattr(getattr(d, "top_game", None), "rank", 9999) or 9999,
+                        getattr(d, "top_game", None) is None,  # No game = always last
+                        (
+                            (
+                                getattr(getattr(d, "top_game", None), "rank", 9999)
+                                or 9999
+                            )
+                            if not is_desc
+                            else -(
+                                getattr(getattr(d, "top_game", None), "rank", 9999)
+                                or 9999
+                            )
+                        ),
                         d.name.lower(),
                     )
                 )
@@ -1918,6 +1951,7 @@ class DeveloperDetailView(DetailView):
         # Collect all unique games for filter view
         all_games = list(
             models.Game.objects.filter(id__in=all_game_ids)
+            .select_related("primary_hltb_game_data")
             .prefetch_related("developers", "platforms", "genres")
             .order_by("rank")
         )
@@ -1947,6 +1981,18 @@ class DeveloperDetailView(DetailView):
         # Game rank map for JavaScript to calculate filtered rank distribution
         game_rank_map = {game.id: game.rank for game in all_games if game.rank}
         context["game_rank_map_json"] = json.dumps(game_rank_map, cls=DjangoJSONEncoder)
+
+        # Game data map with playtime for sorting
+        game_data_map = {}
+        for game in all_games:
+            game_data_map[game.id] = {
+                "pt": (
+                    game.primary_hltb_game_data.main_story_hours
+                    if game.primary_hltb_game_data
+                    else None
+                )
+            }
+        context["game_data_map_json"] = json.dumps(game_data_map, cls=DjangoJSONEncoder)
 
         # Build game -> developer IDs map for anchor links
         # This maps each game_id to the list of developer_ids that have it
@@ -1983,6 +2029,7 @@ class DeveloperDetailView(DetailView):
             "developer_game_map_json": context["developer_game_map_json"],
             "developer_child_map_json": context["developer_child_map_json"],
             "game_rank_map_json": context["game_rank_map_json"],
+            "game_data_map_json": context["game_data_map_json"],
             "game_developer_map": game_developer_map,
             "rank_distribution": rank_bins,
         }
@@ -2055,6 +2102,9 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         """Get publications with list counts, filtered and sorted."""
         year_value, type_slug, type_code = self._get_list_filters()
         sort = self.request.GET.get("sort", "importance")
+        # Default direction depends on sort type: desc for importance, asc for alpha
+        default_dir = "asc" if sort == "alpha" else "desc"
+        sort_direction = self.request.GET.get("dir", default_dir)
 
         # Base list queryset for filtering
         list_filter = Q()
@@ -2125,12 +2175,18 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         # Only include publications with matching lists
         qs = qs.filter(total_count__gt=0)
 
-        # Sort by importance or alphabetically
+        # Sort by importance or alphabetically, respecting direction
         if sort == "alpha":
-            qs = qs.order_by(Lower("name"))
+            if sort_direction == "asc":
+                qs = qs.order_by(Lower("name"))
+            else:
+                qs = qs.order_by(Lower("name").desc())
         else:
-            # Sort by importance score descending, then alphabetically
-            qs = qs.order_by("-importance_score", Lower("name"))
+            # Sort by importance score, then alphabetically as tiebreaker
+            if sort_direction == "asc":
+                qs = qs.order_by("importance_score", Lower("name"))
+            else:
+                qs = qs.order_by("-importance_score", Lower("name"))
 
         return qs
 
@@ -2139,6 +2195,9 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
         year_value, type_slug, type_code = self._get_list_filters()
         sort = self.request.GET.get("sort", "importance")
+        # Default direction depends on sort type: desc for importance, asc for alpha
+        default_dir = "asc" if sort == "alpha" else "desc"
+        sort_direction = self.request.GET.get("dir", default_dir)
 
         # Build the publication groups with their lists
         publication_groups = []
@@ -2227,6 +2286,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             "type": type_slug,  # Keep as slug for template comparison
         }
         context["sort"] = sort
+        context["sort_direction"] = sort_direction
 
         # Total list count for display (loaded publications only)
         total_lists = sum(g["total_count"] for g in publication_groups)

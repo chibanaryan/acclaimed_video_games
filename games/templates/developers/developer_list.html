@@ -18,6 +18,7 @@
 <div class="mb-6" x-data="{
     q: '{{ request.GET.q|default:''|escapejs }}',
     sort: new URLSearchParams(window.location.search).get('sort') || 'games',
+    sortDirection: new URLSearchParams(window.location.search).get('dir') || 'asc',
     updateUrl(event) {
         const searchValue = event.target.value;
         const url = new URL(window.location);
@@ -36,6 +37,21 @@
             url.searchParams.set('sort', newSort);
         } else {
             url.searchParams.delete('sort');
+        }
+        url.searchParams.delete('page');
+        window.history.pushState({}, '', url);
+        // Wait for Alpine to update hx-vals before triggering HTMX
+        this.$nextTick(() => {
+            htmx.trigger(document.getElementById('developer-search'), 'sort-changed');
+        });
+    },
+    toggleSortDirection() {
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        const url = new URL(window.location);
+        if (this.sortDirection !== 'asc') {
+            url.searchParams.set('dir', this.sortDirection);
+        } else {
+            url.searchParams.delete('dir');
         }
         url.searchParams.delete('page');
         window.history.pushState({}, '', url);
@@ -62,7 +78,7 @@
                hx-target="#results-container"
                hx-trigger="input changed delay:300ms, sort-changed"
                hx-swap="innerHTML"
-               :hx-vals="JSON.stringify({sort: sort})"
+               :hx-vals="JSON.stringify({sort: sort, dir: sortDirection})"
                x-on:htmx:after-request="updateUrl($event)"
                autocomplete="off">
         <button type="button"
@@ -84,22 +100,31 @@
     {# Sort dropdown #}
     <div class="flex items-center gap-3 mt-4">
         {# Desktop: Custom dropdown #}
-        <div class="hidden desktop:block dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+        <div class="hidden desktop:flex items-center gap-2">
+            <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+                <button type="button"
+                        class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                        @click="sortOpen = !sortOpen">
+                    <span class="mdi mdi-sort text-base"></span>
+                    <span class="text-sm" x-text="sort === 'games' ? '# Games' : (sort === 'studios' ? '# Subsidiaries' : (sort === 'rank' ? 'Top Rank' : 'Name (A-Z)'))"></span>
+                    <span class="mdi mdi-chevron-down text-xs"></span>
+                </button>
+                <ul x-show="sortOpen" x-cloak
+                    class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-44 p-2 mt-1"
+                    @click="sortOpen = false">
+                    <li><button type="button" @click="updateSort('games')" :class="sort === 'games' ? 'active' : ''"># Games</button></li>
+                    <li><button type="button" @click="updateSort('studios')" :class="sort === 'studios' ? 'active' : ''"># Subsidiaries</button></li>
+                    <li><button type="button" @click="updateSort('rank')" :class="sort === 'rank' ? 'active' : ''">Top Rank</button></li>
+                    <li><button type="button" @click="updateSort('name')" :class="sort === 'name' ? 'active' : ''">Name (A-Z)</button></li>
+                </ul>
+            </div>
+            {# Direction flip button #}
             <button type="button"
-                    class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
-                    @click="sortOpen = !sortOpen">
-                <span class="mdi mdi-sort text-base"></span>
-                <span class="text-sm" x-text="sort === 'games' ? '# Games' : (sort === 'studios' ? '# Subsidiaries' : (sort === 'rank' ? 'Top Rank' : 'Name (A-Z)'))"></span>
-                <span class="mdi mdi-chevron-down text-xs"></span>
+                    class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    @click="toggleSortDirection()"
+                    :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+                <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
             </button>
-            <ul x-show="sortOpen" x-cloak
-                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-44 p-2 mt-1"
-                @click="sortOpen = false">
-                <li><button type="button" @click="updateSort('games')" :class="sort === 'games' ? 'active' : ''"># Games</button></li>
-                <li><button type="button" @click="updateSort('studios')" :class="sort === 'studios' ? 'active' : ''"># Subsidiaries</button></li>
-                <li><button type="button" @click="updateSort('rank')" :class="sort === 'rank' ? 'active' : ''">Top Rank</button></li>
-                <li><button type="button" @click="updateSort('name')" :class="sort === 'name' ? 'active' : ''">Name (A-Z)</button></li>
-            </ul>
         </div>
         {# Mobile: Native select for touch compatibility #}
         <div class="desktop:hidden flex items-center gap-1">
@@ -112,6 +137,13 @@
                 <option value="rank" :selected="sort === 'rank'">Top Rank</option>
                 <option value="name" :selected="sort === 'name'">Name (A-Z)</option>
             </select>
+            {# Direction flip button #}
+            <button type="button"
+                    class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    @click="toggleSortDirection()"
+                    :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+                <span class="mdi text-sm" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+            </button>
         </div>
     </div>
 </div>

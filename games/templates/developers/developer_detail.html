@@ -10,6 +10,7 @@
     window.DEVELOPER_GAME_MAP = {{ developer_game_map_json|safe }};
     window.DEVELOPER_CHILD_MAP = {{ developer_child_map_json|safe }};
     window.GAME_RANK_MAP = {{ game_rank_map_json|safe }};
+    window.GAME_DATA_MAP = {{ game_data_map_json|safe }};
     window.DEVELOPER_NAME_MAP = {
         {% for dev in developers_flat %}{{ dev.id }}: "{{ dev.name|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}
     };

@@ -5,21 +5,37 @@
     <div class="mb-4">
         <div class="flex items-center gap-3 mb-3">
             {# Desktop: Custom dropdown #}
-            <div class="hidden desktop:block dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+            <div class="hidden desktop:flex items-center gap-2">
+                <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+                    <button type="button"
+                            class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                            @click="sortOpen = !sortOpen">
+                        <span class="mdi mdi-sort text-base"></span>
+                        <span class="text-sm" x-text="
+                            sortBy === 'rank' ? 'Rank' :
+                            sortBy === 'year' ? 'Year' :
+                            sortBy === 'name' ? 'A-Z' :
+                            sortBy === 'playtime' ? 'Playtime' :
+                            'Rank'
+                        "></span>
+                        <span class="mdi mdi-chevron-down text-xs"></span>
+                    </button>
+                    <ul x-show="sortOpen" x-cloak
+                        class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                        @click="sortOpen = false">
+                        <li><button type="button" @click="sortBy = 'rank'; sortGames()" :class="sortBy === 'rank' ? 'active' : ''">Rank</button></li>
+                        <li><button type="button" @click="sortBy = 'year'; sortGames()" :class="sortBy === 'year' ? 'active' : ''">Year</button></li>
+                        <li><button type="button" @click="sortBy = 'name'; sortGames()" :class="sortBy === 'name' ? 'active' : ''">A-Z</button></li>
+                        <li><button type="button" @click="sortBy = 'playtime'; sortGames()" :class="sortBy === 'playtime' ? 'active' : ''">Playtime</button></li>
+                    </ul>
+                </div>
+                {# Direction flip button #}
                 <button type="button"
-                        class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
-                        @click="sortOpen = !sortOpen">
-                    <span class="mdi mdi-sort text-base"></span>
-                    <span class="text-sm" x-text="sortBy === 'rank' ? 'Rank' : sortBy === 'year' ? 'Year' : 'A-Z'"></span>
-                    <span class="mdi mdi-chevron-down text-xs"></span>
+                        class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                        @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; sortGames()"
+                        :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+                    <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
                 </button>
-                <ul x-show="sortOpen" x-cloak
-                    class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
-                    @click="sortOpen = false">
-                    <li><button type="button" @click="sortBy = 'rank'; sortGames()" :class="sortBy === 'rank' ? 'active' : ''">Rank</button></li>
-                    <li><button type="button" @click="sortBy = 'year'; sortGames()" :class="sortBy === 'year' ? 'active' : ''">Year</button></li>
-                    <li><button type="button" @click="sortBy = 'name'; sortGames()" :class="sortBy === 'name' ? 'active' : ''">A-Z</button></li>
-                </ul>
             </div>
             {# Mobile: Native select for touch compatibility #}
             <div class="desktop:hidden flex items-center gap-1">
@@ -30,7 +46,15 @@
                     <option value="rank" :selected="sortBy === 'rank'">Rank</option>
                     <option value="year" :selected="sortBy === 'year'">Year</option>
                     <option value="name" :selected="sortBy === 'name'">A-Z</option>
+                    <option value="playtime" :selected="sortBy === 'playtime'">Playtime</option>
                 </select>
+                {# Direction flip button #}
+                <button type="button"
+                        class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                        @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; sortGames()"
+                        :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+                    <span class="mdi text-sm" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                </button>
             </div>
         </div>
 
@@ -45,6 +69,7 @@
     <div id="games-container" class="space-y-1">
         {% for game in all_games %}
         <div x-show="gameIsVisible({{ game.id }})"
+             data-game-id="{{ game.id }}"
              data-year="{{ game.year_of_release }}"
              data-rank="{{ game.rank }}"
              data-name="{{ game.name }}">

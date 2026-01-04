@@ -6,7 +6,8 @@ function developerFilter() {
     return {
         // State
         selectedDeveloperIds: new Set(),
-        sortBy: 'rank', // 'rank', 'year', or 'name'
+        sortBy: 'rank', // 'rank', 'year', 'name', or 'playtime'
+        sortDirection: 'asc', // 'asc' or 'desc'
         showMobileFilters: false, // Controls mobile filter modal
 
         // Data loaded from Django context via window globals
@@ -14,6 +15,7 @@ function developerFilter() {
         developerChildMap: {},
         developerNameMap: {},
         gameRankMap: {},
+        gameMap: new Map(),  // Map of game ID -> game data with playtime
         rootDeveloperName: '',
 
         /**
@@ -205,27 +207,48 @@ function developerFilter() {
         },
 
         /**
-         * Sort games in the DOM based on current sortBy value
+         * Sort games in the DOM based on current sortBy value and sortDirection
          */
         sortGames() {
             const container = document.getElementById('games-container');
             if (!container) return;
 
             const games = Array.from(container.children);
+            const isDesc = this.sortDirection === 'desc';
 
             games.sort((a, b) => {
-                if (this.sortBy === 'year') {
-                    const yearA = parseInt(a.dataset.year) || 0;
-                    const yearB = parseInt(b.dataset.year) || 0;
-                    return yearA - yearB;
-                } else if (this.sortBy === 'rank') {
+                if (this.sortBy === 'rank') {
                     const rankA = parseInt(a.dataset.rank) || 999999;
                     const rankB = parseInt(b.dataset.rank) || 999999;
-                    return rankA - rankB;
+                    const diff = rankA - rankB;
+                    return isDesc ? -diff : diff;
+                } else if (this.sortBy === 'year') {
+                    const yearA = parseInt(a.dataset.year) || 0;
+                    const yearB = parseInt(b.dataset.year) || 0;
+                    const diff = yearA - yearB;
+                    if (diff !== 0) return isDesc ? -diff : diff;
+                    return parseInt(a.dataset.rank) - parseInt(b.dataset.rank);  // Secondary sort by rank
                 } else if (this.sortBy === 'name') {
                     const nameA = a.dataset.name || '';
                     const nameB = b.dataset.name || '';
-                    return nameA.localeCompare(nameB);
+                    const diff = nameA.localeCompare(nameB);
+                    return isDesc ? -diff : diff;
+                } else if (this.sortBy === 'playtime') {
+                    const gameA = this.gameMap.get(parseInt(a.dataset.gameId));
+                    const gameB = this.gameMap.get(parseInt(b.dataset.gameId));
+
+                    if (!gameA || !gameB) return 0;
+
+                    const aTime = gameA.pt;  // Main story hours
+                    const bTime = gameB.pt;
+
+                    // Hide games without playtime data (sort to end)
+                    if (aTime === null && bTime === null) return 0;
+                    if (aTime === null) return 1;
+                    if (bTime === null) return -1;
+
+                    const diff = aTime - bTime;
+                    return isDesc ? -diff : diff;
                 }
                 return 0;
             });
@@ -410,6 +433,10 @@ function developerFilter() {
             this.developerNameMap = window.DEVELOPER_NAME_MAP || {};
             this.gameRankMap = window.GAME_RANK_MAP || {};
             this.rootDeveloperName = window.ROOT_DEVELOPER_NAME || '';
+
+            // Initialize game data map for playtime sorting
+            const gameDataMap = window.GAME_DATA_MAP || {};
+            this.gameMap = new Map(Object.entries(gameDataMap).map(([id, data]) => [parseInt(id), data]));
 
             // Parse URL hash for selection state
             const hash = window.location.hash;

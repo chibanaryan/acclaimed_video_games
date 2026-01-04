@@ -3,7 +3,7 @@
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
 {% load humanize %}
-{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "series": [], "rank_display": "filtered", "sort": "rank", "hltb_mode": "main", "hltb_min": null, "hltb_max": null}</script>{% endif %}
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "series": [], "rank_display": "filtered", "sort": "rank", "sortDirection": "asc", "hltb_mode": "main", "hltb_min": null, "hltb_max": null}</script>{% endif %}
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 {% if series_list %}{{ series_list|json_script:"series-data" }}{% else %}<script id="series-data" type="application/json">[]</script>{% endif %}
@@ -95,11 +95,19 @@
             if (!this.filters.sort || this.filters.sort === '') {
                 this.filters.sort = 'rank';
             }
-            // Capture highlight from URL if present (for direct navigation)
+            // Default sortDirection to asc if not specified
+            if (!this.filters.sortDirection || this.filters.sortDirection === '') {
+                this.filters.sortDirection = 'asc';
+            }
+            // Capture highlight and dir from URL if present (for direct navigation)
             const urlParams = new URLSearchParams(window.location.search);
             const highlightParam = urlParams.get('highlight');
             if (highlightParam) {
                 this.filters.highlight = highlightParam;
+            }
+            const dirParam = urlParams.get('dir');
+            if (dirParam && (dirParam === 'asc' || dirParam === 'desc')) {
+                this.filters.sortDirection = dirParam;
             }
             // Mark as initialized after a short delay to prevent initial watcher triggers
             setTimeout(() => { this.initialized = true; }, 100);
@@ -150,6 +158,7 @@
                 this.filters.start = params.get('start') ? parseInt(params.get('start')) : {{ min_year }};
                 this.filters.end = params.get('end') ? parseInt(params.get('end')) : {{ max_year }};
                 this.filters.sort = params.get('sort') || 'rank';
+                this.filters.sortDirection = params.get('dir') || 'asc';
                 this.filters.played = params.get('played') || '';
                 const genresParam = params.get('genres');
                 this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
@@ -213,13 +222,15 @@
             this.initClientFiltering();
         },
         hasActiveFilters() {
+            // Note: sort and sortDirection are intentionally NOT checked here
+            // Sorting changes the order but doesn't filter games, so it shouldn't
+            // trigger showing the rank distribution
             return this.filters.q ||
                    this.filters.genres.length > 0 ||
                    this.filters.platforms.length > 0 ||
                    (this.filters.series && this.filters.series.length > 0) ||
                    this.filters.start !== {{ min_year }} ||
                    this.filters.end !== {{ max_year }} ||
-                   this.filters.sort !== 'rank' ||
                    this.filters.played ||
                    this.filters.hltb_min !== null ||
                    this.filters.hltb_max !== null;
@@ -367,6 +378,7 @@
                             platforms: this.filters.platforms,
                             series: this.filters.series,
                             sort: this.filters.sort,
+                            sortDirection: this.filters.sortDirection,
                             played: this.filters.played,
                             hltb_mode: this.filters.hltb_mode,
                             hltb_min: this.filters.hltb_min,
@@ -1134,6 +1146,12 @@
         },
         updateSort(newSort) {
             this.filters.sort = newSort;
+            if (this.initialized) {
+                this.debouncedFilterUpdate();
+            }
+        },
+        toggleSortDirection() {
+            this.filters.sortDirection = this.filters.sortDirection === 'asc' ? 'desc' : 'asc';
             if (this.initialized) {
                 this.debouncedFilterUpdate();
             }

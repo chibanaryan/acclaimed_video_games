@@ -530,6 +530,26 @@ def markdown(value):
 
 
 @register.filter
+def format_playtime(hours):
+    """
+    Format playtime hours for display.
+    If less than 1 hour, shows minutes (e.g., "~30m").
+    If 1 hour or more, shows hours (e.g., "~10h").
+    """
+    if hours is None:
+        return ""
+    try:
+        hours = float(hours)
+        if hours < 1:
+            minutes = round(hours * 60)
+            return f"~{minutes}m"
+        else:
+            return f"~{round(hours)}h"
+    except (ValueError, TypeError):
+        return ""
+
+
+@register.filter
 def rank_pct(rank, total):
     """
     Calculate rank position as percentage (higher rank = higher percentage).

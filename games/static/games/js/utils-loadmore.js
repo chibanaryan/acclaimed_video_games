@@ -119,6 +119,7 @@ function getFiltersFromURL() {
         platforms: params.get('platforms') ? params.get('platforms').split(',') : [],
         series: params.get('series') ? params.get('series').split(',') : [],
         sort: params.get('sort') || 'rank',
+        sortDirection: params.get('dir') || 'asc',
         played: params.get('played') || '',
         hltb_mode: params.get('hltb_mode') || 'main',
         hltb_min: hltb_min,
@@ -190,6 +191,10 @@ function hasActiveFilters(filters, csf) {
     if (filters.platforms && filters.platforms.length > 0) return true;
     if (filters.series && filters.series.length > 0) return true;
     if (filters.played) return true;
+
+    // Check sort - non-default sort or direction counts as filtered
+    if (filters.sort && filters.sort !== 'rank') return true;
+    if (filters.sortDirection && filters.sortDirection !== 'asc') return true;
 
     // Check year filter - only active if different from default bounds
     if (csf && csf.getYearBounds) {

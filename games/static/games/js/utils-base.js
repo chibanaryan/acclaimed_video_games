@@ -225,6 +225,7 @@ function buildFilterParams(filters, options = {}) {
         if (seriesIds.length > 0) params.set('series', seriesIds.join(','));
     }
     if (filters.sort && filters.sort !== 'rank') params.set('sort', filters.sort);
+    if (filters.sortDirection && filters.sortDirection !== 'asc') params.set('dir', filters.sortDirection);
     if (filters.played) params.set('played', filters.played);
     if (filters.highlight) params.set('highlight', filters.highlight);
 

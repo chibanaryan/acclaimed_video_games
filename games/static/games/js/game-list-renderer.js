@@ -80,6 +80,23 @@ class GameListRenderer {
     };
 
     /**
+     * Format playtime for display (must match game_filters.py format_playtime)
+     * If less than 1 hour, shows minutes (e.g., "~30m").
+     * If 1 hour or more, shows hours (e.g., "~10h").
+     * @private
+     * @param {number} hours - Playtime in hours
+     * @returns {string} Formatted playtime string
+     */
+    _formatPlaytime(hours) {
+        if (hours === null || hours === undefined) return '';
+        if (hours < 1) {
+            const minutes = Math.round(hours * 60);
+            return `~${minutes}m`;
+        }
+        return `~${Math.round(hours)}h`;
+    }
+
+    /**
      * Sort key for platforms: (year_start, year_end, name).
      * Null values sort to end (9999).
      * @private
@@ -409,7 +426,7 @@ class GameListRenderer {
             }
         }
 
-        // Fill meta row (developer, list count, platforms, genres)
+        // Fill meta row (developer, platforms, genres, playtime, list count)
         const metaRow = row.querySelector('[data-slot="meta-row"]');
         if (metaRow) {
             let metaHtml = '';
@@ -428,19 +445,12 @@ class GameListRenderer {
                         return this._escapeHtml(dev.name);
                     }
                 });
-                metaHtml += `<span data-slot="primary-developer">by ${devLinks.join(', ')}</span>`;
-            }
-            // List count
-            if (game.lc) {
-                if (expanded.developers.length > 0) {
-                    metaHtml += ' <span class="text-base-content/30">•</span> ';
-                }
-                metaHtml += `<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span>`;
+                metaHtml += `<span class="whitespace-nowrap" data-slot="primary-developer">by ${devLinks.join(', ')}</span>`;
             }
             // Platforms - grouped by family, icons for 3+, text codes for < 3
             const platformFamilies = this._groupPlatformsByFamily(expanded.platforms);
             if (platformFamilies.length > 0) {
-                if (metaHtml) metaHtml += ' <span class="text-base-content/30">•</span> ';
+                const bullet = metaHtml ? '<span class="text-base-content/30">•</span> ' : '';
                 const platformsHtml = platformFamilies.map((f, fi) => {
                     if (f.count >= 3) {
                         // Show icon with count
@@ -459,15 +469,26 @@ class GameListRenderer {
                         return codesHtml;
                     }
                 }).join('');
-                metaHtml += `<span data-slot="platforms">${platformsHtml}</span>`;
+                metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="platforms">${platformsHtml}</span></span>`;
             }
             // Genres - text format with / separators
             if (expanded.genres.length > 0) {
-                if (metaHtml) metaHtml += ' <span class="text-base-content/30">•</span> ';
+                const bullet = metaHtml ? '<span class="text-base-content/30">•</span> ' : '';
                 const genresHtml = expanded.genres.map((g, i) =>
                     `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>${i < expanded.genres.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
                 ).join('');
-                metaHtml += `<span data-slot="genres">${genresHtml}</span>`;
+                metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
+            }
+            // Playtime (HLTB)
+            const playtime = game.pt;  // Main story hours
+            if (playtime !== null && playtime !== undefined) {
+                const bullet = metaHtml ? '<span class="text-base-content/30">•</span> ' : '';
+                metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums text-base-content/70" data-slot="playtime" title="HowLongToBeat playtime">${this._formatPlaytime(playtime)}</span></span>`;
+            }
+            // List count - at end
+            if (game.lc) {
+                const bullet = metaHtml ? '<span class="text-base-content/30">•</span> ' : '';
+                metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span></span>`;
             }
             metaRow.innerHTML = metaHtml;
         }
@@ -503,14 +524,7 @@ class GameListRenderer {
                     return this._escapeHtml(dev.name);
                 }
             });
-            primaryDevHtml = `<span data-slot="primary-developer">by ${devLinks.join(', ')}</span>`;
-        }
-
-        // Build meta row (developer + list count)
-        let metaHtml = primaryDevHtml;
-        if (game.lc) {
-            if (primaryDevHtml) metaHtml += ' <span class="text-base-content/30">•</span> ';
-            metaHtml += `<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span>`;
+            primaryDevHtml = `<span class="whitespace-nowrap" data-slot="primary-developer">by ${devLinks.join(', ')}</span>`;
         }
 
         // Group platforms by family - icons for 3+, text codes for < 3
@@ -537,15 +551,26 @@ class GameListRenderer {
         const playedButtonHtml = this._renderPlayedButtonString(game);
         const playedContainerHtml = playedButtonHtml ? `<div class="w-12 min-w-12 max-w-12 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
 
-        // Build hover row content
-        let hoverRowHtml = metaHtml;
+        // Build hover row content: developer, platforms, genres, playtime, list count
+        let hoverRowHtml = primaryDevHtml;
         if (platformFamilies.length > 0) {
-            if (hoverRowHtml) hoverRowHtml += ' <span class="text-base-content/30">•</span> ';
-            hoverRowHtml += `<span data-slot="platforms">${platformsHtml}</span>`;
+            const bullet = hoverRowHtml ? '<span class="text-base-content/30">•</span> ' : '';
+            hoverRowHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="platforms">${platformsHtml}</span></span>`;
         }
         if (expanded.genres.length > 0) {
-            if (hoverRowHtml) hoverRowHtml += ' <span class="text-base-content/30">•</span> ';
-            hoverRowHtml += `<span data-slot="genres">${genresHtml}</span>`;
+            const bullet = hoverRowHtml ? '<span class="text-base-content/30">•</span> ' : '';
+            hoverRowHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
+        }
+        // Playtime (HLTB)
+        const playtime = game.pt;
+        if (playtime !== null && playtime !== undefined) {
+            const bullet = hoverRowHtml ? '<span class="text-base-content/30">•</span> ' : '';
+            hoverRowHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums text-base-content/70" data-slot="playtime" title="HowLongToBeat playtime">${this._formatPlaytime(playtime)}</span></span>`;
+        }
+        // List count - at end
+        if (game.lc) {
+            const bullet = hoverRowHtml ? '<span class="text-base-content/30">•</span> ' : '';
+            hoverRowHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span></span>`;
         }
 
         const div = document.createElement('div');
@@ -564,7 +589,7 @@ class GameListRenderer {
                 <a href="/game/${game.s}/" class="game-title text-2xl font-bold link link-hover">${this._escapeHtml(game.n)}</a>
                 <a href="/games/?start=${game.y}&end=${game.y}&highlight=${game.id}" class="text-base-content/60 ml-1">(${game.y || 'N/A'})</a>
             </div>
-            <div class="game-row-details text-base-content/80 text-sm ml-4 truncate" data-slot="meta-row">${hoverRowHtml}</div>
+            <div class="game-row-details text-base-content/80 text-sm ml-4" data-slot="meta-row">${hoverRowHtml}</div>
         </div>
     </div>
 </div>`;
@@ -610,20 +635,58 @@ class GameListRenderer {
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showRankInline = showRank !== 'none';
 
-        // Build row 1: All developers + list count (as HTML for tabular-nums span)
+        // Build unified meta row: Developer, Platforms, Genres, Playtime, List count
+        const platformFamilies = this._groupPlatformsByFamily(expanded.platforms);
         let metaHtml = '';
+
+        // Developers (full list)
         if (expanded.developers.length > 0) {
-            metaHtml += this._escapeHtml(expanded.developers.map(dev => dev.name).join(', '));
-        }
-        if (game.lc) {
-            if (metaHtml) metaHtml += ' \u2022 ';
-            metaHtml += `<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span>`;
+            const devNames = expanded.developers.map(d => this._escapeHtml(d.name)).join(', ');
+            metaHtml += `<span class="whitespace-nowrap" data-slot="primary-developer">${devNames}</span>`;
         }
 
-        // Build row 2: Platform families + genres (using same 3+ logic as desktop)
-        const platformFamilies = this._groupPlatformsByFamily(expanded.platforms);
-        const displayGenres = expanded.genres.slice(0, 2);
-        const genresText = displayGenres.map(g => g.name).join(', ');
+        // Platforms
+        if (platformFamilies.length > 0) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            const platformsHtml = platformFamilies.map((f, fi) => {
+                if (f.count >= 3) {
+                    const iconHtml = f.svg
+                        ? `<svg class="w-3 h-3" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
+                        : `<span class="mdi ${f.icon}" aria-hidden="true"></span>`;
+                    const countHtml = `<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">${f.count}</span>`;
+                    const comma = fi < platformFamilies.length - 1 ? ', ' : '';
+                    return `<span class="inline-flex items-center" title="${this._escapeHtml(f.tooltip)}">${iconHtml}${countHtml}</span>${comma}`;
+                } else {
+                    return f.platforms.map((p, pi) => {
+                        const comma = (pi < f.platforms.length - 1) ? ', ' : (fi < platformFamilies.length - 1 ? ', ' : '');
+                        return `<span title="${this._escapeHtml(p.name)}">${p.code}</span>${comma}`;
+                    }).join('');
+                }
+            }).join('');
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="platforms">${platformsHtml}</span></span>`;
+        }
+
+        // Genres (all)
+        if (expanded.genres.length > 0) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            const genresHtml = expanded.genres.map((g, i) =>
+                `${this._escapeHtml(g.name)}${i < expanded.genres.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
+            ).join('');
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
+        }
+
+        // Playtime
+        const playtime = game.pt;
+        if (playtime !== null && playtime !== undefined) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="Playtime">${this._formatPlaytime(playtime)}</span></span>`;
+        }
+
+        // List count
+        if (game.lc) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span></span>`;
+        }
 
         // Set root element attributes
         row.id = `game-${game.id}-mobile`;
@@ -675,40 +738,10 @@ class GameListRenderer {
             titleEl.innerHTML = `${rankHtml}${this._escapeHtml(game.n)} <span class="font-normal text-sm text-base-content/60">(${game.y || 'N/A'})</span>${globalRankHtml}`;
         }
 
-        // Fill meta (row 1: developer + list count) - use innerHTML for tabular-nums span
+        // Fill meta (unified row: developer, platforms, genres, playtime, list count)
         const metaEl = row.querySelector('[data-slot="meta"]');
         if (metaEl) {
             metaEl.innerHTML = metaHtml;
-        }
-
-        // Fill platforms-row (row 2: platform families + genres)
-        const platformsRowEl = row.querySelector('[data-slot="platforms-row"]');
-        if (platformsRowEl) {
-            // Build platform HTML using same 3+ logic as desktop
-            const platformsHtml = platformFamilies.map((f, fi) => {
-                if (f.count >= 3) {
-                    // Show icon with count
-                    const iconHtml = f.svg
-                        ? `<svg class="w-3 h-3" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
-                        : `<span class="mdi ${f.icon}" aria-hidden="true"></span>`;
-                    const countHtml = `<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">${f.count}</span>`;
-                    const comma = fi < platformFamilies.length - 1 ? ', ' : '';
-                    return `<span class="inline-flex items-center" title="${this._escapeHtml(f.tooltip)}">${iconHtml}${countHtml}</span>${comma}`;
-                } else {
-                    // Show individual platform codes
-                    return f.platforms.map((p, pi) => {
-                        const comma = (pi < f.platforms.length - 1) ? ', ' : (fi < platformFamilies.length - 1 ? ', ' : '');
-                        return `<span title="${this._escapeHtml(p.name)}">${p.code}</span>${comma}`;
-                    }).join('');
-                }
-            }).join('');
-
-            let rowHtml = platformsHtml;
-            if (genresText) {
-                if (platformFamilies.length > 0) rowHtml += ' \u2022 ';
-                rowHtml += genresText;
-            }
-            platformsRowEl.innerHTML = rowHtml;
         }
 
         return row;
@@ -725,42 +758,57 @@ class GameListRenderer {
         const displayRank = showRank === 'filtered' ? index : game.r;
         const showRankInline = showRank !== 'none';
 
-        // Build row 1: All developers + list count (as HTML for tabular-nums span)
-        let metaHtml = '';
-        if (expanded.developers.length > 0) {
-            metaHtml += this._escapeHtml(expanded.developers.map(dev => dev.name).join(', '));
-        }
-        if (game.lc) {
-            if (metaHtml) metaHtml += ' \u2022 ';
-            metaHtml += `<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span>`;
-        }
-
-        // Build row 2: Platform families + genres (using same 3+ logic as desktop)
+        // Build unified meta row: Developer, Platforms, Genres, Playtime, List count
         const platformFamilies = this._groupPlatformsByFamily(expanded.platforms);
-        const displayGenres = expanded.genres.slice(0, 2);
-        const genresText = displayGenres.map(g => g.name).join(', ');
+        let metaHtml = '';
 
-        // Build platforms HTML using family grouping
-        const platformsHtml = platformFamilies.map((f, fi) => {
-            if (f.count >= 3) {
-                const iconHtml = f.svg
-                    ? `<svg class="w-3 h-3" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
-                    : `<span class="mdi ${f.icon}" aria-hidden="true"></span>`;
-                const countHtml = `<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">${f.count}</span>`;
-                const comma = fi < platformFamilies.length - 1 ? ', ' : '';
-                return `<span class="inline-flex items-center" title="${this._escapeHtml(f.tooltip)}">${iconHtml}${countHtml}</span>${comma}`;
-            } else {
-                return f.platforms.map((p, pi) => {
-                    const comma = (pi < f.platforms.length - 1) ? ', ' : (fi < platformFamilies.length - 1 ? ', ' : '');
-                    return `<span title="${this._escapeHtml(p.name)}">${p.code}</span>${comma}`;
-                }).join('');
-            }
-        }).join('');
+        // Developers (full list)
+        if (expanded.developers.length > 0) {
+            const devNames = expanded.developers.map(d => this._escapeHtml(d.name)).join(', ');
+            metaHtml += `<span class="whitespace-nowrap" data-slot="primary-developer">${devNames}</span>`;
+        }
 
-        let platformsRowHtml = platformsHtml;
-        if (genresText) {
-            if (platformFamilies.length > 0) platformsRowHtml += ' \u2022 ';
-            platformsRowHtml += genresText;
+        // Platforms
+        if (platformFamilies.length > 0) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            const platformsHtml = platformFamilies.map((f, fi) => {
+                if (f.count >= 3) {
+                    const iconHtml = f.svg
+                        ? `<svg class="w-3 h-3" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
+                        : `<span class="mdi ${f.icon}" aria-hidden="true"></span>`;
+                    const countHtml = `<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">${f.count}</span>`;
+                    const comma = fi < platformFamilies.length - 1 ? ', ' : '';
+                    return `<span class="inline-flex items-center" title="${this._escapeHtml(f.tooltip)}">${iconHtml}${countHtml}</span>${comma}`;
+                } else {
+                    return f.platforms.map((p, pi) => {
+                        const comma = (pi < f.platforms.length - 1) ? ', ' : (fi < platformFamilies.length - 1 ? ', ' : '');
+                        return `<span title="${this._escapeHtml(p.name)}">${p.code}</span>${comma}`;
+                    }).join('');
+                }
+            }).join('');
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="platforms">${platformsHtml}</span></span>`;
+        }
+
+        // Genres (all)
+        if (expanded.genres.length > 0) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            const genresHtml = expanded.genres.map((g, i) =>
+                `${this._escapeHtml(g.name)}${i < expanded.genres.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
+            ).join('');
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
+        }
+
+        // Playtime
+        const playtime = game.pt;
+        if (playtime !== null && playtime !== undefined) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="Playtime">${this._formatPlaytime(playtime)}</span></span>`;
+        }
+
+        // List count
+        if (game.lc) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="list-count">${game.lc} lists</span></span>`;
         }
 
         const playedButtonHtml = this._renderPlayedButtonString(game);
@@ -781,8 +829,7 @@ class GameListRenderer {
     <div class="min-w-0 flex items-center justify-between">
         <div class="min-w-0">
             <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">${rankHtml}${this._escapeHtml(game.n)} <span class="font-normal text-sm text-base-content/60">(${game.y || 'N/A'})</span>${globalRankHtml}</div>
-            <div class="text-xs text-base-content/50 truncate" data-slot="meta">${metaHtml}</div>
-            <div class="text-xs text-base-content/50 truncate" data-slot="platforms-row">${platformsRowHtml}</div>
+            <div class="text-xs text-base-content/50" data-slot="meta">${metaHtml}</div>
         </div>
     </div>
 </div>`;

@@ -117,19 +117,19 @@
                 {% if game.primary_hltb_game_data.main_story_hours %}
                 <div>
                     <span class="mdi mdi-gamepad-variant text-xs"></span>
-                    Main: ~{{ game.primary_hltb_game_data.main_story_hours|floatformat:0 }}h
+                    Main: {{ game.primary_hltb_game_data.main_story_hours|format_playtime }}
                 </div>
                 {% endif %}
                 {% if game.primary_hltb_game_data.main_extra_hours %}
                 <div>
                     <span class="mdi mdi-star-outline text-xs"></span>
-                    Main+Extra: ~{{ game.primary_hltb_game_data.main_extra_hours|floatformat:0 }}h
+                    Main+Extra: {{ game.primary_hltb_game_data.main_extra_hours|format_playtime }}
                 </div>
                 {% endif %}
                 {% if game.primary_hltb_game_data.completionist_hours %}
                 <div>
                     <span class="mdi mdi-trophy text-xs"></span>
-                    100%: ~{{ game.primary_hltb_game_data.completionist_hours|floatformat:0 }}h
+                    100%: {{ game.primary_hltb_game_data.completionist_hours|format_playtime }}
                 </div>
                 {% endif %}
             </div>

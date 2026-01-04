@@ -177,6 +177,7 @@ class GameFilterEngine {
             start = null,
             end = null,
             sort = 'rank',
+            sortDirection = 'asc',
             played = '',
             hltb_mode = 'main',
             hltb_min = null,
@@ -300,7 +301,7 @@ class GameFilterEngine {
         }
 
         // Sort results
-        results = this._sortGames(results, sort);
+        results = this._sortGames(results, sort, hltb_mode, sortDirection);
 
         // Calculate faceted counts
         const facets = this._calculateFacets(filters);
@@ -319,22 +320,49 @@ class GameFilterEngine {
      * Sort games by specified criteria
      * @private
      */
-    _sortGames(games, sort) {
+    _sortGames(games, sort, hltb_mode = 'main', direction = 'asc') {
         const sortedGames = [...games];
+        const isDesc = direction === 'desc';
 
         switch (sort) {
-            case 'year':
+            case 'rank':
                 sortedGames.sort((a, b) => {
-                    // Sort by year ascending, then by rank
-                    const yearDiff = (a.y || 0) - (b.y || 0);
-                    if (yearDiff !== 0) return yearDiff;
-                    return a.r - b.r;
+                    const diff = a.r - b.r;
+                    return isDesc ? -diff : diff;
                 });
                 break;
-            case 'name':
-                sortedGames.sort((a, b) => a.n.localeCompare(b.n));
+
+            case 'year':
+                sortedGames.sort((a, b) => {
+                    const yearDiff = (a.y || 0) - (b.y || 0);
+                    if (yearDiff !== 0) return isDesc ? -yearDiff : yearDiff;
+                    return a.r - b.r;  // Secondary sort by rank (always ascending)
+                });
                 break;
-            case 'rank':
+
+            case 'name':
+                sortedGames.sort((a, b) => {
+                    const nameComp = a.n.localeCompare(b.n);
+                    return isDesc ? -nameComp : nameComp;
+                });
+                break;
+
+            case 'playtime':
+                // Filter out games without HLTB data
+                const gamesWithPlaytime = sortedGames.filter(game => {
+                    const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
+                    return playtime !== null && playtime !== undefined;
+                });
+
+                gamesWithPlaytime.sort((a, b) => {
+                    const aTime = hltb_mode === 'completionist' ? a.ptc : a.pt;
+                    const bTime = hltb_mode === 'completionist' ? b.ptc : b.pt;
+                    const diff = aTime - bTime;
+                    return isDesc ? -diff : diff;
+                });
+
+                return gamesWithPlaytime;
+
             default:
                 sortedGames.sort((a, b) => a.r - b.r);
                 break;

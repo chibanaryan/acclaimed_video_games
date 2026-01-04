@@ -166,6 +166,21 @@ class HomePageViewTest(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("Sign Up", content)
 
+    def test_sort_direction_parameter(self):
+        """Test that sort direction parameter is accepted."""
+        response = self.client.get(reverse("home") + "?sort=year&dir=desc")
+        self.assertEqual(response.status_code, 200)
+        # Check that sortDirection is in filters
+        filters = response.context.get("filters", {})
+        self.assertEqual(filters.get("sortDirection"), "desc")
+
+    def test_sort_direction_default_ascending(self):
+        """Test that sort direction defaults to ascending."""
+        response = self.client.get(reverse("home") + "?sort=year")
+        self.assertEqual(response.status_code, 200)
+        filters = response.context.get("filters", {})
+        self.assertEqual(filters.get("sortDirection"), "asc")
+
 
 class ContactPageViewTest(TestCase):
     """Test the dedicated contact page view."""
@@ -965,6 +980,33 @@ class DeveloperListViewTest(TestCase):
         response = self.client.get(reverse("developers-list") + "?page=999")
         self.assertEqual(response.status_code, 200)
 
+    def test_sort_by_name_ascending(self):
+        """Test sorting developers by name ascending."""
+        response = self.client.get(reverse("developers-list") + "?sort=name&dir=asc")
+        self.assertEqual(response.status_code, 200)
+
+    def test_sort_by_name_descending(self):
+        """Test sorting developers by name descending."""
+        response = self.client.get(reverse("developers-list") + "?sort=name&dir=desc")
+        self.assertEqual(response.status_code, 200)
+
+    def test_sort_by_games_descending(self):
+        """Test sorting developers by game count descending."""
+        response = self.client.get(reverse("developers-list") + "?sort=games&dir=desc")
+        self.assertEqual(response.status_code, 200)
+
+    def test_sort_by_studios_descending(self):
+        """Test sorting developers by studio count descending."""
+        response = self.client.get(
+            reverse("developers-list") + "?sort=studios&dir=desc"
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_sort_by_rank_descending(self):
+        """Test sorting developers by rank descending."""
+        response = self.client.get(reverse("developers-list") + "?sort=rank&dir=desc")
+        self.assertEqual(response.status_code, 200)
+
 
 class DeveloperDetailViewTest(TestCase):
     """Test the developer detail view."""
@@ -1037,6 +1079,19 @@ class DeveloperDetailViewTest(TestCase):
             reverse("developer-detail", kwargs={"slug": "invalid-slug"})
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_context_contains_game_data_map(self):
+        """Test that context includes game_data_map_json for playtime sorting."""
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": self.dev.slug})
+        )
+        self.assertIn("game_data_map_json", response.context)
+        # Should be a JSON string
+        import json
+
+        game_data = json.loads(response.context["game_data_map_json"])
+        # Should contain our game IDs
+        self.assertIn(str(self.game1.id), game_data)
 
     def test_unique_game_count_with_sibling_developers(self):
         """
@@ -1293,6 +1348,30 @@ class ListListViewTest(TestCase):
         """Test that out of range page returns last page."""
         response = self.client.get(reverse("list-list") + "?page=999")
         self.assertEqual(response.status_code, 200)
+
+    def test_sort_alpha_ascending(self):
+        """Test sorting publications alphabetically ascending."""
+        response = self.client.get(reverse("list-list") + "?sort=alpha&dir=asc")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["sort_direction"], "asc")
+
+    def test_sort_alpha_descending(self):
+        """Test sorting publications alphabetically descending."""
+        response = self.client.get(reverse("list-list") + "?sort=alpha&dir=desc")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["sort_direction"], "desc")
+
+    def test_sort_importance_ascending(self):
+        """Test sorting publications by importance ascending."""
+        response = self.client.get(reverse("list-list") + "?sort=importance&dir=asc")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["sort_direction"], "asc")
+
+    def test_sort_importance_descending(self):
+        """Test sorting publications by importance descending."""
+        response = self.client.get(reverse("list-list") + "?sort=importance&dir=desc")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["sort_direction"], "desc")
 
     def test_sort_by_importance(self):
         """Test that default sort is by importance."""

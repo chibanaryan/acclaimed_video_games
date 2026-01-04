@@ -16,6 +16,7 @@
      x-data="{
         allExpanded: false,
         sort: '{{ sort|default:'importance' }}',
+        sortDirection: '{{ sort_direction|default:'desc' }}',
         sortOpen: false,
         updateSort(newSort) {
             this.sort = newSort;
@@ -33,27 +34,62 @@
                 swap: 'innerHTML',
                 values: {
                     sort: newSort,
+                    dir: this.sortDirection,
+                    type: document.getElementById('filter-list-type')?.value || '',
+                    year: document.getElementById('filter-list-year')?.value || ''
+                }
+            });
+        },
+        toggleSortDirection() {
+            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+            const url = new URL(window.location);
+            if (this.sortDirection !== 'desc') {
+                url.searchParams.set('dir', this.sortDirection);
+            } else {
+                url.searchParams.delete('dir');
+            }
+            url.searchParams.delete('page');
+            window.history.pushState({}, '', url);
+            htmx.ajax('GET', '{% url 'list-list' %}', {
+                target: '#filter-results-wrapper',
+                swap: 'innerHTML',
+                values: {
+                    sort: this.sort,
+                    dir: this.sortDirection,
                     type: document.getElementById('filter-list-type')?.value || '',
                     year: document.getElementById('filter-list-year')?.value || ''
                 }
             });
         }
      }">
+    {# Hidden inputs for HTMX includes #}
+    <input type="hidden" name="sort" :value="sort">
+    <input type="hidden" name="dir" :value="sortDirection">
+
     {# Sort toggle - far left #}
-    {# Desktop: Custom dropdown #}
-    <div class="hidden desktop:block dropdown" @click.away="sortOpen = false">
+    {# Desktop: Custom dropdown with direction button #}
+    <div class="hidden desktop:flex items-center gap-2">
+        <div class="dropdown" @click.away="sortOpen = false">
+            <button type="button"
+                    class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                    @click="sortOpen = !sortOpen">
+                <span class="mdi mdi-sort text-base"></span>
+                <span class="text-sm" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"></span>
+                <span class="mdi mdi-chevron-down text-xs"></span>
+            </button>
+            <ul x-show="sortOpen" x-cloak
+                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1">
+                <li><button type="button" @click="updateSort('importance')" :class="sort === 'importance' ? 'active' : ''"># Lists</button></li>
+                <li><button type="button" @click="updateSort('alpha')" :class="sort === 'alpha' ? 'active' : ''">Alphabetical</button></li>
+            </ul>
+        </div>
+        {# Direction flip button #}
         <button type="button"
-                class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
-                @click="sortOpen = !sortOpen">
-            <span class="mdi mdi-sort text-base"></span>
-            <span class="text-sm" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"></span>
-            <span class="mdi mdi-chevron-down text-xs"></span>
+                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                @click="toggleSortDirection()"
+                :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+            <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
         </button>
-        <ul x-show="sortOpen" x-cloak
-            class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1">
-            <li><button type="button" @click="updateSort('importance')" :class="sort === 'importance' ? 'active' : ''"># Lists</button></li>
-            <li><button type="button" @click="updateSort('alpha')" :class="sort === 'alpha' ? 'active' : ''">Alphabetical</button></li>
-        </ul>
     </div>
     {# Mobile: Native select for touch compatibility #}
     <div class="desktop:hidden flex items-center gap-1">
@@ -66,6 +102,13 @@
             <option value="importance" :selected="sort === 'importance'"># Lists</option>
             <option value="alpha" :selected="sort === 'alpha'">Alphabetical</option>
         </select>
+        {# Direction flip button #}
+        <button type="button"
+                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                @click="toggleSortDirection()"
+                :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+            <span class="mdi text-sm" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+        </button>
     </div>
 
     {# Separator #}
@@ -80,7 +123,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort']"
+            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All list types</option>
@@ -100,7 +143,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort']"
+            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All years</option>
@@ -113,7 +156,7 @@
 
     {# Clear filters button #}
     {% if filters.year or filters.type %}
-    <a href="{% url 'list-list' %}{% if sort != 'importance' %}?sort={{ sort }}{% endif %}"
+    <a href="{% url 'list-list' %}{% if sort != 'importance' or sort_direction != 'desc' %}?{% if sort != 'importance' %}sort={{ sort }}{% if sort_direction != 'desc' %}&{% endif %}{% endif %}{% if sort_direction != 'desc' %}dir={{ sort_direction }}{% endif %}{% endif %}"
        class="btn btn-ghost btn-sm">
         <span class="mdi mdi-close"></span>
         <span>Clear filters</span>

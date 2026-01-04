@@ -143,6 +143,7 @@ class ClientSideFiltering {
             start: filters.start || null,
             end: filters.end || null,
             sort: filters.sort || 'rank',
+            sortDirection: filters.sortDirection || 'asc',
             played: filters.played || '',
             hltb_mode: filters.hltb_mode || 'main',
             hltb_min: hltb_min,
@@ -264,7 +265,9 @@ class ClientSideFiltering {
         if (params.get('platforms')) return 'filtered';
         if (params.get('series')) return 'filtered';
         if (params.get('played')) return 'filtered';
-        if (params.get('sort') && params.get('sort') !== 'rank') return 'filtered';
+        // Note: sort and sortDirection are intentionally NOT checked here
+        // Sorting changes the order but doesn't filter games, so it shouldn't
+        // affect whether we show the rank distribution
 
         // Check year/decade filters
         if (params.get('year') || params.get('decade')) return 'filtered';
