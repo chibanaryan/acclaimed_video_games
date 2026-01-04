@@ -70,11 +70,11 @@ For running multiple Claude Code sessions in parallel, use git worktrees. Each w
 **Setup (already configured):**
 - 8 worker directories: `~/Development/acclaimedgames-worker-1` through `worker-8`
 - VS Code workspace: `~/Development/acclaimedgames-workers.code-workspace`
-- Launch script: `~/Development/start-workers.sh`
+- Launch script: `./start-workers.sh` (in repo root)
 
 **Daily startup:**
 ```bash
-~/Development/start-workers.sh
+./start-workers.sh
 ```
 This opens VS Code with all folders and 8 Terminal windows. Run `claude --dangerously-skip-permissions` in each terminal.
 
