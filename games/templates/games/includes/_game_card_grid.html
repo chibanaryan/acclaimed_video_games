@@ -1,0 +1,71 @@
+{# Grid Card Template #}
+{# Single source of truth: Used for both server-side rendering and JS template cloning #}
+{# Props: game (optional), show_rank ('alltime'|'filtered'|'none'), index (filtered rank), highlight (game ID) #}
+{# When game is not provided, renders empty template structure for JS cloning with all elements present #}
+{% load game_filters static %}
+<div class="game-card-grid {% if game and highlight and game.id == highlight %}is-highlighted{% endif %}"
+     {% if game %}id="game-{{ game.id }}-grid"{% endif %}
+     data-slot="root">
+    {# Cover image with rank badge overlay #}
+    <div class="game-card-cover relative">
+        {# Rank badge - top left corner #}
+        {% if show_rank == 'alltime' or show_rank == 'filtered' or not game %}
+        <div class="game-card-rank" data-slot="rank-container">
+            <span class="badge" data-slot="rank">
+                {% if game %}#{% if show_rank == 'filtered' %}{{ index|default:game.rank }}{% else %}{{ game.rank }}{% endif %}{% endif %}
+            </span>
+        </div>
+        {% endif %}
+        {# Global rank - top right corner (shown when filtered) #}
+        <span class="game-card-global-rank {% if show_rank != 'filtered' and game %}hidden{% endif %}" data-slot="global-rank">{% if game %}#{{ game.rank }}{% endif %}</span>
+
+        {# Cover image #}
+        <a {% if game %}href="{% url 'game-detail' slug=game.slug %}"{% endif %}
+           class="block w-full h-full"
+           data-slot="cover-link">
+            <img {% if game %}src="{{ game.image }}" srcset="{{ game.image }} 1x, {{ game.image_2x }} 2x" alt="{{ game.name }}"{% endif %}
+                 width="264" height="374"
+                 loading="lazy" decoding="async"
+                 class="w-full h-full object-cover"
+                 data-slot="cover">
+        </a>
+
+        {# Hover overlay with game details #}
+        <div class="game-card-overlay" data-slot="overlay">
+            <div class="game-card-overlay-content">
+                {% if game %}
+                    {% with display_devs=game.get_display_developers %}
+                    {% if display_devs %}
+                    <div class="game-card-dev" data-slot="developer">{% for dev in display_devs %}{{ dev.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+                    {% endif %}
+                    {% endwith %}
+                    {% if game.platforms.count > 0 %}
+                    <div class="game-card-platforms" data-slot="platforms">{% for p in game.platforms.all %}{{ p.code }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+                    {% endif %}
+                    {% if game.wikipedia_genres.count > 0 %}
+                    <div class="game-card-genres" data-slot="genres">{% for g in game.wikipedia_genres.all %}{{ g.name }}{% if not forloop.last %} / {% endif %}{% endfor %}</div>
+                    {% endif %}
+                    {% if game.list_count %}
+                    <div class="game-card-lists" data-slot="list-count">{{ game.list_count }} lists</div>
+                    {% endif %}
+                {% else %}
+                    {# Empty slots for JS cloning #}
+                    <div class="game-card-dev" data-slot="developer"></div>
+                    <div class="game-card-platforms" data-slot="platforms"></div>
+                    <div class="game-card-genres" data-slot="genres"></div>
+                    <div class="game-card-lists" data-slot="list-count"></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Title and year below cover #}
+    <div class="game-card-info">
+        <a {% if game %}href="{% url 'game-detail' slug=game.slug %}"{% endif %}
+           class="link link-hover"
+           data-slot="title-link">
+            <h3 data-slot="name">{% if game %}{{ game.name }}{% endif %}</h3>
+        </a>
+        <span class="game-card-year" data-slot="year">{% if game %}{{ game.year_of_release }}{% endif %}</span>
+    </div>
+</div>

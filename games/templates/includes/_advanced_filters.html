@@ -54,6 +54,7 @@
         seriesExpanded: localStorage.getItem('seriesExpanded') !== 'false',
         gameModesExpanded: localStorage.getItem('gameModesExpanded') !== 'false',
         hltbExpanded: localStorage.getItem('hltbExpanded') !== 'false',
+        viewMode: localStorage.getItem('gameViewMode') || 'list',
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
         _throttledSlider: null,
@@ -1210,6 +1211,15 @@
             this.filters.sortDirection = this.filters.sortDirection === 'asc' ? 'desc' : 'asc';
             if (this.initialized) {
                 this.debouncedFilterUpdate();
+            }
+        },
+        setViewMode(mode) {
+            this.viewMode = mode;
+            localStorage.setItem('gameViewMode', mode);
+            // If client filtering is active, re-render with new view mode
+            if (this.clientFilterReady && this._csf) {
+                this._csf.setViewMode(mode);
+                this.performClientUpdate({ historyMethod: 'replaceState' });
             }
         },
         updateDisplayOnly() {

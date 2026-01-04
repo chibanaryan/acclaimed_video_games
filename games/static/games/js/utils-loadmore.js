@@ -275,6 +275,10 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
     const currentState = getCurrentState();
     const { filters, showRank } = currentState;
 
+    // Determine view mode from CSF or container class
+    const viewMode = csf.getViewMode ? csf.getViewMode() :
+                     (gameListContainer.classList.contains('view-grid') ? 'grid' : 'list');
+
     // Get filtered games from engine
     const result = csf.applyFilters(filters);
     if (!result || !result.games) {
@@ -289,13 +293,30 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
 
     // Render games directly to container
     const renderer = csf.renderer;
-    gamesToRender.forEach((game, i) => {
-        const index = loaded + i + 1; // 1-based rank
-        const desktopRow = renderer._renderDesktopRow(game, index, showRank);
-        const mobileRow = renderer._renderMobileRow(game, index, showRank);
-        if (desktopRow) gameListContainer.appendChild(desktopRow);
-        if (mobileRow) gameListContainer.appendChild(mobileRow);
-    });
+
+    if (viewMode === 'grid') {
+        // For grid view, append cards to existing grid container
+        let gridContainer = gameListContainer.querySelector('.game-grid');
+        if (!gridContainer) {
+            gridContainer = document.createElement('div');
+            gridContainer.className = 'game-grid';
+            gameListContainer.appendChild(gridContainer);
+        }
+        gamesToRender.forEach((game, i) => {
+            const index = loaded + i + 1; // 1-based rank
+            const card = renderer._renderGridCard(game, index, showRank);
+            if (card) gridContainer.appendChild(card);
+        });
+    } else {
+        // List view: render desktop + mobile rows
+        gamesToRender.forEach((game, i) => {
+            const index = loaded + i + 1; // 1-based rank
+            const desktopRow = renderer._renderDesktopRow(game, index, showRank);
+            const mobileRow = renderer._renderMobileRow(game, index, showRank);
+            if (desktopRow) gameListContainer.appendChild(desktopRow);
+            if (mobileRow) gameListContainer.appendChild(mobileRow);
+        });
+    }
 
     // Reinitialize HTMX for dynamically rendered content
     if (typeof htmx !== 'undefined') {
@@ -467,36 +488,55 @@ async function loadPage(page) {
  * @param {number} position - The 1-based position to scroll to (e.g., 50 = 50th game in list)
  */
 function scrollToAndHighlightRank(position) {
-    // Get all game rows - desktop and mobile versions are separate elements
-    // Desktop rows have class 'desktop', mobile rows have class 'game-card-mobile'
-    const desktopRows = document.querySelectorAll('.game-row.desktop');
-    const mobileRows = document.querySelectorAll('.game-row.game-card-mobile');
+    // Detect view mode from container
+    const gameListContainer = document.getElementById('game-list-container');
+    const isGridView = gameListContainer && gameListContainer.classList.contains('view-grid');
 
     // Position is 1-based, arrays are 0-based
     const index = position - 1;
 
-    const desktopRow = desktopRows[index];
-    const mobileRow = mobileRows[index];
+    let elementToScroll = null;
+    let elementsToHighlight = [];
 
-    if (!desktopRow && !mobileRow) {
+    if (isGridView) {
+        // Grid view: get grid cards
+        const gridCards = document.querySelectorAll('.game-card-grid');
+        const gridCard = gridCards[index];
+        if (gridCard) {
+            elementToScroll = gridCard;
+            elementsToHighlight = [gridCard];
+        }
+    } else {
+        // List view: get desktop and mobile rows
+        const desktopRows = document.querySelectorAll('.game-row.desktop');
+        const mobileRows = document.querySelectorAll('.game-row.game-card-mobile');
+
+        const desktopRow = desktopRows[index];
+        const mobileRow = mobileRows[index];
+
+        if (desktopRow || mobileRow) {
+            // Find the visible row (desktop rows are hidden on mobile and vice versa)
+            elementToScroll = (desktopRow && desktopRow.offsetParent !== null) ? desktopRow :
+                              (mobileRow && mobileRow.offsetParent !== null) ? mobileRow :
+                              desktopRow || mobileRow;
+
+            if (desktopRow) elementsToHighlight.push(desktopRow);
+            if (mobileRow) elementsToHighlight.push(mobileRow);
+        }
+    }
+
+    if (!elementToScroll) {
         console.warn('Could not find position:', position);
         return;
     }
 
-    // Find the visible row (desktop rows are hidden on mobile and vice versa)
-    const visibleRow = (desktopRow && desktopRow.offsetParent !== null) ? desktopRow :
-                       (mobileRow && mobileRow.offsetParent !== null) ? mobileRow :
-                       desktopRow || mobileRow;
+    // Scroll to the element with smooth scrolling
+    elementToScroll.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // Scroll to the row with smooth scrolling
-    visibleRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    // Add temporary highlight to both rows (desktop and mobile)
-    if (desktopRow) desktopRow.classList.add('is-highlighted');
-    if (mobileRow) mobileRow.classList.add('is-highlighted');
+    // Add temporary highlight
+    elementsToHighlight.forEach(el => el.classList.add('is-highlighted'));
     setTimeout(() => {
-        if (desktopRow) desktopRow.classList.remove('is-highlighted');
-        if (mobileRow) mobileRow.classList.remove('is-highlighted');
+        elementsToHighlight.forEach(el => el.classList.remove('is-highlighted'));
     }, 3000); // Remove highlight after 3 seconds
 }
 
@@ -515,6 +555,10 @@ function handleLoadMoreCSF(csf) {
     const currentState = getCurrentState();
     const { filters, showRank, loaded } = currentState;
 
+    // Determine view mode from CSF or container class
+    const viewMode = csf.getViewMode ? csf.getViewMode() :
+                     (gameListContainer.classList.contains('view-grid') ? 'grid' : 'list');
+
     // Initialize renderer state if not already done (taking over from server-rendered content)
     const renderer = csf.renderer;
     if (!renderer.currentGames || renderer.currentGames.length === 0) {
@@ -526,6 +570,9 @@ function handleLoadMoreCSF(csf) {
         renderer.currentGames = result.games;
         renderer.currentPage = Math.ceil(loaded / renderer.PAGE_SIZE);
     }
+
+    // Ensure renderer knows the current view mode
+    renderer._currentViewMode = viewMode;
 
     // Use CSF's loadMore method
     const state = csf.loadMore(gameListContainer, { showRank });
@@ -764,19 +811,37 @@ function jumpToHighlightedGame(gameId) {
  * @param {number} gameId - The game ID
  */
 function scrollToAndHighlightGameById(gameId) {
-    var desktopEl = document.getElementById('game-' + gameId);
-    var mobileEl = document.getElementById('game-' + gameId + '-mobile');
+    // Detect view mode from container
+    var gameListContainer = document.getElementById('game-list-container');
+    var isGridView = gameListContainer && gameListContainer.classList.contains('view-grid');
 
-    var isDesktop = window.matchMedia('(min-width: 962px)').matches;
-    var element = isDesktop ? desktopEl : mobileEl;
+    var elementToScroll = null;
+    var elementsToHighlight = [];
 
-    if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        if (desktopEl) desktopEl.classList.add('is-highlighted');
-        if (mobileEl) mobileEl.classList.add('is-highlighted');
+    if (isGridView) {
+        // Grid view: look for grid card
+        var gridEl = document.getElementById('game-' + gameId + '-grid');
+        if (gridEl) {
+            elementToScroll = gridEl;
+            elementsToHighlight = [gridEl];
+        }
+    } else {
+        // List view: look for desktop and mobile rows
+        var desktopEl = document.getElementById('game-' + gameId);
+        var mobileEl = document.getElementById('game-' + gameId + '-mobile');
+
+        var isDesktop = window.matchMedia('(min-width: 962px)').matches;
+        elementToScroll = isDesktop ? desktopEl : mobileEl;
+
+        if (desktopEl) elementsToHighlight.push(desktopEl);
+        if (mobileEl) elementsToHighlight.push(mobileEl);
+    }
+
+    if (elementToScroll) {
+        elementToScroll.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        elementsToHighlight.forEach(function(el) { el.classList.add('is-highlighted'); });
         setTimeout(function() {
-            if (desktopEl) desktopEl.classList.remove('is-highlighted');
-            if (mobileEl) mobileEl.classList.remove('is-highlighted');
+            elementsToHighlight.forEach(function(el) { el.classList.remove('is-highlighted'); });
         }, 3000);
     }
 }

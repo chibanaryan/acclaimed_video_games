@@ -49,6 +49,23 @@
                 :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
             <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
         </button>
+        {# View toggle #}
+        <div class="flex items-center border-l border-base-content/20 ml-2 pl-2">
+            <button type="button"
+                    class="btn btn-xs btn-ghost px-1.5"
+                    :class="viewMode === 'list' ? 'btn-active' : ''"
+                    @click="setViewMode('list')"
+                    title="List view">
+                <span class="mdi mdi-format-list-bulleted text-base"></span>
+            </button>
+            <button type="button"
+                    class="btn btn-xs btn-ghost px-1.5"
+                    :class="viewMode === 'grid' ? 'btn-active' : ''"
+                    @click="setViewMode('grid')"
+                    title="Grid view">
+                <span class="mdi mdi-view-grid text-base"></span>
+            </button>
+        </div>
     </div>
     {# Result count - Middle #}
     <div class="result-count text-base-content/60 whitespace-nowrap">
@@ -91,6 +108,23 @@
                 :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
             <span class="mdi text-sm" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
         </button>
+        {# View toggle #}
+        <div class="flex items-center border-l border-base-content/20 ml-1 pl-1">
+            <button type="button"
+                    class="btn btn-xs btn-ghost px-1"
+                    :class="viewMode === 'list' ? 'btn-active' : ''"
+                    @click="setViewMode('list')"
+                    title="List view">
+                <span class="mdi mdi-format-list-bulleted text-sm"></span>
+            </button>
+            <button type="button"
+                    class="btn btn-xs btn-ghost px-1"
+                    :class="viewMode === 'grid' ? 'btn-active' : ''"
+                    @click="setViewMode('grid')"
+                    title="Grid view">
+                <span class="mdi mdi-view-grid text-sm"></span>
+            </button>
+        </div>
     </div>
     {# Result count - middle, can shrink #}
     <div class="result-count text-base-content/60 text-xs truncate min-w-0">
@@ -115,12 +149,21 @@
 </div>
 
 {% if games %}
-<div id="game-list-container">
+<div id="game-list-container" :class="'view-' + viewMode">
+    {# List view - game rows #}
     {% for game in games %}
         {% with index=page_obj.start_index|add:forloop.counter0 %}
             {% include 'games/includes/_game_row.html' with game=game index=index show_rank=filters.rank_display %}
         {% endwith %}
     {% endfor %}
+    {# Grid view - game cards #}
+    <div class="game-grid">
+        {% for game in games %}
+            {% with index=page_obj.start_index|add:forloop.counter0 %}
+                {% include 'games/includes/_game_card_grid.html' with game=game index=index show_rank=filters.rank_display %}
+            {% endwith %}
+        {% endfor %}
+    </div>
 </div>
 
 {% if has_more and not max_loaded %}

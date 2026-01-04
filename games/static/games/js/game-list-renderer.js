@@ -213,6 +213,7 @@ class GameListRenderer {
         this._templates = {
             desktop: document.getElementById('desktop-row-template'),
             mobile: document.getElementById('mobile-row-template'),
+            grid: document.getElementById('grid-card-template'),
             playedButton: document.getElementById('played-button-template')
         };
 
@@ -358,6 +359,28 @@ class GameListRenderer {
             return '/static/games/images/placeholder.webp';
         }
         return `https://images.igdb.com/igdb/image/upload/t_cover_big/${artworkId}`;
+    }
+
+    /**
+     * Generate larger cover URL for grid view
+     * @private
+     */
+    _getCoverBig(artworkId) {
+        if (!artworkId) {
+            return '/static/games/images/placeholder.webp';
+        }
+        return `https://images.igdb.com/igdb/image/upload/t_cover_big/${artworkId}`;
+    }
+
+    /**
+     * Generate 2x cover URL for grid view
+     * @private
+     */
+    _getCoverBig2x(artworkId) {
+        if (!artworkId) {
+            return '/static/games/images/placeholder.webp';
+        }
+        return `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${artworkId}`;
     }
 
     /**
@@ -928,6 +951,175 @@ class GameListRenderer {
     }
 
     /**
+     * Render a single grid card using DOM template cloning
+     * @private
+     * @returns {Element} The rendered grid card element
+     */
+    _renderGridCard(game, index, showRank) {
+        this._initTemplates();
+
+        const template = this._templates?.grid;
+        if (!template) {
+            return this._renderGridCardString(game, index, showRank);
+        }
+
+        const fragment = template.content.cloneNode(true);
+        const card = fragment.querySelector('[data-slot="root"]');
+        if (!card) return this._renderGridCardString(game, index, showRank);
+
+        const isHighlighted = this.highlightId && game.id === this.highlightId;
+        const coverUrl = this._getCoverBig(game.a);
+        const coverUrl2x = this._getCoverBig2x(game.a);
+        const displayRank = showRank === 'filtered' ? index : game.r;
+
+        // Set root attributes
+        card.id = `game-${game.id}-grid`;
+        if (isHighlighted) card.classList.add('is-highlighted');
+
+        // Fill rank badge
+        const rankEl = card.querySelector('[data-slot="rank"]');
+        if (rankEl) {
+            if (showRank !== 'none') {
+                rankEl.textContent = `#${displayRank}`;
+            } else {
+                const rankContainer = card.querySelector('[data-slot="rank-container"]');
+                if (rankContainer) rankContainer.remove();
+            }
+        }
+
+        // Fill global rank (shown when filtered)
+        const globalRankEl = card.querySelector('[data-slot="global-rank"]');
+        if (globalRankEl) {
+            if (showRank === 'filtered') {
+                globalRankEl.textContent = `#${game.r}`;
+                globalRankEl.classList.remove('hidden');
+            } else {
+                globalRankEl.classList.add('hidden');
+            }
+        }
+
+        // Fill cover image
+        const coverImg = card.querySelector('[data-slot="cover"]');
+        if (coverImg) {
+            coverImg.src = coverUrl;
+            coverImg.srcset = `${coverUrl} 1x, ${coverUrl2x} 2x`;
+            coverImg.alt = game.n;
+        }
+
+        // Fill links
+        const coverLink = card.querySelector('[data-slot="cover-link"]');
+        if (coverLink) coverLink.href = `/game/${game.s}/`;
+
+        const titleLink = card.querySelector('[data-slot="title-link"]');
+        if (titleLink) titleLink.href = `/game/${game.s}/`;
+
+        // Fill title and year
+        this._fillSlot(card, 'name', game.n);
+        this._fillSlot(card, 'year', game.y || 'N/A');
+
+        // Fill overlay with game details
+        const expanded = this.engine.expandGame(game);
+
+        // Developer
+        const devEl = card.querySelector('[data-slot="developer"]');
+        if (devEl) {
+            if (expanded.developers.length > 0) {
+                devEl.textContent = expanded.developers.map(d => d.name).join(', ');
+            } else {
+                devEl.remove();
+            }
+        }
+
+        // Platforms
+        const platEl = card.querySelector('[data-slot="platforms"]');
+        if (platEl) {
+            if (expanded.platforms.length > 0) {
+                platEl.textContent = expanded.platforms.map(p => p.code).join(', ');
+            } else {
+                platEl.remove();
+            }
+        }
+
+        // Genres
+        const genreEl = card.querySelector('[data-slot="genres"]');
+        if (genreEl) {
+            if (expanded.genres.length > 0) {
+                genreEl.textContent = expanded.genres.map(g => g.name).join(' / ');
+            } else {
+                genreEl.remove();
+            }
+        }
+
+        // List count
+        const listEl = card.querySelector('[data-slot="list-count"]');
+        if (listEl) {
+            if (game.lc) {
+                listEl.textContent = `${game.lc} lists`;
+            } else {
+                listEl.remove();
+            }
+        }
+
+        return card;
+    }
+
+    /**
+     * Fallback: Render grid card as string (legacy behavior)
+     * @private
+     */
+    _renderGridCardString(game, index, showRank) {
+        const isHighlighted = this.highlightId && game.id === this.highlightId;
+        const coverUrl = this._getCoverBig(game.a);
+        const coverUrl2x = this._getCoverBig2x(game.a);
+        const displayRank = showRank === 'filtered' ? index : game.r;
+        const showRankBadge = showRank !== 'none';
+        const showGlobalRank = showRank === 'filtered';
+
+        const globalRankHtml = showGlobalRank ? `<span class="game-card-global-rank">#${game.r}</span>` : '';
+        const rankHtml = showRankBadge
+            ? `<div class="game-card-rank"><span class="badge">#${displayRank}</span></div>`
+            : '';
+
+        // Build overlay content
+        const expanded = this.engine.expandGame(game);
+        let overlayContent = '';
+        if (expanded.developers.length > 0) {
+            overlayContent += `<div class="game-card-dev">${this._escapeHtml(expanded.developers.map(d => d.name).join(', '))}</div>`;
+        }
+        if (expanded.platforms.length > 0) {
+            overlayContent += `<div class="game-card-platforms">${this._escapeHtml(expanded.platforms.map(p => p.code).join(', '))}</div>`;
+        }
+        if (expanded.genres.length > 0) {
+            overlayContent += `<div class="game-card-genres">${this._escapeHtml(expanded.genres.map(g => g.name).join(' / '))}</div>`;
+        }
+        if (game.lc) {
+            overlayContent += `<div class="game-card-lists">${game.lc} lists</div>`;
+        }
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+<div class="game-card-grid ${isHighlighted ? 'is-highlighted' : ''}" id="game-${game.id}-grid">
+    <div class="game-card-cover relative">
+        ${rankHtml}
+        ${globalRankHtml}
+        <a href="/game/${game.s}/" class="block w-full h-full">
+            <img src="${coverUrl}" srcset="${coverUrl} 1x, ${coverUrl2x} 2x" alt="${this._escapeHtml(game.n)}" width="264" height="374" loading="lazy" decoding="async" class="w-full h-full object-cover">
+        </a>
+        <div class="game-card-overlay">
+            <div class="game-card-overlay-content">${overlayContent}</div>
+        </div>
+    </div>
+    <div class="game-card-info">
+        <a href="/game/${game.s}/" class="link link-hover">
+            <h3>${this._escapeHtml(game.n)}</h3>
+        </a>
+        <span class="game-card-year">${game.y || 'N/A'}</span>
+    </div>
+</div>`;
+        return div.firstElementChild;
+    }
+
+    /**
      * Render game list to container
      *
      * @param {Array} games - Games to render
@@ -936,17 +1128,21 @@ class GameListRenderer {
      * @param {string} [options.showRank='alltime'] - 'alltime', 'filtered', or 'none'
      * @param {number} [options.highlightId] - Game ID to highlight
      * @param {boolean} [options.append=false] - Append to existing content
+     * @param {string} [options.viewMode='list'] - 'list' or 'grid'
      */
     render(games, container, options = {}) {
         const {
             showRank = 'filtered',
             highlightId = null,
-            append = false
+            append = false,
+            viewMode = 'list'
         } = options;
 
         this.currentGames = games;
         this.highlightId = highlightId;
         this.currentPage = 1;
+        this._currentViewMode = viewMode;
+        this._currentShowRank = showRank;
 
         if (!append) {
             container.innerHTML = '';
@@ -954,7 +1150,7 @@ class GameListRenderer {
 
         // Render first page
         const pageGames = games.slice(0, this.PAGE_SIZE);
-        const fragment = this._renderGames(pageGames, showRank, 1);
+        const fragment = this._renderGames(pageGames, showRank, 1, viewMode);
 
         container.appendChild(fragment);
 
@@ -965,24 +1161,42 @@ class GameListRenderer {
 
         // Handle highlighting
         if (highlightId) {
-            this._scrollToHighlight(highlightId);
+            this._scrollToHighlight(highlightId, viewMode);
         }
     }
 
     /**
      * Render games as DOM fragment
      * @private
+     * @param {string} viewMode - 'list' or 'grid'
      * @returns {DocumentFragment}
      */
-    _renderGames(games, showRank, startIndex) {
+    _renderGames(games, showRank, startIndex, viewMode = 'list') {
         const fragment = document.createDocumentFragment();
-        games.forEach((game, i) => {
-            const index = startIndex + i;
-            const desktopRow = this._renderDesktopRow(game, index, showRank);
-            const mobileRow = this._renderMobileRow(game, index, showRank);
-            if (desktopRow) fragment.appendChild(desktopRow);
-            if (mobileRow) fragment.appendChild(mobileRow);
-        });
+
+        if (viewMode === 'grid') {
+            // Grid view: render cards inside a grid container
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'game-grid';
+
+            games.forEach((game, i) => {
+                const index = startIndex + i;
+                const card = this._renderGridCard(game, index, showRank);
+                if (card) gridContainer.appendChild(card);
+            });
+
+            fragment.appendChild(gridContainer);
+        } else {
+            // List view: render desktop + mobile rows
+            games.forEach((game, i) => {
+                const index = startIndex + i;
+                const desktopRow = this._renderDesktopRow(game, index, showRank);
+                const mobileRow = this._renderMobileRow(game, index, showRank);
+                if (desktopRow) fragment.appendChild(desktopRow);
+                if (mobileRow) fragment.appendChild(mobileRow);
+            });
+        }
+
         return fragment;
     }
 
@@ -995,6 +1209,7 @@ class GameListRenderer {
      */
     loadMore(container, options = {}) {
         const { showRank = 'filtered' } = options;
+        const viewMode = this._currentViewMode || 'list';
 
         this.currentPage++;
         const start = (this.currentPage - 1) * this.PAGE_SIZE;
@@ -1009,8 +1224,24 @@ class GameListRenderer {
             };
         }
 
-        const fragment = this._renderGames(pageGames, showRank, start + 1);
-        container.appendChild(fragment);
+        if (viewMode === 'grid') {
+            // For grid view, append cards to existing grid container
+            let gridContainer = container.querySelector('.game-grid');
+            if (!gridContainer) {
+                gridContainer = document.createElement('div');
+                gridContainer.className = 'game-grid';
+                container.appendChild(gridContainer);
+            }
+
+            pageGames.forEach((game, i) => {
+                const index = start + 1 + i;
+                const card = this._renderGridCard(game, index, showRank);
+                if (card) gridContainer.appendChild(card);
+            });
+        } else {
+            const fragment = this._renderGames(pageGames, showRank, start + 1, viewMode);
+            container.appendChild(fragment);
+        }
 
         // Reinitialize HTMX for dynamically rendered content
         if (typeof htmx !== 'undefined') {
@@ -1040,31 +1271,48 @@ class GameListRenderer {
     /**
      * Scroll to and highlight a game
      * @private
+     * @param {number} gameId - Game ID to highlight
+     * @param {string} viewMode - 'list' or 'grid'
      */
-    _scrollToHighlight(gameId) {
+    _scrollToHighlight(gameId, viewMode = 'list') {
         setTimeout(() => {
-            const desktopElement = document.getElementById(`game-${gameId}`);
-            const mobileElement = document.getElementById(`game-${gameId}-mobile`);
-            const isDesktop = window.matchMedia('(min-width: 962px)').matches;
-            const element = isDesktop ? desktopElement : mobileElement;
+            let elementToScroll = null;
+            let elementsToHighlight = [];
 
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (viewMode === 'grid') {
+                // Grid view has a single element per game
+                const gridElement = document.getElementById(`game-${gameId}-grid`);
+                if (gridElement) {
+                    elementToScroll = gridElement;
+                    elementsToHighlight = [gridElement];
+                }
+            } else {
+                // List view has separate desktop/mobile elements
+                const desktopElement = document.getElementById(`game-${gameId}`);
+                const mobileElement = document.getElementById(`game-${gameId}-mobile`);
+                const isDesktop = window.matchMedia('(min-width: 962px)').matches;
+                elementToScroll = isDesktop ? desktopElement : mobileElement;
+
+                if (desktopElement) elementsToHighlight.push(desktopElement);
+                if (mobileElement) elementsToHighlight.push(mobileElement);
+            }
+
+            if (elementToScroll) {
+                elementToScroll.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
                 // Fade out highlight after 4 seconds
                 const fadeTimeout = setTimeout(() => {
-                    if (desktopElement) desktopElement.classList.add('fade-out');
-                    if (mobileElement) mobileElement.classList.add('fade-out');
+                    elementsToHighlight.forEach(el => el.classList.add('fade-out'));
                 }, 4000);
 
-                // Fade out on hover of other rows
-                const gameRows = document.querySelectorAll('.game-row');
-                gameRows.forEach((row) => {
-                    if (row !== desktopElement && row !== mobileElement) {
-                        row.addEventListener('mouseenter', () => {
+                // Fade out on hover of other rows/cards
+                const selector = viewMode === 'grid' ? '.game-card-grid' : '.game-row';
+                const gameItems = document.querySelectorAll(selector);
+                gameItems.forEach((item) => {
+                    if (!elementsToHighlight.includes(item)) {
+                        item.addEventListener('mouseenter', () => {
                             clearTimeout(fadeTimeout);
-                            if (desktopElement) desktopElement.classList.add('fade-out');
-                            if (mobileElement) mobileElement.classList.add('fade-out');
+                            elementsToHighlight.forEach(el => el.classList.add('fade-out'));
                         }, { once: true });
                     }
                 });
