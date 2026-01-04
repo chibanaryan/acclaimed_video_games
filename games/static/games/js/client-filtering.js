@@ -25,6 +25,24 @@ class ClientSideFiltering {
         this.minYear = 1970;
         this.maxYear = new Date().getFullYear();
         this._hasRenderedUI = false;  // Track if CSF has taken over the UI
+        this._viewMode = localStorage.getItem('gameViewMode') || 'list';
+    }
+
+    /**
+     * Set the view mode (list or grid)
+     * @param {string} mode - 'list' or 'grid'
+     */
+    setViewMode(mode) {
+        this._viewMode = mode;
+        localStorage.setItem('gameViewMode', mode);
+    }
+
+    /**
+     * Get the current view mode
+     * @returns {string} 'list' or 'grid'
+     */
+    getViewMode() {
+        return this._viewMode;
     }
 
     /**
@@ -175,10 +193,11 @@ class ClientSideFiltering {
         // Mark that CSF has taken over UI rendering
         this._hasRenderedUI = true;
 
-        // Clear and render new results
+        // Clear and render new results with current view mode
         this.renderer.render(filterResult.games, gameListContainer, {
             showRank,
-            highlightId
+            highlightId,
+            viewMode: this._viewMode
         });
 
         const loaded = Math.min(100, filterResult.total);
