@@ -219,8 +219,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--concurrency",
             type=int,
-            default=1,
-            help="Number of concurrent requests (default: 1, recommend 5-10 for speed)",
+            default=5,
+            help="Number of concurrent requests (default: 5, max 10 recommended)",
         )
         parser.add_argument(
             "--no-name-search",
