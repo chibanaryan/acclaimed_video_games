@@ -2,6 +2,9 @@
 
 ## 2026-01-03
 
+- Add "Want to Play" game status: three-way filter becomes four-way (All/Unplayed/Want/Played)
+- Fix mobile filter sheet: Game Status section now matches desktop styling (icon, buttons, centering)
+- Fix "Last 5/10 years" presets: now show previous complete years (2021-2025) instead of including current year
 - Add Blog feature: Article model with markdown content, draft/published status, auto-publish date
 - Blog admin: live markdown preview (iframe-isolated), Cloudinary upload widget for images
 - Blog views: /blog/ list page with pagination, /blog/<slug>/ detail page (staff can preview drafts)

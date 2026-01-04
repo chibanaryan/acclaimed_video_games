@@ -84,6 +84,25 @@ def invalidate_played_games_cache(user_id):
     cache.delete(f"played_games_{user_id}")
 
 
+def invalidate_want_to_play_cache(user_id):
+    """Invalidate the want-to-play games cache for a specific user."""
+    cache.delete(f"want_to_play_games_{user_id}")
+
+
+def _get_want_to_play_game_ids(user):
+    """Return cached list of want-to-play game IGDB IDs for a user."""
+    cache_key = f"want_to_play_games_{user.id}"
+    ids = cache.get(cache_key)
+    if ids is None:
+        ids = list(
+            models.WantToPlayGame.objects.filter(user=user).values_list(
+                "igdb_id", flat=True
+            )
+        )
+        cache.set(cache_key, ids, 300)  # 5 minutes
+    return ids
+
+
 def _join_names(names):
     """Join a list of names with commas and an 'and' before the last item."""
     if not names:
@@ -843,9 +862,12 @@ class GameDetailView(DetailView):
 
         context["grouped_lists"] = sorted_grouped_lists
 
-        # Check if current user has marked this game as played
+        # Check if current user has marked this game as played or want-to-play
         if self.request.user.is_authenticated and game.igdb_id:
             context["is_played"] = models.PlayedGame.objects.filter(
+                user=self.request.user, igdb_id=game.igdb_id
+            ).exists()
+            context["is_want_to_play"] = models.WantToPlayGame.objects.filter(
                 user=self.request.user, igdb_id=game.igdb_id
             ).exists()
 
@@ -1446,9 +1468,12 @@ class HomePageView(RobustPaginationMixin, ListView):
         # Enable client-side filtering for fast subsequent interactions
         context["enable_client_filtering"] = True
 
-        # Add played game IDs for client-side rendering (cached per-user)
+        # Add played/want-to-play game IDs for client-side rendering (cached per-user)
         if self.request.user.is_authenticated:
             context["played_game_ids"] = _get_played_game_ids(self.request.user)
+            context["want_to_play_game_ids"] = _get_want_to_play_game_ids(
+                self.request.user
+            )
 
         # Hero section context (for homepage at /)
         hero_stats = _get_hero_stats()
@@ -3071,26 +3096,59 @@ class AuthLogoutView(View):
 
 
 class TogglePlayedGameView(LoginRequiredMixin, View):
-    """Toggle a game's played status for the current user."""
+    """
+    Cycle a game's status: none → want → played → none.
+
+    State transitions:
+    - none (untracked) → want to play
+    - want to play → played (removes want, adds played)
+    - played → none (removes played)
+
+    States are mutually exclusive - a game cannot be both
+    "want to play" and "played" simultaneously.
+    """
 
     def post(self, request, igdb_id):
         game = get_object_or_404(models.Game, igdb_id=igdb_id)
 
-        played_game, created = models.PlayedGame.objects.get_or_create(
-            user=request.user,
-            igdb_id=igdb_id,
-            defaults={"game": game},
-        )
+        # Check current state
+        is_played = models.PlayedGame.objects.filter(
+            user=request.user, igdb_id=igdb_id
+        ).exists()
+        is_want_to_play = models.WantToPlayGame.objects.filter(
+            user=request.user, igdb_id=igdb_id
+        ).exists()
 
-        if not created:
-            played_game.delete()
-            is_played = False
+        # Cycle through states: none → want → played → none
+        if is_played:
+            # played → none: Remove from played
+            models.PlayedGame.objects.filter(
+                user=request.user, igdb_id=igdb_id
+            ).delete()
+            new_is_played = False
+            new_is_want_to_play = False
+        elif is_want_to_play:
+            # want → played: Remove from want, add to played
+            models.WantToPlayGame.objects.filter(
+                user=request.user, igdb_id=igdb_id
+            ).delete()
+            models.PlayedGame.objects.create(
+                user=request.user, igdb_id=igdb_id, game=game
+            )
+            new_is_played = True
+            new_is_want_to_play = False
         else:
-            is_played = True
+            # none → want: Add to want to play
+            models.WantToPlayGame.objects.create(
+                user=request.user, igdb_id=igdb_id, game=game
+            )
+            new_is_played = False
+            new_is_want_to_play = True
 
         # Invalidate caches
         cache.delete("user_played_games_distribution")
         invalidate_played_games_cache(request.user.id)
+        invalidate_want_to_play_cache(request.user.id)
 
         # Preserve button size (large on game detail page, default elsewhere)
         size = request.GET.get("size")
@@ -3098,7 +3156,13 @@ class TogglePlayedGameView(LoginRequiredMixin, View):
         response = render(
             request,
             "games/includes/_played_button.html",
-            {"game": game, "is_played": is_played, "size": size, "just_toggled": True},
+            {
+                "game": game,
+                "is_played": new_is_played,
+                "is_want_to_play": new_is_want_to_play,
+                "size": size,
+                "just_toggled": True,
+            },
         )
         # Prevent URL push for this HTMX action
         response["HX-Push-Url"] = "false"

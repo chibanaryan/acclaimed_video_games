@@ -10,7 +10,7 @@
     {% if not hide_played_button and user.is_authenticated or not game %}
     <div class="w-12 min-w-12 max-w-12 shrink-0 flex items-center justify-center" data-slot="played-button">
         {% if game %}
-            {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user %}
+            {% include 'games/includes/_played_button.html' with is_played=game.is_played_by_user is_want_to_play=game.is_want_to_play_by_user %}
         {% endif %}
     </div>
     {% endif %}

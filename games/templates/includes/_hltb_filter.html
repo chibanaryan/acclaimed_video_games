@@ -80,11 +80,6 @@
              this.dispatchFilterChange();
          },
 
-         toggleCompletionist() {
-             filters.hltb_mode = filters.hltb_mode === 'completionist' ? 'main' : 'completionist';
-             this.dispatchFilterChange();
-         },
-
          dispatchFilterChange() {
              this.$dispatch('filter-changed', {
                  type: 'hltb',
@@ -111,7 +106,7 @@
      }"
      @hltb-reset.window="handleReset()">
 
-    {# Two-column layout: Presets on left, Custom range on right #}
+    {# Two-column layout: Presets on left, Mode + Range on right #}
     <div class="flex gap-3 items-stretch">
         {# Left column: Preset Length Chips - Short/Medium/Long #}
         <div class="flex-1 flex flex-col">
@@ -167,9 +162,25 @@
             </div>
         </div>
 
-        {# Right column: Custom Range Inputs #}
+        {# Right column: Mode toggle + Custom Range Inputs #}
         <div class="flex-1 flex flex-col">
-            <label class="text-xs text-base-content/70 font-medium block mb-2">Range (hours)</label>
+            {# Playtime mode toggle - Main Story vs 100% Completion #}
+            <label class="text-xs text-base-content/70 font-medium block mb-2">Completion</label>
+            <div class="flex justify-center mb-3">
+                <div class="join" title="Playtime mode">
+                    <input type="radio" name="hltb-mode" class="join-item btn btn-sm"
+                           :checked="filters.hltb_mode !== 'completionist'"
+                           @click="filters.hltb_mode = 'main'; dispatchFilterChange()"
+                           aria-label="▶ Main">
+                    <input type="radio" name="hltb-mode" class="join-item btn btn-sm"
+                           :checked="filters.hltb_mode === 'completionist'"
+                           @click="filters.hltb_mode = 'completionist'; dispatchFilterChange()"
+                           aria-label="✔ 100%">
+                </div>
+            </div>
+
+            {# Custom Range header #}
+            <label class="text-xs text-base-content/70 font-medium block mb-1">Range (hours)</label>
 
             {# Min and Max fields side by side #}
             <div class="flex items-center gap-2">
@@ -197,23 +208,6 @@
                            max="100"
                            placeholder="∞"
                            class="input input-bordered input-sm w-full bg-base-100 tabular-nums">
-                </div>
-            </div>
-
-            {# Spacer to push button to bottom #}
-            <div class="flex-grow"></div>
-
-            {# 100% completion button - bottom right corner #}
-            <div class="flex justify-end">
-                <div @click="toggleCompletionist()"
-                     class="flex items-center gap-1 py-1 px-2 rounded-md text-xs transition-colors cursor-pointer border"
-                     :class="{
-                         'bg-primary text-accent-content border-primary': filters.hltb_mode === 'completionist',
-                         'bg-base-200 border-base-300 hover:bg-base-300': filters.hltb_mode !== 'completionist'
-                     }"
-                     title="Filter by 100% completion time">
-                    <span class="mdi mdi-trophy text-sm"></span>
-                    <span>100% Completion</span>
                 </div>
             </div>
         </div>

@@ -28,13 +28,15 @@
             }, 100);
         }
     </script>
-    {# Played games state for client-side rendering #}
+    {# Game status state for client-side rendering (played + want to play) #}
     <script nonce="{{ csp_nonce }}">
     {% if user.is_authenticated %}
     window.playedGameIds = new Set([{% for igdb_id in played_game_ids %}{{ igdb_id }}{% if not forloop.last %},{% endif %}{% endfor %}]);
+    window.wantToPlayGameIds = new Set([{% for igdb_id in want_to_play_game_ids %}{{ igdb_id }}{% if not forloop.last %},{% endif %}{% endfor %}]);
     window.isAuthenticated = true;
     {% else %}
     window.playedGameIds = new Set();
+    window.wantToPlayGameIds = new Set();
     window.isAuthenticated = false;
     {% endif %}
     </script>

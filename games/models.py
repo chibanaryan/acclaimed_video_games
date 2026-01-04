@@ -104,6 +104,44 @@ class PlayedGame(models.Model):
         return f"{self.user.username} played {game_name}"
 
 
+class WantToPlayGame(models.Model):
+    """
+    Tracks games a user wants to play (backlog/wishlist).
+
+    Uses hybrid FK + igdb_id approach:
+    - FK to Game for fast queries and joins
+    - igdb_id stored for reconnection after game re-imports
+
+    Mutually exclusive with PlayedGame - a game cannot be both
+    "want to play" and "played" simultaneously.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="want_to_play_games",
+    )
+    game = models.ForeignKey(
+        "Game",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="want_to_play_by",
+    )
+    igdb_id = models.IntegerField(db_index=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "igdb_id")]
+        indexes = [models.Index(fields=["user", "game"])]
+        verbose_name = "Want to Play Game"
+        verbose_name_plural = "Want to Play Games"
+
+    def __str__(self):
+        game_name = self.game.name if self.game else f"IGDB:{self.igdb_id}"
+        return f"{self.user.username} wants to play {game_name}"
+
+
 class SavedFilterSet(models.Model):
     """
     Saved filter configuration for quick access.
@@ -880,7 +918,7 @@ class GameQuerySet(models.QuerySet):
         )
 
     def with_played_status(self, user):
-        """Annotate games with played status for the given user."""
+        """Annotate games with played and want-to-play status for the given user."""
         if not user or not user.is_authenticated:
             return self
         from django.db.models import Exists, OuterRef
@@ -888,7 +926,10 @@ class GameQuerySet(models.QuerySet):
         return self.annotate(
             is_played_by_user=Exists(
                 PlayedGame.objects.filter(user=user, game=OuterRef("pk"))
-            )
+            ),
+            is_want_to_play_by_user=Exists(
+                WantToPlayGame.objects.filter(user=user, game=OuterRef("pk"))
+            ),
         )
 
     def with_list_count(self):

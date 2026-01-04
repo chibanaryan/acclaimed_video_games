@@ -1,13 +1,14 @@
-{# Played game toggle button - HTMX-enabled #}
-{# Outline when uncollected, Mario Super Star PNG when collected #}
+{# Game status toggle button - HTMX-enabled #}
+{# Cycles through: Untracked -> Want to Play -> Played -> Untracked #}
+{# Icons: star-outline -> star-plus-outline -> Mario Star PNG #}
 {# Sizes: Default w-6/text-2xl, Large w-10/text-5xl #}
 {# Pass size='large' for bigger button on game detail page #}
 {% load static %}
 {% if user.is_authenticated and game.igdb_id %}
 <div class="desktop:tooltip {% if size == 'large' %}desktop:tooltip-bottom{% else %}desktop:tooltip-top{% endif %} played-button-wrapper cursor-pointer z-10"
-    data-tip="{% if is_played %}You have played this game!{% else %}You have not played this game.{% endif %}"
+    data-tip="{% if is_played %}You have played this game!{% elif is_want_to_play %}You want to play this game!{% else %}You haven't played this game.{% endif %}"
     data-igdb-id="{{ game.igdb_id }}"
-    data-is-played="{% if is_played %}true{% else %}false{% endif %}"
+    data-status="{% if is_played %}played{% elif is_want_to_play %}want{% else %}none{% endif %}"
     {% if size == 'large' %}data-size="large"{% endif %}
     hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}{% if size == 'large' %}?size=large{% endif %}"
     hx-trigger="click"
@@ -17,13 +18,20 @@
 <button
     class="played-button flex items-center justify-center shrink-0 pointer-events-none {% if size == 'large' %}h-12 w-12 min-w-12{% else %}h-8 w-8 min-w-8{% endif %}">
     {% if is_played %}
+    {# Played state - Mario Star #}
     <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-appear{% else %} star-idle{% endif %}">
         <img src="{% static 'games/images/mario-star.png' %}"
              srcset="{% static 'games/images/mario-star.png' %} 1x, {% static 'games/images/mario-star@2x.png' %} 2x"
              alt="Played" width="32" height="32"
              class="{% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %} drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
     </span>
+    {% elif is_want_to_play %}
+    {# Want to Play state - Star with plus #}
+    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-appear{% endif %}">
+        <span class="mdi mdi-star-plus-outline {% if size == 'large' %}text-5xl{% else %}text-2xl{% endif %} text-warning"></span>
+    </span>
     {% else %}
+    {# Untracked state - Empty star outline #}
     <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-disappear{% endif %}">
         <span class="mdi mdi-star-outline {% if size == 'large' %}text-5xl{% else %}text-2xl{% endif %} text-base-content/30"></span>
     </span>
@@ -38,14 +46,19 @@
     var wrapper = thisScript.previousElementSibling;
     if (!wrapper || !wrapper.classList.contains('played-button-wrapper')) return;
 
-    var igdbId = wrapper.dataset.igdbId;
-    var isPlayed = wrapper.dataset.isPlayed === 'true';
+    var igdbId = parseInt(wrapper.dataset.igdbId);
+    var status = wrapper.dataset.status; // 'played', 'want', or 'none'
 
-    // Update global state
-    if (isPlayed) {
-        window.playedGameIds?.add(parseInt(igdbId));
+    // Update global state sets
+    if (status === 'played') {
+        window.playedGameIds?.add(igdbId);
+        window.wantToPlayGameIds?.delete(igdbId);
+    } else if (status === 'want') {
+        window.playedGameIds?.delete(igdbId);
+        window.wantToPlayGameIds?.add(igdbId);
     } else {
-        window.playedGameIds?.delete(parseInt(igdbId));
+        window.playedGameIds?.delete(igdbId);
+        window.wantToPlayGameIds?.delete(igdbId);
     }
 
     // Sync other wrappers with same IGDB ID (desktop/mobile views)
@@ -56,7 +69,7 @@
             if (btn && otherBtn) {
                 otherBtn.innerHTML = btn.innerHTML;
             }
-            otherWrapper.dataset.isPlayed = String(isPlayed);
+            otherWrapper.dataset.status = status;
             otherWrapper.dataset.tip = wrapper.dataset.tip;
         }
     });
@@ -65,15 +78,15 @@
     document.querySelectorAll('script[data-played-sync]').forEach(function(s) {
         if (s !== thisScript) {
             var prevWrapper = s.previousElementSibling;
-            if (prevWrapper?.dataset?.igdbId === igdbId) {
+            if (prevWrapper?.dataset?.igdbId === String(igdbId)) {
                 s.remove();
             }
         }
     });
 
-    // Notify filter system of played status change (for immediate filter updates)
-    window.dispatchEvent(new CustomEvent('played-status-changed', {
-        detail: { igdbId: parseInt(igdbId), isPlayed: isPlayed }
+    // Notify filter system of status change (for immediate filter updates)
+    window.dispatchEvent(new CustomEvent('game-status-changed', {
+        detail: { igdbId: igdbId, status: status }
     }));
 })();
 </script>

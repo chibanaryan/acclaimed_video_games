@@ -127,30 +127,53 @@
         </div>
         {% endif %}
 
-        {# Search Input with Played filter #}
-        <div class="space-y-2">
+        {# Game Status Filter #}
+        <div class="mb-4 pb-3 border-b border-base-100">
             <div class="flex items-center gap-2 mb-2">
-                <span class="text-sm font-semibold text-base-content/85">Search</span>
-                <div class="join ml-auto" title="Filter by played status">
-                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-xs"
+                <span class="mdi mdi-star-outline text-xl text-accent"></span>
+                <span class="font-bold text-base">Game Status</span>
+                <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click="filters.played = ''; debouncedFilterUpdate();" title="Clear status filter" x-cloak x-show="filters.played">
+                    <span class="mdi mdi-close text-xs"></span>
+                    <span class="text-xs">Clear</span>
+                </button>
+            </div>
+            <div class="flex justify-center">
+                <div class="join" title="Filter by game status">
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm"
                            aria-label="All" :checked="!filters.played"
                            @click="filters.played = ''; debouncedFilterUpdate()">
                     {% if user.is_authenticated %}
-                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-xs"
-                           aria-label="Played" :checked="filters.played === 'yes'"
-                           @click="filters.played = 'yes'; debouncedFilterUpdate()">
-                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-xs"
-                           aria-label="Unplayed" :checked="filters.played === 'no'"
-                           @click="filters.played = 'no'; debouncedFilterUpdate()">
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm"
+                           :checked="filters.played === 'no'"
+                           @click="filters.played = 'no'; debouncedFilterUpdate()"
+                           aria-label="☆ Unplayed">
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm"
+                           :checked="filters.played === 'want'"
+                           @click="filters.played = 'want'; debouncedFilterUpdate()"
+                           aria-label="★+ Want">
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm"
+                           :checked="filters.played === 'yes'"
+                           @click="filters.played = 'yes'; debouncedFilterUpdate()"
+                           aria-label="★ Played">
                     {% else %}
-                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-xs opacity-40 cursor-not-allowed"
-                           aria-label="Played" title="Sign in to track played games"
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
+                           aria-label="☆ Unplayed" title="Sign in to track games"
                            onclick="return false;">
-                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-xs opacity-40 cursor-not-allowed"
-                           aria-label="Unplayed" title="Sign in to track played games"
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
+                           aria-label="★+ Want" title="Sign in to track games"
+                           onclick="return false;">
+                    <input type="radio" name="mobile-played-filter" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
+                           aria-label="★ Played" title="Sign in to track games"
                            onclick="return false;">
                     {% endif %}
                 </div>
+            </div>
+        </div>
+
+        {# Search Input #}
+        <div class="space-y-2 pb-3 border-b border-base-100">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-sm font-semibold text-base-content/85">Search</span>
             </div>
             <label class="input input-bordered w-full bg-base-200">
                 <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -195,13 +218,25 @@
 
         {# HLTB Playtime Filter #}
         <div class="pb-3 border-b border-base-100"
+             x-data="{ expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_hltb') || 'true') }"
+             x-init="$watch('expanded', val => localStorage.setItem('mobileFilterExpanded_hltb', JSON.stringify(val)))"
              @filter-changed="debouncedFilterUpdate()">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="mdi mdi-clock-outline text-lg"></span>
-                <span class="text-sm font-semibold text-base-content/85">Playtime (HLTB)</span>
+            <div class="flex items-center w-full text-base font-semibold">
                 <button type="button"
-                        @click="filters.hltb_mode = 'main'; filters.hltb_preset = ''; filters.hltb_min = null; filters.hltb_max = null; window.dispatchEvent(new CustomEvent('hltb-reset')); debouncedFilterUpdate();"
-                        class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error"
+                        @click="expanded = !expanded"
+                        class="flex items-center gap-2">
+                    <span class="mdi mdi-clock-outline text-lg text-base-content/60"></span>
+                    Playtime (HLTB)
+                    <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
+                </button>
+                <template x-if="filters.hltb_preset || filters.hltb_min !== null">
+                    <span class="badge badge-primary badge-sm ml-2"
+                          x-text="filters.hltb_preset === 'short' ? '<10h' : filters.hltb_preset === 'medium' ? '10-30h' : filters.hltb_preset === 'long' ? '30h+' : (filters.hltb_min || 0) + '-' + (filters.hltb_max || '∞') + 'h'"></span>
+                </template>
+                <div class="flex-1"></div>
+                <button type="button"
+                        @click.stop="filters.hltb_mode = 'main'; filters.hltb_preset = ''; filters.hltb_min = null; filters.hltb_max = null; window.dispatchEvent(new CustomEvent('hltb-reset')); debouncedFilterUpdate();"
+                        class="btn btn-ghost btn-xs ml-2 text-base-content/60 hover:text-error"
                         title="Clear playtime filter"
                         x-cloak
                         x-show="filters.hltb_preset || filters.hltb_min !== null">
@@ -209,7 +244,13 @@
                     <span class="text-xs">Clear</span>
                 </button>
             </div>
-            {% include 'includes/_hltb_filter.html' %}
+            <div x-show="expanded"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="mt-2">
+                {% include 'includes/_hltb_filter.html' %}
+            </div>
         </div>
     </div>
 

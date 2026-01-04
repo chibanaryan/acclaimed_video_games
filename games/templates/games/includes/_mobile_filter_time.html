@@ -168,12 +168,12 @@
             {# Quick preset buttons #}
             <div class="flex flex-wrap gap-2 justify-center">
                 <button type="button"
-                        @click="filters.start = new Date().getFullYear() - 4; filters.end = new Date().getFullYear(); debouncedFilterUpdate();"
+                        @click="filters.start = new Date().getFullYear() - 5; filters.end = new Date().getFullYear() - 1; debouncedFilterUpdate();"
                         class="btn btn-outline btn-xs">
                     Last 5 years
                 </button>
                 <button type="button"
-                        @click="filters.start = new Date().getFullYear() - 9; filters.end = new Date().getFullYear(); debouncedFilterUpdate();"
+                        @click="filters.start = new Date().getFullYear() - 10; filters.end = new Date().getFullYear() - 1; debouncedFilterUpdate();"
                         class="btn btn-outline btn-xs">
                     Last 10 years
                 </button>

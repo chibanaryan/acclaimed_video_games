@@ -269,13 +269,20 @@ class GameFilterEngine {
                 }
             }
 
-            // Played status filter (requires window.playedGameIds and window.isAuthenticated)
+            // Game status filter (requires window.playedGameIds, window.wantToPlayGameIds, window.isAuthenticated)
+            // Values: 'yes' (played), 'want' (want to play), 'no' (untracked), '' (all)
             if (played && window.isAuthenticated && game.i) {
                 const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
+                const isGameWantToPlay = window.wantToPlayGameIds && window.wantToPlayGameIds.has(game.i);
+
                 if (played === 'yes' && !isGamePlayed) {
                     continue;
                 }
-                if (played === 'no' && isGamePlayed) {
+                if (played === 'want' && !isGameWantToPlay) {
+                    continue;
+                }
+                if (played === 'no' && (isGamePlayed || isGameWantToPlay)) {
+                    // 'no' means untracked - neither played nor want to play
                     continue;
                 }
             }
@@ -401,13 +408,17 @@ class GameFilterEngine {
             if (end !== null && game.y !== null && game.y > end) {
                 return false;
             }
-            // Played status filter
+            // Game status filter (played, want to play, untracked)
             if (played && window.isAuthenticated && game.i) {
                 const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
+                const isGameWantToPlay = window.wantToPlayGameIds && window.wantToPlayGameIds.has(game.i);
                 if (played === 'yes' && !isGamePlayed) {
                     return false;
                 }
-                if (played === 'no' && isGamePlayed) {
+                if (played === 'want' && !isGameWantToPlay) {
+                    return false;
+                }
+                if (played === 'no' && (isGamePlayed || isGameWantToPlay)) {
                     return false;
                 }
             }
@@ -635,11 +646,13 @@ class GameFilterEngine {
                 if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
             }
 
-            // Apply played status filter
+            // Apply game status filter (played, want to play, untracked)
             if (played && window.isAuthenticated && game.i) {
                 const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
+                const isGameWantToPlay = window.wantToPlayGameIds && window.wantToPlayGameIds.has(game.i);
                 if (played === 'yes' && !isGamePlayed) continue;
-                if (played === 'no' && isGamePlayed) continue;
+                if (played === 'want' && !isGameWantToPlay) continue;
+                if (played === 'no' && (isGamePlayed || isGameWantToPlay)) continue;
             }
 
             // Apply HLTB filter

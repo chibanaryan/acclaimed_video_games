@@ -243,6 +243,24 @@ class GameListRenderer {
     }
 
     /**
+     * Check if a game is marked as want to play
+     * @private
+     */
+    _isWantToPlay(igdbId) {
+        return window.wantToPlayGameIds && window.wantToPlayGameIds.has(igdbId);
+    }
+
+    /**
+     * Get game status: 'played', 'want', or 'none'
+     * @private
+     */
+    _getGameStatus(igdbId) {
+        if (this._isPlayed(igdbId)) return 'played';
+        if (this._isWantToPlay(igdbId)) return 'want';
+        return 'none';
+    }
+
+    /**
      * Fill a data slot with text content
      * @private
      */
@@ -256,7 +274,8 @@ class GameListRenderer {
     }
 
     /**
-     * Render the played button by cloning template
+     * Render the game status button by cloning template
+     * Handles 3 states: played, want to play, untracked
      * @private
      * @returns {DocumentFragment|null}
      */
@@ -281,26 +300,38 @@ class GameListRenderer {
         if (!wrapper) return null;
 
         const igdbId = game.i;
-        const isPlayed = this._isPlayed(igdbId);
+        const status = this._getGameStatus(igdbId);
         const csrfToken = this._getCsrfToken();
 
-        // Set attributes
-        wrapper.dataset.tip = isPlayed ? 'You have played this game!' : 'You have not played this game.';
+        // Set tooltip based on status
+        const tooltips = {
+            'played': 'You have played this game!',
+            'want': 'You want to play this game!',
+            'none': "You haven't played this game."
+        };
+        wrapper.dataset.tip = tooltips[status];
         wrapper.dataset.igdbId = igdbId;
-        wrapper.dataset.isPlayed = isPlayed;
+        wrapper.dataset.status = status;
         wrapper.setAttribute('hx-post', `/game/${igdbId}/toggle-played/`);
         wrapper.setAttribute('hx-headers', `{"X-CSRFToken": "${csrfToken}"}`);
 
-        // Show correct icon based on played state
+        // Show correct icon based on status
         const playedIcon = wrapper.querySelector('[data-slot="played-icon"]');
-        const unplayedIcon = wrapper.querySelector('[data-slot="unplayed-icon"]');
+        const wantIcon = wrapper.querySelector('[data-slot="want-icon"]');
+        const untrackedIcon = wrapper.querySelector('[data-slot="untracked-icon"]');
 
-        if (isPlayed) {
-            if (playedIcon) playedIcon.classList.remove('hidden');
-            if (unplayedIcon) unplayedIcon.classList.add('hidden');
-        } else {
-            if (playedIcon) playedIcon.classList.add('hidden');
-            if (unplayedIcon) unplayedIcon.classList.remove('hidden');
+        // Hide all icons first
+        if (playedIcon) playedIcon.classList.add('hidden');
+        if (wantIcon) wantIcon.classList.add('hidden');
+        if (untrackedIcon) untrackedIcon.classList.add('hidden');
+
+        // Show the appropriate icon
+        if (status === 'played' && playedIcon) {
+            playedIcon.classList.remove('hidden');
+        } else if (status === 'want' && wantIcon) {
+            wantIcon.classList.remove('hidden');
+        } else if (untrackedIcon) {
+            untrackedIcon.classList.remove('hidden');
         }
 
         return fragment;
@@ -597,19 +628,35 @@ class GameListRenderer {
     }
 
     /**
-     * Fallback: Render played button as string (legacy behavior)
+     * Fallback: Render game status button as string (legacy behavior)
+     * Handles 3 states: played, want to play, untracked
      * @private
      */
     _renderPlayedButtonString(game) {
         if (!window.isAuthenticated || !game.i) return '';
         const igdbId = game.i;
-        const isPlayed = this._isPlayed(igdbId);
+        const status = this._getGameStatus(igdbId);
         const csrfToken = this._getCsrfToken();
-        const tooltipText = isPlayed ? 'You have played this game!' : 'You have not played this game.';
-        const innerHtml = isPlayed
-            ? `<span class="w-6 h-6 flex items-center justify-center"><img src="/static/games/images/mario-star.png" srcset="/static/games/images/mario-star.png 1x, /static/games/images/mario-star@2x.png 2x" alt="Played" width="32" height="32" class="w-6 h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`
-            : `<span class="w-6 h-6 flex items-center justify-center"><span class="mdi mdi-star-outline text-2xl text-base-content/30"></span></span>`;
-        return `<div class="desktop:tooltip desktop:tooltip-top played-button-wrapper cursor-pointer" data-tip="${tooltipText}" data-igdb-id="${igdbId}" data-is-played="${isPlayed}" hx-post="/game/${igdbId}/toggle-played/" hx-trigger="click" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "${csrfToken}"}' onclick="event.stopPropagation()"><button class="played-button flex items-center justify-center h-8 w-8 min-w-8 shrink-0 pointer-events-none">${innerHtml}</button></div>`;
+
+        // Tooltip shows game status
+        const tooltips = {
+            'played': 'You have played this game!',
+            'want': 'You want to play this game!',
+            'none': "You haven't played this game."
+        };
+        const tooltipText = tooltips[status];
+
+        // Icon based on status
+        let innerHtml;
+        if (status === 'played') {
+            innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><img src="/static/games/images/mario-star.png" srcset="/static/games/images/mario-star.png 1x, /static/games/images/mario-star@2x.png 2x" alt="Played" width="32" height="32" class="w-6 h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`;
+        } else if (status === 'want') {
+            innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><span class="mdi mdi-star-plus-outline text-2xl text-warning"></span></span>`;
+        } else {
+            innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><span class="mdi mdi-star-outline text-2xl text-base-content/30"></span></span>`;
+        }
+
+        return `<div class="desktop:tooltip desktop:tooltip-top played-button-wrapper cursor-pointer" data-tip="${tooltipText}" data-igdb-id="${igdbId}" data-status="${status}" hx-post="/game/${igdbId}/toggle-played/" hx-trigger="click" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "${csrfToken}"}' onclick="event.stopPropagation()"><button class="played-button flex items-center justify-center h-8 w-8 min-w-8 shrink-0 pointer-events-none">${innerHtml}</button></div>`;
     }
 
     /**

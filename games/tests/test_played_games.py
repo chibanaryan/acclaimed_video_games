@@ -1,9 +1,9 @@
-"""Tests for PlayedGame model and related functionality."""
+"""Tests for PlayedGame, WantToPlayGame models and related functionality."""
 
 from django.db import IntegrityError
 from django.test import TestCase
 
-from games.models import Game, PlayedGame, User
+from games.models import Game, PlayedGame, WantToPlayGame, User
 
 
 class PlayedGameModelTests(TestCase):
@@ -230,8 +230,8 @@ class TogglePlayedGameViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response.url)
 
-    def test_toggle_creates_played_game(self):
-        """Test that toggle creates PlayedGame for authenticated user."""
+    def test_toggle_creates_want_to_play_game(self):
+        """Test that first toggle creates WantToPlayGame for authenticated user."""
         from django.urls import reverse
 
         self.client.force_login(self.user)
@@ -240,7 +240,13 @@ class TogglePlayedGameViewTests(TestCase):
         response = self.client.post(url)
 
         self.assertEqual(response.status_code, 200)
+        # First click creates WantToPlayGame, not PlayedGame
         self.assertTrue(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertFalse(
             PlayedGame.objects.filter(
                 user=self.user, igdb_id=self.game.igdb_id
             ).exists()
@@ -371,3 +377,286 @@ class ProfilePlayedCountTests(TestCase):
         # But active count (for profile) should be 0
         active_count = self.user.played_games.filter(game__isnull=False).count()
         self.assertEqual(active_count, 0)
+
+
+class WantToPlayGameModelTests(TestCase):
+    """Test cases for WantToPlayGame model."""
+
+    @classmethod
+    def setUpTestData(cls):
+        """Set up test data."""
+        cls.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        cls.game1 = Game.objects.create(
+            name="Test Game 1",
+            rank=1,
+            igdb_id=12345,
+        )
+
+    def test_create_want_to_play_game(self):
+        """Test creating a WantToPlayGame record."""
+        want = WantToPlayGame.objects.create(
+            user=self.user,
+            game=self.game1,
+            igdb_id=self.game1.igdb_id,
+        )
+        self.assertEqual(want.user, self.user)
+        self.assertEqual(want.game, self.game1)
+        self.assertEqual(want.igdb_id, 12345)
+        self.assertIsNotNone(want.created)
+
+    def test_str_with_game(self):
+        """Test string representation with linked game."""
+        want = WantToPlayGame.objects.create(
+            user=self.user,
+            game=self.game1,
+            igdb_id=self.game1.igdb_id,
+        )
+        self.assertEqual(str(want), "testuser wants to play Test Game 1")
+
+    def test_str_without_game(self):
+        """Test string representation when game is null."""
+        want = WantToPlayGame.objects.create(
+            user=self.user,
+            game=None,
+            igdb_id=99999,
+        )
+        self.assertEqual(str(want), "testuser wants to play IGDB:99999")
+
+    def test_unique_constraint_user_igdb_id(self):
+        """Test that user+igdb_id must be unique."""
+        WantToPlayGame.objects.create(
+            user=self.user,
+            game=self.game1,
+            igdb_id=self.game1.igdb_id,
+        )
+        # Trying to create another record with same user and igdb_id should fail
+        with self.assertRaises(IntegrityError):
+            WantToPlayGame.objects.create(
+                user=self.user,
+                game=self.game1,
+                igdb_id=self.game1.igdb_id,
+            )
+
+
+class GameStatusCycleTests(TestCase):
+    """Test cases for the 3-state game status cycle: none -> want -> played -> none."""
+
+    @classmethod
+    def setUpTestData(cls):
+        """Set up test data."""
+        cls.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        cls.game = Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=12345,
+        )
+
+    def test_cycle_none_to_want(self):
+        """Test first click: none -> want to play."""
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should create WantToPlayGame, not PlayedGame
+        self.assertTrue(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertFalse(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+    def test_cycle_want_to_played(self):
+        """Test second click: want -> played."""
+        from django.urls import reverse
+
+        # Set up: game is in want-to-play state
+        WantToPlayGame.objects.create(
+            user=self.user, game=self.game, igdb_id=self.game.igdb_id
+        )
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should remove WantToPlayGame and create PlayedGame
+        self.assertFalse(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertTrue(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+    def test_cycle_played_to_none(self):
+        """Test third click: played -> none."""
+        from django.urls import reverse
+
+        # Set up: game is in played state
+        PlayedGame.objects.create(
+            user=self.user, game=self.game, igdb_id=self.game.igdb_id
+        )
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should remove PlayedGame, and NOT create WantToPlayGame
+        self.assertFalse(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertFalse(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+    def test_full_cycle(self):
+        """Test the complete cycle: none -> want -> played -> none."""
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        # Click 1: none -> want
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+        # Click 2: want -> played
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertFalse(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+        # Click 3: played -> none
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertFalse(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+    def test_mutual_exclusivity(self):
+        """Test that a game cannot be both want-to-play and played."""
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        # Start in want state
+        self.client.post(url)
+
+        # Transition to played
+        self.client.post(url)
+
+        # At no point should both exist
+        self.assertFalse(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+            and PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+
+class GameQuerySetWantToPlayStatusTests(TestCase):
+    """Test cases for GameQuerySet.with_played_status() including want-to-play."""
+
+    @classmethod
+    def setUpTestData(cls):
+        """Set up test data."""
+        cls.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        cls.game_played = Game.objects.create(
+            name="Played Game",
+            rank=1,
+            igdb_id=11111,
+        )
+        cls.game_want = Game.objects.create(
+            name="Want to Play Game",
+            rank=2,
+            igdb_id=22222,
+        )
+        cls.game_none = Game.objects.create(
+            name="Untracked Game",
+            rank=3,
+            igdb_id=33333,
+        )
+        # Set up statuses
+        PlayedGame.objects.create(
+            user=cls.user,
+            game=cls.game_played,
+            igdb_id=cls.game_played.igdb_id,
+        )
+        WantToPlayGame.objects.create(
+            user=cls.user,
+            game=cls.game_want,
+            igdb_id=cls.game_want.igdb_id,
+        )
+
+    def test_with_played_status_annotates_both(self):
+        """Test that with_played_status annotates both played and want-to-play."""
+        games = Game.objects.with_played_status(self.user)
+
+        game_played = games.get(id=self.game_played.id)
+        game_want = games.get(id=self.game_want.id)
+        game_none = games.get(id=self.game_none.id)
+
+        # Played game
+        self.assertTrue(game_played.is_played_by_user)
+        self.assertFalse(game_played.is_want_to_play_by_user)
+
+        # Want to play game
+        self.assertFalse(game_want.is_played_by_user)
+        self.assertTrue(game_want.is_want_to_play_by_user)
+
+        # Untracked game
+        self.assertFalse(game_none.is_played_by_user)
+        self.assertFalse(game_none.is_want_to_play_by_user)

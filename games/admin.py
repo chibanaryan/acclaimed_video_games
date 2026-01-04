@@ -435,6 +435,30 @@ class PlayedGameAdmin(admin.ModelAdmin):
         return "Connected" if obj.game else "Orphaned"
 
 
+@admin.register(models.WantToPlayGame)
+class WantToPlayGameAdmin(admin.ModelAdmin):
+    """Admin interface for WantToPlayGame records (backlog/wishlist)."""
+
+    list_display = ["user", "game_name", "igdb_id", "created", "game_status"]
+    list_filter = ["created"]
+    search_fields = ["user__username", "user__email", "game__name", "igdb_id"]
+    raw_id_fields = ["user", "game"]
+    readonly_fields = ["created"]
+    ordering = ["-created"]
+
+    @admin.display(description="Game")
+    def game_name(self, obj):
+        """Display game name or IGDB ID if game is orphaned."""
+        if obj.game:
+            return obj.game.name
+        return f"(orphaned) IGDB:{obj.igdb_id}"
+
+    @admin.display(description="Status")
+    def game_status(self, obj):
+        """Show if the game record is connected or orphaned."""
+        return "Connected" if obj.game else "Orphaned"
+
+
 @admin.register(models.SavedFilterSet)
 class SavedFilterSetAdmin(admin.ModelAdmin):
     """Admin interface for SavedFilterSet records."""
