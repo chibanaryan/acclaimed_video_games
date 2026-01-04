@@ -93,7 +93,21 @@ class GameFilterEngine {
         this.genres = data.genres || [];
         this.gameModes = data.game_modes || {};
 
-        // Build genre lookup and descendant sets for fast filtering
+        // Lazy initialization flags - defer expensive index building
+        this._genreMapBuilt = false;
+        this._platformMappingBuilt = false;
+        this._genreMap = null;
+        this._genreDescendants = null;
+        this._platformToGroups = null;
+    }
+
+    /**
+     * Lazily build genre lookup and descendant sets
+     * @private
+     */
+    _ensureGenreMap() {
+        if (this._genreMapBuilt) return;
+
         this._genreMap = new Map();
         this._genreDescendants = new Map();
         for (const genre of this.genres) {
@@ -103,11 +117,19 @@ class GameFilterEngine {
             descendantSet.add(genre.id); // Include self for matching
             this._genreDescendants.set(genre.id, descendantSet);
         }
+        this._genreMapBuilt = true;
+    }
 
-        // Build platform ID to group mapping for deduplicated group counts
-        // Maps platform ID -> { manufacturer: 'nintendo', formFactor: 'home' }
+    /**
+     * Lazily build platform ID to group mapping
+     * @private
+     */
+    _ensurePlatformMapping() {
+        if (this._platformMappingBuilt) return;
+
         this._platformToGroups = new Map();
         this._buildPlatformGroupMapping();
+        this._platformMappingBuilt = true;
     }
 
     /**
@@ -169,6 +191,10 @@ class GameFilterEngine {
      * @returns {Object} Result with filtered games and facet counts
      */
     filter(filters = {}) {
+        // Ensure lazy indexes are built on first filter call
+        this._ensureGenreMap();
+        this._ensurePlatformMapping();
+
         const {
             q = '',
             genres = [],
@@ -947,6 +973,9 @@ class GameFilterEngine {
      * @returns {Object} Expanded game with full developer/platform/genre info
      */
     expandGame(game) {
+        // Ensure lazy indexes are built
+        this._ensureGenreMap();
+
         // Resolve developers with parent info (find root developer for slugs)
         const developerList = (game.dv || []).map(devId => {
             const developer = this.developers[devId];

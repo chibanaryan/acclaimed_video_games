@@ -251,8 +251,33 @@
             // Wait for deferred scripts to load (retry up to 10 times, 100ms apart)
             let retries = 0;
             const maxRetries = 10;
+            const self = this;
 
-            const tryInit = async () => {
+            const doInit = async () => {
+                self._csf = getClientSideFiltering();
+                try {
+                    await self._csf.init({
+                        onLoadStart: () => console.log('[CSF] Loading game data...'),
+                        onLoadComplete: () => {
+                            console.log('[CSF] Game data loaded, client filtering ready');
+                            self.clientFilterReady = true;
+                            // Only re-render if filters are active (prevents flash on default page)
+                            if (self.hasActiveFilters()) {
+                                self.performClientUpdate({ historyMethod: 'replaceState' });
+                            } else {
+                                // Just update faceted counts without re-rendering
+                                self.updateFacetCounts();
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.error('[CSF] Failed to initialize:', e);
+                    // Fallback: dispatch initial counts from server-rendered JSON
+                    self.dispatchInitialCounts();
+                }
+            };
+
+            const tryInit = () => {
                 if (typeof getClientSideFiltering !== 'function') {
                     retries++;
                     if (retries < maxRetries) {
@@ -261,30 +286,15 @@
                     }
                     console.log('[CSF] Client-side filtering not available after retries');
                     // Fallback: dispatch initial counts from server-rendered JSON
-                    this.dispatchInitialCounts();
+                    self.dispatchInitialCounts();
                     return;
                 }
 
-                this._csf = getClientSideFiltering();
-                try {
-                    await this._csf.init({
-                        onLoadStart: () => console.log('[CSF] Loading game data...'),
-                        onLoadComplete: () => {
-                            console.log('[CSF] Game data loaded, client filtering ready');
-                            this.clientFilterReady = true;
-                            // Only re-render if filters are active (prevents flash on default page)
-                            if (this.hasActiveFilters()) {
-                                this.performClientUpdate({ historyMethod: 'replaceState' });
-                            } else {
-                                // Just update faceted counts without re-rendering
-                                this.updateFacetCounts();
-                            }
-                        }
-                    });
-                } catch (e) {
-                    console.error('[CSF] Failed to initialize:', e);
-                    // Fallback: dispatch initial counts from server-rendered JSON
-                    this.dispatchInitialCounts();
+                // Defer heavy initialization until browser is idle
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(doInit, { timeout: 2000 });
+                } else {
+                    setTimeout(doInit, 50);
                 }
             };
 

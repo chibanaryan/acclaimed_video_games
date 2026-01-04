@@ -8,7 +8,7 @@
         <span class="text-xs font-medium text-base-content/60">Rank Distribution</span>
         <span class="rank-distribution-peak text-xs text-base-content/40"></span>
     </div>
-    <div class="rank-distribution" data-bins="{{ rank_distribution|default:'[]'|tojson }}">
+    <div class="rank-distribution" data-bins='{{ rank_distribution|default:"[]"|tojson }}'>
         {# SVG Chart - uses visibility to reserve space and prevent layout shift #}
         <svg viewBox="0 0 100 40"
              preserveAspectRatio="none"
