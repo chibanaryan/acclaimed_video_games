@@ -91,7 +91,6 @@ class GameFilterEngine {
         this.developers = data.developers || {};
         this.platforms = data.platforms || {};
         this.genres = data.genres || [];
-        this.gameModes = data.game_modes || {};
 
         // Build genre lookup and descendant sets for fast filtering
         this._genreMap = new Map();
@@ -175,7 +174,6 @@ class GameFilterEngine {
             genreOption = 'any',
             platforms = [],
             series = [],
-            game_modes = [],
             start = null,
             end = null,
             sort = 'rank',
@@ -192,8 +190,6 @@ class GameFilterEngine {
         const platformSet = new Set(platformIds);
         const seriesIds = series.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const seriesSet = new Set(seriesIds);
-        const gameModeIds = game_modes.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-        const gameModeSet = new Set(gameModeIds);
         const matchAll = genreOption !== 'any';
 
         // Pre-compute expanded genre sets for each selected genre
@@ -228,15 +224,6 @@ class GameFilterEngine {
                 const gameSeries = game.sr || [];
                 const hasMatchingSeries = gameSeries.some(sid => seriesSet.has(sid));
                 if (!hasMatchingSeries) {
-                    continue;
-                }
-            }
-
-            // Game mode filter (any match)
-            if (gameModeIds.length > 0) {
-                const gameGameModes = game.gm || [];
-                const hasMatchingGameMode = gameGameModes.some(gmid => gameModeSet.has(gmid));
-                if (!hasMatchingGameMode) {
                     continue;
                 }
             }
@@ -400,15 +387,13 @@ class GameFilterEngine {
         const platformCounts = new Map();
         const yearCounts = new Map();
         const seriesCounts = new Map();
-        const gameModeCounts = new Map();
 
         // For genre facets, we need to calculate counts based on filters EXCLUDING genres
         // For platform facets, calculate counts based on filters EXCLUDING platforms
         // For series facets, calculate counts based on filters EXCLUDING series
-        // For game mode facets, calculate counts based on filters EXCLUDING game_modes
         // This is standard faceted search behavior
 
-        const { q, start, end, platforms, genres, genreOption, series, game_modes = [], played, hltb_mode = 'main', hltb_min = null, hltb_max = null } = currentFilters;
+        const { q, start, end, platforms, genres, genreOption, series, played, hltb_mode = 'main', hltb_min = null, hltb_max = null } = currentFilters;
         const matchAll = genreOption !== 'any';
 
         // Create base filter functions (without genre/platform/series/HLTB)
@@ -444,8 +429,6 @@ class GameFilterEngine {
         const platformSet = new Set((platforms || []).map(id => parseInt(id, 10)));
         const seriesIds = (series || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const seriesSet = new Set(seriesIds);
-        const gameModeIds = (game_modes || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-        const gameModeSet = new Set(gameModeIds);
 
         for (const game of this.games) {
             if (!passesBaseFilters(game)) continue;
@@ -459,12 +442,6 @@ class GameFilterEngine {
             if (seriesSet.size > 0) {
                 const gameSeries = game.sr || [];
                 if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
-            }
-
-            // Apply game mode filter
-            if (gameModeSet.size > 0) {
-                const gameGameModes = game.gm || [];
-                if (!gameGameModes.some(gmid => gameModeSet.has(gmid))) continue;
             }
 
             // Apply HLTB filter
@@ -559,12 +536,6 @@ class GameFilterEngine {
             if (seriesSet.size > 0) {
                 const gameSeries = game.sr || [];
                 if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
-            }
-
-            // Apply game mode filter
-            if (gameModeSet.size > 0) {
-                const gameGameModes = game.gm || [];
-                if (!gameGameModes.some(gmid => gameModeSet.has(gmid))) continue;
             }
 
             // Apply HLTB filter
@@ -675,12 +646,6 @@ class GameFilterEngine {
                 if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
             }
 
-            // Apply game mode filter
-            if (gameModeSet.size > 0) {
-                const gameGameModes = game.gm || [];
-                if (!gameGameModes.some(gmid => gameModeSet.has(gmid))) continue;
-            }
-
             // Apply game status filter (played, want to play, untracked)
             if (played && window.isAuthenticated && game.i) {
                 const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
@@ -753,12 +718,6 @@ class GameFilterEngine {
                 }
             }
 
-            // Apply game mode filter
-            if (gameModeSet.size > 0) {
-                const gameGameModes = game.gm || [];
-                if (!gameGameModes.some(gmid => gameModeSet.has(gmid))) continue;
-            }
-
             // Apply HLTB filter
             if (hltb_min !== null || hltb_max !== null) {
                 const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
@@ -777,76 +736,6 @@ class GameFilterEngine {
             const gameSeries = game.sr || [];
             for (const sid of gameSeries) {
                 seriesCounts.set(sid, (seriesCounts.get(sid) || 0) + 1);
-            }
-        }
-
-        // Calculate game mode facet counts (apply all filters except game_modes)
-        for (const game of this.games) {
-            if (!passesBaseFilters(game)) continue;
-
-            // Apply platform filter
-            if (platformSet.size > 0) {
-                if (!game.p.some(pid => platformSet.has(pid))) continue;
-            }
-
-            // Apply genre filter
-            if (genreIds.length > 0) {
-                const gameGenreSet = new Set(game.g);
-                if (matchAll) {
-                    let matchesAll = true;
-                    for (const expandedSet of expandedGenreSets) {
-                        let hasMatch = false;
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasMatch = true;
-                                break;
-                            }
-                        }
-                        if (!hasMatch) {
-                            matchesAll = false;
-                            break;
-                        }
-                    }
-                    if (!matchesAll) continue;
-                } else {
-                    let hasAnyMatch = false;
-                    for (const expandedSet of expandedGenreSets) {
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasAnyMatch = true;
-                                break;
-                            }
-                        }
-                        if (hasAnyMatch) break;
-                    }
-                    if (!hasAnyMatch) continue;
-                }
-            }
-
-            // Apply series filter
-            if (seriesSet.size > 0) {
-                const gameSeries = game.sr || [];
-                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
-            }
-
-            // Apply HLTB filter
-            if (hltb_min !== null || hltb_max !== null) {
-                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
-                if (playtime === null || playtime === undefined) {
-                    continue;
-                }
-                if (hltb_min !== null && playtime < hltb_min) {
-                    continue;
-                }
-                if (hltb_max !== null && playtime > hltb_max) {
-                    continue;
-                }
-            }
-
-            // Count game modes for this game (game_modes filter NOT applied)
-            const gameGameModes = game.gm || [];
-            for (const gmid of gameGameModes) {
-                gameModeCounts.set(gmid, (gameModeCounts.get(gmid) || 0) + 1);
             }
         }
 
@@ -906,12 +795,6 @@ class GameFilterEngine {
                 if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
             }
 
-            // Apply game mode filter
-            if (gameModeSet.size > 0) {
-                const gameGameModes = game.gm || [];
-                if (!gameGameModes.some(gmid => gameModeSet.has(gmid))) continue;
-            }
-
             // Count for HLTB presets (HLTB filter NOT applied)
             const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
             if (playtime !== null && playtime !== undefined) {
@@ -936,7 +819,6 @@ class GameFilterEngine {
             platformGroups: platformGroupCounts,
             years: Object.fromEntries(yearCounts),
             series: Object.fromEntries(seriesCounts),
-            gameModes: Object.fromEntries(gameModeCounts),
             hltbPresets: hltbPresetCounts
         };
     }
@@ -1011,18 +893,6 @@ class GameFilterEngine {
             } : null;
         }).filter(Boolean);
 
-        // Resolve game modes
-        const gameModeIds = game.gm || [];
-        const gameModeList = gameModeIds.map(gmid => {
-            // Game modes are stored in the this.gameModes dict from the API
-            const gameMode = this.gameModes ? this.gameModes[gmid] : null;
-            return gameMode ? {
-                id: gmid,
-                name: gameMode.n,
-                slug: gameMode.s
-            } : { id: gmid, name: `Mode ${gmid}`, slug: null };
-        });
-
         return {
             id: game.id,
             name: game.n,
@@ -1032,8 +902,7 @@ class GameFilterEngine {
             artworkId: game.a,
             developers: filteredDeveloperList,
             platforms: platformList,
-            genres: genreList,
-            gameModes: gameModeList
+            genres: genreList
         };
     }
 
