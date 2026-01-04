@@ -222,6 +222,12 @@ class Command(BaseCommand):
             default=1,
             help="Number of concurrent requests (default: 1, recommend 5-10 for speed)",
         )
+        parser.add_argument(
+            "--use-name-search",
+            action="store_true",
+            help="Enable name search fallback when Wikidata HLTB ID is not available. "
+            "Disabled by default to avoid incorrect matches.",
+        )
 
     def handle(self, *args, **options):
         self.start_time = time.time()
@@ -276,12 +282,16 @@ class Command(BaseCommand):
         delay = options.get("delay", 1.0)
         min_similarity = options.get("min_similarity", 0.85)
         concurrency = options.get("concurrency", 1)
+        use_name_search = options.get("use_name_search", False)
 
         self.stdout.write(f"\nProcessing {game_count} games...")
         self.stdout.write(
             f"Delay: {delay}s, Min similarity: {min_similarity}, "
-            f"Concurrency: {concurrency}\n"
+            f"Concurrency: {concurrency}"
         )
+        if use_name_search:
+            self.stdout.write(" (name search ENABLED)")
+        self.stdout.write("\n")
 
         # Prepare CSV output - only if explicitly requested with --output
         # (CSV was mainly for testing; production uses --save for database)
@@ -373,7 +383,8 @@ class Command(BaseCommand):
                             )
 
                     # Fall back to name search if direct lookup failed
-                    if not best_match:
+                    # (only if --use-name-search was specified)
+                    if not best_match and use_name_search:
                         # Build list of names to try: Wikipedia title first,
                         # then local name. Also include Roman/Arabic numeral
                         # conversions
@@ -489,7 +500,14 @@ class Command(BaseCommand):
                     else:
                         async with counter_lock:
                             failure_count += 1
-                        error_message = "No results found"
+                        if wikidata_hltb_id:
+                            error_message = (
+                                f"Wikidata HLTB ID {wikidata_hltb_id} lookup failed"
+                            )
+                        elif use_name_search:
+                            error_message = "No results found via name search"
+                        else:
+                            error_message = "No Wikidata HLTB ID available"
                         self.stdout.write(
                             self.style.WARNING(
                                 f"[{idx}/{game_count}] \u2717 {game_name}: "

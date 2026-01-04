@@ -107,53 +107,9 @@ WIKI_LOOKUP_SOURCE_OPENSEARCH_FALLBACK = "opensearch_fallback"
 WIKIDATA_AUTHENTICATED_DELAY = 0.75  # seconds (safely under 1.39 req/sec limit)
 WIKIDATA_UNAUTHENTICATED_DELAY = 2.0  # seconds (safely under 0.14 req/sec limit)
 
-# Wikidata Game Mode (P404) Q-ID to label mapping
-# Reference: https://www.wikidata.org/wiki/Property:P404
-WIKIDATA_GAME_MODE_MAPPING = {
-    "Q208850": "Single-player",
-    "Q1628022": "Multiplayer",
-    "Q1758804": "Cooperative",
-    "Q6895044": "MMO",
-    "Q3297989": "Online multiplayer",
-    "Q61005756": "Split-screen",
-    "Q2668023": "Hotseat",
-}
-
-# Wikidata Country (P495) Q-ID to label mapping
-# Reference: https://www.wikidata.org/wiki/Property:P495
-WIKIDATA_COUNTRY_MAPPING = {
-    "Q30": "USA",
-    "Q17": "Japan",
-    "Q145": "UK",
-    "Q142": "France",
-    "Q183": "Germany",
-    "Q16": "Canada",
-    "Q408": "Australia",
-    "Q38": "Italy",
-    "Q29": "Spain",
-    "Q159": "Russia",
-    "Q148": "China",
-    "Q884": "South Korea",
-    "Q34": "Sweden",
-    "Q36": "Poland",
-    "Q55": "Netherlands",
-    "Q39": "Switzerland",
-    "Q40": "Austria",
-    "Q35": "Denmark",
-    "Q33": "Finland",
-    "Q20": "Norway",
-    "Q45": "Portugal",
-    "Q214": "Ukraine",
-    "Q213": "Czech Republic",
-    "Q801": "Israel",
-    "Q664": "New Zealand",
-    "Q928": "Philippines",
-    "Q334": "Singapore",
-    "Q668": "India",
-    "Q155": "Brazil",
-    "Q96": "Mexico",
-    "Q414": "Argentina",
-}
+# Note: Game mode (P404) and country (P495) labels are now fetched dynamically
+# from Wikidata and cached in WikipediaGameMode/WikipediaCountry database tables.
+# See WikiPageLookupService._get_or_create_game_mode() and _get_or_create_country()
 
 # =============================================================================
 # Wikiquote Configuration

@@ -641,6 +641,13 @@ class FetchWikipediaMetadataCommandTests(TestCase):
         """Test command saves countries and game modes as M2M relationships."""
         from games.models import WikipediaCountry, WikipediaGameMode
 
+        # Pre-create country and game mode records (normally created by
+        # WikiPageLookupService during lookup, but we're mocking it)
+        WikipediaCountry.objects.create(name="USA", wikidata_id="Q30")
+        WikipediaCountry.objects.create(name="Japan", wikidata_id="Q17")
+        WikipediaGameMode.objects.create(name="Single-player", wikidata_id="Q208850")
+        WikipediaGameMode.objects.create(name="Multiplayer", wikidata_id="Q6895044")
+
         out = StringIO()
 
         with mock.patch(
@@ -688,7 +695,7 @@ class FetchWikipediaMetadataCommandTests(TestCase):
         wiki_data = self.game1.primary_wikipedia_game_data
         self.assertEqual(wiki_data.wikiquote_page_title, "Test Game 1")
 
-        # Check model objects were created with wikidata IDs
+        # Verify records exist with correct wikidata IDs
         usa = WikipediaCountry.objects.get(name="USA")
         self.assertEqual(usa.wikidata_id, "Q30")
 
@@ -699,4 +706,150 @@ class FetchWikipediaMetadataCommandTests(TestCase):
         self.assertEqual(single_player.wikidata_id, "Q208850")
 
         multiplayer = WikipediaGameMode.objects.get(name="Multiplayer")
-        self.assertEqual(multiplayer.wikidata_id, "Q1628022")
+        self.assertEqual(multiplayer.wikidata_id, "Q6895044")
+
+
+class WikiPageLookupServiceTests(TestCase):
+    """Tests for WikiPageLookupService internal logic."""
+
+    def test_skips_deprecated_hltb_ids(self):
+        """Test that deprecated P2816 (HLTB ID) claims are skipped."""
+        from games.services.wiki_page_lookup_service import WikiPageLookupService
+
+        service = WikiPageLookupService(delay=0)
+
+        # Mock the Wikidata API response for NHL '94 (Q607073)
+        # which has deprecated IDs 6571 and 16527, and normal ID 15544
+        mock_response_data = {
+            "entities": {
+                "Q607073": {
+                    "sitelinks": {
+                        "enwiki": {"title": "NHL 94"},
+                    },
+                    "claims": {
+                        "P2816": [
+                            {
+                                "rank": "deprecated",
+                                "mainsnak": {
+                                    "datavalue": {"value": "6571"},
+                                },
+                            },
+                            {
+                                "rank": "normal",
+                                "mainsnak": {
+                                    "datavalue": {"value": "15544"},
+                                },
+                            },
+                            {
+                                "rank": "deprecated",
+                                "mainsnak": {
+                                    "datavalue": {"value": "16527"},
+                                },
+                            },
+                        ],
+                    },
+                }
+            }
+        }
+
+        with mock.patch.object(service, "_make_request") as mock_request:
+            mock_response = mock.MagicMock()
+            mock_response.json.return_value = mock_response_data
+            mock_request.return_value = mock_response
+
+            result = service._lookup_via_wikidata("Q607073")
+
+        # Should return the normal (non-deprecated) HLTB ID
+        self.assertIsNotNone(result)
+        page_title, hltb_id, game_modes, countries, wikiquote = result
+        self.assertEqual(page_title, "NHL 94")
+        self.assertEqual(hltb_id, "15544")  # The normal rank ID, not deprecated
+
+    def test_prefers_preferred_rank_over_normal(self):
+        """Test that 'preferred' rank P2816 claims take priority over 'normal'."""
+        from games.services.wiki_page_lookup_service import WikiPageLookupService
+
+        service = WikiPageLookupService(delay=0)
+
+        mock_response_data = {
+            "entities": {
+                "Q12345": {
+                    "sitelinks": {
+                        "enwiki": {"title": "Test Game"},
+                    },
+                    "claims": {
+                        "P2816": [
+                            {
+                                "rank": "normal",
+                                "mainsnak": {
+                                    "datavalue": {"value": "111"},
+                                },
+                            },
+                            {
+                                "rank": "preferred",
+                                "mainsnak": {
+                                    "datavalue": {"value": "222"},
+                                },
+                            },
+                        ],
+                    },
+                }
+            }
+        }
+
+        with mock.patch.object(service, "_make_request") as mock_request:
+            mock_response = mock.MagicMock()
+            mock_response.json.return_value = mock_response_data
+            mock_request.return_value = mock_response
+
+            result = service._lookup_via_wikidata("Q12345")
+
+        # Should return the preferred HLTB ID
+        self.assertIsNotNone(result)
+        page_title, hltb_id, game_modes, countries, wikiquote = result
+        self.assertEqual(hltb_id, "222")  # Preferred rank
+
+    def test_returns_none_when_all_hltb_ids_deprecated(self):
+        """Test that None is returned for HLTB ID when all claims are deprecated."""
+        from games.services.wiki_page_lookup_service import WikiPageLookupService
+
+        service = WikiPageLookupService(delay=0)
+
+        mock_response_data = {
+            "entities": {
+                "Q99999": {
+                    "sitelinks": {
+                        "enwiki": {"title": "All Deprecated Game"},
+                    },
+                    "claims": {
+                        "P2816": [
+                            {
+                                "rank": "deprecated",
+                                "mainsnak": {
+                                    "datavalue": {"value": "111"},
+                                },
+                            },
+                            {
+                                "rank": "deprecated",
+                                "mainsnak": {
+                                    "datavalue": {"value": "222"},
+                                },
+                            },
+                        ],
+                    },
+                }
+            }
+        }
+
+        with mock.patch.object(service, "_make_request") as mock_request:
+            mock_response = mock.MagicMock()
+            mock_response.json.return_value = mock_response_data
+            mock_request.return_value = mock_response
+
+            result = service._lookup_via_wikidata("Q99999")
+
+        # Page should be found but HLTB ID should be None
+        self.assertIsNotNone(result)
+        page_title, hltb_id, game_modes, countries, wikiquote = result
+        self.assertEqual(page_title, "All Deprecated Game")
+        self.assertIsNone(hltb_id)  # No valid HLTB ID

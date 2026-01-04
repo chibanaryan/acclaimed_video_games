@@ -464,38 +464,18 @@ class Command(BaseCommand):
         game.save(update_fields=["primary_wikipedia_game_data"])
 
         # Set M2M relationships for countries and game modes
+        # Records are created by WikiPageLookupService during lookup,
+        # so we just need to find them by name
         if page_result.country_of_origin:
-            countries = []
-            for country_name in page_result.country_of_origin:
-                # Get the Q-ID from the mapping (reverse lookup)
-                qid = None
-                for q, name in config.WIKIDATA_COUNTRY_MAPPING.items():
-                    if name == country_name:
-                        qid = q
-                        break
-                if qid:
-                    country, _ = WikipediaCountry.objects.get_or_create(
-                        wikidata_id=qid,
-                        defaults={"name": country_name},
-                    )
-                    countries.append(country)
+            countries = list(
+                WikipediaCountry.objects.filter(name__in=page_result.country_of_origin)
+            )
             game.wikipedia_countries.set(countries)
 
         if page_result.game_modes:
-            modes = []
-            for mode_name in page_result.game_modes:
-                # Get the Q-ID from the mapping (reverse lookup)
-                qid = None
-                for q, name in config.WIKIDATA_GAME_MODE_MAPPING.items():
-                    if name == mode_name:
-                        qid = q
-                        break
-                if qid:
-                    mode, _ = WikipediaGameMode.objects.get_or_create(
-                        wikidata_id=qid,
-                        defaults={"name": mode_name},
-                    )
-                    modes.append(mode)
+            modes = list(
+                WikipediaGameMode.objects.filter(name__in=page_result.game_modes)
+            )
             game.wikipedia_game_modes.set(modes)
 
         return wiki_game_data

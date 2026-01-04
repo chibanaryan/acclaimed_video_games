@@ -186,6 +186,137 @@ class WikiPageLookupService:
 
         return None
 
+    def _fetch_wikidata_label(self, qid: str) -> Optional[str]:
+        """
+        Fetch the English label for a Wikidata entity.
+
+        Args:
+            qid: Wikidata Q-ID (e.g., "Q208850")
+
+        Returns:
+            English label string, or None if not found
+        """
+        params = {
+            "action": "wbgetentities",
+            "format": "json",
+            "props": "labels",
+            "ids": qid,
+            "languages": "en",
+        }
+
+        response = self._make_request(
+            config.WIKIDATA_API_URL, params=params, use_auth=True
+        )
+        if not response:
+            return None
+
+        try:
+            data = response.json()
+            entities = data.get("entities", {})
+            entity = entities.get(qid, {})
+            labels = entity.get("labels", {})
+            en_label = labels.get("en", {})
+            return en_label.get("value")
+        except (ValueError, KeyError) as e:
+            logger.warning("Failed to parse Wikidata label for %s: %s", qid, e)
+            return None
+
+    def _get_or_create_game_mode(self, qid: str) -> Optional[str]:
+        """
+        Get game mode label from database, or fetch from Wikidata and create record.
+
+        Args:
+            qid: Wikidata Q-ID (e.g., "Q208850" for single-player)
+
+        Returns:
+            Game mode name, or None if lookup failed
+        """
+        from games.models import WikipediaGameMode
+
+        # Check database first
+        try:
+            game_mode = WikipediaGameMode.objects.get(wikidata_id=qid)
+            return game_mode.name
+        except WikipediaGameMode.DoesNotExist:
+            pass
+
+        # Fetch from Wikidata
+        label = self._fetch_wikidata_label(qid)
+        if not label:
+            logger.warning("Could not fetch Wikidata label for game mode %s", qid)
+            return None
+
+        # Clean up the label (Wikidata often has verbose names like
+        # "single-player video game"). Remove common suffixes
+        for suffix in [" video game", " video games", " game", " games", " mode"]:
+            if label.lower().endswith(suffix):
+                label = label[: -len(suffix)]
+
+        # Title case
+        label = label.strip().title()
+
+        # Create the record
+        try:
+            game_mode, created = WikipediaGameMode.objects.get_or_create(
+                wikidata_id=qid,
+                defaults={"name": label},
+            )
+            if created:
+                logger.info("Created new game mode: %s (%s)", label, qid)
+            return game_mode.name
+        except Exception as e:
+            logger.warning("Failed to create game mode %s: %s", qid, e)
+            return None
+
+    def _get_or_create_country(self, qid: str) -> Optional[str]:
+        """
+        Get country label from database, or fetch from Wikidata and create record.
+
+        Args:
+            qid: Wikidata Q-ID (e.g., "Q30" for USA)
+
+        Returns:
+            Country name, or None if lookup failed
+        """
+        from games.models import WikipediaCountry
+
+        # Check database first
+        try:
+            country = WikipediaCountry.objects.get(wikidata_id=qid)
+            return country.name
+        except WikipediaCountry.DoesNotExist:
+            pass
+
+        # Fetch from Wikidata
+        label = self._fetch_wikidata_label(qid)
+        if not label:
+            logger.warning("Could not fetch Wikidata label for country %s", qid)
+            return None
+
+        # Some common abbreviations/cleanup
+        COUNTRY_ABBREVIATIONS = {
+            "United States of America": "USA",
+            "United States": "USA",
+            "United Kingdom": "UK",
+            "People's Republic of China": "China",
+            "Republic of Korea": "South Korea",
+            "Russian Federation": "Russia",
+        }
+        label = COUNTRY_ABBREVIATIONS.get(label, label)
+
+        # Create the record
+        try:
+            country, created = WikipediaCountry.objects.get_or_create(
+                wikidata_id=qid,
+                defaults={"name": label},
+            )
+            if created:
+                logger.info("Created new country: %s (%s)", label, qid)
+            return country.name
+        except Exception as e:
+            logger.warning("Failed to create country %s: %s", qid, e)
+            return None
+
     def _lookup_via_wikidata(
         self, wikidata_id: str
     ) -> Optional[
@@ -239,21 +370,33 @@ class WikiPageLookupService:
             claims = entity.get("claims", {})
 
             # Extract HLTB ID from P2816 claim (HowLongToBeat ID property)
+            # Filter out deprecated claims and prefer "preferred" rank over "normal"
             hltb_id = None
             p2816 = claims.get("P2816", [])
             if p2816:
-                # Get the first (preferred) value
-                mainsnak = p2816[0].get("mainsnak", {})
-                datavalue = mainsnak.get("datavalue", {})
-                hltb_id = datavalue.get("value")
-                if hltb_id:
-                    logger.debug(
-                        "Found HLTB ID via Wikidata P2816: %s -> %s",
-                        wikidata_id,
-                        hltb_id,
-                    )
+                # Filter out deprecated claims and sort by rank preference
+                valid_claims = []
+                for claim in p2816:
+                    rank = claim.get("rank", "normal")
+                    if rank != "deprecated":
+                        valid_claims.append((claim, rank))
+
+                if valid_claims:
+                    # Sort by rank preference (preferred first, then normal)
+                    valid_claims.sort(key=lambda x: 0 if x[1] == "preferred" else 1)
+                    best_claim = valid_claims[0][0]
+                    mainsnak = best_claim.get("mainsnak", {})
+                    datavalue = mainsnak.get("datavalue", {})
+                    hltb_id = datavalue.get("value")
+                    if hltb_id:
+                        logger.debug(
+                            "Found HLTB ID via Wikidata P2816: %s -> %s",
+                            wikidata_id,
+                            hltb_id,
+                        )
 
             # Extract game modes from P404 claim
+            # Uses database cache with Wikidata API fallback for labels
             game_modes = []
             for claim in claims.get("P404", []):
                 mainsnak = claim.get("mainsnak", {})
@@ -261,18 +404,12 @@ class WikiPageLookupService:
                 value = datavalue.get("value", {})
                 qid = value.get("id") if isinstance(value, dict) else None
                 if qid:
-                    label = config.WIKIDATA_GAME_MODE_MAPPING.get(qid)
+                    label = self._get_or_create_game_mode(qid)
                     if label and label not in game_modes:
                         game_modes.append(label)
-                    elif not label:
-                        logger.warning(
-                            "Unknown game mode Q-ID %s for %s - "
-                            "add to WIKIDATA_GAME_MODE_MAPPING",
-                            qid,
-                            wikidata_id,
-                        )
 
             # Extract country of origin from P495 claim
+            # Uses database cache with Wikidata API fallback for labels
             countries = []
             for claim in claims.get("P495", []):
                 mainsnak = claim.get("mainsnak", {})
@@ -280,16 +417,9 @@ class WikiPageLookupService:
                 value = datavalue.get("value", {})
                 qid = value.get("id") if isinstance(value, dict) else None
                 if qid:
-                    label = config.WIKIDATA_COUNTRY_MAPPING.get(qid)
+                    label = self._get_or_create_country(qid)
                     if label and label not in countries:
                         countries.append(label)
-                    elif not label:
-                        logger.warning(
-                            "Unknown country Q-ID %s for %s - "
-                            "add to WIKIDATA_COUNTRY_MAPPING",
-                            qid,
-                            wikidata_id,
-                        )
 
             if page_title:
                 logger.debug(
