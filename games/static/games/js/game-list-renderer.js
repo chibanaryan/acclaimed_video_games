@@ -510,6 +510,14 @@ class GameListRenderer {
                 ).join('');
                 metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
             }
+            // Game Modes - text format with / separators (after genres)
+            if (expanded.gameModes && expanded.gameModes.length > 0) {
+                const bullet = metaHtml ? '<span class="text-base-content/30">•</span> ' : '';
+                const gameModesHtml = expanded.gameModes.map((gm, i) =>
+                    `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-game-mode', {detail: {gameModeId: '${gm.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(gm.name)}">${this._escapeHtml(gm.name)}</button>${i < expanded.gameModes.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
+                ).join('');
+                metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="game-modes">${gameModesHtml}</span></span>`;
+            }
             // Playtime (HLTB)
             const playtime = game.pt;  // Main story hours
             if (playtime !== null && playtime !== undefined) {
@@ -578,6 +586,9 @@ class GameListRenderer {
         const genresHtml = expanded.genres.map((g, i) =>
             `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '${g.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(g.name)}">${this._escapeHtml(g.name)}</button>${i < expanded.genres.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
         ).join('');
+        const gameModesHtml = (expanded.gameModes || []).map((gm, i) =>
+            `<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-game-mode', {detail: {gameModeId: '${gm.id}', gameId: '${game.id}'} }))" title="${this._escapeHtml(gm.name)}">${this._escapeHtml(gm.name)}</button>${i < expanded.gameModes.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
+        ).join('');
         const globalRankHtml = showGlobalRank ? `<span class="game-row-global-rank text-xs text-base-content/50 tabular-nums">(#${game.r})</span>` : '';
         const playedButtonHtml = this._renderPlayedButtonString(game);
         const playedContainerHtml = playedButtonHtml ? `<div class="w-12 min-w-12 max-w-12 shrink-0 flex items-center justify-center">${playedButtonHtml}</div>` : '';
@@ -591,6 +602,11 @@ class GameListRenderer {
         if (expanded.genres.length > 0) {
             const bullet = hoverRowHtml ? '<span class="text-base-content/30">•</span> ' : '';
             hoverRowHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
+        }
+        // Game Modes (after genres)
+        if (expanded.gameModes && expanded.gameModes.length > 0) {
+            const bullet = hoverRowHtml ? '<span class="text-base-content/30">•</span> ' : '';
+            hoverRowHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="game-modes">${gameModesHtml}</span></span>`;
         }
         // Playtime (HLTB)
         const playtime = game.pt;
@@ -722,6 +738,15 @@ class GameListRenderer {
             metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
         }
 
+        // Game Modes (all)
+        if (expanded.gameModes && expanded.gameModes.length > 0) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            const gameModesHtml = expanded.gameModes.map((gm, i) =>
+                `${this._escapeHtml(gm.name)}${i < expanded.gameModes.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
+            ).join('');
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="game-modes">${gameModesHtml}</span></span>`;
+        }
+
         // Playtime
         const playtime = game.pt;
         if (playtime !== null && playtime !== undefined) {
@@ -843,6 +868,15 @@ class GameListRenderer {
                 `${this._escapeHtml(g.name)}${i < expanded.genres.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
             ).join('');
             metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
+        }
+
+        // Game Modes (all)
+        if (expanded.gameModes && expanded.gameModes.length > 0) {
+            const bullet = metaHtml ? '<span class="text-base-content/30">\u2022</span> ' : '';
+            const gameModesHtml = expanded.gameModes.map((gm, i) =>
+                `${this._escapeHtml(gm.name)}${i < expanded.gameModes.length - 1 ? '<span class="text-base-content/30"> / </span>' : ''}`
+            ).join('');
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="game-modes">${gameModesHtml}</span></span>`;
         }
 
         // Playtime

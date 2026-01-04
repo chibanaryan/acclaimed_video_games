@@ -216,6 +216,9 @@
         {# Series Filter #}
         {% include 'games/includes/_mobile_filter_series.html' %}
 
+        {# Game Mode Filter #}
+        {% include 'games/includes/_mobile_filter_game_modes.html' %}
+
         {# HLTB Playtime Filter #}
         <div class="pb-3 border-b border-base-100"
              x-data="{ expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_hltb') || 'true') }"

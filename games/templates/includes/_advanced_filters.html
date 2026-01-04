@@ -7,6 +7,7 @@
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 {% if series_list %}{{ series_list|json_script:"series-data" }}{% else %}<script id="series-data" type="application/json">[]</script>{% endif %}
+{% if game_modes_list %}{{ game_modes_list|json_script:"game-modes-data" }}{% else %}<script id="game-modes-data" type="application/json">[]</script>{% endif %}
 {# Synchronous script to set initial filter visibility based on localStorage - prevents layout shift #}
 <script nonce="{{ csp_nonce }}">
 (function() {
@@ -15,6 +16,7 @@
     var genresExpanded = localStorage.getItem('genresExpanded') !== 'false';
     var platformsExpanded = localStorage.getItem('platformsExpanded') !== 'false';
     var seriesExpanded = localStorage.getItem('seriesExpanded') !== 'false';
+    var gameModesExpanded = localStorage.getItem('gameModesExpanded') !== 'false';
     var hltbExpanded = localStorage.getItem('hltbExpanded') !== 'false';
     // Add CSS to show/hide filter sections based on initial state
     var style = document.createElement('style');
@@ -23,6 +25,7 @@
                         '[data-filter-init="genres"]{display:' + (genresExpanded ? 'block' : 'none') + '!important}' +
                         '[data-filter-init="platforms"]{display:' + (platformsExpanded ? 'block' : 'none') + '!important}' +
                         '[data-filter-init="series"]{display:' + (seriesExpanded ? 'block' : 'none') + '!important}' +
+                        '[data-filter-init="game-modes"]{display:' + (gameModesExpanded ? 'block' : 'none') + '!important}' +
                         '[data-filter-init="hltb"]{display:' + (hltbExpanded ? 'block' : 'none') + '!important}';
     document.head.appendChild(style);
     // Remove the style once Alpine has initialized (allows x-show to work)
@@ -41,6 +44,7 @@
         genres: JSON.parse(document.getElementById('genres-data').textContent),
         platforms: JSON.parse(document.getElementById('platforms-data').textContent),
         seriesList: JSON.parse(document.getElementById('series-data').textContent),
+        gameModesList: JSON.parse(document.getElementById('game-modes-data').textContent),
         platformGroupCounts: {},  // Populated by client-side filtering
         initialized: false,
         isLoading: false,
@@ -48,6 +52,7 @@
         genresExpanded: localStorage.getItem('genresExpanded') !== 'false',
         platformsExpanded: localStorage.getItem('platformsExpanded') !== 'false',
         seriesExpanded: localStorage.getItem('seriesExpanded') !== 'false',
+        gameModesExpanded: localStorage.getItem('gameModesExpanded') !== 'false',
         hltbExpanded: localStorage.getItem('hltbExpanded') !== 'false',
         fetchManager: new FetchManager(),
         _debouncedUpdate: null,
@@ -169,6 +174,8 @@
                 this.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
                 const seriesParam = params.get('series');
                 this.filters.series = seriesParam ? seriesParam.split(',').filter(id => id) : [];
+                const gameModesParam = params.get('game_modes');
+                this.filters.game_modes = gameModesParam ? gameModesParam.split(',').filter(id => id) : [];
                 this.filters.hltb_mode = params.get('hltb_mode') || 'main';
                 this.filters.hltb_min = params.get('hltb_min') ? parseInt(params.get('hltb_min')) : null;
                 this.filters.hltb_max = params.get('hltb_max') ? parseInt(params.get('hltb_max')) : null;
@@ -232,6 +239,7 @@
                    this.filters.genres.length > 0 ||
                    this.filters.platforms.length > 0 ||
                    (this.filters.series && this.filters.series.length > 0) ||
+                   (this.filters.game_modes && this.filters.game_modes.length > 0) ||
                    this.filters.start !== {{ min_year }} ||
                    this.filters.end !== {{ max_year }} ||
                    this.filters.played ||
@@ -313,6 +321,7 @@
             this.filters.genres = f.genres || [];
             this.filters.platforms = f.platforms || [];
             this.filters.series = f.series || [];
+            this.filters.game_modes = f.game_modes || [];
             this.filters.sort = f.sort || 'rank';
             this.filters.played = f.played || '';
             this.filters.hltb_mode = f.hltb_mode || 'main';
@@ -380,6 +389,7 @@
                             genres: this.filters.genres,
                             platforms: this.filters.platforms,
                             series: this.filters.series,
+                            game_modes: this.filters.game_modes,
                             sort: this.filters.sort,
                             sortDirection: this.filters.sortDirection,
                             played: this.filters.played,
@@ -507,6 +517,7 @@
             const platformLabel = this._buildPlatformSegment();
             let genreLabel = '';
             let seriesLabel = '';
+            let gameModeLabel = '';
 
             // If genres are selected, fold them into the title
             if (this.filters.genres && this.filters.genres.length > 0) {
@@ -524,6 +535,14 @@
                 const series = this.seriesList.find(s => String(s.id) === String(this.filters.series[0]));
                 if (series) {
                     seriesLabel = series.name;
+                }
+            }
+
+            // If exactly one game mode is selected, use it as the primary label
+            if (this.filters.game_modes && this.filters.game_modes.length === 1) {
+                const gameMode = this.gameModesList.find(gm => String(gm.id) === String(this.filters.game_modes[0]));
+                if (gameMode) {
+                    gameModeLabel = gameMode.name;
                 }
             }
 
@@ -569,18 +588,19 @@
             const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
             let platform = platformLabel;
 
-            // Omit 'Video' prefix when genre, series, or playtime is selected
-            if ((genreLabel || seriesLabel || hltbLabel) && platform === 'Video') {
+            // Omit 'Video' prefix when genre, series, game mode, or playtime is selected
+            if ((genreLabel || seriesLabel || gameModeLabel || hltbLabel) && platform === 'Video') {
                 platform = '';
             }
 
-            // Build combined title: 'Most Acclaimed [HLTB] [Platform] [Genre] [Series] Games of [time]'
+            // Build combined title: 'Most Acclaimed [HLTB] [Platform] [Genre] [Series] [GameMode] Games of [time]'
             // HLTB comes first (matches server-side ordering)
             let titleParts = 'Most Acclaimed';
             if (hltbLabel) titleParts += hltbLabel;  // HLTB first (hltbLabel has leading space)
             if (platform) titleParts += ' ' + platform;
             if (genreLabel) titleParts += genreLabel;  // genreLabel already has leading space
             if (seriesLabel) titleParts += ' ' + seriesLabel;
+            if (gameModeLabel) titleParts += ' ' + gameModeLabel;
             titleParts += ' Games' + timeSuffix;
 
             // Add game status suffix
@@ -639,6 +659,8 @@
                     this.filters.platforms = itemIds;
                 } else if (type === 'series') {
                     this.filters.series = itemIds;
+                } else if (type === 'game_modes') {
+                    this.filters.game_modes = itemIds;
                 }
             }
             if (this.initialized) {
@@ -674,6 +696,12 @@
             this.$dispatch('series-reset');
             if (this.initialized) this.debouncedFilterUpdate();
         },
+        resetGameModes() {
+            this.filters.game_modes = [];
+            // Dispatch event to update the game mode filter component
+            this.$dispatch('game-mode-reset');
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
         calculateHltbPreset(min, max) {
             // Calculate preset from min/max values
             if (min === null && max === null) return '';
@@ -701,6 +729,7 @@
             this.filters.genres = [];
             this.filters.platforms = [];
             this.filters.series = [];
+            this.filters.game_modes = [];
             this.filters.played = '';
             this.filters.sort = 'rank';
             this.filters.hltb_mode = 'main';
@@ -715,6 +744,7 @@
             this.$dispatch('platforms-reset');
             this.$dispatch('genres-reset');
             this.$dispatch('series-reset');
+            this.$dispatch('game-mode-reset');
             this.$dispatch('year-reset');
             window.dispatchEvent(new CustomEvent('hltb-reset'));
             if (this.initialized) this.debouncedFilterUpdate();
@@ -999,6 +1029,11 @@
                     window.dispatchEvent(new CustomEvent('series-counts-update', { detail: state.facets.series }));
                 }
 
+                // Game mode counts
+                if (state.facets.gameModes) {
+                    window.dispatchEvent(new CustomEvent('game-mode-counts-update', { detail: state.facets.gameModes }));
+                }
+
                 // Rank distribution
                 if (state.facets.rankDistribution) {
                     window.dispatchEvent(new CustomEvent('rank-distribution-update', { detail: state.facets.rankDistribution }));
@@ -1045,6 +1080,11 @@
             // Series counts
             if (result.facets.series) {
                 window.dispatchEvent(new CustomEvent('series-counts-update', { detail: result.facets.series }));
+            }
+
+            // Game mode counts
+            if (result.facets.gameModes) {
+                window.dispatchEvent(new CustomEvent('game-mode-counts-update', { detail: result.facets.gameModes }));
             }
 
             // Rank distribution
@@ -1098,6 +1138,17 @@
                     window.dispatchEvent(new CustomEvent('series-counts-update', { detail: seriesCounts }));
                 } catch (e) {
                     console.error('Error parsing series counts:', e);
+                }
+            }
+
+            // Game mode counts (if available)
+            const gameModeCountsEl = document.getElementById('game-mode-counts-update');
+            if (gameModeCountsEl) {
+                try {
+                    const gameModeCounts = JSON.parse(gameModeCountsEl.textContent);
+                    window.dispatchEvent(new CustomEvent('game-mode-counts-update', { detail: gameModeCounts }));
+                } catch (e) {
+                    console.error('Error parsing game mode counts:', e);
                 }
             }
         },
@@ -1230,6 +1281,7 @@
                 const platformLabel = this.buildPlatformSegment();
                 let genreLabel = '';
                 let seriesLabel = '';
+                let gameModeLabel = '';
 
                 // If genres are selected, fold them into the title
                 if (filters.genres && filters.genres.length > 0) {
@@ -1250,6 +1302,18 @@
                         const series = seriesList.find(s => String(s.id) === String(filters.series[0]));
                         if (series) {
                             seriesLabel = series.name;
+                        }
+                    }
+                }
+
+                // If exactly one game mode is selected, fold it into the title
+                if (filters.game_modes && filters.game_modes.length === 1) {
+                    const gameModeDataEl = document.getElementById('game-modes-data');
+                    if (gameModeDataEl) {
+                        const gameModesList = JSON.parse(gameModeDataEl.textContent);
+                        const gameMode = gameModesList.find(gm => String(gm.id) === String(filters.game_modes[0]));
+                        if (gameMode) {
+                            gameModeLabel = gameMode.name;
                         }
                     }
                 }
@@ -1296,18 +1360,19 @@
                 const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
                 let platform = platformLabel;
 
-                // Omit 'Video' prefix when genre, series, or playtime is selected
-                if ((genreLabel || seriesLabel || hltbLabel) && platform === 'Video') {
+                // Omit 'Video' prefix when genre, series, game mode, or playtime is selected
+                if ((genreLabel || seriesLabel || gameModeLabel || hltbLabel) && platform === 'Video') {
                     platform = '';
                 }
 
-                // Build combined title: 'Most Acclaimed [HLTB] [Platform] [Genre] [Series] Games of [time]'
+                // Build combined title: 'Most Acclaimed [HLTB] [Platform] [Genre] [Series] [GameMode] Games of [time]'
                 // HLTB comes first (matches server-side ordering)
                 let titleParts = 'Most Acclaimed';
                 if (hltbLabel) titleParts += hltbLabel;  // HLTB first (hltbLabel has leading space)
                 if (platform) titleParts += ' ' + platform;
                 if (genreLabel) titleParts += genreLabel;
                 if (seriesLabel) titleParts += ' ' + seriesLabel;
+                if (gameModeLabel) titleParts += ' ' + gameModeLabel;
                 titleParts += ' Games' + timeSuffix;
 
                 // Add game status suffix
@@ -1354,7 +1419,7 @@
             <button type="button" class="btn btn-primary btn-sm shrink-0" @click="filterOpen = true">
                 <span class="mdi mdi-tune"></span>
                 Filters
-                <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || (filters.series && filters.series.length > 0) || filters.start !== {{ min_year }} || filters.end !== {{ max_year }} || filters.hltb_preset || filters.hltb_min !== null">
+                <template x-if="filters.q || filters.genres.length > 0 || filters.platforms.length > 0 || (filters.series && filters.series.length > 0) || (filters.game_modes && filters.game_modes.length > 0) || filters.start !== {{ min_year }} || filters.end !== {{ max_year }} || filters.hltb_preset || filters.hltb_min !== null">
                     <span class="badge badge-xs badge-secondary">!</span>
                 </template>
             </button>
@@ -1635,6 +1700,29 @@
                          @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
                          @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
                         {% include 'includes/_series_filter.html' %}
+                    </div>
+                </div>
+                {% endif %}
+                {% if game_modes_list %}
+                {# Game Mode filter - Flat list with search #}
+                <div class="mt-4 pt-3 border-t border-base-100" :class="gameModesExpanded ? 'mb-3' : 'mb-1'">
+                    <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="gameModesExpanded = !gameModesExpanded; localStorage.setItem('gameModesExpanded', gameModesExpanded)">
+                        <span class="mdi mdi-account-group text-xl text-accent"></span>
+                        <span class="font-bold text-base">Game Mode</span>
+                        <span class="mdi text-base-content/60 ml-1"
+                              :class="gameModesExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetGameModes()" title="Clear game mode filter" x-cloak x-show="filters.game_modes && filters.game_modes.length > 0">
+                            <span class="mdi mdi-close text-xs"></span>
+                            <span class="text-xs">Clear</span>
+                        </button>
+                    </div>
+                    <div x-show="gameModesExpanded"
+                         x-collapse
+                         data-filter-init="game-modes"
+                         data-filter-type="game_modes"
+                         @filter-changed="handleFilterChange($event.detail.type, $event.detail.items)"
+                         @filter-update="handleFilterChange($event.detail.type, $event.detail.items)">
+                        {% include 'includes/_game_mode_filter.html' %}
                     </div>
                 </div>
                 {% endif %}

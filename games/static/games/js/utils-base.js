@@ -224,6 +224,12 @@ function buildFilterParams(filters, options = {}) {
         ).filter(id => id !== null && id !== undefined);
         if (seriesIds.length > 0) params.set('series', seriesIds.join(','));
     }
+    if (filters.game_modes && filters.game_modes.length) {
+        const gameModeIds = filters.game_modes.map(gm =>
+            (typeof gm === 'object' && gm !== null && gm.id !== undefined) ? gm.id : gm
+        ).filter(id => id !== null && id !== undefined);
+        if (gameModeIds.length > 0) params.set('game_modes', gameModeIds.join(','));
+    }
     if (filters.sort && filters.sort !== 'rank') params.set('sort', filters.sort);
     if (filters.sortDirection && filters.sortDirection !== 'asc') params.set('dir', filters.sortDirection);
     if (filters.played) params.set('played', filters.played);

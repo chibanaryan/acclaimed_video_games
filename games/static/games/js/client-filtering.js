@@ -140,6 +140,7 @@ class ClientSideFiltering {
             genreOption: 'any',  // Single-select mode always uses 'any'
             platforms: (filters.platforms || []).map(id => parseInt(id, 10)),
             series: (filters.series || []).map(id => parseInt(id, 10)),
+            game_modes: (filters.game_modes || []).map(id => parseInt(id, 10)),
             start: filters.start || null,
             end: filters.end || null,
             sort: filters.sort || 'rank',

@@ -510,7 +510,8 @@ def _compute_game_data_version():
     # v7: Added 'pt' (playtime) field for HLTB filtering
     # v8: Added 'ptc' (playtime_completionist) field for HLTB 100% filtering
     # v9: Updated HLTB bucket boundaries (short: 0-10h, medium: 10-30h, long: 30+h)
-    SCHEMA_VERSION = "9"
+    # v10: Added 'gm' (game_modes) field and game_modes reference data
+    SCHEMA_VERSION = "10"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()
@@ -522,13 +523,16 @@ def _compute_game_data_version():
     # Get series count (changes if series are added/removed)
     series_count = models.Series.objects.count()
 
+    # Get game mode count (changes if game modes are added/removed)
+    game_mode_count = models.WikipediaGameMode.objects.count()
+
     # Count games with series assignments
     games_with_series = models.Game.objects.filter(series__isnull=False).count()
 
     # Combine into version string and hash it
     version_string = (
         f"{SCHEMA_VERSION}:{game_modified}:{genre_count}"
-        f":{series_count}:{games_with_series}"
+        f":{series_count}:{games_with_series}:{game_mode_count}"
     )
     return hashlib.md5(version_string.encode()).hexdigest()[:12]
 
@@ -560,10 +564,11 @@ class GameAllDataView(APIView):
     {
         "version": "abc123def456",
         "data": {
-            "games": [{id, n, s, r, y, a, dv, p, g, sr, lc}, ...],
+            "games": [{id, n, s, r, y, a, dv, p, g, sr, gm, lc}, ...],
             "developers": {id: {n, pa, s}, ...},
             "platforms": {id: {n, c, ys, ye}, ...},
-            "genres": [{id, n, s, p, l, d}, ...]
+            "genres": [{id, n, s, p, l, d}, ...],
+            "game_modes": {id: {n, s}, ...}
         }
     }
     """
@@ -581,6 +586,7 @@ class GameAllDataView(APIView):
                 "developers__parent",
                 "platforms",
                 "wikipedia_genres",
+                "wikipedia_game_modes",
                 "series",
             )
             .with_list_count()
@@ -592,6 +598,7 @@ class GameAllDataView(APIView):
         developers_dict = {}
         platforms_dict = {}
         series_dict = {}
+        game_modes_dict = {}
 
         for game in games:
             # Collect developer IDs and build developer reference data
@@ -641,6 +648,16 @@ class GameAllDataView(APIView):
                         "s": s.slug,
                     }
 
+            # Collect game mode IDs and build game modes reference data
+            game_mode_ids = []
+            for gm in game.wikipedia_game_modes.all():
+                game_mode_ids.append(gm.id)
+                if gm.id not in game_modes_dict:
+                    game_modes_dict[gm.id] = {
+                        "n": gm.name,
+                        "s": gm.slug,
+                    }
+
             # Get artwork ID from primary IGDB data
             artwork_id = None
             if game.primary_igdb_game_data:
@@ -670,6 +687,7 @@ class GameAllDataView(APIView):
                     "p": platform_ids,
                     "g": genre_ids,
                     "sr": series_ids,
+                    "gm": game_mode_ids,  # Game mode IDs
                     "lc": game.list_count,  # List count for display
                     "pt": playtime,  # Main story playtime in hours from HLTB
                     "ptc": playtime_completionist,  # Completionist playtime
@@ -703,6 +721,7 @@ class GameAllDataView(APIView):
                     "platforms": platforms_dict,
                     "genres": genres_data,
                     "series": series_dict,
+                    "game_modes": game_modes_dict,
                 },
             }
         )
