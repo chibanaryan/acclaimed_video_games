@@ -6,6 +6,7 @@
 
 ## 2026-01-04
 
+- Refactor GameListRenderer to extend BaseMediaListRenderer (code reuse with BookListRenderer)
 - Add books/ app skeleton with URL routing for multi-media platform expansion
 - Add Open Library API client for book metadata (search, ISBN lookup, cover images)
 - Add Hardcover GraphQL API client as optional secondary book metadata source

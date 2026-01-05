@@ -5,6 +5,7 @@
  * Templates are defined in Django and included as <template> elements.
  * This ensures a single source of truth for HTML structure.
  *
+ * Extends BaseMediaListRenderer from core.
  * Supports Load More pattern and game highlighting.
  */
 
@@ -15,18 +16,12 @@
  *   const renderer = new GameListRenderer(filterEngine);
  *   renderer.render(games, container, { showRank: 'filtered' });
  */
-class GameListRenderer {
+class GameListRenderer extends BaseMediaListRenderer {
     /**
      * @param {GameFilterEngine} filterEngine - Engine with reference data
      */
     constructor(filterEngine) {
-        this.engine = filterEngine;
-        this.PAGE_SIZE = 100;
-        this.currentPage = 1;
-        this.currentGames = [];
-        this.highlightId = null;
-        this._csrfToken = null;
-        this._templates = null;
+        super(filterEngine);
     }
 
     /**
@@ -203,9 +198,10 @@ class GameListRenderer {
     }
 
     /**
-     * Initialize templates from DOM
+     * Initialize templates from DOM (game-specific templates)
      * Called lazily on first render
-     * @private
+     * @protected
+     * @override
      */
     _initTemplates() {
         if (this._templates) return;
@@ -224,16 +220,6 @@ class GameListRenderer {
         }
     }
 
-    /**
-     * Get CSRF token from cookie
-     * @private
-     */
-    _getCsrfToken() {
-        if (this._csrfToken) return this._csrfToken;
-        const match = document.cookie.match(/csrftoken=([^;]+)/);
-        this._csrfToken = match ? match[1] : '';
-        return this._csrfToken;
-    }
 
     /**
      * Check if a game is marked as played
@@ -261,18 +247,6 @@ class GameListRenderer {
         return 'none';
     }
 
-    /**
-     * Fill a data slot with text content
-     * @private
-     */
-    _fillSlot(container, slotName, value) {
-        const el = container.querySelector(`[data-slot="${slotName}"]`);
-        if (!el) return null;
-        if (value !== undefined && value !== null) {
-            el.textContent = value;
-        }
-        return el;
-    }
 
     /**
      * Render the game status button by cloning template
@@ -394,7 +368,8 @@ class GameListRenderer {
 
     /**
      * Render a single game row (desktop version) using DOM template cloning
-     * @private
+     * @protected
+     * @override
      * @returns {Element} The rendered desktop row element
      */
     _renderDesktopRow(game, index, showRank) {
@@ -684,7 +659,8 @@ class GameListRenderer {
 
     /**
      * Render a single game row (mobile version) using DOM template cloning
-     * @private
+     * @protected
+     * @override
      * @returns {Element} The rendered mobile row element
      */
     _renderMobileRow(game, index, showRank) {
@@ -906,19 +882,11 @@ class GameListRenderer {
         return div.firstElementChild;
     }
 
-    /**
-     * Escape HTML special characters
-     * @private
-     */
-    _escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text || '';
-        return div.innerHTML;
-    }
 
     /**
      * Render a single grid card using DOM template cloning
-     * @private
+     * @protected
+     * @override
      * @returns {Element} The rendered grid card element
      */
     _renderGridCard(game, index, showRank) {
@@ -1118,7 +1086,7 @@ class GameListRenderer {
             viewMode = 'list'
         } = options;
 
-        this.currentGames = games;
+        this.currentItems = games;
         this.highlightId = highlightId;
         this.currentPage = 1;
         this._currentViewMode = viewMode;
@@ -1194,12 +1162,12 @@ class GameListRenderer {
         this.currentPage++;
         const start = (this.currentPage - 1) * this.PAGE_SIZE;
         const end = start + this.PAGE_SIZE;
-        const pageGames = this.currentGames.slice(start, end);
+        const pageGames = this.currentItems.slice(start, end);
 
         if (pageGames.length === 0) {
             return {
-                loaded: Math.min((this.currentPage - 1) * this.PAGE_SIZE, this.currentGames.length),
-                total: this.currentGames.length,
+                loaded: Math.min((this.currentPage - 1) * this.PAGE_SIZE, this.currentItems.length),
+                total: this.currentItems.length,
                 hasMore: false
             };
         }
@@ -1228,14 +1196,14 @@ class GameListRenderer {
             htmx.process(container);
         }
 
-        const loaded = Math.min(this.currentPage * this.PAGE_SIZE, this.currentGames.length);
-        const hasMore = loaded < this.currentGames.length && loaded < 1000; // Max 1000
+        const loaded = Math.min(this.currentPage * this.PAGE_SIZE, this.currentItems.length);
+        const hasMore = loaded < this.currentItems.length && loaded < 1000; // Max 1000
 
         return {
             loaded,
-            total: this.currentGames.length,
+            total: this.currentItems.length,
             hasMore,
-            remaining: Math.min(this.currentGames.length - loaded, 1000 - loaded)
+            remaining: Math.min(this.currentItems.length - loaded, 1000 - loaded)
         };
     }
 
@@ -1244,7 +1212,7 @@ class GameListRenderer {
      */
     reset() {
         this.currentPage = 1;
-        this.currentGames = [];
+        this.currentItems = [];
         this.highlightId = null;
     }
 
@@ -1298,16 +1266,6 @@ class GameListRenderer {
                 });
             }
         }, 300);
-    }
-
-    /**
-     * Generate result summary HTML
-     * @param {number} loaded - Number loaded
-     * @param {number} total - Total count
-     * @returns {string} HTML string
-     */
-    getResultSummaryHtml(loaded, total) {
-        return `Showing <span id="loaded-count" class="loaded-count-value">${loaded.toLocaleString()}</span> of ${total.toLocaleString()}`;
     }
 
     /**
