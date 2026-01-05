@@ -1,19 +1,20 @@
 """
 Game-specific template filters and tags.
 
-For shared filters (pagination_pages, from_now, tojson, etc.), use:
-    {% load core_filters %}
-
 This module provides game-specific utilities like platform icons, genre icons,
 list type badges, and other game-related template helpers.
+
+NOTE: This taglib also includes common filters from core_filters for convenience.
+Templates only need to load game_filters to access both game-specific filters
+and common filters like from_now, tojson, pagination_pages, etc.
+Alternatively, use {% load core_filters %} for just the common filters.
 """
 
 from django import template
 
 from games import constants
 
-# Re-export shared filters for backward compatibility
-# Templates using {% load game_filters %} can continue to use these
+# Import shared filters to make them available via {% load game_filters %}
 from core.templatetags.core_filters import (
     format_decade,
     format_duration,
@@ -26,7 +27,8 @@ from core.templatetags.core_filters import (
 
 register = template.Library()
 
-# Re-register the shared filters/tags so they work with {% load game_filters %}
+# Register shared filters/tags so they work with {% load game_filters %}
+# This allows templates to use one load directive for all game-related functionality
 register.filter("from_now", from_now)
 register.filter("tojson", tojson)
 register.filter("format_duration", format_duration)

@@ -35,7 +35,7 @@ from core.models import User
 from games import config, constants, models, utils
 from games.services.percentile_service import calculate_percentile
 from games.forms import ImportForm, ContactForm
-from games.mixins import HTMXPartialMixin, RobustPaginationMixin
+from core.mixins import HTMXPartialMixin, RobustPaginationMixin
 
 
 def _get_year_bounds():

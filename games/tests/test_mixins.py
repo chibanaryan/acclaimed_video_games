@@ -4,7 +4,7 @@ from django.test import RequestFactory, TestCase
 from django.views.generic import ListView
 
 from games import models
-from games.mixins import HTMXPartialMixin, RobustPaginationMixin
+from core.mixins import HTMXPartialMixin, RobustPaginationMixin
 
 
 class RobustPaginationMixinTest(TestCase):
