@@ -30,9 +30,12 @@ if SENTRY_DSN and not TEST_MODE:
 # Core Django settings
 DEBUG = env("DEBUG", default=False)  # Default to True for development
 
+# Feature flags - Books app is in development, only show in DEBUG/TEST mode
+BOOKS_ENABLED = DEBUG or TEST_MODE
+
 SECRET_KEY = env(
     "SECRET_KEY",
-    default="django-insecure-dev-key-change-in-production" if DEBUG else None,
+    default="django-insecure-dev-key-change-in-production" if (DEBUG or TEST_MODE) else None,
 )  # Required - no default for security in production
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -338,7 +341,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
 X_FRAME_OPTIONS = "DENY"  # Prevent clickjacking
 
 # Production-only security settings (require HTTPS)
-if not DEBUG:
+# Disabled in TEST_MODE to allow test client without HTTPS
+if not DEBUG and not TEST_MODE:
     SECURE_HSTS_SECONDS = 31536000  # 1 year - enable HTTP Strict Transport Security
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True

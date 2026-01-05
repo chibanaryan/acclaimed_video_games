@@ -6,7 +6,7 @@
 <div class="book-row book-card-mobile desktop:hidden grid items-center gap-3 p-2 bg-base-200 rounded-lg hover:bg-base-100 transition-colors mb-2 cursor-pointer {% if book and highlight and book.id == highlight %}is-highlighted{% endif %}"
      {% if book %}id="book-{{ book.id }}-mobile"{% endif %}
      data-slot="root"
-     {% if book %}onclick="window.location.href='{% url 'book-detail' slug=book.slug %}'"{% endif %}
+     {% if book %}onclick="window.location.href='{% url 'books:book-detail' slug=book.slug %}'"{% endif %}
      style="grid-template-columns: {% if not hide_read_button and user.is_authenticated or not book %}auto {% endif %}auto 1fr;">
 
     {# Read button - only render container if authenticated (server) or for JS template cloning #}

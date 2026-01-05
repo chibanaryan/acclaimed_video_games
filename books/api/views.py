@@ -311,7 +311,7 @@ class BookSearchAPIView(APIView):
                     "slug": book.slug,
                     "year_published": book.year_published,
                     "rank": book.rank,
-                    "cover_image_url": book.cover_image_url,
+                    "cover_image_url": book.thumbnail,
                 }
             )
 
@@ -373,7 +373,7 @@ class UnifiedBookSearchView(APIView):
                 "slug": book.slug,
                 "year_published": book.year_published,
                 "rank": book.rank,
-                "cover_image_url": book.cover_image_url,
+                "cover_image_url": book.thumbnail,
             }
             for book in books
         ]
