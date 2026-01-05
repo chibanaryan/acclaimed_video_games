@@ -22,8 +22,11 @@
         <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
             <button type="button"
                     class="flex items-center gap-1 text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
-                    @click="sortOpen = !sortOpen">
-                <span class="mdi mdi-sort text-base"></span>
+                    @click="sortOpen = !sortOpen"
+                    aria-label="Sort games"
+                    aria-haspopup="true"
+                    :aria-expanded="sortOpen">
+                <span class="mdi mdi-sort text-base" aria-hidden="true"></span>
                 <span class="text-sm min-w-9" x-text="
                     filters.sort === 'rank' ? 'Rank' :
                     filters.sort === 'year' ? 'Year' :
@@ -46,8 +49,9 @@
         <button type="button"
                 class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
                 @click="toggleSortDirection()"
-                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
-            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
+                :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
+            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-2 pl-2">
@@ -105,8 +109,9 @@
         <button type="button"
                 class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
                 @click="toggleSortDirection()"
-                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
-            <span class="mdi text-sm" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
+                :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
+            <span class="mdi text-sm" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-1 pl-1">
