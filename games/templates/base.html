@@ -58,8 +58,8 @@
 .mdi-bullseye-arrow::before{content:"\F08C9"}.mdi-image-filter-hdr::before{content:"\F02F5"}.mdi-wizard-hat::before{content:"\F1477"}.mdi-chess-knight::before{content:"\F0858"}.mdi-crosshairs::before{content:"\F01A3"}.mdi-car-sports::before{content:"\F07AC"}.mdi-airplane-takeoff::before{content:"\F05D5"}.mdi-basketball::before{content:"\F0806"}.mdi-puzzle::before{content:"\F0431"}.mdi-party-popper::before{content:"\F1056"}.mdi-layers::before{content:"\F0328"}.mdi-mushroom::before{content:"\F07DF"}.mdi-book-open-page-variant::before{content:"\F05DA"}
     </style>
 
-    {# HTMX - self-hosted for faster loading (no CDN latency) #}
-    <script async src="{% static 'games/js/vendor/htmx.min.js' %}" nonce="{{ csp_nonce }}"></script>
+    {# HTMX - self-hosted, deferred to reduce main-thread blocking during initial render #}
+    <script defer src="{% static 'games/js/vendor/htmx.min.js' %}" nonce="{{ csp_nonce }}"></script>
 
     {# Base Utilities - Essential functions that must be available before Alpine.js initializes #}
     <script defer src="{% static 'games/js/utils-base.min.js' %}?v=2" nonce="{{ csp_nonce }}"></script>

@@ -17,7 +17,7 @@
         if ('requestIdleCallback' in window) {
             requestIdleCallback(function() {
                 var script = document.createElement('script');
-                script.src = '{% static 'games/js/utils-loadmore.min.js' %}';
+                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=2';
                 script.defer = true;
                 script.nonce = '{{ csp_nonce }}';
                 document.head.appendChild(script);
@@ -26,7 +26,7 @@
             // Fallback for browsers without requestIdleCallback
             setTimeout(function() {
                 var script = document.createElement('script');
-                script.src = '{% static 'games/js/utils-loadmore.min.js' %}';
+                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=2';
                 script.defer = true;
                 script.nonce = '{{ csp_nonce }}';
                 document.head.appendChild(script);

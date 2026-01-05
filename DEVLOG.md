@@ -4,7 +4,9 @@
 
 - Extract 90KB inline Alpine filter component to external JS file (52KB HTML reduction, enables caching)
 - Optimize _calculateFacets(): consolidate 5 game loops into single pass (~60-70% faster facet calculation)
-- Load htmx with async instead of defer to reduce main-thread blocking (~500ms TBT improvement)
+- Change htmx from async to defer to avoid main-thread blocking during critical rendering
+- Add CSS containment (content-visibility: auto) for game rows to skip layout for off-screen elements
+- Fix Load More bug: renderer property mismatch (currentGames → currentItems)
 - Lazy-load client-side-filtering bundle via requestIdleCallback to reduce main-thread blocking (~47KB shifted to idle)
 - Increase filter init retry limit to 3 seconds to accommodate lazy-loaded scripts
 - Refactor Game model to inherit from MediaItemBase (Phase 9.1.1 complete)

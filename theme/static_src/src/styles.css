@@ -755,12 +755,16 @@
 .game-row {
   position: relative;
   transition: background-color 0.5s ease, transform 0.2s ease;
+  /* CSS containment - allows browser to skip layout for off-screen rows */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 58px; /* Approximate height for desktop rows */
 }
 
 /* Mobile: scroll offset for fixed header (60px nav + 8px breathing room) */
 @media (max-width: 1087px) {
   .game-row {
     scroll-margin-top: 68px;
+    contain-intrinsic-size: auto 80px; /* Mobile rows are taller */
   }
 }
 
@@ -1232,6 +1236,9 @@ input[type="number"] {
   /* Grid card */
   .game-card-grid {
     @apply transition-transform duration-200 cursor-pointer;
+    /* CSS containment for off-screen cards */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 200px;
   }
 
   .game-card-grid:hover {

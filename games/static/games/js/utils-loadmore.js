@@ -147,10 +147,10 @@ function getCurrentState() {
                 total = result.total;
             }
             // Get loaded count from renderer if it has state
-            if (csf.renderer && csf.renderer.currentGames && csf.renderer.currentGames.length > 0) {
+            if (csf.renderer && csf.renderer.currentItems && csf.renderer.currentItems.length > 0) {
                 loaded = Math.min(
                     csf.renderer.currentPage * csf.renderer.PAGE_SIZE,
-                    csf.renderer.currentGames.length
+                    csf.renderer.currentItems.length
                 );
             }
         }
@@ -324,7 +324,7 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
     }
 
     // Update the renderer's state to match
-    renderer.currentGames = result.games;
+    renderer.currentItems = result.games;
     renderer.currentPage = Math.ceil(newLoaded / perPage);
 
     // Update count display
@@ -561,13 +561,13 @@ function handleLoadMoreCSF(csf) {
 
     // Initialize renderer state if not already done (taking over from server-rendered content)
     const renderer = csf.renderer;
-    if (!renderer.currentGames || renderer.currentGames.length === 0) {
+    if (!renderer.currentItems || renderer.currentItems.length === 0) {
         // Get the filtered games from the engine
         const result = csf.applyFilters(filters);
         if (!result || !result.games) return;
 
         // Set the renderer's state based on what's already loaded
-        renderer.currentGames = result.games;
+        renderer.currentItems = result.games;
         renderer.currentPage = Math.ceil(loaded / renderer.PAGE_SIZE);
     }
 
