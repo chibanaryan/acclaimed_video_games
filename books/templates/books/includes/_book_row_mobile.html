@@ -1,0 +1,47 @@
+{# Mobile Book Row Template #}
+{# Props: book (optional), show_rank ('alltime'|'filtered'|'none'), index (filtered rank), highlight (book ID) #}
+{% load book_filters static humanize %}
+<div class="book-row-mobile desktop:hidden flex items-start gap-3 py-2 px-2 {% if book and highlight and book.id == highlight %}is-highlighted{% endif %}"
+     {% if book %}id="book-{{ book.id }}-mobile"{% endif %}
+     data-slot="root">
+    {# Cover with rank overlay #}
+    <div class="relative flex-shrink-0">
+        <a {% if book %}href="{% url 'books:book-detail' slug=book.slug %}"{% endif %} data-slot="cover-link">
+            <img {% if book and book.thumbnail %}src="{{ book.thumbnail }}"{% endif %}
+                 width="60" height="90" loading="lazy" decoding="async"
+                 class="book-cover-mobile rounded shadow-sm"
+                 alt="{% if book %}{{ book.name }}{% endif %}"
+                 data-slot="cover">
+        </a>
+        {% if show_rank != 'none' or not book %}
+        <div class="absolute -top-1 -left-1 bg-accent text-accent-content text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center" data-slot="rank-badge">
+            <span data-slot="rank">{% if book %}{% if show_rank == 'filtered' %}{{ index|default:book.rank }}{% else %}{{ book.rank }}{% endif %}{% endif %}</span>
+        </div>
+        {% endif %}
+    </div>
+    {# Content #}
+    <div class="flex-1 min-w-0">
+        <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+                <a {% if book %}href="{% url 'books:book-detail' slug=book.slug %}"{% endif %} class="book-title font-bold link link-hover line-clamp-2" data-slot="title-link">
+                    <span data-slot="name">{% if book %}{{ book.name }}{% endif %}</span>
+                </a>
+                <div class="text-sm text-base-content/70">
+                    <span data-slot="year">{% if book %}{{ book.year_published }}{% endif %}</span>{% if book and book.primary_author %} • <span data-slot="author">{{ book.primary_author.name }}</span>{% endif %}
+                </div>
+            </div>
+            {# Read button #}
+            {% if not hide_read_button and user.is_authenticated or not book %}
+            <div class="flex-shrink-0" data-slot="read-button">
+                {% if book %}
+                    {% include 'books/includes/_read_button.html' with is_read=book.is_read_by_user is_want_to_read=book.is_want_to_read_by_user size="sm" %}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {# Genres and metadata #}
+        <div class="text-xs text-base-content/60 mt-1 line-clamp-1" data-slot="meta-row">
+            {% if book and book.genres.count > 0 %}<span data-slot="genres">{% for g in book.genres.all %}{{ g.name }}{% if not forloop.last %} / {% endif %}{% endfor %}</span>{% endif %}{% if book and book.page_count %}{% if book.genres.count > 0 %} • {% endif %}<span data-slot="pages">{{ book.page_count|format_page_count }}</span>{% endif %}
+        </div>
+    </div>
+</div>

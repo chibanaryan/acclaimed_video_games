@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load book_filters %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}{{ book.name }} - Acclaimed Books{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+    {# Breadcrumb #}
+    <div class="text-sm breadcrumbs mb-4">
+        <ul>
+            <li><a href="{% url 'books:home' %}">Books</a></li>
+            <li>{{ book.name }}</li>
+        </ul>
+    </div>
+
+    {# Main content grid #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {# Cover and actions column #}
+        <div class="flex flex-col items-center md:items-start gap-4">
+            {# Cover image #}
+            {% if book.image %}
+            <img src="{{ book.image }}" alt="{{ book.name }}"
+                 class="rounded-lg shadow-lg max-w-48">
+            {% else %}
+            <div class="w-48 h-72 bg-base-300 rounded-lg flex items-center justify-center">
+                <span class="mdi mdi-book-open-page-variant text-4xl text-base-content/30"></span>
+            </div>
+            {% endif %}
+
+            {# Rank badge #}
+            <div class="stats shadow">
+                <div class="stat">
+                    <div class="stat-title">Rank</div>
+                    <div class="stat-value text-accent">#{{ book.rank }}</div>
+                    <div class="stat-desc">of {{ total_book_count|intcomma }} books</div>
+                </div>
+            </div>
+
+            {# Read/Want to read buttons #}
+            {% if user.is_authenticated %}
+            <div class="flex gap-2">
+                {% include 'books/includes/_read_button.html' with is_read=is_read is_want_to_read=is_want_to_read book=book %}
+            </div>
+            {% endif %}
+        </div>
+
+        {# Details column #}
+        <div class="md:col-span-2">
+            <h1 class="text-3xl font-bold mb-2">{{ book.name }}</h1>
+
+            {# Authors #}
+            {% with display_authors=book.get_display_authors %}
+            {% if display_authors %}
+            <p class="text-lg text-base-content/80 mb-4">
+                by {% for author in display_authors %}{% if author.slug %}<a href="{% url 'books:author-detail' slug=author.slug %}" class="link link-hover">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </p>
+            {% endif %}
+            {% endwith %}
+
+            {# Metadata pills #}
+            <div class="flex flex-wrap gap-2 mb-4">
+                {% if book.year_published %}
+                <a href="{% url 'books:home' %}?start={{ book.year_published }}&end={{ book.year_published }}"
+                   class="badge badge-lg badge-outline">{{ book.year_published }}</a>
+                {% endif %}
+
+                {% if book.page_count %}
+                <span class="badge badge-lg badge-outline">{{ book.page_count|format_page_count }}</span>
+                {% endif %}
+
+                {% if book.series %}
+                <a href="{% url 'books:home' %}?series={{ book.series.id }}"
+                   class="badge badge-lg badge-primary badge-outline">
+                    {{ book.series.name }}{% if book.series_position %} #{{ book.series_position }}{% endif %}
+                </a>
+                {% endif %}
+            </div>
+
+            {# Genres #}
+            {% if book.genres.count > 0 %}
+            <div class="mb-4">
+                <h3 class="text-sm font-semibold text-base-content/60 mb-2">Genres</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for genre in book.genres.all %}
+                    <a href="{% url 'books:home' %}?genres={{ genre.id }}"
+                       class="badge badge-outline hover:badge-primary">{{ genre.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# Description #}
+            {% if book.description %}
+            <div class="mb-6">
+                <h3 class="text-sm font-semibold text-base-content/60 mb-2">Description</h3>
+                <div class="prose prose-sm max-w-none">
+                    {{ book.description|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            {# External links #}
+            <div class="flex flex-wrap gap-2 mb-6">
+                {% if book.primary_goodreads_book_data and book.primary_goodreads_book_data.goodreads_book_url %}
+                <a href="{{ book.primary_goodreads_book_data.goodreads_book_url }}" target="_blank" rel="noopener"
+                   class="btn btn-sm btn-outline gap-2">
+                    <span class="mdi mdi-book"></span>
+                    Goodreads
+                </a>
+                {% endif %}
+                {% if book.primary_wikipedia_book_data and book.primary_wikipedia_book_data.wikipedia_url %}
+                <a href="{{ book.primary_wikipedia_book_data.wikipedia_url }}" target="_blank" rel="noopener"
+                   class="btn btn-sm btn-outline gap-2">
+                    <span class="mdi mdi-wikipedia"></span>
+                    Wikipedia
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Other books in series #}
+    {% if series_books %}
+    <div class="mt-8">
+        <h2 class="text-xl font-bold mb-4">More in {{ book.series.name }}</h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {% for series_book in series_books %}
+            <a href="{% url 'books:book-detail' slug=series_book.slug %}"
+               class="card card-compact bg-base-200 hover:bg-base-300 transition-colors">
+                <figure class="pt-4">
+                    {% if series_book.thumbnail %}
+                    <img src="{{ series_book.thumbnail }}" alt="{{ series_book.name }}"
+                         class="h-32 object-contain rounded">
+                    {% else %}
+                    <div class="w-24 h-32 bg-base-300 rounded flex items-center justify-center">
+                        <span class="mdi mdi-book text-2xl text-base-content/30"></span>
+                    </div>
+                    {% endif %}
+                </figure>
+                <div class="card-body p-3">
+                    <p class="text-sm font-medium line-clamp-2">{{ series_book.name }}</p>
+                    {% if series_book.series_position %}
+                    <p class="text-xs text-base-content/60">#{{ series_book.series_position }}</p>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# List appearances #}
+    {% if grouped_lists %}
+    <div class="mt-8">
+        <h2 class="text-xl font-bold mb-4">Appears on {{ book.lists.count }} list{{ book.lists.count|pluralize }}</h2>
+
+        {% for type_name, lists in grouped_lists %}
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-3">{{ type_name }}</h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Publication</th>
+                            <th>List</th>
+                            <th>Year</th>
+                            <th class="text-right">Rank</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in lists %}
+                        <tr>
+                            <td>{{ item.publication }}</td>
+                            <td>
+                                {% if item.url %}
+                                <a href="{{ item.url }}" target="_blank" rel="noopener" class="link link-hover">
+                                    {{ item.name }}
+                                    <span class="mdi mdi-open-in-new text-xs"></span>
+                                </a>
+                                {% else %}
+                                {{ item.name }}
+                                {% endif %}
+                            </td>
+                            <td>{{ item.year }}</td>
+                            <td class="text-right font-mono">{% if item.rank %}#{{ item.rank }}{% else %}-{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

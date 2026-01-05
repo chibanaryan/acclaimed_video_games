@@ -1,0 +1,34 @@
+{# Book Search Results - Returned by BookSearchView for HTMX search #}
+{% load book_filters %}
+<div id="book-search-results" class="divide-y divide-base-300">
+    {% for book in books %}
+    <a href="{% url 'books:book-detail' slug=book.slug %}"
+       class="flex items-center gap-3 py-2 px-3 hover:bg-base-200 transition-colors">
+        {# Cover thumbnail #}
+        {% if book.thumbnail %}
+        <img src="{{ book.thumbnail }}" alt="{{ book.name }}"
+             class="w-8 h-12 object-cover rounded flex-shrink-0">
+        {% else %}
+        <div class="w-8 h-12 bg-base-300 rounded flex items-center justify-center flex-shrink-0">
+            <span class="mdi mdi-book text-sm text-base-content/30"></span>
+        </div>
+        {% endif %}
+
+        {# Book info #}
+        <div class="flex-1 min-w-0">
+            <p class="font-medium truncate">{{ book.name }}</p>
+            <p class="text-sm text-base-content/60 truncate">
+                {% if book.authors.count > 0 %}{% for a in book.authors.all %}{{ a.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+                {% if book.year_published %} • {{ book.year_published }}{% endif %}
+            </p>
+        </div>
+
+        {# Rank badge #}
+        <span class="badge badge-sm badge-accent badge-outline flex-shrink-0">#{{ book.rank }}</span>
+    </a>
+    {% empty %}
+    <div class="py-4 px-3 text-center text-base-content/60">
+        <p>No books found matching your search.</p>
+    </div>
+    {% endfor %}
+</div>

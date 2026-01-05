@@ -79,6 +79,22 @@ For running multiple Claude Code sessions in parallel, use git worktrees for cod
 - Launch script: `./start-workers.sh` (in repo root)
 - Beads database: `.beads/` (shared across all worktrees)
 
+**Beads binary location:**
+The `bd` command is installed at `~/.local/bin/bd`. If `bd` isn't in your PATH, use the full path:
+```bash
+# Add to PATH (add to ~/.zshrc or ~/.bashrc for persistence)
+export PATH="$HOME/.local/bin:$PATH"
+
+# Or invoke directly with full path
+~/.local/bin/bd list
+```
+
+For JSONL-only mode (no SQLite database), use `--no-db`:
+```bash
+bd --no-db list
+bd --no-db create "New task"
+```
+
 **Daily startup:**
 ```bash
 ./start-workers.sh

@@ -1,0 +1,6 @@
+{# Book List Append - Used for Load More functionality #}
+{% load book_filters %}
+{% for book in books %}
+    {% include 'books/includes/_book_row_desktop.html' with book=book show_rank='alltime' %}
+    {% include 'books/includes/_book_row_mobile.html' with book=book show_rank='alltime' %}
+{% endfor %}

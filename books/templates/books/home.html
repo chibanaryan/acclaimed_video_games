@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load book_filters %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Acclaimed Books{% endblock %}
+
+{% block extra_head %}
+    {# Book status state for client-side rendering (read + want to read) #}
+    <script nonce="{{ csp_nonce }}">
+    {% if user.is_authenticated %}
+    window.readBookIds = new Set([{% for goodreads_id in read_book_ids %}{{ goodreads_id }}{% if not forloop.last %},{% endif %}{% endfor %}]);
+    window.wantToReadBookIds = new Set([{% for goodreads_id in want_to_read_book_ids %}{{ goodreads_id }}{% if not forloop.last %},{% endif %}{% endfor %}]);
+    window.isAuthenticated = true;
+    {% else %}
+    window.readBookIds = new Set();
+    window.wantToReadBookIds = new Set();
+    window.isAuthenticated = false;
+    {% endif %}
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col w-full">
+{# Hero section #}
+<div class="hero flex flex-col items-center justify-center gap-2 py-6">
+    <h1 class="text-4xl font-bold">Acclaimed Books</h1>
+    <p class="text-base text-base-content/70 max-w-md text-center">
+        The top {{ book_count|default:"1,000"|intcomma }} most recommended books across critic lists from leading publications.
+    </p>
+</div>
+
+<div class="divider my-4"></div>
+
+{# Filters #}
+<div class="mb-6">
+    <form id="book-filters" class="flex flex-wrap gap-4 items-end"
+          hx-get="{% url 'books:home' %}"
+          hx-target="#book-list-content"
+          hx-swap="outerHTML"
+          hx-push-url="true"
+          hx-trigger="change delay:300ms, submit">
+        {# Search #}
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Search</span>
+            </label>
+            <input type="text" name="q" value="{{ current_q }}"
+                   class="input input-bordered input-sm w-48"
+                   placeholder="Book title...">
+        </div>
+
+        {# Year range #}
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Year</span>
+            </label>
+            <div class="flex gap-2">
+                <input type="number" name="start" value="{{ current_start }}"
+                       min="{{ min_year }}" max="{{ max_year }}"
+                       class="input input-bordered input-sm w-20"
+                       placeholder="{{ min_year }}">
+                <span class="self-center">-</span>
+                <input type="number" name="end" value="{{ current_end }}"
+                       min="{{ min_year }}" max="{{ max_year }}"
+                       class="input input-bordered input-sm w-20"
+                       placeholder="{{ max_year }}">
+            </div>
+        </div>
+
+        {# Genre filter #}
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Genre</span>
+            </label>
+            <select name="genres" class="select select-bordered select-sm">
+                <option value="">All genres</option>
+                {% for genre in genres %}
+                <option value="{{ genre.id }}" {% if current_genres == genre.id|stringformat:"s" %}selected{% endif %}>
+                    {{ genre.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# Read status filter (authenticated users) #}
+        {% if user.is_authenticated %}
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Status</span>
+            </label>
+            <select name="read" class="select select-bordered select-sm">
+                <option value="">All books</option>
+                <option value="read" {% if current_read == 'read' %}selected{% endif %}>Read</option>
+                <option value="unread" {% if current_read == 'unread' %}selected{% endif %}>Unread</option>
+                <option value="want" {% if current_read == 'want' %}selected{% endif %}>Want to read</option>
+            </select>
+        </div>
+        {% endif %}
+
+        {# Clear filters #}
+        <a href="{% url 'books:home' %}" class="btn btn-sm btn-ghost">
+            <span class="mdi mdi-filter-off"></span>
+            Clear
+        </a>
+    </form>
+</div>
+
+{# Book list #}
+<div id="content">
+    {% include 'books/includes/_book_list_content.html' %}
+</div>
+</div>{# End flex wrapper #}
+{% endblock %}

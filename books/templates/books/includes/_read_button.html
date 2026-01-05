@@ -1,0 +1,22 @@
+{# Read Button Component #}
+{# Props: is_read (bool), is_want_to_read (bool), book (optional), size ('sm'|default) #}
+{% load book_filters %}
+<div class="read-button-container flex gap-1"
+     {% if book %}data-book-id="{{ book.id }}" data-goodreads-id="{{ book.goodreads_id }}"{% endif %}>
+    {# Read button #}
+    <button type="button"
+            class="btn {% if size == 'sm' %}btn-xs{% else %}btn-sm{% endif %} btn-circle {% if is_read %}btn-success{% else %}btn-ghost{% endif %} tooltip tooltip-right"
+            data-tip="{% if is_read %}Mark as unread{% else %}Mark as read{% endif %}"
+            data-action="toggle-read"
+            {% if not user.is_authenticated %}disabled{% endif %}>
+        <span class="mdi {% if is_read %}mdi-check-circle{% else %}mdi-check-circle-outline{% endif %}"></span>
+    </button>
+    {# Want to read button #}
+    <button type="button"
+            class="btn {% if size == 'sm' %}btn-xs{% else %}btn-sm{% endif %} btn-circle {% if is_want_to_read %}btn-warning{% else %}btn-ghost{% endif %} tooltip tooltip-right"
+            data-tip="{% if is_want_to_read %}Remove from reading list{% else %}Add to reading list{% endif %}"
+            data-action="toggle-want-to-read"
+            {% if not user.is_authenticated %}disabled{% endif %}>
+        <span class="mdi {% if is_want_to_read %}mdi-bookmark{% else %}mdi-bookmark-outline{% endif %}"></span>
+    </button>
+</div>

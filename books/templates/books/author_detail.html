@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load book_filters %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}{{ author.name }} - Acclaimed Books{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+    {# Breadcrumb #}
+    <div class="text-sm breadcrumbs mb-4">
+        <ul>
+            <li><a href="{% url 'books:home' %}">Books</a></li>
+            <li><a href="{% url 'books:author-list' %}">Authors</a></li>
+            <li>{{ author.name }}</li>
+        </ul>
+    </div>
+
+    {# Author header #}
+    <div class="flex flex-col md:flex-row gap-6 mb-8">
+        <div class="flex-1">
+            <h1 class="text-3xl font-bold mb-2">{{ author.name }}</h1>
+
+            {# Stats #}
+            <div class="stats stats-vertical md:stats-horizontal shadow mb-4">
+                <div class="stat">
+                    <div class="stat-title">Books</div>
+                    <div class="stat-value text-primary">{{ books_count }}</div>
+                </div>
+                {% if best_book %}
+                <div class="stat">
+                    <div class="stat-title">Highest Ranked</div>
+                    <div class="stat-value text-accent">#{{ best_book.rank }}</div>
+                    <div class="stat-desc">{{ best_book.name|truncatewords:5 }}</div>
+                </div>
+                {% endif %}
+                {% if user.is_authenticated and read_count %}
+                <div class="stat">
+                    <div class="stat-title">Read</div>
+                    <div class="stat-value text-success">{{ read_count }}</div>
+                    <div class="stat-desc">of {{ books_count }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {# Biography #}
+            {% if author.bio %}
+            <div class="prose prose-sm max-w-none mb-4">
+                {{ author.bio|linebreaks }}
+            </div>
+            {% endif %}
+
+            {# Birth/death dates #}
+            {% if author.birth_date or author.death_date %}
+            <p class="text-base-content/70 text-sm">
+                {% if author.birth_date %}Born: {{ author.birth_date|date:"F j, Y" }}{% endif %}
+                {% if author.death_date %} • Died: {{ author.death_date|date:"F j, Y" }}{% endif %}
+            </p>
+            {% endif %}
+
+            {# External links #}
+            <div class="flex flex-wrap gap-2 mt-4">
+                {% if author.goodreads_url %}
+                <a href="{{ author.goodreads_url }}" target="_blank" rel="noopener"
+                   class="btn btn-sm btn-outline gap-2">
+                    <span class="mdi mdi-book"></span>
+                    Goodreads
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Pen names / subsidiaries #}
+    {% if author.pen_names.exists %}
+    <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">Also Writes As</h2>
+        <div class="flex flex-wrap gap-2">
+            {% for pen_name in author.subsidiaries.all %}
+            <span class="badge badge-lg badge-outline">{{ pen_name.name }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Books by author #}
+    <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">Books by {{ author.name }}</h2>
+
+        <div class="divide-y divide-base-300">
+            {% for book in author_books %}
+            <div class="py-3 flex items-start gap-4">
+                {# Cover #}
+                <a href="{% url 'books:book-detail' slug=book.slug %}" class="flex-shrink-0">
+                    {% if book.thumbnail %}
+                    <img src="{{ book.thumbnail }}" alt="{{ book.name }}"
+                         class="w-16 h-24 object-cover rounded shadow-sm">
+                    {% else %}
+                    <div class="w-16 h-24 bg-base-300 rounded flex items-center justify-center">
+                        <span class="mdi mdi-book text-xl text-base-content/30"></span>
+                    </div>
+                    {% endif %}
+                </a>
+
+                {# Details #}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <a href="{% url 'books:book-detail' slug=book.slug %}"
+                               class="font-bold link link-hover">{{ book.name }}</a>
+                            <p class="text-sm text-base-content/70">
+                                {% if book.year_published %}{{ book.year_published }}{% endif %}
+                                {% if book.series %} • {{ book.series.name }}{% if book.series_position %} #{{ book.series_position }}{% endif %}{% endif %}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-accent badge-outline">#{{ book.rank }}</span>
+                        </div>
+                    </div>
+
+                    {# Genres #}
+                    {% if book.genres.count > 0 %}
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% for genre in book.genres.all %}
+                        <span class="badge badge-xs badge-ghost">{{ genre.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="py-8 text-center text-base-content/60">
+                <span class="mdi mdi-book-search text-4xl mb-2 block"></span>
+                <p>No books found for this author.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

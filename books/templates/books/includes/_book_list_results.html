@@ -1,0 +1,13 @@
+{# Book List Results - Inner results container for targeted HTMX updates #}
+{% load book_filters %}
+<div id="book-results" class="divide-y divide-base-300">
+    {% for book in books %}
+        {% include 'books/includes/_book_row_desktop.html' with book=book show_rank='alltime' %}
+        {% include 'books/includes/_book_row_mobile.html' with book=book show_rank='alltime' %}
+    {% empty %}
+        <div class="py-8 text-center text-base-content/60">
+            <span class="mdi mdi-book-search text-4xl mb-2 block"></span>
+            <p>No books found matching your criteria.</p>
+        </div>
+    {% endfor %}
+</div>

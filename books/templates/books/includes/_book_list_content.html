@@ -1,0 +1,50 @@
+{# Book List Content - Used for HTMX updates #}
+{% load book_filters humanize %}
+<div id="book-list-content" class="w-full">
+    {# Results count #}
+    <div class="flex items-center justify-between mb-4">
+        <p class="text-base-content/70">
+            {% if page_obj.paginator.count == 0 %}
+                No books found matching your filters.
+            {% else %}
+                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count|intcomma }} books
+            {% endif %}
+        </p>
+    </div>
+
+    {# Book list #}
+    <div id="book-results-container">
+        {% include 'books/includes/_book_list_results.html' %}
+    </div>
+
+    {# Pagination #}
+    {% if page_obj.has_other_pages %}
+    <div class="flex justify-center mt-6">
+        <div class="join">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_start %}&start={{ current_start }}{% endif %}{% if current_end %}&end={{ current_end }}{% endif %}{% if current_genres %}&genres={{ current_genres }}{% endif %}{% if current_authors %}&authors={{ current_authors }}{% endif %}"
+               class="join-item btn"
+               hx-get="?page={{ page_obj.previous_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_start %}&start={{ current_start }}{% endif %}{% if current_end %}&end={{ current_end }}{% endif %}{% if current_genres %}&genres={{ current_genres }}{% endif %}{% if current_authors %}&authors={{ current_authors }}{% endif %}"
+               hx-target="#book-list-content"
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                <span class="mdi mdi-chevron-left"></span>
+            </a>
+            {% endif %}
+            <span class="join-item btn btn-disabled">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_start %}&start={{ current_start }}{% endif %}{% if current_end %}&end={{ current_end }}{% endif %}{% if current_genres %}&genres={{ current_genres }}{% endif %}{% if current_authors %}&authors={{ current_authors }}{% endif %}"
+               class="join-item btn"
+               hx-get="?page={{ page_obj.next_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_start %}&start={{ current_start }}{% endif %}{% if current_end %}&end={{ current_end }}{% endif %}{% if current_genres %}&genres={{ current_genres }}{% endif %}{% if current_authors %}&authors={{ current_authors }}{% endif %}"
+               hx-target="#book-list-content"
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                <span class="mdi mdi-chevron-right"></span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

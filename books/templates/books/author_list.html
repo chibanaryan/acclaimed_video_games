@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load book_filters %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Authors - Acclaimed Books{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold mb-6">Authors</h1>
+
+    {# Search and filters #}
+    <div class="mb-6">
+        <form class="flex flex-wrap gap-4 items-end"
+              hx-get="{% url 'books:author-list' %}"
+              hx-target="#author-list-content"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+              hx-trigger="change delay:300ms, submit">
+            {# Search #}
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Search</span>
+                </label>
+                <input type="text" name="q" value="{{ current_q }}"
+                       class="input input-bordered input-sm w-64"
+                       placeholder="Author name...">
+            </div>
+
+            {# Sort #}
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Sort by</span>
+                </label>
+                <select name="sort" class="select select-bordered select-sm">
+                    <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name</option>
+                    <option value="books" {% if current_sort == 'books' %}selected{% endif %}>Book count</option>
+                </select>
+            </div>
+
+            {# Clear filters #}
+            <a href="{% url 'books:author-list' %}" class="btn btn-sm btn-ghost">
+                <span class="mdi mdi-filter-off"></span>
+                Clear
+            </a>
+        </form>
+    </div>
+
+    {# Author list #}
+    <div id="author-list-content">
+        {% include 'books/includes/_author_list_content.html' %}
+    </div>
+</div>
+{% endblock %}
