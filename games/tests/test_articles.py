@@ -102,6 +102,9 @@ class ArticleViewTest(TestCase):
     """Test Article views."""
 
     def setUp(self):
+        # Ensure clean state - delete any articles from other tests
+        Article.objects.all().delete()
+
         self.published = Article.objects.create(
             title="Published Article",
             slug="published-article",
@@ -188,6 +191,9 @@ class ArticleHTMXTest(TransactionTestCase):
     """
 
     def setUp(self):
+        # Ensure clean state - delete any articles from other tests
+        Article.objects.all().delete()
+
         # Create enough articles to test pagination
         for i in range(15):
             Article.objects.create(
