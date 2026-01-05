@@ -5,6 +5,11 @@
 
 {% block title %}Acclaimed Video Games{% endblock %}
 
+{% block pre_alpine %}
+    {# Filter component - Must load before Alpine.js initializes #}
+    <script defer src="{% static 'games/js/filter-component.min.js' %}?v=1" nonce="{{ csp_nonce }}"></script>
+{% endblock %}
+
 {% block extra_head %}
     {# Load More utilities - deferred with requestIdleCallback for better performance #}
     <script nonce="{{ csp_nonce }}">
