@@ -1082,19 +1082,20 @@
   /* Active nav item styling for sidebar menu */
   aside .menu li a.active,
   aside .menu li > a.active {
-    @apply bg-accent text-accent-content font-semibold border-l-2 border-accent -ml-[2px] pl-[calc(0.75rem+2px)];
+    @apply bg-primary text-primary-content font-semibold border-l-2 border-primary -ml-[2px] pl-[calc(0.75rem+2px)];
   }
 
-  /* Keep active styling on hover - subtle brightness increase for feedback */
+  /* Keep active styling on hover - match standard button hover behavior */
   aside .menu li a.active:hover,
   aside .menu li > a.active:hover {
-    @apply !bg-accent !text-accent-content brightness-110;
+    @apply !bg-primary !text-primary-content;
+    filter: brightness(0.9) saturate(1.1);
   }
 
-  /* Sidebar menu hover states - add accent color for clear feedback */
+  /* Sidebar menu hover states - use primary color for consistency */
   aside .menu li a:hover:not(.active),
   aside .menu li button:hover:not(.active) {
-    @apply bg-base-content/10 text-accent;
+    @apply bg-base-content/10 text-primary;
   }
 
   /* Ensure sidebar dropdown doesn't overflow */
@@ -1127,7 +1128,7 @@
 
   /* Active nav item styling for mobile navbar buttons */
   .navbar .btn.btn-active {
-    @apply bg-accent/20 text-accent;
+    @apply bg-primary/20 text-primary;
   }
 }
 
