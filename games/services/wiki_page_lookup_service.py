@@ -457,17 +457,19 @@ class WikiPageLookupService:
                     wikidata_id,
                     page_title,
                 )
-                return (
-                    page_title,
-                    hltb_id,
-                    steam_app_id,
-                    game_modes if game_modes else None,
-                    countries if countries else None,
-                    wikiquote_title,
-                )
             else:
                 logger.debug("No enwiki sitelink for %s", wikidata_id)
-                return None
+
+            # Return metadata even without enwiki sitelink
+            # (page_title may be None, but we still want HLTB ID, etc.)
+            return (
+                page_title,
+                hltb_id,
+                steam_app_id,
+                game_modes if game_modes else None,
+                countries if countries else None,
+                wikiquote_title,
+            )
 
         except (ValueError, KeyError) as e:
             logger.warning(
@@ -532,8 +534,8 @@ class WikiPageLookupService:
 
         Tries multiple strategies in order:
         1. Wikidata API (if wikidata_id provided)
-        2. OpenSearch with year
-        3. OpenSearch without year
+        2. OpenSearch with year (may combine with Wikidata metadata)
+        3. OpenSearch without year (may combine with Wikidata metadata)
 
         Args:
             game_name: Name of the video game
@@ -543,7 +545,8 @@ class WikiPageLookupService:
         Returns:
             PageLookupResult with page title and source
         """
-        # Try Wikidata first
+        # Try Wikidata first to get metadata (HLTB ID, etc.)
+        wikidata_metadata = None
         if wikidata_id:
             wikidata_result = self._lookup_via_wikidata(wikidata_id)
             if wikidata_result:
@@ -555,22 +558,42 @@ class WikiPageLookupService:
                     countries,
                     wikiquote_title,
                 ) = wikidata_result
-                return PageLookupResult(
-                    game_name=game_name,
-                    page_title=page_title,
-                    lookup_source=config.WIKI_LOOKUP_SOURCE_WIKIDATA,
-                    hltb_id=hltb_id,
-                    steam_app_id=steam_app_id,
-                    game_modes=game_modes,
-                    country_of_origin=countries,
-                    wikiquote_page_title=wikiquote_title,
-                )
+
+                # If Wikidata has enwiki sitelink, use it directly
+                if page_title:
+                    return PageLookupResult(
+                        game_name=game_name,
+                        page_title=page_title,
+                        lookup_source=config.WIKI_LOOKUP_SOURCE_WIKIDATA,
+                        hltb_id=hltb_id,
+                        steam_app_id=steam_app_id,
+                        game_modes=game_modes,
+                        country_of_origin=countries,
+                        wikiquote_page_title=wikiquote_title,
+                    )
+
+                # No enwiki sitelink, but save metadata to merge with OpenSearch
+                wikidata_metadata = {
+                    "hltb_id": hltb_id,
+                    "steam_app_id": steam_app_id,
+                    "game_modes": game_modes,
+                    "country_of_origin": countries,
+                    "wikiquote_page_title": wikiquote_title,
+                }
 
         # Try OpenSearch with year
         if year:
             result = self._lookup_via_opensearch(game_name, year)
             if result:
                 page_title, source = result
+                # Merge Wikidata metadata if available
+                if wikidata_metadata:
+                    return PageLookupResult(
+                        game_name=game_name,
+                        page_title=page_title,
+                        lookup_source=source,
+                        **wikidata_metadata,
+                    )
                 return PageLookupResult(
                     game_name=game_name,
                     page_title=page_title,
@@ -581,6 +604,14 @@ class WikiPageLookupService:
         result = self._lookup_via_opensearch(game_name, year=None)
         if result:
             page_title, source = result
+            # Merge Wikidata metadata if available
+            if wikidata_metadata:
+                return PageLookupResult(
+                    game_name=game_name,
+                    page_title=page_title,
+                    lookup_source=config.WIKI_LOOKUP_SOURCE_OPENSEARCH_FALLBACK,
+                    **wikidata_metadata,
+                )
             return PageLookupResult(
                 game_name=game_name,
                 page_title=page_title,
