@@ -1,6 +1,6 @@
 import logging
 from functools import cached_property
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import markdown
 from django.conf import settings
