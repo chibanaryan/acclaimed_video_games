@@ -5,6 +5,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 from django.views.generic import RedirectView
 
+from books.api import views as books_api_views
 from games import views
 from games.api import views as api_views
 from games.sitemaps import sitemaps
@@ -32,7 +33,19 @@ urlpatterns = [
         api_views.UnifiedSearchView.as_view(),
         name="api-unified-search",
     ),
+    # Book search endpoints for HTMX/Alpine.js
+    path(
+        "api/books/search/",
+        books_api_views.BookSearchAPIView.as_view(),
+        name="api-books-search",
+    ),
+    path(
+        "api/books/unified-search/",
+        books_api_views.UnifiedBookSearchView.as_view(),
+        name="api-books-unified-search",
+    ),
     path("api/", include("games.api.urls", namespace="games-api")),
+    path("api/books/", include("books.api.urls", namespace="books-api")),
     path("admin/", admin.site.urls),
     path("import/", views.ImportView.as_view(), name="import"),
     path(
