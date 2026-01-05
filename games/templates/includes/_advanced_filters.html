@@ -388,7 +388,7 @@
                 <div class="mt-4 pt-3 border-t border-base-100" :class="hltbExpanded ? 'mb-3' : 'mb-1'">
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="hltbExpanded = !hltbExpanded; localStorage.setItem('hltbExpanded', hltbExpanded)">
                         <span class="mdi mdi-clock-outline text-xl text-accent"></span>
-                        <span class="font-bold text-base">Playtime (HLTB)</span>
+                        <span class="font-bold text-base">Playtime (HowLongToBeat)</span>
                         <span class="mdi text-base-content/70 ml-1"
                               :class="hltbExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
                         <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/70 hover:text-error" @click.stop="resetHltb()" title="Clear playtime filter" x-cloak x-show="filters.hltb_preset || filters.hltb_min !== null">

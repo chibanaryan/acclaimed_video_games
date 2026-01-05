@@ -493,14 +493,22 @@
     @apply !bg-transparent cursor-default;
   }
 
-  /* Unavailable year cell - dimmed but still visible and clickable */
+  /* Unavailable year cell - grayscale but readable, clearly non-selected */
   .year-grid-cell.is-unavailable {
-    --heatmap-opacity: 25% !important;
-    @apply visible opacity-50 cursor-pointer pointer-events-auto;
+    @apply visible cursor-pointer pointer-events-auto;
+    filter: grayscale(100%);
+  }
+
+  .year-grid-cell.is-unavailable .year-grid-cell-label {
+    @apply text-base-content/60;
   }
 
   .year-grid-cell.is-unavailable:hover {
-    @apply opacity-80;
+    filter: grayscale(50%);
+  }
+
+  .year-grid-cell.is-unavailable:hover .year-grid-cell-label {
+    @apply text-base-content/80;
   }
 
   .year-grid-cell-hidden {
@@ -508,8 +516,16 @@
   }
 
   .year-grid-cell-label {
-    @apply text-[0.7rem] font-bold text-white pointer-events-none;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.6);
+    @apply text-[0.7rem] font-bold text-base-content pointer-events-none;
+    /* Subtle shadow for contrast against dark heatmap backgrounds */
+    text-shadow: 0 0 4px var(--color-base-100);
+  }
+
+  /* Selected cells: inherit text-primary-content from parent */
+  .year-grid-cell.is-selected .year-grid-cell-label,
+  .year-grid-cell.is-dragging .year-grid-cell-label {
+    @apply text-primary-content;
+    text-shadow: none;  /* No shadow needed on solid background */
   }
 
   /* Header row with legend and hint */
@@ -761,7 +777,7 @@
   }
 
   .platform-years {
-    @apply text-xs opacity-60 ml-1;
+    @apply text-xs opacity-70 ml-1;
   }
 }
 
@@ -1073,12 +1089,20 @@
   /* Active nav item styling for sidebar menu */
   aside .menu li a.active,
   aside .menu li > a.active {
-    @apply bg-accent text-accent-content font-semibold border-l-2 border-accent -ml-[2px] pl-[calc(0.75rem+2px)];
+    @apply bg-primary text-primary-content font-semibold border-l-2 border-primary -ml-[2px] pl-[calc(0.75rem+2px)];
   }
 
-  /* Sidebar menu hover states */
-  aside .menu li a:hover:not(.active) {
-    @apply bg-base-content/10;
+  /* Keep active styling on hover - match standard button hover behavior */
+  aside .menu li a.active:hover,
+  aside .menu li > a.active:hover {
+    @apply !bg-primary !text-primary-content;
+    filter: brightness(0.9) saturate(1.1);
+  }
+
+  /* Sidebar menu hover states - use primary color for consistency */
+  aside .menu li a:hover:not(.active),
+  aside .menu li button:hover:not(.active) {
+    @apply bg-base-content/10 text-primary;
   }
 
   /* Ensure sidebar dropdown doesn't overflow */
@@ -1111,7 +1135,7 @@
 
   /* Active nav item styling for mobile navbar buttons */
   .navbar .btn.btn-active {
-    @apply bg-accent/20 text-accent;
+    @apply bg-primary/20 text-primary;
   }
 }
 
@@ -1438,8 +1462,8 @@ input[type="number"] {
     flex-direction: column;
   }
 
-  .game-card-info h3 {
-    @apply font-bold text-sm leading-tight;
+  .game-card-info .game-card-name {
+    @apply font-bold text-sm leading-tight block;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -1448,7 +1472,7 @@ input[type="number"] {
   }
 
   .game-card-info .game-card-year {
-    @apply text-xs text-base-content/60;
+    @apply text-xs text-base-content/70;
     flex-shrink: 0;
   }
 

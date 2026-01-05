@@ -2,6 +2,13 @@
 
 ## 2026-01-05
 
+- Fix accessibility: year grid selected cells use white text, dark heatmap tiles get stronger text shadow for contrast
+- Fix sidebar hover states: prevent DaisyUI from washing out active item colors, add accent color on non-active hover
+- Fix accessibility: use grayscale instead of opacity for unavailable year cells (better text contrast)
+- Fix accessibility: change game card h3 to span to fix heading order (no h2 before h3)
+- Fix accessibility: year grid labels use theme-aware text color instead of white (better contrast on light backgrounds)
+- Bump JS cache version to v=3 to fix stale filter-component.min.js being served from browser cache
+- Fix LCP: add fetchpriority=high to hero logo images for faster initial render
 - Use WebP format for large game cover images (detail page, grid view) for 15-20% size reduction; keep JPG for OG/social sharing compatibility
 - Fix non-composited animations: convert background-color transitions to GPU-composited opacity on ::before pseudo-elements
 - Fix accessibility: increase touch target sizes for mobile buttons (btn-xs → btn-sm with min-h-10)

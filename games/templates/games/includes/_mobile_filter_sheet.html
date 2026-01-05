@@ -44,8 +44,9 @@
             </button>
             <button type="button"
                     @click="filterOpen = false"
-                    class="btn btn-ghost btn-sm btn-square">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="btn btn-ghost btn-sm btn-square"
+                    aria-label="Close filters">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
@@ -226,7 +227,7 @@
                         @click="expanded = !expanded"
                         class="flex items-center gap-2">
                     <span class="mdi mdi-clock-outline text-lg text-base-content/70"></span>
-                    Playtime (HLTB)
+                    Playtime (HowLongToBeat)
                     <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
                 </button>
                 <template x-if="filters.hltb_preset || filters.hltb_min !== null">

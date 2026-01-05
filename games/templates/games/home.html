@@ -7,8 +7,8 @@
 
 {% block pre_alpine %}
     {# Filter component - preloaded, will be loaded dynamically with Alpine #}
-    <link rel="preload" href="{% static 'games/js/filter-component.min.js' %}?v=2" as="script">
-    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=2');</script>
+    <link rel="preload" href="{% static 'games/js/filter-component.min.js' %}?v=3" as="script">
+    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=3');</script>
 {% endblock %}
 
 {% block extra_head %}
@@ -18,7 +18,7 @@
         if ('requestIdleCallback' in window) {
             requestIdleCallback(function() {
                 var script = document.createElement('script');
-                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=2';
+                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=3';
                 script.defer = true;
                 script.nonce = '{{ csp_nonce }}';
                 document.head.appendChild(script);
@@ -27,7 +27,7 @@
             // Fallback for browsers without requestIdleCallback
             setTimeout(function() {
                 var script = document.createElement('script');
-                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=2';
+                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=3';
                 script.defer = true;
                 script.nonce = '{{ csp_nonce }}';
                 document.head.appendChild(script);
@@ -91,7 +91,8 @@
                  alt="Acclaimed Video Games"
                  width="1092"
                  height="737"
-                 class="w-full h-auto">
+                 class="w-full h-auto"
+                 fetchpriority="high">
         </picture>
         {# Light theme logo (black text) - shown in light themes #}
         <picture class="show-light block">
@@ -104,7 +105,8 @@
                  alt="Acclaimed Video Games"
                  width="1092"
                  height="737"
-                 class="w-full h-auto">
+                 class="w-full h-auto"
+                 fetchpriority="high">
         </picture>
     </a>
     {# Content to the right on desktop #}

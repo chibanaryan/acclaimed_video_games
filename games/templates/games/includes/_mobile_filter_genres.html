@@ -324,7 +324,7 @@
                             <span x-text="category.name" class="text-sm font-medium"></span>
                         </button>
                         {# Game count #}
-                        <span class="text-xs opacity-60 tabular-nums" x-text="getCategoryTotalCount(category.id)"></span>
+                        <span class="text-xs opacity-70 tabular-nums" x-text="getCategoryTotalCount(category.id)"></span>
                     </div>
 
                     {# Child genres for this category #}
@@ -343,7 +343,7 @@
                                  @click="toggleGenre(genre.id); debouncedFilterUpdate();">
                                 <span class="text-sm flex-1" x-text="genre.name"></span>
                                 {# Game count #}
-                                <span class="text-xs opacity-60 tabular-nums" x-text="getEffectiveCount(genre)"></span>
+                                <span class="text-xs opacity-70 tabular-nums" x-text="getEffectiveCount(genre)"></span>
                             </div>
                         </template>
                     </div>

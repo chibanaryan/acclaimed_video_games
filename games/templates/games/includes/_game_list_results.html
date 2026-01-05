@@ -59,15 +59,17 @@
                     class="btn btn-xs btn-ghost px-1.5"
                     :class="viewMode === 'list' ? 'btn-active' : ''"
                     @click="setViewMode('list')"
-                    title="List view">
-                <span class="mdi mdi-format-list-bulleted text-base"></span>
+                    title="List view"
+                    aria-label="List view">
+                <span class="mdi mdi-format-list-bulleted text-base" aria-hidden="true"></span>
             </button>
             <button type="button"
                     class="btn btn-xs btn-ghost px-1.5"
                     :class="viewMode === 'grid' ? 'btn-active' : ''"
                     @click="setViewMode('grid')"
-                    title="Grid view">
-                <span class="mdi mdi-view-grid text-base"></span>
+                    title="Grid view"
+                    aria-label="Grid view">
+                <span class="mdi mdi-view-grid text-base" aria-hidden="true"></span>
             </button>
         </div>
     </div>
@@ -84,11 +86,13 @@
                class="jump-to-rank-input input input-xs input-bordered w-20 text-center"
                data-total="{{ total_count }}"
                data-loaded="{{ loaded_count }}"
-               data-per-page="100">
+               data-per-page="100"
+               aria-label="Enter rank number to jump to">
         <button type="button"
                 class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
-                title="Jump to rank">
-            <span class="mdi mdi-arrow-down"></span>
+                title="Jump to rank"
+                aria-label="Jump to rank">
+            <span class="mdi mdi-arrow-down" aria-hidden="true"></span>
         </button>
     </div>
 </div>
