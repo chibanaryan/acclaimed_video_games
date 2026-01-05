@@ -4,55 +4,115 @@
 
 set -e
 
-JS_DIR="games/static/games/js"
+GAMES_JS_DIR="games/static/games/js"
+BOOKS_JS_DIR="books/static/books/js"
+CORE_JS_DIR="core/static/core/js"
 
 CHANGED=0
 
-# Find all .min.js files and minify their source counterparts
-for min in "$JS_DIR"/*.min.js; do
-    # Skip bundle files (they're created from other minified files)
-    if [[ "$min" == *".bundle.min.js" ]]; then
-        continue
+# Function to minify files in a directory
+minify_dir() {
+    local dir="$1"
+
+    # Skip if directory doesn't exist
+    if [ ! -d "$dir" ]; then
+        return
     fi
 
-    # Get the source file name by removing .min from the path
-    src="${min%.min.js}.js"
+    # Find all .min.js files and minify their source counterparts
+    for min in "$dir"/*.min.js; do
+        # Skip if no matches (glob didn't expand)
+        [ -e "$min" ] || continue
 
-    if [ -f "$src" ]; then
-        # Check if minified file is older than source
-        if [ "$src" -nt "$min" ]; then
-            filename=$(basename "$src")
-            echo "Minifying $filename..."
-            npx terser "$src" -o "$min" -c -m
-            git add "$min"
-            CHANGED=1
+        # Skip bundle files (they're created from other minified files)
+        if [[ "$min" == *".bundle.min.js" ]]; then
+            continue
         fi
-    fi
-done
 
-# Bundle client-side filtering scripts (order matters for dependencies)
-BUNDLE="$JS_DIR/client-side-filtering.bundle.min.js"
-BUNDLE_SOURCES=(
-    "$JS_DIR/game-cache.min.js"
-    "$JS_DIR/client-filter.min.js"
-    "$JS_DIR/game-list-renderer.min.js"
-    "$JS_DIR/client-filtering.min.js"
+        # Get the source file name by removing .min from the path
+        src="${min%.min.js}.js"
+
+        if [ -f "$src" ]; then
+            # Check if minified file is older than source
+            if [ "$src" -nt "$min" ]; then
+                filename=$(basename "$src")
+                echo "Minifying $filename..."
+                npx terser "$src" -o "$min" -c -m
+                git add "$min"
+                CHANGED=1
+            fi
+        fi
+    done
+}
+
+# Minify all directories
+minify_dir "$GAMES_JS_DIR"
+minify_dir "$BOOKS_JS_DIR"
+minify_dir "$CORE_JS_DIR"
+
+# Bundle games client-side filtering scripts (order matters for dependencies)
+GAMES_BUNDLE="$GAMES_JS_DIR/client-side-filtering.bundle.min.js"
+GAMES_BUNDLE_SOURCES=(
+    "$GAMES_JS_DIR/game-cache.min.js"
+    "$GAMES_JS_DIR/client-filter.min.js"
+    "$GAMES_JS_DIR/game-list-renderer.min.js"
+    "$GAMES_JS_DIR/client-filtering.min.js"
 )
 
-# Check if any source is newer than bundle
-NEEDS_BUNDLE=0
-for src in "${BUNDLE_SOURCES[@]}"; do
-    if [ ! -f "$BUNDLE" ] || [ "$src" -nt "$BUNDLE" ]; then
-        NEEDS_BUNDLE=1
+# Check if any games source is newer than bundle
+NEEDS_GAMES_BUNDLE=0
+for src in "${GAMES_BUNDLE_SOURCES[@]}"; do
+    if [ ! -f "$GAMES_BUNDLE" ] || [ "$src" -nt "$GAMES_BUNDLE" ]; then
+        NEEDS_GAMES_BUNDLE=1
         break
     fi
 done
 
-if [ $NEEDS_BUNDLE -eq 1 ]; then
-    echo "Creating client-side-filtering.bundle.min.js..."
-    cat "${BUNDLE_SOURCES[@]}" > "$BUNDLE"
-    git add "$BUNDLE"
+if [ $NEEDS_GAMES_BUNDLE -eq 1 ]; then
+    echo "Creating games client-side-filtering.bundle.min.js..."
+    cat "${GAMES_BUNDLE_SOURCES[@]}" > "$GAMES_BUNDLE"
+    git add "$GAMES_BUNDLE"
     CHANGED=1
+fi
+
+# Bundle books client-side filtering scripts (order matters for dependencies)
+BOOKS_BUNDLE="$BOOKS_JS_DIR/book-client-side-filtering.bundle.min.js"
+BOOKS_BUNDLE_SOURCES=(
+    "$BOOKS_JS_DIR/book-cache.min.js"
+    "$BOOKS_JS_DIR/book-client-filter.min.js"
+    "$BOOKS_JS_DIR/book-list-renderer.min.js"
+    "$BOOKS_JS_DIR/book-client-filtering.min.js"
+)
+
+# Check if books bundle needs update (only if books dir exists)
+if [ -d "$BOOKS_JS_DIR" ]; then
+    NEEDS_BOOKS_BUNDLE=0
+    for src in "${BOOKS_BUNDLE_SOURCES[@]}"; do
+        if [ -f "$src" ]; then
+            if [ ! -f "$BOOKS_BUNDLE" ] || [ "$src" -nt "$BOOKS_BUNDLE" ]; then
+                NEEDS_BOOKS_BUNDLE=1
+                break
+            fi
+        fi
+    done
+
+    if [ $NEEDS_BOOKS_BUNDLE -eq 1 ]; then
+        # Only create bundle if all source files exist
+        ALL_EXIST=1
+        for src in "${BOOKS_BUNDLE_SOURCES[@]}"; do
+            if [ ! -f "$src" ]; then
+                ALL_EXIST=0
+                break
+            fi
+        done
+
+        if [ $ALL_EXIST -eq 1 ]; then
+            echo "Creating books book-client-side-filtering.bundle.min.js..."
+            cat "${BOOKS_BUNDLE_SOURCES[@]}" > "$BOOKS_BUNDLE"
+            git add "$BOOKS_BUNDLE"
+            CHANGED=1
+        fi
+    fi
 fi
 
 if [ $CHANGED -eq 1 ]; then
