@@ -3,6 +3,7 @@
 ## 2026-01-05
 
 - Refactor Game model to inherit from MediaItemBase (Phase 9.1.1 complete)
+- Add populate_mock_books management command for demo/testing data (30 books, 20 authors, 25 genres, 7 series)
 
 ## 2026-01-04
 
