@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Reduce TBT: remove deep watch on filters object, defer filter/year-grid init via requestIdleCallback
 - Fix tooltip clipping: remove content-visibility containment from desktop game rows so tooltips can escape row bounds
 - Fix 500 error on home page: remove reference to non-existent placeholder.webp from staticUrls
 - Fix platform-icons.svg 404 in production: pass Django static URLs to JS via window.staticUrls

@@ -76,12 +76,9 @@
 
     {# Mobile Sticky Header + Bottom Sheet (shown only on mobile/tablet) #}
     <div class="desktop:hidden"
-         @filters-updated.window="$refs.mobileTitle.textContent = buildDynamicTitle()"
          x-data="{
             filterOpen: false,
             hasOpenedBefore: false,
-            platforms: JSON.parse(document.getElementById('platforms-data').textContent),
-            genres: JSON.parse(document.getElementById('genres-data').textContent),
             init() {
                 // When filter sheet opens for the first time, re-dispatch counts
                 // to ensure mobile filter components have data (handles race conditions)
@@ -94,133 +91,11 @@
                         }, 50);
                     }
                 });
-            },
-
-            buildDynamicTitle() {
-                const timeWindow = this.buildTimeWindow();
-                const platformLabel = this.buildPlatformSegment();
-                let genreLabel = '';
-                let seriesLabel = '';
-                // If genres are selected, fold them into the title
-                if (filters.genres && filters.genres.length > 0) {
-                    const genreNames = filters.genres
-                        .map(gid => genres.find(g => String(g.id) === String(gid)))
-                        .filter(g => g)
-                        .map(g => g.name);
-                    if (genreNames.length > 0) {
-                        genreLabel = ' ' + this.joinNames(genreNames);
-                    }
-                }
-
-                // If exactly one series is selected, fold it into the title
-                if (filters.series && filters.series.length === 1) {
-                    const seriesDataEl = document.getElementById('series-data');
-                    if (seriesDataEl) {
-                        const seriesList = JSON.parse(seriesDataEl.textContent);
-                        const series = seriesList.find(s => String(s.id) === String(filters.series[0]));
-                        if (series) {
-                            seriesLabel = series.name;
-                        }
-                    }
-                }
-
-                // Build HLTB playtime label
-                let hltbLabel = '';
-                if (filters.hltb_min !== null || filters.hltb_max !== null) {
-                    let timeDesc = '';
-                    const mode = filters.hltb_mode || 'main';
-                    const modeSuffix = mode === 'completionist' ? ' (100%)' : '';
-
-                    const min = filters.hltb_min;
-                    const max = filters.hltb_max;
-
-                    // Recognize preset patterns from min/max values
-                    // Short: 0-10, Medium: 10-30, Long: 30+
-                    if (min === 0 && max === 10) {
-                        timeDesc = 'Short (<10 Hour)';
-                    } else if (min === 10 && max === 30) {
-                        timeDesc = 'Medium (10-30 Hour)';
-                    } else if (min === 30 && max === null) {
-                        timeDesc = 'Long (30+ Hour)';
-                    }
-                    // Custom ranges
-                    else if (min === 0 && max !== null) {
-                        timeDesc = `<${max} Hour`;
-                    } else if (min !== null && max !== null) {
-                        if (min === max) {
-                            timeDesc = `~${min} Hour`;
-                        } else {
-                            timeDesc = `${min}-${max} Hour`;
-                        }
-                    } else if (min !== null) {
-                        timeDesc = `${min}+ Hour`;
-                    } else if (max !== null) {
-                        timeDesc = `<${max} Hour`;
-                    }
-
-                    if (timeDesc) {
-                        hltbLabel = ' ' + timeDesc + modeSuffix;
-                    }
-                }
-
-                const timeSuffix = timeWindow ? ' of ' + timeWindow : '';
-                let platform = platformLabel;
-
-                // Omit 'Video' prefix when genre, series, or playtime is selected
-                if ((genreLabel || seriesLabel || hltbLabel) && platform === 'Video') {
-                    platform = '';
-                }
-
-                // Build combined title: 'Most Acclaimed [HLTB] [Platform] [Genre] [Series] Games of [time]'
-                // HLTB comes first (matches server-side ordering)
-                let titleParts = 'Most Acclaimed';
-                if (hltbLabel) titleParts += hltbLabel;  // HLTB first (hltbLabel has leading space)
-                if (platform) titleParts += ' ' + platform;
-                if (genreLabel) titleParts += genreLabel;
-                if (seriesLabel) titleParts += ' ' + seriesLabel;
-                titleParts += ' Games' + timeSuffix;
-
-                // Add game status suffix
-                if (filters.played === 'yes') {
-                    titleParts += ': Played';
-                } else if (filters.played === 'want') {
-                    titleParts += ': Want to Play';
-                } else if (filters.played === 'no') {
-                    titleParts += ': Untracked';
-                }
-
-                return titleParts;
-            },
-
-            buildTimeWindow() {
-                const start = filters.start;
-                const end = filters.end;
-                const minYear = {{ min_year }};
-                const maxYear = {{ max_year }};
-
-                if (!start || !end) return '';
-                if (start <= minYear && end >= maxYear) return 'All Time';
-                if (start === end) return String(start);
-                if (start % 10 === 0 && end === start + 9) return 'the ' + start + 's';
-                return start + '-' + end;
-            },
-
-            buildPlatformSegment() {
-                // Use helper function from utils-base.js to build platform segment
-                return buildPlatformSegment(platforms, filters.platforms);
-            },
-
-            joinNames(names) {
-                // Join a list of names with commas and 'and' before the last item
-                if (!names || names.length === 0) return '';
-                if (names.length === 1) return names[0];
-                if (names.length === 2) return names.join(' and ');
-                return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
             }
          }"
          x-effect="document.body.classList.toggle('filter-sheet-open', filterOpen)">
         <div class="relative z-10 bg-base-200 border-b border-base-content/10 py-4 mb-4 -mx-4 px-4 flex items-center justify-between gap-3">
-            <h1 class="text-lg font-bold flex-1 min-w-0" x-ref="mobileTitle">{{ filter_title|default:"Most Acclaimed Video Games of All Time" }}</h1>
+            <h1 class="text-lg font-bold flex-1 min-w-0" id="search-title-mobile">{{ filter_title|default:"Most Acclaimed Video Games of All Time" }}</h1>
             <button type="button" class="btn btn-primary btn-sm shrink-0" @click="filterOpen = true">
                 <span class="mdi mdi-tune"></span>
                 Filters

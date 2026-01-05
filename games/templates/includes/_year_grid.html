@@ -24,64 +24,67 @@
 
          _yearCountsHandler: null,
          _yearOriginalCountsHandler: null,
+         _yearSet: null,  // Cached Set for O(1) yearExists lookups
+         _minCount: 0,  // Cached min count value
+         _decadeStructure: null,  // Cached decade structure (only changes when originalYearCounts changes)
 
          init() {
-             // Load year counts from JSON
+             // CRITICAL: Load year counts and build decades synchronously for first paint
              const dataEl = document.getElementById('year-counts-data');
              if (dataEl) {
                  this.yearCounts = JSON.parse(dataEl.textContent);
-                 this.originalYearCounts = [...this.yearCounts];  // Store original structure
+                 this.originalYearCounts = [...this.yearCounts];
+                 this._rebuildCaches();
                  this.maxCount = Math.max(...this.yearCounts.map(y => y.count), 1);
-                 this.originalMaxCount = this.maxCount;  // Store for consistent intensity
+                 this.originalMaxCount = this.maxCount;
                  this.buildDecades();
              }
 
-             // Listen for original counts update (from CSF initialization with full data)
-             // This resets the baseline when page loads with URL filters
-             this._yearOriginalCountsHandler = (event) => {
-                 if (!Array.isArray(event.detail) || event.detail.length === 0) {
-                     console.warn('[YearGrid] Invalid original year counts received:', event.detail);
-                     return;
-                 }
-                 // Update original counts with full unfiltered data
-                 this.originalYearCounts = event.detail;
-                 this.originalMaxCount = Math.max(...event.detail.map(y => y.count), 1);
-                 this.maxCount = this.originalMaxCount;
-                 // Don't rebuild decades here - wait for the filtered counts update
-             };
-             window.addEventListener('year-original-counts-update', this._yearOriginalCountsHandler);
+             // Defer event listener setup to reduce TBT
+             const setupListeners = () => {
+                 // Listen for original counts update (from CSF initialization with full data)
+                 this._yearOriginalCountsHandler = (event) => {
+                     if (!Array.isArray(event.detail) || event.detail.length === 0) {
+                         return;
+                     }
+                     this.originalYearCounts = event.detail;
+                     this._rebuildCaches();
+                     this.originalMaxCount = Math.max(...event.detail.map(y => y.count), 1);
+                     this.maxCount = this.originalMaxCount;
+                 };
+                 window.addEventListener('year-original-counts-update', this._yearOriginalCountsHandler);
 
-             // Listen for updates when filters change
-             // Store handler reference for cleanup on destroy
-             this._yearCountsHandler = (event) => {
-                 // Validate event.detail is an array with expected structure
-                 if (!Array.isArray(event.detail) || event.detail.length === 0) {
-                     console.warn('[YearGrid] Invalid year counts received:', event.detail);
-                     return;
-                 }
-                 // Ensure the array has the same years as originalYearCounts
-                 // If lengths don't match, something is wrong - use a merged approach
-                 if (event.detail.length !== this.originalYearCounts.length) {
-                     console.warn('[YearGrid] Year counts length mismatch:', event.detail.length, 'vs', this.originalYearCounts.length);
-                     // Build a complete array using original structure with new counts
-                     const newCountMap = {};
-                     event.detail.forEach(yc => {
-                         if (yc && typeof yc.year === 'number') {
-                             newCountMap[yc.year] = yc.count || 0;
-                         }
-                     });
-                     this.yearCounts = this.originalYearCounts.map(yc => ({
-                         year: yc.year,
-                         count: newCountMap[yc.year] !== undefined ? newCountMap[yc.year] : 0
-                     }));
-                 } else {
-                     this.yearCounts = event.detail;
-                 }
-                 // Keep originalMaxCount for consistent intensity scale
-                 this.maxCount = this.originalMaxCount;
-                 this.buildDecades();
+                 // Listen for updates when filters change
+                 this._yearCountsHandler = (event) => {
+                     if (!Array.isArray(event.detail) || event.detail.length === 0) {
+                         return;
+                     }
+                     if (event.detail.length !== this.originalYearCounts.length) {
+                         const newCountMap = {};
+                         event.detail.forEach(yc => {
+                             if (yc && typeof yc.year === 'number') {
+                                 newCountMap[yc.year] = yc.count || 0;
+                             }
+                         });
+                         this.yearCounts = this.originalYearCounts.map(yc => ({
+                             year: yc.year,
+                             count: newCountMap[yc.year] !== undefined ? newCountMap[yc.year] : 0
+                         }));
+                     } else {
+                         this.yearCounts = event.detail;
+                     }
+                     this.maxCount = this.originalMaxCount;
+                     this.buildDecades();
+                 };
+                 window.addEventListener('year-counts-update', this._yearCountsHandler);
              };
-             window.addEventListener('year-counts-update', this._yearCountsHandler);
+
+             // Use requestIdleCallback to defer, fallback to setTimeout
+             if ('requestIdleCallback' in window) {
+                 requestIdleCallback(setupListeners, { timeout: 200 });
+             } else {
+                 setTimeout(setupListeners, 50);
+             }
          },
          destroy() {
              // Clean up event listeners when component is destroyed
@@ -96,21 +99,49 @@
              this.lastClicked = null;
          },
 
-         // Get min count (excluding zeros) for legend
-         getMinCount() {
+         // Rebuild cached data structures when originalYearCounts changes
+         _rebuildCaches() {
+             // Build Set for O(1) yearExists lookups
+             this._yearSet = new Set(this.originalYearCounts.map(yc => yc.year));
+             // Calculate min count once
              const nonZero = this.originalYearCounts.filter(yc => yc.count > 0);
-             return nonZero.length > 0 ? Math.min(...nonZero.map(yc => yc.count)) : 0;
+             this._minCount = nonZero.length > 0 ? Math.min(...nonZero.map(yc => yc.count)) : 0;
+             // Invalidate decade structure cache
+             this._decadeStructure = null;
+         },
+
+         // Get min count (excluding zeros) for legend - uses cached value
+         getMinCount() {
+             return this._minCount;
          },
 
          buildDecades() {
-             // Build structure from ORIGINAL data (decades always visible)
-             // All years in a decade are shown (dimmed if 0 results in current filters)
+             // Build current count map for quick lookups
              const currentCountMap = {};
              this.yearCounts.forEach(yc => {
                  currentCountMap[yc.year] = yc.count;
              });
 
-             // Build map of original counts for availability checking
+             // If we have a cached structure, just update counts (fast path)
+             if (this._decadeStructure) {
+                 this.decades = this._decadeStructure.map(decade => ({
+                     start: decade.start,
+                     label: decade.label,
+                     cells: decade.cells.map(cell => {
+                         if (!cell.year) return cell;  // hidden cells
+                         const currentCount = currentCountMap[cell.year] || 0;
+                         return {
+                             year: cell.year,
+                             count: currentCount,
+                             originalCount: cell.originalCount,
+                             available: currentCount > 0
+                         };
+                     })
+                 }));
+                 return;
+             }
+
+             // Build structure from ORIGINAL data (only happens once per originalYearCounts change)
              const originalCountMap = {};
              this.originalYearCounts.forEach(yc => {
                  originalCountMap[yc.year] = yc.count;
@@ -121,56 +152,57 @@
              this.originalYearCounts.forEach(yc => {
                  const decadeStart = Math.floor(yc.year / 10) * 10;
                  if (!decadeMap[decadeStart]) {
-                     decadeMap[decadeStart] = {};
+                     decadeMap[decadeStart] = { maxOriginalPos: 0 };
                  }
 
                  const position = yc.year % 10;
-                 const currentCount = currentCountMap[yc.year] || 0;
-                 const originalCount = yc.count || 0;
-
-                 // Always include years, track availability based on current filter results
                  decadeMap[decadeStart][position] = {
                      year: yc.year,
-                     count: currentCount,
-                     originalCount: originalCount,
-                     available: currentCount > 0  // Has games in current filters
+                     originalCount: yc.count || 0
                  };
-                 // Track max position for decade width
-                 if (!decadeMap[decadeStart].maxOriginalPos || position > decadeMap[decadeStart].maxOriginalPos) {
+                 if (position > decadeMap[decadeStart].maxOriginalPos) {
                      decadeMap[decadeStart].maxOriginalPos = position;
                  }
              });
 
-             // Sort decades descending (newest first)
+             // Sort decades descending (newest first) and build structure
              const decadeStarts = Object.keys(decadeMap).map(Number).sort((a, b) => b - a);
-             this.decades = decadeStarts.map(ds => {
-                 // Use original max position to maintain consistent decade width
+             this._decadeStructure = decadeStarts.map(ds => {
                  const maxPos = decadeMap[ds].maxOriginalPos || 0;
-                 // Create cells for all positions up to maxPos
                  const cells = [];
                  for (let i = 0; i < 10; i++) {
                      if (i > maxPos) {
-                         cells.push({ hidden: true });  // Invisible spacer for future years
+                         cells.push({ hidden: true });
                      } else if (decadeMap[ds][i]) {
-                         cells.push(decadeMap[ds][i]);  // Year with data
-                     } else {
-                         // Year with no games in original data - show as unavailable
-                         const year = ds + i;
-                         const currentCount = currentCountMap[year] || 0;
                          cells.push({
-                             year: year,
-                             count: currentCount,
-                             originalCount: 0,
-                             available: false  // No games in original data
+                             year: decadeMap[ds][i].year,
+                             originalCount: decadeMap[ds][i].originalCount
+                         });
+                     } else {
+                         cells.push({
+                             year: ds + i,
+                             originalCount: 0
                          });
                      }
                  }
-                 return {
-                     start: ds,
-                     label: ds + 's',
-                     cells: cells
-                 };
+                 return { start: ds, label: ds + 's', cells: cells };
              });
+
+             // Now build decades with current counts
+             this.decades = this._decadeStructure.map(decade => ({
+                 start: decade.start,
+                 label: decade.label,
+                 cells: decade.cells.map(cell => {
+                     if (!cell.year) return cell;
+                     const currentCount = currentCountMap[cell.year] || 0;
+                     return {
+                         year: cell.year,
+                         count: currentCount,
+                         originalCount: cell.originalCount,
+                         available: currentCount > 0
+                     };
+                 })
+             }));
          },
 
          // Check if a year is available (has games in current filters)
@@ -371,9 +403,9 @@
                  .reduce((sum, c) => sum + (c.count || 0), 0);
          },
 
-         // Check if a year exists in the grid
+         // Check if a year exists in the grid - uses cached Set for O(1) lookup
          yearExists(year) {
-             return this.originalYearCounts.some(yc => yc.year === year);
+             return this._yearSet && this._yearSet.has(year);
          },
 
          // Adjacency checks for year cells - used to determine which corners should be sharp

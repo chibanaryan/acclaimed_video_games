@@ -74,6 +74,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
+            // CRITICAL: Minimal synchronous init - only what's needed for first paint
             if (!this.filters.sort || this.filters.sort === '') {
                 this.filters.sort = 'rank';
             }
@@ -91,100 +92,105 @@ document.addEventListener('alpine:init', () => {
                 this.filters.sortDirection = dirParam;
             }
 
-            setTimeout(() => { this.initialized = true; }, 100);
+            // Defer non-critical initialization to reduce TBT
+            const deferredInit = () => {
+                this._debouncedUpdate = debounce(() => this.performUpdate({
+                    partial: true, historyMethod: 'pushState'
+                }), 300);
 
-            this._debouncedUpdate = debounce(() => this.performUpdate({
-                partial: true, historyMethod: 'pushState'
-            }), 300);
+                this._throttledSlider = throttleWithForce(() => this.performUpdate({
+                    partial: true, historyMethod: 'replaceState'
+                }), 150);
 
-            this._throttledSlider = throttleWithForce(() => this.performUpdate({
-                partial: true, historyMethod: 'replaceState'
-            }), 150);
+                this._debouncedFilter = debounce(() => this.performUpdate({
+                    partial: true, historyMethod: 'pushState'
+                }), 150);
 
-            this._debouncedFilter = debounce(() => this.performUpdate({
-                partial: true, historyMethod: 'pushState'
-            }), 150);
+                this._debouncedDisplay = debounce(() => this.performUpdate({
+                    partial: true, historyMethod: 'pushState', preservePage: true
+                }), 150);
 
-            this._debouncedDisplay = debounce(() => this.performUpdate({
-                partial: true, historyMethod: 'pushState', preservePage: true
-            }), 150);
+                const savedScrollPos = sessionStorage.getItem('gameListScrollPos');
+                if (savedScrollPos) {
+                    setTimeout(() => {
+                        window.scrollTo(0, parseInt(savedScrollPos));
+                        sessionStorage.removeItem('gameListScrollPos');
+                    }, 100);
+                }
 
-            const savedScrollPos = sessionStorage.getItem('gameListScrollPos');
-            if (savedScrollPos) {
-                setTimeout(() => {
-                    window.scrollTo(0, parseInt(savedScrollPos));
-                    sessionStorage.removeItem('gameListScrollPos');
-                }, 100);
-            }
+                const saveScrollPosition = () => {
+                    sessionStorage.setItem('gameListScrollPos', window.scrollY.toString());
+                };
 
-            const saveScrollPosition = () => {
-                sessionStorage.setItem('gameListScrollPos', window.scrollY.toString());
+                document.addEventListener('click', (e) => {
+                    const link = e.target.closest("a[href*='/game/']");
+                    if (link) {
+                        saveScrollPosition();
+                    }
+                });
+
+                window.addEventListener('popstate', (event) => {
+                    const params = new URLSearchParams(window.location.search);
+                    this.filters.q = params.get('q') || '';
+                    this.filters.start = params.get('start') ? parseInt(params.get('start')) : this.minYear;
+                    this.filters.end = params.get('end') ? parseInt(params.get('end')) : this.maxYear;
+                    this.filters.sort = params.get('sort') || 'rank';
+                    this.filters.sortDirection = params.get('dir') || 'asc';
+                    this.filters.played = params.get('played') || '';
+                    const genresParam = params.get('genres');
+                    this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
+                    const platformsParam = params.get('platforms');
+                    this.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
+                    const seriesParam = params.get('series');
+                    this.filters.series = seriesParam ? seriesParam.split(',').filter(id => id) : [];
+                    this.filters.hltb_mode = params.get('hltb_mode') || 'main';
+                    this.filters.hltb_min = params.get('hltb_min') ? parseInt(params.get('hltb_min')) : null;
+                    this.filters.hltb_max = params.get('hltb_max') ? parseInt(params.get('hltb_max')) : null;
+                    this.filters.hltb_preset = this.calculateHltbPreset(this.filters.hltb_min, this.filters.hltb_max);
+                    if (this.clientFilterReady) {
+                        this.performClientUpdate();
+                    } else {
+                        setLoading('game-results-container');
+                    }
+                });
+
+                this.$watch('filters.q', val => {
+                    if (!this.initialized) return;
+                    this.updateResults();
+                });
+
+                setTimeout(() => { if (typeof initLoadMore === 'function') initLoadMore(); }, 150);
+                if (typeof initYearPreview === 'function') initYearPreview();
+
+                document.addEventListener('add-platform', (e) => this.addPlatform(e.detail));
+                document.addEventListener('add-platforms', (e) => this.addPlatforms(e.detail));
+                document.addEventListener('add-genre', (e) => this.addGenre(e.detail));
+                document.addEventListener('add-genres', (e) => this.addGenres(e.detail));
+
+                window.addEventListener('game-status-changed', (event) => {
+                    if (this.filters.played && this.clientFilterReady) {
+                        this.performClientUpdate({ historyMethod: 'replaceState' });
+                    }
+                });
+
+                window.addEventListener('mobile-filter-opened', () => {
+                    if (this.clientFilterReady) {
+                        this.updateFacetCounts();
+                    } else {
+                        this.dispatchInitialCounts();
+                    }
+                });
+
+                this.initialized = true;
+                this.initClientFiltering();
             };
 
-            document.addEventListener('click', (e) => {
-                const link = e.target.closest("a[href*='/game/']");
-                if (link) {
-                    saveScrollPosition();
-                }
-            });
-
-            window.addEventListener('popstate', (event) => {
-                const params = new URLSearchParams(window.location.search);
-                this.filters.q = params.get('q') || '';
-                this.filters.start = params.get('start') ? parseInt(params.get('start')) : this.minYear;
-                this.filters.end = params.get('end') ? parseInt(params.get('end')) : this.maxYear;
-                this.filters.sort = params.get('sort') || 'rank';
-                this.filters.sortDirection = params.get('dir') || 'asc';
-                this.filters.played = params.get('played') || '';
-                const genresParam = params.get('genres');
-                this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
-                const platformsParam = params.get('platforms');
-                this.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
-                const seriesParam = params.get('series');
-                this.filters.series = seriesParam ? seriesParam.split(',').filter(id => id) : [];
-                this.filters.hltb_mode = params.get('hltb_mode') || 'main';
-                this.filters.hltb_min = params.get('hltb_min') ? parseInt(params.get('hltb_min')) : null;
-                this.filters.hltb_max = params.get('hltb_max') ? parseInt(params.get('hltb_max')) : null;
-                this.filters.hltb_preset = this.calculateHltbPreset(this.filters.hltb_min, this.filters.hltb_max);
-                if (this.clientFilterReady) {
-                    this.performClientUpdate();
-                } else {
-                    setLoading('game-results-container');
-                }
-            });
-
-            this.$watch('filters.q', val => {
-                if (!this.initialized) return;
-                this.updateResults();
-            });
-
-            setTimeout(() => { if (typeof initLoadMore === 'function') initLoadMore(); }, 150);
-            if (typeof initYearPreview === 'function') initYearPreview();
-
-            this.$watch('filters', () => {
-                this.$dispatch('filters-updated');
-            }, { deep: true });
-
-            document.addEventListener('add-platform', (e) => this.addPlatform(e.detail));
-            document.addEventListener('add-platforms', (e) => this.addPlatforms(e.detail));
-            document.addEventListener('add-genre', (e) => this.addGenre(e.detail));
-            document.addEventListener('add-genres', (e) => this.addGenres(e.detail));
-
-            window.addEventListener('game-status-changed', (event) => {
-                if (this.filters.played && this.clientFilterReady) {
-                    this.performClientUpdate({ historyMethod: 'replaceState' });
-                }
-            });
-
-            window.addEventListener('mobile-filter-opened', () => {
-                if (this.clientFilterReady) {
-                    this.updateFacetCounts();
-                } else {
-                    this.dispatchInitialCounts();
-                }
-            });
-
-            this.initClientFiltering();
+            // Use requestIdleCallback to defer non-critical init, fallback to setTimeout
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(deferredInit, { timeout: 200 });
+            } else {
+                setTimeout(deferredInit, 50);
+            }
         },
 
         hasActiveFilters() {
@@ -878,9 +884,14 @@ document.addEventListener('alpine:init', () => {
                 this._initClientLoadMore(loadMoreContainer, gameListContainer, countContainer);
             }
 
+            const dynamicTitle = this._buildDynamicTitle();
             const searchTitle = document.getElementById('search-title');
             if (searchTitle) {
-                searchTitle.textContent = this._buildDynamicTitle();
+                searchTitle.textContent = dynamicTitle;
+            }
+            const mobileTitle = document.getElementById('search-title-mobile');
+            if (mobileTitle) {
+                mobileTitle.textContent = dynamicTitle;
             }
 
             if (state.facets) {
@@ -1018,7 +1029,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         updateResults() {
-            if (!this.initialized) return;
+            if (!this.initialized || !this._debouncedUpdate) return;
             this._debouncedUpdate();
         },
 
@@ -1029,15 +1040,17 @@ document.addEventListener('alpine:init', () => {
         },
 
         throttledSliderUpdate() {
-            this._throttledSlider.call();
+            if (this._throttledSlider) this._throttledSlider.call();
         },
 
         forceSliderUpdate() {
-            this._throttledSlider.force();
+            if (this._throttledSlider) this._throttledSlider.force();
         },
 
         debouncedFilterUpdate() {
-            this._debouncedFilter();
+            if (this._debouncedFilter) {
+                this._debouncedFilter();
+            }
         },
 
         updateUrl() {
@@ -1070,7 +1083,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         updateDisplayOnly() {
-            if (!this.initialized) return;
+            if (!this.initialized || !this._debouncedDisplay) return;
             this._debouncedDisplay();
         }
     }));
