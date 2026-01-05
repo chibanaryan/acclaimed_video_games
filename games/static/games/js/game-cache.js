@@ -67,6 +67,10 @@ class GameDataCache {
                 console.warn('[GameDataCache] IndexedDB blocked - close other tabs');
                 reject(new Error('IndexedDB blocked'));
             };
+        }).catch(err => {
+            // Reset promise on failure so future calls can retry
+            this._initPromise = null;
+            throw err;
         });
 
         return this._initPromise;
