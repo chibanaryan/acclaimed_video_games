@@ -2,6 +2,9 @@
 
 ## 2026-01-04
 
+- Add core/ app with abstract models (MediaItemBase, CreatorBase) for multi-media platform foundation
+- Move shared utilities to core: RobustPaginationMixin, HTMXPartialMixin, common template tags
+- Fix sync_from_prod: include flatpages and sites, exclude user tracking models
 - Fix sitemap.xml 500 error: exclude subsidiary developers without slugs from DeveloperSitemap
 - Add grid view toggle: responsive cover art grid with dual ranking (filtered + global), hover overlays
 - Add IGDB links to developer detail pages (dynamic link updates based on filter selection)

@@ -160,6 +160,7 @@ class ListListView(ListAPIView):
         utils.Filter(param="publisher", fields=["publisher_id"], coerce=int),
         utils.Filter(param="year", fields=["year"], coerce=int),
         utils.Filter(param="type", fields=["type"], coerce=str),
+        utils.Filter(param="media_type", fields=["media_type"], coerce=str),
     ]
 
     def get_queryset(self):

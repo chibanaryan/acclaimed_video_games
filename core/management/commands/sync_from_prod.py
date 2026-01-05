@@ -9,17 +9,24 @@ from games.models import (
     Developer,
     Game,
     GameQuote,
+    HLTBGameData,
     IGDBGameData,
     IGDBGenre,
     List,
     ListMembership,
     Platform,
+    PlayedGame,
     Post,
+    ProtonDBGameData,
     Publication,
+    SavedFilterSet,
     Series,
     SiteMetadata,
     Snippet,
+    WantToPlayGame,
+    WikipediaCountry,
     WikipediaGameData,
+    WikipediaGameMode,
     WikipediaGenre,
 )
 
@@ -71,8 +78,12 @@ class Command(BaseCommand):
             "--app",
             app_name,
             "--no-tty",
-            "python manage.py dumpdata games "
-            "--exclude games.User --exclude games.PlayedGame --indent 2",
+            "python manage.py dumpdata games sites flatpages "
+            "--exclude games.User "
+            "--exclude games.PlayedGame "
+            "--exclude games.WantToPlayGame "
+            "--exclude games.SavedFilterSet "
+            "--indent 2",
         ]
 
         try:
@@ -135,11 +146,23 @@ class Command(BaseCommand):
         # Step 4: Clear local data (order matters for foreign keys)
         self.stdout.write("\n3. Clearing local data...")
         # Delete in order to respect foreign key constraints
-        # First: models that reference Game
+        # First: flatpages (depends on sites)
+        from django.contrib.flatpages.models import FlatPage
+        from django.contrib.sites.models import Site
+
+        FlatPage.objects.all().delete()
+        Site.objects.all().delete()
+        # Then: user-related models (not synced, but clear any local data)
+        PlayedGame.objects.all().delete()
+        WantToPlayGame.objects.all().delete()
+        SavedFilterSet.objects.all().delete()
+        # Then: models that reference Game
         ListMembership.objects.all().delete()
         GameQuote.objects.all().delete()
         IGDBGameData.objects.all().delete()
         WikipediaGameData.objects.all().delete()
+        HLTBGameData.objects.all().delete()
+        ProtonDBGameData.objects.all().delete()
         # Then: List and Publication
         List.objects.all().delete()
         Publication.objects.all().delete()
@@ -150,6 +173,8 @@ class Command(BaseCommand):
         Series.objects.all().delete()
         IGDBGenre.objects.all().delete()
         WikipediaGenre.objects.all().delete()
+        WikipediaCountry.objects.all().delete()
+        WikipediaGameMode.objects.all().delete()
         Platform.objects.all().delete()
         # Finally: standalone models
         Post.objects.all().delete()

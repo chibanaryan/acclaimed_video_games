@@ -240,9 +240,10 @@ class FromNowFilterTest(TestCase):
         from unittest.mock import patch
 
         # Pass a valid datetime but mock timezone.now to raise inside from_now
+        # Note: from_now is now in core.templatetags.core_filters
         valid_datetime = timezone.now()
         with patch(
-            "games.templatetags.game_filters.timezone.now",
+            "core.templatetags.core_filters.timezone.now",
             side_effect=Exception("Test error"),
         ):
             result = from_now(valid_datetime)

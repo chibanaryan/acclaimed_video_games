@@ -161,6 +161,7 @@ class ListSerializer(serializers.ModelSerializer):
             "publication",
             "year",
             "type",
+            "media_type",
             "url",
         ]
 

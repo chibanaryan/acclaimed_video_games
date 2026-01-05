@@ -129,7 +129,8 @@ class RobustPaginationMixinTest(TestCase):
         queryset = models.Game.objects.none()  # Empty queryset
 
         # Mock Paginator to simulate edge case where page(1) also fails
-        with mock.patch("games.mixins.Paginator") as MockPaginator:
+        # Note: Paginator is now in core.mixins (games.mixins re-exports from core)
+        with mock.patch("core.mixins.Paginator") as MockPaginator:
             mock_paginator = MockPaginator.return_value
             mock_paginator.num_pages = 0
             mock_paginator.page.side_effect = EmptyPage("No results")

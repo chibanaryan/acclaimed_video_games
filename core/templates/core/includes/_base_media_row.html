@@ -1,0 +1,107 @@
+{# Base Media Row Template #}
+{# This is an abstract template showing the structure for media items (games, books, etc.) #}
+{# Concrete implementations should extend this pattern for their specific media type. #}
+{# #}
+{# Props: #}
+{#   item (optional) - The media item (game, book, etc.) #}
+{#   show_rank ('alltime'|'filtered'|'none') - How to show the rank #}
+{#   index - Filtered rank number (when show_rank='filtered') #}
+{#   highlight - Item ID to highlight #}
+{# #}
+{# When item is not provided, renders empty template structure for JS cloning #}
+{# with data-slot attributes for client-side population. #}
+
+{# Desktop Row Structure #}
+<div class="media-row-wrapper hidden desktop:flex items-center"
+     {% if item %}id="{{ media_type }}-{{ item.id }}"{% endif %}
+     data-slot="root">
+    
+    {# Optional: User tracking button (played/read) - outside row to avoid hover effect #}
+    {% block tracking_button %}{% endblock %}
+    
+    <div class="media-row desktop flex-1 py-0.5 px-2 grid {% if item and highlight and item.id == highlight %}is-highlighted{% endif %}"
+         data-slot="media-row"
+         style="grid-template-columns: auto 1fr;">
+        
+        {# Rank + Thumbnail #}
+        <div class="flex items-center gap-3 flex-shrink-0">
+            {# Rank #}
+            {% if show_rank == 'alltime' or show_rank == 'filtered' or not item %}
+            <div class="w-15 text-center flex flex-col items-center justify-center {% if show_rank == 'none' and item %}hidden{% endif %}">
+                <span class="media-rank text-2xl font-bold text-accent tabular-nums" data-slot="rank">
+                    {% if item %}{% if show_rank == 'filtered' %}{{ index|default:item.rank }}{% else %}{{ item.rank }}{% endif %}{% endif %}
+                </span>
+                <span class="media-row-global-rank text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and item %}hidden{% endif %}" data-slot="global-rank">
+                    {% if item %}(#{{ item.rank }}){% endif %}
+                </span>
+            </div>
+            {% endif %}
+            
+            {# Thumbnail #}
+            {% block thumbnail %}
+            <a {% if item %}href="{{ item.get_absolute_url }}"{% endif %} class="media-thumb-link" data-slot="thumb-link">
+                <img {% if item and item.thumbnail %}src="{{ item.thumbnail }}"{% endif %}
+                     width="90" height="128" loading="lazy" decoding="async"
+                     class="media-thumb"
+                     data-slot="thumbnail">
+            </a>
+            {% endblock %}
+        </div>
+        
+        {# Title and details #}
+        <div class="flex-1 min-w-0 px-4">
+            <div class="truncate">
+                <a {% if item %}href="{{ item.get_absolute_url }}"{% endif %} class="media-title text-2xl font-bold link link-hover" data-slot="title-link">
+                    <span data-slot="name">{% if item %}{{ item.name }}{% endif %}</span>
+                </a>
+                {% block year_link %}
+                <span class="text-base-content/60 ml-1" data-slot="year-link">
+                    (<span data-slot="year">{% if item %}{{ item.year }}{% endif %}</span>)
+                </span>
+                {% endblock %}
+            </div>
+            
+            {# Metadata row: creator, categories, additional info #}
+            <div class="media-row-details text-base-content/80 text-sm ml-4" data-slot="meta-row">
+                {% block metadata %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Mobile Row Structure #}
+<div class="media-row media-card-mobile desktop:hidden grid items-center gap-3 p-2 bg-base-200 rounded-lg hover:bg-base-100 transition-colors mb-2 cursor-pointer {% if item and highlight and item.id == highlight %}is-highlighted{% endif %}"
+     {% if item %}id="{{ media_type }}-{{ item.id }}-mobile"{% endif %}
+     data-slot="root-mobile"
+     {% if item %}onclick="window.location.href='{{ item.get_absolute_url }}'"{% endif %}>
+    
+    {% block mobile_tracking_button %}{% endblock %}
+    
+    {# Mobile Thumbnail #}
+    <div class="w-12 rounded overflow-hidden bg-base-100" style="aspect-ratio: 90/128;">
+        <img {% if item and item.thumbnail %}src="{{ item.thumbnail }}"{% endif %}
+             width="90" height="128"
+             class="w-full h-full object-cover" loading="lazy" decoding="async"
+             data-slot="thumbnail-mobile">
+    </div>
+    
+    {# Mobile Info #}
+    <div class="min-w-0 flex items-center justify-between">
+        <div class="min-w-0">
+            <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title-mobile">
+                {% if show_rank == 'alltime' or show_rank == 'filtered' or not item %}
+                <span class="text-accent tabular-nums text-lg" data-slot="rank-mobile">
+                    {% if item %}#{% if show_rank == 'filtered' %}{{ index|default:item.rank }}{% else %}{{ item.rank }}{% endif %}{% endif %}
+                </span>
+                {% endif %}
+                {% if item %}{{ item.name }}{% endif %}
+                <span class="font-normal text-sm text-base-content/60" data-slot="year-mobile">
+                    {% if item %}({{ item.year }}){% endif %}
+                </span>
+            </div>
+            <div class="text-xs text-base-content/50" data-slot="meta-mobile">
+                {% block mobile_metadata %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>

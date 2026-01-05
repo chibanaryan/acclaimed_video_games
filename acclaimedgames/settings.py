@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "tailwind",
     "theme",
+    "core",
     "games",
     # django-allauth
     "allauth",

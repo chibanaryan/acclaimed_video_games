@@ -4,6 +4,18 @@ TYPE_LIST = "L"
 TYPE_LIST_MEMBERSHIP = "M"
 TYPE_DEVELOPER = "D"
 
+# Media types for multi-media support (games, books, etc.)
+MEDIA_GAME = "G"
+MEDIA_BOOK = "B"
+
+MEDIA_TYPES = [
+    (MEDIA_GAME, "Game"),
+    (MEDIA_BOOK, "Book"),
+]
+
+# Mapping from media type code to display label
+MEDIA_TYPE_LABELS = dict(MEDIA_TYPES)
+
 LIST_EOY = "E"
 LIST_MISC = "M"
 LIST_ALLTIME = "A"
