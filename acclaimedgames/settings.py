@@ -128,14 +128,15 @@ TEMPLATES = [
                 "games.context_processors.feature_flags",  # Feature flags
                 "games.context_processors.media_type",  # Current media type (games/books)
             ],
-            # In development, don't use cached template loader
+            # In development/tests, don't use cached template loader
             # This ensures template changes are picked up immediately
+            # and Django's test client can track templates used
             "loaders": (
                 [
                     "django.template.loaders.filesystem.Loader",
                     "django.template.loaders.app_directories.Loader",
                 ]
-                if DEBUG
+                if DEBUG or TEST_MODE
                 else [
                     (
                         "django.template.loaders.cached.Loader",
