@@ -79,7 +79,6 @@ class Command(BaseCommand):
             app_name,
             "--no-tty",
             "python manage.py dumpdata games sites flatpages "
-            "--exclude games.User "
             "--exclude games.PlayedGame "
             "--exclude games.WantToPlayGame "
             "--exclude games.SavedFilterSet "

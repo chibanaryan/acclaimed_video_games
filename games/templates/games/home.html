@@ -41,8 +41,22 @@
     {% endif %}
     </script>
     {% if enable_client_filtering %}
-    {# Client-side filtering - bundled for single HTTP request #}
-    <script src="{% static 'games/js/client-side-filtering.bundle.min.js' %}?v=9" defer fetchpriority="low" nonce="{{ csp_nonce }}"></script>
+    {# Client-side filtering - lazy-loaded during idle time for better main-thread performance #}
+    <script nonce="{{ csp_nonce }}">
+    (function() {
+        function loadCSF() {
+            var s = document.createElement('script');
+            s.src = '{% static "games/js/client-side-filtering.bundle.min.js" %}?v=10';
+            s.defer = true;
+            document.head.appendChild(s);
+        }
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(loadCSF, { timeout: 2000 });
+        } else {
+            setTimeout(loadCSF, 100);
+        }
+    })();
+    </script>
     {% endif %}
 {% endblock %}
 

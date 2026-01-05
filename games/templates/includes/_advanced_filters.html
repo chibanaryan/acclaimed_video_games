@@ -240,9 +240,10 @@
                    this.filters.hltb_max !== null;
         },
         async initClientFiltering() {
-            // Wait for deferred scripts to load (retry up to 10 times, 100ms apart)
+            // Wait for deferred scripts to load (retry up to 30 times, 100ms apart = 3 seconds)
+            // This allows time for requestIdleCallback-loaded scripts (2 second timeout)
             let retries = 0;
-            const maxRetries = 10;
+            const maxRetries = 30;
             const self = this;
 
             const doInit = async () => {
