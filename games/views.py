@@ -925,6 +925,39 @@ class HomePageView(RobustPaginationMixin, ListView):
     paginate_by = 100
     paginate_orphans = 0
 
+    def dispatch(self, request, *args, **kwargs):
+        """Cache full page responses for anonymous users to reduce TTFB."""
+        # Only cache for anonymous, non-HTMX full-page requests
+        is_htmx = (
+            request.headers.get("HX-Request")
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or request.GET.get("partial") == "true"
+            or request.GET.get("append") == "true"
+        )
+
+        if request.user.is_authenticated or is_htmx or request.method != "GET":
+            return super().dispatch(request, *args, **kwargs)
+
+        # Build cache key from sorted query params
+        query_string = request.META.get("QUERY_STRING", "")
+        cache_key = f"home_page:{config.CACHE_VERSION}:{query_string}"
+
+        # Check cache
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return cached_response
+
+        # Generate response and cache it
+        response = super().dispatch(request, *args, **kwargs)
+
+        # Only cache successful responses (render TemplateResponse first)
+        if response.status_code == 200:
+            if hasattr(response, "render"):
+                response.render()
+            cache.set(cache_key, response, config.CACHE_TIMEOUT_HOME_PAGE)
+
+        return response
+
     def get_paginate_by(self, queryset):
         """Always use standard page size - client-side handles deep jumps."""
         return self.paginate_by
