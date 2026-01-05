@@ -17,6 +17,7 @@ Use these skills for common workflows:
 - `/refresh-metadata` - Weekly metadata refresh (IGDB + Wikipedia)
 - `/test` - Run tests with coverage
 - `/icons` - Add Material Design Icons to the site
+- `/openlibrary` - Fetch book metadata from Open Library API
 
 ## Development Commands
 
@@ -83,6 +84,12 @@ heroku run -- python manage.py shell
 ### Backend Structure
 
 - **acclaimedgames/** - Django project settings and main URL configuration
+- **core/** - Shared infrastructure for multi-media support:
+  - **models.py** - User model, abstract base classes (MediaItemBase, CreatorBase, ExternalDataBase, UserTrackingBase)
+  - **mixins.py** - Shared view mixins (RobustPaginationMixin, HTMXPartialMixin)
+  - **templatetags/core_filters.py** - Shared template filters
+  - **templates/core/** - Shared templates (_pagination.html, _base_media_row.html)
+  - **static/core/js/** - Base JavaScript renderer classes
 - **games/** - Main Django app containing:
   - **models.py** - Core data models (Game, Developer, Platform, List, etc.)
   - **api/** - REST API with views, serializers, and URL routing
@@ -93,6 +100,17 @@ heroku run -- python manage.py shell
   - **tests/** - Comprehensive test suite (API, models, IGDB, imports, views, admin, utils)
   - **templates/** - Server-side templates with HTMX and Alpine.js
   - **static/** - Static files served by Django
+- **books/** - Books app for book rankings (feature-flagged with `BOOKS_ENABLED`):
+  - **models.py** - Book, Author, BookGenre, BookSeries, ReadBook, WantToReadBook, etc.
+  - **api/** - REST API with views, serializers, and URL routing
+  - **views.py** - Book-related views (BookHomePageView, BookDetailView, AuthorListView, etc.)
+  - **openlibrary.py** - Open Library API client for book metadata
+  - **hardcover.py** - Hardcover GraphQL API client (optional)
+  - **book_metadata.py** - Unified metadata service combining multiple sources
+  - **templatetags/book_filters.py** - Book-specific template filters
+  - **management/commands/** - Book metadata commands (fetch_book_metadata.py)
+  - **templates/books/** - Book templates
+  - **static/books/js/** - Book list renderer and client-side filtering
 
 **Installed Apps:**
 - `django.contrib.admin` - Admin interface
@@ -108,7 +126,9 @@ heroku run -- python manage.py shell
 - `corsheaders` - CORS support
 - `tailwind` - django-tailwind integration
 - `theme` - Tailwind CSS theme app with DaisyUI
+- `core` - Shared infrastructure (User model, abstract bases, mixins)
 - `games` - Main game aggregation app with HTMX and Alpine.js
+- `books` - Book rankings app (behind `BOOKS_ENABLED` feature flag)
 
 **Middleware:**
 - `django.middleware.security.SecurityMiddleware` - Security headers
@@ -141,6 +161,17 @@ Core Django models include:
 - **Post** - Blog-style news posts with markdown support
 - **Snippet** - Reusable text snippets
 
+Books-specific models (behind `BOOKS_ENABLED` feature flag):
+
+- **Book** - Book items with ranking, author, genre, and metadata integration
+- **Author** - Book authors with hierarchical parent-child relationships (similar to Developer)
+- **BookGenre** - Hierarchical book genres with path denormalization
+- **BookSeries** - Book series with position tracking
+- **BookListMembership** - Book positions within lists
+- **ReadBook/WantToReadBook** - User tracking for books (like PlayedGame/WantToPlayGame)
+- **GoodreadsBookData** - External metadata from Open Library (cover, rating, etc.)
+- **WikipediaBookData** - Wikipedia metadata for books
+
 ### API Architecture
 
 Django REST Framework powers the API at `/api/` with endpoints:
@@ -155,13 +186,22 @@ Django REST Framework powers the API at `/api/` with endpoints:
 - `/api/posts/` - News posts
 - `/api/meta/` - Metadata about the database
 
+Books API endpoints (behind `BOOKS_ENABLED` feature flag):
+- `/api/books/` - List and search books
+- `/api/books/<slug>/` - Book details with lists appearances
+- `/api/books/all/` - Bulk endpoint with gzip compression
+- `/api/authors/` - List authors
+- `/api/authors/<slug>/` - Author details with book list
+
 ### Template Architecture
 
 The application uses Django templates with server-side rendering:
 - **Production**: Uses Django's cached template loader for optimal performance
 - **Development**: Uses non-cached loaders for hot-reloading during development
 - Templates configured in `settings.py` based on `DEBUG` mode
-- All templates are in the `games/templates/` directory
+- Game templates are in `games/templates/`
+- Book templates are in `books/templates/` (feature-flagged)
+- Shared templates are in `core/templates/`
 
 ## Application Structure (Django + HTMX + Alpine.js)
 
@@ -195,15 +235,21 @@ The application uses Django templates with HTMX for dynamic interactions and Alp
 - Custom utilities for formatting and string manipulation
 
 **Routes:**
-- `/` - Home page
+- `/` - Home page (games)
 - `/games/` - Game list with filtering and search
 - `/games/<slug>/` - Game detail view
 - `/games/search/` - Game search endpoint (HTMX)
 - `/developers/` - Developer list with game counts and hierarchy
 - `/developers/<slug>/` - Developer detail view with subsidiary hierarchy and games
-- `/lists/` - Published rankings list
+- `/lists/` - Published rankings list (with media_type filter)
 - `/posts/` - News and blog posts
 - `/page/<slug>/` - Static pages
+
+Book routes (behind `BOOKS_ENABLED` feature flag):
+- `/books/` - Book list with filtering and search
+- `/book/<slug>/` - Book detail view
+- `/authors/` - Author list with book counts
+- `/authors/<slug>/` - Author detail view with books
 
 **HTMX Integration:**
 - Dynamic filtering without full page reloads
@@ -326,6 +372,8 @@ Environment variables are managed via django-environ (`.env` file):
 - `IGDB_CLIENT_SECRET` - IGDB API client secret
 - `IGDB_USE_PRO_TIER` - Enable IGDB Pro tier (default: False)
 - `WIKIDATA_ACCESS_TOKEN` - For faster Wikipedia processing (2.5x speedup)
+- `BOOKS_ENABLED` - Enable books feature (default: False, enabled in DEBUG/TEST modes)
+- `HARDCOVER_API_TOKEN` - Optional Hardcover API token for additional book metadata
 
 ### Configuration Files
 
