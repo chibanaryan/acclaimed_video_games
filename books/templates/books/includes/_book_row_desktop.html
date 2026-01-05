@@ -28,7 +28,7 @@
             <span class="book-row-global-rank text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and not show_rank_in_details and book %}hidden{% endif %}" data-slot="global-rank">{% if book %}(#{{ book.rank }}){% endif %}</span>
         </div>
         {% endif %}
-        <a {% if book %}href="{% url 'book-detail' slug=book.slug %}"{% endif %} class="book-thumb-link" data-slot="thumb-link">
+        <a {% if book %}href="{% url 'books:book-detail' slug=book.slug %}"{% endif %} class="book-thumb-link" data-slot="thumb-link">
             <img {% if book and book.thumbnail %}src="{{ book.thumbnail }}" alt="{{ book.name }}"{% endif %}
                  width="64" height="96" loading="lazy" decoding="async"
                  class="book-thumb rounded"
@@ -39,16 +39,16 @@
     {# Title and details #}
     <div class="flex-1 min-w-0 px-4">
         <div class="truncate">
-            <a {% if book %}href="{% url 'book-detail' slug=book.slug %}"{% endif %} class="book-title text-2xl font-bold link link-hover" data-slot="title-link">
+            <a {% if book %}href="{% url 'books:book-detail' slug=book.slug %}"{% endif %} class="book-title text-2xl font-bold link link-hover" data-slot="title-link">
                 <span data-slot="name">{% if book %}{{ book.name }}{% endif %}</span>
             </a>
-            <a {% if book %}href="{% url 'books-home' %}?start={{ book.year_published }}&end={{ book.year_published }}&highlight={{ book.id }}"{% endif %} class="text-base-content/60 ml-1" data-slot="year-link">
+            <a {% if book %}href="{% url 'books:home' %}?start={{ book.year_published }}&end={{ book.year_published }}&highlight={{ book.id }}"{% endif %} class="text-base-content/60 ml-1" data-slot="year-link">
                 (<span data-slot="year">{% if book %}{{ book.year_published }}{% endif %}</span>)
             </a>
         </div>
         {# Hover row: authors, genres, page count, list count #}
         <div class="book-row-details text-base-content/80 text-sm ml-4" data-slot="meta-row">
-            {% if book %}{% with display_authors=book.get_display_authors %}{% if display_authors %}<span class="whitespace-nowrap" data-slot="primary-author">by {% for author in display_authors %}{% if author.slug %}<a href="{% url 'author-detail' slug=author.slug %}" class="link link-hover">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}{% endif %}{% if book and book.genres.count > 0 %} <span class="whitespace-nowrap">{% if book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span data-slot="genres">{% for g in book.genres.all %}<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-book-genre', {detail: {genreId: '{{ g.id }}', bookId: '{{ book.id }}'} }))" title="{{ g.name }}">{{ g.name }}</button>{% if not forloop.last %}<span class="text-base-content/30"> / </span>{% endif %}{% endfor %}</span></span>{% endif %}{% if book and book.page_count %} <span class="whitespace-nowrap">{% if book.genres.count > 0 or book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span class="tabular-nums text-base-content/70" data-slot="page-count" title="Page count">{{ book.page_count|intcomma }} pages</span></span>{% endif %}{% if book and book.list_count %} <span class="whitespace-nowrap">{% if book.page_count or book.genres.count > 0 or book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span class="tabular-nums" data-slot="list-count">{{ book.list_count }} lists</span></span>{% endif %}
+            {% if book %}{% with display_authors=book.get_display_authors %}{% if display_authors %}<span class="whitespace-nowrap" data-slot="primary-author">by {% for author in display_authors %}{% if author.slug %}<a href="{% url 'books:author-detail' slug=author.slug %}" class="link link-hover">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}{% endif %}{% if book and book.genres.count > 0 %} <span class="whitespace-nowrap">{% if book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span data-slot="genres">{% for g in book.genres.all %}<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-book-genre', {detail: {genreId: '{{ g.id }}', bookId: '{{ book.id }}'} }))" title="{{ g.name }}">{{ g.name }}</button>{% if not forloop.last %}<span class="text-base-content/30"> / </span>{% endif %}{% endfor %}</span></span>{% endif %}{% if book and book.page_count %} <span class="whitespace-nowrap">{% if book.genres.count > 0 or book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span class="tabular-nums text-base-content/70" data-slot="page-count" title="Page count">{{ book.page_count|intcomma }} pages</span></span>{% endif %}{% if book and book.list_count %} <span class="whitespace-nowrap">{% if book.page_count or book.genres.count > 0 or book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span class="tabular-nums" data-slot="list-count">{{ book.list_count }} lists</span></span>{% endif %}
         </div>
     </div>
     </div>{# Close book-row #}

@@ -10,7 +10,7 @@
     data-goodreads-id="{{ book.goodreads_id }}"
     data-status="{% if is_read %}read{% elif is_want_to_read %}want{% else %}none{% endif %}"
     {% if size == 'large' %}data-size="large"{% endif %}
-    hx-post="{% url 'books:toggle-read-book' goodreads_id=book.goodreads_id %}{% if size == 'large' %}?size=large{% endif %}"
+    hx-post="{% url 'books:toggle-read' goodreads_id=book.goodreads_id %}{% if size == 'large' %}?size=large{% endif %}"
     hx-trigger="click"
     hx-swap="outerHTML"
     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'

@@ -5,7 +5,6 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from books.api import views as books_api_views
 from games import views
 from games.api import views as api_views
 from games.sitemaps import sitemaps
@@ -33,19 +32,20 @@ urlpatterns = [
         api_views.UnifiedSearchView.as_view(),
         name="api-unified-search",
     ),
+    # TODO: Uncomment when books app is enabled on production
     # Book search endpoints for HTMX/Alpine.js
-    path(
-        "api/books/search/",
-        books_api_views.BookSearchAPIView.as_view(),
-        name="api-books-search",
-    ),
-    path(
-        "api/books/unified-search/",
-        books_api_views.UnifiedBookSearchView.as_view(),
-        name="api-books-unified-search",
-    ),
+    # path(
+    #     "api/books/search/",
+    #     books_api_views.BookSearchAPIView.as_view(),
+    #     name="api-books-search",
+    # ),
+    # path(
+    #     "api/books/unified-search/",
+    #     books_api_views.UnifiedBookSearchView.as_view(),
+    #     name="api-books-unified-search",
+    # ),
     path("api/", include("games.api.urls", namespace="games-api")),
-    path("api/books/", include("books.api.urls", namespace="books-api")),
+    # path("api/books/", include("books.api.urls", namespace="books-api")),
     path("admin/", admin.site.urls),
     path("import/", views.ImportView.as_view(), name="import"),
     path(
@@ -147,12 +147,35 @@ urlpatterns = [
     path("blog/", views.ArticleListView.as_view(), name="article-list"),
     path("blog/<slug:slug>/", views.ArticleDetailView.as_view(), name="article-detail"),
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
+    # TODO: Uncomment when books app is enabled on production
     # Books routes (multi-media expansion)
-    path("books/", include("books.urls", namespace="books")),
+    # path("books/", include("books.urls", namespace="books")),
 ]
+
+# Books routes - only available in DEBUG/TEST mode (BOOKS_ENABLED feature flag)
+if settings.BOOKS_ENABLED:
+    from books.api import views as books_api_views
+
+    books_urlpatterns = [
+        # Book search endpoints for HTMX/Alpine.js
+        path(
+            "api/books/search/",
+            books_api_views.BookSearchAPIView.as_view(),
+            name="api-books-search",
+        ),
+        path(
+            "api/books/unified-search/",
+            books_api_views.UnifiedBookSearchView.as_view(),
+            name="api-books-unified-search",
+        ),
+        path("api/books/", include("books.api.urls", namespace="books-api")),
+        path("books/", include("books.urls", namespace="books")),
+    ]
+    urlpatterns = books_urlpatterns + urlpatterns
 
 if settings.DEBUG:
     import debug_toolbar
+
     from django.views.defaults import page_not_found
 
     urlpatterns = [
