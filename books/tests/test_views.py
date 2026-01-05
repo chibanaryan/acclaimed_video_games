@@ -3,6 +3,9 @@ Tests for books app views.
 
 Tests for BookHomePageView, BookDetailView, AuthorListView,
 AuthorDetailView, ToggleReadBookView, and BookSearchView.
+
+Note: All book views require staff access (StaffOnlyMixin).
+Tests must use staff users to access these views.
 """
 
 from django.contrib.auth import get_user_model
@@ -15,11 +18,25 @@ from books import models
 User = get_user_model()
 
 
-class BookHomePageViewTests(TestCase):
+class StaffUserTestMixin:
+    """Mixin that provides a staff user and logs them in for tests."""
+
+    def setUp(self):
+        super().setUp()
+        # Create staff user for accessing books views
+        self.staff_user = User.objects.create_user(
+            username="staffuser",
+            password="staffpass",
+            is_staff=True,
+        )
+        self.client.login(username="staffuser", password="staffpass")
+
+
+class BookHomePageViewTests(StaffUserTestMixin, TestCase):
     """Tests for the BookHomePageView."""
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.author = models.Author.objects.create(name="Test Author", slug="test-author")
         self.genre = models.BookGenre.objects.create(name="Fiction")
 
@@ -165,11 +182,11 @@ class BookHomePageViewTests(TestCase):
         self.assertEqual(len(response.context["books"]), 2)
 
 
-class BookDetailViewTests(TestCase):
+class BookDetailViewTests(StaffUserTestMixin, TestCase):
     """Tests for the BookDetailView."""
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.author = models.Author.objects.create(name="Test Author", slug="test-author")
         self.genre = models.BookGenre.objects.create(name="Fiction")
         self.series = models.BookSeries.objects.create(name="Test Series")
@@ -231,12 +248,10 @@ class BookDetailViewTests(TestCase):
         self.assertEqual(series_books[0].name, "Test Book 2")
 
     def test_read_status_for_authenticated_user(self):
-        """Test read status context for authenticated user."""
-        user = User.objects.create_user(username="testuser", password="testpass")
-        self.client.login(username="testuser", password="testpass")
-
+        """Test read status context for authenticated staff user."""
+        # Use staff_user from mixin (already logged in)
         models.ReadBook.objects.create(
-            user=user, book=self.book, goodreads_id="12345"
+            user=self.staff_user, book=self.book, goodreads_id="12345"
         )
 
         response = self.client.get(
@@ -245,12 +260,10 @@ class BookDetailViewTests(TestCase):
         self.assertTrue(response.context["is_read"])
 
     def test_want_to_read_status_for_authenticated_user(self):
-        """Test want-to-read status context for authenticated user."""
-        user = User.objects.create_user(username="testuser", password="testpass")
-        self.client.login(username="testuser", password="testpass")
-
+        """Test want-to-read status context for authenticated staff user."""
+        # Use staff_user from mixin (already logged in)
         models.WantToReadBook.objects.create(
-            user=user, book=self.book, goodreads_id="12345"
+            user=self.staff_user, book=self.book, goodreads_id="12345"
         )
 
         response = self.client.get(
@@ -266,11 +279,11 @@ class BookDetailViewTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class AuthorListViewTests(TestCase):
+class AuthorListViewTests(StaffUserTestMixin, TestCase):
     """Tests for the AuthorListView."""
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.author1 = models.Author.objects.create(name="Alpha Author", slug="alpha")
         self.author2 = models.Author.objects.create(name="Beta Author", slug="beta")
 
@@ -338,11 +351,11 @@ class AuthorListViewTests(TestCase):
         self.assertNotIn("No Books Author", names)
 
 
-class AuthorDetailViewTests(TestCase):
+class AuthorDetailViewTests(StaffUserTestMixin, TestCase):
     """Tests for the AuthorDetailView."""
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.author = models.Author.objects.create(
             name="Test Author",
             slug="test-author",
@@ -402,13 +415,15 @@ class AuthorDetailViewTests(TestCase):
         self.assertEqual(response.context["best_book"].name, "Book 1")
 
     def test_read_count_for_authenticated_user(self):
-        """Test read count context for authenticated user."""
-        user = User.objects.create_user(username="testuser", password="testpass")
-        self.client.login(username="testuser", password="testpass")
+        """Test read count context for authenticated staff user."""
+        from django.core.cache import cache
 
+        # Use staff_user from mixin (already logged in)
         models.ReadBook.objects.create(
-            user=user, book=self.book1, goodreads_id="111"
+            user=self.staff_user, book=self.book1, goodreads_id="111"
         )
+        # Clear cache to ensure fresh read_ids lookup
+        cache.delete(f"read_books_{self.staff_user.id}")
 
         response = self.client.get(
             reverse("books:author-detail", kwargs={"slug": "test-author"})
@@ -423,12 +438,13 @@ class AuthorDetailViewTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class ToggleReadBookViewTests(TestCase):
+class ToggleReadBookViewTests(StaffUserTestMixin, TestCase):
     """Tests for the ToggleReadBookView."""
 
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="testpass")
-        self.client = Client()
+        super().setUp()
+        # Use staff_user from mixin for toggle tests
+        self.user = self.staff_user
         self.book = models.Book.objects.create(
             name="Test Book",
             rank=1,
@@ -436,18 +452,34 @@ class ToggleReadBookViewTests(TestCase):
             goodreads_id="12345",
         )
 
-    def test_requires_authentication(self):
-        """Test view requires authentication."""
+    def test_requires_staff_access(self):
+        """Test view requires staff access (returns 404 for non-staff)."""
+        # Log out staff user
+        self.client.logout()
+
         response = self.client.post(
             reverse("books:toggle-read", kwargs={"goodreads_id": "12345"})
         )
-        # Should redirect to login
-        self.assertEqual(response.status_code, 302)
+        # Should return 404 to hide the feature from non-staff
+        self.assertEqual(response.status_code, 404)
+
+        # Log in as non-staff user
+        regular_user = User.objects.create_user(
+            username="regularuser", password="testpass"
+        )
+        self.client.login(username="regularuser", password="testpass")
+        response = self.client.post(
+            reverse("books:toggle-read", kwargs={"goodreads_id": "12345"})
+        )
+        # Should still return 404
+        self.assertEqual(response.status_code, 404)
+
+        # Log back in as staff for remaining tests
+        self.client.login(username="staffuser", password="staffpass")
 
     def test_toggle_none_to_want(self):
         """Test cycling from none to want-to-read."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         response = self.client.post(
             reverse("books:toggle-read", kwargs={"goodreads_id": "12345"})
         )
@@ -466,8 +498,7 @@ class ToggleReadBookViewTests(TestCase):
 
     def test_toggle_want_to_read(self):
         """Test cycling from want-to-read to read."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         # Create want-to-read entry
         models.WantToReadBook.objects.create(
             user=self.user, book=self.book, goodreads_id="12345"
@@ -491,8 +522,7 @@ class ToggleReadBookViewTests(TestCase):
 
     def test_toggle_read_to_none(self):
         """Test cycling from read to none."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         # Create read entry
         models.ReadBook.objects.create(
             user=self.user, book=self.book, goodreads_id="12345"
@@ -516,8 +546,7 @@ class ToggleReadBookViewTests(TestCase):
 
     def test_returns_button_html(self):
         """Test response contains button HTML."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         response = self.client.post(
             reverse("books:toggle-read", kwargs={"goodreads_id": "12345"})
         )
@@ -527,8 +556,7 @@ class ToggleReadBookViewTests(TestCase):
 
     def test_nonexistent_book_returns_404(self):
         """Test nonexistent book returns 404."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         response = self.client.post(
             reverse("books:toggle-read", kwargs={"goodreads_id": "99999"})
         )
@@ -537,8 +565,7 @@ class ToggleReadBookViewTests(TestCase):
 
     def test_hx_push_url_false(self):
         """Test HX-Push-Url header is false."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         response = self.client.post(
             reverse("books:toggle-read", kwargs={"goodreads_id": "12345"})
         )
@@ -546,11 +573,11 @@ class ToggleReadBookViewTests(TestCase):
         self.assertEqual(response.get("HX-Push-Url"), "false")
 
 
-class BookSearchViewTests(TestCase):
+class BookSearchViewTests(StaffUserTestMixin, TestCase):
     """Tests for the BookSearchView."""
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.book1 = models.Book.objects.create(
             name="Harry Potter", rank=1, slug="harry-potter"
         )

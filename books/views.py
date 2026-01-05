@@ -7,16 +7,32 @@ following the same patterns established in the games app.
 
 from collections import defaultdict
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.cache import cache
 from django.db.models import Count, Max, Min, Prefetch
 from django.db.models.functions import Lower
+from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.views import View
 from django.views.generic import DetailView, ListView
 
 from books import models
 from core.mixins import HTMXPartialMixin, RobustPaginationMixin
+
+
+class StaffOnlyMixin(UserPassesTestMixin):
+    """
+    Mixin that restricts access to staff/admin users only.
+
+    Returns 404 (not 403) for non-staff users so the feature
+    remains hidden until publicly launched.
+    """
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_staff
+
+    def handle_no_permission(self):
+        raise Http404("Page not found")
 
 
 # Cache configuration
@@ -104,7 +120,7 @@ def _apply_read_filter(qs, user, read_param):
     return qs
 
 
-class BookHomePageView(RobustPaginationMixin, ListView):
+class BookHomePageView(StaffOnlyMixin, RobustPaginationMixin, ListView):
     """
     Main book listing page with filtering, search, and HTMX support.
 
@@ -291,7 +307,7 @@ class BookHomePageView(RobustPaginationMixin, ListView):
         return context
 
 
-class BookDetailView(DetailView):
+class BookDetailView(StaffOnlyMixin, DetailView):
     """
     Detail view for a single book showing all metadata and list appearances.
     """
@@ -384,7 +400,7 @@ class BookDetailView(DetailView):
         return context
 
 
-class AuthorListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
+class AuthorListView(StaffOnlyMixin, RobustPaginationMixin, HTMXPartialMixin, ListView):
     """
     List view for authors with book counts and hierarchy support.
 
@@ -460,7 +476,7 @@ class AuthorListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         return context
 
 
-class AuthorDetailView(DetailView):
+class AuthorDetailView(StaffOnlyMixin, DetailView):
     """
     Detail view for an author showing biography and all their books.
     """
@@ -510,7 +526,7 @@ class AuthorDetailView(DetailView):
         return context
 
 
-class ToggleReadBookView(LoginRequiredMixin, View):
+class ToggleReadBookView(StaffOnlyMixin, LoginRequiredMixin, View):
     """
     Cycle a book's status: none -> want -> read -> none.
 
@@ -583,7 +599,7 @@ class ToggleReadBookView(LoginRequiredMixin, View):
         return response
 
 
-class BookSearchView(ListView):
+class BookSearchView(StaffOnlyMixin, ListView):
     """
     Search endpoint for HTMX-powered book search.
     Returns just the search results for dynamic updates.

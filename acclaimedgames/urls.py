@@ -152,26 +152,26 @@ urlpatterns = [
     # path("books/", include("books.urls", namespace="books")),
 ]
 
-# Books routes - only available in DEBUG/TEST mode (BOOKS_ENABLED feature flag)
-if settings.BOOKS_ENABLED:
-    from books.api import views as books_api_views
+# Books routes - always included, but views require staff access
+# Access is controlled at the view level via StaffOnlyMixin / IsStaffOrHide permission
+from books.api import views as books_api_views
 
-    books_urlpatterns = [
-        # Book search endpoints for HTMX/Alpine.js
-        path(
-            "api/books/search/",
-            books_api_views.BookSearchAPIView.as_view(),
-            name="api-books-search",
-        ),
-        path(
-            "api/books/unified-search/",
-            books_api_views.UnifiedBookSearchView.as_view(),
-            name="api-books-unified-search",
-        ),
-        path("api/books/", include("books.api.urls", namespace="books-api")),
-        path("books/", include("books.urls", namespace="books")),
-    ]
-    urlpatterns = books_urlpatterns + urlpatterns
+books_urlpatterns = [
+    # Book search endpoints for HTMX/Alpine.js
+    path(
+        "api/books/search/",
+        books_api_views.BookSearchAPIView.as_view(),
+        name="api-books-search",
+    ),
+    path(
+        "api/books/unified-search/",
+        books_api_views.UnifiedBookSearchView.as_view(),
+        name="api-books-unified-search",
+    ),
+    path("api/books/", include("books.api.urls", namespace="books-api")),
+    path("books/", include("books.urls", namespace="books")),
+]
+urlpatterns = books_urlpatterns + urlpatterns
 
 if settings.DEBUG:
     import debug_toolbar
