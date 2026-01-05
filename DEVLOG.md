@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Load htmx with async instead of defer to reduce main-thread blocking (~500ms TBT improvement)
 - Add populate_mock_books management command for demo/testing data (30 books, 20 authors, 25 genres, 7 series)
 
 ## 2026-01-04
