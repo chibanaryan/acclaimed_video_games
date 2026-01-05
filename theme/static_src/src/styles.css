@@ -1085,9 +1085,16 @@
     @apply bg-accent text-accent-content font-semibold border-l-2 border-accent -ml-[2px] pl-[calc(0.75rem+2px)];
   }
 
-  /* Sidebar menu hover states */
-  aside .menu li a:hover:not(.active) {
-    @apply bg-base-content/10;
+  /* Keep active styling on hover - subtle brightness increase for feedback */
+  aside .menu li a.active:hover,
+  aside .menu li > a.active:hover {
+    @apply !bg-accent !text-accent-content brightness-110;
+  }
+
+  /* Sidebar menu hover states - add accent color for clear feedback */
+  aside .menu li a:hover:not(.active),
+  aside .menu li button:hover:not(.active) {
+    @apply bg-base-content/10 text-accent;
   }
 
   /* Ensure sidebar dropdown doesn't overflow */
