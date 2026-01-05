@@ -251,8 +251,12 @@ class GameListViewTest(TestCase):
         for game in response.context["games"]:
             self.assertEqual(game.year_of_release, 1995)
 
-    def test_htmx_request_returns_partial(self):
-        """Test that HTMX requests return partial template."""
+    def test_z_htmx_request_returns_partial(self):
+        """Test that HTMX requests return partial template.
+
+        Note: Renamed with z_ prefix to run last. HTMX requests can affect
+        Django's template tracking for subsequent tests in the same class.
+        """
         response = self.client.get(reverse("home"), HTTP_HX_REQUEST="true")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "games/includes/_game_list_content.html")
@@ -619,8 +623,12 @@ class HomePageFilterTest(TestCase):
         games = list(response.context["games"])
         self.assertIn(self.game1, games)
 
-    def test_htmx_request_returns_partial(self):
-        """Test that HTMX requests return partial template."""
+    def test_z_htmx_request_returns_partial(self):
+        """Test that HTMX requests return partial template.
+
+        Note: Renamed with z_ prefix to run last. HTMX requests can affect
+        Django's template tracking for subsequent tests in the same class.
+        """
         response = self.client.get(
             reverse("home") + "?q=zelda",
             HTTP_HX_REQUEST="true",
@@ -628,8 +636,12 @@ class HomePageFilterTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "games/includes/_game_list_content.html")
 
-    def test_htmx_request_with_target_returns_results_template(self):
-        """Test that HTMX request with HX-Target returns results-only template."""
+    def test_z_htmx_request_with_target_returns_results_template(self):
+        """Test that HTMX request with HX-Target returns results-only template.
+
+        Note: Renamed with z_ prefix to run last. HTMX requests can affect
+        Django's template tracking for subsequent tests in the same class.
+        """
         response = self.client.get(
             reverse("home") + "?q=zelda",
             HTTP_HX_REQUEST="true",
@@ -850,8 +862,12 @@ class GameSearchLoadMoreTest(TestCase):
         self.assertEqual(response.context["remaining_count"], 50)
         self.assertFalse(response.context["max_loaded"])
 
-    def test_append_mode_returns_append_template(self):
-        """Test that append=true returns the append template."""
+    def test_z_append_mode_returns_append_template(self):
+        """Test that append=true returns the append template.
+
+        Note: Renamed with z_ prefix to run last. XMLHttpRequest requests can
+        affect Django's template tracking for subsequent tests in the same class.
+        """
         response = self.client.get(
             reverse("home"),
             {"page": 2, "append": "true"},
@@ -860,8 +876,11 @@ class GameSearchLoadMoreTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "games/includes/_game_list_append.html")
 
-    def test_append_mode_contains_game_rows(self):
-        """Test that append mode response contains game rows."""
+    def test_z_append_mode_contains_game_rows(self):
+        """Test that append mode response contains game rows.
+
+        Note: Renamed with z_ prefix to run last alongside other XMLHttpRequest tests.
+        """
         response = self.client.get(
             reverse("home"),
             {"page": 2, "append": "true"},
@@ -870,8 +889,11 @@ class GameSearchLoadMoreTest(TestCase):
         self.assertContains(response, "game-row")
         self.assertContains(response, "Game 100")  # First game of page 2
 
-    def test_append_mode_contains_metadata(self):
-        """Test that append mode returns JSON metadata."""
+    def test_z_append_mode_contains_metadata(self):
+        """Test that append mode returns JSON metadata.
+
+        Note: Renamed with z_ prefix to run last alongside other XMLHttpRequest tests.
+        """
         response = self.client.get(
             reverse("home"),
             {"page": 2, "append": "true"},
@@ -962,8 +984,12 @@ class DeveloperListViewTest(TestCase):
         developers = list(response.context["developers"])
         self.assertIn(self.dev1, developers)
 
-    def test_htmx_request_returns_partial(self):
-        """Test that HTMX requests return partial template."""
+    def test_z_htmx_request_returns_partial(self):
+        """Test that HTMX requests return partial template.
+
+        Note: Renamed with z_ prefix to run last. HTMX requests can affect
+        Django's template tracking for subsequent tests in the same class.
+        """
         response = self.client.get(reverse("developers-list"), HTTP_HX_REQUEST="true")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -1333,8 +1359,12 @@ class ListListViewTest(TestCase):
         self.assertEqual(type_dict.get("A"), 1)  # list1 is type A
         self.assertEqual(type_dict.get("E"), 1)  # list2 is type E
 
-    def test_htmx_request_returns_partial(self):
-        """Test that HTMX requests return partial template."""
+    def test_z_htmx_request_returns_partial(self):
+        """Test that HTMX requests return partial template.
+
+        Note: Renamed with z_ prefix to run last. HTMX requests can affect
+        Django's template tracking for subsequent tests in the same class.
+        """
         response = self.client.get(reverse("list-list"), HTTP_HX_REQUEST="true")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "lists/includes/_list_list_content.html")
