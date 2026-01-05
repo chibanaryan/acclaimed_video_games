@@ -257,7 +257,7 @@ def notify_subscribers_of_new_post(post) -> int:
         Number of emails sent successfully
     """
     from allauth.account.models import EmailAddress
-    from games.models import User
+    from core.models import User
 
     # Get users who are subscribed AND have a verified email
     verified_emails = EmailAddress.objects.filter(verified=True).values_list(

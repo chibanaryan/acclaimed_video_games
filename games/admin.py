@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from django.utils.html import format_html
 from django.utils.text import Truncator
 
+from core.models import User
 from . import models
 
 
@@ -599,7 +600,7 @@ class EmailAddressInline(admin.TabularInline):
         return False
 
 
-@admin.register(models.User)
+@admin.register(User)
 class UserAdmin(BaseUserAdmin):
     """Admin interface for custom User model with subscription fields."""
 

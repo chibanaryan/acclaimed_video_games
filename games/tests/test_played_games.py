@@ -3,7 +3,8 @@
 from django.db import IntegrityError
 from django.test import TestCase
 
-from games.models import Game, PlayedGame, WantToPlayGame, User
+from core.models import User
+from games.models import Game, PlayedGame, WantToPlayGame
 
 
 class PlayedGameModelTests(TestCase):

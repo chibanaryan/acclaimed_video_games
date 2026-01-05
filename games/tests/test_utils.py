@@ -3,8 +3,9 @@ from unittest import mock
 
 from django.test import TestCase
 
+from core.models import User
 from games import constants, models, utils
-from games.models import Post, User
+from games.models import Post
 
 
 class ImportDataRoutingTests(TestCase):
@@ -479,7 +480,8 @@ class SendPostNotificationEmailTests(TestCase):
         """Test sending multipart notification email."""
         from django.core import mail
 
-        from games.models import Post, User
+        from core.models import User
+        from games.models import Post
 
         author = User.objects.create_user(
             username="testuser", email="author@example.com"
@@ -519,7 +521,8 @@ class SendPostNotificationEmailTests(TestCase):
 
     def test_handles_exception(self):
         """Test notification sending with exception."""
-        from games.models import Post, User
+        from core.models import User
+        from games.models import Post
 
         author = User.objects.create_user(
             username="testuser", email="author@example.com"
@@ -548,7 +551,8 @@ class SendPostNotificationEmailTests(TestCase):
         """Test notification email for post without author."""
         from django.core import mail
 
-        from games.models import Post, User
+        from core.models import User
+        from games.models import Post
 
         # Create post without author
         post = Post.objects.create(
@@ -602,7 +606,8 @@ class NotifySubscribersOfNewPostTests(TestCase):
         """Test batch notification to confirmed subscribers."""
         from django.core import mail
 
-        from games.models import Post, User
+        from core.models import User
+        from games.models import Post
 
         author = User.objects.create_user(
             username="testuser", email="author@example.com"
@@ -641,7 +646,8 @@ class NotifySubscribersOfNewPostTests(TestCase):
 
     def test_handles_individual_failures(self):
         """Test that individual email failures don't stop batch."""
-        from games.models import Post, User
+        from core.models import User
+        from games.models import Post
 
         author = User.objects.create_user(
             username="testuser", email="author@example.com"

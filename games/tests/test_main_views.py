@@ -10,6 +10,7 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 
+from core.models import User
 from games.models import (
     Developer,
     Game,
@@ -21,7 +22,6 @@ from games.models import (
     Post,
     Publication,
     SiteMetadata,
-    User,
     WikipediaGenre,
 )
 

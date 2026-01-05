@@ -1042,7 +1042,8 @@ class HasPublishedArticlesTagTest(TestCase):
 
     def test_returns_true_with_published_article(self):
         """Test returns True when published article exists."""
-        from games.models import Article, User
+        from core.models import User
+        from games.models import Article
         from games.templatetags.game_filters import has_published_articles
 
         author = User.objects.create_user(username="author", email="author@test.com")
@@ -1059,7 +1060,8 @@ class HasPublishedArticlesTagTest(TestCase):
 
     def test_returns_false_with_only_draft(self):
         """Test returns False when only draft articles exist."""
-        from games.models import Article, User
+        from core.models import User
+        from games.models import Article
         from games.templatetags.game_filters import has_published_articles
 
         author = User.objects.create_user(username="author2", email="author2@test.com")
