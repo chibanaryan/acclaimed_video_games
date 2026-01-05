@@ -2,10 +2,10 @@
 
 ## 2026-01-05
 
+- Fix HLTB ID missing for games without English Wikipedia pages: fetch Wikidata metadata even when enwiki sitelink is absent, merge with Wikipedia page's Wikidata entry for union of all metadata (HLTB, Steam, game modes, countries)
 - Fix accessibility: add aria-labels to played/tracking buttons for screen readers
 - Fix contrast: increase unavailable year cell text opacity (/60→/70, hover /80→/90)
 - Fix CLS: add explicit aspect-ratio to logo and game cover images to prevent layout shift
-- Fix HLTB ID missing for games without English Wikipedia pages: fetch Wikidata metadata even when enwiki sitelink is absent, then merge with OpenSearch page title
 - Fix visual glitch: genre buttons in game rows no longer dim and pop-in during Alpine.js initialization
 - Fix dark mode sidebar hover: use base-content text color for readability (was using dark primary color)
 - Fix accessibility: year grid selected cells use white text, dark heatmap tiles get stronger text shadow for contrast
