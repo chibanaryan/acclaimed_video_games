@@ -1099,10 +1099,10 @@
     filter: brightness(0.9) saturate(1.1);
   }
 
-  /* Sidebar menu hover states - use primary color for consistency */
+  /* Sidebar menu hover states - use base-content for readability in both themes */
   aside .menu li a:hover:not(.active),
   aside .menu li button:hover:not(.active) {
-    @apply bg-base-content/10 text-primary;
+    @apply bg-base-content/10 text-base-content;
   }
 
   /* Ensure sidebar dropdown doesn't overflow */
