@@ -510,7 +510,7 @@
   }
 
   .year-grid-cell.is-unavailable .year-grid-cell-label {
-    @apply text-base-content/60;
+    @apply text-base-content/70;
   }
 
   .year-grid-cell.is-unavailable:hover {
@@ -518,7 +518,7 @@
   }
 
   .year-grid-cell.is-unavailable:hover .year-grid-cell-label {
-    @apply text-base-content/80;
+    @apply text-base-content/90;
   }
 
   .year-grid-cell-hidden {

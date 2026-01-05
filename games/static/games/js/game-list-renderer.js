@@ -291,11 +291,22 @@ class GameListRenderer extends BaseMediaListRenderer {
             'want': 'You want to play this game!',
             'none': "You aren't tracking this game."
         };
+        const ariaLabels = {
+            'played': 'Played - click to untrack',
+            'want': 'Want to play - click to mark as played',
+            'none': 'Not tracked - click to add to wishlist'
+        };
         wrapper.dataset.tip = tooltips[status];
         wrapper.dataset.igdbId = igdbId;
         wrapper.dataset.status = status;
         wrapper.setAttribute('hx-post', `/game/${igdbId}/toggle-played/`);
         wrapper.setAttribute('hx-headers', `{"X-CSRFToken": "${csrfToken}"}`);
+
+        // Set aria-label on the button for accessibility
+        const button = wrapper.querySelector('[data-slot="played-button"]');
+        if (button) {
+            button.setAttribute('aria-label', ariaLabels[status]);
+        }
 
         // Show correct icon based on status
         const playedIcon = wrapper.querySelector('[data-slot="played-icon"]');
@@ -664,7 +675,14 @@ class GameListRenderer extends BaseMediaListRenderer {
             innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><span class="mdi mdi-star-outline text-2xl text-base-content/30"></span></span>`;
         }
 
-        return `<div class="desktop:tooltip desktop:tooltip-top played-button-wrapper cursor-pointer" data-tip="${tooltipText}" data-igdb-id="${igdbId}" data-status="${status}" hx-post="/game/${igdbId}/toggle-played/" hx-trigger="click" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "${csrfToken}"}' onclick="event.stopPropagation()"><button class="played-button flex items-center justify-center h-8 w-8 min-w-8 shrink-0 pointer-events-none">${innerHtml}</button></div>`;
+        const ariaLabels = {
+            'played': 'Played - click to untrack',
+            'want': 'Want to play - click to mark as played',
+            'none': 'Not tracked - click to add to wishlist'
+        };
+        const ariaLabel = ariaLabels[status];
+
+        return `<div class="desktop:tooltip desktop:tooltip-top played-button-wrapper cursor-pointer" data-tip="${tooltipText}" data-igdb-id="${igdbId}" data-status="${status}" hx-post="/game/${igdbId}/toggle-played/" hx-trigger="click" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "${csrfToken}"}' onclick="event.stopPropagation()"><button class="played-button flex items-center justify-center h-8 w-8 min-w-8 shrink-0 pointer-events-none" aria-label="${ariaLabel}">${innerHtml}</button></div>`;
     }
 
     /**

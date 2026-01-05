@@ -16,7 +16,8 @@
     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
     onclick="event.stopPropagation()">
 <button
-    class="played-button flex items-center justify-center shrink-0 pointer-events-none {% if size == 'large' %}h-12 w-12 min-w-12{% else %}h-8 w-8 min-w-8{% endif %}">
+    class="played-button flex items-center justify-center shrink-0 pointer-events-none {% if size == 'large' %}h-12 w-12 min-w-12{% else %}h-8 w-8 min-w-8{% endif %}"
+    aria-label="{% if is_played %}Played - click to untrack{% elif is_want_to_play %}Want to play - click to mark as played{% else %}Not tracked - click to add to wishlist{% endif %}">
     {% if is_played %}
     {# Played state - Mario Star #}
     <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-appear{% else %} star-idle{% endif %}">
