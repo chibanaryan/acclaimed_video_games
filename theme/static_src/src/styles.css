@@ -534,7 +534,7 @@
     @apply h-2.5 w-20 rounded-sm;
     background: linear-gradient(
       to right,
-      color-mix(in oklch, var(--color-heatmap) 30%, transparent),
+      color-mix(in oklch, var(--color-heatmap) 20%, transparent),
       var(--color-heatmap)
     );
   }
