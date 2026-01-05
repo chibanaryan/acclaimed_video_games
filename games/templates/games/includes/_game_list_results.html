@@ -21,7 +21,7 @@
     <div class="flex items-center gap-2 flex-shrink-0">
         <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
             <button type="button"
-                    class="flex items-center gap-1 text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="sortOpen = !sortOpen"
                     aria-label="Sort games"
                     aria-haspopup="true"
@@ -47,7 +47,7 @@
         </div>
         {# Direction flip button #}
         <button type="button"
-                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                 @click="toggleSortDirection()"
                 :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
                 :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
@@ -72,7 +72,7 @@
         </div>
     </div>
     {# Result count - Middle #}
-    <div class="result-count text-base-content/60 whitespace-nowrap">
+    <div class="result-count text-base-content/70 whitespace-nowrap">
         {% if total_count %}Showing <span id="loaded-count" class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
     </div>
     {# Jump to Rank - Right side #}
@@ -97,7 +97,7 @@
 <div class="desktop:hidden flex items-center justify-between gap-2 mb-2 text-sm">
     {# Sort - Left side - Native select for mobile touch compatibility #}
     <div class="flex items-center gap-1 shrink-0">
-        <span class="mdi mdi-sort text-base text-base-content/60"></span>
+        <span class="mdi mdi-sort text-base text-base-content/70"></span>
         <select class="select select-xs select-bordered bg-base-200"
                 @change="updateSort($event.target.value)">
             <option value="rank" :selected="filters.sort === 'rank'">Rank</option>
@@ -107,7 +107,7 @@
         </select>
         {# Direction flip button #}
         <button type="button"
-                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                 @click="toggleSortDirection()"
                 :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
                 :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
@@ -132,7 +132,7 @@
         </div>
     </div>
     {# Result count - middle, can shrink #}
-    <div class="result-count text-base-content/60 text-xs truncate min-w-0">
+    <div class="result-count text-base-content/70 text-xs truncate min-w-0">
         {% if total_count %}<span class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% endif %}
     </div>
     {# Jump to Rank - Right side #}

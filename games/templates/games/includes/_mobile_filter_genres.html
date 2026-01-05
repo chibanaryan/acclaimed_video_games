@@ -256,7 +256,7 @@
         <button type="button"
                 @click="expanded = !expanded"
                 class="flex items-center gap-2">
-            <span class="mdi mdi-gamepad-variant text-lg text-base-content/60"></span>
+            <span class="mdi mdi-gamepad-variant text-lg text-base-content/70"></span>
             Genre
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
@@ -269,7 +269,7 @@
                     x-show="selectedCount() > 0"
                     x-cloak
                     @click.stop="clearGenres(); resetExpanded(); debouncedFilterUpdate();"
-                    class="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
+                    class="btn btn-ghost btn-xs text-base-content/70 hover:text-error">
                 <span class="mdi mdi-close text-xs"></span>
                 <span class="text-xs">Clear</span>
             </button>

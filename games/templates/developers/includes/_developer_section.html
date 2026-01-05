@@ -76,7 +76,7 @@
             <h2 class="{% if level == 0 %}text-xl{% else %}text-lg{% endif %} font-semibold cursor-pointer"
                 @click="expanded = !expanded">
                 {{ developer_data.developer.name }}
-                <span class="text-sm font-normal text-base-content/60">
+                <span class="text-sm font-normal text-base-content/70">
                     {% if developer_data.sub_developers %}
                         ({{ developer_data.total_games_count }} total game{{ developer_data.total_games_count|pluralize }}, {{ developer_data.total_subsidiaries_count }} developer{{ developer_data.total_subsidiaries_count|pluralize }})
                     {% else %}

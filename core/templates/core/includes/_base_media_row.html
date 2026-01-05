@@ -55,7 +55,7 @@
                     <span data-slot="name">{% if item %}{{ item.name }}{% endif %}</span>
                 </a>
                 {% block year_link %}
-                <span class="text-base-content/60 ml-1" data-slot="year-link">
+                <span class="text-base-content/70 ml-1" data-slot="year-link">
                     (<span data-slot="year">{% if item %}{{ item.year }}{% endif %}</span>)
                 </span>
                 {% endblock %}
@@ -95,7 +95,7 @@
                 </span>
                 {% endif %}
                 {% if item %}{{ item.name }}{% endif %}
-                <span class="font-normal text-sm text-base-content/60" data-slot="year-mobile">
+                <span class="font-normal text-sm text-base-content/70" data-slot="year-mobile">
                     {% if item %}({{ item.year }}){% endif %}
                 </span>
             </div>

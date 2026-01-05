@@ -83,7 +83,7 @@
             {# Top game #}
             {% if dev.top_game %}
             <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-2 group min-w-0" style="max-width: calc(100vw - 4rem);">
-                <span class="text-base-content/60 text-sm shrink-0">Top:</span>
+                <span class="text-base-content/70 text-sm shrink-0">Top:</span>
                 <span class="text-accent font-bold text-sm shrink-0">#{{ dev.top_game.rank }}</span>
                 {% if dev.top_game.thumbnail %}
                 <img src="{{ dev.top_game.thumbnail }}" alt="" width="24" height="32" class="w-6 h-8 object-cover rounded shrink-0" loading="lazy">

@@ -42,7 +42,7 @@
             <a {% if book %}href="{% url 'books:book-detail' slug=book.slug %}"{% endif %} class="book-title text-2xl font-bold link link-hover" data-slot="title-link">
                 <span data-slot="name">{% if book %}{{ book.name }}{% endif %}</span>
             </a>
-            <a {% if book %}href="{% url 'books:home' %}?start={{ book.year_published }}&end={{ book.year_published }}&highlight={{ book.id }}"{% endif %} class="text-base-content/60 ml-1" data-slot="year-link">
+            <a {% if book %}href="{% url 'books:home' %}?start={{ book.year_published }}&end={{ book.year_published }}&highlight={{ book.id }}"{% endif %} class="text-base-content/70 ml-1" data-slot="year-link">
                 (<span data-slot="year">{% if book %}{{ book.year_published }}{% endif %}</span>)
             </a>
         </div>

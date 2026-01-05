@@ -50,7 +50,7 @@
                     of {{ total_games }} games played
                 </span>
             </div>
-            <div class="pl-7 text-xs text-base-content/60">
+            <div class="pl-7 text-xs text-base-content/70">
                 {{ percentile_message }}
             </div>
         </div>
@@ -66,7 +66,7 @@
                 </span>
             </div>
             {% if backlog_playtime.main or backlog_playtime.completionist %}
-            <div class="pl-7 text-xs text-base-content/60">
+            <div class="pl-7 text-xs text-base-content/70">
                 {% if backlog_playtime.main %}
                 ~{{ backlog_playtime.main|floatformat:0 }}h main story{% if backlog_playtime.completionist %}, {{ backlog_playtime.completionist|floatformat:0 }}h 100%{% endif %}
                 {% elif backlog_playtime.completionist %}
@@ -87,7 +87,7 @@
                        class="checkbox checkbox-primary">
                 <span class="label-text">Subscribe to email updates</span>
             </label>
-            <p class="text-xs text-base-content/60 pl-10">
+            <p class="text-xs text-base-content/70 pl-10">
                 Get notified about new features and <a href="/news/" class="link link-hover">important updates</a>
             </p>
         </div>
@@ -122,7 +122,7 @@
     </form>
 
     {# Legal disclaimer #}
-    <p class="text-xs text-base-content/60 text-center mt-4">
+    <p class="text-xs text-base-content/70 text-center mt-4">
         By using Acclaimed Video Games, you agree to our
         <a href="/page/legal/" class="link link-hover">Terms of Service and Privacy Policy</a>.
     </p>

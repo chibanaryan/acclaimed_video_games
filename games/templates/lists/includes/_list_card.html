@@ -2,7 +2,7 @@
 <div class="list-row card bg-base-200 p-3">
     <div class="flex items-center gap-2 flex-wrap">
         <span class="font-bold">{% if list.publisher %}{{ list.publisher.name }}{% else %}{{ list.publication|default:'' }}{% endif %}</span>
-        <span class="text-xs text-base-content/60">({{ list.year }} • {{ list.get_type_display }})</span>
+        <span class="text-xs text-base-content/70">({{ list.year }} • {{ list.get_type_display }})</span>
     </div>
     <div class="mt-1">
         {% if list.url %}
