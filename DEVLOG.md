@@ -2,6 +2,8 @@
 
 ## 2026-01-04
 
+- Enable books navigation in sidebar and mobile nav (Games/Books primary nav links)
+- Add books and authors to sitemap.xml for search engine indexing
 - Add books/ app skeleton with URL routing for multi-media platform expansion
 - Add Open Library API client for book metadata (search, ISBN lookup, cover images)
 - Add Hardcover GraphQL API client as optional secondary book metadata source
