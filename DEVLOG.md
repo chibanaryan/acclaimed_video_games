@@ -10,6 +10,7 @@
 - Add populate_mock_books management command for demo/testing data (30 books, 20 authors, 25 genres, 7 series)
 - Add IndexedDB timeout to prevent infinite hangs on corrupted/blocked databases
 - Fix IndexedDB timeout bug: reset _initPromise on failure so retries can succeed
+- Fix IndexedDB upgrade hang: use new database name to avoid version upgrade path
 - Fix missing Home button in sidebar when BOOKS_ENABLED is False
 - Fix mobile nav home button icon consistency (gamepad → medal)
 

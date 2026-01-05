@@ -15,8 +15,8 @@
  */
 class GameDataCache {
     constructor() {
-        this.DB_NAME = 'acclaimedgames';
-        this.DB_VERSION = 2;  // Bumped to force cache refresh
+        this.DB_NAME = 'acclaimedgames_v2';  // New name to avoid upgrade issues from v1
+        this.DB_VERSION = 1;
         this.STORE_NAME = 'gamedata';
         this.CACHE_KEY = 'allgames';
         this.VERSION_URL = '/api/games/version/';
