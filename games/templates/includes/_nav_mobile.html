@@ -10,7 +10,7 @@
             </a>
 
             {# TODO: Uncomment when books app is enabled
-            <a href="{% url 'book-home' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'book-home' %} btn-active{% endif %}" data-nav-item="books" data-menu-label="Books">
+            <a href="{% url 'books:home' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'home' and request.resolver_match.app_name == 'books' %} btn-active{% endif %}" data-nav-item="books" data-menu-label="Books">
                 <span class="mdi mdi-book-open-page-variant text-xl"></span>
             </a>
             #}

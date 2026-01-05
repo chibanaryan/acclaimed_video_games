@@ -51,7 +51,7 @@
                 </li>
                 {# TODO: Uncomment when books app is enabled
                 <li>
-                    <a href="{% url 'book-home' %}" class="{% if request.resolver_match.url_name == 'book-home' %}active{% endif %}">
+                    <a href="{% url 'books:home' %}" class="{% if request.resolver_match.url_name == 'home' and request.resolver_match.app_name == 'books' %}active{% endif %}">
                         <span class="mdi mdi-book-open-page-variant text-xl"></span>
                         Books
                     </a>
