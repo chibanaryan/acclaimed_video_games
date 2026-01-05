@@ -7,6 +7,7 @@
 - Add IGDB links to developer detail pages (dynamic link updates based on filter selection)
 - Add ProtonDB Steam Deck compatibility integration (data stored, display coming later)
 - Optimize main thread: defer scripts, lazy filter indexes, requestIdleCallback for initialization
+- Lazy-load Alpine.js via requestIdleCallback to reduce main-thread blocking (~92KB shifted to idle)
 - Bridge gaps between selected tiles in year grid heatmap (box-shadow connections)
 - Fix HLTB import: skip deprecated Wikidata IDs, support multiple Wikidata entries per game
 - Restore HLTB name search as default fallback (opt-out with --no-name-search)
