@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Fix visual glitch: genre buttons in game rows no longer dim and pop-in during Alpine.js initialization
 - Fix accessibility: year grid selected cells use white text, dark heatmap tiles get stronger text shadow for contrast
 - Fix sidebar hover states: prevent DaisyUI from washing out active item colors, add accent color on non-active hover
 - Fix accessibility: use grayscale instead of opacity for unavailable year cells (better text contrast)

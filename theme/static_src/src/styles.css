@@ -183,11 +183,21 @@
 }
 
 /* Alpine loading state - show subtle indicator on interactive filter elements */
-.alpine-loading [x-data] button:not(.btn-primary),
-.alpine-loading [x-data] .btn-ghost {
+/* Use :where() for specificity reasons so game content can override */
+.alpine-loading :where([x-data]) button:not(.btn-primary),
+.alpine-loading :where([x-data]) .btn-ghost {
   opacity: 0.6;
   cursor: wait;
   pointer-events: none;
+}
+
+/* Game/book content should not be dimmed during Alpine loading */
+#game-list-container button,
+#game-results-container button,
+#book-list-container button {
+  opacity: 1;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 /* Keep primary buttons visible but non-interactive until Alpine loads */
