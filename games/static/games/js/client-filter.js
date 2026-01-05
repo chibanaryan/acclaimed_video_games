@@ -406,6 +406,7 @@ class GameFilterEngine {
 
     /**
      * Calculate faceted counts for genres, platforms, and years
+     * OPTIMIZED: Single pass through games instead of 5 separate loops
      * @private
      */
     _calculateFacets(currentFilters) {
@@ -413,192 +414,146 @@ class GameFilterEngine {
         const platformCounts = new Map();
         const yearCounts = new Map();
         const seriesCounts = new Map();
+        const hltbPresetCounts = { 'short': 0, 'medium': 0, 'long': 0 };
 
-        // For genre facets, we need to calculate counts based on filters EXCLUDING genres
-        // For platform facets, calculate counts based on filters EXCLUDING platforms
-        // For series facets, calculate counts based on filters EXCLUDING series
-        // This is standard faceted search behavior
+        // Track unique games per manufacturer and form factor for deduplicated counts
+        const manufacturerGameSets = new Map();
+        const formFactorGameSets = new Map();
 
+        // Pre-compute filter parameters once
         const { q, start, end, platforms, genres, genreOption, series, played, hltb_mode = 'main', hltb_min = null, hltb_max = null } = currentFilters;
+        const normalizedQuery = (q || '').toLowerCase().trim();
         const matchAll = genreOption !== 'any';
 
-        // Create base filter functions (without genre/platform/series/HLTB)
-        const passesBaseFilters = (game) => {
-            const normalizedQuery = (q || '').toLowerCase().trim();
-            if (normalizedQuery && !game.n.toLowerCase().includes(normalizedQuery)) {
-                return false;
-            }
-            if (start !== null && game.y !== null && game.y < start) {
-                return false;
-            }
-            if (end !== null && game.y !== null && game.y > end) {
-                return false;
-            }
-            // Game status filter (played, want to play, untracked)
-            if (played && window.isAuthenticated && game.i) {
-                const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
-                const isGameWantToPlay = window.wantToPlayGameIds && window.wantToPlayGameIds.has(game.i);
-                if (played === 'yes' && !isGamePlayed) {
-                    return false;
-                }
-                if (played === 'want' && !isGameWantToPlay) {
-                    return false;
-                }
-                if (played === 'no' && (isGamePlayed || isGameWantToPlay)) {
-                    return false;
-                }
-            }
-            return true;
-        };
-
-        // Calculate genre facet counts (apply all filters except genre)
-        const platformSet = new Set((platforms || []).map(id => parseInt(id, 10)));
+        const genreIds = (genres || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+        const platformIds = (platforms || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+        const platformSet = new Set(platformIds);
         const seriesIds = (series || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const seriesSet = new Set(seriesIds);
 
-        for (const game of this.games) {
-            if (!passesBaseFilters(game)) continue;
+        // Pre-compute expanded genre sets once
+        const expandedGenreSets = genreIds.map(id => this._genreDescendants.get(id) || new Set([id]));
 
-            // Apply platform filter
-            if (platformSet.size > 0) {
-                if (!game.p.some(pid => platformSet.has(pid))) continue;
-            }
-
-            // Apply series filter
-            if (seriesSet.size > 0) {
-                const gameSeries = game.sr || [];
-                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
-            }
-
-            // Apply HLTB filter
-            if (hltb_min !== null || hltb_max !== null) {
-                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
-                if (playtime === null || playtime === undefined) {
-                    continue;
-                }
-                if (hltb_min !== null && playtime < hltb_min) {
-                    continue;
-                }
-                if (hltb_max !== null && playtime > hltb_max) {
-                    continue;
-                }
-            }
-
-            // For Match All mode with existing selections, only count genres on matching games
-            if (matchAll && genres && genres.length > 0) {
-                const genreIds = genres.map(id => parseInt(id, 10));
-                const expandedGenreSets = genreIds.map(id => this._genreDescendants.get(id) || new Set([id]));
-                const gameGenreSet = new Set(game.g);
-
-                let matchesAll = true;
+        // Helper to check genre matching (used multiple times)
+        const checkGenreMatch = (gameGenreSet) => {
+            if (genreIds.length === 0) return true;
+            if (matchAll) {
                 for (const expandedSet of expandedGenreSets) {
                     let hasMatch = false;
                     for (const gid of gameGenreSet) {
-                        if (expandedSet.has(gid)) {
-                            hasMatch = true;
-                            break;
-                        }
+                        if (expandedSet.has(gid)) { hasMatch = true; break; }
                     }
-                    if (!hasMatch) {
-                        matchesAll = false;
-                        break;
+                    if (!hasMatch) return false;
+                }
+                return true;
+            } else {
+                for (const expandedSet of expandedGenreSets) {
+                    for (const gid of gameGenreSet) {
+                        if (expandedSet.has(gid)) return true;
                     }
                 }
-                if (!matchesAll) continue;
+                return false;
             }
+        };
 
-            // Count genres for this game
-            for (const gid of game.g) {
-                genreCounts.set(gid, (genreCounts.get(gid) || 0) + 1);
-            }
-        }
-
-        // Calculate platform facet counts (apply all filters except platform)
-        const genreIds = (genres || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-        const expandedGenreSets = genreIds.map(id => this._genreDescendants.get(id) || new Set([id]));
-
-        // Track unique games per manufacturer and form factor for deduplicated counts
-        const manufacturerGameSets = new Map();  // mfrKey -> Set of game IDs
-        const formFactorGameSets = new Map();     // 'mfrKey_ffKey' -> Set of game IDs
-
+        // Single pass through all games
         for (const game of this.games) {
-            if (!passesBaseFilters(game)) continue;
+            // Compute individual filter results once per game
+            const passesText = !normalizedQuery || game.n.toLowerCase().includes(normalizedQuery);
+            if (!passesText) continue; // Early exit - text filter applies to all facets
 
-            // Apply genre filter
-            if (genreIds.length > 0) {
-                const gameGenreSet = new Set(game.g);
-                if (matchAll) {
-                    let matchesAll = true;
-                    for (const expandedSet of expandedGenreSets) {
-                        let hasMatch = false;
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasMatch = true;
-                                break;
-                            }
-                        }
-                        if (!hasMatch) {
-                            matchesAll = false;
-                            break;
-                        }
-                    }
-                    if (!matchesAll) continue;
-                } else {
-                    let hasAnyMatch = false;
-                    for (const expandedSet of expandedGenreSets) {
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasAnyMatch = true;
-                                break;
-                            }
-                        }
-                        if (hasAnyMatch) break;
-                    }
-                    if (!hasAnyMatch) continue;
-                }
+            const passesYear = (start === null || game.y === null || game.y >= start) &&
+                               (end === null || game.y === null || game.y <= end);
+
+            // Check played status
+            let passesPlayed = true;
+            if (played && window.isAuthenticated && game.i) {
+                const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
+                const isGameWantToPlay = window.wantToPlayGameIds && window.wantToPlayGameIds.has(game.i);
+                if (played === 'yes') passesPlayed = isGamePlayed;
+                else if (played === 'want') passesPlayed = isGameWantToPlay;
+                else if (played === 'no') passesPlayed = !isGamePlayed && !isGameWantToPlay;
             }
 
-            // Apply series filter
-            if (seriesSet.size > 0) {
-                const gameSeries = game.sr || [];
-                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
-            }
+            const passesPlatform = platformSet.size === 0 || game.p.some(pid => platformSet.has(pid));
+            const passesSeries = seriesSet.size === 0 || (game.sr || []).some(sid => seriesSet.has(sid));
 
-            // Apply HLTB filter
+            // Genre matching (computed once, reused)
+            const gameGenreSet = new Set(game.g);
+            const passesGenre = checkGenreMatch(gameGenreSet);
+
+            // HLTB filtering
+            const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
+            let passesHltb = true;
             if (hltb_min !== null || hltb_max !== null) {
-                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
                 if (playtime === null || playtime === undefined) {
-                    continue;
-                }
-                if (hltb_min !== null && playtime < hltb_min) {
-                    continue;
-                }
-                if (hltb_max !== null && playtime > hltb_max) {
-                    continue;
+                    passesHltb = false;
+                } else {
+                    if (hltb_min !== null && playtime < hltb_min) passesHltb = false;
+                    if (hltb_max !== null && playtime > hltb_max) passesHltb = false;
                 }
             }
 
-            // Count platforms for this game and track group membership
-            for (const pid of game.p) {
-                platformCounts.set(pid, (platformCounts.get(pid) || 0) + 1);
+            // Base filters (text + year + played) - used by most facets
+            const passesBase = passesYear && passesPlayed;
 
-                // Track game for manufacturer/form factor group counts
-                const groupInfo = this._platformToGroups.get(pid);
-                if (groupInfo) {
-                    // Add to manufacturer set
-                    if (!manufacturerGameSets.has(groupInfo.manufacturer)) {
-                        manufacturerGameSets.set(groupInfo.manufacturer, new Set());
+            // --- Update facet counts based on which filters each facet excludes ---
+
+            // Genre counts: apply base + platform + series + HLTB (exclude genre)
+            // For Match All mode, also check genre to count only on matching games
+            if (passesBase && passesPlatform && passesSeries && passesHltb) {
+                if (!matchAll || passesGenre) {
+                    for (const gid of game.g) {
+                        genreCounts.set(gid, (genreCounts.get(gid) || 0) + 1);
                     }
-                    manufacturerGameSets.get(groupInfo.manufacturer).add(game.id);
+                }
+            }
 
-                    // Add to form factor set if applicable
-                    if (groupInfo.formFactor) {
-                        const ffKey = `${groupInfo.manufacturer}_${groupInfo.formFactor}`;
-                        if (!formFactorGameSets.has(ffKey)) {
-                            formFactorGameSets.set(ffKey, new Set());
+            // Platform counts: apply base + genre + series + HLTB (exclude platform)
+            if (passesBase && passesGenre && passesSeries && passesHltb) {
+                for (const pid of game.p) {
+                    platformCounts.set(pid, (platformCounts.get(pid) || 0) + 1);
+
+                    // Track for manufacturer/form factor group counts
+                    const groupInfo = this._platformToGroups.get(pid);
+                    if (groupInfo) {
+                        if (!manufacturerGameSets.has(groupInfo.manufacturer)) {
+                            manufacturerGameSets.set(groupInfo.manufacturer, new Set());
                         }
-                        formFactorGameSets.get(ffKey).add(game.id);
+                        manufacturerGameSets.get(groupInfo.manufacturer).add(game.id);
+
+                        if (groupInfo.formFactor) {
+                            const ffKey = `${groupInfo.manufacturer}_${groupInfo.formFactor}`;
+                            if (!formFactorGameSets.has(ffKey)) {
+                                formFactorGameSets.set(ffKey, new Set());
+                            }
+                            formFactorGameSets.get(ffKey).add(game.id);
+                        }
                     }
+                }
+            }
+
+            // Year counts: apply text + played + platform + genre + series + HLTB (exclude year)
+            if (passesPlayed && passesPlatform && passesGenre && passesSeries && passesHltb) {
+                if (game.y !== null) {
+                    yearCounts.set(game.y, (yearCounts.get(game.y) || 0) + 1);
+                }
+            }
+
+            // Series counts: apply base + platform + genre + HLTB (exclude series)
+            if (passesBase && passesPlatform && passesGenre && passesHltb) {
+                const gameSeries = game.sr || [];
+                for (const sid of gameSeries) {
+                    seriesCounts.set(sid, (seriesCounts.get(sid) || 0) + 1);
+                }
+            }
+
+            // HLTB preset counts: apply base + platform + genre + series (exclude HLTB)
+            if (passesBase && passesPlatform && passesGenre && passesSeries) {
+                if (playtime !== null && playtime !== undefined) {
+                    if (playtime < 10) hltbPresetCounts['short']++;
+                    else if (playtime < 30) hltbPresetCounts['medium']++;
+                    else hltbPresetCounts['long']++;
                 }
             }
         }
@@ -606,231 +561,12 @@ class GameFilterEngine {
         // Build platform group counts from the sets
         const platformGroupCounts = {};
         for (const [mfrKey, gameSet] of manufacturerGameSets) {
-            platformGroupCounts[mfrKey] = {
-                count: gameSet.size,
-                formFactors: {}
-            };
+            platformGroupCounts[mfrKey] = { count: gameSet.size, formFactors: {} };
         }
         for (const [ffFullKey, gameSet] of formFactorGameSets) {
             const [mfrKey, ffKey] = ffFullKey.split('_');
             if (platformGroupCounts[mfrKey]) {
                 platformGroupCounts[mfrKey].formFactors[ffKey] = gameSet.size;
-            }
-        }
-
-        // Calculate year counts (apply all filters EXCEPT year filters)
-        // This allows the heatmap to show which years have games given other filters
-        for (const game of this.games) {
-            // Apply search filter only (no year filter)
-            const normalizedQuery = (q || '').toLowerCase().trim();
-            if (normalizedQuery && !game.n.toLowerCase().includes(normalizedQuery)) {
-                continue;
-            }
-
-            // Apply platform filter
-            if (platformSet.size > 0) {
-                if (!game.p.some(pid => platformSet.has(pid))) continue;
-            }
-
-            // Apply genre filter
-            if (genreIds.length > 0) {
-                const gameGenreSet = new Set(game.g);
-                if (matchAll) {
-                    let matchesAll = true;
-                    for (const expandedSet of expandedGenreSets) {
-                        let hasMatch = false;
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasMatch = true;
-                                break;
-                            }
-                        }
-                        if (!hasMatch) {
-                            matchesAll = false;
-                            break;
-                        }
-                    }
-                    if (!matchesAll) continue;
-                } else {
-                    let hasAnyMatch = false;
-                    for (const expandedSet of expandedGenreSets) {
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasAnyMatch = true;
-                                break;
-                            }
-                        }
-                        if (hasAnyMatch) break;
-                    }
-                    if (!hasAnyMatch) continue;
-                }
-            }
-
-            // Apply series filter
-            if (seriesSet.size > 0) {
-                const gameSeries = game.sr || [];
-                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
-            }
-
-            // Apply game status filter (played, want to play, untracked)
-            if (played && window.isAuthenticated && game.i) {
-                const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
-                const isGameWantToPlay = window.wantToPlayGameIds && window.wantToPlayGameIds.has(game.i);
-                if (played === 'yes' && !isGamePlayed) continue;
-                if (played === 'want' && !isGameWantToPlay) continue;
-                if (played === 'no' && (isGamePlayed || isGameWantToPlay)) continue;
-            }
-
-            // Apply HLTB filter
-            if (hltb_min !== null || hltb_max !== null) {
-                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
-                if (playtime === null || playtime === undefined) {
-                    continue;
-                }
-                if (hltb_min !== null && playtime < hltb_min) {
-                    continue;
-                }
-                if (hltb_max !== null && playtime > hltb_max) {
-                    continue;
-                }
-            }
-
-            // Count this game's year
-            if (game.y !== null) {
-                yearCounts.set(game.y, (yearCounts.get(game.y) || 0) + 1);
-            }
-        }
-
-        // Calculate series facet counts (apply all filters except series)
-        for (const game of this.games) {
-            if (!passesBaseFilters(game)) continue;
-
-            // Apply platform filter
-            if (platformSet.size > 0) {
-                if (!game.p.some(pid => platformSet.has(pid))) continue;
-            }
-
-            // Apply genre filter
-            if (genreIds.length > 0) {
-                const gameGenreSet = new Set(game.g);
-                if (matchAll) {
-                    let matchesAll = true;
-                    for (const expandedSet of expandedGenreSets) {
-                        let hasMatch = false;
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasMatch = true;
-                                break;
-                            }
-                        }
-                        if (!hasMatch) {
-                            matchesAll = false;
-                            break;
-                        }
-                    }
-                    if (!matchesAll) continue;
-                } else {
-                    let hasAnyMatch = false;
-                    for (const expandedSet of expandedGenreSets) {
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasAnyMatch = true;
-                                break;
-                            }
-                        }
-                        if (hasAnyMatch) break;
-                    }
-                    if (!hasAnyMatch) continue;
-                }
-            }
-
-            // Apply HLTB filter
-            if (hltb_min !== null || hltb_max !== null) {
-                const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
-                if (playtime === null || playtime === undefined) {
-                    continue;
-                }
-                if (hltb_min !== null && playtime < hltb_min) {
-                    continue;
-                }
-                if (hltb_max !== null && playtime > hltb_max) {
-                    continue;
-                }
-            }
-
-            // Count series for this game (series filter NOT applied)
-            const gameSeries = game.sr || [];
-            for (const sid of gameSeries) {
-                seriesCounts.set(sid, (seriesCounts.get(sid) || 0) + 1);
-            }
-        }
-
-        // Calculate HLTB preset counts (apply all filters except HLTB)
-        const hltbPresetCounts = {
-            'short': 0,    // Under 10h
-            'medium': 0,   // 10-25h
-            'long': 0      // 25+ hours
-        };
-
-        for (const game of this.games) {
-            // Apply base filters (text, year, played)
-            if (!passesBaseFilters(game)) continue;
-
-            // Apply platform filter
-            if (platformSet.size > 0) {
-                if (!game.p.some(pid => platformSet.has(pid))) continue;
-            }
-
-            // Apply genre filter
-            if (genreIds.length > 0) {
-                const gameGenreSet = new Set(game.g);
-                if (matchAll) {
-                    let matchesAll = true;
-                    for (const expandedSet of expandedGenreSets) {
-                        let hasMatch = false;
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasMatch = true;
-                                break;
-                            }
-                        }
-                        if (!hasMatch) {
-                            matchesAll = false;
-                            break;
-                        }
-                    }
-                    if (!matchesAll) continue;
-                } else {
-                    let hasAnyMatch = false;
-                    for (const expandedSet of expandedGenreSets) {
-                        for (const gid of gameGenreSet) {
-                            if (expandedSet.has(gid)) {
-                                hasAnyMatch = true;
-                                break;
-                            }
-                        }
-                        if (hasAnyMatch) break;
-                    }
-                    if (!hasAnyMatch) continue;
-                }
-            }
-
-            // Apply series filter
-            if (seriesSet.size > 0) {
-                const gameSeries = game.sr || [];
-                if (!gameSeries.some(sid => seriesSet.has(sid))) continue;
-            }
-
-            // Count for HLTB presets (HLTB filter NOT applied)
-            const playtime = hltb_mode === 'completionist' ? game.ptc : game.pt;
-            if (playtime !== null && playtime !== undefined) {
-                if (playtime < 10) {
-                    hltbPresetCounts['short']++;
-                } else if (playtime < 30) {
-                    hltbPresetCounts['medium']++;
-                } else {
-                    hltbPresetCounts['long']++;
-                }
             }
         }
 
