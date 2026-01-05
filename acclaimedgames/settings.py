@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "theme",
     "core",
     "games",
+    "books",
     # django-allauth
     "allauth",
     "allauth.account",
