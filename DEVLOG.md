@@ -3,8 +3,8 @@
 ## 2026-01-05
 
 - Add page-level caching for anonymous home page requests (5-min cache reduces TTFB from ~1300ms to ~50ms)
-- Fix accessibility: add aria-labels to platform filter expand/collapse buttons for screen readers
-- Fix contrast issues: add text shadow to year grid labels, use solid accent background for active sidebar links
+- Fix accessibility: add aria-labels to genre filter expand/collapse buttons for screen readers
+- Fix contrast issues: increase text opacity from /40 and /50 to /60 and /70 in filter panels
 - Reduce TBT: remove deep watch on filters object, defer filter/year-grid init via requestIdleCallback
 - Fix tooltip clipping: remove content-visibility containment from desktop game rows so tooltips can escape row bounds
 - Fix 500 error on home page: remove reference to non-existent placeholder.webp from staticUrls

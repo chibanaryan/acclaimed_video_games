@@ -320,6 +320,8 @@
                     {# Expand/Collapse Arrow #}
                     <button type="button"
                             class="p-0.5 rounded hover:bg-base-content/10"
+                            :aria-label="isCategoryExpanded(category.id) ? 'Collapse ' + category.name : 'Expand ' + category.name"
+                            :aria-expanded="isCategoryExpanded(category.id)"
                             @click.stop="toggleCategoryExpanded(category.id)">
                         <span class="mdi text-base transition-transform duration-200"
                               :class="isCategoryExpanded(category.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
