@@ -1,0 +1,91 @@
+{# Append-only partial - returns just author rows for Load More #}
+{% load humanize %}
+
+{# Desktop table rows #}
+<div id="append-rows-container" class="hidden">
+{% for author in authors %}
+<tr class="author-row">
+    <td>
+        {% if author.slug %}
+            <a href="{% url 'books:author-detail' slug=author.slug %}" class="link link-accent text-lg font-semibold">
+                {{ author.name }}
+            </a>
+        {% else %}
+            <span class="text-lg font-semibold">{{ author.name }}</span>
+        {% endif %}
+    </td>
+    <td class="text-right tabular-nums">
+        {% if author.top_book %}
+        <span class="text-accent font-bold">#{{ author.top_book.rank }}</span>
+        {% else %}
+        <span class="text-base-content/40">—</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if author.top_book %}
+        <a href="{% url 'books:book-detail' slug=author.top_book.slug %}" class="flex items-center gap-2 group">
+            {% if author.top_book.thumbnail %}
+            <img src="{{ author.top_book.thumbnail }}"
+                 alt=""
+                 width="24" height="36"
+                 class="w-6 h-9 object-cover rounded"
+                 loading="lazy">
+            {% else %}
+            <div class="w-6 h-9 bg-base-100 rounded flex items-center justify-center">
+                <span class="mdi mdi-book text-base-content/30"></span>
+            </div>
+            {% endif %}
+            <span class="text-sm truncate group-hover:underline">{{ author.top_book.name }}</span>
+        </a>
+        {% endif %}
+    </td>
+    <td class="text-lg text-right tabular-nums">{{ author.books_count }}</td>
+</tr>
+{% endfor %}
+</div>
+
+{# Mobile cards #}
+<div id="mobile-append-container" class="hidden">
+{% for author in authors %}
+<div class="author-row card bg-base-200 p-3">
+    <div class="flex flex-col gap-2">
+        {# Author name - truncate long names #}
+        <a href="{% if author.slug %}{% url 'books:author-detail' slug=author.slug %}{% else %}#{% endif %}" class="link link-accent text-lg font-bold truncate" style="max-width: calc(100vw - 4rem);">
+            {{ author.name }}
+        </a>
+        {# Top book #}
+        {% if author.top_book %}
+        <a href="{% url 'books:book-detail' slug=author.top_book.slug %}" class="flex items-center gap-2 group min-w-0" style="max-width: calc(100vw - 4rem);">
+            <span class="text-base-content/60 text-sm shrink-0">Top:</span>
+            <span class="text-accent font-bold text-sm shrink-0">#{{ author.top_book.rank }}</span>
+            {% if author.top_book.thumbnail %}
+            <img src="{{ author.top_book.thumbnail }}" alt="" width="18" height="27" class="w-4.5 h-7 object-cover rounded shrink-0" loading="lazy">
+            {% else %}
+            <div class="w-4.5 h-7 bg-base-100 rounded flex items-center justify-center shrink-0">
+                <span class="mdi mdi-book text-xs text-base-content/30"></span>
+            </div>
+            {% endif %}
+            <span class="text-sm truncate group-hover:underline min-w-0">{{ author.top_book.name }}</span>
+        </a>
+        {% endif %}
+        {# Badges #}
+        <div class="flex gap-2">
+            {% with count=author.books_count %}
+            <span class="badge badge-ghost">{{ count }} book{{ count|pluralize }}</span>
+            {% endwith %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+{# JSON metadata for JavaScript to update the button #}
+<script type="application/json" id="load-more-meta">
+{
+    "hasMore": {{ has_more|yesno:"true,false" }},
+    "nextPage": {{ next_page|default:"null" }},
+    "loadedCount": {{ loaded_count }},
+    "totalCount": {{ total_count }},
+    "remainingCount": {{ remaining_count }}
+}
+</script>

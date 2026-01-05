@@ -1,0 +1,55 @@
+{# Desktop Book Row Template #}
+{# Single source of truth: Used for both server-side rendering and JS template cloning #}
+{# Props: book (optional), show_rank ('alltime'|'filtered'|'none'), index (filtered rank), highlight (book ID), show_rank_in_details (bool) #}
+{# When book is not provided, renders empty template structure for JS cloning with all elements present #}
+{% load static humanize %}
+<div class="book-row-wrapper hidden desktop:flex items-center"
+     {% if book %}id="book-{{ book.id }}"{% endif %}
+     data-slot="root">
+    {# Read button - outside book-row to avoid hover effect #}
+    {% if not hide_read_button and user.is_authenticated or not book %}
+    <div class="w-12 min-w-12 max-w-12 shrink-0 flex items-center justify-center" data-slot="read-button">
+        {% if book %}
+            {% include 'books/includes/_read_button.html' with is_read=book.is_read_by_user is_want_to_read=book.is_want_to_read_by_user %}
+        {% endif %}
+    </div>
+    {% endif %}
+    <div class="book-row desktop flex-1 py-0.5 px-2 grid {% if book and highlight and book.id == highlight %}is-highlighted{% endif %}"
+         data-slot="book-row"
+         style="grid-template-columns: auto 1fr;">
+        {# Rank + Thumbnail #}
+        <div class="flex items-center gap-3 flex-shrink-0">
+            {# Rank - always present in template (for JS), conditionally shown for server render #}
+        {% if show_rank == 'alltime' or show_rank == 'filtered' or not book %}
+        <div class="w-15 text-center flex flex-col items-center justify-center {% if show_rank == 'none' and book %}hidden{% endif %}">
+            <span class="book-rank text-2xl font-bold text-accent tabular-nums" data-slot="rank">
+                {% if book %}{% if show_rank == 'filtered' %}{{ index|default:book.rank }}{% else %}{{ book.rank }}{% endif %}{% endif %}
+            </span>
+            <span class="book-row-global-rank text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and not show_rank_in_details and book %}hidden{% endif %}" data-slot="global-rank">{% if book %}(#{{ book.rank }}){% endif %}</span>
+        </div>
+        {% endif %}
+        <a {% if book %}href="{% url 'book-detail' slug=book.slug %}"{% endif %} class="book-thumb-link" data-slot="thumb-link">
+            <img {% if book and book.thumbnail %}src="{{ book.thumbnail }}" alt="{{ book.name }}"{% endif %}
+                 width="64" height="96" loading="lazy" decoding="async"
+                 class="book-thumb rounded"
+                 style="aspect-ratio: 2/3; object-fit: cover;"
+                 data-slot="thumbnail">
+        </a>
+    </div>
+    {# Title and details #}
+    <div class="flex-1 min-w-0 px-4">
+        <div class="truncate">
+            <a {% if book %}href="{% url 'book-detail' slug=book.slug %}"{% endif %} class="book-title text-2xl font-bold link link-hover" data-slot="title-link">
+                <span data-slot="name">{% if book %}{{ book.name }}{% endif %}</span>
+            </a>
+            <a {% if book %}href="{% url 'books-home' %}?start={{ book.year_published }}&end={{ book.year_published }}&highlight={{ book.id }}"{% endif %} class="text-base-content/60 ml-1" data-slot="year-link">
+                (<span data-slot="year">{% if book %}{{ book.year_published }}{% endif %}</span>)
+            </a>
+        </div>
+        {# Hover row: authors, genres, page count, list count #}
+        <div class="book-row-details text-base-content/80 text-sm ml-4" data-slot="meta-row">
+            {% if book %}{% with display_authors=book.get_display_authors %}{% if display_authors %}<span class="whitespace-nowrap" data-slot="primary-author">by {% for author in display_authors %}{% if author.slug %}<a href="{% url 'author-detail' slug=author.slug %}" class="link link-hover">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}{% endif %}{% if book and book.genres.count > 0 %} <span class="whitespace-nowrap">{% if book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span data-slot="genres">{% for g in book.genres.all %}<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-book-genre', {detail: {genreId: '{{ g.id }}', bookId: '{{ book.id }}'} }))" title="{{ g.name }}">{{ g.name }}</button>{% if not forloop.last %}<span class="text-base-content/30"> / </span>{% endif %}{% endfor %}</span></span>{% endif %}{% if book and book.page_count %} <span class="whitespace-nowrap">{% if book.genres.count > 0 or book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span class="tabular-nums text-base-content/70" data-slot="page-count" title="Page count">{{ book.page_count|intcomma }} pages</span></span>{% endif %}{% if book and book.list_count %} <span class="whitespace-nowrap">{% if book.page_count or book.genres.count > 0 or book.get_display_authors %}<span class="text-base-content/30">•</span> {% endif %}<span class="tabular-nums" data-slot="list-count">{{ book.list_count }} lists</span></span>{% endif %}
+        </div>
+    </div>
+    </div>{# Close book-row #}
+</div>{# Close wrapper #}

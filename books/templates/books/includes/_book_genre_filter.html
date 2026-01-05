@@ -1,0 +1,369 @@
+{# BookGenreFilter component - Hierarchical Tree Style #}
+{# Props: genres (list from parent with book_count, filtered_count, parent_id, level) #}
+{# Uses parent Alpine.js context for genres array and filters.genres (single-select) #}
+{% load static %}
+
+<div class="book-genre-filter"
+     x-data="{
+         init() {
+             // Listen for filtered count updates from client-side filtering
+             window.addEventListener('book-genre-counts-update', (event) => {
+                 this.updateFilteredCounts(event.detail);
+                 this.countsReady = true;
+             });
+             // Initialize expanded state from localStorage
+             this.loadExpandedState();
+         },
+
+         // Counts are only shown after client-side calculation
+         countsReady: false,
+
+         // Expanded state for categories (stored in localStorage)
+         expandedCategories: {},
+
+         loadExpandedState() {
+             try {
+                 const saved = localStorage.getItem('bookGenreCategoriesExpanded');
+                 if (saved) {
+                     this.expandedCategories = JSON.parse(saved);
+                 }
+             } catch (e) {
+                 this.expandedCategories = {};
+             }
+         },
+
+         saveExpandedState() {
+             localStorage.setItem('bookGenreCategoriesExpanded', JSON.stringify(this.expandedCategories));
+         },
+
+         toggleCategoryExpanded(categoryId) {
+             this.expandedCategories[categoryId] = !this.expandedCategories[categoryId];
+             this.saveExpandedState();
+         },
+
+         isCategoryExpanded(categoryId) {
+             // Default to expanded for categories with selected children or category itself selected
+             if (this.expandedCategories[categoryId] === undefined) {
+                 return this.hasCategoryOrChildrenSelected(categoryId);
+             }
+             return this.expandedCategories[categoryId];
+         },
+
+         // Update filtered counts on the genres array
+         updateFilteredCounts(countMap) {
+             bookGenres.forEach(g => {
+                 g.filtered_count = countMap[String(g.id)] || 0;
+             });
+         },
+
+         // Get root categories (level 0), sorted by total book count (descending)
+         get rootCategories() {
+             return bookGenres.filter(g => g.level === 0).sort((a, b) => {
+                 // Sort by total book count of children (descending)
+                 const aCount = this.getCategoryTotalBookCount(a.id);
+                 const bCount = this.getCategoryTotalBookCount(b.id);
+                 return bCount - aCount;
+             });
+         },
+
+         // Get total book count for a category (category's own count + sum of all children's effective counts)
+         getCategoryTotalBookCount(categoryId) {
+             const category = bookGenres.find(g => String(g.id) === String(categoryId));
+             const categoryCount = category ? this.getEffectiveCount(category) : 0;
+             const children = bookGenres.filter(g => String(g.parent_id) === String(categoryId));
+             const childrenCount = children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+             return categoryCount + childrenCount;
+         },
+
+         // Get child genres for a parent, sorted by effective count (descending)
+         getChildren(parentId) {
+             return bookGenres.filter(g => String(g.parent_id) === String(parentId)).sort((a, b) => {
+                 // Sort by effective count (descending)
+                 return this.getEffectiveCount(b) - this.getEffectiveCount(a);
+             });
+         },
+
+         // Get all descendant IDs for a genre (recursive)
+         getDescendantIds(genreId) {
+             const children = this.getChildren(genreId);
+             let ids = children.map(c => String(c.id));
+             for (const child of children) {
+                 ids = ids.concat(this.getDescendantIds(child.id));
+             }
+             return ids;
+         },
+
+         // Check if genre has any books with current filters (or is selected)
+         isGenreAvailable(genreId) {
+             const genre = bookGenres.find(g => String(g.id) === String(genreId));
+             if (!genre) return false;
+             const count = this.getEffectiveCount(genre);
+             return count > 0 || this.isGenreSelected(genreId);
+         },
+
+         // Check if selected genre has zero results (for very-dimmed styling)
+         hasZeroResults(genreId) {
+             const genre = bookGenres.find(g => String(g.id) === String(genreId));
+             if (!genre) return false;
+             const count = this.getEffectiveCount(genre);
+             return count === 0 && this.isGenreSelected(genreId);
+         },
+
+         // Get the effective count for display (use filtered_count if available)
+         getEffectiveCount(genre) {
+             return genre.filtered_count !== undefined ? genre.filtered_count : genre.book_count;
+         },
+
+         // Get total book count for a category (category's own count + sum of all children)
+         getCategoryTotalCount(categoryId) {
+             const category = bookGenres.find(g => String(g.id) === String(categoryId));
+             const categoryCount = category ? this.getEffectiveCount(category) : 0;
+             const children = this.getChildren(categoryId);
+             const childrenCount = children.reduce((sum, c) => sum + this.getEffectiveCount(c), 0);
+             return categoryCount + childrenCount;
+         },
+
+         // Check if category has any available books (category itself or any child with books in current filters)
+         isCategoryAvailable(categoryId) {
+             // Check if category itself has books
+             const category = bookGenres.find(g => String(g.id) === String(categoryId));
+             if (category && this.getEffectiveCount(category) > 0) return true;
+             // Check if any children have books
+             const children = this.getChildren(categoryId);
+             return children.some(c => this.isGenreAvailable(c.id));
+         },
+
+         // Check if genre is selected
+         isGenreSelected(genreId) {
+             return filters.genres.includes(String(genreId));
+         },
+
+         // Check if the category itself is selected (parent level)
+         isCategorySelected(categoryId) {
+             return filters.genres.includes(String(categoryId));
+         },
+
+         // Check if any child of a category is selected (not including parent)
+         hasSelectedChildren(categoryId) {
+             const childIds = this.getDescendantIds(categoryId);
+             return childIds.some(id => filters.genres.includes(id));
+         },
+
+         // Check if category or any children selected
+         hasCategoryOrChildrenSelected(categoryId) {
+             return this.isCategorySelected(categoryId) || this.hasSelectedChildren(categoryId);
+         },
+
+         // Check if all children of a category are selected
+         allChildrenSelected(categoryId) {
+             const children = this.getChildren(categoryId).filter(c => this.isGenreAvailable(c.id));
+             if (children.length === 0) return false;
+             return children.every(c => filters.genres.includes(String(c.id)));
+         },
+
+         // Find the parent of a genre
+         findGenreParent(genreId) {
+             const genre = bookGenres.find(g => String(g.id) === String(genreId));
+             if (!genre || !genre.parent_id) return null;
+             return bookGenres.find(g => String(g.id) === String(genre.parent_id));
+         },
+
+         // MULTI-SELECT: Toggle individual genre (add/remove from selection)
+         toggleGenre(genreId) {
+             const id = String(genreId);
+             const genre = bookGenres.find(g => String(g.id) === id);
+
+             // Check if parent category is selected
+             if (genre && genre.parent_id) {
+                 const parentId = String(genre.parent_id);
+
+                 // If parent category is directly selected, drill down to just this genre
+                 if (filters.genres.includes(parentId)) {
+                     // Remove parent, add just this child
+                     filters.genres = filters.genres.filter(gid => gid !== parentId);
+                     if (!filters.genres.includes(id)) {
+                         filters.genres.push(id);
+                     }
+                     this.dispatchFilterChange();
+                     return;
+                 }
+
+                 // If all siblings are selected, drill down to just this genre
+                 if (this.allChildrenSelected(parentId)) {
+                     const siblingIds = this.getChildren(parentId).map(c => String(c.id));
+                     // Remove all siblings
+                     filters.genres = filters.genres.filter(gid => !siblingIds.includes(gid));
+                     // Add just this genre
+                     filters.genres.push(id);
+                     this.dispatchFilterChange();
+                     return;
+                 }
+             }
+
+             // Normal toggle behavior
+             const idx = filters.genres.indexOf(id);
+             if (idx > -1) {
+                 // Already selected - remove it
+                 filters.genres.splice(idx, 1);
+             } else {
+                 // Not selected - add it
+                 filters.genres.push(id);
+             }
+             this.dispatchFilterChange();
+         },
+
+         // MULTI-SELECT: Toggle parent category selection (add/remove from selection)
+         toggleCategorySelection(categoryId) {
+             const id = String(categoryId);
+             // Preserve current expansion state before selection changes
+             if (this.expandedCategories[id] === undefined) {
+                 this.expandedCategories[id] = this.hasCategoryOrChildrenSelected(id);
+             }
+             const idx = filters.genres.indexOf(id);
+             if (idx > -1) {
+                 // Already selected - remove it
+                 filters.genres.splice(idx, 1);
+             } else {
+                 // Not selected - add category and remove all descendants (exclusive selection)
+                 const descendantIds = this.getDescendantIds(categoryId);
+                 // Remove any selected descendants
+                 filters.genres = filters.genres.filter(gid => !descendantIds.includes(gid));
+                 // Add the category
+                 filters.genres.push(id);
+             }
+             this.dispatchFilterChange();
+         },
+
+         // Dispatch filter change event
+         dispatchFilterChange() {
+             const selectedItems = bookGenres.filter(g => filters.genres.includes(String(g.id)));
+             $dispatch('filter-changed', { type: 'genres', items: selectedItems });
+         },
+
+         // Get selected count
+         getSelectedCount() {
+             return filters.genres.length;
+         },
+
+         // Category icons mapping for book genres
+         categoryIcons: {
+             'Fiction': 'mdi-book-open-page-variant',
+             'Non-Fiction': 'mdi-book-education',
+             'Mystery': 'mdi-magnify',
+             'Thriller': 'mdi-knife-military',
+             'Romance': 'mdi-heart',
+             'Science Fiction': 'mdi-rocket',
+             'Fantasy': 'mdi-wizard-hat',
+             'Horror': 'mdi-ghost',
+             'Historical': 'mdi-clock-outline',
+             'Biography': 'mdi-account',
+             'Self-Help': 'mdi-head-lightbulb',
+             'Poetry': 'mdi-feather',
+             'Drama': 'mdi-theater',
+             'Adventure': 'mdi-compass',
+             'Children': 'mdi-teddy-bear',
+             'Young Adult': 'mdi-human',
+             'Literary Fiction': 'mdi-pen',
+             'Classics': 'mdi-star'
+         },
+
+         getCategoryIcon(name) {
+             return this.categoryIcons[name] || 'mdi-book';
+         },
+
+         // Handle reset from parent (includes clearing expanded states)
+         handleReset() {
+             // Reset expanded states to defaults (collapsed)
+             this.expandedCategories = {};
+             localStorage.removeItem('bookGenreCategoriesExpanded');
+         },
+
+         // Check if all categories are expanded
+         areAllExpanded() {
+             for (const category of this.rootCategories) {
+                 if (!this.expandedCategories[category.id]) return false;
+             }
+             return true;
+         },
+
+         // Toggle all categories expanded/collapsed
+         toggleAllExpanded() {
+             const shouldExpand = !this.areAllExpanded();
+             for (const category of this.rootCategories) {
+                 this.expandedCategories[category.id] = shouldExpand;
+             }
+             this.saveExpandedState();
+         }
+     }"
+     @book-genres-reset.window="handleReset()"
+     @book-genres-toggle-expand.window="toggleAllExpanded()">
+
+    {# Loading State - matches actual rendered height #}
+    <div x-show="!countsReady" class="space-y-1 animate-pulse" style="min-height: 320px;">
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+        <div class="bg-base-100/50 rounded-lg" style="height: 36px;"></div>
+    </div>
+
+    {# Hierarchical Genre Tree - Only show after counts are ready #}
+    <div class="book-genre-tree space-y-1" x-show="countsReady" x-cloak>
+        <template x-for="category in rootCategories" :key="category.id">
+            <div class="book-genre-category">
+                {# Category Header - Selectable and Expandable #}
+                <div class="flex items-center gap-1 py-1 px-2 rounded-lg transition-colors"
+                     :class="{
+                         'bg-primary text-accent-content': isCategorySelected(category.id),
+                         'bg-primary/10 text-accent': !isCategorySelected(category.id) && hasSelectedChildren(category.id),
+                         'hover:bg-base-content/10': !isCategorySelected(category.id),
+                         'opacity-50': !isCategoryAvailable(category.id) && !hasCategoryOrChildrenSelected(category.id)
+                     }">
+                    {# Expand/Collapse Arrow #}
+                    <button type="button"
+                            class="p-0.5 rounded hover:bg-base-content/10"
+                            @click.stop="toggleCategoryExpanded(category.id)">
+                        <span class="mdi text-base transition-transform duration-200"
+                              :class="isCategoryExpanded(category.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
+                    </button>
+                    {# Category Icon and Name - clickable to select #}
+                    <button type="button"
+                            class="flex items-center gap-2 flex-1 text-left"
+                            @click="toggleCategorySelection(category.id)">
+                        <span class="mdi text-lg" :class="getCategoryIcon(category.name)"></span>
+                        <span class="font-medium text-sm" x-text="category.name"></span>
+                    </button>
+                    {# Book count for category #}
+                    <span class="text-xs opacity-60 tabular-nums"
+                          x-text="getCategoryTotalCount(category.id)"></span>
+                </div>
+
+                {# Child Genres - Collapsible #}
+                <div class="book-genre-children ml-6 mt-1 space-y-0.5"
+                     x-show="isCategoryExpanded(category.id)"
+                     x-collapse>
+                    <template x-for="genre in getChildren(category.id)" :key="genre.id">
+                        <div class="book-genre-item flex items-center gap-2 w-full py-1 px-2 rounded-md text-left text-sm transition-colors cursor-pointer"
+                             :class="{
+                                 'bg-primary text-accent-content': isGenreSelected(genre.id),
+                                 'hover:bg-base-content/10': !isGenreSelected(genre.id),
+                                 'opacity-40': !isGenreAvailable(genre.id) && !isGenreSelected(genre.id),
+                                 'bg-error/20 text-error': hasZeroResults(genre.id)
+                             }"
+                             @click="toggleGenre(genre.id)"
+                             :title="genre.name + ' - ' + getEffectiveCount(genre) + ' books'">
+                            {# Genre Name #}
+                            <span class="flex-1 truncate" x-text="genre.name"></span>
+                            {# Book Count #}
+                            <span class="text-xs opacity-60 tabular-nums"
+                                  x-text="getEffectiveCount(genre)"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>

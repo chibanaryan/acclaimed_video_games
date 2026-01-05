@@ -1,0 +1,5 @@
+{# BookRow component #}
+{# Props: book, index (optional, for filtered rank), show_rank (default: 'alltime'), show_rank_in_details (default: False), highlight (optional book ID) #}
+{# This file delegates to _book_row_desktop.html and _book_row_mobile.html for the actual rendering #}
+{% include 'books/includes/_book_row_desktop.html' with book=book show_rank=show_rank index=index highlight=highlight show_rank_in_details=show_rank_in_details %}
+{% include 'books/includes/_book_row_mobile.html' with book=book show_rank=show_rank index=index highlight=highlight %}

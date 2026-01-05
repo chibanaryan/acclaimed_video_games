@@ -1,0 +1,33 @@
+{# Search results partial - used by BookSearchView for HTMX search #}
+{% load humanize %}
+{% if books %}
+<div class="space-y-2">
+    {% for book in books %}
+    <a href="{% url 'books:book-detail' slug=book.slug %}" class="flex items-center gap-3 p-2 rounded hover:bg-base-200 transition-colors">
+        {% if book.thumbnail %}
+        <img src="{{ book.thumbnail }}"
+             alt=""
+             width="32" height="48"
+             class="w-8 h-12 object-cover rounded"
+             loading="lazy">
+        {% else %}
+        <div class="w-8 h-12 bg-base-200 rounded flex items-center justify-center">
+            <span class="mdi mdi-book text-base-content/30"></span>
+        </div>
+        {% endif %}
+        <div class="flex-1 min-w-0">
+            <div class="font-semibold truncate">{{ book.name }}</div>
+            <div class="text-sm text-base-content/60">
+                {% if book.year_published %}{{ book.year_published }}{% endif %}
+                {% if book.authors.exists %} &bull; {{ book.authors.first.name }}{% endif %}
+            </div>
+        </div>
+        <span class="text-accent font-bold tabular-nums">#{{ book.rank }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-base-content/60 text-center py-4">
+    No books found.
+</div>
+{% endif %}

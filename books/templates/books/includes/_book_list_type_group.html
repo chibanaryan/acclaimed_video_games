@@ -1,0 +1,76 @@
+{# List type group for book detail page #}
+
+<div class="list-type-group border border-base-content/10 rounded-lg">
+    {# Section header #}
+    <div class="flex items-center gap-3 p-3">
+        <span class="font-semibold text-base">{{ group_label }}</span>
+        <span class="text-sm text-base-content/60">{{ group_items|length }}</span>
+    </div>
+
+    {# Lists content #}
+    <div class="border-t border-base-content/10">
+        {# Desktop table view #}
+        <div class="hidden md:block px-3">
+            <table class="table table-fixed w-full">
+                <colgroup>
+                    <col style="width: 10%;">
+                    <col style="width: 28%;">
+                    <col style="width: 52%;">
+                    <col style="width: 10%;">
+                </colgroup>
+                <thead>
+                    <tr class="text-xs text-base-content/60">
+                        <th class="py-2">Year</th>
+                        <th class="py-2">Publication</th>
+                        <th class="py-2">Name</th>
+                        <th class="py-2">Rank</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for list in group_items %}
+                    <tr class="list-row hover:bg-base-200/30">
+                        <td class="py-2 tabular-nums">{{ list.year }}</td>
+                        <td class="py-2 truncate" title="{{ list.publication }}">{{ list.publication }}</td>
+                        <td class="py-2 truncate" title="{{ list.name }}">
+                            {% if list.url %}
+                            <a href="{{ list.url }}" target="_blank" rel="noopener" class="link link-hover inline-flex items-center gap-1">
+                                {{ list.name }}
+                                <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
+                            </a>
+                            {% else %}
+                            {{ list.name }}
+                            {% endif %}
+                        </td>
+                        <td class="py-2 tabular-nums">{{ list.rank|default:'' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Mobile card view #}
+        <div class="md:hidden py-3 px-3 space-y-2">
+            {% for list in group_items %}
+            <div class="list-row py-2 border-b border-base-content/5 last:border-0">
+                <div class="flex items-baseline gap-2">
+                    <span class="tabular-nums text-base-content/60 text-sm">{{ list.year }}</span>
+                    <span class="text-sm font-medium">{{ list.publication }}</span>
+                </div>
+                <div class="text-sm mt-1">
+                    {% if list.url %}
+                    <a href="{{ list.url }}" target="_blank" rel="noopener" class="link link-hover">
+                        {{ list.name }}
+                        <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
+                    </a>
+                    {% else %}
+                    {{ list.name }}
+                    {% endif %}
+                    {% if list.rank %}
+                    <span class="text-base-content/50 ml-1">#{{ list.rank }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

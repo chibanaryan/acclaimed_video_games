@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Acclaimed Books{% endblock %}
+
+{% block extra_head %}
+    {# Book status state for client-side rendering (read + want to read) #}
+    <script nonce="{{ csp_nonce }}">
+    {% if user.is_authenticated %}
+    window.readBookIds = new Set([{% for goodreads_id in read_book_ids %}"{{ goodreads_id }}"{% if not forloop.last %},{% endif %}{% endfor %}]);
+    window.wantToReadBookIds = new Set([{% for goodreads_id in want_to_read_book_ids %}"{{ goodreads_id }}"{% if not forloop.last %},{% endif %}{% endfor %}]);
+    window.isAuthenticated = true;
+    {% else %}
+    window.readBookIds = new Set();
+    window.wantToReadBookIds = new Set();
+    window.isAuthenticated = false;
+    {% endif %}
+    </script>
+    {% if enable_client_filtering %}
+    {# Client-side filtering - will be added in Phase 6.1 #}
+    <script src="{% static 'books/js/book-client-filtering.bundle.min.js' %}?v=1" defer fetchpriority="low" nonce="{{ csp_nonce }}"></script>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col w-full">
+{# Hero section for books homepage #}
+<div class="hero flex flex-col md:flex-row items-center justify-center gap-2 md:gap-2">
+    {# Logo/Heading #}
+    <div class="flex-shrink-0 text-center" style="max-width: 280px;">
+        <h1 class="text-4xl font-bold text-primary mb-2">
+            <span class="mdi mdi-book-open-page-variant"></span>
+            Acclaimed Books
+        </h1>
+    </div>
+    {# Content to the right on desktop #}
+    <div class="flex flex-col items-center text-center gap-3">
+        {# Action Buttons #}
+        <div class="flex flex-wrap justify-center gap-2">
+            {% if not user.is_authenticated %}
+            <button type="button" class="btn btn-primary gap-2 auth-modal-trigger" data-auth-screen="signup">
+                <span class="mdi mdi-book"></span>
+                <span>Sign Up</span>
+            </button>
+            {% endif %}
+            <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-primary gap-2">
+                <span class="mdi mdi-heart"></span>
+                <span>Support This Project</span>
+            </a>
+        </div>
+        <p class="text-base text-base-content/70 max-w-md">
+            The top {{ book_count|default:"500"|intcomma }} most recommended books across {{ list_count|intcomma }} critic lists from {{ publication_count|intcomma }} publications.
+        </p>
+        {% if last_update %}
+        <p class="text-sm text-base-content/60">
+            Updated: {{ last_update|date:"F j, Y" }}
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="divider my-4"></div>
+
+<div id="content">
+    {# Filters will be added incrementally - for now show basic list #}
+    {% include 'books/includes/_book_list_results.html' %}
+</div>
+</div>{# End flex wrapper #}
+
+{# Client-side rendering templates - hidden, cloned by JavaScript #}
+{% if enable_client_filtering %}
+<template id="desktop-row-template">
+    {% include 'books/includes/_book_row_desktop.html' %}
+</template>
+<template id="mobile-row-template">
+    {% include 'books/includes/_book_row_mobile.html' %}
+</template>
+<template id="read-button-template">
+    {% include 'books/includes/_read_button_template.html' %}
+</template>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if highlight %}
+<script nonce="{{ csp_nonce }}">
+    // Wait for page to settle, then trigger highlight navigation
+    setTimeout(function() {
+        var bookId = {{ highlight }};
+
+        // Check if book is already in DOM (position within first page)
+        var desktopElement = document.getElementById('book-' + bookId);
+        var mobileElement = document.getElementById('book-' + bookId + '-mobile');
+
+        if (desktopElement || mobileElement) {
+            // Book loaded - just scroll and highlight
+            var isDesktop = window.matchMedia('(min-width: 962px)').matches;
+            var element = isDesktop ? desktopElement : mobileElement;
+
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                // Add highlight class for visual feedback
+                if (desktopElement) desktopElement.classList.add('is-highlighted');
+                if (mobileElement) mobileElement.classList.add('is-highlighted');
+
+                // Fade out highlight after 2 seconds
+                var fadeTimeout = setTimeout(function() {
+                    if (desktopElement) desktopElement.classList.add('fade-out');
+                    if (mobileElement) mobileElement.classList.add('fade-out');
+                }, 2000);
+
+                // Also fade out if user hovers over any other book row
+                var bookRows = document.querySelectorAll('.book-row');
+                bookRows.forEach(function(row) {
+                    if (row !== desktopElement && row !== mobileElement) {
+                        row.addEventListener('mouseenter', function() {
+                            clearTimeout(fadeTimeout);
+                            if (desktopElement) desktopElement.classList.add('fade-out');
+                            if (mobileElement) mobileElement.classList.add('fade-out');
+                        }, { once: true });
+                    }
+                });
+            }
+        }
+    }, 300);
+</script>
+{% endif %}
+{% endblock %}

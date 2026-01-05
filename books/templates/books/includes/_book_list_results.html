@@ -1,0 +1,135 @@
+{# Book search results partial - used for both initial render and HTMX updates #}
+{% load humanize %}
+
+{# Desktop: Sort + result count (horizontal row at desktop+) #}
+<div class="hidden desktop:flex items-center justify-between gap-4 mb-2 text-sm">
+    {# Sort - Left side #}
+    <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+            <button type="button"
+                    class="flex items-center gap-1 text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    @click="sortOpen = !sortOpen">
+                <span class="mdi mdi-sort text-base"></span>
+                <span class="text-sm min-w-9" x-text="
+                    filters?.sort === 'rank' ? 'Rank' :
+                    filters?.sort === 'year' ? 'Year' :
+                    filters?.sort === 'name' ? 'A-Z' :
+                    filters?.sort === 'pages' ? 'Pages' :
+                    'Rank'
+                ">Rank</span>
+                <span class="mdi mdi-chevron-down text-xs"></span>
+            </button>
+            <ul x-show="sortOpen" x-cloak
+                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                @click="sortOpen = false">
+                <li><button type="button" @click="updateSort('rank')" :class="filters?.sort === 'rank' ? 'active' : ''">Rank</button></li>
+                <li><button type="button" @click="updateSort('year')" :class="filters?.sort === 'year' ? 'active' : ''">Year</button></li>
+                <li><button type="button" @click="updateSort('name')" :class="filters?.sort === 'name' ? 'active' : ''">A-Z</button></li>
+                <li><button type="button" @click="updateSort('pages')" :class="filters?.sort === 'pages' ? 'active' : ''">Pages</button></li>
+            </ul>
+        </div>
+        {# Direction flip button #}
+        <button type="button"
+                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                @click="toggleSortDirection?.()"
+                :title="(filters?.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
+            <span class="mdi text-base" :class="(filters?.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+        </button>
+    </div>
+    {# Result count - Middle #}
+    <div class="result-count text-base-content/60 whitespace-nowrap">
+        {% if total_count %}Showing <span id="loaded-count" class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
+    </div>
+    {# Jump to Rank - Right side #}
+    <div class="flex items-center gap-2 flex-shrink-0 pr-4">
+        <input type="number"
+               min="1"
+               max="{{ total_count }}"
+               placeholder="Book #"
+               class="jump-to-rank-input input input-xs input-bordered w-20 text-center"
+               data-total="{{ total_count }}"
+               data-loaded="{{ loaded_count }}"
+               data-per-page="100">
+        <button type="button"
+                class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
+                title="Jump to rank">
+            <span class="mdi mdi-arrow-down"></span>
+        </button>
+    </div>
+</div>
+
+{# Mobile: Sort + result count (hidden at desktop+) #}
+<div class="desktop:hidden flex items-center justify-between gap-2 mb-2 text-sm">
+    {# Sort - Left side - Native select for mobile touch compatibility #}
+    <div class="flex items-center gap-1 shrink-0">
+        <span class="mdi mdi-sort text-base text-base-content/60"></span>
+        <select class="select select-xs select-bordered bg-base-200"
+                @change="updateSort?.($event.target.value)">
+            <option value="rank" :selected="filters?.sort === 'rank'">Rank</option>
+            <option value="year" :selected="filters?.sort === 'year'">Year</option>
+            <option value="name" :selected="filters?.sort === 'name'">A-Z</option>
+            <option value="pages" :selected="filters?.sort === 'pages'">Pages</option>
+        </select>
+        {# Direction flip button #}
+        <button type="button"
+                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                @click="toggleSortDirection?.()"
+                :title="(filters?.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
+            <span class="mdi text-sm" :class="(filters?.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+        </button>
+    </div>
+    {# Result count - middle, can shrink #}
+    <div class="result-count text-base-content/60 text-xs truncate min-w-0">
+        {% if total_count %}<span class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% endif %}
+    </div>
+    {# Jump to Rank - Right side #}
+    <div class="flex items-center gap-1 shrink-0">
+        <input type="number"
+               min="1"
+               max="{{ total_count }}"
+               placeholder="#"
+               class="jump-to-rank-input input input-xs input-bordered w-12 text-center"
+               data-total="{{ total_count }}"
+               data-loaded="{{ loaded_count }}"
+               data-per-page="100">
+        <button type="button"
+                class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
+                title="Jump to rank">
+            <span class="mdi mdi-arrow-down"></span>
+        </button>
+    </div>
+</div>
+
+{% if books %}
+<div id="book-list-container">
+    {# List view - book rows #}
+    {% for book in books %}
+        {% with index=page_obj.start_index|add:forloop.counter0 %}
+            {% include 'books/includes/_book_row.html' with book=book index=index show_rank=show_rank|default:'alltime' %}
+        {% endwith %}
+    {% endfor %}
+</div>
+
+{% if has_more and not max_loaded %}
+<div id="load-more-container" class="load-more-container text-center my-6">
+    <button type="button"
+            class="btn btn-ghost load-more-button"
+            data-next-page="{{ next_page }}"
+            data-total="{{ total_count }}"
+            data-loaded="{{ loaded_count }}">
+        <span class="mdi mdi-book-open-page-variant"></span>
+        <span class="load-more-text">Load More ({{ remaining_count|intcomma }} remaining)</span>
+    </button>
+</div>
+{% elif max_loaded %}
+<div id="load-more-container" class="load-more-container text-center my-6">
+    <div class="alert alert-info">
+        <span class="mdi mdi-information-outline"></span>
+        <span>Showing maximum of 1,000 results. Refine your filters to see more specific results.</span>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-base-content/85 py-8 text-center">No books match your filters.</div>
+{% endif %}

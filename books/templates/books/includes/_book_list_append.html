@@ -1,0 +1,19 @@
+{# Append-only partial - returns just book rows for Load More #}
+{% load humanize %}
+{% for book in books %}
+    {% with index=page_obj.start_index|add:forloop.counter0 %}
+        {% include 'books/includes/_book_row.html' with book=book index=index show_rank=show_rank|default:'alltime' %}
+    {% endwith %}
+{% endfor %}
+
+{# JSON metadata for JavaScript to update the button #}
+<script type="application/json" id="load-more-meta">
+{
+    "hasMore": {{ has_more|yesno:"true,false" }},
+    "nextPage": {{ next_page|default:"null" }},
+    "loadedCount": {{ loaded_count }},
+    "totalCount": {{ total_count }},
+    "remainingCount": {{ remaining_count }},
+    "maxLoaded": {{ max_loaded|yesno:"true,false" }}
+}
+</script>

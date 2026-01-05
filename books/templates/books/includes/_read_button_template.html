@@ -1,0 +1,27 @@
+{# Book Status Button Template for JS cloning #}
+{# Contains all 3 state elements - JS shows the correct one based on status #}
+{# States: none (untracked), want (want to read), read #}
+{% load static %}
+<div class="tooltip tooltip-top read-button-wrapper cursor-pointer"
+     data-slot="read-wrapper"
+     data-tip=""
+     data-goodreads-id=""
+     data-status="none"
+     hx-trigger="click"
+     hx-swap="outerHTML"
+     onclick="event.stopPropagation()">
+    <button class="read-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none">
+        {# Read state - Book with checkmark #}
+        <span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center hidden" data-slot="read-icon">
+            <span class="mdi mdi-book-check text-4xl desktop:text-2xl text-success drop-shadow-[0_0_6px_rgba(34,197,94,0.7)]"></span>
+        </span>
+        {# Want to Read state - Book with plus outline #}
+        <span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center hidden" data-slot="want-icon">
+            <span class="mdi mdi-book-plus-outline text-4xl desktop:text-2xl text-warning"></span>
+        </span>
+        {# Untracked state - Book outline icon #}
+        <span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center" data-slot="untracked-icon">
+            <span class="mdi mdi-book-outline text-4xl desktop:text-2xl text-base-content/30"></span>
+        </span>
+    </button>
+</div>
