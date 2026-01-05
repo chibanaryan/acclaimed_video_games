@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Fix accessibility: use grayscale instead of opacity for unavailable year cells (better text contrast)
 - Fix accessibility: change game card h3 to span to fix heading order (no h2 before h3)
 - Fix accessibility: year grid labels use theme-aware text color instead of white (better contrast on light backgrounds)
 - Bump JS cache version to v=3 to fix stale filter-component.min.js being served from browser cache

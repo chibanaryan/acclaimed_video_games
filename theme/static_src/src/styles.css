@@ -493,14 +493,22 @@
     @apply !bg-transparent cursor-default;
   }
 
-  /* Unavailable year cell - dimmed but still visible and clickable */
+  /* Unavailable year cell - grayscale but readable, clearly non-selected */
   .year-grid-cell.is-unavailable {
-    --heatmap-opacity: 25% !important;
-    @apply visible opacity-50 cursor-pointer pointer-events-auto;
+    @apply visible cursor-pointer pointer-events-auto;
+    filter: grayscale(100%);
+  }
+
+  .year-grid-cell.is-unavailable .year-grid-cell-label {
+    @apply text-base-content/60;
   }
 
   .year-grid-cell.is-unavailable:hover {
-    @apply opacity-80;
+    filter: grayscale(50%);
+  }
+
+  .year-grid-cell.is-unavailable:hover .year-grid-cell-label {
+    @apply text-base-content/80;
   }
 
   .year-grid-cell-hidden {
