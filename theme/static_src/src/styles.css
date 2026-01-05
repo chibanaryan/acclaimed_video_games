@@ -370,7 +370,7 @@
   /* Decade label (e.g., "1980s") */
   .year-grid-decade {
     @apply w-[50px] min-w-[50px] flex items-center justify-center py-1.5 px-1;
-    @apply bg-base-100 rounded-sm cursor-pointer font-semibold text-base-content/60;
+    @apply bg-base-100 rounded-sm cursor-pointer font-semibold text-base-content/70;
     @apply transition-all duration-150;
   }
 
@@ -509,16 +509,16 @@
 
   .year-grid-cell-label {
     @apply text-[0.7rem] font-bold text-white pointer-events-none;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7), 0 0 4px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.6);
   }
 
   /* Header row with legend and hint */
   .year-grid-header {
-    @apply flex items-center justify-between mb-2 text-xs text-base-content/60;
+    @apply flex items-center justify-between mb-2 text-xs text-base-content/70;
   }
 
   .year-grid-hint {
-    @apply text-base-content/60;
+    @apply text-base-content/70;
   }
 
   /* Legend showing color scale */

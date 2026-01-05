@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Fix accessibility: improve year grid heatmap contrast (increase text opacity /60→/70, strengthen cell label shadows)
 - Fix accessibility: add aria-labels to sort dropdown and direction toggle buttons for screen readers
 - Add page-level caching for anonymous home page requests (5-min cache reduces TTFB from ~1300ms to ~50ms)
 - Fix accessibility: add aria-labels to genre filter expand/collapse buttons for screen readers
