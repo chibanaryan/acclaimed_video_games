@@ -3,7 +3,7 @@
 {# Props: book (optional), show_rank ('alltime'|'filtered'|'none'), index (filtered rank), highlight (book ID) #}
 {# When book is not provided, renders empty template structure for JS cloning with all elements present #}
 {% load static humanize %}
-<div class="book-row book-card-mobile desktop:hidden grid items-center gap-3 p-2 bg-base-200 rounded-lg hover:bg-base-100 transition-colors mb-2 cursor-pointer {% if book and highlight and book.id == highlight %}is-highlighted{% endif %}"
+<div class="book-row book-card-mobile desktop:hidden grid items-center gap-3 p-2 bg-base-200 rounded-lg mb-2 cursor-pointer {% if book and highlight and book.id == highlight %}is-highlighted{% endif %}"
      {% if book %}id="book-{{ book.id }}-mobile"{% endif %}
      data-slot="root"
      {% if book %}onclick="window.location.href='{% url 'books:book-detail' slug=book.slug %}'"{% endif %}
@@ -31,10 +31,10 @@
         <div class="min-w-0">
             <div class="font-bold text-base leading-tight line-clamp-2" data-slot="title">
                 {# Inline rank - always present in template for JS, conditionally shown for server render #}
-                {% if show_rank == 'alltime' or show_rank == 'filtered' or not book %}<span class="text-accent tabular-nums text-lg" data-slot="rank">{% if book %}#{% if show_rank == 'filtered' %}{{ index|default:book.rank }}{% else %}{{ book.rank }}{% endif %}{% endif %}</span> {% endif %}{% if book %}{{ book.name }} <span class="font-normal text-sm text-base-content/70">({{ book.year_published }})</span>{% else %}<span class="font-normal text-sm text-base-content/70" data-slot="year"></span>{% endif %}{% if show_rank == 'filtered' or not book %}<span class="font-normal text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and book %}hidden{% endif %}" data-slot="global-rank">{% if book %} (#{{ book.rank }}){% endif %}</span>{% endif %}
+                {% if show_rank == 'alltime' or show_rank == 'filtered' or not book %}<span class="text-accent tabular-nums text-lg" data-slot="rank">{% if book %}#{% if show_rank == 'filtered' %}{{ index|default:book.rank }}{% else %}{{ book.rank }}{% endif %}{% endif %}</span> {% endif %}{% if book %}{{ book.name }} <span class="font-normal text-sm text-base-content/70">({{ book.year_published }})</span>{% else %}<span class="font-normal text-sm text-base-content/70" data-slot="year"></span>{% endif %}{% if show_rank == 'filtered' or not book %}<span class="font-normal text-xs text-base-content/60 tabular-nums {% if show_rank != 'filtered' and book %}hidden{% endif %}" data-slot="global-rank">{% if book %} (#{{ book.rank }}){% endif %}</span>{% endif %}
             </div>
             {# Meta row: Author, Genres, Page count, List count - wraps as needed #}
-            <div class="text-xs text-base-content/50" data-slot="meta">
+            <div class="text-xs text-base-content/65" data-slot="meta">
                 {% if book %}{% with display_authors=book.get_display_authors %}{% if display_authors %}<span class="whitespace-nowrap" data-slot="primary-author">{% for author in display_authors %}{{ author.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}{% if book.genres.count > 0 %} <span class="whitespace-nowrap">{% if book.get_display_authors %}<span class="text-base-content/30">&bull;</span> {% endif %}<span data-slot="genres">{% for g in book.genres.all %}{{ g.name }}{% if not forloop.last %}<span class="text-base-content/30"> / </span>{% endif %}{% endfor %}</span></span>{% endif %}{% if book.page_count %} <span class="whitespace-nowrap">{% if book.genres.count > 0 or book.get_display_authors %}<span class="text-base-content/30">&bull;</span> {% endif %}<span class="tabular-nums" data-slot="page-count" title="Page count">{{ book.page_count|intcomma }}p</span></span>{% endif %}{% if book.list_count %} <span class="whitespace-nowrap">{% if book.page_count or book.genres.count > 0 or book.get_display_authors %}<span class="text-base-content/30">&bull;</span> {% endif %}<span class="tabular-nums" data-slot="list-count">{{ book.list_count }} lists</span></span>{% endif %}{% endif %}
             </div>
         </div>

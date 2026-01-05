@@ -768,7 +768,21 @@
 /* Game Row Component - Desktop and Mobile */
 .game-row {
   position: relative;
-  transition: background-color 0.5s ease, transform 0.2s ease;
+  /* Use transform only - it's GPU-accelerated. Background transitions use pseudo-element below. */
+  transition: transform 0.2s ease;
+}
+
+/* Highlight overlay using pseudo-element for GPU-composited animation */
+.game-row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* CSS containment for mobile only - desktop needs tooltips to escape row bounds */
@@ -784,15 +798,21 @@
   }
 }
 
-/* Highlighted row (from URL param) */
+/* Highlighted row (from URL param) - uses GPU-composited opacity on ::before pseudo-element */
+.game-row.is-highlighted::before {
+  opacity: 1;
+}
+
 .game-row.is-highlighted {
-  background-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
   border-left-color: var(--color-primary);
 }
 
 /* Fade out animation for highlight */
+.game-row.is-highlighted.fade-out::before {
+  opacity: 0;
+}
+
 .game-row.is-highlighted.fade-out {
-  background-color: transparent;
   border-left-color: transparent;
 }
 
@@ -935,16 +955,69 @@
   .game-card-mobile {
     position: relative;
     border-left: 3px solid transparent;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    /* Remove non-composited transitions, use instant change */
+  }
+
+  /* Highlight overlay for mobile - uses opacity for GPU compositing */
+  .game-card-mobile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: color-mix(in oklch, var(--color-primary) 20%, transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .game-card-mobile.is-highlighted::before {
+    opacity: 1;
   }
 
   .game-card-mobile.is-highlighted {
-    background-color: color-mix(in oklch, var(--color-primary) 20%, transparent) !important;
     border-left-color: var(--color-primary);
   }
 
+  .game-card-mobile.is-highlighted.fade-out::before {
+    opacity: 0;
+  }
+
   .game-card-mobile.is-highlighted.fade-out {
-    background-color: var(--color-base-200);
+    border-left-color: transparent;
+  }
+
+  /* Mobile Book Card - similar to game card mobile */
+  .book-card-mobile {
+    position: relative;
+    border-left: 3px solid transparent;
+  }
+
+  .book-card-mobile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: color-mix(in oklch, var(--color-primary) 20%, transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .book-card-mobile.is-highlighted::before {
+    opacity: 1;
+  }
+
+  .book-card-mobile.is-highlighted {
+    border-left-color: var(--color-primary);
+  }
+
+  .book-card-mobile.is-highlighted.fade-out::before {
+    opacity: 0;
+  }
+
+  .book-card-mobile.is-highlighted.fade-out {
     border-left-color: transparent;
   }
 
