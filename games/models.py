@@ -9,6 +9,8 @@ from django.utils.text import Truncator, slugify
 
 from core.models import MediaItemBase
 
+from core.models import CreatorBase
+
 from . import constants, igdb
 
 logger = logging.getLogger(__name__)
@@ -184,9 +186,15 @@ class Platform(models.Model):
         return self.name
 
 
-class Developer(models.Model):
+class Developer(CreatorBase):
     """
     A game development entity with optional parent hierarchy.
+
+    Inherits from CreatorBase which provides:
+    - name, slug, parent (hierarchical self-FK)
+    - is_root, is_subsidiary properties
+    - root_creator, display_root_creator methods
+    - get_all_subsidiaries, get_all_subsidiary_ids methods
 
     In IGDB's data model, all developers are "company" records. This model
     represents both parent developers and subsidiary development teams using a
@@ -202,8 +210,7 @@ class Developer(models.Model):
     The parent FK enables hierarchical organization on developer detail pages.
     """
 
-    name = models.CharField(max_length=100, db_index=True)
-    slug = models.SlugField(max_length=100, null=True, blank=True, db_index=True)
+    # IGDB-specific fields
     igdb_id = models.IntegerField(
         null=True,
         blank=True,
@@ -215,118 +222,36 @@ class Developer(models.Model):
         blank=True,
         help_text="IGDB company detail page URL",
     )
-    parent = models.ForeignKey(
-        "self",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="subsidiaries",
-        help_text="Parent developer in the ownership hierarchy",
-    )
 
     class Meta:
         ordering = ["name"]
         verbose_name_plural = "Developers"
 
-    def __str__(self) -> str:
-        if self.parent:
-            return f"{self.name} ({self.parent.name})"
-        return self.name
-
-    @property
-    def is_root(self) -> bool:
-        """True if this is a root developer (no parent)."""
-        return self.parent is None
-
-    @property
-    def is_subsidiary(self) -> bool:
-        """True if this developer has a parent."""
-        return self.parent is not None
+    # Backward compatibility aliases for existing code that uses
+    # root_developer and display_root_developer instead of
+    # root_creator and display_root_creator from CreatorBase
 
     @cached_property
     def root_developer(self) -> "Developer":
         """
-        Returns the root (topmost) developer in the ownership hierarchy.
+        Alias for root_creator for backward compatibility.
 
+        Returns the root (topmost) developer in the ownership hierarchy.
         For nested developers like BioWare Edmonton → BioWare → EA,
         this returns the ultimate parent (EA).
-
-        Cached on the instance to avoid repeated DB queries when accessed
-        multiple times on the same instance.
         """
-        if not self.parent:
-            return self
-
-        current = self
-        visited = {current.id}  # Prevent infinite loops
-
-        while current.parent:
-            if current.parent_id in visited:
-                break  # Prevent infinite loops
-            visited.add(current.parent_id)
-            current = current.parent
-
-        return current
+        return self.root_creator
 
     @property
     def display_root_developer(self) -> "Developer":
         """
-        Template-friendly accessor for root developer.
+        Alias for display_root_creator for backward compatibility.
 
+        Template-friendly accessor for root developer.
         Uses prefetched root if available (set by views using cached hierarchy),
         otherwise falls back to the cached_property root_developer.
         """
-        if hasattr(self, "_prefetched_root"):
-            return self._prefetched_root
-        return self.root_developer
-
-    def get_all_subsidiaries(self, include_self: bool = False) -> list:
-        """
-        Get all subsidiary developers recursively.
-
-        Args:
-            include_self: If True, include this developer in results
-
-        Returns:
-            List of Developer objects (all descendants)
-        """
-        descendants = []
-        if include_self:
-            descendants.append(self)
-
-        for sub in self.subsidiaries.all():
-            descendants.append(sub)
-            descendants.extend(sub.get_all_subsidiaries(include_self=False))
-
-        return descendants
-
-    def get_all_subsidiary_ids(self, include_self: bool = False) -> list:
-        """
-        Get IDs of all subsidiary developers (optimized for filtering).
-
-        Args:
-            include_self: If True, include this developer's ID
-
-        Returns:
-            List of developer IDs
-        """
-        ids = []
-        if include_self:
-            ids.append(self.id)
-
-        for sub in self.subsidiaries.all():
-            ids.append(sub.id)
-            ids.extend(sub.get_all_subsidiary_ids(include_self=False))
-
-        return ids
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """Save the developer, clearing slug if it has a parent."""
-        # Only root developers should have slugs - child developers are accessed
-        # via their root parent's URL with hash anchors
-        if self.parent_id is not None:
-            self.slug = ""
-        super().save(*args, **kwargs)
+        return self.display_root_creator
 
 
 class IGDBGenre(models.Model):
