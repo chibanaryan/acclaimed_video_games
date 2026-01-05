@@ -54,9 +54,9 @@ minify_dir "$CORE_JS_DIR"
 # base-renderer must come before game-list-renderer (GameListRenderer extends BaseMediaListRenderer)
 GAMES_BUNDLE="$GAMES_JS_DIR/client-side-filtering.bundle.min.js"
 GAMES_BUNDLE_SOURCES=(
+    "$CORE_JS_DIR/base-renderer.min.js"
     "$GAMES_JS_DIR/game-cache.min.js"
     "$GAMES_JS_DIR/client-filter.min.js"
-    "$CORE_JS_DIR/base-renderer.min.js"
     "$GAMES_JS_DIR/game-list-renderer.min.js"
     "$GAMES_JS_DIR/client-filtering.min.js"
 )
