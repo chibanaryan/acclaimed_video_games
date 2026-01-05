@@ -2,6 +2,8 @@
 
 ## 2026-01-05
 
+- Fix accessibility: add aria-labels to platform filter expand/collapse buttons for screen readers
+- Fix contrast issues: add text shadow to year grid labels, use solid accent background for active sidebar links
 - Defer Alpine.js loading until user interaction to reduce TBT (~1.7s script evaluation moved off critical path)
 - Reduce TBT: remove deep watch on filters object, defer filter/year-grid init via requestIdleCallback
 - Fix tooltip clipping: remove content-visibility containment from desktop game rows so tooltips can escape row bounds

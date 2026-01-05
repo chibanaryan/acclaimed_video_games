@@ -21,3 +21,4 @@ venv/*
 .playwright-mcp/
 django_cache/
 games/fixtures/prod_dump.json
+core/fixtures/

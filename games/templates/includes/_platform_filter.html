@@ -574,8 +574,10 @@
                     {# Expand/Collapse Arrow #}
                     <button type="button"
                             class="p-0.5 rounded hover:bg-base-content/10"
+                            :aria-label="(isManufacturerExpanded(mfrKey) ? 'Collapse ' : 'Expand ') + platformHierarchy[mfrKey].name + ' platforms'"
+                            :aria-expanded="isManufacturerExpanded(mfrKey)"
                             @click.stop="toggleManufacturerExpanded(mfrKey)">
-                        <span class="mdi text-base transition-transform duration-200"
+                        <span class="mdi text-base transition-transform duration-200" aria-hidden="true"
                               :class="isManufacturerExpanded(mfrKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
                     </button>
                     {# Manufacturer Icon and Name - click to toggle selection #}
@@ -620,8 +622,10 @@
                                         {# Expand/Collapse Arrow #}
                                         <button type="button"
                                                 class="p-0.5 rounded hover:bg-base-content/10"
+                                                :aria-label="(isFormFactorExpanded(mfrKey, ffKey) ? 'Collapse ' : 'Expand ') + platformHierarchy[mfrKey].formFactors[ffKey].name"
+                                                :aria-expanded="isFormFactorExpanded(mfrKey, ffKey)"
                                                 @click.stop="toggleFormFactorExpanded(mfrKey, ffKey)">
-                                            <span class="mdi text-sm transition-transform duration-200"
+                                            <span class="mdi text-sm transition-transform duration-200" aria-hidden="true"
                                                   :class="isFormFactorExpanded(mfrKey, ffKey) ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
                                         </button>
                                         {# Form Factor Name - click to toggle selection #}
