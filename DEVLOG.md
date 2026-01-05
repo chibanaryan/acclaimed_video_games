@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Fix accessibility: year grid labels use theme-aware text color instead of white (better contrast on light backgrounds)
 - Bump JS cache version to v=3 to fix stale filter-component.min.js being served from browser cache
 - Fix LCP: add fetchpriority=high to hero logo images for faster initial render
 - Use WebP format for large game cover images (detail page, grid view) for 15-20% size reduction; keep JPG for OG/social sharing compatibility

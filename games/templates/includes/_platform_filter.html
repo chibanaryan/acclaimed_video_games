@@ -598,7 +598,7 @@
                         <span class="font-medium text-sm" x-text="platformHierarchy[mfrKey].name"></span>
                     </button>
                     {# Deduplicated manufacturer count #}
-                    <span class="text-xs opacity-60 tabular-nums" x-text="getManufacturerTotalCount(mfrKey)"></span>
+                    <span class="text-xs opacity-70 tabular-nums" x-text="getManufacturerTotalCount(mfrKey)"></span>
                 </div>
 
                 {# Manufacturer Content - Collapsible #}
@@ -637,7 +637,7 @@
                                                   x-text="platformHierarchy[mfrKey].formFactors[ffKey].name"></span>
                                         </button>
                                         {# Deduplicated form factor count #}
-                                        <span class="text-xs opacity-60 tabular-nums" x-text="getFormFactorTotalCount(mfrKey, ffKey)"></span>
+                                        <span class="text-xs opacity-70 tabular-nums" x-text="getFormFactorTotalCount(mfrKey, ffKey)"></span>
                                     </div>
 
                                     {# Platforms in Form Factor - collapsible #}
@@ -658,7 +658,7 @@
                                                     <span class="platform-years flex-shrink-0" x-text="formatPlatformYears(platform)"></span>
                                                 </span>
                                                 {# Game Count #}
-                                                <span class="text-xs opacity-60 tabular-nums"
+                                                <span class="text-xs opacity-70 tabular-nums"
                                                       x-text="getEffectiveCount(platform)"></span>
                                             </div>
                                         </template>
@@ -685,7 +685,7 @@
                                         <span class="platform-years flex-shrink-0" x-text="formatPlatformYears(platform)"></span>
                                     </span>
                                     {# Game Count #}
-                                    <span class="text-xs opacity-60 tabular-nums"
+                                    <span class="text-xs opacity-70 tabular-nums"
                                           x-text="getEffectiveCount(platform)"></span>
                                 </div>
                             </template>
