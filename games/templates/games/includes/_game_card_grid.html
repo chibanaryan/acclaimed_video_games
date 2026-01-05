@@ -68,7 +68,7 @@
         <a {% if game %}href="{% url 'game-detail' slug=game.slug %}"{% endif %}
            class="link link-hover"
            data-slot="title-link">
-            <h3 data-slot="name">{% if game %}{{ game.name }}{% endif %}</h3>
+            <span class="game-card-name" data-slot="name">{% if game %}{{ game.name }}{% endif %}</span>
         </a>
         <span class="game-card-year" data-slot="year">{% if game %}{{ game.year_of_release }}{% endif %}</span>
     </div>

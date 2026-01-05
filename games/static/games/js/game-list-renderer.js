@@ -1066,7 +1066,7 @@ class GameListRenderer extends BaseMediaListRenderer {
     </div>
     <div class="game-card-info">
         <a href="/game/${game.s}/" class="link link-hover">
-            <h3>${this._escapeHtml(game.n)}</h3>
+            <span class="game-card-name">${this._escapeHtml(game.n)}</span>
         </a>
         <span class="game-card-year">${game.y || 'N/A'}</span>
     </div>

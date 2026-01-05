@@ -1437,8 +1437,8 @@ input[type="number"] {
     flex-direction: column;
   }
 
-  .game-card-info h3 {
-    @apply font-bold text-sm leading-tight;
+  .game-card-info .game-card-name {
+    @apply font-bold text-sm leading-tight block;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -1447,7 +1447,7 @@ input[type="number"] {
   }
 
   .game-card-info .game-card-year {
-    @apply text-xs text-base-content/60;
+    @apply text-xs text-base-content/70;
     flex-shrink: 0;
   }
 
