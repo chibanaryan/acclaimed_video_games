@@ -1,0 +1,139 @@
+{# BookProperties component #}
+{# Props: book (full book object) #}
+{% load humanize %}
+
+<table class="text-base">
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">All time rank:</td>
+        <td class="pb-3 align-middle tabular-nums">
+            <span class="rank-indicator">
+                <a href="{% url 'books:home' %}?highlight={{ book.id }}" class="link link-accent font-medium">{{ book.rank }}</a>
+                {% if total_book_count %}<span class="text-base-content/50 text-sm"> of {{ total_book_count|intcomma }}</span>{% endif %}
+            </span>
+        </td>
+    </tr>
+    {% if book.decade_rank %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">{{ book.decade }}s rank:</td>
+        <td class="pb-3 align-middle tabular-nums">
+            <a href="{% url 'books:home' %}?start={{ book.decade }}&end={{ book.decade|add:9 }}&highlight={{ book.id }}" class="link link-accent font-medium">{{ book.decade_rank }}</a>
+            {% if decade_book_count %}<span class="text-base-content/50 text-sm"> of {{ decade_book_count|intcomma }}</span>{% endif %}
+        </td>
+    </tr>
+    {% endif %}
+    {% if book.year_rank %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">{{ book.year_published }} rank:</td>
+        <td class="pb-3 align-middle tabular-nums">
+            <a href="{% url 'books:home' %}?start={{ book.year_published }}&end={{ book.year_published }}&highlight={{ book.id }}" class="link link-accent font-medium">{{ book.year_rank }}</a>
+            {% if year_book_count %}<span class="text-base-content/50 text-sm"> of {{ year_book_count|intcomma }}</span>{% endif %}
+        </td>
+    </tr>
+    {% endif %}
+    {% if book.lists.count %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">List appearances:</td>
+        <td class="pb-3 align-middle tabular-nums">
+            <span class="font-medium">{{ book.lists.count }}</span>
+            <span class="text-base-content/50 text-sm">lists</span>
+        </td>
+    </tr>
+    {% endif %}
+    {% with authors=book.authors.all %}
+    {% if authors %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if authors|length == 1 %}Author{% else %}Authors{% endif %}:</td>
+        <td class="pb-3">
+            {% for author in authors %}{% if author.slug %}<a href="{% url 'books:author-detail' slug=author.slug %}" class="link link-accent">{{ author.name }}</a>{% else %}<span>{{ author.name }}</span>{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </td>
+    </tr>
+    {% endif %}
+    {% endwith %}
+    {% with genres=book.genres.all %}
+    {% if genres %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-top whitespace-nowrap">{% if genres|length == 1 %}Genre{% else %}Genres{% endif %}:</td>
+        <td class="pb-3">
+            <span class="flex flex-wrap gap-1">
+                {% for genre in genres %}<a href="{% url 'books:home' %}?genres={{ genre.id }}&highlight={{ book.id }}" class="badge badge-outline opacity-80 hover:opacity-100 hover:badge-primary transition-colors max-w-[200px] overflow-hidden inline-flex items-center gap-1" title="{{ genre.name }}"><span class="mdi mdi-book text-sm flex-shrink-0"></span><span class="truncate">{{ genre.name }}</span></a>{% endfor %}
+            </span>
+        </td>
+    </tr>
+    {% endif %}
+    {% endwith %}
+    {% if book.series %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Series:</td>
+        <td class="pb-3 align-middle">
+            <span class="font-medium">{{ book.series.name }}</span>
+            {% if book.series_position %}<span class="text-base-content/50"> (#{{ book.series_position|floatformat:0 }})</span>{% endif %}
+        </td>
+    </tr>
+    {% endif %}
+    {% if book.page_count %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Pages:</td>
+        <td class="pb-3 align-middle tabular-nums">
+            <span class="font-medium">{{ book.page_count|intcomma }}</span>
+        </td>
+    </tr>
+    {% endif %}
+    {% if book.isbn or book.isbn13 %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">ISBN:</td>
+        <td class="pb-3 align-middle tabular-nums">
+            {{ book.isbn13|default:book.isbn }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if book.primary_wikipedia_book_data.wikipedia_url %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Wikipedia:</td>
+        <td class="pb-3 align-middle">
+            <a href="{{ book.primary_wikipedia_book_data.wikipedia_url }}" target="_blank" class="link link-accent inline-flex items-center gap-1">
+                Wikipedia <span class="mdi mdi-open-in-new text-sm"></span>
+            </a>
+        </td>
+    </tr>
+    {% endif %}
+    {% if book.primary_goodreads_book_data.goodreads_book_url %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Goodreads:</td>
+        <td class="pb-3 align-middle">
+            <a href="{{ book.primary_goodreads_book_data.goodreads_book_url }}" target="_blank" class="link link-accent inline-flex items-center gap-1">
+                Goodreads <span class="mdi mdi-open-in-new text-sm"></span>
+            </a>
+            {% if book.primary_goodreads_book_data.average_rating %}
+            <div class="text-base-content/50 text-sm mt-1">
+                <span class="mdi mdi-star text-warning text-xs"></span>
+                {{ book.primary_goodreads_book_data.average_rating }}/5
+                {% if book.primary_goodreads_book_data.ratings_count %}
+                <span class="text-base-content/40">({{ book.primary_goodreads_book_data.ratings_count|intcomma }} ratings)</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </td>
+    </tr>
+    {% endif %}
+    {% if book.open_library_id %}
+    <tr>
+        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Open Library:</td>
+        <td class="pb-3 align-middle">
+            <a href="https://openlibrary.org/works/{{ book.open_library_id }}" target="_blank" class="link link-accent inline-flex items-center gap-1">
+                Open Library <span class="mdi mdi-open-in-new text-sm"></span>
+            </a>
+        </td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td colspan="2" class="pt-4 border-t border-base-content/10">
+            <a href="#contact"
+               class="contact-modal-trigger link link-hover text-base-content/60 hover:text-warning inline-flex items-center gap-1 text-sm"
+               data-category="data"
+               data-message="Book: {{ book.name }}{% if book.goodreads_id %} (Goodreads ID: {{ book.goodreads_id }}){% endif %}">
+                <span class="mdi mdi-alert-circle"></span>
+                Report incorrect data
+            </a>
+        </td>
+    </tr>
+</table>

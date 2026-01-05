@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Authors | Acclaimed Books{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+<h1 class="text-3xl font-bold mb-4">Authors</h1>
+<h2 id="results-count" class="text-xl text-base-content/85 mb-4">
+    {% if total_count %}
+    Showing <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} author{{ total_count|pluralize }}
+    {% else %}
+    Showing 0
+    {% endif %}
+</h2>
+
+<div class="mb-6" x-data="{
+    q: '{{ request.GET.q|default:''|escapejs }}',
+    sort: new URLSearchParams(window.location.search).get('sort') || 'books',
+    sortDirection: new URLSearchParams(window.location.search).get('dir') || 'asc',
+    updateUrl(event) {
+        const searchValue = event.target.value;
+        const url = new URL(window.location);
+        if (searchValue) {
+            url.searchParams.set('q', searchValue);
+        } else {
+            url.searchParams.delete('q');
+        }
+        url.searchParams.delete('page');
+        window.history.pushState({}, '', url);
+    },
+    updateSort(newSort) {
+        this.sort = newSort;
+        const url = new URL(window.location);
+        if (newSort !== 'books') {
+            url.searchParams.set('sort', newSort);
+        } else {
+            url.searchParams.delete('sort');
+        }
+        url.searchParams.delete('page');
+        window.history.pushState({}, '', url);
+        // Wait for Alpine to update hx-vals before triggering HTMX
+        this.$nextTick(() => {
+            htmx.trigger(document.getElementById('author-search'), 'sort-changed');
+        });
+    },
+    toggleSortDirection() {
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        const url = new URL(window.location);
+        if (this.sortDirection !== 'asc') {
+            url.searchParams.set('dir', this.sortDirection);
+        } else {
+            url.searchParams.delete('dir');
+        }
+        url.searchParams.delete('page');
+        window.history.pushState({}, '', url);
+        // Wait for Alpine to update hx-vals before triggering HTMX
+        this.$nextTick(() => {
+            htmx.trigger(document.getElementById('author-search'), 'sort-changed');
+        });
+    }
+}">
+    <label class="input input-bordered w-64 bg-base-200">
+        <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+            </g>
+        </svg>
+        <input type="text"
+               class="grow"
+               name="q"
+               id="author-search"
+               placeholder="Search by name"
+               x-model="q"
+               hx-get="{% url 'books:author-list' %}"
+               hx-target="#results-container"
+               hx-trigger="input changed delay:300ms, sort-changed"
+               hx-swap="innerHTML"
+               :hx-vals="JSON.stringify({sort: sort, dir: sortDirection})"
+               x-on:htmx:after-request="updateUrl($event)"
+               autocomplete="off">
+        <button type="button"
+                @click="q = ''; $nextTick(() => { document.getElementById('author-search').dispatchEvent(new Event('input', { bubbles: true })); })"
+                title="Clear search"
+                class="btn btn-ghost btn-xs btn-circle"
+                style="display: none"
+                :style="{ display: q.length > 0 ? 'flex' : 'none' }"
+                aria-label="Clear search">
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                </g>
+            </svg>
+        </button>
+    </label>
+
+    {# Sort dropdown #}
+    <div class="flex items-center gap-3 mt-4">
+        {# Desktop: Custom dropdown #}
+        <div class="hidden desktop:flex items-center gap-2">
+            <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
+                <button type="button"
+                        class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                        @click="sortOpen = !sortOpen">
+                    <span class="mdi mdi-sort text-base"></span>
+                    <span class="text-sm" x-text="sort === 'books' ? '# Books' : (sort === 'rank' ? 'Top Rank' : 'Name (A-Z)')"></span>
+                    <span class="mdi mdi-chevron-down text-xs"></span>
+                </button>
+                <ul x-show="sortOpen" x-cloak
+                    class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                    @click="sortOpen = false">
+                    <li><button type="button" @click="updateSort('books')" :class="sort === 'books' ? 'active' : ''"># Books</button></li>
+                    <li><button type="button" @click="updateSort('rank')" :class="sort === 'rank' ? 'active' : ''">Top Rank</button></li>
+                    <li><button type="button" @click="updateSort('name')" :class="sort === 'name' ? 'active' : ''">Name (A-Z)</button></li>
+                </ul>
+            </div>
+            {# Direction flip button #}
+            <button type="button"
+                    class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    @click="toggleSortDirection()"
+                    :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+                <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+            </button>
+        </div>
+        {# Mobile: Native select for touch compatibility #}
+        <div class="desktop:hidden flex items-center gap-1">
+            <span class="mdi mdi-sort text-base text-base-content/60"></span>
+            <select class="select select-sm select-bordered bg-base-200"
+                    style="width: fit-content; max-width: 100%;"
+                    @change="updateSort($event.target.value)">
+                <option value="books" :selected="sort === 'books'"># Books</option>
+                <option value="rank" :selected="sort === 'rank'">Top Rank</option>
+                <option value="name" :selected="sort === 'name'">Name (A-Z)</option>
+            </select>
+            {# Direction flip button #}
+            <button type="button"
+                    class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    @click="toggleSortDirection()"
+                    :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+                <span class="mdi text-sm" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="results-container">
+    {% include 'books/authors/includes/_author_list_results.html' %}
+</div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+// Generic Load More handler for authors
+function initAuthorLoadMore() {
+    const container = document.getElementById('results-container');
+    if (!container) return;
+
+    const button = container.querySelector('.load-more-button');
+    if (!button) return;
+
+    // Remove existing listener to prevent duplicates after DOM updates
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+    newButton.addEventListener('click', handleAuthorLoadMore);
+}
+
+async function handleAuthorLoadMore(event) {
+    const button = event.currentTarget;
+    const nextPage = button.dataset.nextPage;
+
+    if (!nextPage || button.classList.contains('loading')) return;
+
+    // Set loading state
+    button.classList.add('loading');
+    button.disabled = true;
+
+    // Build URL with current filters + next page + append flag
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', nextPage);
+    params.set('append', 'true');
+
+    const url = window.location.pathname + '?' + params.toString();
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'HX-Request': 'true'
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to load more');
+
+        const html = await response.text();
+
+        // Parse the response to separate rows from metadata
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Extract metadata
+        const metaScript = doc.getElementById('load-more-meta');
+        const meta = metaScript ? JSON.parse(metaScript.textContent) : null;
+
+        // Remove the metadata script from the parsed doc
+        if (metaScript) metaScript.remove();
+
+        // Append rows to desktop table body with staggered cascade animation
+        const tbody = document.getElementById('author-list-body');
+        const appendContainer = doc.getElementById('append-rows-container');
+        if (tbody && appendContainer) {
+            const newRows = appendContainer.querySelectorAll('.author-row');
+            let index = 0;
+            newRows.forEach(row => {
+                row.classList.add('game-row-enter');
+                row.style.animationDelay = `${index * 8}ms`;
+                index++;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Append cards to mobile container with staggered cascade animation
+        const mobileContainer = document.getElementById('author-mobile-container');
+        const mobileAppendContainer = doc.getElementById('mobile-append-container');
+        if (mobileContainer && mobileAppendContainer) {
+            const newCards = mobileAppendContainer.querySelectorAll('.author-row');
+            let index = 0;
+            newCards.forEach(card => {
+                card.classList.add('game-row-enter');
+                card.style.animationDelay = `${index * 8}ms`;
+                index++;
+                mobileContainer.appendChild(card);
+            });
+        }
+
+        // Update result summary and button
+        if (meta) {
+            const loadedCountEl = document.getElementById('loaded-count');
+            if (loadedCountEl) {
+                loadedCountEl.textContent = meta.loadedCount.toLocaleString();
+            }
+
+            button.classList.remove('loading');
+
+            if (!meta.hasMore) {
+                const container = button.parentElement;
+                container.innerHTML = `
+                    <div class="text-base-content/85 text-center">
+                        All ${meta.totalCount.toLocaleString()} authors loaded
+                    </div>
+                `;
+            } else {
+                button.disabled = false;
+                button.dataset.nextPage = meta.nextPage;
+                button.dataset.loaded = meta.loadedCount;
+
+                const textSpan = button.querySelector('.load-more-text');
+                if (textSpan) {
+                    textSpan.textContent = `Load More (${meta.remainingCount.toLocaleString()} remaining)`;
+                }
+            }
+        }
+
+    } catch (err) {
+        console.error('Load more error:', err);
+        button.classList.remove('loading');
+        button.disabled = false;
+    }
+}
+
+// Initialize on page load (handle case where DOMContentLoaded already fired)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuthorLoadMore);
+} else {
+    initAuthorLoadMore();
+}
+
+// Reinitialize after HTMX swaps (for search results)
+document.body.addEventListener('htmx:afterSwap', function(e) {
+    if (e.detail.target.id === 'results-container') {
+        initAuthorLoadMore();
+        // Update the results count heading
+        const paginationData = document.querySelector('#pagination-data');
+        if (paginationData) {
+            const loadedCount = paginationData.dataset.loadedCount;
+            const totalCount = paginationData.dataset.totalCount;
+            const resultsCount = document.querySelector('#results-count');
+            if (resultsCount) {
+                const plural = totalCount == 1 ? '' : 's';
+                resultsCount.innerHTML = `Showing <span id="loaded-count">${parseInt(loadedCount).toLocaleString()}</span> of ${parseInt(totalCount).toLocaleString()} author${plural}`;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

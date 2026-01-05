@@ -393,16 +393,16 @@ class AuthorListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     """
 
     model = models.Author
-    template_name = "books/author_list.html"
+    template_name = "books/authors/author_list.html"
     context_object_name = "authors"
     paginate_by = 100
     paginate_orphans = 0
-    htmx_partial_template = "books/includes/_author_list_content.html"
+    htmx_partial_template = "books/authors/includes/_author_list_results.html"
 
     def get_template_names(self):
         """Support append mode for Load More."""
         if self.request.GET.get("append") == "true":
-            return ["books/includes/_author_list_append.html"]
+            return ["books/authors/includes/_author_list_append.html"]
         return super().get_template_names()
 
     def get_queryset(self):
@@ -466,7 +466,7 @@ class AuthorDetailView(DetailView):
     """
 
     model = models.Author
-    template_name = "books/author_detail.html"
+    template_name = "books/authors/author_detail.html"
     context_object_name = "author"
     slug_field = "slug"
     slug_url_kwarg = "slug"

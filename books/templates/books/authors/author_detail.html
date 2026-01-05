@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ author.name }} | Acclaimed Books{% endblock %}
+
+{% block meta_description %}Explore books by {{ author.name }} ranked among the most critically acclaimed of all time.{% endblock %}
+
+{% block og_title %}{{ author.name }} | Acclaimed Books{% endblock %}
+{% block og_description %}Discover books by {{ author.name }} featured in the most acclaimed books of all time rankings.{% endblock %}
+
+{% block structured_data %}{
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "{{ author.name }}",
+    "description": "Author of {{ author.books.count }} acclaimed book{{ author.books.count|pluralize }}"
+}{% endblock %}
+
+{% block content %}
+{% if author %}
+    <div>
+        {# Header row: Author name + book count #}
+        <div class="flex items-start justify-between gap-6 mb-4">
+            {# Left: Author info #}
+            <div class="flex-1 min-w-0">
+                <h1 class="text-3xl font-bold mb-2">{{ author.name }}</h1>
+                {% if total_books %}
+                <p class="text-base-content/70">
+                    {{ total_books }} book{{ total_books|pluralize }}
+                </p>
+                {% endif %}
+                {% if author.wikipedia_url %}
+                <p class="mt-1">
+                    <a href="{{ author.wikipedia_url }}" target="_blank" class="link link-accent text-sm inline-flex items-center gap-1">
+                        Wikipedia <span class="mdi mdi-open-in-new text-xs"></span>
+                    </a>
+                </p>
+                {% endif %}
+                {% if author.goodreads_author_id %}
+                <p class="mt-1">
+                    <a href="https://www.goodreads.com/author/show/{{ author.goodreads_author_id }}" target="_blank" class="link link-accent text-sm inline-flex items-center gap-1">
+                        Goodreads <span class="mdi mdi-open-in-new text-xs"></span>
+                    </a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Books list #}
+        <div class="mt-6">
+            <h2 class="text-xl font-bold mb-4">Books</h2>
+            {% if books %}
+            <div id="book-list-container">
+                {% for book in books %}
+                    {% include 'books/includes/_book_row.html' with book=book show_rank='alltime' %}
+                {% endfor %}
+            </div>
+
+            {% if has_more %}
+            <div id="load-more-container" class="load-more-container text-center my-6">
+                <button type="button"
+                        class="btn btn-ghost load-more-button"
+                        data-next-page="{{ next_page }}"
+                        data-total="{{ total_books }}"
+                        data-loaded="{{ loaded_count }}">
+                    <span class="mdi mdi-book-open-page-variant"></span>
+                    <span class="load-more-text">Load More ({{ remaining_count|intcomma }} remaining)</span>
+                </button>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-base-content/85 py-8 text-center">No books found for this author.</div>
+            {% endif %}
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-error">
+        <span class="mdi mdi-alert-circle"></span>
+        <div>
+            <p class="font-bold">Error: Author not found</p>
+            <p>The author you're looking for could not be found or there was a problem loading it.</p>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
