@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Fix accessibility: year grid selected cells use white text, dark heatmap tiles get stronger text shadow for contrast
 - Fix sidebar hover states: prevent DaisyUI from washing out active item colors, add accent color on non-active hover
 - Fix accessibility: use grayscale instead of opacity for unavailable year cells (better text contrast)
 - Fix accessibility: change game card h3 to span to fix heading order (no h2 before h3)

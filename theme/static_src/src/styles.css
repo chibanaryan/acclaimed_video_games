@@ -517,8 +517,18 @@
 
   .year-grid-cell-label {
     @apply text-[0.7rem] font-bold text-base-content pointer-events-none;
-    /* Subtle text shadow for contrast against heatmap background */
-    text-shadow: 0 0 2px var(--color-base-100);
+    /* Multi-layer text shadow for contrast against dark heatmap backgrounds */
+    text-shadow:
+      0 0 3px var(--color-base-100),
+      0 0 6px var(--color-base-100),
+      0 0 9px var(--color-base-100);
+  }
+
+  /* Selected cells: inherit text-primary-content from parent */
+  .year-grid-cell.is-selected .year-grid-cell-label,
+  .year-grid-cell.is-dragging .year-grid-cell-label {
+    @apply text-primary-content;
+    text-shadow: none;  /* No shadow needed on solid background */
   }
 
   /* Header row with legend and hint */
