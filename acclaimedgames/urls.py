@@ -128,6 +128,8 @@ urlpatterns = [
         views.DeveloperRedirectView.as_view(),
         name="developer-alias-redirect",
     ),
+    # Books app routes
+    path("books/", include("books.urls", namespace="books")),
     path("lists/", views.ListListView.as_view(), name="list-list"),
     path("news/", views.NewsListView.as_view(), name="news-list"),
     # Blog/Articles
