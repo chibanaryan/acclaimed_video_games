@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Fix 500 error on home page: remove reference to non-existent placeholder.webp from staticUrls
 - Fix platform-icons.svg 404 in production: pass Django static URLs to JS via window.staticUrls
 - Extract 90KB inline Alpine filter component to external JS file (52KB HTML reduction, enables caching)
 - Optimize _calculateFacets(): consolidate 5 game loops into single pass (~60-70% faster facet calculation)
