@@ -213,9 +213,9 @@
 
          getOpacity(count) {
              if (count === 0) return '5%';
-             // Linear scaling from 35% to 100% (maximum visual range with good contrast)
+             // Linear scaling from 20% to 100% (wider range enabled by label shadows)
              const normalized = count / this.maxCount;
-             const opacity = 0.35 + normalized * 0.65;
+             const opacity = 0.20 + normalized * 0.80;
              return Math.round(opacity * 100) + '%';
          },
 

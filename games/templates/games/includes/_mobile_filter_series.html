@@ -85,7 +85,7 @@
         <button type="button"
                 @click="expanded = !expanded"
                 class="flex items-center gap-2">
-            <span class="mdi mdi-mushroom text-lg text-base-content/60"></span>
+            <span class="mdi mdi-mushroom text-lg text-base-content/70"></span>
             Series
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
@@ -97,7 +97,7 @@
                 x-show="isSeriesActive()"
                 x-cloak
                 @click.stop="clearSeries(); debouncedFilterUpdate();"
-                class="btn btn-ghost btn-xs ml-2 text-base-content/60 hover:text-error">
+                class="btn btn-ghost btn-xs ml-2 text-base-content/70 hover:text-error">
             <span class="mdi mdi-close text-xs"></span>
             <span class="text-xs">Clear Series</span>
         </button>
@@ -155,7 +155,7 @@
 
             {# Empty state #}
             <template x-if="filteredSeries.length === 0">
-                <div class="text-center py-4 text-base-content/60 text-sm">
+                <div class="text-center py-4 text-base-content/70 text-sm">
                     <span x-show="searchQuery">No series matching "<span x-text="searchQuery"></span>"</span>
                     <span x-show="!searchQuery">No series available</span>
                 </div>

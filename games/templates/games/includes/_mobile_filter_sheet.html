@@ -132,7 +132,7 @@
             <div class="flex items-center gap-2 mb-2">
                 <span class="mdi mdi-star-outline text-xl text-accent"></span>
                 <span class="font-bold text-base">Game Status</span>
-                <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click="filters.played = ''; debouncedFilterUpdate();" title="Clear status filter" x-cloak x-show="filters.played">
+                <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/70 hover:text-error" @click="filters.played = ''; debouncedFilterUpdate();" title="Clear status filter" x-cloak x-show="filters.played">
                     <span class="mdi mdi-close text-xs"></span>
                     <span class="text-xs">Clear</span>
                 </button>
@@ -225,7 +225,7 @@
                 <button type="button"
                         @click="expanded = !expanded"
                         class="flex items-center gap-2">
-                    <span class="mdi mdi-clock-outline text-lg text-base-content/60"></span>
+                    <span class="mdi mdi-clock-outline text-lg text-base-content/70"></span>
                     Playtime (HLTB)
                     <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
                 </button>
@@ -236,7 +236,7 @@
                 <div class="flex-1"></div>
                 <button type="button"
                         @click.stop="filters.hltb_mode = 'main'; filters.hltb_preset = ''; filters.hltb_min = null; filters.hltb_max = null; window.dispatchEvent(new CustomEvent('hltb-reset')); debouncedFilterUpdate();"
-                        class="btn btn-ghost btn-xs ml-2 text-base-content/60 hover:text-error"
+                        class="btn btn-ghost btn-xs ml-2 text-base-content/70 hover:text-error"
                         title="Clear playtime filter"
                         x-cloak
                         x-show="filters.hltb_preset || filters.hltb_min !== null">

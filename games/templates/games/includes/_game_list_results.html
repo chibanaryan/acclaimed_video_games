@@ -21,9 +21,12 @@
     <div class="flex items-center gap-2 flex-shrink-0">
         <div class="dropdown" x-data="{ sortOpen: false }" @click.away="sortOpen = false">
             <button type="button"
-                    class="flex items-center gap-1 text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
-                    @click="sortOpen = !sortOpen">
-                <span class="mdi mdi-sort text-base"></span>
+                    class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                    @click="sortOpen = !sortOpen"
+                    aria-label="Sort games"
+                    aria-haspopup="true"
+                    :aria-expanded="sortOpen">
+                <span class="mdi mdi-sort text-base" aria-hidden="true"></span>
                 <span class="text-sm min-w-9" x-text="
                     filters.sort === 'rank' ? 'Rank' :
                     filters.sort === 'year' ? 'Year' :
@@ -44,10 +47,11 @@
         </div>
         {# Direction flip button #}
         <button type="button"
-                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                 @click="toggleSortDirection()"
-                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
-            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
+                :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
+            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-2 pl-2">
@@ -68,7 +72,7 @@
         </div>
     </div>
     {# Result count - Middle #}
-    <div class="result-count text-base-content/60 whitespace-nowrap">
+    <div class="result-count text-base-content/70 whitespace-nowrap">
         {% if total_count %}Showing <span id="loaded-count" class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% else %}Advanced Search{% endif %}
     </div>
     {# Jump to Rank - Right side #}
@@ -93,8 +97,9 @@
 <div class="desktop:hidden flex items-center justify-between gap-2 mb-2 text-sm">
     {# Sort - Left side - Native select for mobile touch compatibility #}
     <div class="flex items-center gap-1 shrink-0">
-        <span class="mdi mdi-sort text-base text-base-content/60"></span>
+        <span class="mdi mdi-sort text-base text-base-content/70"></span>
         <select class="select select-xs select-bordered bg-base-200"
+                aria-label="Sort by"
                 @change="updateSort($event.target.value)">
             <option value="rank" :selected="filters.sort === 'rank'">Rank</option>
             <option value="year" :selected="filters.sort === 'year'">Year</option>
@@ -103,31 +108,34 @@
         </select>
         {# Direction flip button #}
         <button type="button"
-                class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer min-h-10 min-w-10 justify-center"
                 @click="toggleSortDirection()"
-                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'">
-            <span class="mdi text-sm" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
+                :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
+            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-1 pl-1">
             <button type="button"
-                    class="btn btn-xs btn-ghost px-1"
+                    class="btn btn-sm btn-ghost px-2 min-h-10"
                     :class="viewMode === 'list' ? 'btn-active' : ''"
                     @click="setViewMode('list')"
+                    aria-label="List view"
                     title="List view">
-                <span class="mdi mdi-format-list-bulleted text-sm"></span>
+                <span class="mdi mdi-format-list-bulleted text-base" aria-hidden="true"></span>
             </button>
             <button type="button"
-                    class="btn btn-xs btn-ghost px-1"
+                    class="btn btn-sm btn-ghost px-2 min-h-10"
                     :class="viewMode === 'grid' ? 'btn-active' : ''"
                     @click="setViewMode('grid')"
+                    aria-label="Grid view"
                     title="Grid view">
-                <span class="mdi mdi-view-grid text-sm"></span>
+                <span class="mdi mdi-view-grid text-base" aria-hidden="true"></span>
             </button>
         </div>
     </div>
     {# Result count - middle, can shrink #}
-    <div class="result-count text-base-content/60 text-xs truncate min-w-0">
+    <div class="result-count text-base-content/70 text-xs truncate min-w-0">
         {% if total_count %}<span class="loaded-count-value">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }}{% endif %}
     </div>
     {# Jump to Rank - Right side #}
@@ -136,14 +144,16 @@
                min="1"
                max="{{ total_count }}"
                placeholder="#"
-               class="jump-to-rank-input input input-xs input-bordered w-12 text-center"
+               aria-label="Game rank number"
+               class="jump-to-rank-input input input-sm input-bordered w-14 text-center"
                data-total="{{ total_count }}"
                data-loaded="{{ loaded_count }}"
                data-per-page="100">
         <button type="button"
-                class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
+                class="jump-to-rank-btn btn btn-sm btn-primary btn-square min-h-10 min-w-10"
+                aria-label="Jump to rank"
                 title="Jump to rank">
-            <span class="mdi mdi-arrow-down"></span>
+            <span class="mdi mdi-arrow-down" aria-hidden="true"></span>
         </button>
     </div>
 </div>

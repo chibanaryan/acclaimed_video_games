@@ -325,7 +325,7 @@ class BaseMediaListRenderer {
         }
 
         if (!hasMore) {
-            return '<div class="text-base-content/60 text-center">All results loaded</div>';
+            return '<div class="text-base-content/70 text-center">All results loaded</div>';
         }
 
         return '<button type="button" class="btn btn-ghost load-more-button"><span class="mdi mdi-plus-circle-outline"></span><span class="load-more-text">Load More (' + remaining.toLocaleString() + ' remaining)</span></button>';

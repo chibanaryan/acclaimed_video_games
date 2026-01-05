@@ -17,7 +17,7 @@
         {% endif %}
         <div class="flex-1 min-w-0">
             <div class="font-semibold truncate">{{ book.name }}</div>
-            <div class="text-sm text-base-content/60">
+            <div class="text-sm text-base-content/70">
                 {% if book.year_published %}{{ book.year_published }}{% endif %}
                 {% if book.authors.exists %} &bull; {{ book.authors.first.name }}{% endif %}
             </div>
@@ -27,7 +27,7 @@
     {% endfor %}
 </div>
 {% else %}
-<div class="text-base-content/60 text-center py-4">
+<div class="text-base-content/70 text-center py-4">
     No books found.
 </div>
 {% endif %}

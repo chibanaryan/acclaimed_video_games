@@ -118,7 +118,7 @@
             </div>
             {# Direction flip button #}
             <button type="button"
-                    class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="toggleSortDirection()"
                     :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
                 <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
@@ -126,7 +126,7 @@
         </div>
         {# Mobile: Native select for touch compatibility #}
         <div class="desktop:hidden flex items-center gap-1">
-            <span class="mdi mdi-sort text-base text-base-content/60"></span>
+            <span class="mdi mdi-sort text-base text-base-content/70"></span>
             <select class="select select-sm select-bordered bg-base-200"
                     style="width: fit-content; max-width: 100%;"
                     @change="updateSort($event.target.value)">
@@ -136,7 +136,7 @@
             </select>
             {# Direction flip button #}
             <button type="button"
-                    class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                    class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="toggleSortDirection()"
                     :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
                 <span class="mdi text-sm" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>

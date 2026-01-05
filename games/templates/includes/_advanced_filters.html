@@ -157,7 +157,7 @@
                             {# Limit reached message #}
                             <template x-if="hasActiveFilters() && savedFiltersLoaded && savedFilters.length >= 10">
                                 <li class="border-b border-base-200 mb-1 pb-1">
-                                    <span class="text-base-content/50 text-sm pointer-events-none">
+                                    <span class="text-base-content/70 text-sm pointer-events-none">
                                         <span class="mdi mdi-bookmark-off"></span>
                                         Limit reached (10/10)
                                     </span>
@@ -169,7 +169,7 @@
                             </li>
                             {# Empty state - only show after loading is complete #}
                             <template x-if="savedFiltersLoaded && !savedFiltersLoading && savedFilters.length === 0 && !hasActiveFilters()">
-                                <li class="p-3 text-center text-base-content/60 text-sm pointer-events-none">
+                                <li class="p-3 text-center text-base-content/70 text-sm pointer-events-none">
                                     No saved filters yet
                                 </li>
                             </template>
@@ -230,7 +230,7 @@
                     <div class="flex items-center gap-2 mb-2">
                         <span class="mdi mdi-star-outline text-xl text-accent"></span>
                         <span class="font-bold text-base">Game Status</span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click="resetPlayed()" title="Clear status filter" x-cloak x-show="filters.played">
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/70 hover:text-error" @click="resetPlayed()" title="Clear status filter" x-cloak x-show="filters.played">
                             <span class="mdi mdi-close text-xs"></span>
                             <span class="text-xs">Clear</span>
                         </button>
@@ -289,9 +289,9 @@
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="yearExpanded = !yearExpanded; localStorage.setItem('yearExpanded', yearExpanded)">
                         <span class="mdi mdi-calendar-range text-xl text-accent"></span>
                         <span class="font-bold text-base">Release Year</span>
-                        <span class="mdi text-base-content/60 ml-1"
+                        <span class="mdi text-base-content/70 ml-1"
                               :class="yearExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetYears()" title="Clear year filter" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/70 hover:text-error" @click.stop="resetYears()" title="Clear year filter" x-cloak x-show="filters.start !== {{ min_year }} || filters.end !== {{ max_year }}">
                             <span class="mdi mdi-close text-xs"></span>
                             <span class="text-xs">Clear</span>
                         </button>
@@ -309,10 +309,10 @@
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="platformsExpanded = !platformsExpanded; localStorage.setItem('platformsExpanded', platformsExpanded)">
                         <span class="mdi mdi-controller text-xl text-accent"></span>
                         <span class="font-bold text-base">Platform</span>
-                        <span class="mdi text-base-content/60 ml-1"
+                        <span class="mdi text-base-content/70 ml-1"
                               :class="platformsExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
                         <div class="ml-auto flex items-center gap-1">
-                            <button type="button" class="btn btn-ghost btn-xs text-base-content/60 hover:text-error" @click.stop="resetPlatforms()" title="Clear platform filter" x-cloak x-show="filters.platforms.length > 0">
+                            <button type="button" class="btn btn-ghost btn-xs text-base-content/70 hover:text-error" @click.stop="resetPlatforms()" title="Clear platform filter" x-cloak x-show="filters.platforms.length > 0">
                                 <span class="mdi mdi-close text-xs"></span>
                                 <span class="text-xs">Clear</span>
                             </button>
@@ -338,10 +338,10 @@
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="genresExpanded = !genresExpanded; localStorage.setItem('genresExpanded', genresExpanded)">
                         <span class="mdi mdi-gamepad-variant text-xl text-accent"></span>
                         <span class="font-bold text-base">Genre</span>
-                        <span class="mdi text-base-content/60 ml-1"
+                        <span class="mdi text-base-content/70 ml-1"
                               :class="genresExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
                         <div class="ml-auto flex items-center gap-1">
-                            <button type="button" class="btn btn-ghost btn-xs text-base-content/60 hover:text-error" @click.stop="resetGenres()" title="Clear genre filter" x-cloak x-show="filters.genres.length > 0">
+                            <button type="button" class="btn btn-ghost btn-xs text-base-content/70 hover:text-error" @click.stop="resetGenres()" title="Clear genre filter" x-cloak x-show="filters.genres.length > 0">
                                 <span class="mdi mdi-close text-xs"></span>
                                 <span class="text-xs">Clear</span>
                             </button>
@@ -366,9 +366,9 @@
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="seriesExpanded = !seriesExpanded; localStorage.setItem('seriesExpanded', seriesExpanded)">
                         <span class="mdi mdi-mushroom text-xl text-accent"></span>
                         <span class="font-bold text-base">Series</span>
-                        <span class="mdi text-base-content/60 ml-1"
+                        <span class="mdi text-base-content/70 ml-1"
                               :class="seriesExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetSeries()" title="Clear series filter" x-cloak x-show="filters.series && filters.series.length > 0">
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/70 hover:text-error" @click.stop="resetSeries()" title="Clear series filter" x-cloak x-show="filters.series && filters.series.length > 0">
                             <span class="mdi mdi-close text-xs"></span>
                             <span class="text-xs">Clear Series Filter</span>
                         </button>
@@ -389,9 +389,9 @@
                     <div class="flex items-center gap-2 mb-2 cursor-pointer" @click="hltbExpanded = !hltbExpanded; localStorage.setItem('hltbExpanded', hltbExpanded)">
                         <span class="mdi mdi-clock-outline text-xl text-accent"></span>
                         <span class="font-bold text-base">Playtime (HLTB)</span>
-                        <span class="mdi text-base-content/60 ml-1"
+                        <span class="mdi text-base-content/70 ml-1"
                               :class="hltbExpanded ? 'mdi-chevron-down' : 'mdi-chevron-right'"></span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/60 hover:text-error" @click.stop="resetHltb()" title="Clear playtime filter" x-cloak x-show="filters.hltb_preset || filters.hltb_min !== null">
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/70 hover:text-error" @click.stop="resetHltb()" title="Clear playtime filter" x-cloak x-show="filters.hltb_preset || filters.hltb_min !== null">
                             <span class="mdi mdi-close text-xs"></span>
                             <span class="text-xs">Clear</span>
                         </button>

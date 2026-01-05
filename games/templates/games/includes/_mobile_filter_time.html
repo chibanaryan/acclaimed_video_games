@@ -61,7 +61,7 @@
         <button type="button"
                 @click="expanded = !expanded"
                 class="flex items-center gap-2">
-            <span class="mdi mdi-calendar-range text-lg text-base-content/60"></span>
+            <span class="mdi mdi-calendar-range text-lg text-base-content/70"></span>
             Release Year
             <span class="mdi mdi-chevron-right text-xl transition-transform duration-200" :class="{ 'rotate-90': expanded }"></span>
         </button>
@@ -73,7 +73,7 @@
                 x-show="hasYearFilter()"
                 x-cloak
                 @click.stop="clearYears(); debouncedFilterUpdate();"
-                class="btn btn-ghost btn-xs ml-2 text-base-content/60 hover:text-error">
+                class="btn btn-ghost btn-xs ml-2 text-base-content/70 hover:text-error">
             <span class="mdi mdi-close text-xs"></span>
             <span class="text-xs">Clear Years</span>
         </button>
@@ -123,7 +123,7 @@
         {# Single Year Select #}
         <div x-show="mode === 'year'" class="space-y-3">
             <div>
-                <label class="text-xs text-base-content/60 mb-2 block">Select Year</label>
+                <label class="text-xs text-base-content/70 mb-2 block">Select Year</label>
                 <select x-model.number="filters.start"
                         @change="filters.end = filters.start; debouncedFilterUpdate()"
                         class="select select-bordered w-full">
@@ -140,7 +140,7 @@
             <div class="grid grid-cols-2 gap-3">
                 {# Start Year #}
                 <div>
-                    <label class="text-xs text-base-content/60 mb-2 block">From</label>
+                    <label class="text-xs text-base-content/70 mb-2 block">From</label>
                     <select x-ref="startYear"
                             x-model.number="filters.start"
                             @change="if (filters.start > filters.end) filters.end = filters.start; debouncedFilterUpdate()"
@@ -153,7 +153,7 @@
 
                 {# End Year #}
                 <div>
-                    <label class="text-xs text-base-content/60 mb-2 block">To</label>
+                    <label class="text-xs text-base-content/70 mb-2 block">To</label>
                     <select x-ref="endYear"
                             x-model.number="filters.end"
                             @change="if (filters.end < filters.start) filters.start = filters.end; debouncedFilterUpdate()"

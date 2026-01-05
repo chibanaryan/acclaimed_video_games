@@ -25,7 +25,7 @@
             <span class="book-rank text-2xl font-bold text-accent tabular-nums" data-slot="rank">
                 {% if book %}{% if show_rank == 'filtered' %}{{ index|default:book.rank }}{% else %}{{ book.rank }}{% endif %}{% endif %}
             </span>
-            <span class="book-row-global-rank text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and not show_rank_in_details and book %}hidden{% endif %}" data-slot="global-rank">{% if book %}(#{{ book.rank }}){% endif %}</span>
+            <span class="book-row-global-rank text-xs text-base-content/60 tabular-nums {% if show_rank != 'filtered' and not show_rank_in_details and book %}hidden{% endif %}" data-slot="global-rank">{% if book %}(#{{ book.rank }}){% endif %}</span>
         </div>
         {% endif %}
         <a {% if book %}href="{% url 'books:book-detail' slug=book.slug %}"{% endif %} class="book-thumb-link" data-slot="thumb-link">
@@ -42,7 +42,7 @@
             <a {% if book %}href="{% url 'books:book-detail' slug=book.slug %}"{% endif %} class="book-title text-2xl font-bold link link-hover" data-slot="title-link">
                 <span data-slot="name">{% if book %}{{ book.name }}{% endif %}</span>
             </a>
-            <a {% if book %}href="{% url 'books:home' %}?start={{ book.year_published }}&end={{ book.year_published }}&highlight={{ book.id }}"{% endif %} class="text-base-content/60 ml-1" data-slot="year-link">
+            <a {% if book %}href="{% url 'books:home' %}?start={{ book.year_published }}&end={{ book.year_published }}&highlight={{ book.id }}"{% endif %} class="text-base-content/70 ml-1" data-slot="year-link">
                 (<span data-slot="year">{% if book %}{{ book.year_published }}{% endif %}</span>)
             </a>
         </div>

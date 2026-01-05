@@ -31,7 +31,7 @@
                 </div>
                 {# Direction flip button #}
                 <button type="button"
-                        class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                        class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                         @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; sortGames()"
                         :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
                     <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
@@ -39,7 +39,7 @@
             </div>
             {# Mobile: Native select for touch compatibility #}
             <div class="desktop:hidden flex items-center gap-1">
-                <span class="mdi mdi-sort text-base text-base-content/60"></span>
+                <span class="mdi mdi-sort text-base text-base-content/70"></span>
                 <select class="select select-sm select-bordered bg-base-200"
                         style="width: fit-content; max-width: 100%;"
                         @change="sortBy = $event.target.value; sortGames()">
@@ -50,7 +50,7 @@
                 </select>
                 {# Direction flip button #}
                 <button type="button"
-                        class="flex items-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                        class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                         @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; sortGames()"
                         :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
                     <span class="mdi text-sm" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
@@ -83,7 +83,7 @@
     </div>
 
     {# Results count #}
-    <div class="mt-4 text-sm text-base-content/60 text-center">
+    <div class="mt-4 text-sm text-base-content/70 text-center">
         <template x-if="selectedDeveloperIds.size === 0">
             <span>Showing all {{ all_games|length }} games</span>
         </template>
