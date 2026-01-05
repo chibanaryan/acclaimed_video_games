@@ -3,6 +3,7 @@
 ## 2026-01-05
 
 - Fix LCP: add fetchpriority=high to hero logo images for faster initial render
+- Use WebP format for large game cover images (detail page, grid view) for 15-20% size reduction; keep JPG for OG/social sharing compatibility
 - Fix non-composited animations: convert background-color transitions to GPU-composited opacity on ::before pseudo-elements
 - Fix accessibility: increase touch target sizes for mobile buttons (btn-xs → btn-sm with min-h-10)
 - Fix accessibility: add aria-labels to mobile sort select, view toggle, and jump-to-rank buttons

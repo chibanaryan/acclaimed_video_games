@@ -774,16 +774,16 @@ class IGDBGameDataTests(TestCase):
         self.assertEqual(self.igdb_data.thumbnail_2x, expected)
 
     def test_image(self):
-        """Test image property returns correct URL."""
+        """Test image property returns correct WebP URL."""
         expected = (
-            "https://images.igdb.com/igdb/image/upload/t_cover_big/test_artwork_id"
+            "https://images.igdb.com/igdb/image/upload/t_cover_big/test_artwork_id.webp"
         )
         self.assertEqual(self.igdb_data.image, expected)
 
     def test_image_2x(self):
-        """Test image_2x property returns correct URL."""
+        """Test image_2x property returns correct WebP URL."""
         expected = (
-            "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/test_artwork_id"
+            "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/test_artwork_id.webp"
         )
         self.assertEqual(self.igdb_data.image_2x, expected)
 
@@ -802,9 +802,9 @@ class IGDBGameDataTests(TestCase):
         self.assertEqual(self.igdb_data.homepage_thumb, expected)
 
     def test_homepage_thumb_2x(self):
-        """Test homepage_thumb_2x property returns correct URL."""
+        """Test homepage_thumb_2x property returns correct WebP URL."""
         expected = (
-            "https://images.igdb.com/igdb/image/upload/t_cover_big/test_artwork_id"
+            "https://images.igdb.com/igdb/image/upload/t_cover_big/test_artwork_id.webp"
         )
         self.assertEqual(self.igdb_data.homepage_thumb_2x, expected)
 
@@ -828,6 +828,7 @@ class IGDBGameDataTests(TestCase):
             "homepage_thumb",
             "homepage_thumb_2x",
             "thumbnail_square",
+            "_artwork_id_base",
         ]:
             if attr in self.igdb_data.__dict__:
                 del self.igdb_data.__dict__[attr]
@@ -840,6 +841,53 @@ class IGDBGameDataTests(TestCase):
         self.assertIsNone(self.igdb_data.homepage_thumb)
         self.assertIsNone(self.igdb_data.homepage_thumb_2x)
         self.assertIsNone(self.igdb_data.thumbnail_square)
+
+    def test_webp_urls_strip_jpg_extension(self):
+        """Test WebP URLs correctly strip .jpg extension from artwork_id."""
+        # Update to artwork_id with extension (as stored in production DB)
+        self.igdb_data.artwork_id = "co3p2d.jpg"
+        self.igdb_data.save()
+        self.igdb_data.refresh_from_db()
+        # Clear cached_property cache
+        for attr in ["image", "image_2x", "homepage_thumb_2x", "_artwork_id_base"]:
+            if attr in self.igdb_data.__dict__:
+                del self.igdb_data.__dict__[attr]
+
+        # Large images should use WebP with extension stripped
+        self.assertEqual(
+            self.igdb_data.image,
+            "https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.webp",
+        )
+        self.assertEqual(
+            self.igdb_data.image_2x,
+            "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co3p2d.webp",
+        )
+        self.assertEqual(
+            self.igdb_data.homepage_thumb_2x,
+            "https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.webp",
+        )
+
+    def test_image_og_returns_jpg(self):
+        """Test image_og returns JPG format for social sharing compatibility."""
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_big/test_artwork_id.jpg"
+        )
+        self.assertEqual(self.igdb_data.image_og, expected)
+
+    def test_image_og_strips_extension(self):
+        """Test image_og strips .jpg extension from artwork_id."""
+        self.igdb_data.artwork_id = "co3p2d.jpg"
+        self.igdb_data.save()
+        self.igdb_data.refresh_from_db()
+        # Clear cached_property cache
+        for attr in ["image_og", "_artwork_id_base"]:
+            if attr in self.igdb_data.__dict__:
+                del self.igdb_data.__dict__[attr]
+
+        self.assertEqual(
+            self.igdb_data.image_og,
+            "https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.jpg",
+        )
 
 
 class WikipediaGameDataTests(TestCase):
