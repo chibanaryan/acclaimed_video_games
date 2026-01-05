@@ -10,7 +10,9 @@
      hx-trigger="click"
      hx-swap="outerHTML"
      onclick="event.stopPropagation()">
-    <button class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none">
+    <button class="played-button flex items-center justify-center h-11 w-11 min-w-11 shrink-0 desktop:h-8 desktop:w-8 desktop:min-w-8 pointer-events-none"
+            aria-label="Not tracked - click to add to wishlist"
+            data-slot="played-button">
         {# Played state - Mario star image #}
         <span class="w-8 h-8 desktop:w-6 desktop:h-6 flex items-center justify-center hidden" data-slot="played-icon">
             <img src="{% static 'games/images/mario-star.png' %}"

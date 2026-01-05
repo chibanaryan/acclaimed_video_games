@@ -318,6 +318,53 @@ class WikiPageLookupService:
             logger.warning("Failed to create country %s: %s", qid, e)
             return None
 
+    def _get_wikidata_id_from_page(self, page_title: str) -> Optional[str]:
+        """
+        Look up the Wikidata Q-ID for a Wikipedia page title.
+
+        Args:
+            page_title: Wikipedia page title (e.g., "The Jackbox Party Pack")
+
+        Returns:
+            Wikidata Q-ID (e.g., "Q31638338"), or None if not found
+        """
+        if not page_title:
+            return None
+
+        # Convert spaces to underscores for the API
+        normalized_title = page_title.replace(" ", "_")
+
+        params = {
+            "action": "wbgetentities",
+            "format": "json",
+            "sites": "enwiki",
+            "titles": normalized_title,
+            "props": "info",  # Minimal props, we just need the Q-ID
+        }
+
+        response = self._make_request(
+            config.WIKIDATA_API_URL, params=params, use_auth=True
+        )
+        if not response:
+            return None
+
+        try:
+            data = response.json()
+            entities = data.get("entities", {})
+            # The response uses the Q-ID as key, or "-1" if not found
+            for qid, entity in entities.items():
+                if qid.startswith("Q"):
+                    logger.debug(
+                        "Found Wikidata ID for page '%s': %s", page_title, qid
+                    )
+                    return qid
+            return None
+        except (ValueError, KeyError) as e:
+            logger.warning(
+                "Failed to get Wikidata ID for page '%s': %s", page_title, e
+            )
+            return None
+
     def _lookup_via_wikidata(self, wikidata_id: str) -> Optional[
         tuple[
             str,
@@ -336,8 +383,8 @@ class WikiPageLookupService:
 
         Returns:
             Tuple of (page_title, hltb_id, steam_app_id, game_modes, countries,
-            wikiquote_title), or None if Wikipedia page not found.
-            All fields except page_title may be None.
+            wikiquote_title), or None if not found.
+            page_title may be None if no enwiki sitelink exists.
         """
         if not wikidata_id:
             return None
@@ -457,17 +504,19 @@ class WikiPageLookupService:
                     wikidata_id,
                     page_title,
                 )
-                return (
-                    page_title,
-                    hltb_id,
-                    steam_app_id,
-                    game_modes if game_modes else None,
-                    countries if countries else None,
-                    wikiquote_title,
-                )
             else:
                 logger.debug("No enwiki sitelink for %s", wikidata_id)
-                return None
+
+            # Return metadata even without enwiki sitelink
+            # (page_title may be None, but we still want HLTB ID, etc.)
+            return (
+                page_title,
+                hltb_id,
+                steam_app_id,
+                game_modes if game_modes else None,
+                countries if countries else None,
+                wikiquote_title,
+            )
 
         except (ValueError, KeyError) as e:
             logger.warning(
@@ -521,6 +570,54 @@ class WikiPageLookupService:
 
         return None
 
+    def _merge_wikidata_metadata(
+        self,
+        primary: Optional[Dict],
+        secondary: Optional[Dict],
+    ) -> Dict:
+        """
+        Merge metadata from two Wikidata sources, taking union of all values.
+
+        Primary values take precedence when both have the same field.
+        For list fields (game_modes, country_of_origin), combines unique values.
+
+        Args:
+            primary: Metadata from primary Wikidata ID (stored on game)
+            secondary: Metadata from secondary Wikidata ID (from Wikipedia page)
+
+        Returns:
+            Merged metadata dict
+        """
+        if not primary and not secondary:
+            return {}
+        if not primary:
+            return secondary or {}
+        if not secondary:
+            return primary
+
+        merged = {}
+        all_keys = set(primary.keys()) | set(secondary.keys())
+
+        for key in all_keys:
+            primary_val = primary.get(key)
+            secondary_val = secondary.get(key)
+
+            # For list fields, combine unique values
+            if key in ("game_modes", "country_of_origin"):
+                combined = []
+                if primary_val:
+                    combined.extend(primary_val)
+                if secondary_val:
+                    for val in secondary_val:
+                        if val not in combined:
+                            combined.append(val)
+                merged[key] = combined if combined else None
+            else:
+                # For scalar fields, primary takes precedence
+                merged[key] = primary_val if primary_val else secondary_val
+
+        return merged
+
     def lookup_page(
         self,
         game_name: str,
@@ -535,56 +632,102 @@ class WikiPageLookupService:
         2. OpenSearch with year
         3. OpenSearch without year
 
+        When using OpenSearch, also looks up the page's Wikidata ID to get
+        additional metadata, then merges with the stored wikidata_id's metadata.
+
         Args:
             game_name: Name of the video game
-            wikidata_id: Optional Wikidata ID
+            wikidata_id: Optional Wikidata ID (stored on game)
             year: Optional year of release
 
         Returns:
             PageLookupResult with page title and source
         """
-        # Try Wikidata first
+        # Get metadata from stored wikidata_id (if any)
+        stored_metadata = None
+        stored_page_title = None
         if wikidata_id:
             wikidata_result = self._lookup_via_wikidata(wikidata_id)
             if wikidata_result:
                 (
-                    page_title,
+                    stored_page_title,
                     hltb_id,
                     steam_app_id,
                     game_modes,
                     countries,
                     wikiquote_title,
                 ) = wikidata_result
-                return PageLookupResult(
-                    game_name=game_name,
-                    page_title=page_title,
-                    lookup_source=config.WIKI_LOOKUP_SOURCE_WIKIDATA,
-                    hltb_id=hltb_id,
-                    steam_app_id=steam_app_id,
-                    game_modes=game_modes,
-                    country_of_origin=countries,
-                    wikiquote_page_title=wikiquote_title,
-                )
 
-        # Try OpenSearch with year
+                stored_metadata = {
+                    "hltb_id": hltb_id,
+                    "steam_app_id": steam_app_id,
+                    "game_modes": game_modes,
+                    "country_of_origin": countries,
+                    "wikiquote_page_title": wikiquote_title,
+                }
+
+                # If stored Wikidata has enwiki sitelink, use it directly
+                if stored_page_title:
+                    return PageLookupResult(
+                        game_name=game_name,
+                        page_title=stored_page_title,
+                        lookup_source=config.WIKI_LOOKUP_SOURCE_WIKIDATA,
+                        **{k: v for k, v in stored_metadata.items() if v},
+                    )
+
+        # Try OpenSearch to find the Wikipedia page
+        opensearch_result = None
         if year:
-            result = self._lookup_via_opensearch(game_name, year)
-            if result:
-                page_title, source = result
-                return PageLookupResult(
-                    game_name=game_name,
-                    page_title=page_title,
-                    lookup_source=source,
-                )
+            opensearch_result = self._lookup_via_opensearch(game_name, year)
 
-        # Try OpenSearch without year
-        result = self._lookup_via_opensearch(game_name, year=None)
-        if result:
-            page_title, source = result
+        if not opensearch_result:
+            opensearch_result = self._lookup_via_opensearch(game_name, year=None)
+
+        if opensearch_result:
+            page_title, source = opensearch_result
+            if not year:
+                source = config.WIKI_LOOKUP_SOURCE_OPENSEARCH_FALLBACK
+
+            # Look up the page's Wikidata ID to get additional metadata
+            page_wikidata_id = self._get_wikidata_id_from_page(page_title)
+            page_metadata = None
+
+            if page_wikidata_id and page_wikidata_id != wikidata_id:
+                # Different Wikidata ID - get its metadata too
+                page_result = self._lookup_via_wikidata(page_wikidata_id)
+                if page_result:
+                    (
+                        _,  # page_title already known
+                        hltb_id,
+                        steam_app_id,
+                        game_modes,
+                        countries,
+                        wikiquote_title,
+                    ) = page_result
+                    page_metadata = {
+                        "hltb_id": hltb_id,
+                        "steam_app_id": steam_app_id,
+                        "game_modes": game_modes,
+                        "country_of_origin": countries,
+                        "wikiquote_page_title": wikiquote_title,
+                    }
+                    logger.info(
+                        "Merging metadata from two Wikidata IDs for %s: %s (stored) + %s (page)",
+                        game_name,
+                        wikidata_id,
+                        page_wikidata_id,
+                    )
+
+            # Merge metadata from both sources (stored takes precedence)
+            merged_metadata = self._merge_wikidata_metadata(
+                stored_metadata, page_metadata
+            )
+
             return PageLookupResult(
                 game_name=game_name,
                 page_title=page_title,
-                lookup_source=config.WIKI_LOOKUP_SOURCE_OPENSEARCH_FALLBACK,
+                lookup_source=source,
+                **{k: v for k, v in merged_metadata.items() if v},
             )
 
         # All methods failed
