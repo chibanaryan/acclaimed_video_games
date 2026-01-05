@@ -5,15 +5,15 @@
     {# Nav items that can overflow to hamburger menu #}
     <div class="flex-1 min-w-0 overflow-hidden" x-ref="navContainer">
         <div id="mobile-nav-items" class="flex gap-1 items-center nav-calculating" x-ref="navItems">
-            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm btn-square shrink-0 nav-item{% if request.resolver_match.url_name == 'home' %} btn-active{% endif %}" data-nav-item="home" aria-label="Home">
-                <span class="mdi mdi-medal text-xl"></span>
+            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm btn-square shrink-0 nav-item{% if request.resolver_match.url_name == 'home' or media_type == 'games' %} btn-active{% endif %}" data-nav-item="home" aria-label="Games">
+                <span class="mdi mdi-gamepad-variant text-xl"></span>
             </a>
 
-            {# TODO: Uncomment when books app is enabled
-            <a href="{% url 'books:home' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'home' and request.resolver_match.app_name == 'books' %} btn-active{% endif %}" data-nav-item="books" data-menu-label="Books">
+            {% if BOOKS_ENABLED %}
+            <a href="{% url 'books:home' %}" class="btn btn-ghost btn-sm btn-square shrink-0 nav-item{% if request.resolver_match.url_name == 'books:home' or media_type == 'books' %} btn-active{% endif %}" data-nav-item="books" data-menu-label="Books" aria-label="Books">
                 <span class="mdi mdi-book-open-page-variant text-xl"></span>
             </a>
-            #}
+            {% endif %}
 
             {# Search dropdown #}
             <div class="relative shrink-0 nav-item" data-nav-item="search" x-data="{

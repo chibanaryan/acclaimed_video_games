@@ -16,4 +16,26 @@ def feature_flags(request):
     """
     Add feature flags to template context.
     """
-    return {}
+    import os
+
+    return {
+        # Books feature is hidden until ready for public release
+        "BOOKS_ENABLED": os.environ.get("BOOKS_ENABLED", "").lower() == "true",
+    }
+
+
+def media_type(request):
+    """
+    Add current media type to template context.
+
+    Determines media type based on URL namespace:
+    - 'books' namespace -> 'books'
+    - Everything else -> 'games'
+    """
+    resolver_match = getattr(request, "resolver_match", None)
+    if resolver_match:
+        # Check if we're in the books namespace
+        namespace = getattr(resolver_match, "namespace", "") or ""
+        if namespace.startswith("books"):
+            return {"media_type": "books"}
+    return {"media_type": "games"}

@@ -1,0 +1,86 @@
+{# Media Type Switcher Component #}
+{# Props: #}
+{#   - media_type: Current media type ('games' or 'books'), defaults to 'games' #}
+{#   - variant: 'tabs' (default), 'pills', or 'minimal' #}
+{#   - size: 'sm', 'md' (default), or 'lg' #}
+{# Usage: {% include 'core/includes/_media_switcher.html' with media_type='games' variant='tabs' %} #}
+{# Note: Only renders if BOOKS_ENABLED feature flag is true #}
+
+{% if BOOKS_ENABLED %}
+{% with current_type=media_type|default:'games' %}
+{% with variant_class=variant|default:'tabs' %}
+{% with size_class=size|default:'md' %}
+
+{% if variant_class == 'tabs' %}
+{# Tab-style switcher - Good for sidebar #}
+<div role="tablist" class="tabs tabs-box{% if size_class == 'sm' %} tabs-sm{% elif size_class == 'lg' %} tabs-lg{% endif %} bg-base-100 w-full">
+    <a href="{% url 'home' %}"
+       role="tab"
+       class="tab gap-1{% if current_type == 'games' %} tab-active{% endif %}"
+       aria-selected="{% if current_type == 'games' %}true{% else %}false{% endif %}">
+        <span class="mdi mdi-gamepad-variant{% if size_class == 'lg' %} text-xl{% endif %}"></span>
+        <span>Games</span>
+    </a>
+    <a href="{% url 'books:home' %}"
+       role="tab"
+       class="tab gap-1{% if current_type == 'books' %} tab-active{% endif %}"
+       aria-selected="{% if current_type == 'books' %}true{% else %}false{% endif %}">
+        <span class="mdi mdi-book-open-page-variant{% if size_class == 'lg' %} text-xl{% endif %}"></span>
+        <span>Books</span>
+    </a>
+</div>
+
+{% elif variant_class == 'pills' %}
+{# Pill-style switcher - Good for mobile nav #}
+<div class="join w-full">
+    <a href="{% url 'home' %}"
+       class="join-item btn btn-{% if size_class == 'sm' %}sm{% elif size_class == 'lg' %}lg{% else %}md{% endif %} flex-1{% if current_type == 'games' %} btn-primary{% else %} btn-ghost{% endif %}">
+        <span class="mdi mdi-gamepad-variant"></span>
+        <span class="hidden sm:inline">Games</span>
+    </a>
+    <a href="{% url 'books:home' %}"
+       class="join-item btn btn-{% if size_class == 'sm' %}sm{% elif size_class == 'lg' %}lg{% else %}md{% endif %} flex-1{% if current_type == 'books' %} btn-primary{% else %} btn-ghost{% endif %}">
+        <span class="mdi mdi-book-open-page-variant"></span>
+        <span class="hidden sm:inline">Books</span>
+    </a>
+</div>
+
+{% elif variant_class == 'minimal' %}
+{# Minimal switcher - Icon buttons only #}
+<div class="flex gap-1">
+    <a href="{% url 'home' %}"
+       class="btn btn-{% if size_class == 'sm' %}sm{% elif size_class == 'lg' %}lg{% else %}md{% endif %} btn-square{% if current_type == 'games' %} btn-primary{% else %} btn-ghost{% endif %}"
+       aria-label="Games"
+       title="Games">
+        <span class="mdi mdi-gamepad-variant{% if size_class == 'lg' %} text-2xl{% elif size_class == 'sm' %} text-lg{% else %} text-xl{% endif %}"></span>
+    </a>
+    <a href="{% url 'books:home' %}"
+       class="btn btn-{% if size_class == 'sm' %}sm{% elif size_class == 'lg' %}lg{% else %}md{% endif %} btn-square{% if current_type == 'books' %} btn-primary{% else %} btn-ghost{% endif %}"
+       aria-label="Books"
+       title="Books">
+        <span class="mdi mdi-book-open-page-variant{% if size_class == 'lg' %} text-2xl{% elif size_class == 'sm' %} text-lg{% else %} text-xl{% endif %}"></span>
+    </a>
+</div>
+
+{% else %}
+{# Default to menu-style for navigation menus #}
+<ul class="menu gap-1">
+    <li>
+        <a href="{% url 'home' %}" class="{% if current_type == 'games' %}active{% endif %}">
+            <span class="mdi mdi-gamepad-variant text-xl"></span>
+            Games
+        </a>
+    </li>
+    <li>
+        <a href="{% url 'books:home' %}" class="{% if current_type == 'books' %}active{% endif %}">
+            <span class="mdi mdi-book-open-page-variant text-xl"></span>
+            Books
+        </a>
+    </li>
+</ul>
+{% endif %}
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endif %}

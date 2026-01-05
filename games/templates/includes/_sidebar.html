@@ -40,25 +40,12 @@
             </a>
         </div>
 
-        {# Primary navigation links #}
+        {# Media type switcher - Games/Books toggle (only shown when books feature is enabled) #}
+        {% if BOOKS_ENABLED %}
         <nav class="mb-3">
-            <ul class="menu gap-1">
-                <li>
-                    <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                        <span class="mdi mdi-medal text-xl"></span>
-                        Home
-                    </a>
-                </li>
-                {# TODO: Uncomment when books app is enabled
-                <li>
-                    <a href="{% url 'books:home' %}" class="{% if request.resolver_match.url_name == 'home' and request.resolver_match.app_name == 'books' %}active{% endif %}">
-                        <span class="mdi mdi-book-open-page-variant text-xl"></span>
-                        Books
-                    </a>
-                </li>
-                #}
-            </ul>
+            {% include 'core/includes/_media_switcher.html' with variant='tabs' size='sm' %}
         </nav>
+        {% endif %}
 
         {# Search bar #}
         <div class="relative"
