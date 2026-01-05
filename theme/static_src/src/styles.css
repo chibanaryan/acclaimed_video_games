@@ -182,6 +182,19 @@
   display: none !important;
 }
 
+/* Alpine loading state - show subtle indicator on interactive filter elements */
+.alpine-loading [x-data] button:not(.btn-primary),
+.alpine-loading [x-data] .btn-ghost {
+  opacity: 0.6;
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* Keep primary buttons visible but non-interactive until Alpine loads */
+.alpine-loading [x-data] .btn-primary {
+  cursor: wait;
+}
+
 /* Hide nav items until Alpine calculates overflow */
 .nav-calculating {
   opacity: 0;

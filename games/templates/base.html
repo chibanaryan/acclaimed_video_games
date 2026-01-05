@@ -64,13 +64,58 @@
     {# Base Utilities - Essential functions that must be available before Alpine.js initializes #}
     <script defer src="{% static 'games/js/utils-base.min.js' %}?v=2" nonce="{{ csp_nonce }}"></script>
 
-    {# Alpine.js components - loaded before Alpine to register on alpine:init #}
+    {# Alpine.js - deferred loading for better TBT scores #}
+    {# Scripts are preloaded but execution is delayed until user interaction #}
+    <link rel="preload" href="{% static 'games/js/rank-distribution.min.js' %}" as="script">
+    <link rel="preload" href="{% static 'games/js/vendor/alpine-collapse.min.js' %}" as="script">
+    <link rel="preload" href="{% static 'games/js/vendor/alpine.min.js' %}" as="script">
+
+    {# Initialize Alpine scripts array - pages can add their components via pre_alpine block #}
+    <script nonce="{{ csp_nonce }}">window.alpineScripts = [];</script>
+
+    {# Alpine.js components - pages add scripts here before Alpine loads #}
     {% block pre_alpine %}{% endblock %}
 
-    {# Alpine.js and plugins - defer ensures execution order in document order #}
-    <script defer src="{% static 'games/js/rank-distribution.min.js' %}" nonce="{{ csp_nonce }}"></script>
-    <script defer src="{% static 'games/js/vendor/alpine-collapse.min.js' %}" nonce="{{ csp_nonce }}"></script>
-    <script defer src="{% static 'games/js/vendor/alpine.min.js' %}" nonce="{{ csp_nonce }}"></script>
+    {# Add core Alpine scripts after page-specific ones #}
+    <script nonce="{{ csp_nonce }}">
+    window.alpineScripts.push(
+        '{% static "games/js/rank-distribution.min.js" %}',
+        '{% static "games/js/vendor/alpine-collapse.min.js" %}',
+        '{% static "games/js/vendor/alpine.min.js" %}'
+    );
+    // Remove loading class when Alpine initializes
+    document.addEventListener('alpine:init', function() {
+        document.body.classList.remove('alpine-loading');
+    });
+    // Deferred Alpine loader - waits for user interaction
+    (function() {
+        var loaded = false;
+        function loadAlpine() {
+            if (loaded) return;
+            loaded = true;
+            ['scroll', 'click', 'touchstart', 'mousemove', 'keydown'].forEach(function(e) {
+                window.removeEventListener(e, loadAlpine, { capture: true });
+            });
+            var i = 0;
+            function next() {
+                if (i >= window.alpineScripts.length) return;
+                var s = document.createElement('script');
+                s.src = window.alpineScripts[i++];
+                s.onload = next;
+                document.head.appendChild(s);
+            }
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(function() { next(); }, { timeout: 100 });
+            } else {
+                next();
+            }
+        }
+        ['scroll', 'click', 'touchstart', 'mousemove', 'keydown'].forEach(function(e) {
+            window.addEventListener(e, loadAlpine, { once: true, capture: true, passive: true });
+        });
+        setTimeout(loadAlpine, 3000);
+    })();
+    </script>
 
     {% block extra_head %}{% endblock %}
 
@@ -90,7 +135,7 @@
     }{% endblock %}
     </script>
 </head>
-<body class="min-h-screen bg-base-100" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="min-h-screen bg-base-100 alpine-loading" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     {# Skip navigation link for accessibility #}
     <a href="#main-content" class="skip-link">Skip to main content</a>
 

@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Defer Alpine.js loading until user interaction to reduce TBT (~1.7s script evaluation moved off critical path)
 - Reduce TBT: remove deep watch on filters object, defer filter/year-grid init via requestIdleCallback
 - Fix tooltip clipping: remove content-visibility containment from desktop game rows so tooltips can escape row bounds
 - Fix 500 error on home page: remove reference to non-existent placeholder.webp from staticUrls
