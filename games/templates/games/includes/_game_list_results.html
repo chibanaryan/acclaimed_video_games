@@ -99,6 +99,7 @@
     <div class="flex items-center gap-1 shrink-0">
         <span class="mdi mdi-sort text-base text-base-content/70"></span>
         <select class="select select-xs select-bordered bg-base-200"
+                aria-label="Sort by"
                 @change="updateSort($event.target.value)">
             <option value="rank" :selected="filters.sort === 'rank'">Rank</option>
             <option value="year" :selected="filters.sort === 'year'">Year</option>
@@ -107,27 +108,29 @@
         </select>
         {# Direction flip button #}
         <button type="button"
-                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer min-h-10 min-w-10 justify-center"
                 @click="toggleSortDirection()"
                 :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
                 :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
-            <span class="mdi text-sm" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
+            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-1 pl-1">
             <button type="button"
-                    class="btn btn-xs btn-ghost px-1"
+                    class="btn btn-sm btn-ghost px-2 min-h-10"
                     :class="viewMode === 'list' ? 'btn-active' : ''"
                     @click="setViewMode('list')"
+                    aria-label="List view"
                     title="List view">
-                <span class="mdi mdi-format-list-bulleted text-sm"></span>
+                <span class="mdi mdi-format-list-bulleted text-base" aria-hidden="true"></span>
             </button>
             <button type="button"
-                    class="btn btn-xs btn-ghost px-1"
+                    class="btn btn-sm btn-ghost px-2 min-h-10"
                     :class="viewMode === 'grid' ? 'btn-active' : ''"
                     @click="setViewMode('grid')"
+                    aria-label="Grid view"
                     title="Grid view">
-                <span class="mdi mdi-view-grid text-sm"></span>
+                <span class="mdi mdi-view-grid text-base" aria-hidden="true"></span>
             </button>
         </div>
     </div>
@@ -141,14 +144,16 @@
                min="1"
                max="{{ total_count }}"
                placeholder="#"
-               class="jump-to-rank-input input input-xs input-bordered w-12 text-center"
+               aria-label="Game rank number"
+               class="jump-to-rank-input input input-sm input-bordered w-14 text-center"
                data-total="{{ total_count }}"
                data-loaded="{{ loaded_count }}"
                data-per-page="100">
         <button type="button"
-                class="jump-to-rank-btn btn btn-xs btn-primary btn-square"
+                class="jump-to-rank-btn btn btn-sm btn-primary btn-square min-h-10 min-w-10"
+                aria-label="Jump to rank"
                 title="Jump to rank">
-            <span class="mdi mdi-arrow-down"></span>
+            <span class="mdi mdi-arrow-down" aria-hidden="true"></span>
         </button>
     </div>
 </div>

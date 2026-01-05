@@ -2,6 +2,9 @@
 
 ## 2026-01-05
 
+- Fix non-composited animations: convert background-color transitions to GPU-composited opacity on ::before pseudo-elements
+- Fix accessibility: increase touch target sizes for mobile buttons (btn-xs → btn-sm with min-h-10)
+- Fix accessibility: add aria-labels to mobile sort select, view toggle, and jump-to-rank buttons
 - Fix accessibility: improve year grid heatmap contrast (increase text opacity /60→/70, strengthen cell label shadows)
 - Fix accessibility: add aria-labels to sort dropdown and direction toggle buttons for screen readers
 - Add page-level caching for anonymous home page requests (5-min cache reduces TTFB from ~1300ms to ~50ms)

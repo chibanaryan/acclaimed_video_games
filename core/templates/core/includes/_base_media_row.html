@@ -31,7 +31,7 @@
                 <span class="media-rank text-2xl font-bold text-accent tabular-nums" data-slot="rank">
                     {% if item %}{% if show_rank == 'filtered' %}{{ index|default:item.rank }}{% else %}{{ item.rank }}{% endif %}{% endif %}
                 </span>
-                <span class="media-row-global-rank text-xs text-base-content/50 tabular-nums {% if show_rank != 'filtered' and item %}hidden{% endif %}" data-slot="global-rank">
+                <span class="media-row-global-rank text-xs text-base-content/60 tabular-nums {% if show_rank != 'filtered' and item %}hidden{% endif %}" data-slot="global-rank">
                     {% if item %}(#{{ item.rank }}){% endif %}
                 </span>
             </div>
@@ -99,7 +99,7 @@
                     {% if item %}({{ item.year }}){% endif %}
                 </span>
             </div>
-            <div class="text-xs text-base-content/50" data-slot="meta-mobile">
+            <div class="text-xs text-base-content/65" data-slot="meta-mobile">
                 {% block mobile_metadata %}{% endblock %}
             </div>
         </div>
