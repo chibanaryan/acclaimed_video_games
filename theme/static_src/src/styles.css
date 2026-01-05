@@ -517,11 +517,8 @@
 
   .year-grid-cell-label {
     @apply text-[0.7rem] font-bold text-base-content pointer-events-none;
-    /* Multi-layer text shadow for contrast against dark heatmap backgrounds */
-    text-shadow:
-      0 0 3px var(--color-base-100),
-      0 0 6px var(--color-base-100),
-      0 0 9px var(--color-base-100);
+    /* Subtle shadow for contrast against dark heatmap backgrounds */
+    text-shadow: 0 0 4px var(--color-base-100);
   }
 
   /* Selected cells: inherit text-primary-content from parent */
