@@ -394,55 +394,6 @@ class HLTBGameDataAdminTests(TestCase):
         self.assertEqual(value, "-")
 
 
-class ProtonDBGameDataAdminTests(TestCase):
-    """Tests for ProtonDBGameData admin interface."""
-
-    def setUp(self):
-        self.site = AdminSite()
-        self.admin = admin.ProtonDBGameDataAdmin(models.ProtonDBGameData, self.site)
-
-    def test_protondb_link_with_steam_app_id(self):
-        """Test _protondb_link displays clickable ProtonDB URL."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            igdb_id=123,
-            year_of_release=2020,
-        )
-        protondb_data = models.ProtonDBGameData.objects.create(
-            game=game,
-            igdb_id=123,
-            steam_app_id=12345,
-            tier="gold",
-            is_primary=True,
-        )
-
-        value = self.admin._protondb_link(protondb_data)
-        self.assertIn("protondb.com", value)
-        self.assertIn("<a href=", value)
-        self.assertIn("View on ProtonDB", value)
-
-    def test_protondb_link_without_steam_app_id(self):
-        """Test _protondb_link returns '-' when steam_app_id is empty."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            igdb_id=123,
-            year_of_release=2020,
-        )
-        protondb_data = models.ProtonDBGameData.objects.create(
-            game=game,
-            igdb_id=123,
-            steam_app_id="",
-            tier="gold",
-            is_primary=True,
-        )
-
-        # Empty steam_app_id should return "-"
-        value = self.admin._protondb_link(protondb_data)
-        self.assertEqual(value, "-")
-
-
 class GameQuoteAdminTests(TestCase):
     """Tests for GameQuote admin interface."""
 

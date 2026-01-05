@@ -880,101 +880,6 @@ class HLTBGameData(models.Model):
         return None
 
 
-class ProtonDBGameData(models.Model):
-    """
-    ProtonDB Steam Deck/Linux compatibility data.
-    Stores compatibility tier ratings from protondb.com.
-
-    Metadata persists when games are deleted (SET_NULL) to allow reconnection
-    when games are re-imported (using igdb_id for matching).
-    """
-
-    TIER_CHOICES = [
-        ("native", "Native"),
-        ("platinum", "Platinum"),
-        ("gold", "Gold"),
-        ("silver", "Silver"),
-        ("bronze", "Bronze"),
-        ("borked", "Borked"),
-        ("pending", "Pending"),
-    ]
-
-    game = models.ForeignKey(
-        "Game",
-        on_delete=models.SET_NULL,
-        related_name="protondb_game_data_set",
-        null=True,
-        blank=True,
-    )
-    igdb_id = models.IntegerField(
-        db_index=True,
-        help_text="IGDB game ID for reconnection after reimport",
-    )
-    steam_app_id = models.CharField(
-        max_length=20,
-        db_index=True,
-        help_text="Steam AppID used to fetch ProtonDB data",
-    )
-    tier = models.CharField(
-        max_length=20,
-        choices=TIER_CHOICES,
-        help_text="ProtonDB compatibility tier",
-    )
-    trending_tier = models.CharField(
-        max_length=20,
-        choices=TIER_CHOICES,
-        null=True,
-        blank=True,
-        help_text="Trending compatibility tier based on recent reports",
-    )
-    report_count = models.PositiveIntegerField(
-        default=0,
-        help_text="Number of user reports on ProtonDB",
-    )
-    is_primary = models.BooleanField(
-        default=False,
-        db_index=True,
-        help_text="Primary ProtonDB record for display (only one per game)",
-    )
-    fetched_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = "games_protondbgamedata"
-        verbose_name = "ProtonDB Game Data"
-        verbose_name_plural = "ProtonDB Game Data"
-        indexes = [
-            models.Index(fields=["game", "is_primary"]),
-            models.Index(fields=["igdb_id"]),
-            models.Index(fields=["steam_app_id"]),
-            models.Index(fields=["tier"]),
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["game"],
-                condition=models.Q(is_primary=True) & models.Q(game__isnull=False),
-                name="unique_primary_protondb_per_game",
-            )
-        ]
-
-    def __str__(self) -> str:
-        if self.game:
-            return f"ProtonDB data for {self.game.name} ({self.tier})"
-        return f"Orphaned ProtonDB data (IGDB: {self.igdb_id})"
-
-    @property
-    def protondb_url(self) -> Optional[str]:
-        """Generate ProtonDB game URL."""
-        if self.steam_app_id:
-            return f"https://www.protondb.com/app/{self.steam_app_id}"
-        return None
-
-    @property
-    def is_steam_deck_compatible(self) -> bool:
-        """Returns True if the game is playable on Steam Deck."""
-        return self.tier in ("native", "platinum", "gold")
-
-
 class GameQuerySet(models.QuerySet):
     """Custom QuerySet for Game model with common prefetch patterns."""
 
@@ -990,7 +895,6 @@ class GameQuerySet(models.QuerySet):
             "primary_igdb_game_data",
             "primary_wikipedia_game_data",
             "primary_hltb_game_data",
-            "primary_protondb_game_data",
         )
 
     def with_played_status(self, user):
@@ -1091,14 +995,6 @@ class Game(MediaItemBase):
         blank=True,
         related_name="primary_game",
         help_text="Primary HLTB game data for playtime display",
-    )
-    primary_protondb_game_data = models.OneToOneField(
-        "ProtonDBGameData",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="primary_game",
-        help_text="Primary ProtonDB data for Steam Deck compatibility display",
     )
 
     objects = GameQuerySet.as_manager()

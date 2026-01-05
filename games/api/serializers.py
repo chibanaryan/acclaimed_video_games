@@ -36,10 +36,8 @@ game_fields = [
     "name",
     "name_normalized",
     "platforms",
-    "protondb_tier",
     "rank",
     "slug",
-    "steam_deck_compatible",
     "year_of_release",
     "year_rank",
 ]
@@ -54,9 +52,6 @@ class GameSummarySerializer(serializers.ModelSerializer):
     igdb_artwork_id = serializers.SerializerMethodField()
     igdb_url = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
-    # Delegate to primary_protondb_game_data
-    protondb_tier = serializers.SerializerMethodField()
-    steam_deck_compatible = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Game
@@ -78,18 +73,6 @@ class GameSummarySerializer(serializers.ModelSerializer):
         """Get description from primary IGDBGameData record."""
         if obj.primary_igdb_game_data:
             return obj.primary_igdb_game_data.description
-        return None
-
-    def get_protondb_tier(self, obj):
-        """Get ProtonDB compatibility tier from primary ProtonDBGameData record."""
-        if obj.primary_protondb_game_data:
-            return obj.primary_protondb_game_data.tier
-        return None
-
-    def get_steam_deck_compatible(self, obj):
-        """Get Steam Deck compatibility status (native, platinum, gold = compatible)."""
-        if obj.primary_protondb_game_data:
-            return obj.primary_protondb_game_data.is_steam_deck_compatible
         return None
 
 

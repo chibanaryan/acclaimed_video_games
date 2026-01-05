@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Remove ProtonDB Steam Deck compatibility feature (low coverage, limited utility)
 - Fix visual glitch: genre buttons in game rows no longer dim and pop-in during Alpine.js initialization
 - Fix dark mode sidebar hover: use base-content text color for readability (was using dark primary color)
 - Fix accessibility: year grid selected cells use white text, dark heatmap tiles get stronger text shadow for contrast

@@ -678,55 +678,6 @@ class GameSummarySerializerTests(TestCase):
         serializer = serializers.GameSummarySerializer(game)
         self.assertIsNone(serializer.data["description"])
 
-    def test_get_protondb_tier_with_primary_data(self):
-        """Test that protondb_tier is returned from primary_protondb_game_data."""
-        game = models.Game.objects.create(
-            name="Test Game", rank=1, igdb_id=1007, slug="test-game-sm7"
-        )
-        protondb_data = models.ProtonDBGameData.objects.create(
-            game=game, igdb_id=1007, steam_app_id="12345", tier="gold", is_primary=True
-        )
-        game.primary_protondb_game_data = protondb_data
-        game.save()
-
-        serializer = serializers.GameSummarySerializer(game)
-        self.assertEqual(serializer.data["protondb_tier"], "gold")
-
-    def test_get_protondb_tier_returns_none_without_primary_data(self):
-        """Test that protondb_tier returns None when no primary_protondb_game_data."""
-        game = models.Game.objects.create(
-            name="Test Game", rank=1, igdb_id=1008, slug="test-game-sm8"
-        )
-        serializer = serializers.GameSummarySerializer(game)
-        self.assertIsNone(serializer.data["protondb_tier"])
-
-    def test_get_steam_deck_compatible_with_primary_data(self):
-        """Test that steam_deck_compatible is returned correctly."""
-        game = models.Game.objects.create(
-            name="Test Game", rank=1, igdb_id=1009, slug="test-game-sm9"
-        )
-        protondb_data = models.ProtonDBGameData.objects.create(
-            game=game,
-            igdb_id=1009,
-            steam_app_id="12346",
-            tier="platinum",
-            is_primary=True,
-        )
-        game.primary_protondb_game_data = protondb_data
-        game.save()
-
-        serializer = serializers.GameSummarySerializer(game)
-        # Platinum tier should be Steam Deck compatible
-        self.assertTrue(serializer.data["steam_deck_compatible"])
-
-    def test_get_steam_deck_compatible_returns_none_without_primary_data(self):
-        """Test that steam_deck_compatible returns None without data."""
-        game = models.Game.objects.create(
-            name="Test Game", rank=1, igdb_id=1010, slug="test-game-sm10"
-        )
-        serializer = serializers.GameSummarySerializer(game)
-        self.assertIsNone(serializer.data["steam_deck_compatible"])
-
 
 class DeveloperSerializerTests(TestCase):
     """Tests for DeveloperSerializer get_games_count method."""

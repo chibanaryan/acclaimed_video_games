@@ -17,7 +17,6 @@ from games.models import (
     Platform,
     PlayedGame,
     Post,
-    ProtonDBGameData,
     Publication,
     SavedFilterSet,
     Series,
@@ -161,7 +160,6 @@ class Command(BaseCommand):
         IGDBGameData.objects.all().delete()
         WikipediaGameData.objects.all().delete()
         HLTBGameData.objects.all().delete()
-        ProtonDBGameData.objects.all().delete()
         # Then: List and Publication
         List.objects.all().delete()
         Publication.objects.all().delete()
