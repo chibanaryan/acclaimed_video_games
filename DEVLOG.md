@@ -3,6 +3,7 @@
 ## 2026-01-05
 
 - Refactor Game model to inherit from MediaItemBase (Phase 9.1.1 complete)
+- Add comprehensive integration tests for OpenLibrary, Hardcover, and BookMetadataService (73 tests)
 
 ## 2026-01-04
 
