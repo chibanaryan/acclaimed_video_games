@@ -115,15 +115,17 @@ class FeatureFlagsContextProcessorTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
-    def test_returns_empty_dict(self):
-        """Test that feature_flags returns an empty dict."""
+    def test_returns_expected_flags(self):
+        """Test that feature_flags returns expected feature flags."""
         from games.context_processors import feature_flags
 
         request = self.factory.get("/")
 
         result = feature_flags(request)
 
-        self.assertEqual(result, {})
+        self.assertIn("BOOKS_ENABLED", result)
+        # Default is False when env var not set
+        self.assertEqual(result["BOOKS_ENABLED"], False)
 
     def test_returns_dict_type(self):
         """Test that feature_flags returns a dict type."""

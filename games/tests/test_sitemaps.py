@@ -21,7 +21,10 @@ class StaticViewSitemapTests(TestCase):
     def test_items_returns_expected_pages(self):
         """Test that items() returns the correct static page names."""
         items = self.sitemap.items()
-        self.assertEqual(items, ["home", "developers-list", "list-list"])
+        self.assertEqual(
+            items,
+            ["home", "developers-list", "list-list", "books:home", "books:author-list"],
+        )
 
     def test_location_returns_valid_urls(self):
         """Test that location() returns valid URLs for each item."""
