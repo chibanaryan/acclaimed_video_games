@@ -603,19 +603,39 @@ class IGDBGameData(models.Model):
         return None
 
     @cached_property
-    def image(self) -> Optional[str]:
-        """Get full-size image URL (264x352) for cover art."""
+    def _artwork_id_base(self) -> Optional[str]:
+        """Get artwork_id without file extension for format conversion."""
         if self.artwork_id:
+            # Strip extension if present (e.g., co3p2d.jpg -> co3p2d)
+            return self.artwork_id.rsplit(".", 1)[0]
+        return None
+
+    @cached_property
+    def image(self) -> Optional[str]:
+        """Get full-size image URL (264x352) for cover art in WebP format."""
+        if self._artwork_id_base:
             base = "https://images.igdb.com/igdb/image/upload"
-            return f"{base}/t_cover_big/{self.artwork_id}"
+            return f"{base}/t_cover_big/{self._artwork_id_base}.webp"
         return None
 
     @cached_property
     def image_2x(self) -> Optional[str]:
-        """Get 2x retina URL (528x704) for cover art."""
-        if self.artwork_id:
+        """Get 2x retina URL (528x704) for cover art in WebP format."""
+        if self._artwork_id_base:
             base = "https://images.igdb.com/igdb/image/upload"
-            return f"{base}/t_cover_big_2x/{self.artwork_id}"
+            return f"{base}/t_cover_big_2x/{self._artwork_id_base}.webp"
+        return None
+
+    @cached_property
+    def image_og(self) -> Optional[str]:
+        """Get full-size image URL in JPG for Open Graph/social sharing.
+
+        LinkedIn and some third-party tools don't support WebP, so we use
+        JPG for og:image and JSON-LD structured data.
+        """
+        if self._artwork_id_base:
+            base = "https://images.igdb.com/igdb/image/upload"
+            return f"{base}/t_cover_big/{self._artwork_id_base}.jpg"
         return None
 
     @cached_property
@@ -636,10 +656,10 @@ class IGDBGameData(models.Model):
 
     @cached_property
     def homepage_thumb_2x(self) -> Optional[str]:
-        """Get homepage 2x thumbnail - t_cover_big (264x352)."""
-        if self.artwork_id:
+        """Get homepage 2x thumbnail - t_cover_big (264x352) in WebP format."""
+        if self._artwork_id_base:
             base = "https://images.igdb.com/igdb/image/upload"
-            return f"{base}/t_cover_big/{self.artwork_id}"
+            return f"{base}/t_cover_big/{self._artwork_id_base}.webp"
         return None
 
     @cached_property
@@ -1567,6 +1587,13 @@ class Game(MediaItemBase):
         """Get 2x retina URL (528x704) from primary IGDB data."""
         if self.primary_igdb_game_data:
             return self.primary_igdb_game_data.image_2x
+        return None
+
+    @cached_property
+    def image_og(self) -> Optional[str]:
+        """Get full-size image URL in JPG for Open Graph/social sharing."""
+        if self.primary_igdb_game_data:
+            return self.primary_igdb_game_data.image_og
         return None
 
     @cached_property

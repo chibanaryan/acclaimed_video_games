@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Use WebP format for large game cover images (detail page, grid view) for 15-20% size reduction; keep JPG for OG/social sharing compatibility
 - Add page-level caching for anonymous home page requests (5-min cache reduces TTFB from ~1300ms to ~50ms)
 - Fix accessibility: add aria-labels to platform filter expand/collapse buttons for screen readers
 - Fix contrast issues: add text shadow to year grid labels, use solid accent background for active sidebar links

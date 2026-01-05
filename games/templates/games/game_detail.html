@@ -7,7 +7,7 @@
 
 {% block og_title %}{{ game.name }} | Acclaimed Video Games{% endblock %}
 {% block og_description %}{{ game.name }} ({{ game.year_of_release }}) is ranked #{{ game.rank }} among the most critically acclaimed games of all time.{% endblock %}
-{% block og_image %}{{ game.image }}{% endblock %}
+{% block og_image %}{{ game.image_og }}{% endblock %}
 {% block twitter_title %}{{ game.name }} | Acclaimed Video Games{% endblock %}
 {% block twitter_description %}{{ game.name }} ({{ game.year_of_release }}) is ranked #{{ game.rank }} all-time.{% endblock %}
 
@@ -16,7 +16,7 @@
     "@type": "VideoGame",
     "name": "{{ game.name }}",
     "datePublished": "{{ game.year_of_release }}",
-    "image": "{{ game.image }}",
+    "image": "{{ game.image_og }}",
     "description": "{{ game.description|default:'One of the most critically acclaimed video games of all time.'|escapejs }}",
     "aggregateRating": {
         "@type": "AggregateRating",
