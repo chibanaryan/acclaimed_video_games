@@ -509,6 +509,8 @@
 
   .year-grid-cell-label {
     @apply text-[0.7rem] font-bold text-base-content pointer-events-none;
+    /* Subtle text shadow for contrast against heatmap background */
+    text-shadow: 0 0 2px var(--color-base-100);
   }
 
   /* Header row with legend and hint */
