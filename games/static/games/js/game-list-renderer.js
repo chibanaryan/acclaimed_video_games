@@ -22,6 +22,13 @@ class GameListRenderer extends BaseMediaListRenderer {
      */
     constructor(filterEngine) {
         super(filterEngine);
+        // Cache static URLs (from Django template or fallback to hardcoded)
+        this._staticUrls = window.staticUrls || {
+            platformIcons: '/static/games/images/platform-icons.svg',
+            placeholder: '/static/games/images/placeholder.webp',
+            marioStar: '/static/games/images/mario-star.png',
+            marioStar2x: '/static/games/images/mario-star@2x.png'
+        };
     }
 
     /**
@@ -319,7 +326,7 @@ class GameListRenderer extends BaseMediaListRenderer {
      */
     _getThumbnail(artworkId) {
         if (!artworkId) {
-            return '/static/games/images/placeholder.webp';
+            return this._staticUrls.placeholder;
         }
         return `https://images.igdb.com/igdb/image/upload/t_cover_small/${artworkId}`;
     }
@@ -330,7 +337,7 @@ class GameListRenderer extends BaseMediaListRenderer {
      */
     _getThumbnail2x(artworkId) {
         if (!artworkId) {
-            return '/static/games/images/placeholder.webp';
+            return this._staticUrls.placeholder;
         }
         return `https://images.igdb.com/igdb/image/upload/t_cover_big/${artworkId}`;
     }
@@ -341,7 +348,7 @@ class GameListRenderer extends BaseMediaListRenderer {
      */
     _getCoverBig(artworkId) {
         if (!artworkId) {
-            return '/static/games/images/placeholder.webp';
+            return this._staticUrls.placeholder;
         }
         return `https://images.igdb.com/igdb/image/upload/t_cover_big/${artworkId}`;
     }
@@ -352,7 +359,7 @@ class GameListRenderer extends BaseMediaListRenderer {
      */
     _getCoverBig2x(artworkId) {
         if (!artworkId) {
-            return '/static/games/images/placeholder.webp';
+            return this._staticUrls.placeholder;
         }
         return `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${artworkId}`;
     }
@@ -484,7 +491,7 @@ class GameListRenderer extends BaseMediaListRenderer {
                     if (f.count >= 3) {
                         // Show icon with count
                         const iconHtml = f.svg
-                            ? `<svg class="w-3.5 h-3.5" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
+                            ? `<svg class="w-3.5 h-3.5" aria-hidden="true"><use href="${this._staticUrls.platformIcons}#${f.svg}"></use></svg>`
                             : `<span class="mdi ${f.icon} text-sm leading-none" aria-hidden="true"></span>`;
                         const countHtml = `<span class="tabular-nums font-bold leading-none" style="font-size: 8px; margin-left: 1px; margin-top: -2px;">${f.count}</span>`;
                         const comma = fi < platformFamilies.length - 1 ? ', ' : '';
@@ -561,7 +568,7 @@ class GameListRenderer extends BaseMediaListRenderer {
         const platformsHtml = platformFamilies.map((f, fi) => {
             if (f.count >= 3) {
                 const iconHtml = f.svg
-                    ? `<svg class="w-3.5 h-3.5" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
+                    ? `<svg class="w-3.5 h-3.5" aria-hidden="true"><use href="${this._staticUrls.platformIcons}#${f.svg}"></use></svg>`
                     : `<span class="mdi ${f.icon} text-sm leading-none" aria-hidden="true"></span>`;
                 const countHtml = `<span class="tabular-nums font-bold leading-none" style="font-size: 8px; margin-left: 1px; margin-top: -2px;">${f.count}</span>`;
                 const comma = fi < platformFamilies.length - 1 ? ', ' : '';
@@ -647,7 +654,7 @@ class GameListRenderer extends BaseMediaListRenderer {
         // Icon based on status
         let innerHtml;
         if (status === 'played') {
-            innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><img src="/static/games/images/mario-star.png" srcset="/static/games/images/mario-star.png 1x, /static/games/images/mario-star@2x.png 2x" alt="Played" width="32" height="32" class="w-6 h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`;
+            innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><img src="${this._staticUrls.marioStar}" srcset="${this._staticUrls.marioStar} 1x, ${this._staticUrls.marioStar2x} 2x" alt="Played" width="32" height="32" class="w-6 h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`;
         } else if (status === 'want') {
             innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><span class="mdi mdi-star-plus-outline text-2xl text-warning"></span></span>`;
         } else {
@@ -697,7 +704,7 @@ class GameListRenderer extends BaseMediaListRenderer {
             const platformsHtml = platformFamilies.map((f, fi) => {
                 if (f.count >= 3) {
                     const iconHtml = f.svg
-                        ? `<svg class="w-3 h-3" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
+                        ? `<svg class="w-3 h-3" aria-hidden="true"><use href="${this._staticUrls.platformIcons}#${f.svg}"></use></svg>`
                         : `<span class="mdi ${f.icon}" aria-hidden="true"></span>`;
                     const countHtml = `<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">${f.count}</span>`;
                     const comma = fi < platformFamilies.length - 1 ? ', ' : '';
@@ -820,7 +827,7 @@ class GameListRenderer extends BaseMediaListRenderer {
             const platformsHtml = platformFamilies.map((f, fi) => {
                 if (f.count >= 3) {
                     const iconHtml = f.svg
-                        ? `<svg class="w-3 h-3" aria-hidden="true"><use href="/static/games/images/platform-icons.svg#${f.svg}"></use></svg>`
+                        ? `<svg class="w-3 h-3" aria-hidden="true"><use href="${this._staticUrls.platformIcons}#${f.svg}"></use></svg>`
                         : `<span class="mdi ${f.icon}" aria-hidden="true"></span>`;
                     const countHtml = `<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">${f.count}</span>`;
                     const comma = fi < platformFamilies.length - 1 ? ', ' : '';

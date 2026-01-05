@@ -33,6 +33,15 @@
             }, 100);
         }
     </script>
+    {# Static URLs for client-side rendering (Django adds hashes in production) #}
+    <script nonce="{{ csp_nonce }}">
+    window.staticUrls = {
+        platformIcons: '{% static "games/images/platform-icons.svg" %}',
+        placeholder: '{% static "games/images/placeholder.webp" %}',
+        marioStar: '{% static "games/images/mario-star.png" %}',
+        marioStar2x: '{% static "games/images/mario-star@2x.png" %}'
+    };
+    </script>
     {# Game status state for client-side rendering (played + want to play) #}
     <script nonce="{{ csp_nonce }}">
     {% if user.is_authenticated %}
