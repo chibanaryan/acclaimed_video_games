@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0080_delete_user'),
+        ('games', '0081_game_inherit_media_item_base'),
     ]
 
     operations = [
