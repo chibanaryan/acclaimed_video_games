@@ -755,16 +755,18 @@
 .game-row {
   position: relative;
   transition: background-color 0.5s ease, transform 0.2s ease;
-  /* CSS containment - allows browser to skip layout for off-screen rows */
+}
+
+/* CSS containment for mobile only - desktop needs tooltips to escape row bounds */
+.game-row.mobile {
   content-visibility: auto;
-  contain-intrinsic-size: auto 58px; /* Approximate height for desktop rows */
+  contain-intrinsic-size: auto 80px;
 }
 
 /* Mobile: scroll offset for fixed header (60px nav + 8px breathing room) */
 @media (max-width: 1087px) {
   .game-row {
     scroll-margin-top: 68px;
-    contain-intrinsic-size: auto 80px; /* Mobile rows are taller */
   }
 }
 
