@@ -17,6 +17,7 @@ class StaticViewSitemap(Sitemap):
     changefreq = "weekly"
 
     def items(self):
+        # Static pages for games; books static pages will be added when books app is enabled
         return ["home", "developers-list", "list-list"]
 
     def location(self, item):
@@ -53,9 +54,37 @@ class DeveloperSitemap(Sitemap):
         return reverse("developer-detail", kwargs={"slug": obj.slug})
 
 
+# TODO: Add BookSitemap and AuthorSitemap when books app is enabled
+# class BookSitemap(Sitemap):
+#     """Sitemap for individual book pages."""
+#     changefreq = "monthly"
+#     priority = 0.8
+#
+#     def items(self):
+#         from books.models import Book
+#         return Book.objects.all()
+#
+#     def location(self, obj):
+#         return reverse("book-detail", kwargs={"slug": obj.slug})
+#
+# class AuthorSitemap(Sitemap):
+#     """Sitemap for author pages."""
+#     changefreq = "monthly"
+#     priority = 0.6
+#
+#     def items(self):
+#         from books.models import Author
+#         return Author.objects.all()
+#
+#     def location(self, obj):
+#         return reverse("author-detail", kwargs={"slug": obj.slug})
+
+
 # Dictionary of all sitemaps for URL configuration
 sitemaps = {
     "static": StaticViewSitemap,
     "games": GameSitemap,
     "developers": DeveloperSitemap,
+    # "books": BookSitemap,  # Enable when books app is ready
+    # "authors": AuthorSitemap,  # Enable when books app is ready
 }

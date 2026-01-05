@@ -9,6 +9,12 @@
                 <span class="mdi mdi-medal text-xl"></span>
             </a>
 
+            {# TODO: Uncomment when books app is enabled
+            <a href="{% url 'book-home' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'book-home' %} btn-active{% endif %}" data-nav-item="books" data-menu-label="Books">
+                <span class="mdi mdi-book-open-page-variant text-xl"></span>
+            </a>
+            #}
+
             {# Search dropdown #}
             <div class="relative shrink-0 nav-item" data-nav-item="search" x-data="{
                      showSearchDropdown: false,
