@@ -243,12 +243,17 @@ STATICFILES_DIRS = []
 # WhiteNoise configuration for compression and caching
 # Creates hashed filenames (e.g., main.a1b2c3d4.css) for cache busting
 # Creates gzip and brotli compressed versions automatically
+# Use simple storage for tests (manifest-based storage requires collectstatic)
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if TEST_MODE
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
     },
 }
 
@@ -342,7 +347,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
 X_FRAME_OPTIONS = "DENY"  # Prevent clickjacking
 
 # Production-only security settings (require HTTPS)
-# Disabled in TEST_MODE to allow test client without HTTPS
+# Exclude TEST_MODE since tests run with DEBUG=False but shouldn't have HTTPS redirect
 if not DEBUG and not TEST_MODE:
     SECURE_HSTS_SECONDS = 31536000  # 1 year - enable HTTP Strict Transport Security
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
