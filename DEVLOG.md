@@ -2,6 +2,10 @@
 
 ## 2026-01-04
 
+- Add books/ app skeleton with URL routing for multi-media platform expansion
+- Add Open Library API client for book metadata (search, ISBN lookup, cover images)
+- Add Hardcover GraphQL API client as optional secondary book metadata source
+- Add fetch_book_metadata management command for book search and metadata retrieval
 - Add core/ app with abstract models (MediaItemBase, CreatorBase) for multi-media platform foundation
 - Move shared utilities to core: RobustPaginationMixin, HTMXPartialMixin, common template tags
 - Fix sync_from_prod: include flatpages and sites, exclude user tracking models
