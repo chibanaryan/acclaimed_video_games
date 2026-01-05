@@ -784,8 +784,7 @@
 /* Game Row Component - Desktop and Mobile */
 .game-row {
   position: relative;
-  /* Use transform only - it's GPU-accelerated. Background transitions use pseudo-element below. */
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease;
 }
 
 /* Highlight overlay using pseudo-element for GPU-composited animation */
@@ -832,7 +831,7 @@
   border-left-color: transparent;
 }
 
-/* Desktop grid layout with equidistant spacing */
+/* Desktop: Visual styling with gradient hover */
 .game-row.desktop {
   align-items: center;
   border-left: 4px solid transparent;
@@ -840,9 +839,9 @@
   border-bottom-left-radius: 9999px;
 }
 
-/* Desktop hover effects - gradient fades to right, extending to meet filter sidebar */
+/* Desktop hover - gradient effect */
 .game-row.desktop:hover {
-  background: linear-gradient(to right, color-mix(in oklch, var(--color-primary) 15%, transparent) 50%, transparent 100%);
+  background: linear-gradient(to right, color-mix(in oklch, var(--color-primary) 12%, transparent) 40%, transparent 100%);
   transform: translateY(-1px);
   border-left-color: var(--color-primary);
 }
@@ -854,42 +853,41 @@
 
 @layer components {
 
-  /* Desktop: Game row - compact by default, expands on hover */
+  /* Desktop: Comfortable row height with visible metadata */
   .game-row.desktop {
-    min-height: 58px;
+    min-height: 52px;
   }
 
-  /* Desktop: Rank number scales up on hover */
+  /* Desktop: Rank scales subtly on hover */
   .game-row.desktop .game-rank {
-    transition: transform 0.35s ease;
+    transition: transform 0.2s ease;
   }
 
   .game-row.desktop:hover .game-rank {
-    transform: scale(1.15);
+    transform: scale(1.08);
   }
 
-  /* Desktop: Game title - consistent size (no shrink on hover) */
+  /* Desktop: Game title */
   .game-row.desktop .game-title {
-    font-size: 1.25rem; /* text-xl */
+    font-size: 1.125rem; /* text-lg */
     line-height: 1.75rem;
   }
 
-  /* Desktop: Game cover thumbnails - full aspect ratio, subtle scale on hover */
+  /* Desktop: Thumbnails with middle-out hover effect */
   .game-row.desktop .game-thumb-link {
     @apply block flex-shrink-0;
-    width: 42px;
-    height: calc(42px * 128 / 90);
+    width: 38px;
+    height: calc(38px * 128 / 90);
     border-radius: 6px;
     overflow: hidden;
-    margin-left: 8px;
-    margin-right: 8px;
-    transition: width 0.35s ease, height 0.35s ease, margin 0.35s ease;
+    margin-left: 4px;
+    margin-right: 4px;
+    transform-origin: center center;
+    transition: transform 0.2s ease;
   }
 
   .game-row.desktop:hover .game-thumb-link {
-    width: 52px;
-    height: calc(52px * 128 / 90);
-    margin-left: 3px;
+    transform: scale(1.16); /* 44/38 ≈ 1.158, rounded for cleaner value */
   }
 
   .game-row.desktop .game-thumb {
@@ -898,15 +896,14 @@
     object-fit: cover;
   }
 
-  /* Desktop: Details row hidden by default, shown on hover */
+  /* Desktop: Metadata row - always visible */
   .game-row.desktop .game-row-details {
-    @apply opacity-0 max-h-0 overflow-hidden;
-    transition: opacity 0.2s ease, max-height 0.2s ease;
+    @apply opacity-80;
+    transition: opacity 0.15s ease;
   }
 
   .game-row.desktop:hover .game-row-details {
-    @apply opacity-100 max-h-16;
-    overflow: visible !important;
+    @apply opacity-100;
   }
 
   /* Mobile: Circular thumbnails (no hover expansion) */
