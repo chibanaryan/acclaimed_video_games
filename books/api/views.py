@@ -10,13 +10,14 @@ from datetime import datetime
 from django.db import connection
 from django.db.models import Count, F, Min, Prefetch
 from django.db.models.functions import Lower
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.views import APIView, Response
 
 from games import config  # Shared cache config
@@ -25,6 +26,20 @@ from games import utils  # Shared utilities
 
 from .. import models
 from . import serializers
+
+
+class IsStaffOrHide(BasePermission):
+    """
+    Permission class that returns 404 for non-staff users.
+
+    This hides the books API from public view until launch.
+    """
+
+    def has_permission(self, request, view):
+        if request.user.is_authenticated and request.user.is_staff:
+            return True
+        # Raise 404 to hide the endpoint from non-staff users
+        raise Http404("Page not found")
 
 
 @method_decorator(cache_page(60 * 15), name="dispatch")  # 15 min cache
@@ -39,6 +54,7 @@ class BookListView(ListAPIView):
     - genres: Comma-separated genre IDs
     """
 
+    permission_classes = [IsStaffOrHide]
     serializer_class = serializers.BookSummarySerializer
     # Build search fields based on database vendor
     search_fields = ["name_normalized__icontains", "name__icontains"]
@@ -81,6 +97,7 @@ class BookListView(ListAPIView):
 class BookDetailView(RetrieveAPIView):
     """Get detailed book information including list appearances."""
 
+    permission_classes = [IsStaffOrHide]
     lookup_field = "slug"
     serializer_class = serializers.BookDetailSerializer
     queryset = models.Book.objects.select_related(
@@ -100,6 +117,7 @@ class BookDetailView(RetrieveAPIView):
 class AuthorDetailView(RetrieveAPIView):
     """API endpoint for author details."""
 
+    permission_classes = [IsStaffOrHide]
     lookup_field = "slug"
     serializer_class = serializers.AuthorSerializer
     queryset = models.Author.objects.all()
@@ -108,6 +126,7 @@ class AuthorDetailView(RetrieveAPIView):
 class AuthorListView(ListAPIView):
     """API endpoint for listing authors."""
 
+    permission_classes = [IsStaffOrHide]
     serializer_class = serializers.AuthorSerializer
     search_fields = ["name__icontains"]
     if connection.vendor == "postgresql":
@@ -139,6 +158,7 @@ class AuthorListView(ListAPIView):
 class AuthorDetailByIdView(RetrieveAPIView):
     """API endpoint for author details by GoodReads ID."""
 
+    permission_classes = [IsStaffOrHide]
     lookup_field = "goodreads_id"
     serializer_class = serializers.AuthorSerializer
     queryset = models.Author.objects.annotate(
@@ -149,6 +169,7 @@ class AuthorDetailByIdView(RetrieveAPIView):
 class BookListListView(ListAPIView):
     """List all book lists/rankings."""
 
+    permission_classes = [IsStaffOrHide]
     serializer_class = serializers.BookListSerializer
     filters = [
         utils.Filter(param="publisher", fields=["publisher_id"], coerce=int),
@@ -182,6 +203,8 @@ class BookMetaView(APIView):
 
     Returns counts, year ranges, and statistics.
     """
+
+    permission_classes = [IsStaffOrHide]
 
     def get(self, *args, **kwargs):
         data = {}
@@ -257,6 +280,7 @@ class BookMetaView(APIView):
 class BookGenreListView(ListAPIView):
     """List all book genres (flat list with hierarchy metadata)."""
 
+    permission_classes = [IsStaffOrHide]
     serializer_class = serializers.BookGenreSerializer
     queryset = models.BookGenre.objects.all().order_by("level", "display_order", "name")
 
@@ -265,6 +289,7 @@ class BookGenreListView(ListAPIView):
 class BookGenreTreeView(ListAPIView):
     """List book genres as hierarchical tree structure."""
 
+    permission_classes = [IsStaffOrHide]
     serializer_class = serializers.BookGenreTreeSerializer
 
     def get_queryset(self):
@@ -278,6 +303,8 @@ class BookSearchAPIView(APIView):
     """
     API endpoint for navbar search - returns JSON list of books matching query.
     """
+
+    permission_classes = [IsStaffOrHide]
 
     def get(self, request):
         from django.http import JsonResponse
@@ -322,6 +349,8 @@ class UnifiedBookSearchView(APIView):
     """
     Unified search endpoint for navbar - returns both authors and books.
     """
+
+    permission_classes = [IsStaffOrHide]
 
     def get(self, request):
         from django.http import JsonResponse
@@ -409,6 +438,8 @@ def _compute_book_data_version():
 class BookDataVersionView(APIView):
     """Lightweight endpoint returning only the data version hash."""
 
+    permission_classes = [IsStaffOrHide]
+
     def get(self, request):
         return Response({"version": _compute_book_data_version()})
 
@@ -420,6 +451,8 @@ class BookAllDataView(APIView):
 
     Returns all books with minimal payload for efficient client-side filtering.
     """
+
+    permission_classes = [IsStaffOrHide]
 
     def get(self, request):
         version = _compute_book_data_version()
@@ -511,7 +544,7 @@ class ReadBookListCreateView(APIView):
     """
 
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsStaffOrHide, IsAuthenticated]
 
     def get(self, request):
         """List all read books for current user."""
@@ -569,7 +602,7 @@ class ReadBookDeleteView(APIView):
     """Remove a book from read list."""
 
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsStaffOrHide, IsAuthenticated]
 
     def delete(self, request, goodreads_id):
         """Unmark a book as read."""
@@ -592,7 +625,7 @@ class WantToReadBookListCreateView(APIView):
     """
 
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsStaffOrHide, IsAuthenticated]
 
     def get(self, request):
         """List all want-to-read books for current user."""
@@ -654,7 +687,7 @@ class WantToReadBookDeleteView(APIView):
     """Remove a book from want-to-read list."""
 
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsStaffOrHide, IsAuthenticated]
 
     def delete(self, request, goodreads_id):
         """Remove a book from want-to-read list."""

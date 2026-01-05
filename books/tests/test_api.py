@@ -3,6 +3,9 @@ Tests for books app API endpoints.
 
 Tests for BookListView, BookDetailView, AuthorListView, AuthorDetailView,
 BookMetaView, BookGenreListView, ReadBookListCreateView, and other API views.
+
+Note: All book API views require staff access (IsStaffOrHide permission).
+Tests must use staff users to access these endpoints.
 """
 
 from django.contrib.auth import get_user_model
@@ -16,11 +19,27 @@ from games.models import List, Publication
 User = get_user_model()
 
 
-class BookListAPITests(TestCase):
+class StaffAPITestMixin:
+    """Mixin that provides a staff user and authenticates them for API tests."""
+
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+        # Create staff user for accessing books API
+        self.staff_user = User.objects.create_user(
+            username="staffuser",
+            password="staffpass",
+            is_staff=True,
+        )
+        # Use force_authenticate for reliable DRF authentication
+        self.client.force_authenticate(user=self.staff_user)
+
+
+class BookListAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookListView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.author = models.Author.objects.create(
             name="Test Author", slug="test-author", goodreads_id="100"
         )
@@ -94,11 +113,11 @@ class BookListAPITests(TestCase):
         self.assertEqual(data["results"][1]["name"], "Beta Book")
 
 
-class BookDetailAPITests(TestCase):
+class BookDetailAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookDetailView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.author = models.Author.objects.create(name="Test Author", slug="test-author")
         self.book = models.Book.objects.create(
             name="Test Book",
@@ -123,11 +142,11 @@ class BookDetailAPITests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class AuthorListAPITests(TestCase):
+class AuthorListAPITests(StaffAPITestMixin, TestCase):
     """Tests for the AuthorListView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.author1 = models.Author.objects.create(name="Alpha Author", slug="alpha")
         self.author2 = models.Author.objects.create(name="Beta Author", slug="beta")
 
@@ -151,11 +170,11 @@ class AuthorListAPITests(TestCase):
         self.assertEqual(data["count"], 1)
 
 
-class AuthorDetailAPITests(TestCase):
+class AuthorDetailAPITests(StaffAPITestMixin, TestCase):
     """Tests for the AuthorDetailView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.author = models.Author.objects.create(
             name="Test Author",
             slug="test-author",
@@ -175,11 +194,11 @@ class AuthorDetailAPITests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class AuthorDetailByIdAPITests(TestCase):
+class AuthorDetailByIdAPITests(StaffAPITestMixin, TestCase):
     """Tests for the AuthorDetailByIdView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.author = models.Author.objects.create(
             name="Test Author",
             slug="test-author",
@@ -199,11 +218,11 @@ class AuthorDetailByIdAPITests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class BookListListAPITests(TestCase):
+class BookListListAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookListListView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.publication = Publication.objects.create(name="Test Pub")
         self.book_list = List.objects.create(
             publisher=self.publication,
@@ -235,11 +254,11 @@ class BookListListAPITests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class BookMetaAPITests(TestCase):
+class BookMetaAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookMetaView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.publication = Publication.objects.create(name="Test Pub")
         List.objects.create(
             publisher=self.publication,
@@ -274,11 +293,11 @@ class BookMetaAPITests(TestCase):
         self.assertIn("total_count", data["authors"])
 
 
-class BookGenreListAPITests(TestCase):
+class BookGenreListAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookGenreListView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.fiction = models.BookGenre.objects.create(name="Fiction")
         self.scifi = models.BookGenre.objects.create(
             name="Science Fiction", parent=self.fiction
@@ -292,11 +311,11 @@ class BookGenreListAPITests(TestCase):
         self.assertEqual(data["count"], 2)
 
 
-class BookGenreTreeAPITests(TestCase):
+class BookGenreTreeAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookGenreTreeView API endpoint."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.fiction = models.BookGenre.objects.create(name="Fiction")
         self.scifi = models.BookGenre.objects.create(
             name="Science Fiction", parent=self.fiction
@@ -312,11 +331,11 @@ class BookGenreTreeAPITests(TestCase):
         self.assertEqual(data["results"][0]["name"], "Fiction")
 
 
-class BookSearchAPITests(TestCase):
+class BookSearchAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookSearchAPIView."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.book = models.Book.objects.create(
             name="Harry Potter", rank=1, slug="harry-potter"
         )
@@ -337,11 +356,11 @@ class BookSearchAPITests(TestCase):
         self.assertEqual(data["count"], 0)
 
 
-class UnifiedBookSearchAPITests(TestCase):
+class UnifiedBookSearchAPITests(StaffAPITestMixin, TestCase):
     """Tests for the UnifiedBookSearchView."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.author = models.Author.objects.create(name="J.K. Rowling", slug="jk")
         self.book = models.Book.objects.create(
             name="Harry Potter", rank=1, slug="harry-potter"
@@ -365,11 +384,11 @@ class UnifiedBookSearchAPITests(TestCase):
         self.assertEqual(data["books"], [])
 
 
-class BookDataVersionAPITests(TestCase):
+class BookDataVersionAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookDataVersionView."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         models.Book.objects.create(name="Test Book", rank=1)
 
     def test_get_version(self):
@@ -382,11 +401,11 @@ class BookDataVersionAPITests(TestCase):
         self.assertEqual(len(data["version"]), 12)
 
 
-class BookAllDataAPITests(TestCase):
+class BookAllDataAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookAllDataView."""
 
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         self.author = models.Author.objects.create(name="Test Author", slug="test")
         self.genre = models.BookGenre.objects.create(name="Fiction")
         self.book = models.Book.objects.create(
@@ -413,24 +432,39 @@ class BookAllDataAPITests(TestCase):
         self.assertEqual(books[0]["n"], "Test Book")
 
 
-class ReadBookAPITests(TestCase):
+class ReadBookAPITests(StaffAPITestMixin, TestCase):
     """Tests for the ReadBookListCreateView and ReadBookDeleteView."""
 
     def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(username="testuser", password="testpass")
+        super().setUp()
+        # Use staff user for read book tests (already logged in via mixin)
+        self.user = self.staff_user
         self.book = models.Book.objects.create(
             name="Test Book", rank=1, goodreads_id="12345"
         )
 
-    def test_list_read_books_requires_auth(self):
-        """Test GET /api/books/read-books/ requires authentication."""
+    def test_list_read_books_requires_staff(self):
+        """Test GET /api/books/read-books/ requires staff access."""
+        # Clear authentication
+        self.client.force_authenticate(user=None)
         response = self.client.get("/api/books/read-books/")
-        self.assertEqual(response.status_code, 403)
+        # Non-staff/unauthenticated gets 404 (hidden feature)
+        self.assertEqual(response.status_code, 404)
+
+        # Authenticate as non-staff user
+        regular_user = User.objects.create_user(
+            username="regularuser", password="testpass"
+        )
+        self.client.force_authenticate(user=regular_user)
+        response = self.client.get("/api/books/read-books/")
+        self.assertEqual(response.status_code, 404)
+
+        # Re-authenticate as staff
+        self.client.force_authenticate(user=self.staff_user)
 
     def test_list_read_books_authenticated(self):
         """Test GET /api/books/read-books/ returns user's read books."""
-        self.client.login(username="testuser", password="testpass")
+        # Staff user is already logged in via mixin
         models.ReadBook.objects.create(
             user=self.user, book=self.book, goodreads_id="12345"
         )
@@ -442,8 +476,7 @@ class ReadBookAPITests(TestCase):
 
     def test_mark_book_as_read(self):
         """Test POST /api/books/read-books/ marks book as read."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         response = self.client.post(
             "/api/books/read-books/", {"goodreads_id": "12345"}, format="json"
         )
@@ -456,7 +489,7 @@ class ReadBookAPITests(TestCase):
 
     def test_mark_book_as_read_removes_want_to_read(self):
         """Test marking as read removes from want-to-read."""
-        self.client.login(username="testuser", password="testpass")
+        # Staff user is already logged in via mixin
         models.WantToReadBook.objects.create(
             user=self.user, book=self.book, goodreads_id="12345"
         )
@@ -473,7 +506,7 @@ class ReadBookAPITests(TestCase):
 
     def test_unmark_book_as_read(self):
         """Test DELETE /api/books/read-books/<id>/ removes read status."""
-        self.client.login(username="testuser", password="testpass")
+        # Staff user is already logged in via mixin
         models.ReadBook.objects.create(
             user=self.user, book=self.book, goodreads_id="12345"
         )
@@ -488,30 +521,44 @@ class ReadBookAPITests(TestCase):
 
     def test_unmark_nonexistent_returns_404(self):
         """Test DELETE for nonexistent read book returns 404."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         response = self.client.delete("/api/books/read-books/99999/")
         self.assertEqual(response.status_code, 404)
 
 
-class WantToReadBookAPITests(TestCase):
+class WantToReadBookAPITests(StaffAPITestMixin, TestCase):
     """Tests for the WantToReadBookListCreateView and WantToReadBookDeleteView."""
 
     def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(username="testuser", password="testpass")
+        super().setUp()
+        # Use staff user for want to read tests (already logged in via mixin)
+        self.user = self.staff_user
         self.book = models.Book.objects.create(
             name="Test Book", rank=1, goodreads_id="12345"
         )
 
-    def test_list_want_to_read_requires_auth(self):
-        """Test GET /api/books/want-to-read/ requires authentication."""
+    def test_list_want_to_read_requires_staff(self):
+        """Test GET /api/books/want-to-read/ requires staff access."""
+        # Clear authentication
+        self.client.force_authenticate(user=None)
         response = self.client.get("/api/books/want-to-read/")
-        self.assertEqual(response.status_code, 403)
+        # Non-staff/unauthenticated gets 404 (hidden feature)
+        self.assertEqual(response.status_code, 404)
+
+        # Authenticate as non-staff user
+        regular_user = User.objects.create_user(
+            username="regularuser", password="testpass"
+        )
+        self.client.force_authenticate(user=regular_user)
+        response = self.client.get("/api/books/want-to-read/")
+        self.assertEqual(response.status_code, 404)
+
+        # Re-authenticate as staff
+        self.client.force_authenticate(user=self.staff_user)
 
     def test_list_want_to_read_authenticated(self):
         """Test GET /api/books/want-to-read/ returns user's want-to-read books."""
-        self.client.login(username="testuser", password="testpass")
+        # Staff user is already logged in via mixin
         models.WantToReadBook.objects.create(
             user=self.user, book=self.book, goodreads_id="12345"
         )
@@ -523,8 +570,7 @@ class WantToReadBookAPITests(TestCase):
 
     def test_add_to_want_to_read(self):
         """Test POST /api/books/want-to-read/ adds book to list."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         response = self.client.post(
             "/api/books/want-to-read/", {"goodreads_id": "12345"}, format="json"
         )
@@ -537,7 +583,7 @@ class WantToReadBookAPITests(TestCase):
 
     def test_add_already_read_book_fails(self):
         """Test adding a read book to want-to-read fails."""
-        self.client.login(username="testuser", password="testpass")
+        # Staff user is already logged in via mixin
         models.ReadBook.objects.create(
             user=self.user, book=self.book, goodreads_id="12345"
         )
@@ -549,7 +595,7 @@ class WantToReadBookAPITests(TestCase):
 
     def test_remove_from_want_to_read(self):
         """Test DELETE /api/books/want-to-read/<id>/ removes from list."""
-        self.client.login(username="testuser", password="testpass")
+        # Staff user is already logged in via mixin
         models.WantToReadBook.objects.create(
             user=self.user, book=self.book, goodreads_id="12345"
         )
@@ -564,7 +610,6 @@ class WantToReadBookAPITests(TestCase):
 
     def test_remove_nonexistent_returns_404(self):
         """Test DELETE for nonexistent want-to-read book returns 404."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via mixin
         response = self.client.delete("/api/books/want-to-read/99999/")
         self.assertEqual(response.status_code, 404)
