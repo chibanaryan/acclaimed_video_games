@@ -5,8 +5,8 @@ Basic tests for books app admin configuration.
 from django.contrib import admin
 from django.test import TestCase
 
-from . import models
-from .admin import (
+from books import models
+from books.admin import (
     AuthorAdmin,
     BookAdmin,
     BookGenreAdmin,
