@@ -40,6 +40,7 @@ SECRET_KEY = env(
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
+    "testserver",  # Required for Django tests
     "acclaimedvideogames.com",
     "www.acclaimedvideogames.com",
 ]
