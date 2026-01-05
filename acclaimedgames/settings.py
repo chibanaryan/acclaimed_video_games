@@ -43,6 +43,8 @@ ALLOWED_HOSTS = [
     "acclaimedvideogames.com",
     "www.acclaimedvideogames.com",
 ]
+if TEST_MODE:
+    ALLOWED_HOSTS.append("testserver")  # Django test client uses 'testserver' as host
 SITE_ID = 1
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -101,8 +103,8 @@ MIDDLEWARE = [
     "games.middleware.HTMXPushURLMiddleware",  # HTMX history support
 ]
 
-# Only enable cache middleware in production
-if not DEBUG:
+# Only enable cache middleware in production (not in DEBUG or TEST mode)
+if not DEBUG and not TEST_MODE:
     MIDDLEWARE.insert(0, "django.middleware.cache.UpdateCacheMiddleware")
     MIDDLEWARE.append("django.middleware.cache.FetchFromCacheMiddleware")
 

@@ -1,6 +1,6 @@
 """Tests for the Article (Blog) feature."""
 
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
 from core.models import User
@@ -181,8 +181,11 @@ class ArticleViewTest(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class ArticleHTMXTest(TestCase):
-    """Test HTMX partial responses for articles."""
+class ArticleHTMXTest(TransactionTestCase):
+    """Test HTMX partial responses for articles.
+
+    Uses TransactionTestCase to ensure proper database isolation from other tests.
+    """
 
     def setUp(self):
         # Create enough articles to test pagination
