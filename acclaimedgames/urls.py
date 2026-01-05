@@ -134,6 +134,8 @@ urlpatterns = [
     path("blog/", views.ArticleListView.as_view(), name="article-list"),
     path("blog/<slug:slug>/", views.ArticleDetailView.as_view(), name="article-detail"),
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page-detail"),
+    # Books app routes (Phase 4.5 will add views)
+    path("books/", include("books.urls", namespace="books")),
 ]
 
 if settings.DEBUG:
