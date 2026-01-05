@@ -6,7 +6,8 @@ import markdown
 from django.conf import settings
 from django.db import models
 from django.utils.text import Truncator, slugify
-from unidecode import unidecode
+
+from core.models import MediaItemBase
 
 from . import constants, igdb
 
@@ -1069,16 +1070,26 @@ class GameQuerySet(models.QuerySet):
         return self.annotate(list_count=Count("lists", distinct=True))
 
 
-class Game(models.Model):
+class Game(MediaItemBase):
     """
-    A video game
+    A video game.
+
+    Inherits common fields from MediaItemBase:
+    - name, name_normalized, slug, description
+    - rank, year_rank, decade_rank
+    - wikidata_id, created, modified
+
+    Adds game-specific fields for release year, IGDB integration,
+    genres, platforms, developers, and series.
     """
 
-    name = models.CharField(max_length=100, db_index=True)
-    name_normalized = models.CharField(
-        max_length=100, null=True, blank=True, db_index=True
+    # Game-specific fields
+    year_of_release = models.PositiveSmallIntegerField(
+        null=True, blank=True, db_index=True
     )
-    slug = models.SlugField(max_length=100, null=True, blank=True, db_index=True)
+    igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
+
+    # Relationships
     genres = models.ManyToManyField("IGDBGenre", blank=True)
     wikipedia_genres = models.ManyToManyField(
         "WikipediaGenre",
@@ -1097,11 +1108,6 @@ class Game(models.Model):
         related_name="games",
         help_text="Game modes from Wikidata P404",
     )
-    description = models.TextField(null=True, blank=True)
-    rank = models.IntegerField(db_index=True)
-    year_of_release = models.PositiveSmallIntegerField(
-        null=True, blank=True, db_index=True
-    )
     developers = models.ManyToManyField(
         "Developer",
         blank=True,
@@ -1115,11 +1121,6 @@ class Game(models.Model):
         related_name="games",
         help_text="Game series from IGDB (e.g., 'Mario Kart', 'Final Fantasy VII')",
     )
-    created = models.DateTimeField(
-        auto_now_add=True, db_index=True, null=True, blank=True
-    )
-    modified = models.DateTimeField(auto_now=True, db_index=True)
-    igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
 
     # Fast access to primary records (OneToOne for performance)
     primary_igdb_game_data = models.OneToOneField(
@@ -1155,19 +1156,6 @@ class Game(models.Model):
         help_text="Primary ProtonDB data for Steam Deck compatibility display",
     )
 
-    # Wikidata ID for linking to Wikipedia/Wikidata
-    wikidata_id = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True,
-        db_index=True,
-        help_text="Wikidata entity ID (e.g., 'Q12345')",
-    )
-
-    # Calculated ranking fields
-    year_rank = models.IntegerField(null=True, blank=True, db_index=True)
-    decade_rank = models.IntegerField(null=True, blank=True, db_index=True)
-
     objects = GameQuerySet.as_manager()
 
     class Meta:
@@ -1175,21 +1163,6 @@ class Game(models.Model):
         indexes = [
             models.Index(fields=["year_of_release", "rank"]),
         ]
-
-    def __str__(self) -> str:
-        return self.name
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """
-        Save the game, calculating normalized name and ensuring data records exist.
-        """
-        # Save the normalized version of the name
-        normalized = unidecode(self.name)
-        if self.name != normalized:
-            self.name_normalized = normalized
-
-        # Call parent save
-        super().save(*args, **kwargs)
 
     def get_igdb_data(
         self,

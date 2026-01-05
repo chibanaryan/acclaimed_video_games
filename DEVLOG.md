@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-05
+
+- Refactor Game model to inherit from MediaItemBase (Phase 9.1.1 complete)
+
 ## 2026-01-04
 
 - Add books/ app skeleton with URL routing for multi-media platform expansion
