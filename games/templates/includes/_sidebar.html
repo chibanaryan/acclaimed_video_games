@@ -40,12 +40,21 @@
             </a>
         </div>
 
-        {# Media type switcher - Games/Books toggle (only shown when books feature is enabled) #}
-        {% if BOOKS_ENABLED %}
+        {# Media type switcher - Games/Books toggle when books enabled, otherwise Home button #}
         <nav class="mb-3">
+            {% if BOOKS_ENABLED %}
             {% include 'core/includes/_media_switcher.html' with variant='tabs' size='sm' %}
+            {% else %}
+            <ul class="menu gap-1">
+                <li>
+                    <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <span class="mdi mdi-medal text-xl"></span>
+                        Home
+                    </a>
+                </li>
+            </ul>
+            {% endif %}
         </nav>
-        {% endif %}
 
         {# Search bar #}
         <div class="relative"

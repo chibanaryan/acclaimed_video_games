@@ -16,7 +16,7 @@
 class GameDataCache {
     constructor() {
         this.DB_NAME = 'acclaimedgames';
-        this.DB_VERSION = 1;
+        this.DB_VERSION = 2;  // Bumped to force cache refresh
         this.STORE_NAME = 'gamedata';
         this.CACHE_KEY = 'allgames';
         this.VERSION_URL = '/api/games/version/';
@@ -35,14 +35,22 @@ class GameDataCache {
         if (this._initPromise) return this._initPromise;
 
         this._initPromise = new Promise((resolve, reject) => {
+            // Timeout to prevent infinite hang on corrupted databases
+            const timeout = setTimeout(() => {
+                console.warn('[GameDataCache] IndexedDB open timed out');
+                reject(new Error('IndexedDB timeout'));
+            }, 5000);
+
             const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
 
             request.onerror = () => {
+                clearTimeout(timeout);
                 console.error('IndexedDB error:', request.error);
                 reject(request.error);
             };
 
             request.onsuccess = () => {
+                clearTimeout(timeout);
                 this._db = request.result;
                 resolve(this._db);
             };
@@ -52,6 +60,12 @@ class GameDataCache {
                 if (!db.objectStoreNames.contains(this.STORE_NAME)) {
                     db.createObjectStore(this.STORE_NAME, { keyPath: 'key' });
                 }
+            };
+
+            request.onblocked = () => {
+                clearTimeout(timeout);
+                console.warn('[GameDataCache] IndexedDB blocked - close other tabs');
+                reject(new Error('IndexedDB blocked'));
             };
         });
 
