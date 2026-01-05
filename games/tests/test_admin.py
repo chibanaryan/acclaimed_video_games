@@ -3,6 +3,7 @@ from unittest import mock
 from django.contrib.admin.sites import AdminSite
 from django.test import TestCase
 
+from core.models import User
 from games import admin, models
 
 
@@ -653,7 +654,7 @@ class PlayedGameAdminTests(TestCase):
     def setUp(self):
         self.site = AdminSite()
         self.admin = admin.PlayedGameAdmin(models.PlayedGame, self.site)
-        self.user = models.User.objects.create_user(
+        self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
         )
 
@@ -706,7 +707,7 @@ class WantToPlayGameAdminTests(TestCase):
     def setUp(self):
         self.site = AdminSite()
         self.admin = admin.WantToPlayGameAdmin(models.WantToPlayGame, self.site)
-        self.user = models.User.objects.create_user(
+        self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
         )
 
@@ -759,7 +760,7 @@ class SavedFilterSetAdminTests(TestCase):
     def setUp(self):
         self.site = AdminSite()
         self.admin = admin.SavedFilterSetAdmin(models.SavedFilterSet, self.site)
-        self.user = models.User.objects.create_user(
+        self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
         )
 

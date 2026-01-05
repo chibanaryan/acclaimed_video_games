@@ -181,7 +181,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Custom User model
-AUTH_USER_MODEL = "games.User"
+AUTH_USER_MODEL = "core.User"
 
 # Authentication URLs
 LOGIN_REDIRECT_URL = "/"

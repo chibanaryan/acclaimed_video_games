@@ -1,11 +1,9 @@
 import logging
-import secrets
 from functools import cached_property
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 import markdown
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.text import Truncator, slugify
 from unidecode import unidecode
@@ -15,60 +13,8 @@ from . import constants, igdb
 logger = logging.getLogger(__name__)
 
 
-class User(AbstractUser):
-    """
-    Custom user model consolidating UserProfile and Subscriber functionality.
-
-    This model extends Django's AbstractUser to include:
-    - Newsletter subscription fields (email_subscribed, unsubscribe_token, etc.)
-
-    Email verification is handled by allauth's EmailAddress model.
-    Check EmailAddress.verified to determine if a user's email is verified.
-
-    Users can be:
-    - Full accounts: Have a usable password, can log in
-    - Subscriber-only: Created from newsletter signup with unusable password,
-      can claim account later via password reset
-    """
-
-    # Newsletter subscription fields
-    email_subscribed = models.BooleanField(default=False)
-    unsubscribe_token = models.CharField(
-        max_length=64, unique=True, null=True, blank=True, db_index=True
-    )
-    date_subscribed = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        swappable = "AUTH_USER_MODEL"
-
-    @property
-    def name(self) -> str:
-        """Return username or email prefix for display purposes."""
-        if self.username:
-            return self.username
-        if self.email:
-            return self.email.split("@")[0]
-        return "User"
-
-    @property
-    def email_verified(self) -> bool:
-        """Check if user's email is verified via allauth EmailAddress."""
-        from allauth.account.models import EmailAddress
-
-        return EmailAddress.objects.filter(
-            user=self, email__iexact=self.email, verified=True
-        ).exists()
-
-    def generate_unsubscribe_token(self) -> None:
-        """Generate unsubscribe token for newsletter."""
-        if not self.unsubscribe_token:
-            self.unsubscribe_token = secrets.token_urlsafe(32)
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """Generate unsubscribe token if subscribing for first time."""
-        if self.email_subscribed and not self.unsubscribe_token:
-            self.generate_unsubscribe_token()
-        super().save(*args, **kwargs)
+# User model has been moved to core.models
+# Import from there: from core.models import User
 
 
 class PlayedGame(models.Model):

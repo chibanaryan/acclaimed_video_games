@@ -31,6 +31,7 @@ from django.views import View
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
+from core.models import User
 from games import config, constants, models, utils
 from games.services.percentile_service import calculate_percentile
 from games.forms import ImportForm, ContactForm
@@ -2717,11 +2718,11 @@ class UnsubscribeView(TemplateView):
     def get(self, request, token):  # pragma: no cover
         """Process unsubscribe token."""
         try:
-            user = models.User.objects.get(unsubscribe_token=token)
+            user = User.objects.get(unsubscribe_token=token)
             user.email_subscribed = False
             user.save()
             return self.render_to_response({"success": True, "email": user.email})
-        except models.User.DoesNotExist:
+        except User.DoesNotExist:
             return self.render_to_response({"success": False})
 
 
@@ -2827,7 +2828,7 @@ class AuthModalSignupView(View):
                     "Username can only contain letters, numbers, "
                     "underscores, and hyphens."
                 )
-            elif models.User.objects.filter(username__iexact=username).exists():
+            elif User.objects.filter(username__iexact=username).exists():
                 username_error = "This username is already taken."
 
         if form.is_valid() and not username_error:
@@ -3067,7 +3068,7 @@ class AuthModalProfileView(View):
                     "underscores, and hyphens."
                 )
             elif (
-                models.User.objects.filter(username__iexact=new_username)
+                User.objects.filter(username__iexact=new_username)
                 .exclude(pk=user.pk)
                 .exists()
             ):

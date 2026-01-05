@@ -4,6 +4,7 @@ from unittest import mock
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
+from core.models import User
 from .. import models, utils
 
 
@@ -307,7 +308,7 @@ class ImportGamesTests(TestCase):
     def test_import_games_orphans_played_games_on_delete(self):
         """Test that PlayedGame records are orphaned when games are deleted."""
         # Create user and game
-        user = models.User.objects.create_user(
+        user = User.objects.create_user(
             username="testuser",
             email="test@example.com",
             password="testpass123",
@@ -338,7 +339,7 @@ class ImportGamesTests(TestCase):
     def test_import_games_reconnects_played_games(self):
         """Test that orphaned PlayedGame records are reconnected on re-import."""
         # Create user and orphaned PlayedGame (simulating previous game was deleted)
-        user = models.User.objects.create_user(
+        user = User.objects.create_user(
             username="testuser",
             email="test@example.com",
             password="testpass123",

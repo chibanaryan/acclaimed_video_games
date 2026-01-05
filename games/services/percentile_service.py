@@ -7,6 +7,7 @@ Calculates where a user's played game count ranks relative to other users.
 from django.core.cache import cache
 from django.db.models import Count, Q
 
+from core.models import User
 from games import config, models
 
 
@@ -25,7 +26,7 @@ def get_played_games_distribution():
     if distribution is None:
         # Aggregate played game counts per user (non-orphaned only)
         distribution = list(
-            models.User.objects.annotate(
+            User.objects.annotate(
                 played_count=Count(
                     "played_games", filter=Q(played_games__game__isnull=False)
                 )

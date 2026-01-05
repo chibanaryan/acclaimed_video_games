@@ -2,6 +2,7 @@ from unittest import mock
 
 from django.test import TestCase
 
+from core.models import User
 from .. import constants, models, utils
 
 
@@ -1118,17 +1119,17 @@ class UserModelTests(TestCase):
 
     def test_name_returns_username_when_set(self):
         """Test name property returns username if set."""
-        user = models.User.objects.create(username="testuser", email="test@example.com")
+        user = User.objects.create(username="testuser", email="test@example.com")
         self.assertEqual(user.name, "testuser")
 
     def test_name_returns_email_prefix_when_no_username(self):
         """Test name property returns email prefix when username is empty."""
-        user = models.User.objects.create(username="", email="john.doe@example.com")
+        user = User.objects.create(username="", email="john.doe@example.com")
         self.assertEqual(user.name, "john.doe")
 
     def test_name_returns_user_fallback(self):
         """Test name property returns 'User' when no username or email."""
-        user = models.User.objects.create(username="", email="")
+        user = User.objects.create(username="", email="")
         self.assertEqual(user.name, "User")
 
 

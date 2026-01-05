@@ -4,7 +4,8 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from games.models import SavedFilterSet, User
+from core.models import User
+from games.models import SavedFilterSet
 
 
 class SavedFilterSetModelTests(TestCase):

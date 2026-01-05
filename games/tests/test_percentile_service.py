@@ -3,7 +3,8 @@
 from django.core.cache import cache
 from django.test import TestCase
 
-from games.models import User, Game, PlayedGame
+from core.models import User
+from games.models import Game, PlayedGame
 from games.services.percentile_service import (
     calculate_percentile,
     get_played_games_distribution,

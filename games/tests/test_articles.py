@@ -3,7 +3,8 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from games.models import Article, User
+from core.models import User
+from games.models import Article
 
 
 class ArticleModelTest(TestCase):
