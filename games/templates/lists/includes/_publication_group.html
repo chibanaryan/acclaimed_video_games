@@ -19,7 +19,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
 
-        {# Publication name and type counts as colored badges (fixed-width for alignment) #}
+        {# Publication name and type counts as colored badges (counts update based on filters) #}
         <span class="font-semibold text-base flex-1">{{ group.publication.name }}</span>
         <span class="flex items-center gap-0.5">
             <span class="w-8 text-center">{% if group.alltime_count %}<span class="badge badge-sm badge-info font-semibold">{{ group.alltime_count }}</span>{% endif %}</span>

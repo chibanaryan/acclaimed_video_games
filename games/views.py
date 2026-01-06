@@ -2180,54 +2180,66 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         if type_code:
             count_filter &= Q(type=type_code)
 
+        # Build filter conditions for badge counts
+        # Year filter applies to all counts
+        # Type filter: only show count for matching type (others become 0)
+        year_filter = Q(lists__year=year_value) if year_value else Q()
+
         qs = models.Publication.objects.annotate(
-            # Filtered counts for display
+            # Filtered counts for display - responsive to both year and type filters
             alltime_count=Count(
                 "lists",
                 filter=Q(lists__type=constants.LIST_ALLTIME)
-                & (Q(lists__year=year_value) if year_value else Q()),
+                & year_filter
+                & (Q() if not type_code or type_code == constants.LIST_ALLTIME else Q(pk__in=[])),
             ),
             decade_count=Count(
                 "lists",
                 filter=Q(lists__type=constants.LIST_DECADE)
-                & (Q(lists__year=year_value) if year_value else Q()),
+                & year_filter
+                & (Q() if not type_code or type_code == constants.LIST_DECADE else Q(pk__in=[])),
             ),
             misc_count=Count(
                 "lists",
                 filter=Q(lists__type=constants.LIST_MISC)
-                & (Q(lists__year=year_value) if year_value else Q()),
+                & year_filter
+                & (Q() if not type_code or type_code == constants.LIST_MISC else Q(pk__in=[])),
             ),
             eoy_count=Count(
                 "lists",
                 filter=Q(lists__type=constants.LIST_EOY)
-                & (Q(lists__year=year_value) if year_value else Q()),
+                & year_filter
+                & (Q() if not type_code or type_code == constants.LIST_EOY else Q(pk__in=[])),
             ),
             # Total filtered count
             total_count=Count("lists", filter=list_filter if list_filter else Q()),
             # Importance score for sorting
-            # All-time: 1000 pts, Decade: 100 pts, Misc: 10 pts, EOY: 1 pt
-            importance_score=Count(
-                "lists",
-                filter=Q(lists__type=constants.LIST_ALLTIME)
-                & (Q(lists__year=year_value) if year_value else Q()),
-            )
-            * 1000
-            + Count(
-                "lists",
-                filter=Q(lists__type=constants.LIST_DECADE)
-                & (Q(lists__year=year_value) if year_value else Q()),
-            )
-            * 100
-            + Count(
-                "lists",
-                filter=Q(lists__type=constants.LIST_MISC)
-                & (Q(lists__year=year_value) if year_value else Q()),
-            )
-            * 10
-            + Count(
-                "lists",
-                filter=Q(lists__type=constants.LIST_EOY)
-                & (Q(lists__year=year_value) if year_value else Q()),
+            # When type filter is applied: sort by count of that type
+            # When no type filter: weighted score (All-time: 1000, Decade: 100, Misc: 10, EOY: 1)
+            importance_score=(
+                Count("lists", filter=list_filter if list_filter else Q())
+                if type_code
+                else (
+                    Count(
+                        "lists",
+                        filter=Q(lists__type=constants.LIST_ALLTIME) & year_filter,
+                    )
+                    * 1000
+                    + Count(
+                        "lists",
+                        filter=Q(lists__type=constants.LIST_DECADE) & year_filter,
+                    )
+                    * 100
+                    + Count(
+                        "lists",
+                        filter=Q(lists__type=constants.LIST_MISC) & year_filter,
+                    )
+                    * 10
+                    + Count(
+                        "lists",
+                        filter=Q(lists__type=constants.LIST_EOY) & year_filter,
+                    )
+                )
             ),
         )
 
