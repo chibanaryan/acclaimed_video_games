@@ -442,7 +442,6 @@ python manage.py collectstatic --noinput
 - `theme/static_src/src/styles.css` - Main Tailwind CSS source file with custom components
 - `theme/static/css/dist/styles.css` - Compiled CSS output (auto-generated)
 - `games/static/games/css/mdi-subset.css` - Material Design Icons (self-hosted subset)
-- `games/static/games/css/import.css` - Standalone CSS for admin import page
 
 **Adding Custom Styles:**
 Edit `theme/static_src/src/styles.css` and use Tailwind's `@layer` directive:

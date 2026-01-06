@@ -45,18 +45,6 @@ def get_list_type_label(type_code):
     return type_dict.get(type_code, type_code)
 
 
-@register.filter
-def get_list_type_badge_class(type_code):
-    """Return DaisyUI badge class for list type."""
-    badge_classes = {
-        constants.LIST_ALLTIME: "badge-info font-semibold",
-        constants.LIST_DECADE: "badge-success font-semibold",
-        constants.LIST_MISC: "badge-warning font-semibold",
-        constants.LIST_EOY: "badge-error font-semibold",
-    }
-    return badge_classes.get(type_code, "badge-ghost")
-
-
 @register.simple_tag
 def game_rank_url(rank, game_id=None, start=None, end=None):
     """
@@ -357,17 +345,6 @@ def format_playtime(hours):
 
 
 @register.filter
-def rank_pct(rank, total):
-    """
-    Calculate rank position as percentage (higher rank = higher percentage).
-    Rank 1 = 100%, Rank N = close to 0%.
-    """
-    if not rank or not total or total <= 1:
-        return 0
-    return round((1 - (rank - 1) / (total - 1)) * 100)
-
-
-@register.filter
 def platform_icon(platform):
     """
     Get the MDI icon class for a platform based on its family.
@@ -417,55 +394,6 @@ GENRE_CATEGORY_ICONS = {
     "Party & Casual": "mdi-party-popper",
     "Hybrid & Specialized": "mdi-layers",
 }
-
-
-@register.filter
-def genre_categories_grouped(genres):
-    """
-    Group genres by their parent category with metadata for display.
-    Returns list of dicts with:
-    - icon: MDI icon class
-    - name: Category display name
-    - count: Number of genres in this category
-    - genre_ids_str: Comma-separated genre IDs for filtering
-    - tooltip: Full genre names for tooltip display
-    """
-    categories = {}
-
-    for genre in genres:
-        # Determine the category
-        if hasattr(genre, "parent") and genre.parent:
-            category_name = genre.parent.name
-        elif hasattr(genre, "level") and genre.level == 0:
-            category_name = genre.name
-        else:
-            category_name = "Other"
-
-        if category_name not in categories:
-            icon = GENRE_CATEGORY_ICONS.get(category_name, "mdi-gamepad-variant")
-            categories[category_name] = {
-                "icon": icon,
-                "name": category_name,
-                "genre_ids": [],
-                "genre_names": [],
-            }
-
-        genre_id = genre.id if hasattr(genre, "id") else None
-        genre_name = genre.name if hasattr(genre, "name") else str(genre)
-
-        if genre_id:
-            categories[category_name]["genre_ids"].append(str(genre_id))
-        categories[category_name]["genre_names"].append(genre_name)
-
-    # Build final list with computed fields
-    result = []
-    for data in categories.values():
-        data["count"] = len(data["genre_names"])
-        data["genre_ids_str"] = ",".join(data["genre_ids"])
-        data["tooltip"] = ", ".join(data["genre_names"])
-        result.append(data)
-
-    return result
 
 
 @register.filter
