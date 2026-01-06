@@ -14,7 +14,7 @@ Use these skills for common workflows:
 - `/minify` - Minify JavaScript files and regenerate bundles
 - `/igdb` - Import IGDB game data
 - `/wikipedia` - Fetch Wikipedia metadata and genres
-- `/refresh-metadata` - Weekly metadata refresh (IGDB + Wikipedia)
+- `/refresh-metadata` - Weekly metadata refresh (IGDB + Wikipedia + HLTB)
 - `/test` - Run tests with coverage
 - `/icons` - Add Material Design Icons to the site
 - `/openlibrary` - Fetch book metadata from Open Library API
@@ -122,6 +122,9 @@ heroku run -- python manage.py shell
 - `django.contrib.flatpages` - Flat pages framework for CMS content
 - `django.contrib.sites` - Sites framework (used for multi-site support)
 - `django.contrib.postgres` - PostgreSQL-specific features
+- `django.contrib.humanize` - Human-readable formatting filters
+- `django.contrib.sitemaps` - Sitemap generation
+- `django.forms` - Form rendering customization
 - `rest_framework` - Django REST Framework
 - `corsheaders` - CORS support
 - `tailwind` - django-tailwind integration
@@ -129,19 +132,27 @@ heroku run -- python manage.py shell
 - `core` - Shared infrastructure (User model, abstract bases, mixins)
 - `games` - Main game aggregation app with HTMX and Alpine.js
 - `books` - Book rankings app (behind `BOOKS_ENABLED` feature flag)
+- `allauth` - Django-allauth authentication
+- `allauth.account` - Email/password authentication
+- `allauth.socialaccount` - Social authentication base
+- `allauth.socialaccount.providers.google` - Google OAuth
+- `allauth.socialaccount.providers.facebook` - Facebook OAuth
+- `django_extensions` - Development utilities (shell_plus, etc.)
 
 **Middleware:**
 - `django.middleware.security.SecurityMiddleware` - Security headers
 - `whitenoise.middleware.WhiteNoiseMiddleware` - Static file serving in production
+- `django.middleware.gzip.GZipMiddleware` - Compress HTML responses
 - `django.contrib.sessions.middleware.SessionMiddleware` - Session management
 - `corsheaders.middleware.CorsMiddleware` - CORS headers
 - `django.middleware.common.CommonMiddleware` - Common utilities
 - `django.middleware.csrf.CsrfViewMiddleware` - CSRF protection
 - `django.contrib.auth.middleware.AuthenticationMiddleware` - Authentication
+- `allauth.account.middleware.AccountMiddleware` - Allauth account handling
 - `django.contrib.messages.middleware.MessageMiddleware` - Messages
 - `django.middleware.clickjacking.XFrameOptionsMiddleware` - Click-jacking protection
-- `games.middleware.HTMXPushURLMiddleware` - HTMX history/URL push support
 - `django.contrib.flatpages.middleware.FlatpageFallbackMiddleware` - Flat pages routing
+- `games.middleware.HTMXPushURLMiddleware` - HTMX history/URL push support
 
 ### Data Models
 
@@ -226,7 +237,7 @@ The application uses Django templates with HTMX for dynamic interactions and Alp
 
 **Styling:**
 - Uses Tailwind CSS v4 with DaisyUI v5 component library
-- Light theme (lofi) as default with forest dark theme available via theme switcher
+- Dark theme (forest) as default with lofi light theme available via theme switcher
 - Responsive design using Tailwind's mobile-first breakpoints (md:, lg:, etc.)
 - Custom components defined in `theme/static_src/src/styles.css` using Tailwind's `@layer components`
 
@@ -235,21 +246,24 @@ The application uses Django templates with HTMX for dynamic interactions and Alp
 - Custom utilities for formatting and string manipulation
 
 **Routes:**
-- `/` - Home page (games)
-- `/games/` - Game list with filtering and search
-- `/games/<slug>/` - Game detail view
-- `/games/search/` - Game search endpoint (HTMX)
+- `/` - Home page (game rankings with filtering and search)
+- `/game/<slug>/` - Game detail view
 - `/developers/` - Developer list with game counts and hierarchy
 - `/developers/<slug>/` - Developer detail view with subsidiary hierarchy and games
 - `/lists/` - Published rankings list (with media_type filter)
-- `/posts/` - News and blog posts
-- `/page/<slug>/` - Static pages
+- `/news/` - News posts
+- `/blog/` - Blog articles
+- `/blog/<slug>/` - Article detail view
+- `/contact/` - Contact form
+- `/page/<slug>/` - Static pages (flatpages)
+- `/download/` - CSV export of games
+- `/accounts/*` - Authentication (django-allauth)
 
 Book routes (behind `BOOKS_ENABLED` feature flag):
 - `/books/` - Book list with filtering and search
-- `/book/<slug>/` - Book detail view
-- `/authors/` - Author list with book counts
-- `/authors/<slug>/` - Author detail view with books
+- `/books/<slug>/` - Book detail view
+- `/books/authors/` - Author list with book counts
+- `/books/authors/<slug>/` - Author detail view with books
 
 **HTMX Integration:**
 - Dynamic filtering without full page reloads

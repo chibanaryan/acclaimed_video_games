@@ -100,9 +100,10 @@ The site uses django-tailwind with Tailwind CSS v4 and DaisyUI v5.
 Themes are configured in `styles.css`:
 ```css
 @plugin "daisyui" {
-  themes: forest --default, night, sunset, nord, lofi;
+  themes: ["lofi", "forest"];
 }
 ```
+Forest (dark theme) is the default. The theme switcher allows users to select lofi (light theme).
 
 ## Pre-commit Hooks
 

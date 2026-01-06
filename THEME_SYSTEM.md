@@ -150,7 +150,7 @@ User clicks theme toggle → JavaScript function `setTheme(newTheme)`:
 - [ ] Main site pages (games, developers, lists, posts) use correct theme
 - [ ] Theme toggle switches between lofi and forest
 - [ ] Theme persists across page navigation
-- [ ] Import page (`/admin/import/`) uses same theme as main site
+- [ ] Import page (`/import/`) uses same theme as main site
 - [ ] Django admin (`/admin/`) uses same theme as main site
 - [ ] Theme survives browser refresh
 - [ ] Invalid theme values get automatically corrected
