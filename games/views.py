@@ -813,7 +813,6 @@ class GameDetailView(DetailView):
             "developers__parent",
             "platforms",
             "genres",
-            "quotes",
             Prefetch(
                 "lists",
                 queryset=models.ListMembership.objects.select_related(

@@ -18,6 +18,7 @@ Reference files that must stay in sync:
 
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -36,6 +37,9 @@ class TemplateStructureTests(TestCase):
     """
 
     def setUp(self):
+        # Clear all caches to ensure fresh responses
+        # (home page caches full rendered responses for anonymous users)
+        cache.clear()
         self.client = Client()
         self.developer = models.Developer.objects.create(
             name="Test Developer", slug="test-developer-struct"
@@ -149,6 +153,8 @@ class ServerRenderedOutputTests(TestCase):
     """
 
     def setUp(self):
+        # Clear all caches to ensure fresh responses
+        cache.clear()
         self.client = Client()
         self.developer = models.Developer.objects.create(
             name="Test Studios", slug="test-studios-server"
@@ -332,6 +338,8 @@ class GameWithoutOptionalFieldsTests(TestCase):
     """
 
     def setUp(self):
+        # Clear all caches to ensure fresh responses
+        cache.clear()
         self.client = Client()
         # Create minimal game without optional fields
         self.game = models.Game.objects.create(
@@ -376,6 +384,8 @@ class MobileDesktopConsistencyTests(TestCase):
     """
 
     def setUp(self):
+        # Clear all caches to ensure fresh responses
+        cache.clear()
         self.client = Client()
         self.developer = models.Developer.objects.create(
             name="Test Developer", slug="test-developer-consist"

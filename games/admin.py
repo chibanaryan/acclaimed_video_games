@@ -113,14 +113,6 @@ class DeveloperAdmin(admin.ModelAdmin):
         return getattr(obj, "_game_count", obj.developed_games.count())
 
 
-class GameQuoteInline(admin.TabularInline):
-    """Inline editor for game quotes."""
-
-    model = models.GameQuote
-    extra = 1
-    fields = ["text", "attribution", "is_featured"]
-
-
 @admin.register(models.Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = [
@@ -149,7 +141,6 @@ class GameAdmin(admin.ModelAdmin):
         "wikipedia_game_modes",
         "series",
     ]
-    inlines = [GameQuoteInline]
 
     def get_queryset(self, request: HttpRequest):
         """Prefetch genres and select primary data records to avoid N+1 queries."""
@@ -349,22 +340,6 @@ class HLTBGameDataAdmin(admin.ModelAdmin):
         return "-"
 
     _hltb_link.short_description = "HLTB Link"
-
-
-@admin.register(models.GameQuote)
-class GameQuoteAdmin(admin.ModelAdmin):
-    """Admin interface for game quotes."""
-
-    list_display = ["game", "quote_preview", "attribution", "is_featured", "created"]
-    list_filter = ["is_featured", "created"]
-    search_fields = ["game__name", "text", "attribution"]
-    raw_id_fields = ["game"]
-
-    def quote_preview(self, obj: models.GameQuote) -> str:
-        """Display truncated quote text."""
-        return Truncator(obj.text).words(15)
-
-    quote_preview.short_description = "Quote"
 
 
 @admin.register(models.List)

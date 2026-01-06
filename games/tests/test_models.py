@@ -1269,26 +1269,3 @@ class GameListsGroupedTests(TestCase):
         # All time should come before End of year in sorted order
         self.assertEqual(keys[0], "All time")
         self.assertEqual(keys[1], "End of year")
-
-
-class GameQuoteModelTests(TestCase):
-    """Tests for GameQuote model."""
-
-    def test_str_truncates_long_text(self):
-        """Test __str__ truncates long quote text."""
-        game = models.Game.objects.create(name="Quotable Game", rank=1, igdb_id=1)
-        long_text = " ".join(["word"] * 20)  # 20 words
-        quote = models.GameQuote.objects.create(game=game, text=long_text)
-
-        result = str(quote)
-        self.assertIn("Quotable Game:", result)
-        # Should be truncated to 10 words (uses ellipsis character)
-        self.assertIn("…", result)
-
-    def test_str_short_text(self):
-        """Test __str__ shows full text when short."""
-        game = models.Game.objects.create(name="Short Game", rank=1, igdb_id=1)
-        quote = models.GameQuote.objects.create(game=game, text="Short quote")
-
-        result = str(quote)
-        self.assertEqual(result, "Short Game: Short quote")

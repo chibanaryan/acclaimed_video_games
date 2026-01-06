@@ -114,14 +114,3 @@ WIKIDATA_UNAUTHENTICATED_DELAY = 2.0  # seconds (safely under 0.14 req/sec limit
 # Note: Game mode (P404) and country (P495) labels are now fetched dynamically
 # from Wikidata and cached in WikipediaGameMode/WikipediaCountry database tables.
 # See WikiPageLookupService._get_or_create_game_mode() and _get_or_create_country()
-
-# =============================================================================
-# Wikiquote Configuration
-# =============================================================================
-
-# API endpoints
-WIKIQUOTE_API_URL = "https://en.wikiquote.org/w/api.php"
-
-# Quote validation
-MIN_QUOTE_LENGTH = 10
-MAX_QUOTE_LENGTH = 200

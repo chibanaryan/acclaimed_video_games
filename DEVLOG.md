@@ -2,6 +2,8 @@
 
 ## 2026-01-05
 
+- Remove GameQuote feature (model, services, management command, admin, tests)
+- Fix test isolation bug: add cache.clear() to test setUp methods (home page caches full responses for anonymous users)
 - Remove ProtonDB Steam Deck compatibility feature (low coverage, limited utility)
 - Fix HLTB ID missing for games without English Wikipedia pages: fetch Wikidata metadata even when enwiki sitelink is absent, merge with Wikipedia page's Wikidata entry for union of all metadata (HLTB, Steam, game modes, countries)
 - Fix accessibility: add aria-labels to played/tracking buttons for screen readers

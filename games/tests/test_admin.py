@@ -394,33 +394,6 @@ class HLTBGameDataAdminTests(TestCase):
         self.assertEqual(value, "-")
 
 
-class GameQuoteAdminTests(TestCase):
-    """Tests for GameQuote admin interface."""
-
-    def setUp(self):
-        self.site = AdminSite()
-        self.admin = admin.GameQuoteAdmin(models.GameQuote, self.site)
-
-    def test_quote_preview_truncates_long_quote(self):
-        """Test quote_preview truncates long quotes to 15 words."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            year_of_release=2020,
-        )
-        long_quote = "This is a very long quote that has many more words " * 5
-        quote = models.GameQuote.objects.create(
-            game=game,
-            text=long_quote,
-            attribution="Test Source",
-        )
-
-        value = self.admin.quote_preview(quote)
-        # Should be truncated, so shorter than original
-        word_count = len(value.replace("…", "").split())
-        self.assertLessEqual(word_count, 16)
-
-
 class WikipediaGenreAdminTests(TestCase):
     """Tests for WikipediaGenre admin interface."""
 

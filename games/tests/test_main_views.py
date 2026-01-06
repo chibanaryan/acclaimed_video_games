@@ -30,8 +30,9 @@ class HomePageViewTest(TestCase):
     """Test the home page view."""
 
     def setUp(self):
-        # Clear hero stats cache to ensure fresh counts
-        cache.delete("homepage_hero_stats")
+        # Clear all caches to ensure fresh responses
+        # (home page caches full rendered responses for anonymous users)
+        cache.clear()
 
         # Create test data
         self.site_metadata = SiteMetadata.objects.create()
@@ -213,6 +214,11 @@ class GameListViewTest(TestCase):
             Game.objects.create(
                 name=f"Game {i}", rank=i, year_of_release=1990 + (i % 30)
             )
+
+    def setUp(self):
+        # Clear all caches to ensure fresh responses
+        # (home page caches full rendered responses for anonymous users)
+        cache.clear()
 
     def test_game_list_loads(self):
         """Test that game list page loads."""
@@ -484,6 +490,10 @@ class HomePageFilterTest(TestCase):
     """Test the home page filtering and search functionality."""
 
     def setUp(self):
+        # Clear all caches to ensure fresh responses
+        # (home page caches full rendered responses for anonymous users)
+        cache.clear()
+
         # Create test games with different attributes
         self.game1 = Game.objects.create(
             name="The Legend of Zelda", rank=1, year_of_release=1986
@@ -506,9 +516,6 @@ class HomePageFilterTest(TestCase):
         self.game1.platforms.add(self.nes_platform)
         self.game2.wikipedia_genres.add(self.rpg_genre)
         self.game3.wikipedia_genres.add(self.action_genre)
-
-        # Clear genre cache to ensure fresh data for each test
-        cache.delete("search_wikipedia_genres_list_with_counts")
 
     def test_search_page_loads(self):
         """Test that search page loads."""
@@ -744,6 +751,10 @@ class GameSearchPlayedFilterTest(TestCase):
     """Test the played games filter in game search view."""
 
     def setUp(self):
+        # Clear all caches to ensure fresh responses
+        # (home page caches full rendered responses for anonymous users)
+        cache.clear()
+
         # Create test user
         self.user = User.objects.create_user(
             username="testuser",
@@ -842,6 +853,10 @@ class GameSearchLoadMoreTest(TestCase):
     """Test the Load More functionality in game search."""
 
     def setUp(self):
+        # Clear all caches to ensure fresh responses
+        # (home page caches full rendered responses for anonymous users)
+        cache.clear()
+
         # Create 150 test games to test pagination
         for i in range(150):
             Game.objects.create(
