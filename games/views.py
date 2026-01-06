@@ -643,7 +643,7 @@ def download_games_csv(request):
     min_year, max_year = _get_year_bounds()
     genres_lookup = utils.get_or_set_cache(
         "search_genres_list_with_counts",
-        models.IGDBGenre.objects.annotate(game_count=Count("game")),
+        models.WikipediaGenre.objects.annotate(game_count=Count("games_with_wikipedia_genre")),
         ["id", "name", "game_count"],
         order_by="name",
         transform_id=True,
@@ -812,7 +812,7 @@ class GameDetailView(DetailView):
             "developers",
             "developers__parent",
             "platforms",
-            "genres",
+            "wikipedia_genres",
             Prefetch(
                 "lists",
                 queryset=models.ListMembership.objects.select_related(
@@ -1761,7 +1761,7 @@ class DeveloperDetailView(DetailView):
             "developers",
             "developers__parent",
             "platforms",
-            "genres",
+            "wikipedia_genres",
         ).order_by("rank")
 
         return models.Developer.objects.prefetch_related(
@@ -2011,7 +2011,7 @@ class DeveloperDetailView(DetailView):
         all_games = list(
             models.Game.objects.filter(id__in=all_game_ids)
             .select_related("primary_hltb_game_data")
-            .prefetch_related("developers", "platforms", "genres")
+            .prefetch_related("developers", "platforms", "wikipedia_genres")
             .order_by("rank")
         )
         context["all_games"] = all_games
@@ -2559,7 +2559,6 @@ class ImportView(LoginRequiredMixin, FormView):
             "memberships": models.ListMembership.objects.count(),
             "developers": models.Developer.objects.count(),
             "series": models.Series.objects.count(),
-            "igdb_genres": models.IGDBGenre.objects.count(),
             "wikipedia_genres": models.WikipediaGenre.objects.count(),
         }
         # Calculate time estimates for fetching metadata

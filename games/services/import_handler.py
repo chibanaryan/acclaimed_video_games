@@ -1012,8 +1012,8 @@ def clear_igdb_metadata() -> Tuple[bool, str]:
     """
     Delete all IGDB metadata records (both connected and orphaned).
 
-    This clears all IGDBGameData records and removes Developer, IGDBGenre,
-    and Series objects since they are derived from IGDB data.
+    This clears all IGDBGameData records and removes Developer and Series
+    objects since they are derived from IGDB data.
 
     Returns:
         Tuple of (success, message)
@@ -1022,7 +1022,6 @@ def clear_igdb_metadata() -> Tuple[bool, str]:
         # Count records before deletion
         igdb_count = models.IGDBGameData.objects.count()
         developer_count = models.Developer.objects.count()
-        genre_count = models.IGDBGenre.objects.count()
         series_count = models.Series.objects.count()
 
         # Clear primary relationships on games
@@ -1031,21 +1030,19 @@ def clear_igdb_metadata() -> Tuple[bool, str]:
         # Clear M2M relationships before deleting objects
         # Use through model to delete efficiently without loading all games
         models.Game.developers.through.objects.all().delete()
-        models.Game.genres.through.objects.all().delete()
         models.Game.series.through.objects.all().delete()
 
         # Delete all IGDB metadata
         models.IGDBGameData.objects.all().delete()
 
-        # Delete derived data (Developer, IGDBGenre, Series)
+        # Delete derived data (Developer, Series)
         models.Developer.objects.all().delete()
-        models.IGDBGenre.objects.all().delete()
         models.Series.objects.all().delete()
 
     return (
         True,
         f"Cleared {igdb_count} IGDB records, {developer_count} developers, "
-        f"{genre_count} genres, {series_count} series",
+        f"{series_count} series",
     )
 
 

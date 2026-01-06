@@ -28,9 +28,7 @@ class IdCodeNameSerializer(IdNameSerializer):
 game_fields = [
     "id",
     "decade_rank",
-    "description",
     "developers",
-    "genres",
     "igdb_artwork_id",
     "igdb_url",
     "name",
@@ -46,12 +44,10 @@ game_fields = [
 class GameSummarySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source="igdb_id")
     developers = IdNameSerializer(many=True)
-    genres = IdNameSerializer(many=True)  # IGDB genres (not Wikipedia genres)
     platforms = IdCodeNameSerializer(many=True)
     # Delegate to primary_igdb_game_data
     igdb_artwork_id = serializers.SerializerMethodField()
     igdb_url = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Game
@@ -67,12 +63,6 @@ class GameSummarySerializer(serializers.ModelSerializer):
         """Get URL from primary IGDBGameData record."""
         if obj.primary_igdb_game_data:
             return obj.primary_igdb_game_data.url
-        return None
-
-    def get_description(self, obj):
-        """Get description from primary IGDBGameData record."""
-        if obj.primary_igdb_game_data:
-            return obj.primary_igdb_game_data.description
         return None
 
 
@@ -196,20 +186,6 @@ class PageSerializer(serializers.ModelSerializer):
 
     def get_content(self, obj: FlatPage):
         return markdown.markdown(obj.content)
-
-
-class IGDBGenreSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.IGDBGenre
-        fields = [
-            "id",
-            "name",
-        ]
-
-
-# Backward compatibility alias
-GenreSerializer = IGDBGenreSerializer
 
 
 class WikipediaGenreSerializer(serializers.ModelSerializer):

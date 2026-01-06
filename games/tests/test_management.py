@@ -75,9 +75,8 @@ class GetIgdbCommandTests(TestCase):
 
         # Mock get_igdb_data to set some fields
         def mock_get_igdb(cache_results=True):
-            # Simulate what get_igdb_data does (sets slug and description)
+            # Simulate what get_igdb_data does (sets slug)
             game.slug = "halo-2-updated"
-            game.description = "A test game"
 
         with mock.patch.object(models.Game, "get_igdb_data", side_effect=mock_get_igdb):
             call_command("get_igdb", game="Halo 2")

@@ -2,6 +2,7 @@
 
 ## 2026-01-05
 
+- Remove unused models: WikipediaCountry, WikipediaGameMode, IGDBGenre, and IGDBGameData.description field
 - Remove GameQuote feature (model, services, management command, admin, tests)
 - Fix test isolation bug: add cache.clear() to test setUp methods (home page caches full responses for anonymous users)
 - Remove ProtonDB Steam Deck compatibility feature (low coverage, limited utility)

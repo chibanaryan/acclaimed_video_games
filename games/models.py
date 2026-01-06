@@ -254,24 +254,6 @@ class Developer(CreatorBase):
         return self.display_root_creator
 
 
-class IGDBGenre(models.Model):
-    """A video game genre from IGDB"""
-
-    name = models.CharField(max_length=100, unique=True)
-
-    class Meta:
-        db_table = "games_igdbgenre"
-        ordering = ["name"]
-        verbose_name = "IGDB Genre"
-        verbose_name_plural = "IGDB Genres"
-        indexes = [
-            models.Index(fields=["name"]),
-        ]
-
-    def __str__(self) -> str:
-        return self.name
-
-
 class WikipediaGenre(models.Model):
     """
     A video game genre from Wikipedia with hierarchical structure.
@@ -443,68 +425,6 @@ class WikipediaGenre(models.Model):
         return not self.children.exists()
 
 
-class WikipediaCountry(models.Model):
-    """
-    A country of origin for video games from Wikidata P495.
-    Simple model for filtering games by country of development.
-    """
-
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=110, unique=True, db_index=True)
-    wikidata_id = models.CharField(
-        max_length=20,
-        unique=True,
-        db_index=True,
-        help_text="Wikidata Q-ID (e.g., 'Q17' for Japan)",
-    )
-
-    class Meta:
-        ordering = ["name"]
-        verbose_name = "Wikipedia Country"
-        verbose_name_plural = "Wikipedia Countries"
-
-    def __str__(self) -> str:
-        return self.name
-
-    def save(self, *args, **kwargs):
-        from django.utils.text import slugify
-
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-
-class WikipediaGameMode(models.Model):
-    """
-    A game mode from Wikidata P404 (single-player, multiplayer, etc.).
-    Simple model for filtering games by game mode.
-    """
-
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=110, unique=True, db_index=True)
-    wikidata_id = models.CharField(
-        max_length=20,
-        unique=True,
-        db_index=True,
-        help_text="Wikidata Q-ID (e.g., 'Q208850' for Single-player)",
-    )
-
-    class Meta:
-        ordering = ["name"]
-        verbose_name = "Wikipedia Game Mode"
-        verbose_name_plural = "Wikipedia Game Modes"
-
-    def __str__(self) -> str:
-        return self.name
-
-    def save(self, *args, **kwargs):
-        from django.utils.text import slugify
-
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-
 class Series(models.Model):
     """
     A video game series from IGDB (called 'Collection' in IGDB API).
@@ -550,7 +470,6 @@ class IGDBGameData(models.Model):
         max_length=100, db_index=True, help_text="IGDB cover art hash (e.g., 'co1234')"
     )
     url = models.URLField(help_text="IGDB game detail page URL")
-    description = models.TextField(null=True, blank=True)
     youtube_video_id = models.CharField(
         max_length=50,
         null=True,
@@ -889,7 +808,7 @@ class GameQuerySet(models.QuerySet):
             "developers",
             "developers__parent",
             "platforms",
-            "genres",
+            "wikipedia_genres",
             "series",
         ).select_related(
             "primary_igdb_game_data",
@@ -939,23 +858,10 @@ class Game(MediaItemBase):
     igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
 
     # Relationships
-    genres = models.ManyToManyField("IGDBGenre", blank=True)
     wikipedia_genres = models.ManyToManyField(
         "WikipediaGenre",
         blank=True,
         related_name="games_with_wikipedia_genre",
-    )
-    wikipedia_countries = models.ManyToManyField(
-        "WikipediaCountry",
-        blank=True,
-        related_name="games",
-        help_text="Countries of origin from Wikidata P495",
-    )
-    wikipedia_game_modes = models.ManyToManyField(
-        "WikipediaGameMode",
-        blank=True,
-        related_name="games",
-        help_text="Game modes from Wikidata P404",
     )
     developers = models.ManyToManyField(
         "Developer",
@@ -1096,16 +1002,6 @@ class Game(MediaItemBase):
                 orphaned_record.game = self
                 orphaned_record.artwork_id = game_data.get("cover", "")
                 orphaned_record.url = game_data.get("url", "")
-                orphaned_record.description = "\n\n".join(
-                    [
-                        x
-                        for x in [
-                            game_data.get("storyline"),
-                            game_data.get("summary"),
-                        ]
-                        if x
-                    ]
-                )
                 orphaned_record.youtube_video_id = game_data.get("youtube_video_id")
                 orphaned_record.is_primary = idx == 0  # First record is primary
                 orphaned_record.save(
@@ -1113,7 +1009,6 @@ class Game(MediaItemBase):
                         "game",
                         "artwork_id",
                         "url",
-                        "description",
                         "youtube_video_id",
                         "is_primary",
                     ]
@@ -1128,16 +1023,6 @@ class Game(MediaItemBase):
                     defaults={
                         "artwork_id": game_data.get("cover", ""),
                         "url": game_data.get("url", ""),
-                        "description": "\n\n".join(
-                            [
-                                x
-                                for x in [
-                                    game_data.get("storyline"),
-                                    game_data.get("summary"),
-                                ]
-                                if x
-                            ]
-                        ),
                         "youtube_video_id": game_data.get("youtube_video_id"),
                         "is_primary": (idx == 0),  # First record is primary
                     },
@@ -1147,21 +1032,9 @@ class Game(MediaItemBase):
             if idx == 0:
                 self.primary_igdb_game_data = igdb_game_data
 
-                # Update description field
-                self.description = "\n\n".join(
-                    [
-                        x
-                        for x in [
-                            game_data.get("storyline"),
-                            game_data.get("summary"),
-                        ]
-                        if x
-                    ]
-                )
-
-        # Update developers and IGDB genres only from first record
+        # Update developers only from first record
         if ids_to_fetch and (data is not None or api_client):
-            # Get first record data for developers/IGDB genres
+            # Get first record data for developers
             if data is not None:
                 first_data = data
             else:
@@ -1175,12 +1048,6 @@ class Game(MediaItemBase):
                 devs.append(dev)
 
             self.developers.set(devs)
-
-            genres = []
-            for genre_name in first_data.get("genres", []):
-                genre, created = IGDBGenre.objects.get_or_create(name=genre_name)
-                genres.append(genre)
-            self.genres.set(genres)
 
             # Update series from IGDB collections
             series_list = []
@@ -1196,7 +1063,7 @@ class Game(MediaItemBase):
             self.series.set(series_list)
 
         # Save only specific fields to avoid updating modified timestamp
-        self.save(update_fields=["slug", "primary_igdb_game_data", "description"])
+        self.save(update_fields=["slug", "primary_igdb_game_data"])
 
     @staticmethod
     def _get_or_create_developer_with_parents(dev_data: dict) -> "Developer":
@@ -1238,13 +1105,13 @@ class Game(MediaItemBase):
 
     def _update_relationships_from_data(self, game_data: dict) -> None:
         """
-        Update Developer/IGDB Genre relationships from IGDB game data dict.
+        Update Developer relationships from IGDB game data dict.
 
         Helper method that updates M2M relationships from pre-fetched data.
         Does not modify IGDBGameData records.
 
         Args:
-            game_data: Dict from IGDB API with developers and IGDB genres keys
+            game_data: Dict from IGDB API with developers key
         """
         # Update developers
         devs = []
@@ -1253,13 +1120,6 @@ class Game(MediaItemBase):
             devs.append(dev)
 
         self.developers.set(devs)
-
-        # Update IGDB genres
-        genres = []
-        for genre_name in game_data.get("genres", []):
-            genre, created = IGDBGenre.objects.get_or_create(name=genre_name)
-            genres.append(genre)
-        self.genres.set(genres)
 
         # Update series from IGDB collections
         series_list = []
@@ -1276,7 +1136,7 @@ class Game(MediaItemBase):
 
     def update_igdb_relationships(self, api_client=None) -> bool:
         """
-        Update Company/Studio/IGDB Genre relationships from IGDB API without
+        Update Company/Studio relationships from IGDB API without
         modifying IGDBGameData records.
 
         Used when games are re-imported after deletion - the IGDBGameData
