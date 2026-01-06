@@ -181,6 +181,60 @@ class HomePageViewTest(TestCase):
         filters = response.context.get("filters", {})
         self.assertEqual(filters.get("sortDirection"), "asc")
 
+    def test_unfiltered_home_page_is_cached(self):
+        """Test that the unfiltered home page is cached for anonymous users."""
+        from games import config
+
+        cache.clear()
+
+        # Make request to unfiltered home page
+        self.client.get(reverse("home"))
+
+        # Verify cache entry was created
+        cache_key = f"home_page:{config.CACHE_VERSION}"
+        self.assertIsNotNone(cache.get(cache_key))
+
+    def test_decade_filter_is_cached(self):
+        """Test that decade-only filters are cached (bounded: 6 values)."""
+        from games import config
+
+        cache.clear()
+
+        # Make request with decade filter
+        self.client.get(reverse("home") + "?decade=2010")
+
+        # Verify cache entry was created
+        cache_key = f"home_page:{config.CACHE_VERSION}:decade=2010"
+        self.assertIsNotNone(cache.get(cache_key))
+
+    def test_invalid_decade_not_cached(self):
+        """Test that invalid decade values don't create cache entries."""
+        from games import config
+
+        cache.clear()
+
+        # Make request with invalid decade
+        self.client.get(reverse("home") + "?decade=9999")
+
+        # Should not create any cache entry
+        self.assertIsNone(cache.get(f"home_page:{config.CACHE_VERSION}:decade=9999"))
+
+    def test_complex_filters_not_cached(self):
+        """Test that complex filters don't create cache entries (prevents pollution)."""
+        from games import config
+
+        cache.clear()
+
+        # Make requests with various query params that shouldn't be cached
+        self.client.get(reverse("home") + "?page=2")
+        self.client.get(reverse("home") + "?genres=1")
+        self.client.get(reverse("home") + "?q=zelda")
+        self.client.get(reverse("home") + "?decade=2010&genres=1")  # Multi-filter
+        self.client.get(reverse("home") + "?malicious=payload")
+
+        # The unfiltered key should not exist (we didn't request it)
+        self.assertIsNone(cache.get(f"home_page:{config.CACHE_VERSION}"))
+
 
 class ContactPageViewTest(TestCase):
     """Test the dedicated contact page view."""

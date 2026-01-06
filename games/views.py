@@ -924,9 +924,12 @@ class HomePageView(RobustPaginationMixin, ListView):
     paginate_by = 100
     paginate_orphans = 0
 
+    # Decades we cache (bounded: 6 values)
+    CACHEABLE_DECADES = {"1970", "1980", "1990", "2000", "2010", "2020"}
+
     def dispatch(self, request, *args, **kwargs):
         """Cache full page responses for anonymous users to reduce TTFB."""
-        # Only cache for anonymous, non-HTMX full-page requests
+        # Only cache for anonymous, non-HTMX requests
         is_htmx = (
             request.headers.get("HX-Request")
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
@@ -937,9 +940,26 @@ class HomePageView(RobustPaginationMixin, ListView):
         if request.user.is_authenticated or is_htmx or request.method != "GET":
             return super().dispatch(request, *args, **kwargs)
 
-        # Build cache key from sorted query params
-        query_string = request.META.get("QUERY_STRING", "")
-        cache_key = f"home_page:{config.CACHE_VERSION}:{query_string}"
+        # Determine cache key based on bounded filter set
+        # Only cache: unfiltered OR single decade filter (page 1 only)
+        # Max cache entries: 1 (unfiltered) + 6 (decades) = 7
+        params = request.GET
+        cache_key = None
+
+        if not params:
+            # Unfiltered home page
+            cache_key = f"home_page:{config.CACHE_VERSION}"
+        elif (
+            len(params) == 1
+            and "decade" in params
+            and params["decade"] in self.CACHEABLE_DECADES
+        ):
+            # Single decade filter, page 1
+            cache_key = f"home_page:{config.CACHE_VERSION}:decade={params['decade']}"
+
+        if not cache_key:
+            # Not a cacheable request (complex filters, pagination, etc.)
+            return super().dispatch(request, *args, **kwargs)
 
         # Check cache - only store rendered content, not full response objects
         # (caching response objects causes memory leaks due to request references)

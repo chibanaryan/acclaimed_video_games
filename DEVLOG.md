@@ -27,7 +27,7 @@
 - Fix accessibility: improve year grid heatmap contrast (increase text opacity /60→/70, strengthen cell label shadows)
 - Fix accessibility: add aria-labels to sort dropdown and direction toggle buttons for screen readers
 - Add page-level caching for anonymous home page requests (5-min cache reduces TTFB from ~1300ms to ~50ms)
-- Fix memory leak: cache only rendered HTML content instead of full response objects (response objects retain request/context references)
+- Fix memory leak: bound page cache to 7 entries max (unfiltered + 6 decades) to prevent cache pollution attacks
 - Fix accessibility: add aria-labels to genre filter expand/collapse buttons for screen readers
 - Fix contrast issues: increase text opacity from /40 and /50 to /60 and /70 in filter panels
 - Fix contrast issues: increase remaining /60 opacities to /70 across all templates and JS renderers
