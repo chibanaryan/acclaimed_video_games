@@ -941,10 +941,11 @@ class HomePageView(RobustPaginationMixin, ListView):
         query_string = request.META.get("QUERY_STRING", "")
         cache_key = f"home_page:{config.CACHE_VERSION}:{query_string}"
 
-        # Check cache
-        cached_response = cache.get(cache_key)
-        if cached_response is not None:
-            return cached_response
+        # Check cache - only store rendered content, not full response objects
+        # (caching response objects causes memory leaks due to request references)
+        cached_content = cache.get(cache_key)
+        if cached_content is not None:
+            return HttpResponse(cached_content, content_type="text/html")
 
         # Generate response and cache it
         response = super().dispatch(request, *args, **kwargs)
@@ -953,7 +954,8 @@ class HomePageView(RobustPaginationMixin, ListView):
         if response.status_code == 200:
             if hasattr(response, "render"):
                 response.render()
-            cache.set(cache_key, response, config.CACHE_TIMEOUT_HOME_PAGE)
+            # Cache only the rendered content string, not the response object
+            cache.set(cache_key, response.content, config.CACHE_TIMEOUT_HOME_PAGE)
 
         return response
 
