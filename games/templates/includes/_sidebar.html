@@ -40,20 +40,33 @@
             </a>
         </div>
 
-        {# Media type switcher - Games/Books toggle when books enabled, otherwise Home button #}
+        {# Main navigation: Rankings, Developers, Source Lists #}
         <nav class="mb-3">
             {% if BOOKS_ENABLED %}
             {% include 'core/includes/_media_switcher.html' with variant='tabs' size='sm' %}
-            {% else %}
+            {% endif %}
             <ul class="menu gap-1">
+                {% if not BOOKS_ENABLED %}
                 <li>
                     <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
                         <span class="mdi mdi-medal text-xl"></span>
                         Rankings
                     </a>
                 </li>
+                {% endif %}
+                <li>
+                    <a href="{% url 'developers-list' %}" class="{% if request.resolver_match.url_name == 'developers-list' %}active{% endif %}">
+                        <span class="mdi mdi-account-group text-xl"></span>
+                        Developers
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'list-list' %}" class="{% if request.resolver_match.url_name == 'list-list' %}active{% endif %}">
+                        <span class="mdi mdi-format-list-numbered text-xl"></span>
+                        Source Lists
+                    </a>
+                </li>
             </ul>
-            {% endif %}
         </nav>
 
         {# Search bar #}
@@ -161,45 +174,20 @@
             </div>
         </div>
 
-        {# Secondary navigation: Login, Developers, Lists #}
+        {# Secondary navigation: Blog #}
+        {% has_published_articles as show_blog %}
+        {% if show_blog %}
         <nav class="mt-3">
             <ul class="menu gap-1">
-                <li>
-                    {% if user.is_authenticated %}
-                    <button type="button" class="auth-modal-trigger w-full text-left" data-auth-screen="profile">
-                        <span class="mdi mdi-account-circle text-xl"></span>
-                        {{ user.name|default:user.email|default:"Account" }}
-                    </button>
-                    {% else %}
-                    <button type="button" class="auth-modal-trigger w-full text-left">
-                        <span class="mdi mdi-login text-xl"></span>
-                        Login
-                    </button>
-                    {% endif %}
-                </li>
-                <li>
-                    <a href="{% url 'developers-list' %}" class="{% if request.resolver_match.url_name == 'developers-list' %}active{% endif %}">
-                        <span class="mdi mdi-account-group text-xl"></span>
-                        Developers
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'list-list' %}" class="{% if request.resolver_match.url_name == 'list-list' %}active{% endif %}">
-                        <span class="mdi mdi-format-list-numbered text-xl"></span>
-                        Source Lists
-                    </a>
-                </li>
-                {% has_published_articles as show_blog %}
-                {% if show_blog %}
                 <li>
                     <a href="{% url 'article-list' %}" class="{% if request.resolver_match.url_name == 'article-list' or request.resolver_match.url_name == 'article-detail' %}active{% endif %}">
                         <span class="mdi mdi-newspaper text-xl"></span>
                         Blog
                     </a>
                 </li>
-                {% endif %}
             </ul>
         </nav>
+        {% endif %}
     </div>
 
     {# BOTTOM SECTION: Scrollable when viewport is short #}
@@ -212,6 +200,19 @@
             <div class="p-4 pt-4 border-t border-base-content/10">
         {# Secondary navigation #}
         <ul class="menu gap-1 mb-3">
+            <li>
+                {% if user.is_authenticated %}
+                <button type="button" class="auth-modal-trigger w-full text-left" data-auth-screen="profile">
+                    <span class="mdi mdi-account-circle text-xl"></span>
+                    {{ user.name|default:user.email|default:"Account" }}
+                </button>
+                {% else %}
+                <button type="button" class="auth-modal-trigger w-full text-left">
+                    <span class="mdi mdi-login text-xl"></span>
+                    Login
+                </button>
+                {% endif %}
+            </li>
             <li>
                 <a href="{% url 'page-detail' slug='about' %}">
                     <span class="mdi mdi-information text-xl"></span>

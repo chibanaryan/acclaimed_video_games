@@ -142,21 +142,6 @@
                 </div>
             </div>
 
-            {# Login/User button #}
-            {% if user.is_authenticated %}
-            {% with display_name=user.name|default:user.email|default:'Account' %}
-            <button type="button" class="btn btn-ghost btn-sm shrink-0 nav-item auth-modal-trigger" data-nav-item="login" data-menu-label="{{ display_name }}" data-auth-screen="profile">
-                <span class="mdi mdi-account-circle text-xl"></span>
-                {{ display_name }}
-            </button>
-            {% endwith %}
-            {% else %}
-            <button type="button" class="btn btn-ghost btn-sm shrink-0 nav-item auth-modal-trigger" data-nav-item="login" data-menu-label="Login">
-                <span class="mdi mdi-login text-xl"></span>
-                Login
-            </button>
-            {% endif %}
-
             <a href="{% url 'developers-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'developers-list' %} btn-active{% endif %}" data-nav-item="devs" data-menu-label="Developers">
                 Devs
             </a>
@@ -170,6 +155,21 @@
             <a href="{% url 'article-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'article-list' or request.resolver_match.url_name == 'article-detail' %} btn-active{% endif %}" data-nav-item="blog" data-menu-label="Blog">
                 Blog
             </a>
+            {% endif %}
+
+            {# Login/User button #}
+            {% if user.is_authenticated %}
+            {% with display_name=user.name|default:user.email|default:'Account' %}
+            <button type="button" class="btn btn-ghost btn-sm shrink-0 nav-item auth-modal-trigger" data-nav-item="login" data-menu-label="{{ display_name }}" data-auth-screen="profile">
+                <span class="mdi mdi-account-circle text-xl"></span>
+                {{ display_name }}
+            </button>
+            {% endwith %}
+            {% else %}
+            <button type="button" class="btn btn-ghost btn-sm shrink-0 nav-item auth-modal-trigger" data-nav-item="login" data-menu-label="Login">
+                <span class="mdi mdi-login text-xl"></span>
+                Login
+            </button>
             {% endif %}
 
             <a href="{% url 'page-detail' slug='about' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'page-detail' and request.resolver_match.kwargs.slug == 'about' %} btn-active{% endif %}" data-nav-item="about" data-menu-label="About">
