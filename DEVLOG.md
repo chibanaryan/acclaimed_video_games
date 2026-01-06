@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-06
+
+- Fix Alpine.js race condition: ensure utils-base.js loads before Alpine initializes to prevent "createUnifiedSearchData is not defined" errors
+
 ## 2026-01-05
 
 - Make source list page badges responsive to filters: counts update based on filtered set, sorting respects selected type

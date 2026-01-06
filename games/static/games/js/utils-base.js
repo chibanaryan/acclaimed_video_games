@@ -666,3 +666,6 @@ function joinNames(names) {
     return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
 }
 
+// Signal that utils-base is ready for Alpine
+window.utilsBaseReady = true;
+

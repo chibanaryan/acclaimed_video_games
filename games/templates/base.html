@@ -87,11 +87,17 @@
     document.addEventListener('alpine:init', function() {
         document.body.classList.remove('alpine-loading');
     });
-    // Deferred Alpine loader - waits for user interaction
+    // Deferred Alpine loader - waits for user interaction AND utils-base.js
     (function() {
         var loaded = false;
         function loadAlpine() {
             if (loaded) return;
+            // Wait for both interaction trigger AND utils-base.js to be ready
+            if (!window.utilsBaseReady) {
+                // Check again in 50ms
+                setTimeout(loadAlpine, 50);
+                return;
+            }
             loaded = true;
             ['scroll', 'click', 'touchstart', 'mousemove', 'keydown'].forEach(function(e) {
                 window.removeEventListener(e, loadAlpine, { capture: true });
