@@ -1,8 +1,13 @@
 # Generated manually for Company -> Developer refactor
 # Data migration: Migrate Studio records into Developer model
 
+import sys
+
 from django.db import migrations
 from django.utils.text import slugify
+
+# Suppress print statements during tests
+TEST_MODE = "test" in sys.argv
 
 
 def migrate_studios_to_developers(apps, schema_editor):
@@ -107,7 +112,8 @@ def migrate_studios_to_developers(apps, schema_editor):
     # Studio -> Developer relationships in the next migration based on
     # matching igdb_id or name.
 
-    print(f"Migrated {len(studio_to_developer_id)} studios to developers")
+    if not TEST_MODE:
+        print(f"Migrated {len(studio_to_developer_id)} studios to developers")
 
 
 def reverse_studio_migration(apps, schema_editor):
@@ -123,7 +129,8 @@ def reverse_studio_migration(apps, schema_editor):
     # For Developer records without parent that have no slug, they came from
     # independent studios. We can't easily distinguish these from original
     # Companies, so we leave them
-    print("Reversed studio migration (deleted subsidiary developers)")
+    if not TEST_MODE:
+        print("Reversed studio migration (deleted subsidiary developers)")
 
 
 class Migration(migrations.Migration):

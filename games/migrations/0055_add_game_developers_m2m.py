@@ -1,7 +1,12 @@
 # Generated manually for Company -> Developer refactor
 # Add Game.developers M2M and migrate data from Game.studios
 
+import sys
+
 from django.db import migrations, models
+
+# Suppress print statements during tests
+TEST_MODE = "test" in sys.argv
 
 
 def rename_m2m_table_if_needed(apps, schema_editor):
@@ -81,7 +86,8 @@ def migrate_game_studios_to_developers(apps, schema_editor):
             game.developers.set(developers_to_add)
             games_updated += 1
 
-    print(f"Migrated developers for {games_updated} games")
+    if not TEST_MODE:
+        print(f"Migrated developers for {games_updated} games")
 
 
 def reverse_game_developers(apps, schema_editor):
@@ -92,7 +98,8 @@ def reverse_game_developers(apps, schema_editor):
     Game = apps.get_model("games", "Game")
     for game in Game.objects.all():
         game.developers.clear()
-    print("Cleared game.developers relationships")
+    if not TEST_MODE:
+        print("Cleared game.developers relationships")
 
 
 class Migration(migrations.Migration):

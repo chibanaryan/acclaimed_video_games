@@ -6,7 +6,12 @@ matching the WikipediaGenre hierarchy, preventing inconsistencies between the st
 metadata and the M2M genre relationships.
 """
 
+import sys
+
 from django.db import migrations
+
+# Suppress print statements during tests
+TEST_MODE = "test" in sys.argv
 
 
 # Genre normalization mapping - must match games/services/genre_normalizer.py
@@ -236,7 +241,8 @@ def forward_migration(apps, schema_editor):
     total = records.count()
     updated = 0
 
-    print(f"\nNormalizing {total} WikipediaGameData records...")
+    if not TEST_MODE:
+        print(f"\nNormalizing {total} WikipediaGameData records...")
 
     for record in records:
         changed = False
@@ -259,8 +265,9 @@ def forward_migration(apps, schema_editor):
             record.save(update_fields=["primary_genre", "all_genres"])
             updated += 1
 
-    print(f"Updated {updated} records")
-    print("WikipediaGameData normalization complete!\n")
+    if not TEST_MODE:
+        print(f"Updated {updated} records")
+        print("WikipediaGameData normalization complete!\n")
 
 
 def reverse_migration(apps, schema_editor):
@@ -271,8 +278,9 @@ def reverse_migration(apps, schema_editor):
     the original values. The migration is essentially one-way for the text
     fields (the M2M relationships are handled by migration 0050).
     """
-    print("\nReverse migration for WikipediaGameData is a no-op.")
-    print("Original non-canonical genre names cannot be restored.\n")
+    if not TEST_MODE:
+        print("\nReverse migration for WikipediaGameData is a no-op.")
+        print("Original non-canonical genre names cannot be restored.\n")
 
 
 class Migration(migrations.Migration):

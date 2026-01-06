@@ -9,8 +9,13 @@ This migration:
 5. Populates slugs, paths, levels, and display_order for all genres
 """
 
+import sys
+
 from django.db import migrations
 from django.utils.text import slugify
+
+# Suppress print statements during tests
+TEST_MODE = "test" in sys.argv
 
 
 # Genre normalization mapping (imported from genre_normalizer.py concept)
@@ -329,7 +334,8 @@ def forward_migration(apps, schema_editor):
 
     # Step 1: Get all existing genres and their game relationships
     existing_genres = list(WikipediaGenre.objects.all())
-    print(f"\nFound {len(existing_genres)} existing Wikipedia genres")
+    if not TEST_MODE:
+        print(f"\nFound {len(existing_genres)} existing Wikipedia genres")
 
     # Build mapping: old_genre_id -> canonical_name
     old_to_canonical = {}
@@ -345,11 +351,13 @@ def forward_migration(apps, schema_editor):
             if canonical:  # Only keep valid genres
                 game_genre_relations.append((game.id, canonical))
 
-    print(f"Captured {len(game_genre_relations)} game-genre relationships")
+    if not TEST_MODE:
+        print(f"Captured {len(game_genre_relations)} game-genre relationships")
 
     # Step 3: Clear all existing genres (we'll recreate them with hierarchy)
     WikipediaGenre.objects.all().delete()
-    print("Cleared existing genres")
+    if not TEST_MODE:
+        print("Cleared existing genres")
 
     # Step 4: Create root categories
     root_genres = {}
@@ -363,7 +371,8 @@ def forward_migration(apps, schema_editor):
             path=category_name,
         )
         root_genres[category_name] = genre
-    print(f"Created {len(root_genres)} root categories")
+    if not TEST_MODE:
+        print(f"Created {len(root_genres)} root categories")
 
     # Step 5: Create child genres with hierarchy
     all_genres = {}  # name -> genre object
@@ -391,7 +400,8 @@ def forward_migration(apps, schema_editor):
             )
             all_genres[child_name] = genre
 
-    print(f"Created {len(all_genres)} total genres in hierarchy")
+    if not TEST_MODE:
+        print(f"Created {len(all_genres)} total genres in hierarchy")
 
     # Step 6: Restore game-genre relationships using canonical names
     games_updated = 0
@@ -404,8 +414,9 @@ def forward_migration(apps, schema_editor):
             except Game.DoesNotExist:
                 continue
 
-    print(f"Restored {games_updated} game-genre relationships")
-    print("Migration complete!\n")
+    if not TEST_MODE:
+        print(f"Restored {games_updated} game-genre relationships")
+        print("Migration complete!\n")
 
 
 def reverse_migration(apps, schema_editor):
@@ -424,7 +435,8 @@ def reverse_migration(apps, schema_editor):
         path="",
         display_order=0,
     )
-    print("Flattened genre hierarchy (hierarchy data cleared)")
+    if not TEST_MODE:
+        print("Flattened genre hierarchy (hierarchy data cleared)")
 
 
 class Migration(migrations.Migration):
