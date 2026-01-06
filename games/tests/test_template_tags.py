@@ -10,9 +10,7 @@ from games.templatetags.game_filters import (
     format_duration,
     from_now,
     game_rank_url,
-    genre_categories_grouped,
     genre_icon,
-    get_list_type_badge_class,
     get_list_type_label,
     markdown,
     pagination_pages,
@@ -21,7 +19,6 @@ from games.templatetags.game_filters import (
     platform_families_grouped,
     platform_icon,
     platform_svg_icon,
-    rank_pct,
     tojson,
 )
 
@@ -573,71 +570,6 @@ class MarkdownFilterTest(TestCase):
         self.assertEqual(markdown(""), "")
 
 
-class GetListTypeBadgeClassTest(TestCase):
-    """Test the get_list_type_badge_class template filter."""
-
-    def test_all_time_badge(self):
-        """Test that 'A' returns info badge class."""
-        result = get_list_type_badge_class("A")
-        self.assertIn("badge-info", result)
-
-    def test_decade_badge(self):
-        """Test that 'D' returns success badge class."""
-        result = get_list_type_badge_class("D")
-        self.assertIn("badge-success", result)
-
-    def test_misc_badge(self):
-        """Test that 'M' returns warning badge class."""
-        result = get_list_type_badge_class("M")
-        self.assertIn("badge-warning", result)
-
-    def test_eoy_badge(self):
-        """Test that 'E' returns error badge class."""
-        result = get_list_type_badge_class("E")
-        self.assertIn("badge-error", result)
-
-    def test_unknown_type_returns_ghost(self):
-        """Test that unknown type code returns ghost badge."""
-        result = get_list_type_badge_class("X")
-        self.assertEqual(result, "badge-ghost")
-
-
-class RankPctFilterTest(TestCase):
-    """Test the rank_pct template filter."""
-
-    def test_rank_1_is_100_percent(self):
-        """Test that rank 1 equals 100%."""
-        result = rank_pct(1, 100)
-        self.assertEqual(result, 100)
-
-    def test_last_rank_is_near_zero(self):
-        """Test that last rank is close to 0%."""
-        result = rank_pct(100, 100)
-        self.assertEqual(result, 0)
-
-    def test_middle_rank(self):
-        """Test middle rank calculation."""
-        result = rank_pct(50, 100)
-        # Rank 50 of 100: (1 - 49/99) * 100 ≈ 51%
-        self.assertGreater(result, 45)
-        self.assertLess(result, 55)
-
-    def test_none_rank_returns_zero(self):
-        """Test that None rank returns 0."""
-        result = rank_pct(None, 100)
-        self.assertEqual(result, 0)
-
-    def test_none_total_returns_zero(self):
-        """Test that None total returns 0."""
-        result = rank_pct(50, None)
-        self.assertEqual(result, 0)
-
-    def test_total_1_returns_zero(self):
-        """Test that total <= 1 returns 0."""
-        result = rank_pct(1, 1)
-        self.assertEqual(result, 0)
-
-
 class PlatformIconFilterTest(TestCase):
     """Test the platform_icon template filter."""
 
@@ -792,71 +724,6 @@ class PlatformFamiliesGroupedFilterTest(TestCase):
         # Nintendo (NES 1983) should come before PlayStation (PS5 2020)
         self.assertEqual(result[0]["key"], "nintendo")
         self.assertEqual(result[1]["key"], "playstation")
-
-
-class GenreCategoriesGroupedFilterTest(TestCase):
-    """Test the genre_categories_grouped template filter."""
-
-    def _make_genre(self, name, id, parent_name=None, level=1):
-        """Create a mock genre."""
-        g = Mock()
-        g.name = name
-        g.id = id
-        g.level = level
-        if parent_name:
-            g.parent = Mock()
-            g.parent.name = parent_name
-        else:
-            g.parent = None
-        return g
-
-    def test_groups_genres_by_parent(self):
-        """Test genres are grouped by parent category."""
-        shooter = self._make_genre("Shooter", 1, parent_name="Action")
-        fighting = self._make_genre("Fighting", 2, parent_name="Action")
-        result = genre_categories_grouped([shooter, fighting])
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["name"], "Action")
-        self.assertEqual(result[0]["count"], 2)
-
-    def test_category_genre_uses_own_name(self):
-        """Test top-level category genre uses its own name."""
-        action = self._make_genre("Action", 1, parent_name=None, level=0)
-        result = genre_categories_grouped([action])
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["name"], "Action")
-
-    def test_orphan_genre_uses_other(self):
-        """Test genre without parent or level 0 uses 'Other'."""
-        orphan = self._make_genre("Mystery Genre", 1, parent_name=None, level=1)
-        result = genre_categories_grouped([orphan])
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["name"], "Other")
-
-    def test_icon_assigned_correctly(self):
-        """Test category gets correct icon."""
-        shooter = self._make_genre("Shooter", 1, parent_name="Action")
-        result = genre_categories_grouped([shooter])
-        self.assertEqual(result[0]["icon"], "mdi-crosshairs")
-
-    def test_genre_ids_in_result(self):
-        """Test genre IDs are included in result."""
-        shooter = self._make_genre("Shooter", 42, parent_name="Action")
-        result = genre_categories_grouped([shooter])
-        self.assertIn("42", result[0]["genre_ids_str"])
-
-    def test_tooltip_contains_names(self):
-        """Test tooltip contains genre names."""
-        shooter = self._make_genre("Shooter", 1, parent_name="Action")
-        fighting = self._make_genre("Fighting", 2, parent_name="Action")
-        result = genre_categories_grouped([shooter, fighting])
-        self.assertIn("Shooter", result[0]["tooltip"])
-        self.assertIn("Fighting", result[0]["tooltip"])
-
-    def test_empty_list_returns_empty(self):
-        """Test empty list returns empty result."""
-        result = genre_categories_grouped([])
-        self.assertEqual(result, [])
 
 
 class GenreIconFilterTest(TestCase):
