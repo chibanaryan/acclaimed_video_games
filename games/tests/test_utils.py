@@ -147,18 +147,24 @@ class ApplyGenreFilterTests(TestCase):
     """Tests for apply_genre_filter utility function."""
 
     def setUp(self):
-        self.genre_action = models.IGDBGenre.objects.create(name="Action")
-        self.genre_rpg = models.IGDBGenre.objects.create(name="RPG")
-        self.genre_puzzle = models.IGDBGenre.objects.create(name="Puzzle")
+        self.genre_action = models.WikipediaGenre.objects.create(
+            name="Test Action Utils", slug="test-action-utils"
+        )
+        self.genre_rpg = models.WikipediaGenre.objects.create(
+            name="Test RPG Utils", slug="test-rpg-utils"
+        )
+        self.genre_puzzle = models.WikipediaGenre.objects.create(
+            name="Test Puzzle Utils", slug="test-puzzle-utils"
+        )
 
         self.game_action = models.Game.objects.create(name="Action Game", rank=1)
-        self.game_action.genres.add(self.genre_action)
+        self.game_action.wikipedia_genres.add(self.genre_action)
 
         self.game_rpg = models.Game.objects.create(name="RPG Game", rank=2)
-        self.game_rpg.genres.add(self.genre_rpg)
+        self.game_rpg.wikipedia_genres.add(self.genre_rpg)
 
         self.game_action_rpg = models.Game.objects.create(name="Action RPG", rank=3)
-        self.game_action_rpg.genres.add(self.genre_action, self.genre_rpg)
+        self.game_action_rpg.wikipedia_genres.add(self.genre_action, self.genre_rpg)
 
     def test_empty_genre_list_returns_all(self):
         """Empty genre list should return all games."""
@@ -424,26 +430,32 @@ class GetOrSetCacheTests(TestCase):
 
     def setUp(self):
         """Create test genres."""
-        models.IGDBGenre.objects.create(name="Action")
-        models.IGDBGenre.objects.create(name="RPG")
-        models.IGDBGenre.objects.create(name="Adventure")
+        models.WikipediaGenre.objects.create(
+            name="Test Action Cache", slug="test-action-cache"
+        )
+        models.WikipediaGenre.objects.create(
+            name="Test RPG Cache", slug="test-rpg-cache"
+        )
+        models.WikipediaGenre.objects.create(
+            name="Test Adventure Cache", slug="test-adventure-cache"
+        )
 
     def test_returns_list_from_queryset(self):
         """Test that function returns list of dicts from queryset."""
         result = utils.get_or_set_cache(
             "test_genres",
-            models.IGDBGenre.objects.all(),
+            models.WikipediaGenre.objects.filter(slug__startswith="test-"),
             ["id", "name"],
             order_by="name",
         )
         self.assertEqual(len(result), 3)
-        self.assertEqual(result[0]["name"], "Action")
+        self.assertEqual(result[0]["name"], "Test Action Cache")
 
     def test_transform_id(self):
         """Test that transform_id converts id to string."""
         result = utils.get_or_set_cache(
             "test_genres_str",
-            models.IGDBGenre.objects.all(),
+            models.WikipediaGenre.objects.filter(slug__startswith="test-"),
             ["id", "name"],
             transform_id=True,
         )
@@ -458,14 +470,14 @@ class GetOrSetCacheTests(TestCase):
         # First call should query database
         result1 = utils.get_or_set_cache(
             "test_cache_key",
-            models.IGDBGenre.objects.all(),
+            models.WikipediaGenre.objects.filter(slug__startswith="test-"),
             ["id", "name"],
         )
 
         # Second call should return cached result
         result2 = utils.get_or_set_cache(
             "test_cache_key",
-            models.IGDBGenre.objects.none(),  # Different queryset
+            models.WikipediaGenre.objects.none(),  # Different queryset
             ["id", "name"],
         )
 

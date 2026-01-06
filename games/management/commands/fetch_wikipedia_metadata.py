@@ -22,9 +22,7 @@ from django.db.models import Q
 from games import config
 from games.models import (
     Game,
-    WikipediaCountry,
     WikipediaGameData,
-    WikipediaGameMode,
     WikipediaGenre,
 )
 from games.services.genre_normalizer import get_or_create_genre, normalize_genre
@@ -511,21 +509,6 @@ class Command(BaseCommand):
         game.primary_wikipedia_game_data = wiki_game_data
         game.save(update_fields=["primary_wikipedia_game_data"])
 
-        # Set M2M relationships for countries and game modes
-        # Records are created by WikiPageLookupService during lookup,
-        # so we just need to find them by name
-        if page_result.country_of_origin:
-            countries = list(
-                WikipediaCountry.objects.filter(name__in=page_result.country_of_origin)
-            )
-            game.wikipedia_countries.set(countries)
-
-        if page_result.game_modes:
-            modes = list(
-                WikipediaGameMode.objects.filter(name__in=page_result.game_modes)
-            )
-            game.wikipedia_game_modes.set(modes)
-
         return wiki_game_data
 
     def _get_csv_path(self, output_path):
@@ -568,8 +551,6 @@ class Command(BaseCommand):
                     page_title,
                     hltb_id,
                     steam_app_id,
-                    game_modes,
-                    countries,
                     wikiquote_title,
                 ) = wikidata_result
 

@@ -148,8 +148,12 @@ class ApplyGameFiltersTests(TestCase):
 
     def setUp(self):
         """Create test data."""
-        self.genre_action = models.IGDBGenre.objects.create(name="Action")
-        self.genre_rpg = models.IGDBGenre.objects.create(name="RPG")
+        self.genre_action = models.WikipediaGenre.objects.create(
+            name="Test Action Filter", slug="test-action-filter"
+        )
+        self.genre_rpg = models.WikipediaGenre.objects.create(
+            name="Test RPG Filter", slug="test-rpg-filter"
+        )
         self.platform_pc = models.Platform.objects.create(code="PC", name="PC")
         self.platform_ps5 = models.Platform.objects.create(
             code="PS5", name="PlayStation 5"
@@ -164,20 +168,20 @@ class ApplyGameFiltersTests(TestCase):
         self.game1 = models.Game.objects.create(
             name="Zelda", rank=1, year_of_release=1998, igdb_id=1
         )
-        self.game1.genres.add(self.genre_action)
+        self.game1.wikipedia_genres.add(self.genre_action)
         self.game1.platforms.add(self.platform_pc)
         self.game1.developers.add(self.developer)
 
         self.game2 = models.Game.objects.create(
             name="Final Fantasy", rank=2, year_of_release=1997, igdb_id=2
         )
-        self.game2.genres.add(self.genre_rpg)
+        self.game2.wikipedia_genres.add(self.genre_rpg)
         self.game2.platforms.add(self.platform_ps5)
 
         self.game3 = models.Game.objects.create(
             name="Action RPG", rank=3, year_of_release=2005, igdb_id=3
         )
-        self.game3.genres.add(self.genre_action, self.genre_rpg)
+        self.game3.wikipedia_genres.add(self.genre_action, self.genre_rpg)
         self.game3.platforms.add(self.platform_pc, self.platform_ps5)
 
     def test_no_filters_returns_all(self):

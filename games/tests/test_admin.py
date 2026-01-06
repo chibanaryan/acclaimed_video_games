@@ -19,18 +19,6 @@ class GameAdminTests(TestCase):
         game.get_igdb_data.assert_called_once_with(cache_results=False)
         game.save.assert_called_once()
 
-    def test_genres_helper_returns_joined_names(self):
-        genre = models.IGDBGenre.objects.create(name="Action")
-        game = models.Game.objects.create(
-            name="Sample",
-            rank=1,
-            igdb_id=1,
-            year_of_release=1990,
-        )
-        game.genres.add(genre)
-        value = self.admin._igdb_genres(game)
-        self.assertEqual(value, "Action")
-
     def test_igdb_data_link_with_data(self):
         """Test _igdb_data_link displays admin link to IGDB data."""
         game = models.Game.objects.create(
@@ -234,45 +222,6 @@ class IGDBGameDataAdminTests(TestCase):
         value = self.admin._url_link(igdb_data)
         self.assertEqual(value, "-")
 
-    def test_description_preview_with_description(self):
-        """Test _description_preview displays truncated description."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            igdb_id=123,
-            year_of_release=2020,
-        )
-        long_description = "This is a very long description " * 10
-        igdb_data = models.IGDBGameData.objects.create(
-            game=game,
-            igdb_id=123,
-            description=long_description,
-            is_primary=True,
-        )
-
-        value = self.admin._description_preview(igdb_data)
-        # Should be truncated to 10 words
-        self.assertIn("This is a very", value)
-        self.assertLess(len(value), len(long_description))
-
-    def test_description_preview_without_description(self):
-        """Test _description_preview returns '-' when no description."""
-        game = models.Game.objects.create(
-            name="Test Game",
-            rank=1,
-            igdb_id=123,
-            year_of_release=2020,
-        )
-        igdb_data = models.IGDBGameData.objects.create(
-            game=game,
-            igdb_id=123,
-            description="",
-            is_primary=True,
-        )
-
-        value = self.admin._description_preview(igdb_data)
-        self.assertEqual(value, "-")
-
 
 class WikipediaGameDataAdminTests(TestCase):
     """Tests for WikipediaGameData admin interface."""
@@ -412,85 +361,6 @@ class WikipediaGenreAdminTests(TestCase):
         game2.wikipedia_genres.add(genre)
 
         count = self.admin.game_count(genre)
-        self.assertEqual(count, 2)
-
-
-class WikipediaCountryAdminTests(TestCase):
-    """Tests for WikipediaCountry admin interface."""
-
-    def setUp(self):
-        self.site = AdminSite()
-        self.admin = admin.WikipediaCountryAdmin(models.WikipediaCountry, self.site)
-
-    def test_get_queryset_annotates_game_count(self):
-        """Test get_queryset annotates _game_count."""
-        country = models.WikipediaCountry.objects.create(
-            name="Japan", wikidata_id="Q17", slug="japan"
-        )
-        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
-        game.wikipedia_countries.add(country)
-
-        qs = self.admin.get_queryset(request=None)
-        country_from_qs = qs.get(pk=country.pk)
-        self.assertEqual(country_from_qs._game_count, 1)
-
-    def test_game_count_uses_annotation(self):
-        """Test game_count uses the _game_count annotation."""
-        country = models.WikipediaCountry.objects.create(
-            name="Japan", wikidata_id="Q17", slug="japan"
-        )
-        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
-        game.wikipedia_countries.add(country)
-
-        qs = self.admin.get_queryset(request=None)
-        country_from_qs = qs.get(pk=country.pk)
-        count = self.admin.game_count(country_from_qs)
-        self.assertEqual(count, 1)
-
-    def test_game_count_fallback_without_annotation(self):
-        """Test game_count falls back to queryset when no annotation."""
-        country = models.WikipediaCountry.objects.create(
-            name="USA", wikidata_id="Q30", slug="usa"
-        )
-        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
-        game.wikipedia_countries.add(country)
-
-        count = self.admin.game_count(country)
-        self.assertEqual(count, 1)
-
-
-class WikipediaGameModeAdminTests(TestCase):
-    """Tests for WikipediaGameMode admin interface."""
-
-    def setUp(self):
-        self.site = AdminSite()
-        self.admin = admin.WikipediaGameModeAdmin(models.WikipediaGameMode, self.site)
-
-    def test_get_queryset_annotates_game_count(self):
-        """Test get_queryset annotates _game_count."""
-        mode = models.WikipediaGameMode.objects.create(
-            name="Single-player", wikidata_id="Q208850", slug="single-player"
-        )
-        game = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
-        game.wikipedia_game_modes.add(mode)
-
-        qs = self.admin.get_queryset(request=None)
-        mode_from_qs = qs.get(pk=mode.pk)
-        self.assertEqual(mode_from_qs._game_count, 1)
-
-    def test_game_count_uses_annotation(self):
-        """Test game_count uses the _game_count annotation."""
-        mode = models.WikipediaGameMode.objects.create(
-            name="Multiplayer", wikidata_id="Q6895044", slug="multiplayer"
-        )
-        game1 = models.Game.objects.create(name="Game 1", rank=1, year_of_release=2020)
-        game2 = models.Game.objects.create(name="Game 2", rank=2, year_of_release=2021)
-        game1.wikipedia_game_modes.add(mode)
-        game2.wikipedia_game_modes.add(mode)
-
-        qs = self.admin.get_queryset(request=None)
-        mode_from_qs = qs.get(pk=mode.pk)
-        count = self.admin.game_count(mode_from_qs)
         self.assertEqual(count, 2)
 
 

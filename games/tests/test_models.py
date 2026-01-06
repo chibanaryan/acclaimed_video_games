@@ -129,8 +129,6 @@ class GameIgdbTests(TestCase):
         self.assertIsNotNone(game.primary_igdb_game_data)
         self.assertEqual(game.primary_igdb_game_data.url, "https://example.com/sample")
         self.assertEqual(game.primary_igdb_game_data.artwork_id, "cover_hash")
-        self.assertIn("Story", game.description)
-        self.assertEqual(game.genres.get().name, "Action")
         self.assertEqual(game.developers.get().name, "Foo Dev")
 
     def test_get_igdb_data_handles_missing_api(self):
@@ -446,14 +444,12 @@ class GameIgdbTests(TestCase):
             igdb_id=123,
             artwork_id="cover_hash",
             url="https://example.com/test",
-            description="Test description",
             is_primary=True,
         )
 
         # Mock API response
         fake_api = mock.Mock()
         fake_api.get_game_info_by_id.return_value = {
-            "genres": ["Action", "Adventure"],
             "developers": [
                 {
                     "id": 1,
@@ -470,16 +466,12 @@ class GameIgdbTests(TestCase):
         self.assertTrue(result)
 
         # Verify relationships were created
-        self.assertEqual(game.genres.count(), 2)
-        self.assertIn("Action", [g.name for g in game.genres.all()])
-        self.assertIn("Adventure", [g.name for g in game.genres.all()])
         self.assertEqual(game.developers.count(), 1)
         self.assertEqual(game.developers.first().name, "Test Studio")
 
         # Verify IGDBGameData was NOT modified
         igdb_data = models.IGDBGameData.objects.get(game=game)
         self.assertEqual(igdb_data.artwork_id, "cover_hash")
-        self.assertEqual(igdb_data.description, "Test description")
 
     def test_update_igdb_relationships_no_igdb_id(self):
         """Test update_igdb_relationships returns False without igdb_id."""
@@ -616,8 +608,10 @@ class ModelHelpersTests(TestCase):
         self.assertEqual(str(child), "Studio Alt (Studio)")
 
     def test_genre_str(self):
-        genre = models.IGDBGenre.objects.create(name="Action")
-        self.assertEqual(str(genre), "Action")
+        genre = models.WikipediaGenre.objects.create(
+            name="Test Action Model", slug="test-action-model"
+        )
+        self.assertEqual(str(genre), "Test Action Model")
 
     def test_game_save_normalizes_name(self):
         """Test that Game.save() normalizes non-ASCII characters in name."""
@@ -749,7 +743,6 @@ class IGDBGameDataTests(TestCase):
             igdb_id=123,
             artwork_id="test_artwork_id",
             url="https://www.igdb.com/games/test-game",
-            description="Test description",
             is_primary=True,
         )
         self.game.primary_igdb_game_data = self.igdb_data

@@ -170,8 +170,8 @@ class Command(BaseCommand):
             progress_callback=progress_callback,
         )
 
-        # Process games - prefetch genres for CSV comparison
-        game_list = list(games.prefetch_related("genres"))
+        # Process games - prefetch wikipedia_genres for display
+        game_list = list(games.prefetch_related("wikipedia_genres"))
 
         # Set up incremental CSV writing (append after each game)
         csv_file = None
@@ -249,7 +249,8 @@ class Command(BaseCommand):
 
                 # Write to CSV immediately (incremental save)
                 if csv_writer:
-                    igdb_genres = ", ".join(g.name for g in game.genres.all())
+                    # IGDB genres column removed - keeping empty for CSV compatibility
+                    igdb_genres = ""
                     csv_writer.writerow(
                         [
                             game.rank,
@@ -379,10 +380,8 @@ class Command(BaseCommand):
                 ]
             )
             for result in results:
-                # Get IGDB genres from the game object
+                # IGDB genres column removed - keeping empty for CSV compatibility
                 igdb_genres = ""
-                if hasattr(result, "game") and result.game:
-                    igdb_genres = ", ".join(g.name for g in result.game.genres.all())
                 writer.writerow(
                     [
                         result.game.rank if hasattr(result, "game") else "",

@@ -142,7 +142,6 @@ class ImportGamesTests(TestCase):
             igdb_id=12345,
             artwork_id="test_artwork",
             url="https://www.igdb.com/games/test",
-            description="Test description",
             is_primary=True,
         )
 
@@ -206,7 +205,6 @@ class ImportGamesTests(TestCase):
             igdb_id=12345,
             artwork_id="test_artwork",
             url="https://www.igdb.com/games/test",
-            description="Test description",
             is_primary=True,
         )
         game.primary_igdb_game_data = igdb_data
@@ -280,7 +278,6 @@ class ImportGamesTests(TestCase):
             igdb_id=12345,
             artwork_id="primary_artwork",
             url="https://www.igdb.com/games/primary",
-            description="Primary description",
             is_primary=True,
         )
         game.primary_igdb_game_data = igdb_primary
@@ -292,7 +289,6 @@ class ImportGamesTests(TestCase):
             igdb_id=12345,
             artwork_id="secondary_artwork",
             url="https://www.igdb.com/games/secondary",
-            description="Secondary description",
             is_primary=False,
         )
 
@@ -1247,7 +1243,6 @@ class ImportIGDBWithProgressTests(TestCase):
             igdb_id=123,
             artwork_id="cover_hash",
             url="https://example.com/test",
-            description="Test description",
             is_primary=True,
         )
 

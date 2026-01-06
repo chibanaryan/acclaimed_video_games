@@ -27,7 +27,6 @@ class GameFilters:
         q: Search query for game name
         genres: List of genre IDs to filter by (single-select)
         platforms: List of platform IDs to filter by
-        game_modes: List of game mode IDs to filter by (single-select)
         start: Minimum year of release
         end: Maximum year of release
         decade: Decade string (e.g., "1990-99")
@@ -38,7 +37,6 @@ class GameFilters:
     q: Optional[str] = None
     genres: List[int] = field(default_factory=list)
     platforms: List[int] = field(default_factory=list)
-    game_modes: List[int] = field(default_factory=list)
     start: Optional[int] = None
     end: Optional[int] = None
     decade: Optional[str] = None
@@ -79,14 +77,6 @@ class GameFilters:
             except (ValueError, TypeError):
                 filters.platforms = []
 
-        # Game mode filtering
-        game_modes_param = request.GET.get("game_modes")
-        if game_modes_param:
-            try:
-                filters.game_modes = [int(x) for x in game_modes_param.split(",") if x]
-            except (ValueError, TypeError):
-                filters.game_modes = []
-
         # Year/decade filtering
         filters.decade = request.GET.get("decade")
         filters.year = request.GET.get("year")
@@ -122,7 +112,6 @@ class GameFilters:
             self.q
             or self.genres
             or self.platforms
-            or self.game_modes
             or self.decade
             or self.year
             or self.start
@@ -163,10 +152,6 @@ def apply_game_filters(qs: QuerySet, filters: GameFilters) -> QuerySet:
     if filters.platforms:
         qs = apply_platform_filter(qs, filters.platforms)
 
-    # Game mode filtering
-    if filters.game_modes:
-        qs = qs.filter(wikipedia_game_modes__id__in=filters.game_modes)
-
     # Developer filtering
     if filters.developer_igdb_id:
         qs = qs.filter(developers__igdb_id=filters.developer_igdb_id)
@@ -205,7 +190,6 @@ def get_filter_context_from_request(
         "end": filters.end if filters.end else max_year,
         "genres": [str(g) for g in filters.genres],  # String IDs for HTML select
         "platforms": [str(p) for p in filters.platforms],  # String IDs for HTML select
-        "game_modes": [str(gm) for gm in filters.game_modes],  # String IDs for select
         "decade": filters.decade,
         "year": filters.year,
     }

@@ -12,8 +12,6 @@ class GameListApiTests(TestCase):
         self.client = APIClient()
         self.platform_pc = models.Platform.objects.create(code="PC", name="PC")
         self.platform_ps = models.Platform.objects.create(code="PS", name="PlayStation")
-        self.genre_action = models.IGDBGenre.objects.create(name="Action")
-        self.genre_adventure = models.IGDBGenre.objects.create(name="Adventure")
 
         self.developer = models.Developer.objects.create(
             name="Studio", slug="studio", igdb_id=10
@@ -27,7 +25,6 @@ class GameListApiTests(TestCase):
             slug="alpha-quest",
         )
         self.game1.platforms.add(self.platform_pc)
-        self.game1.genres.add(self.genre_action)
         self.game1.developers.add(self.developer)
 
         self.game2 = models.Game.objects.create(
@@ -38,7 +35,6 @@ class GameListApiTests(TestCase):
             slug="beta-saga",
         )
         self.game2.platforms.add(self.platform_ps)
-        self.game2.genres.add(self.genre_adventure)
 
     def _get_game_names(self, **params):
         response = self.client.get("/api/games/", params)
@@ -50,12 +46,6 @@ class GameListApiTests(TestCase):
     def test_filter_by_platform(self):
         names = self._get_game_names(platforms=str(self.platform_ps.id))
         self.assertEqual(names, ["Beta Saga"])
-
-    def test_filter_by_single_genre(self):
-        """Single genre filter should work (single-select mode)."""
-        self.game2.genres.add(self.genre_action)
-        names = self._get_game_names(genres=str(self.genre_action.id))
-        self.assertCountEqual(names, ["Alpha Quest", "Beta Saga"])
 
     def test_filter_by_developer(self):
         names = self._get_game_names(developer=str(self.developer.igdb_id))
@@ -144,11 +134,6 @@ class ApiSmokeTests(TestCase):
 
     def test_platforms_endpoint(self):
         resp = self.client.get("/api/platforms/")
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn("results", resp.json())
-
-    def test_genres_endpoint(self):
-        resp = self.client.get("/api/genres/")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("results", resp.json())
 
@@ -597,8 +582,8 @@ class IdNameSerializerTests(TestCase):
 
     def test_get_id_falls_back_to_id(self):
         """Test that get_id falls back to regular id when no igdb_id."""
-        # IGDBGenre has id but no igdb_id attribute
-        genre = models.IGDBGenre.objects.create(name="Test Genre")
+        # WikipediaGenre has id but no igdb_id attribute
+        genre = models.WikipediaGenre.objects.create(name="Test Genre")
         serializer = serializers.IdNameSerializer(genre)
         self.assertEqual(serializer.data["id"], genre.id)
 
@@ -652,31 +637,6 @@ class GameSummarySerializerTests(TestCase):
         )
         serializer = serializers.GameSummarySerializer(game)
         self.assertIsNone(serializer.data["igdb_url"])
-
-    def test_get_description_with_primary_data(self):
-        """Test that description is returned from primary_igdb_game_data."""
-        game = models.Game.objects.create(
-            name="Test Game", rank=1, igdb_id=1005, slug="test-game-sm5"
-        )
-        igdb_data = models.IGDBGameData.objects.create(
-            game=game,
-            igdb_id=1005,
-            description="A great game",
-            is_primary=True,
-        )
-        game.primary_igdb_game_data = igdb_data
-        game.save()
-
-        serializer = serializers.GameSummarySerializer(game)
-        self.assertEqual(serializer.data["description"], "A great game")
-
-    def test_get_description_returns_none_without_primary_data(self):
-        """Test that description returns None when no primary_igdb_game_data."""
-        game = models.Game.objects.create(
-            name="Test Game", rank=1, igdb_id=1006, slug="test-game-sm6"
-        )
-        serializer = serializers.GameSummarySerializer(game)
-        self.assertIsNone(serializer.data["description"])
 
 
 class DeveloperSerializerTests(TestCase):

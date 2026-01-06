@@ -30,10 +30,6 @@ class PageLookupResult:
     error_message: Optional[str] = None
     hltb_id: Optional[str] = None  # HowLongToBeat ID from Wikidata P2816
     steam_app_id: Optional[str] = None  # Steam AppID from Wikidata P1733
-    game_modes: Optional[List[str]] = None  # Game modes from Wikidata P404
-    country_of_origin: Optional[List[str]] = (
-        None  # Country of origin from Wikidata P495
-    )
     wikiquote_page_title: Optional[str] = (
         None  # Wikiquote page from enwikiquote sitelink
     )
@@ -222,102 +218,6 @@ class WikiPageLookupService:
             logger.warning("Failed to parse Wikidata label for %s: %s", qid, e)
             return None
 
-    def _get_or_create_game_mode(self, qid: str) -> Optional[str]:
-        """
-        Get game mode label from database, or fetch from Wikidata and create record.
-
-        Args:
-            qid: Wikidata Q-ID (e.g., "Q208850" for single-player)
-
-        Returns:
-            Game mode name, or None if lookup failed
-        """
-        from games.models import WikipediaGameMode
-
-        # Check database first
-        try:
-            game_mode = WikipediaGameMode.objects.get(wikidata_id=qid)
-            return game_mode.name
-        except WikipediaGameMode.DoesNotExist:
-            pass
-
-        # Fetch from Wikidata
-        label = self._fetch_wikidata_label(qid)
-        if not label:
-            logger.warning("Could not fetch Wikidata label for game mode %s", qid)
-            return None
-
-        # Clean up the label (Wikidata often has verbose names like
-        # "single-player video game"). Remove common suffixes
-        for suffix in [" video game", " video games", " game", " games", " mode"]:
-            if label.lower().endswith(suffix):
-                label = label[: -len(suffix)]
-
-        # Title case
-        label = label.strip().title()
-
-        # Create the record
-        try:
-            game_mode, created = WikipediaGameMode.objects.get_or_create(
-                wikidata_id=qid,
-                defaults={"name": label},
-            )
-            if created:
-                logger.info("Created new game mode: %s (%s)", label, qid)
-            return game_mode.name
-        except Exception as e:
-            logger.warning("Failed to create game mode %s: %s", qid, e)
-            return None
-
-    def _get_or_create_country(self, qid: str) -> Optional[str]:
-        """
-        Get country label from database, or fetch from Wikidata and create record.
-
-        Args:
-            qid: Wikidata Q-ID (e.g., "Q30" for USA)
-
-        Returns:
-            Country name, or None if lookup failed
-        """
-        from games.models import WikipediaCountry
-
-        # Check database first
-        try:
-            country = WikipediaCountry.objects.get(wikidata_id=qid)
-            return country.name
-        except WikipediaCountry.DoesNotExist:
-            pass
-
-        # Fetch from Wikidata
-        label = self._fetch_wikidata_label(qid)
-        if not label:
-            logger.warning("Could not fetch Wikidata label for country %s", qid)
-            return None
-
-        # Some common abbreviations/cleanup
-        COUNTRY_ABBREVIATIONS = {
-            "United States of America": "USA",
-            "United States": "USA",
-            "United Kingdom": "UK",
-            "People's Republic of China": "China",
-            "Republic of Korea": "South Korea",
-            "Russian Federation": "Russia",
-        }
-        label = COUNTRY_ABBREVIATIONS.get(label, label)
-
-        # Create the record
-        try:
-            country, created = WikipediaCountry.objects.get_or_create(
-                wikidata_id=qid,
-                defaults={"name": label},
-            )
-            if created:
-                logger.info("Created new country: %s (%s)", label, qid)
-            return country.name
-        except Exception as e:
-            logger.warning("Failed to create country %s: %s", qid, e)
-            return None
-
     def _get_wikidata_id_from_page(self, page_title: str) -> Optional[str]:
         """
         Look up the Wikidata Q-ID for a Wikipedia page title.
@@ -370,8 +270,6 @@ class WikiPageLookupService:
             str,
             Optional[str],
             Optional[str],
-            Optional[List[str]],
-            Optional[List[str]],
             Optional[str],
         ]
     ]:
@@ -382,8 +280,8 @@ class WikiPageLookupService:
             wikidata_id: Wikidata ID (e.g., "Q12345")
 
         Returns:
-            Tuple of (page_title, hltb_id, steam_app_id, game_modes, countries,
-            wikiquote_title), or None if not found.
+            Tuple of (page_title, hltb_id, steam_app_id, wikiquote_title),
+            or None if not found.
             page_title may be None if no enwiki sitelink exists.
         """
         if not wikidata_id:
@@ -472,32 +370,6 @@ class WikiPageLookupService:
                             steam_app_id,
                         )
 
-            # Extract game modes from P404 claim
-            # Uses database cache with Wikidata API fallback for labels
-            game_modes = []
-            for claim in claims.get("P404", []):
-                mainsnak = claim.get("mainsnak", {})
-                datavalue = mainsnak.get("datavalue", {})
-                value = datavalue.get("value", {})
-                qid = value.get("id") if isinstance(value, dict) else None
-                if qid:
-                    label = self._get_or_create_game_mode(qid)
-                    if label and label not in game_modes:
-                        game_modes.append(label)
-
-            # Extract country of origin from P495 claim
-            # Uses database cache with Wikidata API fallback for labels
-            countries = []
-            for claim in claims.get("P495", []):
-                mainsnak = claim.get("mainsnak", {})
-                datavalue = mainsnak.get("datavalue", {})
-                value = datavalue.get("value", {})
-                qid = value.get("id") if isinstance(value, dict) else None
-                if qid:
-                    label = self._get_or_create_country(qid)
-                    if label and label not in countries:
-                        countries.append(label)
-
             if page_title:
                 logger.debug(
                     "Found Wikipedia page via Wikidata: %s -> %s",
@@ -513,8 +385,6 @@ class WikiPageLookupService:
                 page_title,
                 hltb_id,
                 steam_app_id,
-                game_modes if game_modes else None,
-                countries if countries else None,
                 wikiquote_title,
             )
 
@@ -576,10 +446,9 @@ class WikiPageLookupService:
         secondary: Optional[Dict],
     ) -> Dict:
         """
-        Merge metadata from two Wikidata sources, taking union of all values.
+        Merge metadata from two Wikidata sources.
 
         Primary values take precedence when both have the same field.
-        For list fields (game_modes, country_of_origin), combines unique values.
 
         Args:
             primary: Metadata from primary Wikidata ID (stored on game)
@@ -601,20 +470,8 @@ class WikiPageLookupService:
         for key in all_keys:
             primary_val = primary.get(key)
             secondary_val = secondary.get(key)
-
-            # For list fields, combine unique values
-            if key in ("game_modes", "country_of_origin"):
-                combined = []
-                if primary_val:
-                    combined.extend(primary_val)
-                if secondary_val:
-                    for val in secondary_val:
-                        if val not in combined:
-                            combined.append(val)
-                merged[key] = combined if combined else None
-            else:
-                # For scalar fields, primary takes precedence
-                merged[key] = primary_val if primary_val else secondary_val
+            # Primary takes precedence
+            merged[key] = primary_val if primary_val else secondary_val
 
         return merged
 
@@ -653,16 +510,12 @@ class WikiPageLookupService:
                     stored_page_title,
                     hltb_id,
                     steam_app_id,
-                    game_modes,
-                    countries,
                     wikiquote_title,
                 ) = wikidata_result
 
                 stored_metadata = {
                     "hltb_id": hltb_id,
                     "steam_app_id": steam_app_id,
-                    "game_modes": game_modes,
-                    "country_of_origin": countries,
                     "wikiquote_page_title": wikiquote_title,
                 }
 
@@ -700,15 +553,11 @@ class WikiPageLookupService:
                         _,  # page_title already known
                         hltb_id,
                         steam_app_id,
-                        game_modes,
-                        countries,
                         wikiquote_title,
                     ) = page_result
                     page_metadata = {
                         "hltb_id": hltb_id,
                         "steam_app_id": steam_app_id,
-                        "game_modes": game_modes,
-                        "country_of_origin": countries,
                         "wikiquote_page_title": wikiquote_title,
                     }
                     logger.info(

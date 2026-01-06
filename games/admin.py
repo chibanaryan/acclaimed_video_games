@@ -27,12 +27,6 @@ class PlatformAdmin(admin.ModelAdmin):
     ordering = ["name"]
 
 
-@admin.register(models.IGDBGenre)
-class IGDBGenreAdmin(admin.ModelAdmin):
-    list_display = ["name"]
-    search_fields = ["name"]
-
-
 @admin.register(models.WikipediaGenre)
 class WikipediaGenreAdmin(admin.ModelAdmin):
     list_display = ["name", "parent", "level", "path", "game_count", "display_order"]
@@ -44,38 +38,6 @@ class WikipediaGenreAdmin(admin.ModelAdmin):
     @admin.display(description="Games")
     def game_count(self, obj):
         return obj.games_with_wikipedia_genre.count()
-
-
-@admin.register(models.WikipediaCountry)
-class WikipediaCountryAdmin(admin.ModelAdmin):
-    list_display = ["name", "wikidata_id", "slug", "game_count"]
-    search_fields = ["name", "wikidata_id"]
-    ordering = ["name"]
-    readonly_fields = ["game_count"]
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.annotate(_game_count=Count("games"))
-
-    @admin.display(description="Games", ordering="_game_count")
-    def game_count(self, obj):
-        return getattr(obj, "_game_count", obj.games.count())
-
-
-@admin.register(models.WikipediaGameMode)
-class WikipediaGameModeAdmin(admin.ModelAdmin):
-    list_display = ["name", "wikidata_id", "slug", "game_count"]
-    search_fields = ["name", "wikidata_id"]
-    ordering = ["name"]
-    readonly_fields = ["game_count"]
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.annotate(_game_count=Count("games"))
-
-    @admin.display(description="Games", ordering="_game_count")
-    def game_count(self, obj):
-        return getattr(obj, "_game_count", obj.games.count())
 
 
 @admin.register(models.Series)
@@ -127,7 +89,6 @@ class GameAdmin(admin.ModelAdmin):
         "_igdb_data_link",
         "_wikipedia_data_link",
         "_hltb_data_link",
-        "_igdb_genres",
         "_wikipedia_genres",
     ]
     list_filter = ["year_of_release"]
@@ -135,10 +96,7 @@ class GameAdmin(admin.ModelAdmin):
     filter_horizontal = [
         "developers",
         "platforms",
-        "genres",
         "wikipedia_genres",
-        "wikipedia_countries",
-        "wikipedia_game_modes",
         "series",
     ]
 
@@ -153,10 +111,7 @@ class GameAdmin(admin.ModelAdmin):
                 "primary_hltb_game_data",
             )
             .prefetch_related(
-                "genres",
                 "wikipedia_genres",
-                "wikipedia_countries",
-                "wikipedia_game_modes",
             )
         )
 
@@ -166,14 +121,6 @@ class GameAdmin(admin.ModelAdmin):
         """Save the game model, fetching fresh IGDB data."""
         obj.get_igdb_data(cache_results=False)
         obj.save()
-
-    def _igdb_genres(self, obj: models.Game) -> str:
-        """Display comma-separated list of IGDB genres for the game."""
-        # Use prefetched genres instead of values_list to avoid extra query
-        genres = [genre.name for genre in obj.genres.all()]
-        return ", ".join(genres) if genres else "-"
-
-    _igdb_genres.short_description = "IGDB Genres"
 
     def _wikipedia_genres(self, obj: models.Game) -> str:
         """Display comma-separated list of Wikipedia genres for the game."""
@@ -223,13 +170,12 @@ class IGDBGameDataAdmin(admin.ModelAdmin):
         "igdb_id",
         "artwork_id",
         "_url_link",
-        "_description_preview",
         "is_primary",
         "fetched_at",
         "updated_at",
     ]
     list_filter = ["is_primary", "fetched_at", "updated_at"]
-    search_fields = ["game__name", "igdb_id", "artwork_id", "description"]
+    search_fields = ["game__name", "igdb_id", "artwork_id"]
     raw_id_fields = ["game"]
     readonly_fields = ["fetched_at", "updated_at"]
 
@@ -240,14 +186,6 @@ class IGDBGameDataAdmin(admin.ModelAdmin):
         return "-"
 
     _url_link.short_description = "IGDB URL"
-
-    def _description_preview(self, obj: models.IGDBGameData) -> str:
-        """Display truncated description."""
-        if obj.description:
-            return Truncator(obj.description).words(10)
-        return "-"
-
-    _description_preview.short_description = "Description"
 
 
 @admin.register(models.WikipediaGameData)

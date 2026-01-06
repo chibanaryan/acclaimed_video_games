@@ -637,77 +637,6 @@ class FetchWikipediaMetadataCommandTests(TestCase):
         output = out.getvalue()
         self.assertIn("No orphan WikipediaGenre records found", output)
 
-    def test_command_saves_countries_and_game_modes(self):
-        """Test command saves countries and game modes as M2M relationships."""
-        from games.models import WikipediaCountry, WikipediaGameMode
-
-        # Pre-create country and game mode records (normally created by
-        # WikiPageLookupService during lookup, but we're mocking it)
-        WikipediaCountry.objects.create(name="USA", wikidata_id="Q30")
-        WikipediaCountry.objects.create(name="Japan", wikidata_id="Q17")
-        WikipediaGameMode.objects.create(name="Single-player", wikidata_id="Q208850")
-        WikipediaGameMode.objects.create(name="Multiplayer", wikidata_id="Q6895044")
-
-        out = StringIO()
-
-        with mock.patch(
-            "games.management.commands.fetch_wikipedia_metadata.WikiPageLookupService"
-        ) as mock_page_service_class, mock.patch(
-            "games.management.commands.fetch_wikipedia_metadata.WikiGenreService"
-        ) as mock_genre_service_class:
-            mock_page_service = mock_page_service_class.return_value
-            mock_page_service.lookup_page.return_value = PageLookupResult(
-                game_name="Test Game 1",
-                page_title="Test Game 1",
-                lookup_source="wikidata",
-                country_of_origin=["USA", "Japan"],
-                game_modes=["Single-player", "Multiplayer"],
-                wikiquote_page_title="Test Game 1",
-            )
-
-            mock_genre_service = mock_genre_service_class.return_value
-            mock_genre_service.get_genre_from_url.return_value = GenreResult(
-                game_name="Test Game 1",
-                source=GenreSource.WIKIPEDIA,
-                primary_genre="Action",
-                all_genres=["Action"],
-            )
-
-            call_command(
-                "fetch_wikipedia_metadata",
-                "--game",
-                "Test Game 1",
-                "--save",
-                stdout=out,
-            )
-
-        self.game1.refresh_from_db()
-
-        # Check countries M2M
-        countries = list(self.game1.wikipedia_countries.values_list("name", flat=True))
-        self.assertEqual(sorted(countries), ["Japan", "USA"])
-
-        # Check game modes M2M
-        modes = list(self.game1.wikipedia_game_modes.values_list("name", flat=True))
-        self.assertEqual(sorted(modes), ["Multiplayer", "Single-player"])
-
-        # Check wikiquote was saved
-        wiki_data = self.game1.primary_wikipedia_game_data
-        self.assertEqual(wiki_data.wikiquote_page_title, "Test Game 1")
-
-        # Verify records exist with correct wikidata IDs
-        usa = WikipediaCountry.objects.get(name="USA")
-        self.assertEqual(usa.wikidata_id, "Q30")
-
-        japan = WikipediaCountry.objects.get(name="Japan")
-        self.assertEqual(japan.wikidata_id, "Q17")
-
-        single_player = WikipediaGameMode.objects.get(name="Single-player")
-        self.assertEqual(single_player.wikidata_id, "Q208850")
-
-        multiplayer = WikipediaGameMode.objects.get(name="Multiplayer")
-        self.assertEqual(multiplayer.wikidata_id, "Q6895044")
-
 
 class WikiPageLookupServiceTests(TestCase):
     """Tests for WikiPageLookupService internal logic."""
@@ -761,7 +690,7 @@ class WikiPageLookupServiceTests(TestCase):
 
         # Should return the normal (non-deprecated) HLTB ID
         self.assertIsNotNone(result)
-        page_title, hltb_id, steam_app_id, game_modes, countries, wikiquote = result
+        page_title, hltb_id, steam_app_id, wikiquote = result
         self.assertEqual(page_title, "NHL 94")
         self.assertEqual(hltb_id, "15544")  # The normal rank ID, not deprecated
 
@@ -806,7 +735,7 @@ class WikiPageLookupServiceTests(TestCase):
 
         # Should return the preferred HLTB ID
         self.assertIsNotNone(result)
-        page_title, hltb_id, steam_app_id, game_modes, countries, wikiquote = result
+        page_title, hltb_id, steam_app_id, wikiquote = result
         self.assertEqual(hltb_id, "222")  # Preferred rank
 
     def test_returns_none_when_all_hltb_ids_deprecated(self):
@@ -850,6 +779,6 @@ class WikiPageLookupServiceTests(TestCase):
 
         # Page should be found but HLTB ID should be None
         self.assertIsNotNone(result)
-        page_title, hltb_id, steam_app_id, game_modes, countries, wikiquote = result
+        page_title, hltb_id, steam_app_id, wikiquote = result
         self.assertEqual(page_title, "All Deprecated Game")
         self.assertIsNone(hltb_id)  # No valid HLTB ID

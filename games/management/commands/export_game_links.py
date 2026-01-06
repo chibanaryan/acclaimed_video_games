@@ -40,7 +40,7 @@ class Command(BaseCommand):
             Game.objects.select_related(
                 "primary_hltb_game_data", "primary_igdb_game_data"
             )
-            .prefetch_related("developers", "platforms", "genres", "wikipedia_genres")
+            .prefetch_related("developers", "platforms", "wikipedia_genres")
             .order_by("rank")
         )
 

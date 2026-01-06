@@ -14,7 +14,6 @@ from core.models import User
 from games.models import (
     Developer,
     Game,
-    IGDBGenre,
     List,
     ListMembership,
     Platform,
@@ -1604,13 +1603,11 @@ class GameDownloadCSVTest(TestCase):
 
     def setUp(self):
         # Create test games with related data
-        self.genre = IGDBGenre.objects.create(name="Action")
         self.wiki_genre, _ = WikipediaGenre.objects.get_or_create(name="Action")
         self.platform = Platform.objects.create(name="PC", code="PC")
         self.dev = Developer.objects.create(name="Test Dev", slug="test-dev", igdb_id=1)
 
         self.game1 = Game.objects.create(name="Game 1", rank=1, year_of_release=1995)
-        self.game1.genres.add(self.genre)
         self.game1.wikipedia_genres.add(self.wiki_genre)
         self.game1.platforms.add(self.platform)
         self.game1.developers.add(self.dev)
@@ -1791,7 +1788,7 @@ class GameDownloadCSVTest(TestCase):
     def test_csv_respects_genre_filter(self):
         """Test that CSV respects genre filter."""
         response = self.client.get(
-            reverse("games-download") + f"?genres={self.genre.id}"
+            reverse("games-download") + f"?genres={self.wiki_genre.id}"
         )
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")

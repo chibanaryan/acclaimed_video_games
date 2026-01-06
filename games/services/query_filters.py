@@ -17,13 +17,12 @@ def apply_genre_filter(
     queryset: QuerySet,
     genre_ids: List[int],
     match_all: bool = True,
-    use_wikipedia: bool = False,  # Default False for backward compatibility
+    use_wikipedia: bool = True,  # Now defaults to Wikipedia genres
     expand_hierarchy: bool = True,
 ) -> QuerySet:
     """
-    Filter queryset by genres with any/all matching.
+    Filter queryset by Wikipedia genres with any/all matching.
 
-    Supports both IGDB genres (legacy) and Wikipedia genres (hierarchical).
     When using Wikipedia genres with hierarchy expansion, selecting a parent
     genre will automatically include all games tagged with child genres.
 
@@ -32,11 +31,9 @@ def apply_genre_filter(
         genre_ids: List of genre IDs to filter by
         match_all: If True, games must match ALL selected genres (each can be
                    satisfied by itself or any descendant). If False, ANY match.
-        use_wikipedia: If True, filter by wikipedia_genres. If False, filter by
-                       IGDB genres (legacy behavior).
-        expand_hierarchy: If True and use_wikipedia, expand parent genres to
-                          include all descendants. If False, filter by exact
-                          genre IDs only.
+        use_wikipedia: Deprecated, always uses wikipedia_genres.
+        expand_hierarchy: If True, expand parent genres to include all
+                          descendants. If False, filter by exact genre IDs only.
 
     Returns:
         Filtered queryset
@@ -44,20 +41,7 @@ def apply_genre_filter(
     if not genre_ids:
         return queryset
 
-    # Determine the M2M field to use
-    genre_field = "wikipedia_genres" if use_wikipedia else "genres"
-
-    # For non-Wikipedia genres (IGDB), use simple filtering
-    if not use_wikipedia:
-        if match_all:
-            for genre_id in genre_ids:
-                queryset = queryset.filter(**{genre_field: genre_id})
-        else:
-            q = Q()
-            for genre_id in genre_ids:
-                q |= Q(**{genre_field: genre_id})
-            queryset = queryset.filter(q)
-        return queryset
+    genre_field = "wikipedia_genres"
 
     # For Wikipedia genres with hierarchy expansion
     # Each selected genre expands to include its descendants
