@@ -379,15 +379,12 @@ class BookListMembershipModelTests(TestCase):
     """Tests for the BookListMembership model."""
 
     def setUp(self):
-        from games.models import List, Publication
-
-        self.publication = Publication.objects.create(name="Test Pub")
-        self.book_list = List.objects.create(
+        self.publication = models.BookPublication.objects.create(name="Test Pub")
+        self.book_list = models.BookList.objects.create(
             publisher=self.publication,
             name="Best Books 2024",
             year=2024,
-            type="AT",
-            media_type="B",
+            type="A",
         )
         self.book = models.Book.objects.create(name="Test Book", rank=1)
 
@@ -504,8 +501,6 @@ class BookQuerySetTests(TestCase):
     """Tests for the BookQuerySet custom manager methods."""
 
     def setUp(self):
-        from games.models import List, Publication
-
         self.user = User.objects.create_user(username="testuser", password="testpass")
 
         # Create some books with relationships
@@ -525,13 +520,12 @@ class BookQuerySetTests(TestCase):
         self.book2.authors.add(self.author)
 
         # Create list membership
-        self.publication = Publication.objects.create(name="Test Pub")
-        self.book_list = List.objects.create(
+        self.publication = models.BookPublication.objects.create(name="Test Pub")
+        self.book_list = models.BookList.objects.create(
             publisher=self.publication,
             name="Best Books",
             year=2024,
-            type="AT",
-            media_type="B",
+            type="A",
         )
         models.BookListMembership.objects.create(
             list=self.book_list, book=self.book1, rank=1

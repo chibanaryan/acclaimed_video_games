@@ -13,7 +13,6 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from books import models
-from games.models import List, Publication
 
 
 User = get_user_model()
@@ -223,25 +222,16 @@ class BookListListAPITests(StaffAPITestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.publication = Publication.objects.create(name="Test Pub")
-        self.book_list = List.objects.create(
+        self.publication = models.BookPublication.objects.create(name="Test Pub")
+        self.book_list = models.BookList.objects.create(
             publisher=self.publication,
             name="Best Books 2024",
             year=2024,
-            type="AT",
-            media_type="B",
-        )
-        # Also create a game list that should not appear
-        self.game_list = List.objects.create(
-            publisher=self.publication,
-            name="Best Games 2024",
-            year=2024,
-            type="AT",
-            media_type="G",
+            type="A",
         )
 
     def test_list_book_lists(self):
-        """Test GET /api/books/lists/ returns only book lists."""
+        """Test GET /api/books/lists/ returns book lists."""
         response = self.client.get("/api/books/lists/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -259,13 +249,12 @@ class BookMetaAPITests(StaffAPITestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.publication = Publication.objects.create(name="Test Pub")
-        List.objects.create(
+        self.publication = models.BookPublication.objects.create(name="Test Pub")
+        models.BookList.objects.create(
             publisher=self.publication,
             name="Best Books",
             year=2024,
-            type="AT",
-            media_type="B",
+            type="A",
         )
         models.Book.objects.create(name="Test Book", rank=1, year_published=2020)
         models.Author.objects.create(name="Test Author", slug="test")

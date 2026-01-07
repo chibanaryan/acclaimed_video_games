@@ -7,9 +7,13 @@ from django.conf import settings
 from django.db import models
 from django.utils.text import Truncator, slugify
 
-from core.models import MediaItemBase
-
-from core.models import CreatorBase
+from core.models import (
+    CreatorBase,
+    ListBase,
+    ListMembershipBase,
+    MediaItemBase,
+    PublicationBase,
+)
 
 from . import constants, igdb
 
@@ -1484,30 +1488,31 @@ class Game(MediaItemBase):
         return result
 
 
-class Publication(models.Model):
+class Publication(PublicationBase):
     """
-    A magazine, website etc that publishes lists
+    A magazine, website etc that publishes game lists.
+
+    Inherits from PublicationBase which provides:
+    - name (CharField, unique)
+    - slug (SlugField with auto-generation)
+    - __str__, save methods
     """
 
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=100)
-
-    def __str__(self) -> str:
-        return self.name
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """Save the publication, ensuring slug is populated."""
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
+    class Meta:
+        db_table = "games_publication"  # Preserve existing table name
+        ordering = ["name"]
 
 
-class List(models.Model):
+class List(ListBase):
     """
     A list published by a critic or publication.
 
-    Supports multiple media types (games, books) via the media_type field.
-    Each list is specific to one media type.
+    Inherits from ListBase which provides:
+    - name, url, year, type, order fields
+    - __str__, get_type_label methods
+
+    Adds game-specific fields:
+    - publisher FK to games.Publication
     """
 
     publisher = models.ForeignKey(
@@ -1517,46 +1522,29 @@ class List(models.Model):
         related_name="lists",
         on_delete=models.CASCADE,
     )
-    name = models.CharField(max_length=100)
-    url = models.URLField(null=True, blank=True)
-    year = models.PositiveSmallIntegerField(db_index=True)
-    type = models.CharField(
-        max_length=1,
-        choices=constants.LIST_TYPES,
-        default=constants.LIST_EOY,
-        db_index=True,
-    )
-    media_type = models.CharField(
-        max_length=1,
-        choices=constants.MEDIA_TYPES,
-        default=constants.MEDIA_GAME,
-        db_index=True,
-        help_text="Media type this list applies to (games, books, etc.)",
-    )
-    order = models.PositiveIntegerField(unique=True, null=True)
 
     class Meta:
+        db_table = "games_list"  # Preserve existing table name
         ordering = ["order", "type", "publisher", "year", "name"]
         unique_together = ["publisher", "name", "year"]
         indexes = [
             models.Index(fields=["type", "year"]),
-            models.Index(fields=["media_type"]),
         ]
 
-    def __str__(self) -> str:
-        return self.name
 
-
-class ListMembership(models.Model):
+class ListMembership(ListMembershipBase):
     """
-    A game's appearance in a list
+    A game's appearance in a list.
+
+    Inherits from ListMembershipBase which provides:
+    - rank field
     """
 
     list = models.ForeignKey("List", on_delete=models.CASCADE)
     game = models.ForeignKey("Game", on_delete=models.CASCADE, related_name="lists")
-    rank = models.PositiveSmallIntegerField(null=True, blank=True)
 
     class Meta:
+        db_table = "games_listmembership"  # Preserve existing table name
         indexes = [
             models.Index(fields=["list", "rank"]),
             models.Index(fields=["game", "list"]),

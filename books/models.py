@@ -12,7 +12,15 @@ from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
-from core.models import CreatorBase, ExternalDataBase, MediaItemBase, UserTrackingBase
+from core.models import (
+    CreatorBase,
+    ExternalDataBase,
+    ListBase,
+    ListMembershipBase,
+    MediaItemBase,
+    PublicationBase,
+    UserTrackingBase,
+)
 
 
 class Author(CreatorBase):
@@ -616,16 +624,72 @@ class Book(MediaItemBase):
         return filtered
 
 
-class BookListMembership(models.Model):
+class BookPublication(PublicationBase):
+    """
+    A magazine, website, or organization that publishes book lists.
+
+    Examples: New York Times, Goodreads, Library Journal, Modern Library
+
+    Inherits from PublicationBase which provides:
+    - name (CharField, unique)
+    - slug (SlugField with auto-generation)
+    - __str__, save methods
+    """
+
+    class Meta:
+        db_table = "books_bookpublication"
+        ordering = ["name"]
+        verbose_name = "Book Publication"
+        verbose_name_plural = "Book Publications"
+
+
+class BookList(ListBase):
+    """
+    A book list published by a publication.
+
+    Examples: "NYT Best Books of 2024", "Modern Library 100 Best Novels"
+
+    Inherits from ListBase which provides:
+    - name, url, year, type, order fields
+    - __str__, get_type_label methods
+    """
+
+    # null=True allows importing lists before their publication is created,
+    # or for lists from unknown/anonymous sources during data migration.
+    publisher = models.ForeignKey(
+        "BookPublication",
+        null=True,
+        blank=True,
+        related_name="lists",
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        db_table = "books_booklist"
+        ordering = ["order", "type", "publisher", "year", "name"]
+        # Note: unique_together with nullable publisher allows multiple lists
+        # with same name/year when publisher is NULL (NULLs are distinct in SQL).
+        # This is acceptable for orphan lists during data import.
+        unique_together = ["publisher", "name", "year"]
+        indexes = [
+            models.Index(fields=["type", "year"]),
+        ]
+        verbose_name = "Book List"
+        verbose_name_plural = "Book Lists"
+
+
+class BookListMembership(ListMembershipBase):
     """
     A book's appearance in a list.
 
-    Uses the existing List model (with media_type='B' for books)
-    to track which lists a book appears on and its rank in each.
+    Inherits from ListMembershipBase which provides:
+    - rank field
+
+    References books.BookList for complete independence from games app.
     """
 
     list = models.ForeignKey(
-        "games.List",
+        "BookList",
         on_delete=models.CASCADE,
         help_text="The list this book appears on",
     )
@@ -635,11 +699,6 @@ class BookListMembership(models.Model):
         related_name="lists",
         help_text="The book appearing in the list",
     )
-    rank = models.PositiveSmallIntegerField(
-        null=True,
-        blank=True,
-        help_text="Book's position in the list (lower is better)",
-    )
 
     class Meta:
         db_table = "books_booklistmembership"
@@ -648,6 +707,8 @@ class BookListMembership(models.Model):
             models.Index(fields=["book", "list"]),
         ]
         unique_together = [("list", "book")]
+        verbose_name = "Book List Membership"
+        verbose_name_plural = "Book List Memberships"
 
     def __str__(self) -> str:
         return f"{self.list} - {self.book} - {self.rank}"

@@ -245,6 +245,28 @@ class WikipediaBookDataAdmin(admin.ModelAdmin):
         return "-"
 
 
+@admin.register(models.BookPublication)
+class BookPublicationAdmin(admin.ModelAdmin):
+    """Admin interface for BookPublication records."""
+
+    list_display = ["name", "slug"]
+    list_display_links = ["name", "slug"]
+    search_fields = ["name"]
+    prepopulated_fields = {"slug": ("name",)}
+    ordering = ["name"]
+
+
+@admin.register(models.BookList)
+class BookListAdmin(admin.ModelAdmin):
+    """Admin interface for BookList records."""
+
+    list_display = ["name", "publisher", "year", "type", "order"]
+    list_filter = ["type", "year", "publisher"]
+    search_fields = ["name", "publisher__name"]
+    raw_id_fields = ["publisher"]
+    ordering = ["order", "type", "publisher", "year", "name"]
+
+
 @admin.register(models.BookListMembership)
 class BookListMembershipAdmin(admin.ModelAdmin):
     """Admin interface for BookListMembership records."""
