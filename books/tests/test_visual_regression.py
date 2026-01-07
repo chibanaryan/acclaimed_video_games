@@ -512,8 +512,20 @@ class AuthenticatedUserRenderingTests(StaffClientMixin, TestCase):
             goodreads_id="auth123",
         )
 
+    def test_non_staff_user_gets_404(self):
+        """Test non-staff users get 404 (books is staff-only)."""
+        # Create and login as non-staff user
+        non_staff = User.objects.create_user(
+            username="regularuser", password="regularpass"
+        )
+        self.client.login(username="regularuser", password="regularpass")
+        response = self.client.get(reverse("books:home"))
+        self.assertEqual(response.status_code, 404)
+
     def test_authenticated_user_sees_read_button(self):
         """Test authenticated users see read button."""
+        # Re-login as staff user after testing non-staff
+        self.client.login(username="staffuser", password="staffpass")
         response = self.client.get(reverse("books:home"))
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -523,7 +535,7 @@ class AuthenticatedUserRenderingTests(StaffClientMixin, TestCase):
             read_slot = desktop_row.find(attrs={"data-slot": "read-button"})
             self.assertIsNotNone(
                 read_slot,
-                "Authenticated user should have read button slot"
+                "Staff user should have read button slot"
             )
 
     def test_read_book_shows_read_state(self):
