@@ -9,10 +9,13 @@ from django.test import TestCase
 from books import models
 from books.templatetags.book_filters import (
     author_display_name,
+    book_genre_categories_grouped,
     book_genre_icon,
+    book_rank_url,
     book_series_label,
     format_author_list,
     format_page_count,
+    get_author_ids,
     get_list_type_badge_class,
     get_list_type_label,
     isbn_display,
@@ -45,10 +48,6 @@ class BookGenreIconTests(TestCase):
         )
         # Child should use parent's category, which is Fiction
         self.assertEqual(book_genre_icon(child_genre), "mdi-book-open-page-variant")
-
-        # Clean up
-        child_genre.delete()
-        root_genre.delete()
 
 
 class FormatPageCountTests(TestCase):
@@ -117,11 +116,6 @@ class FormatAuthorListTests(TestCase):
         self.assertEqual(format_author_list([]), "")
         self.assertEqual(format_author_list(None), "")
 
-        # Clean up
-        models.Author.objects.filter(
-            id__in=[author1.id, author2.id, author3.id, author4.id, author5.id]
-        ).delete()
-
 
 class BookSeriesLabelTests(TestCase):
     """Tests for book_series_label template filter."""
@@ -156,10 +150,6 @@ class BookSeriesLabelTests(TestCase):
         book.series = None
         book.save()
         self.assertEqual(book_series_label(book), "")
-
-        # Clean up
-        book.delete()
-        series.delete()
 
 
 class IsbnDisplayTests(TestCase):
@@ -240,10 +230,6 @@ class AuthorDisplayNameTests(TestCase):
         )
         self.assertEqual(author_display_name(None), "")
 
-        # Clean up
-        child.delete()
-        parent.delete()
-
 
 class ListTypeLabelTests(TestCase):
     """Tests for get_list_type_label template filter."""
@@ -267,3 +253,194 @@ class ListTypeBadgeClassTests(TestCase):
         self.assertEqual(get_list_type_badge_class("D"), "badge-success font-semibold")
         self.assertEqual(get_list_type_badge_class("M"), "badge-warning font-semibold")
         self.assertEqual(get_list_type_badge_class("X"), "badge-ghost")
+
+
+class BookGenreCategoriesGroupedTests(TestCase):
+    """Tests for book_genre_categories_grouped template filter."""
+
+    def test_groups_genres_by_parent(self):
+        """book_genre_categories_grouped should group genres by parent category."""
+        # Create parent category
+        fiction = models.BookGenre.objects.create(
+            name="Fiction", slug="fiction", level=0
+        )
+        # Create child genres
+        scifi = models.BookGenre.objects.create(
+            name="Sci-Fi", slug="scifi", parent=fiction, level=1
+        )
+        fantasy = models.BookGenre.objects.create(
+            name="Fantasy", slug="fantasy", parent=fiction, level=1
+        )
+
+        result = book_genre_categories_grouped([scifi, fantasy])
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["name"], "Fiction")
+        self.assertEqual(result[0]["count"], 2)
+        self.assertIn("Sci-Fi", result[0]["tooltip"])
+        self.assertIn("Fantasy", result[0]["tooltip"])
+
+    def test_handles_root_level_genres(self):
+        """book_genre_categories_grouped should handle root-level genres."""
+        root = models.BookGenre.objects.create(
+            name="Science Fiction", slug="science-fiction", level=0
+        )
+
+        result = book_genre_categories_grouped([root])
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["name"], "Science Fiction")
+        self.assertEqual(result[0]["icon"], "mdi-rocket-launch")
+
+    def test_returns_empty_for_empty_list(self):
+        """book_genre_categories_grouped should return empty list for no genres."""
+        result = book_genre_categories_grouped([])
+        self.assertEqual(result, [])
+
+    def test_multiple_categories(self):
+        """book_genre_categories_grouped should handle multiple categories."""
+        fiction = models.BookGenre.objects.create(
+            name="Fiction", slug="fiction-cat", level=0
+        )
+        nonfiction = models.BookGenre.objects.create(
+            name="Non-Fiction", slug="nonfiction-cat", level=0
+        )
+        fantasy = models.BookGenre.objects.create(
+            name="Epic Fantasy", slug="epic-fantasy", parent=fiction, level=1
+        )
+        history = models.BookGenre.objects.create(
+            name="World History", slug="world-history", parent=nonfiction, level=1
+        )
+
+        result = book_genre_categories_grouped([fantasy, history])
+
+        self.assertEqual(len(result), 2)
+        category_names = {r["name"] for r in result}
+        self.assertIn("Fiction", category_names)
+        self.assertIn("Non-Fiction", category_names)
+
+
+class BookRankUrlTests(TestCase):
+    """Tests for book_rank_url template tag."""
+
+    def test_basic_url(self):
+        """book_rank_url should generate basic URL."""
+        url = book_rank_url(1)
+        self.assertEqual(url, "/books/")
+
+    def test_url_with_highlight(self):
+        """book_rank_url should include highlight parameter."""
+        url = book_rank_url(1, book_id=123)
+        self.assertIn("highlight=123", url)
+
+    def test_url_with_year_range(self):
+        """book_rank_url should include year range parameters."""
+        url = book_rank_url(1, start=2000, end=2010)
+        self.assertIn("start=2000", url)
+        self.assertIn("end=2010", url)
+
+    def test_url_with_all_params(self):
+        """book_rank_url should handle all parameters."""
+        url = book_rank_url(1, book_id=456, start=1990, end=2000)
+        self.assertIn("highlight=456", url)
+        self.assertIn("start=1990", url)
+        self.assertIn("end=2000", url)
+
+
+class GetAuthorIdsTests(TestCase):
+    """Tests for get_author_ids template filter."""
+
+    def test_returns_author_ids(self):
+        """get_author_ids should return author IDs from mapping."""
+        book_author_map = {
+            1: [10, 20, 30],
+            2: [40, 50],
+        }
+        result = get_author_ids(book_author_map, 1)
+        self.assertEqual(result, [10, 20, 30])
+
+    def test_returns_empty_for_missing_book(self):
+        """get_author_ids should return empty list for missing book."""
+        book_author_map = {1: [10, 20]}
+        result = get_author_ids(book_author_map, 999)
+        self.assertEqual(result, [])
+
+    def test_handles_none_map(self):
+        """get_author_ids should handle None map."""
+        result = get_author_ids(None, 1)
+        self.assertEqual(result, [])
+
+    def test_handles_non_dict_map(self):
+        """get_author_ids should handle non-dict map."""
+        result = get_author_ids("not a dict", 1)
+        self.assertEqual(result, [])
+
+
+class BookGenreIconEdgeCasesTests(TestCase):
+    """Additional edge case tests for book_genre_icon."""
+
+    def test_genre_with_icon_name_attribute(self):
+        """book_genre_icon should use icon_name if present."""
+
+        class MockGenre:
+            icon_name = "mdi-custom-icon"
+            name = "Custom"
+
+        result = book_genre_icon(MockGenre())
+        self.assertEqual(result, "mdi-custom-icon")
+
+    def test_genre_without_parent_or_level(self):
+        """book_genre_icon should fall back for genre without parent/level."""
+
+        class MockGenre:
+            name = "Mystery"
+            parent = None
+
+        result = book_genre_icon(MockGenre())
+        self.assertEqual(result, "mdi-magnify")
+
+
+class ReadingTimeEstimateEdgeCasesTests(TestCase):
+    """Additional edge case tests for reading_time_estimate."""
+
+    def test_negative_page_count(self):
+        """reading_time_estimate should handle negative page count."""
+        self.assertEqual(reading_time_estimate(-10), "")
+
+    def test_custom_words_per_minute(self):
+        """reading_time_estimate should accept custom reading speed."""
+        # 100 pages * 250 words = 25000 words / 500 wpm = 50 min
+        self.assertEqual(reading_time_estimate(100, 500), "~50m")
+
+    def test_invalid_words_per_minute(self):
+        """reading_time_estimate should handle invalid wpm."""
+        self.assertEqual(reading_time_estimate(100, "invalid"), "")
+        self.assertEqual(reading_time_estimate(100, 0), "")
+
+
+class RatingStarsEdgeCasesTests(TestCase):
+    """Additional edge case tests for rating_stars."""
+
+    def test_negative_rating(self):
+        """rating_stars should handle negative rating."""
+        result = rating_stars(-2)
+        self.assertEqual(result["full"], 0)
+        self.assertEqual(result["empty"], 5)
+
+    def test_over_max_rating(self):
+        """rating_stars should cap at max_stars."""
+        result = rating_stars(7, max_stars=5)
+        self.assertEqual(result["full"], 5)
+        self.assertEqual(result["empty"], 0)
+
+    def test_custom_max_stars(self):
+        """rating_stars should handle custom max_stars."""
+        result = rating_stars(8, max_stars=10)
+        self.assertEqual(result["full"], 8)
+        self.assertEqual(result["empty"], 2)
+
+    def test_invalid_rating(self):
+        """rating_stars should handle invalid rating."""
+        result = rating_stars("invalid")
+        self.assertEqual(result["full"], 0)
+        self.assertEqual(result["empty"], 5)

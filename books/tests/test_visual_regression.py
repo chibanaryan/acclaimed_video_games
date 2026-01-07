@@ -28,7 +28,21 @@ from books import models
 User = get_user_model()
 
 
-class TemplateStructureTests(TestCase):
+class StaffUserTestMixin:
+    """Mixin that provides a staff user and logs them in for tests."""
+
+    def setUp(self):
+        super().setUp()
+        # Create staff user for accessing books views
+        self.staff_user = User.objects.create_user(
+            username="staffuser",
+            password="staffpass",
+            is_staff=True,
+        )
+        self.client.login(username="staffuser", password="staffpass")
+
+
+class TemplateStructureTests(StaffUserTestMixin, TestCase):
     """
     Tests that verify template structure has all required data-slot attributes.
 
@@ -37,7 +51,7 @@ class TemplateStructureTests(TestCase):
     """
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.author = models.Author.objects.create(
             name="Test Author", slug="test-author"
         )
@@ -147,7 +161,7 @@ class TemplateStructureTests(TestCase):
         self.assertTrue(len(mobile_rows) > 0, "Mobile rows should be rendered")
 
 
-class ServerRenderedOutputTests(TestCase):
+class ServerRenderedOutputTests(StaffUserTestMixin, TestCase):
     """
     Tests that verify server-rendered HTML contains expected content.
 
@@ -156,7 +170,7 @@ class ServerRenderedOutputTests(TestCase):
     """
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.author1 = models.Author.objects.create(
             name="Primary Author", slug="primary-author"
         )
@@ -360,7 +374,7 @@ class DataTransformationTests(TestCase):
             )
 
 
-class BookWithoutOptionalFieldsTests(TestCase):
+class BookWithoutOptionalFieldsTests(StaffUserTestMixin, TestCase):
     """
     Tests that verify rendering works correctly when optional fields are null.
 
@@ -368,7 +382,7 @@ class BookWithoutOptionalFieldsTests(TestCase):
     """
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         # Create minimal book without optional fields
         self.book = models.Book.objects.create(
             name="Minimal Book",
@@ -422,7 +436,7 @@ class BookWithoutOptionalFieldsTests(TestCase):
         # Should not show "0 lists" - only non-zero counts
 
 
-class MobileDesktopConsistencyTests(TestCase):
+class MobileDesktopConsistencyTests(StaffUserTestMixin, TestCase):
     """
     Tests that verify mobile and desktop rows render equivalent content.
 
@@ -430,7 +444,7 @@ class MobileDesktopConsistencyTests(TestCase):
     """
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.author = models.Author.objects.create(
             name="Test Author", slug="test-author"
         )
@@ -478,18 +492,16 @@ class MobileDesktopConsistencyTests(TestCase):
             self.assertIn("5", mobile_text)
 
 
-class AuthenticatedUserRenderingTests(TestCase):
+class AuthenticatedUserRenderingTests(StaffUserTestMixin, TestCase):
     """
     Tests that verify rendering differences for authenticated users.
 
     Authenticated users should see read/want-to-read buttons.
+    Note: Books views require staff access, so all tests run as staff users.
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username="testuser", password="testpass"
-        )
+        super().setUp()
         self.book = models.Book.objects.create(
             name="Auth Test Book",
             rank=1,
@@ -497,27 +509,19 @@ class AuthenticatedUserRenderingTests(TestCase):
             goodreads_id="auth123",
         )
 
-    def test_anonymous_user_no_read_button(self):
-        """Test anonymous users don't see read button content."""
+    def test_non_staff_user_gets_404(self):
+        """Test non-staff users get 404 (books is staff-only)."""
+        # Create and login as non-staff user
+        non_staff = User.objects.create_user(
+            username="regularuser", password="regularpass"
+        )
+        self.client.login(username="regularuser", password="regularpass")
         response = self.client.get(reverse("books:home"))
-        soup = BeautifulSoup(response.content, "html.parser")
+        self.assertEqual(response.status_code, 404)
 
-        # Server-rendered read button slot should be empty for anonymous
-        desktop_row = soup.find(id=f"book-{self.book.id}")
-        if desktop_row:
-            read_slot = desktop_row.find(attrs={"data-slot": "read-button"})
-            # Slot may not exist or should be empty
-            if read_slot:
-                # Should not contain button elements
-                buttons = read_slot.find_all("button")
-                self.assertEqual(
-                    len(buttons), 0,
-                    "Anonymous user should not see read buttons"
-                )
-
-    def test_authenticated_user_sees_read_button(self):
-        """Test authenticated users see read button."""
-        self.client.login(username="testuser", password="testpass")
+    def test_staff_user_sees_read_button(self):
+        """Test staff users see read button."""
+        # Staff user is already logged in via StaffUserTestMixin
         response = self.client.get(reverse("books:home"))
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -527,16 +531,15 @@ class AuthenticatedUserRenderingTests(TestCase):
             read_slot = desktop_row.find(attrs={"data-slot": "read-button"})
             self.assertIsNotNone(
                 read_slot,
-                "Authenticated user should have read button slot"
+                "Staff user should have read button slot"
             )
 
     def test_read_book_shows_read_state(self):
         """Test book marked as read shows correct state."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via StaffUserTestMixin
         # Mark book as read
         models.ReadBook.objects.create(
-            user=self.user, book=self.book, goodreads_id="auth123"
+            user=self.staff_user, book=self.book, goodreads_id="auth123"
         )
 
         response = self.client.get(reverse("books:home"))
@@ -545,11 +548,10 @@ class AuthenticatedUserRenderingTests(TestCase):
 
     def test_want_to_read_book_shows_want_state(self):
         """Test book marked as want-to-read shows correct state."""
-        self.client.login(username="testuser", password="testpass")
-
+        # Staff user is already logged in via StaffUserTestMixin
         # Mark book as want to read
         models.WantToReadBook.objects.create(
-            user=self.user, book=self.book, goodreads_id="auth123"
+            user=self.staff_user, book=self.book, goodreads_id="auth123"
         )
 
         response = self.client.get(reverse("books:home"))
@@ -557,7 +559,7 @@ class AuthenticatedUserRenderingTests(TestCase):
         # The exact text depends on template implementation
 
 
-class TemplateIDAttributeTests(TestCase):
+class TemplateIDAttributeTests(StaffUserTestMixin, TestCase):
     """
     Tests that verify HTML IDs are correctly generated for JavaScript targeting.
 
@@ -565,7 +567,7 @@ class TemplateIDAttributeTests(TestCase):
     """
 
     def setUp(self):
-        self.client = Client()
+        super().setUp()
         self.book = models.Book.objects.create(
             name="ID Test Book",
             rank=1,
@@ -597,16 +599,13 @@ class TemplateIDAttributeTests(TestCase):
         )
 
 
-class HTMXAttributeTests(TestCase):
+class HTMXAttributeTests(StaffUserTestMixin, TestCase):
     """
     Tests that verify HTMX attributes are correctly set for dynamic interactions.
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username="testuser", password="testpass"
-        )
+        super().setUp()
         self.book = models.Book.objects.create(
             name="HTMX Test Book",
             rank=1,
@@ -616,7 +615,6 @@ class HTMXAttributeTests(TestCase):
 
     def test_read_button_has_htmx_attributes(self):
         """Test read button includes HTMX attributes for toggle."""
-        self.client.login(username="testuser", password="testpass")
         response = self.client.get(reverse("books:home"))
         soup = BeautifulSoup(response.content, "html.parser")
 

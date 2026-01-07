@@ -14,7 +14,8 @@ if local_env.exists():
     env.read_env(local_env, overwrite=True)
 
 # Define TEST_MODE early for Sentry configuration
-TEST_MODE = "test" in sys.argv
+# Check both Django's manage.py test and pytest
+TEST_MODE = "test" in sys.argv or "pytest" in sys.modules
 
 SENTRY_DSN = env("SENTRY_DSN", default=None)
 # Don't initialize Sentry during test runs to avoid capturing test errors
