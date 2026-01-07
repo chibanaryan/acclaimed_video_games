@@ -6,7 +6,6 @@ from django.urls import include, path
 from django.views.generic import RedirectView
 
 from games import views
-from games.api import views as api_views
 from games.sitemaps import sitemaps
 
 # Custom 404 handler
@@ -21,29 +20,7 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path("robots.txt", views.robots_txt, name="robots-txt"),
-    # API search endpoint for HTMX/Alpine.js (must be before REST API include)
-    path(
-        "api/games/search/",
-        api_views.GameSearchAPIView.as_view(),
-        name="api-games-search",
-    ),
-    path(
-        "api/unified-search/",
-        api_views.UnifiedSearchView.as_view(),
-        name="api-unified-search",
-    ),
-    # TODO: Uncomment when books app is enabled on production
-    # Book search endpoints for HTMX/Alpine.js
-    # path(
-    #     "api/books/search/",
-    #     books_api_views.BookSearchAPIView.as_view(),
-    #     name="api-books-search",
-    # ),
-    # path(
-    #     "api/books/unified-search/",
-    #     books_api_views.UnifiedBookSearchView.as_view(),
-    #     name="api-books-unified-search",
-    # ),
+    # REST API includes (search endpoints now in app modules)
     path("api/", include("games.api.urls", namespace="games-api")),
     # path("api/books/", include("books.api.urls", namespace="books-api")),
     path("admin/", admin.site.urls),
@@ -154,20 +131,8 @@ urlpatterns = [
 
 # Books routes - always included, but views require staff access
 # Access is controlled at the view level via StaffOnlyMixin / IsStaffOrHide permission
-from books.api import views as books_api_views
-
+# Search endpoints are now in books/api/urls.py
 books_urlpatterns = [
-    # Book search endpoints for HTMX/Alpine.js
-    path(
-        "api/books/search/",
-        books_api_views.BookSearchAPIView.as_view(),
-        name="api-books-search",
-    ),
-    path(
-        "api/books/unified-search/",
-        books_api_views.UnifiedBookSearchView.as_view(),
-        name="api-books-unified-search",
-    ),
     path("api/books/", include("books.api.urls", namespace="books-api")),
     path("books/", include("books.urls", namespace="books")),
 ]

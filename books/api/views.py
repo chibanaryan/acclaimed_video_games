@@ -21,7 +21,6 @@ from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.views import APIView, Response
 
 from games import config  # Shared cache config
-from games import models as games_models
 from games import utils  # Shared utilities
 
 from .. import models
@@ -178,10 +177,7 @@ class BookListListView(ListAPIView):
     ]
 
     def get_queryset(self):
-        # Use games.List with media_type='B' for books
-        qs = games_models.List.objects.filter(
-            media_type="B"
-        ).select_related(
+        qs = models.BookList.objects.select_related(
             "publisher",
         ).order_by(
             "publisher",
@@ -209,8 +205,8 @@ class BookMetaView(APIView):
     def get(self, *args, **kwargs):
         data = {}
 
-        # Book lists (games.List with media_type='B')
-        book_lists = games_models.List.objects.filter(media_type="B")
+        # Book lists
+        book_lists = models.BookList.objects.all()
         list_year_counts = (
             book_lists.order_by("year")
             .values("year")

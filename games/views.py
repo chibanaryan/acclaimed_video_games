@@ -10,8 +10,6 @@ from django.core.cache import cache
 from django.db.models import (
     Case,
     Count,
-    Min,
-    Max,
     Prefetch,
     Q,
     When,
@@ -31,25 +29,23 @@ from django.views import View
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
+from core.cache_helpers import get_year_bounds
+from core.mixins import HTMXPartialMixin, RobustPaginationMixin
 from core.models import User
 from games import config, constants, models, utils
-from games.services.percentile_service import calculate_percentile
 from games.forms import ImportForm, ContactForm
-from core.mixins import HTMXPartialMixin, RobustPaginationMixin
+from games.services.percentile_service import calculate_percentile
 
 
 def _get_year_bounds():
     """Return cached global min/max release years."""
-    year_stats = cache.get("game_year_stats")
-    if year_stats is None:
-        year_stats = models.Game.objects.aggregate(
-            min_year=Min("year_of_release"),
-            max_year=Max("year_of_release"),
-        )
-        cache.set("game_year_stats", year_stats, config.CACHE_TIMEOUT_24_HOURS)
-    min_year = year_stats["min_year"] or 1970
-    max_year = year_stats["max_year"] or datetime.today().year
-    return min_year, max_year
+    return get_year_bounds(
+        model_class=models.Game,
+        year_field="year_of_release",
+        cache_key=config.CACHE_KEY_YEAR_STATS,
+        cache_timeout=config.CACHE_TIMEOUT_24_HOURS,
+        default_min=config.DEFAULT_MIN_YEAR,
+    )
 
 
 def _get_hero_stats():
@@ -80,14 +76,8 @@ def _get_played_game_ids(user):
     return ids
 
 
-def invalidate_played_games_cache(user_id):
-    """Invalidate the played games cache for a specific user."""
-    cache.delete(f"played_games_{user_id}")
-
-
-def invalidate_want_to_play_cache(user_id):
-    """Invalidate the want-to-play games cache for a specific user."""
-    cache.delete(f"want_to_play_games_{user_id}")
+# Import cache invalidation functions from centralized cache module
+from games.cache import invalidate_played_games_cache, invalidate_want_to_play_cache
 
 
 def _get_want_to_play_game_ids(user):
@@ -510,8 +500,8 @@ class ContactThankYouView(TemplateView):
 def download_games_csv(request):
     """Download games list as CSV, respecting current filters."""
     # Get filtered queryset using same logic as HomePageView
-    # Include wikipedia_genres prefetch for CSV export
-    qs = models.Game.objects.with_relations().prefetch_related("wikipedia_genres")
+    # with_relations() already includes all needed prefetches (developers, platforms, genres, series)
+    qs = models.Game.objects.with_relations()
 
     # Add played status annotation for authenticated users
     user = request.user
@@ -2138,6 +2128,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         """Parse and validate filter parameters from request."""
         year_value = self.request.GET.get("year")
         type_slug = self.request.GET.get("type")
+        search_query = self.request.GET.get("q", "").strip()
 
         try:
             year_value = int(year_value) if year_value else None
@@ -2146,7 +2137,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
         type_code = constants.LIST_TYPE_CODES.get(type_slug) if type_slug else None
 
-        return year_value, type_slug, type_code
+        return year_value, type_slug, type_code, search_query
 
     def _get_filtered_list_queryset(self, year_value, type_code):
         """Build base list queryset with filters applied."""
@@ -2159,7 +2150,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
     def get_queryset(self):
         """Get publications with list counts, filtered and sorted."""
-        year_value, type_slug, type_code = self._get_list_filters()
+        year_value, type_slug, type_code, search_query = self._get_list_filters()
         sort = self.request.GET.get("sort", "importance")
         # Default direction depends on sort type: desc for importance, asc for alpha
         default_dir = "asc" if sort == "alpha" else "desc"
@@ -2246,6 +2237,10 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         # Only include publications with matching lists
         qs = qs.filter(total_count__gt=0)
 
+        # Apply search filter if provided
+        if search_query:
+            qs = qs.filter(name__icontains=search_query)
+
         # Sort by importance or alphabetically, respecting direction
         if sort == "alpha":
             if sort_direction == "asc":
@@ -2264,7 +2259,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        year_value, type_slug, type_code = self._get_list_filters()
+        year_value, type_slug, type_code, search_query = self._get_list_filters()
         sort = self.request.GET.get("sort", "importance")
         # Default direction depends on sort type: desc for importance, asc for alpha
         default_dir = "asc" if sort == "alpha" else "desc"
@@ -2355,6 +2350,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         context["filters"] = {
             "year": str(year_value) if year_value else None,
             "type": type_slug,  # Keep as slug for template comparison
+            "q": search_query,
         }
         context["sort"] = sort
         context["sort_direction"] = sort_direction

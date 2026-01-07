@@ -34,6 +34,18 @@
             }
         });
 
+        // Event delegation for hover rects (single listener instead of per-rect)
+        this.rectsContainer.addEventListener('mouseenter', function(e) {
+            if (e.target.tagName === 'rect' && e.target.dataset.binIndex !== undefined) {
+                self.showTooltip(parseInt(e.target.dataset.binIndex, 10), e);
+            }
+        }, true);
+        this.rectsContainer.addEventListener('mouseleave', function(e) {
+            if (e.target.tagName === 'rect') {
+                self.hideTooltip();
+            }
+        }, true);
+
         // Initial render
         this.render();
     };
@@ -109,9 +121,10 @@
         // Update path
         this.path.setAttribute('d', this.computePath());
 
-        // Clear and recreate hover rects
+        // Clear and recreate hover rects using DocumentFragment (single reflow)
         this.rectsContainer.innerHTML = '';
         var binWidth = 100 / this.bins.length;
+        var fragment = document.createDocumentFragment();
 
         this.bins.forEach(function(bin, idx) {
             var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -121,21 +134,17 @@
             rect.setAttribute('height', 40);
             rect.setAttribute('fill', 'transparent');
             rect.style.cursor = 'help';
-
-            rect.addEventListener('mouseenter', function(e) {
-                self.showTooltip(idx, e);
-            });
-            rect.addEventListener('mouseleave', function() {
-                self.hideTooltip();
-            });
-
-            self.rectsContainer.appendChild(rect);
+            rect.dataset.binIndex = idx;
+            fragment.appendChild(rect);
         });
+
+        // Single DOM insertion triggers only one reflow
+        this.rectsContainer.appendChild(fragment);
     };
 
     RankDistributionChart.prototype.showTooltip = function(binIndex, event) {
         this.hoveredBin = binIndex;
-        var rect = event.currentTarget.getBoundingClientRect();
+        var rect = event.target.getBoundingClientRect();
         var containerRect = this.container.getBoundingClientRect();
         var tooltipX = rect.left - containerRect.left + rect.width / 2;
 

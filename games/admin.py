@@ -282,8 +282,8 @@ class HLTBGameDataAdmin(admin.ModelAdmin):
 
 @admin.register(models.List)
 class ListAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "order", "publisher", "type", "media_type"]
-    list_filter = ["media_type", "type", "publisher"]
+    list_display = ["__str__", "order", "publisher", "type"]
+    list_filter = ["type", "publisher"]
     search_fields = ["name"]
 
 

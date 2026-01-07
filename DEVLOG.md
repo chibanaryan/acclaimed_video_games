@@ -1,8 +1,25 @@
 # Developer Log
 
+## 2026-01-07
+
+- Fix view mode flash: add inline script to set correct CSS before Alpine initializes (prevents list→grid flash on page load)
+- Refactor List/Publication models to use abstract base classes in core (PublicationBase, ListBase, ListMembershipBase)
+- Add independent BookPublication and BookList models to books app, removing games→books dependency
+- Remove media_type field from games.List (books now have dedicated models)
+- Fix visual regression tests: add StaffClientMixin for books staff access requirement
+
 ## 2026-01-06
 
+- Refactor: extract shared cache helpers to core, add books/config.py mirroring games pattern
+- Reorganize repo: move docs to docs/, archive old PRDs, add .env.example
+- Add sort direction toggle (asc/desc) to developer list, game list, lists page, and developer detail filtered games
+- Add hover effects to developer list rows (desktop table and mobile cards)
+- Fix developer list href fallback: use span instead of href="#" for developers without slugs
+- Fix developer list terminology: "studios" → "subsidiaries" to match table header
+- Add publication search to source lists page with debounced HTMX filtering
+- Polish source lists page: add subtitle, compact legend badges, hover transitions on cards
 - Fix Alpine.js race condition: ensure utils-base.js loads before Alpine initializes to prevent "createUnifiedSearchData is not defined" errors
+- Consolidate API paths: move search endpoints into app modules, fix /api/books/books/ double-path bug, add /api/developers/ and /api/genres/ aliases
 
 ## 2026-01-05
 

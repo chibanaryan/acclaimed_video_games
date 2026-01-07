@@ -176,22 +176,25 @@ Books-specific models (behind `BOOKS_ENABLED` feature flag):
 
 Django REST Framework powers the API at `/api/` with endpoints:
 - `/api/games/` - List and search games
+- `/api/games/search/` - Game search for navbar
 - `/api/games/<slug>/` - Game details with lists appearances
-- `/api/developers/<slug>/` - Root developer details with subsidiary hierarchy
-- `/api/developer-aliases/` - List of all developers with games
-- `/api/developer-aliases/<igdb_id>/` - Developer details by IGDB ID
+- `/api/developers/` - List of all developers with games
+- `/api/developers/<slug>/` - Developer details by slug
+- `/api/developers/by-id/<igdb_id>/` - Developer details by IGDB ID
 - `/api/lists/` - Source lists
 - `/api/platforms/` - Gaming platforms
-- `/api/genres/` - Game genres
-- `/api/posts/` - News posts
+- `/api/genres/` - Game genres (also available at `/api/wikipedia-genres/` for backwards compatibility)
 - `/api/meta/` - Metadata about the database
+- `/api/unified-search/` - Unified search for games, developers, and series
 
 Books API endpoints (behind `BOOKS_ENABLED` feature flag):
 - `/api/books/` - List and search books
+- `/api/books/search/` - Book search
 - `/api/books/<slug>/` - Book details with lists appearances
 - `/api/books/all/` - Bulk endpoint with gzip compression
-- `/api/authors/` - List authors
-- `/api/authors/<slug>/` - Author details with book list
+- `/api/books/authors/` - List authors
+- `/api/books/authors/<slug>/` - Author details with book list
+- `/api/books/unified-search/` - Unified book search
 
 ### Template Architecture
 

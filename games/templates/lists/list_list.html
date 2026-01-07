@@ -7,15 +7,18 @@
 {% block content %}
 <div class="max-w-[860px] mx-auto">
 <div id="content" x-data="{
+    q: '{{ filters.q|default:''|escapejs }}',
     updateUrl(event) {
         // Get all current filter values from the form
         const yearEl = document.querySelector('[name=year]');
         const typeEl = document.querySelector('[name=type]');
         const sortEl = document.querySelector('#sort-select');
+        const searchEl = document.getElementById('publication-search');
 
         const year = yearEl ? yearEl.value : '';
         const type = typeEl ? typeEl.value : '';
         const sort = sortEl ? sortEl.value : 'importance';
+        const q = searchEl ? searchEl.value : '';
 
         const url = new URL(window.location);
 
@@ -25,6 +28,9 @@
 
         if (type) url.searchParams.set('type', type);
         else url.searchParams.delete('type');
+
+        if (q) url.searchParams.set('q', q);
+        else url.searchParams.delete('q');
 
         // Only add sort if not default
         if (sort && sort !== 'importance') url.searchParams.set('sort', sort);
@@ -36,7 +42,7 @@
         window.history.pushState({}, '', url);
     }
 }">
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-2">
         <h1 class="text-3xl font-bold">Source Lists</h1>
         <a href="#contact"
            class="contact-modal-trigger link link-hover text-base-content/70 hover:text-accent inline-flex items-center gap-1 text-sm"
@@ -50,6 +56,47 @@ Year published: ">
             <span class="mdi mdi-plus-circle"></span>
             Submit a list
         </a>
+    </div>
+
+    <p class="text-base-content/70 text-sm mb-4">Rankings and lists from publications worldwide</p>
+
+    {# Search input #}
+    <div class="mb-6">
+        <label class="input input-bordered w-64 bg-base-200">
+            <svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                </g>
+            </svg>
+            <input type="text"
+                   class="grow"
+                   name="q"
+                   id="publication-search"
+                   placeholder="Search publications"
+                   x-model="q"
+                   hx-get="{% url 'list-list' %}"
+                   hx-target="#filter-results-wrapper"
+                   hx-trigger="input changed delay:300ms"
+                   hx-swap="innerHTML"
+                   hx-include="[name='year'], [name='type'], [name='sort'], [name='dir']"
+                   x-on:htmx:after-request="updateUrl($event)"
+                   autocomplete="off">
+            <button type="button"
+                    @click="q = ''; $nextTick(() => { document.getElementById('publication-search').dispatchEvent(new Event('input', { bubbles: true })); })"
+                    title="Clear search"
+                    class="btn btn-ghost btn-xs btn-circle"
+                    style="display: none"
+                    :style="{ display: q.length > 0 ? 'flex' : 'none' }"
+                    aria-label="Clear search">
+                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </g>
+                </svg>
+            </button>
+        </label>
     </div>
 
     <div id="filter-results-wrapper">

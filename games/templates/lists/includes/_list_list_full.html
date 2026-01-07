@@ -36,7 +36,8 @@
                     sort: newSort,
                     dir: this.sortDirection,
                     type: document.getElementById('filter-list-type')?.value || '',
-                    year: document.getElementById('filter-list-year')?.value || ''
+                    year: document.getElementById('filter-list-year')?.value || '',
+                    q: document.getElementById('publication-search')?.value || ''
                 }
             });
         },
@@ -57,7 +58,8 @@
                     sort: this.sort,
                     dir: this.sortDirection,
                     type: document.getElementById('filter-list-type')?.value || '',
-                    year: document.getElementById('filter-list-year')?.value || ''
+                    year: document.getElementById('filter-list-year')?.value || '',
+                    q: document.getElementById('publication-search')?.value || ''
                 }
             });
         }
@@ -83,16 +85,17 @@
                 <li><button type="button" @click="updateSort('alpha')" :class="sort === 'alpha' ? 'active' : ''">Alphabetical</button></li>
             </ul>
         </div>
-        {# Direction flip button #}
+        {# Direction flip button - more prominent #}
         <button type="button"
-                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                class="btn btn-ghost btn-sm gap-1 px-2"
                 @click="toggleSortDirection()"
-                :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
-            <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                :title="sortDirection === 'asc' ? 'Ascending order' : 'Descending order'">
+            <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"></span>
+            <span class="text-xs" x-text="sortDirection === 'asc' ? 'Asc' : 'Desc'"></span>
         </button>
     </div>
     {# Mobile: Native select for touch compatibility #}
-    <div class="desktop:hidden flex items-center gap-1">
+    <div class="desktop:hidden flex items-center gap-2">
         <span class="mdi mdi-sort text-base text-base-content/70"></span>
         <select id="sort-select"
                 name="sort"
@@ -104,10 +107,10 @@
         </select>
         {# Direction flip button #}
         <button type="button"
-                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                class="p-1 text-base-content/70 hover:text-base-content transition-colors"
                 @click="toggleSortDirection()"
-                :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
-            <span class="mdi text-sm" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                :title="sortDirection === 'asc' ? 'Ascending order' : 'Descending order'">
+            <span class="mdi text-lg" :class="sortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"></span>
         </button>
     </div>
 
@@ -123,7 +126,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir']"
+            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All list types</option>
@@ -143,7 +146,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir']"
+            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All years</option>
@@ -154,9 +157,9 @@
         {% endfor %}
     </select>
 
-    {# Clear filters button #}
+    {# Clear filters button - preserves sort, direction, and search query #}
     {% if filters.year or filters.type %}
-    <a href="{% url 'list-list' %}{% if sort != 'importance' or sort_direction != 'desc' %}?{% if sort != 'importance' %}sort={{ sort }}{% if sort_direction != 'desc' %}&{% endif %}{% endif %}{% if sort_direction != 'desc' %}dir={{ sort_direction }}{% endif %}{% endif %}"
+    <a href="{% url 'list-list' %}{% if sort != 'importance' or sort_direction != 'desc' or filters.q %}?{% if sort != 'importance' %}sort={{ sort }}{% endif %}{% if sort_direction != 'desc' %}{% if sort != 'importance' %}&{% endif %}dir={{ sort_direction }}{% endif %}{% if filters.q %}{% if sort != 'importance' or sort_direction != 'desc' %}&{% endif %}q={{ filters.q }}{% endif %}{% endif %}"
        class="btn btn-ghost btn-sm">
         <span class="mdi mdi-close"></span>
         <span>Clear filters</span>
@@ -176,13 +179,12 @@
     </button>
 </div>
 
-{# Badge legend row #}
-<div class="flex items-center gap-2 mb-4 text-sm text-base-content/70">
-    <span>Legend:</span>
-    <span class="badge badge-sm badge-info font-semibold">All time</span>
-    <span class="badge badge-sm badge-success font-semibold">Decade</span>
-    <span class="badge badge-sm badge-warning font-semibold">Miscellaneous</span>
-    <span class="badge badge-sm badge-error font-semibold">End of year</span>
+{# Badge legend row - compact, without label #}
+<div class="flex items-center gap-3 mb-4 text-xs text-base-content/60">
+    <span class="badge badge-xs badge-info">All time</span>
+    <span class="badge badge-xs badge-success">Decade</span>
+    <span class="badge badge-xs badge-warning">Misc</span>
+    <span class="badge badge-xs badge-error">EOY</span>
 </div>
 
 <div id="results-container">

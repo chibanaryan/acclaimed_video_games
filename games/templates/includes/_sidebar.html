@@ -71,7 +71,7 @@
 
         {# Search bar #}
         <div class="relative"
-             x-data="createUnifiedSearchData('{% url 'api-unified-search' %}', 3, 5)"
+             x-data="createUnifiedSearchData('{% url 'games-api:unified-search' %}', 3, 5)"
              x-init="window.addEventListener('reset-search-state', () => reset())"
              @click.away="showMenu = false">
             <label for="sidebar-search" class="sr-only">Search games, developers, and series</label>

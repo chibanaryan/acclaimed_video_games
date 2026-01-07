@@ -12,6 +12,7 @@ from typing import Any
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.text import slugify
 from unidecode import unidecode
 
 
@@ -311,3 +312,100 @@ class UserTrackingBase(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} tracked {self.__class__.__name__}"
+
+
+class PublicationBase(models.Model):
+    """
+    Abstract base model for publications (magazines, websites, etc.) that publish lists.
+
+    Publications aggregate lists from a single source like IGN, GameSpot, NYT, etc.
+    Each media app has its own concrete Publication model for independence.
+
+    Concrete models may add:
+    - Media-specific external ID fields
+    - Additional metadata fields (e.g., website URL, description)
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, db_index=True)
+
+    class Meta:
+        abstract = True
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the publication, ensuring slug is populated."""
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
+class ListBase(models.Model):
+    """
+    Abstract base model for ranking lists.
+
+    Lists represent collections of ranked media items from a publication.
+    Each list has a type (all-time, decade, end-of-year, misc) and year.
+
+    Concrete models must add:
+    - publisher: ForeignKey to the concrete Publication model
+    - Any media-specific fields
+
+    Note: The 'publisher' FK is not defined here because abstract models
+    cannot reference other abstract models. Each concrete class must define
+    its own publisher FK pointing to its concrete Publication model.
+    """
+
+    # Import at class level because choices/default are evaluated at class definition time
+    from core import constants as core_constants
+
+    name = models.CharField(max_length=100)
+    url = models.URLField(null=True, blank=True)
+    year = models.PositiveSmallIntegerField(db_index=True)
+    type = models.CharField(
+        max_length=1,
+        choices=core_constants.LIST_TYPES,
+        default=core_constants.LIST_EOY,
+        db_index=True,
+    )
+    order = models.PositiveIntegerField(unique=True, null=True)
+
+    class Meta:
+        abstract = True
+        ordering = ["order", "type", "year", "name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_type_label(self) -> str:
+        """Get human-readable label for this list's type."""
+        from core import constants as core_constants
+
+        return core_constants.get_list_type_label(self.type)
+
+
+class ListMembershipBase(models.Model):
+    """
+    Abstract base model for list membership (item position in a list).
+
+    Tracks which media items appear in which lists and their rank.
+
+    Concrete models must add:
+    - list: ForeignKey to the concrete List model
+    - Media item FK (game, book, etc.)
+    """
+
+    rank = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Position in the list (lower is better)",
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self) -> str:
+        return f"Rank {self.rank}"

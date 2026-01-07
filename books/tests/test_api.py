@@ -13,7 +13,6 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from books import models
-from games.models import List, Publication
 
 
 User = get_user_model()
@@ -66,7 +65,7 @@ class BookListAPITests(StaffAPITestMixin, TestCase):
 
     def test_list_books(self):
         """Test GET /api/books/ returns books."""
-        response = self.client.get("/api/books/books/")
+        response = self.client.get("/api/books/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 2)
@@ -74,7 +73,7 @@ class BookListAPITests(StaffAPITestMixin, TestCase):
 
     def test_filter_by_search_query(self):
         """Test filtering by search query."""
-        response = self.client.get("/api/books/books/", {"q": "Alpha"})
+        response = self.client.get("/api/books/", {"q": "Alpha"})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 1)
@@ -82,7 +81,7 @@ class BookListAPITests(StaffAPITestMixin, TestCase):
 
     def test_filter_by_year_start(self):
         """Test filtering by year start."""
-        response = self.client.get("/api/books/books/", {"start": 2018})
+        response = self.client.get("/api/books/", {"start": 2018})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 1)
@@ -90,7 +89,7 @@ class BookListAPITests(StaffAPITestMixin, TestCase):
 
     def test_filter_by_year_end(self):
         """Test filtering by year end."""
-        response = self.client.get("/api/books/books/", {"end": 2016})
+        response = self.client.get("/api/books/", {"end": 2016})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 1)
@@ -98,7 +97,7 @@ class BookListAPITests(StaffAPITestMixin, TestCase):
 
     def test_filter_by_genres(self):
         """Test filtering by genres."""
-        response = self.client.get("/api/books/books/", {"genres": str(self.genre.id)})
+        response = self.client.get("/api/books/", {"genres": str(self.genre.id)})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 1)
@@ -106,7 +105,7 @@ class BookListAPITests(StaffAPITestMixin, TestCase):
 
     def test_order_by_parameter(self):
         """Test order_by parameter."""
-        response = self.client.get("/api/books/books/", {"order_by": "-year_published"})
+        response = self.client.get("/api/books/", {"order_by": "-year_published"})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["results"][0]["name"], "Alpha Book")
@@ -130,7 +129,7 @@ class BookDetailAPITests(StaffAPITestMixin, TestCase):
 
     def test_get_book_detail(self):
         """Test GET /api/books/<slug>/ returns book details."""
-        response = self.client.get("/api/books/books/test-book/")
+        response = self.client.get("/api/books/test-book/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["name"], "Test Book")
@@ -138,7 +137,7 @@ class BookDetailAPITests(StaffAPITestMixin, TestCase):
 
     def test_nonexistent_book_returns_404(self):
         """Test GET for nonexistent book returns 404."""
-        response = self.client.get("/api/books/books/nonexistent/")
+        response = self.client.get("/api/books/nonexistent/")
         self.assertEqual(response.status_code, 404)
 
 
@@ -223,25 +222,16 @@ class BookListListAPITests(StaffAPITestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.publication = Publication.objects.create(name="Test Pub")
-        self.book_list = List.objects.create(
+        self.publication = models.BookPublication.objects.create(name="Test Pub")
+        self.book_list = models.BookList.objects.create(
             publisher=self.publication,
             name="Best Books 2024",
             year=2024,
-            type="AT",
-            media_type="B",
-        )
-        # Also create a game list that should not appear
-        self.game_list = List.objects.create(
-            publisher=self.publication,
-            name="Best Games 2024",
-            year=2024,
-            type="AT",
-            media_type="G",
+            type="A",
         )
 
     def test_list_book_lists(self):
-        """Test GET /api/books/lists/ returns only book lists."""
+        """Test GET /api/books/lists/ returns book lists."""
         response = self.client.get("/api/books/lists/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -259,13 +249,12 @@ class BookMetaAPITests(StaffAPITestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.publication = Publication.objects.create(name="Test Pub")
-        List.objects.create(
+        self.publication = models.BookPublication.objects.create(name="Test Pub")
+        models.BookList.objects.create(
             publisher=self.publication,
             name="Best Books",
             year=2024,
-            type="AT",
-            media_type="B",
+            type="A",
         )
         models.Book.objects.create(name="Test Book", rank=1, year_published=2020)
         models.Author.objects.create(name="Test Author", slug="test")
@@ -393,7 +382,7 @@ class BookDataVersionAPITests(StaffAPITestMixin, TestCase):
 
     def test_get_version(self):
         """Test GET /api/books/data-version/ returns version hash."""
-        response = self.client.get("/api/books/books/version/")
+        response = self.client.get("/api/books/version/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("version", data)
@@ -416,7 +405,7 @@ class BookAllDataAPITests(StaffAPITestMixin, TestCase):
 
     def test_get_all_data(self):
         """Test GET /api/books/all/ returns complete data."""
-        response = self.client.get("/api/books/books/all/")
+        response = self.client.get("/api/books/all/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
 

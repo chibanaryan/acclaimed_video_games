@@ -45,13 +45,14 @@
                 <li><button type="button" @click="updateSort('playtime')" :class="filters.sort === 'playtime' ? 'active' : ''">Playtime</button></li>
             </ul>
         </div>
-        {# Direction flip button #}
+        {# Direction flip button - more prominent #}
         <button type="button"
-                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                class="btn btn-ghost btn-sm gap-1 px-2"
                 @click="toggleSortDirection()"
-                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending order' : 'Descending order'"
                 :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
-            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
+            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'" aria-hidden="true"></span>
+            <span class="text-xs" x-text="(filters.sortDirection || 'asc') === 'asc' ? 'Asc' : 'Desc'"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-2 pl-2">
@@ -112,11 +113,11 @@
         </select>
         {# Direction flip button #}
         <button type="button"
-                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer min-h-10 min-w-10 justify-center"
+                class="p-1 text-base-content/70 hover:text-base-content transition-colors"
                 @click="toggleSortDirection()"
-                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending order' : 'Descending order'"
                 :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
-            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
+            <span class="mdi text-lg" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'" aria-hidden="true"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-1 pl-1">
@@ -163,6 +164,42 @@
 </div>
 
 {% if games %}
+{# Synchronous script to set initial view mode based on localStorage - prevents flash #}
+<script nonce="{{ csp_nonce }}">
+(function() {
+    var viewMode = localStorage.getItem('gameViewMode') || 'list';
+    // Remove any existing init style (from previous HTMX loads)
+    var existing = document.getElementById('view-mode-init-styles');
+    if (existing) existing.remove();
+
+    var style = document.createElement('style');
+    style.id = 'view-mode-init-styles';
+    if (viewMode === 'grid') {
+        // Hide list rows, show grid
+        style.textContent = '#game-list-container .game-row-wrapper{display:none!important}' +
+                            '#game-list-container .game-card-mobile{display:none!important}';
+    } else {
+        // Hide grid, show list rows (default)
+        style.textContent = '#game-list-container .game-grid{display:none!important}';
+    }
+    document.head.appendChild(style);
+
+    // Cleanup function
+    function removeInitStyle() {
+        var initStyle = document.getElementById('view-mode-init-styles');
+        if (initStyle) initStyle.remove();
+    }
+
+    // If Alpine is already initialized (HTMX update), remove immediately
+    if (window.Alpine) {
+        setTimeout(removeInitStyle, 0);
+    } else {
+        document.addEventListener('alpine:init', function() {
+            setTimeout(removeInitStyle, 0);
+        });
+    }
+})();
+</script>
 <div id="game-list-container" :class="'view-' + viewMode">
     {# List view - game rows #}
     {% for game in games %}
