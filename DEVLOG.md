@@ -1,5 +1,12 @@
 # Developer Log
 
+## 2026-01-07
+
+- Refactor List/Publication models to use abstract base classes in core (PublicationBase, ListBase, ListMembershipBase)
+- Add independent BookPublication and BookList models to books app, removing games→books dependency
+- Remove media_type field from games.List (books now have dedicated models)
+- Fix visual regression tests: add StaffClientMixin for books staff access requirement
+
 ## 2026-01-06
 
 - Fix Alpine.js race condition: ensure utils-base.js loads before Alpine initializes to prevent "createUnifiedSearchData is not defined" errors

@@ -8,8 +8,6 @@ They will be fully functional once the books models are created in Phase 4.2.
 from django.db.models import F
 from rest_framework import serializers
 
-from games import models as games_models
-
 from .. import models
 
 
@@ -200,12 +198,12 @@ class BookGenreTreeSerializer(serializers.ModelSerializer):
 
 
 class BookListSerializer(serializers.ModelSerializer):
-    """Serializer for book lists (uses games.List with media_type='B')."""
+    """Serializer for book lists (uses books.BookList)."""
 
     publication = serializers.CharField(source="publisher.name")
 
     class Meta:
-        model = games_models.List
+        model = models.BookList
         fields = [
             "id",
             "name",
