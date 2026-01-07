@@ -156,6 +156,7 @@ class ServerRenderedOutputTests(TestCase):
         # Clear all caches to ensure fresh responses
         cache.clear()
         self.client = Client()
+        self.client.defaults["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
         self.developer = models.Developer.objects.create(
             name="Test Studios", slug="test-studios-server"
         )

@@ -195,6 +195,16 @@ class MakeRequestTests(TestCase):
         self.assertIsNone(result)
         self.assertEqual(mock_get.call_count, 3)  # Initial + 2 retries
 
+    @mock.patch("requests.get")
+    def test_make_request_negative_max_retries_skips_loop(self, mock_get):
+        """Test negative max_retries returns None without making a request."""
+        api = OpenLibraryApi()
+
+        result = api._make_request("http://example.com", max_retries=-1)
+
+        self.assertIsNone(result)
+        mock_get.assert_not_called()
+
     @mock.patch("time.sleep")
     @mock.patch("books.openlibrary.OpenLibraryApi._wait_for_rate_limit")
     @mock.patch("requests.get")

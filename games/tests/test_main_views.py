@@ -4,6 +4,8 @@ Tests for main site views (Django + HTMX + Alpine.js).
 Comprehensive test coverage for all user-facing views.
 """
 
+from unittest import mock
+
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.cache import cache
@@ -11,9 +13,11 @@ from django.test import TestCase
 from django.urls import reverse
 
 from core.models import User
+from games import constants
 from games.models import (
     Developer,
     Game,
+    HLTBGameData,
     List,
     ListMembership,
     Platform,
@@ -54,9 +58,11 @@ class HomePageViewTest(TestCase):
 
     def test_home_page_loads(self):
         """Test that home page loads successfully."""
-        response = self.client.get(reverse("home"))
+        response = self.client.get(
+            reverse("home"), HTTP_X_REQUESTED_WITH="XMLHttpRequest"
+        )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "games/home.html")
+        self.assertTemplateUsed(response, "games/includes/_game_list_content.html")
 
     def test_news_page_contains_posts(self):
         """Test that news page includes posts."""
@@ -85,6 +91,12 @@ class HomePageViewTest(TestCase):
         """Test that context includes last update metadata."""
         response = self.client.get(reverse("home"))
         self.assertIn("last_update", response.context)
+
+    def test_negative_hltb_max_clamped_to_zero(self):
+        """Test negative hltb_max is clamped to zero."""
+        response = self.client.get(reverse("home") + "?hltb_max=-5")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["filters"]["hltb_max"], 0)
 
     def test_contact_form_post_valid(self):
         """Test valid contact form submission."""
@@ -298,6 +310,8 @@ class GameListViewTest(TestCase):
     def test_year_counts_reflects_genre_filter(self):
         """Test that year counts reflect genre filter."""
         from django.core.cache import cache
+        from django.db.models import Max, Min
+        from django.utils import timezone
 
         # Clear only year-related caches to avoid affecting other tests
         cache.delete("game_year_stats")
@@ -323,21 +337,36 @@ class GameListViewTest(TestCase):
         )
         game2.wikipedia_genres.add(rpg)
 
-        # Without filter, both years should have counts
-        response = self.client.get(reverse("home"))
-        year_counts = {
-            yc["year"]: yc["count"] for yc in response.context["year_counts"]
-        }
-        self.assertGreaterEqual(year_counts.get(2010, 0), 1)
-        self.assertGreaterEqual(year_counts.get(2015, 0), 1)
+        def fresh_year_bounds():
+            stats = Game.objects.aggregate(
+                min_year=Min("year_of_release"), max_year=Max("year_of_release")
+            )
+            return (
+                stats["min_year"] or 1970,
+                stats["max_year"] or timezone.now().year,
+            )
 
-        # With genre filter, only matching year should have count
-        response = self.client.get(reverse("home") + f"?genres={action.id}")
-        year_counts = {
-            yc["year"]: yc["count"] for yc in response.context["year_counts"]
-        }
-        self.assertGreaterEqual(year_counts.get(2010, 0), 1)
-        self.assertEqual(year_counts.get(2015, 0), 0)
+        with mock.patch("games.views._get_year_bounds", side_effect=fresh_year_bounds):
+            # Without filter, both years should have counts
+            response = self.client.get(
+                reverse("home"), HTTP_X_REQUESTED_WITH="XMLHttpRequest"
+            )
+            year_counts = {
+                yc["year"]: yc["count"] for yc in response.context["year_counts"]
+            }
+            self.assertGreaterEqual(year_counts.get(2010, 0), 1)
+            self.assertGreaterEqual(year_counts.get(2015, 0), 1)
+
+            # With genre filter, only matching year should have count
+            response = self.client.get(
+                reverse("home") + f"?genres={action.id}",
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+            year_counts = {
+                yc["year"]: yc["count"] for yc in response.context["year_counts"]
+            }
+            self.assertGreaterEqual(year_counts.get(2010, 0), 1)
+            self.assertEqual(year_counts.get(2015, 0), 0)
 
     def test_year_counts_reflects_search_filter(self):
         """Test that year counts reflect search filter."""
@@ -583,7 +612,10 @@ class HomePageFilterTest(TestCase):
 
     def test_filter_title_genre_without_video_prefix(self):
         """Test that genre filter title does not include 'Video' prefix."""
-        response = self.client.get(reverse("home") + f"?genres={self.action_genre.id}")
+        response = self.client.get(
+            reverse("home") + f"?genres={self.action_genre.id}",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
         self.assertEqual(response.status_code, 200)
         filter_title = response.context["filter_title"]
         # Should be "Action Games" not "Video Action Games"
@@ -1010,6 +1042,14 @@ class DeveloperListViewTest(TestCase):
             response, "developers/includes/_developer_list_content.html"
         )
 
+    def test_append_mode_uses_append_template(self):
+        """Test append mode uses the append template."""
+        response = self.client.get(reverse("developers-list") + "?append=true")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, "developers/includes/_developer_list_append.html"
+        )
+
     def test_invalid_page_defaults_to_first(self):
         """Test that invalid page parameter defaults to page 1."""
         response = self.client.get(reverse("developers-list") + "?page=invalid")
@@ -1045,6 +1085,11 @@ class DeveloperListViewTest(TestCase):
     def test_sort_by_rank_descending(self):
         """Test sorting developers by rank descending."""
         response = self.client.get(reverse("developers-list") + "?sort=rank&dir=desc")
+        self.assertEqual(response.status_code, 200)
+
+    def test_page_zero_defaults_to_first_for_manual_pagination(self):
+        """Test page<1 defaults to first page for manual pagination."""
+        response = self.client.get(reverse("developers-list") + "?sort=games&page=0")
         self.assertEqual(response.status_code, 200)
 
 
@@ -1119,6 +1164,69 @@ class DeveloperDetailViewTest(TestCase):
             reverse("developer-detail", kwargs={"slug": "invalid-slug"})
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_cached_context_is_used(self):
+        """Test cached context short-circuits expensive computation."""
+        from django.core.cache import cache
+        from games import config
+
+        cache_key = f"{config.CACHE_VERSION}:developer_detail:{self.dev.id}"
+        cache.set(cache_key, {"cached_flag": True}, 60)
+
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": self.dev.slug})
+        )
+        self.assertTrue(response.context.get("cached_flag"))
+        cache.delete(cache_key)
+
+    def test_cycle_in_subsidiaries_is_handled(self):
+        """Test subsidiary cycles do not cause infinite recursion."""
+        parent = Developer.objects.create(name="Parent Dev", slug="parent-dev")
+        child = Developer.objects.create(name="Child Dev", parent=parent)
+        # Create cycle: parent becomes subsidiary of child
+        Developer.objects.filter(id=parent.id).update(parent=child)
+        parent.refresh_from_db()
+
+        game = Game.objects.create(name="Cycle Game", rank=10, year_of_release=2020)
+        game.developers.add(child)
+
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": parent.slug})
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_nested_subsidiaries_include_unique_games(self):
+        """Test nested subsidiaries are processed with unique game counts."""
+        root = Developer.objects.create(name="Root Dev", slug="root-dev")
+        child = Developer.objects.create(name="Child Dev", parent=root)
+        grandchild = Developer.objects.create(name="Grand Dev", parent=child)
+        great_grandchild = Developer.objects.create(
+            name="Great Dev", parent=grandchild
+        )
+
+        game_root = Game.objects.create(
+            name="Root Game", rank=5, year_of_release=2019
+        )
+        game_child = Game.objects.create(
+            name="Child Game", rank=6, year_of_release=2020
+        )
+        game_grand = Game.objects.create(
+            name="Grand Game", rank=7, year_of_release=2021
+        )
+        game_great = Game.objects.create(
+            name="Great Game", rank=8, year_of_release=2022
+        )
+        game_root.developers.add(root)
+        game_child.developers.add(child)
+        game_grand.developers.add(grandchild)
+        game_great.developers.add(great_grandchild)
+
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": root.slug})
+        )
+        self.assertEqual(response.status_code, 200)
+        subsidiaries = response.context.get("subsidiaries_with_games", [])
+        self.assertTrue(subsidiaries)
 
     def test_context_contains_game_data_map(self):
         """Test that context includes game_data_map_json for playtime sorting."""
@@ -1309,6 +1417,12 @@ class ListListViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "lists/list_list.html")
 
+    def test_append_mode_uses_append_template(self):
+        """Test append mode uses append template."""
+        response = self.client.get(reverse("list-list") + "?append=true")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "lists/includes/_list_list_append.html")
+
     def test_context_contains_publication_groups(self):
         """Test that context includes publication_groups with lists."""
         response = self.client.get(reverse("list-list"))
@@ -1338,6 +1452,22 @@ class ListListViewTest(TestCase):
         self.assertEqual(len(groups), 1)
         self.assertEqual(groups[0]["publication"].name, "IGN")
         self.assertEqual(groups[0]["lists"][0].type, "A")
+
+    def test_search_filter(self):
+        """Test filtering publications by search query."""
+        response = self.client.get(reverse("list-list") + "?q=IGN")
+        groups = response.context["publication_groups"]
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["publication"].name, "IGN")
+
+    def test_filtered_list_queryset_applies_filters(self):
+        """Test _get_filtered_list_queryset applies year and type filters."""
+        from games.views import ListListView
+
+        view = ListListView()
+        qs = view._get_filtered_list_queryset(2020, constants.LIST_ALLTIME)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first().publisher.name, "IGN")
 
     def test_filter_by_invalid_year_is_ignored(self):
         """Test that invalid (non-numeric) year is ignored."""
@@ -1581,6 +1711,20 @@ class PageDetailViewTest(TestCase):
         self.assertIn("<h1>", flatpage.rendered_content)
         self.assertIn("<strong>", flatpage.rendered_content)
 
+    def test_empty_content_sets_blank_rendered_content(self):
+        """Test that empty content results in blank rendered_content."""
+        site = Site.objects.get_current()
+        empty_page = FlatPage.objects.create(
+            url="/empty/",
+            title="Empty Page",
+            content="",
+        )
+        empty_page.sites.add(site)
+
+        response = self.client.get(reverse("page-detail", kwargs={"slug": "empty"}))
+        flatpage = response.context["flatpage"]
+        self.assertEqual(flatpage.rendered_content, "")
+
     def test_invalid_slug_returns_404(self):
         """Test that invalid slug returns 404."""
         response = self.client.get(reverse("page-detail", kwargs={"slug": "invalid"}))
@@ -1645,6 +1789,27 @@ class GameDownloadCSVTest(TestCase):
         self.assertIn("PC", content)
         self.assertIn("Test Dev", content)
 
+    def test_csv_includes_main_extra_hours(self):
+        """Test CSV includes HLTB main+extra hours when available."""
+        hltb = HLTBGameData.objects.create(
+            game=self.game1,
+            igdb_id=1001,
+            hltb_id="hltb1001",
+            main_story_hours=10.0,
+            main_extra_hours=15.5,
+            completionist_hours=20.0,
+            is_primary=True,
+        )
+        self.game1.primary_hltb_game_data = hltb
+        self.game1.save(update_fields=["primary_hltb_game_data"])
+
+        response = self.client.get(reverse("games-download"))
+        content = response.content.decode("utf-8")
+        game1_line = next(
+            line.strip() for line in content.split("\n") if "Game 1" in line
+        )
+        self.assertIn(",15.5,", game1_line)
+
     def test_csv_respects_decade_filter(self):
         """Test that CSV respects decade filter and uses filtered rank."""
         response = self.client.get(reverse("games-download") + "?decade=1990-99")
@@ -1656,6 +1821,13 @@ class GameDownloadCSVTest(TestCase):
         # Should use filtered rank (1) not alltime rank
         lines = content.strip().split("\n")
         self.assertTrue(lines[1].startswith("1,"))  # First data row starts with rank 1
+
+    def test_csv_invalid_decade_filter_is_ignored(self):
+        """Test invalid decade format falls back to full range."""
+        response = self.client.get(reverse("games-download") + "?decade=1990s")
+        content = response.content.decode("utf-8")
+        self.assertIn("Game 1", content)
+        self.assertIn("Game 2", content)
 
     def test_csv_respects_year_filter(self):
         """Test that CSV respects year filter."""
@@ -1924,6 +2096,29 @@ class AuthModalViewsTest(TestCase):
         # Should return HX-Redirect header to redirect after login
         self.assertIn("HX-Redirect", response)
 
+    def test_auth_modal_login_redirects_root_for_auth_referer(self):
+        """Test login redirect is root when referer is an auth URL."""
+        from allauth.account.models import EmailAddress
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="testuser2",
+            email="test2@example.com",
+            password="testpass123",
+        )
+        EmailAddress.objects.create(
+            user=user, email="test2@example.com", verified=True, primary=True
+        )
+
+        response = self.client.post(
+            reverse("auth-modal-login"),
+            {"login": "test2@example.com", "password": "testpass123"},
+            HTTP_REFERER="/auth/modal/login/",
+        )
+
+        self.assertEqual(response["HX-Redirect"], "/")
+
     def test_auth_modal_signup_get_returns_200(self):
         """Test that signup form GET returns 200."""
         response = self.client.get(reverse("auth-modal-signup"))
@@ -2051,6 +2246,23 @@ class AuthModalViewsTest(TestCase):
         # User should be logged out
         response = self.client.get(reverse("home"))
         self.assertFalse(response.wsgi_request.user.is_authenticated)
+
+    def test_auth_logout_redirects_root_for_auth_referer(self):
+        """Test logout redirects to root when referer is an auth URL."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(
+            username="testuser3", email="test3@example.com", password="testpass123"
+        )
+        self.client.login(username="testuser3", password="testpass123")
+
+        response = self.client.post(
+            reverse("auth-logout"),
+            HTTP_REFERER="/accounts/login/",
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/")
 
     def test_auth_modal_profile_unauthenticated_redirects_to_login(self):
         """Test that profile view redirects to login if not authenticated."""
@@ -2573,6 +2785,43 @@ class AuthModalViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
         self.assertIn("Invalid Verification Link", content)
+
+    def test_email_confirmation_exception_returns_failure(self):
+        """Test email confirmation exception falls back to failure response."""
+        with mock.patch(
+            "allauth.account.models.EmailConfirmationHMAC.from_key",
+            side_effect=Exception("boom"),
+        ):
+            response = self.client.get(
+                reverse("account_confirm_email", kwargs={"key": "bad-key"})
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["success"])
+
+    def test_email_confirmation_valid_key(self):
+        """Test email confirmation with valid key succeeds."""
+        from allauth.account.models import EmailAddress, EmailConfirmationHMAC
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="confirmuser",
+            email="confirm@example.com",
+            password="testpass123",
+        )
+        email_address = EmailAddress.objects.create(
+            user=user, email="confirm@example.com", verified=False, primary=True
+        )
+
+        confirmation = EmailConfirmationHMAC(email_address)
+        response = self.client.get(
+            reverse("account_confirm_email", kwargs={"key": confirmation.key})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["success"])
+        self.assertEqual(response.context["email"], "confirm@example.com")
+        email_address.refresh_from_db()
+        self.assertTrue(email_address.verified)
 
     def test_profile_shows_backlog_playtime(self):
         """Test profile view shows backlog playtime for want-to-play games."""

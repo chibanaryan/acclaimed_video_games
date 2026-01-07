@@ -13,6 +13,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from books import models
+from books.views import invalidate_read_books_cache, invalidate_want_to_read_cache
 
 
 User = get_user_model()
@@ -266,6 +267,7 @@ class BookHomePageViewTests(StaffUserTestMixin, TestCase):
             user=self.staff_user,
             goodreads_id=self.book1.goodreads_id,
         )
+        invalidate_read_books_cache(self.staff_user.id)
 
         response = self.client.get(reverse("books:home"), {"read": "read"})
         self.assertEqual(response.status_code, 200)
@@ -280,6 +282,7 @@ class BookHomePageViewTests(StaffUserTestMixin, TestCase):
             user=self.staff_user,
             goodreads_id=self.book1.goodreads_id,
         )
+        invalidate_read_books_cache(self.staff_user.id)
 
         response = self.client.get(reverse("books:home"), {"read": "unread"})
         self.assertEqual(response.status_code, 200)
@@ -294,6 +297,7 @@ class BookHomePageViewTests(StaffUserTestMixin, TestCase):
             user=self.staff_user,
             goodreads_id=self.book2.goodreads_id,
         )
+        invalidate_want_to_read_cache(self.staff_user.id)
 
         response = self.client.get(reverse("books:home"), {"read": "want"})
         self.assertEqual(response.status_code, 200)
@@ -356,6 +360,30 @@ class BookDetailViewTests(StaffUserTestMixin, TestCase):
             reverse("books:book-detail", kwargs={"slug": "test-book"})
         )
         self.assertIn("grouped_lists", response.context)
+
+    def test_grouped_lists_includes_membership(self):
+        """Test grouped lists include list membership data."""
+        publication = models.BookPublication.objects.create(name="Test Pub")
+        book_list = models.BookList.objects.create(
+            publisher=publication,
+            name="All Time Favorites",
+            year=2024,
+            type="AT",
+        )
+        models.BookListMembership.objects.create(
+            list=book_list,
+            book=self.book,
+            rank=1,
+        )
+
+        response = self.client.get(
+            reverse("books:book-detail", kwargs={"slug": "test-book"})
+        )
+        grouped_lists = response.context["grouped_lists"]
+        self.assertTrue(grouped_lists)
+        label, items = grouped_lists[0]
+        self.assertEqual(label, "All time")
+        self.assertEqual(items[0]["name"], "All Time Favorites")
 
     def test_context_includes_series_books(self):
         """Test context includes other books in series."""
@@ -449,6 +477,24 @@ class AuthorListViewTests(StaffUserTestMixin, TestCase):
         authors = list(response.context["authors"])
         self.assertEqual(authors[0].name, "Alpha Author")
         self.assertEqual(authors[1].name, "Beta Author")
+
+    def test_sort_by_name_desc(self):
+        """Test sorting by name descending."""
+        response = self.client.get(
+            reverse("books:author-list"), {"sort": "name", "dir": "desc"}
+        )
+        authors = list(response.context["authors"])
+        self.assertEqual(authors[0].name, "Beta Author")
+        self.assertEqual(authors[1].name, "Alpha Author")
+
+    def test_sort_by_books_count_asc(self):
+        """Test sorting by book count ascending."""
+        response = self.client.get(
+            reverse("books:author-list"), {"sort": "books", "dir": "asc"}
+        )
+        authors = list(response.context["authors"])
+        self.assertEqual(authors[0].name, "Beta Author")
+        self.assertEqual(authors[1].name, "Alpha Author")
 
     def test_sort_by_books_count_default(self):
         """Test default sorting by book count descending."""
@@ -723,3 +769,16 @@ class BookSearchViewTests(StaffUserTestMixin, TestCase):
         books = response.context["books"]
         self.assertEqual(len(books), 1)
         self.assertEqual(books[0].name, "Harry Potter")
+
+
+class ListTypeLabelTests(TestCase):
+    """Tests for list type label mapping."""
+
+    def test_list_type_label_mapping(self):
+        from books.views import _get_list_type_label
+
+        self.assertEqual(_get_list_type_label("AT"), "All time")
+        self.assertEqual(_get_list_type_label("DEC"), "Decade")
+        self.assertEqual(_get_list_type_label("EOY"), "End of year")
+        self.assertEqual(_get_list_type_label("MISC"), "Miscellaneous")
+        self.assertEqual(_get_list_type_label("OTHER"), "Other")

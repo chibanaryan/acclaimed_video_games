@@ -77,7 +77,7 @@ class BookSummarySerializer(serializers.ModelSerializer):
     def get_goodreads_url(self, obj):
         """Get URL from primary GoodreadsBookData record."""
         if obj.primary_goodreads_book_data:
-            return obj.primary_goodreads_book_data.url
+            return obj.primary_goodreads_book_data.goodreads_book_url
         return None
 
     def get_description(self, obj):

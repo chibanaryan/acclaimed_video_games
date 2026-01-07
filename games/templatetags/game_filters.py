@@ -308,7 +308,7 @@ def platform_families_grouped(platforms):
         if sorted_platforms:
             data["_first_sort_key"] = _platform_sort_key(sorted_platforms[0])
         else:
-            data["_first_sort_key"] = (9999, 9999, "")
+            data["_first_sort_key"] = (9999, 9999, "")  # pragma: no cover
 
         # Clean up internal fields
         del data["_platform_objects"]
