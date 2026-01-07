@@ -2,6 +2,7 @@
 
 ## 2026-01-07
 
+- Fix view mode flash: add inline script to set correct CSS before Alpine initializes (prevents list→grid flash on page load)
 - Refactor List/Publication models to use abstract base classes in core (PublicationBase, ListBase, ListMembershipBase)
 - Add independent BookPublication and BookList models to books app, removing games→books dependency
 - Remove media_type field from games.List (books now have dedicated models)
