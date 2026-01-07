@@ -3,6 +3,7 @@
 ## 2026-01-06
 
 - Fix Alpine.js race condition: ensure utils-base.js loads before Alpine initializes to prevent "createUnifiedSearchData is not defined" errors
+- Consolidate API paths: move search endpoints into app modules, fix /api/books/books/ double-path bug, add /api/developers/ and /api/genres/ aliases
 
 ## 2026-01-05
 

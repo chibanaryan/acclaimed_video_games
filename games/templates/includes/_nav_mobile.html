@@ -18,7 +18,7 @@
             {# Search dropdown #}
             <div class="relative shrink-0 nav-item" data-nav-item="search" x-data="{
                      showSearchDropdown: false,
-                     ...createUnifiedSearchData('{% url 'api-unified-search' %}', 3, 5)
+                     ...createUnifiedSearchData('{% url 'games-api:unified-search' %}', 3, 5)
                  }"
                  x-init="window.addEventListener('reset-search-state', () => { reset(); showSearchDropdown = false; })"
                  @click.away="showSearchDropdown = false; q = ''; developers = []; games = []; series = []; showMenu = false">

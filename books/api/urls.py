@@ -11,11 +11,13 @@ from . import views
 app_name = "books-api"
 
 urlpatterns = [
-    # Book endpoints
-    path("books/", views.BookListView.as_view(), name="book-list"),
-    path("books/all/", views.BookAllDataView.as_view(), name="book-all-data"),
-    path("books/version/", views.BookDataVersionView.as_view(), name="book-data-version"),
-    path("books/<slug:slug>/", views.BookDetailView.as_view(), name="book-detail"),
+    # Search endpoints
+    path("search/", views.BookSearchAPIView.as_view(), name="book-search"),
+    path("unified-search/", views.UnifiedBookSearchView.as_view(), name="unified-search"),
+    # Book list endpoints
+    path("", views.BookListView.as_view(), name="book-list"),
+    path("all/", views.BookAllDataView.as_view(), name="book-all-data"),
+    path("version/", views.BookDataVersionView.as_view(), name="book-data-version"),
     # Author endpoints
     path("authors/", views.AuthorListView.as_view(), name="author-list"),
     path("authors/<slug:slug>/", views.AuthorDetailView.as_view(), name="author-detail"),
@@ -24,7 +26,7 @@ urlpatterns = [
         views.AuthorDetailByIdView.as_view(),
         name="author-detail-by-id",
     ),
-    # Book list endpoints
+    # List endpoints
     path("lists/", views.BookListListView.as_view(), name="booklist-list"),
     # Metadata
     path("meta/", views.BookMetaView.as_view(), name="meta"),
@@ -48,4 +50,6 @@ urlpatterns = [
         views.WantToReadBookDeleteView.as_view(),
         name="want-to-read-delete",
     ),
+    # Book detail - must be last (slug pattern catches everything)
+    path("<slug:slug>/", views.BookDetailView.as_view(), name="book-detail"),
 ]
