@@ -164,6 +164,42 @@
 </div>
 
 {% if games %}
+{# Synchronous script to set initial view mode based on localStorage - prevents flash #}
+<script nonce="{{ csp_nonce }}">
+(function() {
+    var viewMode = localStorage.getItem('gameViewMode') || 'list';
+    // Remove any existing init style (from previous HTMX loads)
+    var existing = document.getElementById('view-mode-init-styles');
+    if (existing) existing.remove();
+
+    var style = document.createElement('style');
+    style.id = 'view-mode-init-styles';
+    if (viewMode === 'grid') {
+        // Hide list rows, show grid
+        style.textContent = '#game-list-container .game-row-wrapper{display:none!important}' +
+                            '#game-list-container .game-card-mobile{display:none!important}';
+    } else {
+        // Hide grid, show list rows (default)
+        style.textContent = '#game-list-container .game-grid{display:none!important}';
+    }
+    document.head.appendChild(style);
+
+    // Cleanup function
+    function removeInitStyle() {
+        var initStyle = document.getElementById('view-mode-init-styles');
+        if (initStyle) initStyle.remove();
+    }
+
+    // If Alpine is already initialized (HTMX update), remove immediately
+    if (window.Alpine) {
+        setTimeout(removeInitStyle, 0);
+    } else {
+        document.addEventListener('alpine:init', function() {
+            setTimeout(removeInitStyle, 0);
+        });
+    }
+})();
+</script>
 <div id="game-list-container" :class="'view-' + viewMode">
     {# List view - game rows #}
     {% for game in games %}
