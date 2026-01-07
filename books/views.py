@@ -9,14 +9,15 @@ from collections import defaultdict
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.cache import cache
-from django.db.models import Count, Max, Min, Prefetch
+from django.db.models import Count, Prefetch
 from django.db.models.functions import Lower
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.views import View
 from django.views.generic import DetailView, ListView
 
-from books import models
+from books import config, models
+from core.cache_helpers import get_year_bounds
 from core.mixins import HTMXPartialMixin, RobustPaginationMixin
 
 
@@ -35,23 +36,15 @@ class StaffOnlyMixin(UserPassesTestMixin):
         raise Http404("Page not found")
 
 
-# Cache configuration
-CACHE_TIMEOUT_24_HOURS = 60 * 60 * 24
-CACHE_VERSION = "v1"
-
-
 def _get_year_bounds():
     """Return cached global min/max publication years."""
-    year_stats = cache.get("book_year_stats")
-    if year_stats is None:
-        year_stats = models.Book.objects.aggregate(
-            min_year=Min("year_published"),
-            max_year=Max("year_published"),
-        )
-        cache.set("book_year_stats", year_stats, CACHE_TIMEOUT_24_HOURS)
-    min_year = year_stats["min_year"] or 1800
-    max_year = year_stats["max_year"] or 2024
-    return min_year, max_year
+    return get_year_bounds(
+        model_class=models.Book,
+        year_field="year_published",
+        cache_key=config.CACHE_KEY_YEAR_STATS,
+        cache_timeout=config.CACHE_TIMEOUT_24_HOURS,
+        default_min=config.DEFAULT_MIN_YEAR,
+    )
 
 
 def _get_read_book_ids(user):
@@ -259,18 +252,18 @@ class BookHomePageView(StaffOnlyMixin, RobustPaginationMixin, ListView):
         context["max_year"] = max_year
 
         # All genres for filtering (hierarchical)
-        genres_cache_key = f"{CACHE_VERSION}:book_genres_list"
+        genres_cache_key = f"{config.CACHE_VERSION}:book_genres_list"
         genres_list = cache.get(genres_cache_key)
         if genres_list is None:
             genres_list = list(
                 models.BookGenre.objects.order_by("level", "display_order", "name")
                 .values("id", "name", "slug", "level", "parent_id", "path")
             )
-            cache.set(genres_cache_key, genres_list, CACHE_TIMEOUT_24_HOURS)
+            cache.set(genres_cache_key, genres_list, config.CACHE_TIMEOUT_24_HOURS)
         context["genres"] = genres_list
 
         # All authors for filtering
-        authors_cache_key = f"{CACHE_VERSION}:book_authors_list"
+        authors_cache_key = f"{config.CACHE_VERSION}:book_authors_list"
         authors_list = cache.get(authors_cache_key)
         if authors_list is None:
             authors_list = list(
@@ -279,7 +272,7 @@ class BookHomePageView(StaffOnlyMixin, RobustPaginationMixin, ListView):
                 .order_by(Lower("name"))
                 .values("id", "name", "slug", "books_count")
             )
-            cache.set(authors_cache_key, authors_list, CACHE_TIMEOUT_24_HOURS)
+            cache.set(authors_cache_key, authors_list, config.CACHE_TIMEOUT_24_HOURS)
         context["authors"] = authors_list
 
         # Hero stats
@@ -290,7 +283,7 @@ class BookHomePageView(StaffOnlyMixin, RobustPaginationMixin, ListView):
                 "book_count": models.Book.objects.count(),
                 "author_count": models.Author.objects.count(),
             }
-            cache.set(stats_cache_key, stats, CACHE_TIMEOUT_24_HOURS)
+            cache.set(stats_cache_key, stats, config.CACHE_TIMEOUT_24_HOURS)
         context.update(stats)
 
         # Current filter state for UI
@@ -394,7 +387,7 @@ class BookDetailView(StaffOnlyMixin, DetailView):
         total_book_count = cache.get("total_book_count")
         if total_book_count is None:
             total_book_count = models.Book.objects.count()
-            cache.set("total_book_count", total_book_count, CACHE_TIMEOUT_24_HOURS)
+            cache.set("total_book_count", total_book_count, config.CACHE_TIMEOUT_24_HOURS)
         context["total_book_count"] = total_book_count
 
         return context
@@ -465,7 +458,7 @@ class AuthorListView(StaffOnlyMixin, RobustPaginationMixin, HTMXPartialMixin, Li
                     books_count=Count("books")
                 ).filter(books_count__gt=0).count(),
             }
-            cache.set(stats_cache_key, stats, CACHE_TIMEOUT_24_HOURS)
+            cache.set(stats_cache_key, stats, config.CACHE_TIMEOUT_24_HOURS)
         context.update(stats)
 
         # Current filter state

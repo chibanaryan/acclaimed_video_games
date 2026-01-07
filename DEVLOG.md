@@ -10,6 +10,8 @@
 
 ## 2026-01-06
 
+- Refactor: extract shared cache helpers to core, add books/config.py mirroring games pattern
+- Reorganize repo: move docs to docs/, archive old PRDs, add .env.example
 - Add sort direction toggle (asc/desc) to developer list, game list, lists page, and developer detail filtered games
 - Add hover effects to developer list rows (desktop table and mobile cards)
 - Fix developer list href fallback: use span instead of href="#" for developers without slugs
