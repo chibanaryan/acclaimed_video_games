@@ -1014,3 +1014,132 @@ class IgbdApiTests(SimpleTestCase):
                 result = igdb.get_api()
         self.assertIsNone(result)
         self.assertIn("Network error", cm.output[0])
+
+
+class YouTubeEmbeddableTests(SimpleTestCase):
+    """Tests for YouTube video embeddability check functions."""
+
+    @mock.patch("games.igdb.requests.get")
+    def test_is_youtube_video_embeddable_empty_id(self, mock_get):
+        """Empty video_id returns False without making API call."""
+        result = igdb.is_youtube_video_embeddable("")
+        self.assertFalse(result)
+        mock_get.assert_not_called()
+
+    @mock.patch("games.igdb.requests.get")
+    def test_is_youtube_video_embeddable_none_id(self, mock_get):
+        """None video_id returns False without making API call."""
+        result = igdb.is_youtube_video_embeddable(None)
+        self.assertFalse(result)
+        mock_get.assert_not_called()
+
+    @mock.patch("games.igdb.requests.get")
+    def test_is_youtube_video_embeddable_success(self, mock_get):
+        """Embeddable video returns True."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "items": [{"status": {"embeddable": True}}]
+        }
+        mock_get.return_value = mock_response
+
+        result = igdb.is_youtube_video_embeddable("test123")
+        self.assertTrue(result)
+
+    @mock.patch("games.igdb.requests.get")
+    def test_is_youtube_video_embeddable_not_embeddable(self, mock_get):
+        """Non-embeddable video returns False."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "items": [{"status": {"embeddable": False}}]
+        }
+        mock_get.return_value = mock_response
+
+        result = igdb.is_youtube_video_embeddable("test123")
+        self.assertFalse(result)
+
+    @mock.patch("games.igdb.requests.get")
+    def test_is_youtube_video_embeddable_non_200(self, mock_get):
+        """Non-200 response returns False."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 403
+        mock_get.return_value = mock_response
+
+        result = igdb.is_youtube_video_embeddable("test123")
+        self.assertFalse(result)
+
+    @mock.patch("games.igdb.requests.get")
+    def test_is_youtube_video_embeddable_no_items(self, mock_get):
+        """Empty items (video not found) returns False."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"items": []}
+        mock_get.return_value = mock_response
+
+        result = igdb.is_youtube_video_embeddable("nonexistent")
+        self.assertFalse(result)
+
+    @mock.patch("games.igdb.requests.get")
+    def test_is_youtube_video_embeddable_request_exception(self, mock_get):
+        """RequestException returns False."""
+        import requests
+
+        mock_get.side_effect = requests.RequestException("Network error")
+
+        result = igdb.is_youtube_video_embeddable("test123")
+        self.assertFalse(result)
+
+    @mock.patch("games.igdb.requests.get")
+    def test_check_youtube_videos_embeddable_empty_list(self, mock_get):
+        """Empty list returns empty dict."""
+        result = igdb.check_youtube_videos_embeddable([])
+        self.assertEqual(result, {})
+        mock_get.assert_not_called()
+
+    @mock.patch("games.igdb.requests.get")
+    def test_check_youtube_videos_embeddable_success(self, mock_get):
+        """Batch check returns correct embeddable status."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "items": [
+                {"id": "vid1", "status": {"embeddable": True}},
+                {"id": "vid2", "status": {"embeddable": False}},
+            ]
+        }
+        mock_get.return_value = mock_response
+
+        result = igdb.check_youtube_videos_embeddable(["vid1", "vid2", "vid3"])
+        self.assertEqual(result["vid1"], True)
+        self.assertEqual(result["vid2"], False)
+        self.assertEqual(result["vid3"], False)  # Not in response
+
+    @mock.patch("games.igdb.requests.get")
+    def test_check_youtube_videos_embeddable_batching(self, mock_get):
+        """More than 50 videos are batched correctly."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"items": []}
+        mock_get.return_value = mock_response
+
+        # Create 75 video IDs (should make 2 API calls)
+        video_ids = [f"vid{i}" for i in range(75)]
+        result = igdb.check_youtube_videos_embeddable(video_ids)
+
+        # Should have made 2 calls (50 + 25)
+        self.assertEqual(mock_get.call_count, 2)
+        # All should be False since not in response
+        self.assertEqual(len(result), 75)
+        self.assertTrue(all(v is False for v in result.values()))
+
+    @mock.patch("games.igdb.requests.get")
+    def test_check_youtube_videos_embeddable_request_exception(self, mock_get):
+        """RequestException sets all videos to False."""
+        import requests
+
+        mock_get.side_effect = requests.RequestException("Network error")
+
+        result = igdb.check_youtube_videos_embeddable(["vid1", "vid2"])
+        self.assertEqual(result["vid1"], False)
+        self.assertEqual(result["vid2"], False)
