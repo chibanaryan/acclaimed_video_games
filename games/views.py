@@ -10,8 +10,6 @@ from django.core.cache import cache
 from django.db.models import (
     Case,
     Count,
-    Min,
-    Max,
     Prefetch,
     Q,
     When,
@@ -31,25 +29,23 @@ from django.views import View
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
+from core.cache_helpers import get_year_bounds
+from core.mixins import HTMXPartialMixin, RobustPaginationMixin
 from core.models import User
 from games import config, constants, models, utils
-from games.services.percentile_service import calculate_percentile
 from games.forms import ImportForm, ContactForm
-from core.mixins import HTMXPartialMixin, RobustPaginationMixin
+from games.services.percentile_service import calculate_percentile
 
 
 def _get_year_bounds():
     """Return cached global min/max release years."""
-    year_stats = cache.get("game_year_stats")
-    if year_stats is None:
-        year_stats = models.Game.objects.aggregate(
-            min_year=Min("year_of_release"),
-            max_year=Max("year_of_release"),
-        )
-        cache.set("game_year_stats", year_stats, config.CACHE_TIMEOUT_24_HOURS)
-    min_year = year_stats["min_year"] or 1970
-    max_year = year_stats["max_year"] or datetime.today().year
-    return min_year, max_year
+    return get_year_bounds(
+        model_class=models.Game,
+        year_field="year_of_release",
+        cache_key=config.CACHE_KEY_YEAR_STATS,
+        cache_timeout=config.CACHE_TIMEOUT_24_HOURS,
+        default_min=config.DEFAULT_MIN_YEAR,
+    )
 
 
 def _get_hero_stats():

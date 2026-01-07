@@ -9,6 +9,7 @@
 .coverage
 .coverage.*
 .env*
+!.env.example
 *.swp
 .pytest_cache
 .vscode
