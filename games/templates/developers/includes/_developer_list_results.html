@@ -5,16 +5,16 @@
 <div class="hidden desktop:block overflow-x-auto">
     <table class="table-minimal table-fixed w-full">
         <colgroup>
-            <col style="width: 28%;">
-            <col style="width: 7%;">
             <col style="width: 32%;">
-            <col style="width: 16%;">
-            <col style="width: 17%;">
+            <col style="width: 9%;">
+            <col style="width: 30%;">
+            <col style="width: 14%;">
+            <col style="width: 15%;">
         </colgroup>
         <thead>
             <tr>
                 <th class="font-semibold">Name</th>
-                <th></th>
+                <th class="font-semibold text-center">Rank</th>
                 <th class="font-semibold">Top Game</th>
                 <th class="font-semibold text-right">Subsidiaries</th>
                 <th class="font-semibold text-right">Games</th>
@@ -23,14 +23,14 @@
         <tbody id="developer-list-body">
             {% for dev in developers %}
             <tr class="developer-row">
-                <td>
+                <td class="py-3">
                     {% with root=dev.display_root_developer %}
                     {% if root.slug %}
-                        <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-accent text-lg font-semibold">
-                            {{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}
+                        <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-accent text-lg font-semibold hover:underline">
+                            {{ dev.name }}
                         </a>
                     {% elif dev.slug %}
-                        <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-accent text-lg font-semibold">
+                        <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-accent text-lg font-semibold hover:underline">
                             {{ dev.name }}
                         </a>
                     {% else %}
@@ -38,29 +38,33 @@
                     {% endif %}
                     {% endwith %}
                 </td>
-                <td class="text-right tabular-nums">
+                <td class="text-center align-middle">
                     {% if dev.top_game %}
-                    <span class="text-accent font-bold">#{{ dev.top_game.rank }}</span>
+                    <span class="text-accent font-bold text-xl tabular-nums">#{{ dev.top_game.rank }}</span>
                     {% else %}
-                    <span class="text-base-content/40">—</span>
+                    <span class="text-base-content/30 text-lg">—</span>
                     {% endif %}
                 </td>
-                <td>
+                <td class="py-2">
                     {% if dev.top_game %}
-                    <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-2 group">
+                    <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-3 group py-1 -ml-1 pl-1 rounded transition-colors hover:bg-base-content/5">
                         {% if dev.top_game.thumbnail %}
-                        <img src="{{ dev.top_game.thumbnail }}"
-                             alt=""
-                             width="32" height="44"
-                             class="w-8 h-11 object-cover rounded"
-                             loading="lazy">
+                        <div class="w-10 h-14 flex-shrink-0 overflow-hidden rounded shadow-sm group-hover:shadow-md transition-shadow">
+                            <img src="{{ dev.top_game.thumbnail }}"
+                                 alt=""
+                                 width="40" height="56"
+                                 class="w-full h-full object-cover"
+                                 loading="lazy">
+                        </div>
                         {% else %}
-                        <div class="w-8 h-11 bg-base-100 rounded flex items-center justify-center">
+                        <div class="w-10 h-14 bg-base-100 rounded flex items-center justify-center flex-shrink-0">
                             <span class="mdi mdi-gamepad-variant text-base-content/30"></span>
                         </div>
                         {% endif %}
-                        <span class="text-sm truncate group-hover:underline">{{ dev.top_game.name }}</span>
+                        <span class="text-sm font-medium truncate group-hover:text-accent transition-colors">{{ dev.top_game.name }}</span>
                     </a>
+                    {% else %}
+                    <span class="text-base-content/40 text-sm italic">No ranked games</span>
                     {% endif %}
                 </td>
                 <td class="text-lg text-right tabular-nums">{{ dev.recursive_studios_count|default:0 }}</td>
@@ -72,38 +76,55 @@
 </div>
 
 {# Mobile card view #}
-<div id="developer-mobile-container" class="desktop:hidden space-y-3">
+<div id="developer-mobile-container" class="desktop:hidden space-y-2">
     {% for dev in developers %}
-    <div class="developer-row card bg-base-200 p-3">
-        <div class="flex flex-col gap-2">
-            {# Developer name - truncate long names #}
-            <a href="{% with root=dev.display_root_developer %}{% if root.slug %}{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}{% elif dev.slug %}{% url 'developer-detail' slug=dev.slug %}{% else %}#{% endif %}{% endwith %}" class="link link-accent text-lg font-bold truncate" style="max-width: calc(100vw - 4rem);">
-                {% with root=dev.display_root_developer %}{{ dev.name }}{% if dev.name != root.name %} ({{ root.name }}){% endif %}{% endwith %}
-            </a>
-            {# Top game #}
+    <div class="developer-row card bg-base-200 rounded-lg overflow-hidden">
+        <div class="p-3">
+            {# Developer name #}
+            {% with root=dev.display_root_developer %}
+            {% if root.slug %}
+            <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}{% endif %}" class="link link-accent text-lg font-bold block truncate mb-2">{{ dev.name }}</a>
+            {% elif dev.slug %}
+            <a href="{% url 'developer-detail' slug=dev.slug %}" class="link link-accent text-lg font-bold block truncate mb-2">{{ dev.name }}</a>
+            {% else %}
+            <span class="text-lg font-bold block truncate mb-2">{{ dev.name }}</span>
+            {% endif %}
+            {% endwith %}
+
+            {# Top game row with larger thumbnail #}
             {% if dev.top_game %}
-            <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-2 group min-w-0" style="max-width: calc(100vw - 4rem);">
-                <span class="text-base-content/70 text-sm shrink-0">Top:</span>
-                <span class="text-accent font-bold text-sm shrink-0">#{{ dev.top_game.rank }}</span>
+            <a href="{% url 'game-detail' slug=dev.top_game.slug %}" class="flex items-center gap-3 py-2 bg-base-100/50 rounded mb-2">
                 {% if dev.top_game.thumbnail %}
-                <img src="{{ dev.top_game.thumbnail }}" alt="" width="24" height="32" class="w-6 h-8 object-cover rounded shrink-0" loading="lazy">
+                <div class="w-10 h-14 flex-shrink-0 overflow-hidden rounded shadow-sm">
+                    <img src="{{ dev.top_game.thumbnail }}" alt="" width="40" height="56" class="w-full h-full object-cover" loading="lazy">
+                </div>
                 {% else %}
-                <div class="w-6 h-8 bg-base-100 rounded flex items-center justify-center shrink-0">
-                    <span class="mdi mdi-gamepad-variant text-xs text-base-content/30"></span>
+                <div class="w-10 h-14 bg-base-300 rounded flex items-center justify-center flex-shrink-0">
+                    <span class="mdi mdi-gamepad-variant text-base-content/30"></span>
                 </div>
                 {% endif %}
-                <span class="text-sm truncate group-hover:underline min-w-0">{{ dev.top_game.name }}</span>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate">{{ dev.top_game.name }}</div>
+                    <div class="text-accent font-bold text-sm">#{{ dev.top_game.rank }}</div>
+                </div>
             </a>
             {% endif %}
-            {# Badges #}
-            <div class="flex gap-2">
+
+            {# Stats badges with icons #}
+            <div class="flex flex-wrap gap-2">
+                {% with count=dev.recursive_games_count|default:dev.games_count %}
+                <span class="badge badge-primary badge-outline">
+                    <span class="mdi mdi-gamepad-variant mr-1"></span>
+                    {{ count }} game{{ count|pluralize }}
+                </span>
+                {% endwith %}
                 {% with subs=dev.recursive_studios_count|default:0 %}
                 {% if subs > 0 %}
-                <span class="badge badge-ghost">{{ subs }} subsidiar{{ subs|pluralize:"y,ies" }}</span>
+                <span class="badge badge-ghost">
+                    <span class="mdi mdi-office-building mr-1"></span>
+                    {{ subs }} subsidiar{{ subs|pluralize:"y,ies" }}
+                </span>
                 {% endif %}
-                {% endwith %}
-                {% with count=dev.recursive_games_count|default:dev.games_count %}
-                <span class="badge badge-ghost">{{ count }} game{{ count|pluralize }}</span>
                 {% endwith %}
             </div>
         </div>

@@ -933,6 +933,34 @@
 
 }
 
+/* ============================================================================
+ * DEVELOPER ROW STYLES
+ * ============================================================================ */
+
+/* Developer Row - Desktop table hover effects */
+tr.developer-row {
+  border-left: 4px solid transparent;
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+tr.developer-row:hover {
+  background: linear-gradient(to right, color-mix(in oklch, var(--color-primary) 12%, transparent) 40%, transparent 100%);
+  transform: translateY(-1px);
+  border-left-color: var(--color-primary);
+}
+
+/* Mobile developer cards - simple hover effect */
+.developer-row.card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.developer-row.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--color-base-content) 10%, transparent);
+}
+
 /* Animation for new game rows loaded via HTMX */
 @keyframes game-row-enter {
   from {

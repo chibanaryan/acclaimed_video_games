@@ -118,16 +118,17 @@
                     <li><button type="button" @click="updateSort('name')" :class="sort === 'name' ? 'active' : ''">Name (A-Z)</button></li>
                 </ul>
             </div>
-            {# Direction flip button #}
+            {# Direction flip button - more prominent #}
             <button type="button"
-                    class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                    class="btn btn-ghost btn-sm gap-1 px-2"
                     @click="toggleSortDirection()"
-                    :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
-                <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                    :title="sortDirection === 'asc' ? 'Ascending order' : 'Descending order'">
+                <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"></span>
+                <span class="text-xs hidden xs:inline" x-text="sortDirection === 'asc' ? 'Asc' : 'Desc'"></span>
             </button>
         </div>
         {# Mobile: Native select for touch compatibility #}
-        <div class="desktop:hidden flex items-center gap-1">
+        <div class="desktop:hidden flex items-center gap-2">
             <span class="mdi mdi-sort text-base text-base-content/70"></span>
             <select class="select select-sm select-bordered bg-base-200"
                     style="width: fit-content; max-width: 100%;"
@@ -139,10 +140,10 @@
             </select>
             {# Direction flip button #}
             <button type="button"
-                    class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                    class="p-1 text-base-content/70 hover:text-base-content transition-colors"
                     @click="toggleSortDirection()"
-                    :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
-                <span class="mdi text-sm" :class="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></span>
+                    :title="sortDirection === 'asc' ? 'Ascending order' : 'Descending order'">
+                <span class="mdi text-lg" :class="sortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"></span>
             </button>
         </div>
     </div>

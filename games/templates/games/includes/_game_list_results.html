@@ -45,13 +45,14 @@
                 <li><button type="button" @click="updateSort('playtime')" :class="filters.sort === 'playtime' ? 'active' : ''">Playtime</button></li>
             </ul>
         </div>
-        {# Direction flip button #}
+        {# Direction flip button - more prominent #}
         <button type="button"
-                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+                class="btn btn-ghost btn-sm gap-1 px-2"
                 @click="toggleSortDirection()"
-                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending order' : 'Descending order'"
                 :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
-            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
+            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'" aria-hidden="true"></span>
+            <span class="text-xs" x-text="(filters.sortDirection || 'asc') === 'asc' ? 'Asc' : 'Desc'"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-2 pl-2">
@@ -112,11 +113,11 @@
         </select>
         {# Direction flip button #}
         <button type="button"
-                class="flex items-center text-base-content/70 hover:text-base-content transition-colors cursor-pointer min-h-10 min-w-10 justify-center"
+                class="p-1 text-base-content/70 hover:text-base-content transition-colors"
                 @click="toggleSortDirection()"
-                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending' : 'Descending'"
+                :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending order' : 'Descending order'"
                 :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
-            <span class="mdi text-base" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'" aria-hidden="true"></span>
+            <span class="mdi text-lg" :class="(filters.sortDirection || 'asc') === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'" aria-hidden="true"></span>
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-1 pl-1">

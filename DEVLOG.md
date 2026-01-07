@@ -9,6 +9,10 @@
 
 ## 2026-01-06
 
+- Add sort direction toggle (asc/desc) to developer list, game list, lists page, and developer detail filtered games
+- Add hover effects to developer list rows (desktop table and mobile cards)
+- Fix developer list href fallback: use span instead of href="#" for developers without slugs
+- Fix developer list terminology: "studios" → "subsidiaries" to match table header
 - Add publication search to source lists page with debounced HTMX filtering
 - Polish source lists page: add subtitle, compact legend badges, hover transitions on cards
 - Fix Alpine.js race condition: ensure utils-base.js loads before Alpine initializes to prevent "createUnifiedSearchData is not defined" errors
