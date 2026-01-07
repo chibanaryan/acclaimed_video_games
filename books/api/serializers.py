@@ -37,7 +37,6 @@ book_fields = [
     "authors",
     "genres",
     "goodreads_id",
-    "goodreads_url",
     "name",
     "name_normalized",
     "cover_image_url",
@@ -59,32 +58,10 @@ class BookSummarySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source="goodreads_id")
     authors = IdNameSerializer(many=True)
     genres = IdNameSerializer(many=True)
-    # Delegate to primary_goodreads_book_data
-    cover_image_url = serializers.SerializerMethodField()
-    goodreads_url = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Book
         fields = book_fields
-
-    def get_cover_image_url(self, obj):
-        """Get cover image URL from primary GoodreadsBookData record."""
-        if obj.primary_goodreads_book_data:
-            return obj.primary_goodreads_book_data.cover_image_url
-        return None
-
-    def get_goodreads_url(self, obj):
-        """Get URL from primary GoodreadsBookData record."""
-        if obj.primary_goodreads_book_data:
-            return obj.primary_goodreads_book_data.goodreads_book_url
-        return None
-
-    def get_description(self, obj):
-        """Get description from primary GoodreadsBookData record."""
-        if obj.primary_goodreads_book_data:
-            return obj.primary_goodreads_book_data.description
-        return None
 
 
 class BookDetailSerializer(BookSummarySerializer):

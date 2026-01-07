@@ -12,7 +12,6 @@ from books.admin import (
     BookGenreAdmin,
     BookListMembershipAdmin,
     BookSeriesAdmin,
-    GoodreadsBookDataAdmin,
     ReadBookAdmin,
     WantToReadBookAdmin,
     WikipediaBookDataAdmin,
@@ -41,13 +40,6 @@ class AdminRegistrationTests(TestCase):
         """BookSeries model should be registered with BookSeriesAdmin."""
         self.assertIn(models.BookSeries, admin.site._registry)
         self.assertIsInstance(admin.site._registry[models.BookSeries], BookSeriesAdmin)
-
-    def test_goodreads_book_data_admin_registered(self):
-        """GoodreadsBookData model should be registered."""
-        self.assertIn(models.GoodreadsBookData, admin.site._registry)
-        self.assertIsInstance(
-            admin.site._registry[models.GoodreadsBookData], GoodreadsBookDataAdmin
-        )
 
     def test_wikipedia_book_data_admin_registered(self):
         """WikipediaBookData model should be registered."""

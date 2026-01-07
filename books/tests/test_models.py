@@ -1,7 +1,7 @@
 """
 Tests for books app models.
 
-Tests for Author, Book, BookGenre, BookSeries, GoodreadsBookData,
+Tests for Author, Book, BookGenre, BookSeries,
 WikipediaBookData, BookListMembership, ReadBook, and WantToReadBook models.
 """
 
@@ -198,39 +198,17 @@ class BookModelTests(TestCase):
         book = models.Book.objects.create(name="Test", rank=1)
         self.assertIsNone(book.decade)
 
-    def test_thumbnail_from_goodreads_data(self):
-        """Test thumbnail property uses primary Goodreads data."""
-        book = models.Book.objects.create(name="Test", rank=1, goodreads_id="123")
-        goodreads_data = models.GoodreadsBookData.objects.create(
-            book=book,
-            goodreads_id="123",
+    def test_thumbnail_with_cover_image_url(self):
+        """Test thumbnail property uses cover_image_url field."""
+        book = models.Book.objects.create(
+            name="Test",
+            rank=1,
             cover_image_url="https://example.com/cover.jpg",
-            is_primary=True,
         )
-        book.primary_goodreads_book_data = goodreads_data
-        book.save()
-
-        # Refresh from database to get fresh object
-        book.refresh_from_db()
         self.assertEqual(book.thumbnail, "https://example.com/cover.jpg")
 
-    def test_image_from_goodreads_data(self):
-        """Test image property uses primary Goodreads data."""
-        book = models.Book.objects.create(name="Test", rank=1, goodreads_id="123")
-        goodreads_data = models.GoodreadsBookData.objects.create(
-            book=book,
-            goodreads_id="123",
-            cover_image_url="https://example.com/cover.jpg",
-            is_primary=True,
-        )
-        book.primary_goodreads_book_data = goodreads_data
-        book.save()
-
-        book.refresh_from_db()
-        self.assertEqual(book.image, "https://example.com/cover.jpg")
-
-    def test_thumbnail_none_without_goodreads_data(self):
-        """Test thumbnail property returns None without Goodreads data."""
+    def test_thumbnail_none_without_cover_image_url(self):
+        """Test thumbnail property returns None without cover_image_url."""
         book = models.Book.objects.create(name="Test", rank=1)
         self.assertIsNone(book.thumbnail)
 
@@ -308,58 +286,6 @@ class BookModelTests(TestCase):
 
         result = book.get_display_authors(max_count=2)
         self.assertEqual(len(result), 2)
-
-
-class GoodreadsBookDataModelTests(TestCase):
-    """Tests for the GoodreadsBookData model."""
-
-    def test_str_with_book(self):
-        """Test __str__ with linked book."""
-        book = models.Book.objects.create(name="Test Book", rank=1)
-        data = models.GoodreadsBookData.objects.create(
-            book=book,
-            goodreads_id="12345",
-        )
-        self.assertEqual(str(data), "Goodreads data for Test Book (ID: 12345)")
-
-    def test_str_without_book(self):
-        """Test __str__ for orphaned data."""
-        data = models.GoodreadsBookData.objects.create(
-            goodreads_id="12345",
-        )
-        self.assertEqual(str(data), "Orphaned Goodreads data (ID: 12345)")
-
-    def test_goodreads_book_url(self):
-        """Test goodreads_book_url property generates URL."""
-        data = models.GoodreadsBookData.objects.create(
-            goodreads_id="12345",
-        )
-        self.assertEqual(
-            data.goodreads_book_url,
-            "https://www.goodreads.com/book/show/12345",
-        )
-
-    def test_goodreads_book_url_fallback(self):
-        """Test goodreads_book_url falls back to stored URL."""
-        data = models.GoodreadsBookData.objects.create(
-            goodreads_id="",
-            goodreads_url="https://goodreads.example/book/123",
-        )
-        self.assertEqual(
-            data.goodreads_book_url,
-            "https://goodreads.example/book/123",
-        )
-
-    def test_thumbnail_property(self):
-        """Test thumbnail property returns cover_image_url."""
-        data = models.GoodreadsBookData.objects.create(
-            goodreads_id="12345",
-            cover_image_url="https://example.com/cover.jpg",
-        )
-        # Clear cached property
-        if "thumbnail" in data.__dict__:
-            del data.__dict__["thumbnail"]
-        self.assertEqual(data.thumbnail, "https://example.com/cover.jpg")
 
 
 class WikipediaBookDataModelTests(TestCase):

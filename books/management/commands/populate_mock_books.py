@@ -6,7 +6,6 @@ Creates a comprehensive set of:
 - BookGenres (hierarchical genre structure)
 - BookSeries (well-known series)
 - Books (classic and popular books)
-- GoodreadsBookData (mock external data)
 - WikipediaBookData (mock external data)
 """
 
@@ -21,7 +20,6 @@ from books.models import (
     Book,
     BookGenre,
     BookSeries,
-    GoodreadsBookData,
     WikipediaBookData,
 )
 
@@ -63,7 +61,6 @@ class Command(BaseCommand):
     def _clear_data(self):
         """Clear all book-related data."""
         WikipediaBookData.objects.all().delete()
-        GoodreadsBookData.objects.all().delete()
         Book.objects.all().delete()
         BookSeries.objects.all().delete()
         Author.objects.all().delete()
@@ -808,25 +805,12 @@ class Command(BaseCommand):
         return books
 
     def _create_metadata(self, books):
-        """Create Goodreads and Wikipedia metadata for books."""
+        """Create Wikipedia metadata and set cover images for books."""
         for book in books:
-            # Create Goodreads data
-            if book.goodreads_id:
-                goodreads_data, created = GoodreadsBookData.objects.get_or_create(
-                    goodreads_id=book.goodreads_id,
-                    book=book,
-                    defaults={
-                        "is_primary": True,
-                        "cover_image_url": f"https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/{book.goodreads_id}.jpg",
-                        "average_rating": Decimal("4.25"),
-                        "ratings_count": 50000 + (book.rank * 1000),
-                        "reviews_count": 5000 + (book.rank * 100),
-                        "description": book.description,
-                    },
-                )
-                if created:
-                    book.primary_goodreads_book_data = goodreads_data
-                    book.save(update_fields=["primary_goodreads_book_data"])
+            # Set cover image URL if book has a goodreads_id
+            if book.goodreads_id and not book.cover_image_url:
+                book.cover_image_url = f"https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/{book.goodreads_id}.jpg"
+                book.save(update_fields=["cover_image_url"])
 
             # Create Wikipedia data
             wiki_data, created = WikipediaBookData.objects.get_or_create(

@@ -17,6 +17,8 @@ from django.views import View
 from django.views.generic import DetailView, ListView
 
 from books import config, models
+from books.forms import GoodreadsImportForm
+from books.services.goodreads_importer import import_goodreads_csv
 from core.cache_helpers import get_year_bounds
 from core.mixins import HTMXPartialMixin, RobustPaginationMixin
 
@@ -300,6 +302,37 @@ class BookHomePageView(StaffOnlyMixin, RobustPaginationMixin, ListView):
         return context
 
 
+class GoodreadsImportView(StaffOnlyMixin, View):
+    """
+    Import Goodreads CSV exports for read/want-to-read shelves.
+    """
+
+    template_name = "books/import.html"
+
+    def get(self, request):
+        form = GoodreadsImportForm()
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request):
+        form = GoodreadsImportForm(request.POST, request.FILES)
+        summary = None
+
+        if form.is_valid():
+            try:
+                summary = import_goodreads_csv(form.cleaned_data["file"], request.user)
+            except ValueError as exc:
+                form.add_error("file", str(exc))
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": form,
+                "summary": summary,
+            },
+        )
+
+
 class BookDetailView(StaffOnlyMixin, DetailView):
     """
     Detail view for a single book showing all metadata and list appearances.
@@ -314,7 +347,6 @@ class BookDetailView(StaffOnlyMixin, DetailView):
     def get_queryset(self):
         """Prefetch related data for the book detail page."""
         return models.Book.objects.select_related(
-            "primary_goodreads_book_data",
             "primary_wikipedia_book_data",
             "series",
         ).prefetch_related(

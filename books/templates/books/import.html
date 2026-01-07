@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Goodreads | Acclaimed Books{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="card bg-base-200 border border-base-content/10 shadow-sm">
+        <div class="card-body space-y-4">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <span class="mdi mdi-book-open-page-variant"></span>
+                Import Goodreads Library
+            </h1>
+            <p class="text-base-content/70">
+                Upload your Goodreads CSV export to mark books as read or want to read.
+            </p>
+
+            <div class="alert bg-base-100 border border-base-content/10">
+                <span class="mdi mdi-information-outline text-lg"></span>
+                <div class="text-sm text-base-content/70">
+                    <div class="font-semibold text-base-content">Export steps</div>
+                    <ol class="list-decimal pl-5 mt-1 space-y-1">
+                        <li>Go to Goodreads &gt; My Books &gt; Import/Export.</li>
+                        <li>Click "Export Library" and download the CSV.</li>
+                        <li>Upload the CSV file below.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">{{ form.file.label }}</span>
+                    </label>
+                    {{ form.file }}
+                    {% if form.file.errors %}
+                        <p class="text-error text-sm mt-1">{{ form.file.errors|join:", " }}</p>
+                    {% endif %}
+                    {% if form.file.help_text %}
+                        <p class="text-xs text-base-content/60 mt-1">{{ form.file.help_text }}</p>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">Import</button>
+            </form>
+
+            {% if summary %}
+                <div class="divider"></div>
+                <div class="alert alert-success">
+                    <span class="mdi mdi-check-circle"></span>
+                    <div>
+                        <div class="font-semibold">Import complete</div>
+                        <div class="text-sm">
+                            Processed {{ summary.processed_books }} unique books from {{ summary.total_rows }} rows.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    <div class="bg-base-100 border border-base-content/10 rounded-lg p-3">
+                        <div class="font-semibold mb-2">Read shelf</div>
+                        <div>Added: {{ summary.read_added }}</div>
+                        <div>Existing: {{ summary.read_existing }}</div>
+                        <div>Removed from want: {{ summary.removed_from_want }}</div>
+                    </div>
+                    <div class="bg-base-100 border border-base-content/10 rounded-lg p-3">
+                        <div class="font-semibold mb-2">Want to read shelf</div>
+                        <div>Added: {{ summary.want_added }}</div>
+                        <div>Existing: {{ summary.want_existing }}</div>
+                        <div>Skipped (already read): {{ summary.read_overrides_want }}</div>
+                    </div>
+                    <div class="bg-base-100 border border-base-content/10 rounded-lg p-3">
+                        <div class="font-semibold mb-2">File cleanup</div>
+                        <div>Duplicates merged: {{ summary.duplicate_rows }}</div>
+                        <div>Skipped (missing ID): {{ summary.skipped_no_id }}</div>
+                        <div>Skipped (no shelf): {{ summary.skipped_no_status }}</div>
+                    </div>
+                    <div class="bg-base-100 border border-base-content/10 rounded-lg p-3">
+                        <div class="font-semibold mb-2">Book matches</div>
+                        <div>Linked to ranked books: {{ summary.linked_books }}</div>
+                        <div>Matched by Goodreads ID: {{ summary.matched_by_goodreads }}</div>
+                        <div>Matched by ISBN: {{ summary.matched_by_isbn }}</div>
+                        <div>Matched by title/author: {{ summary.matched_by_title_author }}</div>
+                        <div>Backfilled Goodreads ID: {{ summary.goodreads_id_backfilled }}</div>
+                        <div>Conflicts skipped: {{ summary.goodreads_id_conflicts }}</div>
+                        <div>Ambiguous ISBN matches: {{ summary.isbn_ambiguous }}</div>
+                        <div>Ambiguous title/author: {{ summary.title_author_ambiguous }}</div>
+                        <div>Not in database: {{ summary.unmatched_books }}</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
