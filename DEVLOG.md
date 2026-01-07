@@ -2,6 +2,8 @@
 
 ## 2026-01-06
 
+- Add publication search to source lists page with debounced HTMX filtering
+- Polish source lists page: add subtitle, compact legend badges, hover transitions on cards
 - Fix Alpine.js race condition: ensure utils-base.js loads before Alpine initializes to prevent "createUnifiedSearchData is not defined" errors
 
 ## 2026-01-05

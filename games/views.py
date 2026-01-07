@@ -2138,6 +2138,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         """Parse and validate filter parameters from request."""
         year_value = self.request.GET.get("year")
         type_slug = self.request.GET.get("type")
+        search_query = self.request.GET.get("q", "").strip()
 
         try:
             year_value = int(year_value) if year_value else None
@@ -2146,7 +2147,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
         type_code = constants.LIST_TYPE_CODES.get(type_slug) if type_slug else None
 
-        return year_value, type_slug, type_code
+        return year_value, type_slug, type_code, search_query
 
     def _get_filtered_list_queryset(self, year_value, type_code):
         """Build base list queryset with filters applied."""
@@ -2159,7 +2160,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
     def get_queryset(self):
         """Get publications with list counts, filtered and sorted."""
-        year_value, type_slug, type_code = self._get_list_filters()
+        year_value, type_slug, type_code, search_query = self._get_list_filters()
         sort = self.request.GET.get("sort", "importance")
         # Default direction depends on sort type: desc for importance, asc for alpha
         default_dir = "asc" if sort == "alpha" else "desc"
@@ -2246,6 +2247,10 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         # Only include publications with matching lists
         qs = qs.filter(total_count__gt=0)
 
+        # Apply search filter if provided
+        if search_query:
+            qs = qs.filter(name__icontains=search_query)
+
         # Sort by importance or alphabetically, respecting direction
         if sort == "alpha":
             if sort_direction == "asc":
@@ -2264,7 +2269,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        year_value, type_slug, type_code = self._get_list_filters()
+        year_value, type_slug, type_code, search_query = self._get_list_filters()
         sort = self.request.GET.get("sort", "importance")
         # Default direction depends on sort type: desc for importance, asc for alpha
         default_dir = "asc" if sort == "alpha" else "desc"
@@ -2355,6 +2360,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         context["filters"] = {
             "year": str(year_value) if year_value else None,
             "type": type_slug,  # Keep as slug for template comparison
+            "q": search_query,
         }
         context["sort"] = sort
         context["sort_direction"] = sort_direction

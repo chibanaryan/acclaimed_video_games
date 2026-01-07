@@ -2,7 +2,7 @@
 {% load game_filters %}
 {% load humanize %}
 
-<div class="publication-group border border-base-content/10 rounded-lg"
+<div class="publication-group border border-base-content/10 rounded-lg transition-all duration-150 hover:border-base-content/20"
      x-data="{ expanded: false }"
      @publications-toggle-expand.window="expanded = !expanded"
      @publications-expand-all.window="expanded = true"
