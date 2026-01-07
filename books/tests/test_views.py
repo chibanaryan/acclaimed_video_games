@@ -181,6 +181,126 @@ class BookHomePageViewTests(StaffUserTestMixin, TestCase):
         # Should return all books
         self.assertEqual(len(response.context["books"]), 2)
 
+    def test_invalid_end_year_filter_ignored(self):
+        """Test invalid end year filter is ignored gracefully."""
+        response = self.client.get(reverse("books:home"), {"end": "invalid"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["books"]), 2)
+
+    def test_invalid_genre_filter_ignored(self):
+        """Test invalid genre filter is ignored gracefully."""
+        response = self.client.get(reverse("books:home"), {"genres": "invalid"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["books"]), 2)
+
+    def test_invalid_author_filter_ignored(self):
+        """Test invalid author filter is ignored gracefully."""
+        response = self.client.get(reverse("books:home"), {"authors": "invalid"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["books"]), 2)
+
+    def test_series_filter(self):
+        """Test filtering by series."""
+        series = models.BookSeries.objects.create(name="Test Series")
+        self.book1.series = series
+        self.book1.save()
+
+        response = self.client.get(reverse("books:home"), {"series": str(series.id)})
+        self.assertEqual(response.status_code, 200)
+        books = response.context["books"]
+        self.assertEqual(len(books), 1)
+        self.assertEqual(books[0].name, "Alpha Book")
+
+    def test_invalid_series_filter_ignored(self):
+        """Test invalid series filter is ignored gracefully."""
+        response = self.client.get(reverse("books:home"), {"series": "invalid"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["books"]), 2)
+
+    def test_sort_by_year_desc(self):
+        """Test sorting by year descending."""
+        response = self.client.get(
+            reverse("books:home"), {"sort": "year", "dir": "desc"}
+        )
+        books = list(response.context["books"])
+        self.assertEqual(books[0].name, "Alpha Book")  # 2020
+        self.assertEqual(books[1].name, "Beta Book")  # 2015
+
+    def test_sort_by_pages(self):
+        """Test sorting by page count."""
+        self.book1.page_count = 100
+        self.book1.save()
+        self.book2.page_count = 200
+        self.book2.save()
+
+        response = self.client.get(reverse("books:home"), {"sort": "pages"})
+        books = list(response.context["books"])
+        self.assertEqual(books[0].name, "Alpha Book")  # 100 pages
+        self.assertEqual(books[1].name, "Beta Book")  # 200 pages
+
+    def test_sort_by_pages_desc(self):
+        """Test sorting by page count descending."""
+        self.book1.page_count = 100
+        self.book1.save()
+        self.book2.page_count = 200
+        self.book2.save()
+
+        response = self.client.get(
+            reverse("books:home"), {"sort": "pages", "dir": "desc"}
+        )
+        books = list(response.context["books"])
+        self.assertEqual(books[0].name, "Beta Book")  # 200 pages
+        self.assertEqual(books[1].name, "Alpha Book")  # 100 pages
+
+    def test_sort_by_rank_desc(self):
+        """Test sorting by rank descending (default sort)."""
+        response = self.client.get(reverse("books:home"), {"dir": "desc"})
+        books = list(response.context["books"])
+        self.assertEqual(books[0].name, "Beta Book")  # rank 2
+        self.assertEqual(books[1].name, "Alpha Book")  # rank 1
+
+    def test_read_filter(self):
+        """Test filtering by read books (authenticated user)."""
+        # Mark book1 as read
+        models.ReadBook.objects.create(
+            user=self.staff_user,
+            goodreads_id=self.book1.goodreads_id,
+        )
+
+        response = self.client.get(reverse("books:home"), {"read": "read"})
+        self.assertEqual(response.status_code, 200)
+        books = response.context["books"]
+        self.assertEqual(len(books), 1)
+        self.assertEqual(books[0].name, "Alpha Book")
+
+    def test_unread_filter(self):
+        """Test filtering by unread books (authenticated user)."""
+        # Mark book1 as read
+        models.ReadBook.objects.create(
+            user=self.staff_user,
+            goodreads_id=self.book1.goodreads_id,
+        )
+
+        response = self.client.get(reverse("books:home"), {"read": "unread"})
+        self.assertEqual(response.status_code, 200)
+        books = response.context["books"]
+        self.assertEqual(len(books), 1)
+        self.assertEqual(books[0].name, "Beta Book")
+
+    def test_want_to_read_filter(self):
+        """Test filtering by want-to-read books (authenticated user)."""
+        # Mark book2 as want-to-read
+        models.WantToReadBook.objects.create(
+            user=self.staff_user,
+            goodreads_id=self.book2.goodreads_id,
+        )
+
+        response = self.client.get(reverse("books:home"), {"read": "want"})
+        self.assertEqual(response.status_code, 200)
+        books = response.context["books"]
+        self.assertEqual(len(books), 1)
+        self.assertEqual(books[0].name, "Beta Book")
+
 
 class BookDetailViewTests(StaffUserTestMixin, TestCase):
     """Tests for the BookDetailView."""

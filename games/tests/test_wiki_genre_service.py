@@ -524,6 +524,30 @@ class WikiGenreServiceTests(SimpleTestCase):
         # "II" is too short (< 5 chars), should not be added
         self.assertEqual(variants, ["Game: II"])
 
+    def test_get_name_variants_unspaced_slash(self):
+        """Test that unspaced slash names are handled correctly."""
+        # Like "Pokémon Red/Blue/Yellow"
+        variants = self.service._get_name_variants("Pokémon Red/Blue/Yellow")
+        # Should include "Red and Blue" combination first
+        self.assertIn("Pokémon Red and Blue", variants)
+        self.assertIn("Pokémon Red", variants)
+        # Short parts like "Blue" and "Yellow" should be skipped (< 5 chars)
+
+    def test_get_name_variants_unspaced_slash_two_parts(self):
+        """Test that unspaced slash with two parts creates 'and' combination."""
+        variants = self.service._get_name_variants("Game One/Game Two")
+        # Should include "Game One and Game Two" combination
+        self.assertIn("Game One and Game Two", variants)
+        self.assertIn("Game One", variants)
+        self.assertIn("Game Two", variants)
+
+    def test_get_name_variants_skips_short_slash_parts(self):
+        """Test that short parts after slash are skipped unless first."""
+        variants = self.service._get_name_variants("Long Name/ABC")
+        # "ABC" (3 chars) should be skipped, but "Long Name" should be included
+        self.assertIn("Long Name", variants)
+        self.assertNotIn("ABC", variants)
+
     def test_is_video_game_page_detects_game_infobox(self):
         """Test that video game pages are detected by infobox."""
         html = """

@@ -568,6 +568,31 @@ class GameAllDataViewTests(TestCase):
         self.assertEqual(platform_data["n"], "PC")
         self.assertEqual(platform_data["c"], "PC")
 
+    def test_all_data_games_have_series_field(self):
+        """Test that all games have series IDs field in response."""
+        response = self.client.get("/api/games/all/")
+        data = response.json()
+        games = data["data"]["games"]
+
+        game = games[0]
+        # Check series IDs field is present (even if empty)
+        self.assertIn("sr", game)
+        # Without a series, should be empty list
+        self.assertEqual(game["sr"], [])
+
+    def test_all_data_games_without_optional_data(self):
+        """Test that games without optional data return None for those fields."""
+        response = self.client.get("/api/games/all/")
+        data = response.json()
+        games = data["data"]["games"]
+        game = games[0]
+
+        # When no IGDB data attached, artwork should be None
+        self.assertIsNone(game["a"])
+        # When no HLTB data attached, playtime should be None
+        self.assertIsNone(game["pt"])
+        self.assertIsNone(game["ptc"])
+
 
 class IdNameSerializerTests(TestCase):
     """Tests for IdNameSerializer get_id method."""

@@ -116,6 +116,30 @@ class FormatAuthorListTests(TestCase):
         self.assertEqual(format_author_list([]), "")
         self.assertEqual(format_author_list(None), "")
 
+    def test_format_author_list_with_invalid_max_display(self):
+        """format_author_list should handle invalid max_display parameter."""
+        author1 = models.Author.objects.create(
+            name="Author Six", slug="author-six"
+        )
+        author2 = models.Author.objects.create(
+            name="Author Seven", slug="author-seven"
+        )
+
+        # Invalid string max_display should default to 3
+        result = format_author_list([author1, author2], max_display="invalid")
+        self.assertEqual(result, "Author Six, Author Seven")
+
+        # None max_display should default to 3
+        result = format_author_list([author1, author2], max_display=None)
+        self.assertEqual(result, "Author Six, Author Seven")
+
+    def test_format_author_list_with_empty_iterable_converted(self):
+        """format_author_list should handle iterable that becomes empty list."""
+        # Generator that yields nothing
+        empty_gen = (x for x in [])
+        result = format_author_list(empty_gen)
+        self.assertEqual(result, "")
+
 
 class BookSeriesLabelTests(TestCase):
     """Tests for book_series_label template filter."""
@@ -319,6 +343,24 @@ class BookGenreCategoriesGroupedTests(TestCase):
         self.assertIn("Fiction", category_names)
         self.assertIn("Non-Fiction", category_names)
 
+    def test_genre_without_parent_or_level_zero_falls_to_other(self):
+        """book_genre_categories_grouped puts genre in 'Other' if no parent and level != 0."""
+
+        class MockGenre:
+            name = "Orphan Genre"
+            parent = None
+            level = 1  # Not level 0, so not a root category
+            id = 9999
+
+            def __init__(self):
+                pass
+
+        mock_genre = MockGenre()
+        result = book_genre_categories_grouped([mock_genre])
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["name"], "Other")
+
 
 class BookRankUrlTests(TestCase):
     """Tests for book_rank_url template tag."""
@@ -398,6 +440,15 @@ class BookGenreIconEdgeCasesTests(TestCase):
 
         result = book_genre_icon(MockGenre())
         self.assertEqual(result, "mdi-magnify")
+
+    def test_genre_without_name_attribute(self):
+        """book_genre_icon should return default when genre has no name (line 121)."""
+
+        class MockGenreNoName:
+            pass
+
+        result = book_genre_icon(MockGenreNoName())
+        self.assertEqual(result, "mdi-book")  # DEFAULT_BOOK_GENRE_ICON
 
 
 class ReadingTimeEstimateEdgeCasesTests(TestCase):

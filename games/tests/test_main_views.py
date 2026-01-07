@@ -3029,3 +3029,64 @@ class BuildFilterTitleHLTBTests(TestCase):
         filters = {"hltb_min": 10, "hltb_max": 30, "hltb_mode": "completionist"}
         result = _build_filter_title(filters, [], [], 1970, 2024)
         self.assertIn("100%", result)
+
+
+class PlatformVirtualIdTests(TestCase):
+    """Tests for _expand_platform_virtual_ids function."""
+
+    def setUp(self):
+        # Create test platforms with the expected codes
+        self.nes = Platform.objects.create(code="NES", name="Nintendo Entertainment System")
+        self.snes = Platform.objects.create(code="SNES", name="Super Nintendo")
+        self.pc = Platform.objects.create(code="PC", name="PC")
+
+    def test_expand_virtual_id_nintendo_manufacturer(self):
+        """Test that mfr-nintendo expands to Nintendo platform IDs."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [
+            {"id": self.nes.id, "code": "NES"},
+            {"id": self.snes.id, "code": "SNES"},
+            {"id": self.pc.id, "code": "PC"},
+        ]
+        result = _expand_platform_virtual_ids("mfr-nintendo", platforms)
+        # Should include NES and SNES but not PC
+        self.assertIn(self.nes.id, result)
+        self.assertIn(self.snes.id, result)
+        self.assertNotIn(self.pc.id, result)
+
+    def test_expand_regular_id(self):
+        """Test that regular numeric IDs are returned as-is."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [{"id": self.pc.id, "code": "PC"}]
+        result = _expand_platform_virtual_ids(str(self.pc.id), platforms)
+        self.assertEqual(result, [self.pc.id])
+
+    def test_expand_invalid_id_ignored(self):
+        """Test that invalid IDs are silently ignored."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [{"id": self.pc.id, "code": "PC"}]
+        result = _expand_platform_virtual_ids("invalid,abc,xyz", platforms)
+        self.assertEqual(result, [])
+
+    def test_expand_empty_param_returns_empty(self):
+        """Test that empty param returns empty list."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [{"id": self.pc.id, "code": "PC"}]
+        result = _expand_platform_virtual_ids("", platforms)
+        self.assertEqual(result, [])
+
+    def test_expand_mixed_ids(self):
+        """Test that mix of virtual and regular IDs works."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [
+            {"id": self.nes.id, "code": "NES"},
+            {"id": self.pc.id, "code": "PC"},
+        ]
+        result = _expand_platform_virtual_ids(f"mfr-nintendo,{self.pc.id}", platforms)
+        self.assertIn(self.nes.id, result)
+        self.assertIn(self.pc.id, result)

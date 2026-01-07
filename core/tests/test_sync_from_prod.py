@@ -300,3 +300,94 @@ class SyncFromProdCommandTests(TestCase):
         error_output = err.getvalue()
 
         self.assertIn("Invalid JSON from Heroku", error_output)
+
+
+class UserModelTests(TestCase):
+    """Tests for core User model"""
+
+    def test_email_verified_returns_true_when_verified(self):
+        """Test email_verified property returns True when email is verified."""
+        from allauth.account.models import EmailAddress
+
+        from core.models import User
+
+        user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        EmailAddress.objects.create(
+            user=user,
+            email="test@example.com",
+            verified=True,
+            primary=True,
+        )
+
+        self.assertTrue(user.email_verified)
+
+    def test_email_verified_returns_false_when_not_verified(self):
+        """Test email_verified property returns False when email not verified."""
+        from allauth.account.models import EmailAddress
+
+        from core.models import User
+
+        user = User.objects.create_user(
+            username="testuser2",
+            email="test2@example.com",
+            password="testpass123",
+        )
+        EmailAddress.objects.create(
+            user=user,
+            email="test2@example.com",
+            verified=False,
+            primary=True,
+        )
+
+        self.assertFalse(user.email_verified)
+
+    def test_email_verified_returns_false_when_no_email_address(self):
+        """Test email_verified returns False when no EmailAddress record."""
+        from core.models import User
+
+        user = User.objects.create_user(
+            username="testuser3",
+            email="test3@example.com",
+            password="testpass123",
+        )
+        # No EmailAddress record created
+
+        self.assertFalse(user.email_verified)
+
+
+class CreatorBaseTests(TestCase):
+    """Tests for CreatorBase model (via Developer)."""
+
+    def test_root_creator_prevents_infinite_loop(self):
+        """Test root_creator breaks out of infinite loop in parent chain."""
+        # Create a circular parent relationship (shouldn't happen, but test safety)
+        dev1 = models.Developer.objects.create(name="Dev 1")
+        dev2 = models.Developer.objects.create(name="Dev 2", parent=dev1)
+
+        # Manually create circular reference (bypassing normal save)
+        models.Developer.objects.filter(id=dev1.id).update(parent=dev2)
+        dev1.refresh_from_db()
+
+        # Should not loop forever - returns dev1 after detecting cycle
+        result = dev1.root_creator
+        self.assertIsNotNone(result)
+
+
+class ListBaseTests(TestCase):
+    """Tests for ListBase abstract model (via List)."""
+
+    def test_get_type_label(self):
+        """Test get_type_label returns human-readable label (lines 385-387)."""
+        game_list = models.List.objects.create(
+            name="Top Games 2024",
+            type="E",  # End of year
+            year=2024,
+        )
+
+        # Should return "End of year"
+        label = game_list.get_type_label()
+        self.assertEqual(label, "End of year")

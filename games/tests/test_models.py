@@ -57,39 +57,32 @@ class RankingUtilsTests(TestCase):
         self.assertEqual(years_processed, 0)
 
     @mock.patch("games.services.ranking_service.connection")
-    def test_update_year_decade_ranks_postgresql_path(self, mock_connection):
+    @mock.patch("games.services.ranking_service.models.Game.objects")
+    def test_update_year_decade_ranks_postgresql_path(
+        self, mock_game_objects, mock_connection
+    ):
         """Test that PostgreSQL path uses window functions for ranking.
 
-        Note: This test requires an actual PostgreSQL database to properly test
-        the window function path. When running on SQLite, we simply verify that
-        the PostgreSQL code path is attempted when vendor is 'postgresql'.
+        This test mocks the database operations to verify the PostgreSQL code
+        path is executed correctly when vendor is 'postgresql'.
         """
-        import unittest
-
-        from django.db import connection
-
         from games.services.ranking_service import update_year_decade_ranks
 
-        # Skip on SQLite as window functions in UPDATE subqueries aren't supported
-        if connection.vendor == "sqlite":
-            raise unittest.SkipTest(
-                "PostgreSQL window functions not supported on SQLite"
-            )
-
-        # Create test games
-        models.Game.objects.create(
-            name="Game 1", rank=1, igdb_id=1, year_of_release=1990
-        )
-        models.Game.objects.create(
-            name="Game 2", rank=2, igdb_id=2, year_of_release=1990
-        )
-
+        # Mock the connection vendor to be PostgreSQL
         mock_connection.vendor = "postgresql"
+
+        # Mock count() and values().distinct().count() for the return values
+        mock_game_objects.count.return_value = 5
+        mock_game_objects.values.return_value.distinct.return_value.count.return_value = 3
+
         games_updated, years_processed = update_year_decade_ranks()
 
         # Verify results
-        self.assertEqual(games_updated, 2)
-        self.assertEqual(years_processed, 1)
+        self.assertEqual(games_updated, 5)
+        self.assertEqual(years_processed, 3)
+
+        # Verify update was called twice (year_rank and decade_rank)
+        self.assertEqual(mock_game_objects.update.call_count, 2)
 
 
 class GameIgdbTests(TestCase):
@@ -1262,3 +1255,122 @@ class GameListsGroupedTests(TestCase):
         # All time should come before End of year in sorted order
         self.assertEqual(keys[0], "All time")
         self.assertEqual(keys[1], "End of year")
+
+
+class IGDBGameDataEdgeCaseTests(TestCase):
+    """Tests for IGDBGameData edge cases and properties."""
+
+    def test_str_orphaned_igdb_data(self):
+        """Test __str__ for orphaned IGDBGameData (no game attached)."""
+        igdb_data = models.IGDBGameData.objects.create(
+            igdb_id=12345,
+            artwork_id="co1234",
+            game=None,  # orphaned
+        )
+        self.assertEqual(str(igdb_data), "Orphaned IGDB data (ID: 12345)")
+
+    def test_og_image_returns_none_when_no_artwork(self):
+        """Test image_og returns None when no artwork_id."""
+        game = models.Game.objects.create(name="No Art Game", rank=1, igdb_id=1)
+        igdb_data = models.IGDBGameData.objects.create(
+            igdb_id=1,
+            game=game,
+            artwork_id="",  # No artwork
+        )
+        self.assertIsNone(igdb_data.image_og)
+
+    def test_youtube_url_returns_url_when_video_id_exists(self):
+        """Test youtube_url returns full URL when video_id exists."""
+        game = models.Game.objects.create(name="YouTube Game", rank=1, igdb_id=2)
+        igdb_data = models.IGDBGameData.objects.create(
+            igdb_id=2,
+            game=game,
+            youtube_video_id="dQw4w9WgXcQ",
+        )
+        self.assertEqual(
+            igdb_data.youtube_url, "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        )
+
+    def test_youtube_url_returns_none_when_no_video_id(self):
+        """Test youtube_url returns None when no video_id."""
+        game = models.Game.objects.create(name="No Video Game", rank=1, igdb_id=3)
+        igdb_data = models.IGDBGameData.objects.create(
+            igdb_id=3,
+            game=game,
+            youtube_video_id=None,
+        )
+        self.assertIsNone(igdb_data.youtube_url)
+
+
+class WikipediaGameDataEdgeCaseTests(TestCase):
+    """Tests for WikipediaGameData edge cases."""
+
+    def test_str_orphaned_wikipedia_data(self):
+        """Test __str__ for orphaned WikipediaGameData (no game attached)."""
+        wiki_data = models.WikipediaGameData.objects.create(
+            wikidata_id="Q12345",
+            game=None,  # orphaned
+        )
+        self.assertEqual(
+            str(wiki_data), "Orphaned Wikipedia data (Wikidata: Q12345)"
+        )
+
+    def test_str_orphaned_wikipedia_data_no_wikidata_id(self):
+        """Test __str__ for orphaned WikipediaGameData with no wikidata_id."""
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=None,  # orphaned
+        )
+        self.assertEqual(
+            str(wiki_data), "Orphaned Wikipedia data (Wikidata: unknown)"
+        )
+
+    def test_wikiquote_url_returns_url_when_exists(self):
+        """Test wikiquote_url returns formatted URL when page title exists."""
+        game = models.Game.objects.create(name="Quotable Game", rank=1, igdb_id=4)
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            wikiquote_page_title="The Legend of Zelda",
+        )
+        self.assertEqual(
+            wiki_data.wikiquote_url,
+            "https://en.wikiquote.org/wiki/The_Legend_of_Zelda",
+        )
+
+    def test_wikiquote_url_returns_none_when_no_title(self):
+        """Test wikiquote_url returns None when no page title."""
+        game = models.Game.objects.create(name="No Quote Game", rank=1, igdb_id=5)
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            wikiquote_page_title=None,
+        )
+        self.assertIsNone(wiki_data.wikiquote_url)
+
+
+class GameThumbnailPropertiesTests(TestCase):
+    """Tests for Game thumbnail properties when no primary IGDB data exists."""
+
+    def test_image_og_returns_none_when_no_primary_igdb(self):
+        """Test image_og returns None when no primary IGDB data."""
+        game = models.Game.objects.create(name="No IGDB Game", rank=1, igdb_id=10)
+        # No IGDBGameData attached
+        self.assertIsNone(game.image_og)
+
+    def test_homepage_thumb_small_returns_none_when_no_primary_igdb(self):
+        """Test homepage_thumb_small returns None when no primary IGDB data."""
+        game = models.Game.objects.create(name="No IGDB Game 2", rank=2, igdb_id=11)
+        self.assertIsNone(game.homepage_thumb_small)
+
+    def test_homepage_thumb_returns_none_when_no_primary_igdb(self):
+        """Test homepage_thumb returns None when no primary IGDB data."""
+        game = models.Game.objects.create(name="No IGDB Game 3", rank=3, igdb_id=12)
+        self.assertIsNone(game.homepage_thumb)
+
+    def test_homepage_thumb_2x_returns_none_when_no_primary_igdb(self):
+        """Test homepage_thumb_2x returns None when no primary IGDB data."""
+        game = models.Game.objects.create(name="No IGDB Game 4", rank=4, igdb_id=13)
+        self.assertIsNone(game.homepage_thumb_2x)
+
+    def test_thumbnail_square_returns_none_when_no_primary_igdb(self):
+        """Test thumbnail_square returns None when no primary IGDB data."""
+        game = models.Game.objects.create(name="No IGDB Game 5", rank=5, igdb_id=14)
+        self.assertIsNone(game.thumbnail_square)

@@ -118,6 +118,41 @@ class IGDBImportServiceTests(TestCase):
         self.assertGreater(len(progress_events), 0)
 
     @mock.patch("games.services.igdb_importer.get_api")
+    def test_import_batched_success_notification(self, mock_get_api):
+        """Test progress notification in _import_batched success path (line 152)."""
+        mock_api = mock.MagicMock()
+        mock_api.max_batch_size = 50
+        mock_get_api.return_value = mock_api
+
+        callback_events = []
+
+        def progress_callback(event_type, data):
+            callback_events.append((event_type, data))
+
+        # Use batch_size > 0, concurrency=1 to trigger _import_batched path
+        service = IGDBImportService(
+            progress_callback=progress_callback, batch_size=10, concurrency=1
+        )
+
+        # Mock _process_game_batch to return success
+        with mock.patch.object(
+            service,
+            "_process_game_batch",
+            return_value=[(True, self.game, None)],
+        ):
+            processed, errors, elapsed = service.import_games(
+                models.Game.objects.filter(pk=self.game.pk)
+            )
+
+        # Should have progress notification from _import_batched (line 152)
+        progress_events = [e for e in callback_events if e[0] == "progress"]
+        self.assertGreater(len(progress_events), 0)
+        # Verify progress data structure
+        self.assertIn("current", progress_events[0][1])
+        self.assertIn("total", progress_events[0][1])
+        self.assertIn("game_name", progress_events[0][1])
+
+    @mock.patch("games.services.igdb_importer.get_api")
     def test_process_game_batch_no_igdb_ids(self, mock_get_api):
         """Test _process_game_batch with games that have no IGDB IDs (lines 298-302)."""
         mock_api = mock.MagicMock()

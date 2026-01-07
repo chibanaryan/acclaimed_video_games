@@ -20,6 +20,7 @@ from games.services.genre_normalizer import (
 )
 from games.services.query_filters import (
     apply_genre_filter,
+    apply_series_filter,
     apply_wikipedia_genre_filter,
     _expand_single_genre_with_descendants,
     _expand_genre_ids_with_descendants,
@@ -190,6 +191,26 @@ class GetOrCreateGenreTest(TestCase):
         self.assertEqual(action.name, "Action")
         self.assertIsNone(action.parent)
         self.assertEqual(action.level, 0)
+
+    def test_recursively_creates_parent_when_nonexistent(self):
+        """Test that parent genre is recursively created when it doesn't exist."""
+        # Remove any existing Action genre to force recursive creation
+        WikipediaGenre.objects.filter(name="Action").delete()
+
+        # First-Person Shooter should create Action parent recursively (lines 354-356)
+        fps = get_or_create_genre("First-Person Shooter")
+
+        # Verify FPS was created with proper parent
+        self.assertEqual(fps.name, "First-Person Shooter")
+        self.assertEqual(fps.level, 1)
+
+        # Verify Action parent was recursively created
+        self.assertIsNotNone(fps.parent)
+        self.assertEqual(fps.parent.name, "Action")
+        self.assertEqual(fps.parent.level, 0)
+
+        # Verify path is correct
+        self.assertEqual(fps.path, "Action > First-Person Shooter")
 
 
 class WikipediaGenreHierarchyTest(TestCase):
@@ -424,6 +445,27 @@ class HierarchicalGenreFilterTest(TestCase):
         # No games are tagged directly with Action root
         self.assertEqual(filtered.count(), 0)
 
+    def test_filter_match_any_without_hierarchy_expansion(self):
+        """Test match_any filtering with expand_hierarchy=False (lines 77-80)."""
+        qs = Game.objects.filter(
+            pk__in=[self.game1.pk, self.game2.pk, self.game3.pk, self.game4.pk]
+        )
+        # Filter by child genres directly without hierarchy expansion
+        # match_all=False with expand_hierarchy=False triggers lines 77-80
+        filtered = apply_genre_filter(
+            qs,
+            [self.shooter.id, self.fighting.id],
+            match_all=False,
+            use_wikipedia=True,
+            expand_hierarchy=False,
+        )
+        # game1 has shooter, game2 has fighting, game4 has shooter
+        self.assertEqual(filtered.count(), 3)
+        self.assertIn(self.game1, filtered)
+        self.assertIn(self.game2, filtered)
+        self.assertIn(self.game4, filtered)
+        self.assertNotIn(self.game3, filtered)  # Only has action_rpg
+
     def test_expand_single_genre_with_descendants(self):
         """Test the _expand_single_genre_with_descendants helper."""
         ids = _expand_single_genre_with_descendants(self.action.id)
@@ -519,3 +561,26 @@ class ApplyWikipediaGenreFilterTest(TestCase):
         qs = Game.objects.filter(pk=self.game.pk)
         filtered = apply_wikipedia_genre_filter(qs, [self.genre.id], match_all=False)
         self.assertEqual(filtered.count(), 1)
+
+
+class ApplySeriesFilterTest(TestCase):
+    """Tests for the apply_series_filter helper."""
+
+    def test_empty_series_ids_returns_queryset_unchanged(self):
+        """Test that empty series_ids returns queryset unchanged (line 205)."""
+        game = Game.objects.create(name="Test Series Game", rank=1)
+        qs = Game.objects.filter(pk=game.pk)
+
+        # Empty list should return queryset unchanged
+        result = apply_series_filter(qs, [])
+        self.assertEqual(result.count(), 1)
+        self.assertIn(game, result)
+
+    def test_none_series_ids_returns_queryset_unchanged(self):
+        """Test that None series_ids returns queryset unchanged."""
+        game = Game.objects.create(name="Test Series Game 2", rank=2)
+        qs = Game.objects.filter(pk=game.pk)
+
+        # None should be treated as falsy and return queryset unchanged
+        result = apply_series_filter(qs, None)
+        self.assertEqual(result.count(), 1)
