@@ -450,6 +450,13 @@ class GameIgdbTests(TestCase):
                     "slug": "test-studio",
                 }
             ],
+            "series": [
+                {
+                    "id": 99,
+                    "name": "Test Series",
+                    "slug": "",
+                }
+            ],
         }
 
         # Update relationships
@@ -461,6 +468,7 @@ class GameIgdbTests(TestCase):
         # Verify relationships were created
         self.assertEqual(game.developers.count(), 1)
         self.assertEqual(game.developers.first().name, "Test Studio")
+        self.assertTrue(game.series.filter(igdb_id=99).exists())
 
         # Verify IGDBGameData was NOT modified
         igdb_data = models.IGDBGameData.objects.get(game=game)
@@ -493,6 +501,75 @@ class GameIgdbTests(TestCase):
         fake_api.get_game_info_by_id.return_value = None
         result = game.update_igdb_relationships(api_client=fake_api)
         self.assertFalse(result)
+
+
+class GameGetIgdbDataTests(TestCase):
+    """Tests for Game.get_igdb_data branches."""
+
+    def test_get_igdb_data_parses_string_ids_and_sets_primary(self):
+        game = models.Game.objects.create(name="Test Game", rank=1, igdb_id=None)
+
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": "test-game",
+            "cover": "cover_hash",
+            "url": "https://example.com/test",
+            "youtube_video_id": "vid",
+            "developers": [],
+            "series": [{"id": 2000, "name": "Test Series", "slug": ""}],
+        }
+
+        game.get_igdb_data(igdb_ids="200", api_client=fake_api, cache_results=False)
+
+        self.assertEqual(game.igdb_id, 200)
+        self.assertTrue(
+            models.IGDBGameData.objects.filter(game=game, igdb_id=200).exists()
+        )
+        self.assertTrue(game.series.filter(igdb_id=2000).exists())
+
+    def test_get_igdb_data_skips_empty_ids(self):
+        game = models.Game.objects.create(name="Test Game", rank=1, igdb_id=None)
+        fake_api = mock.Mock()
+
+        game.get_igdb_data(igdb_ids=" ", api_client=fake_api, cache_results=False)
+
+        self.assertEqual(models.IGDBGameData.objects.count(), 0)
+        self.assertIsNone(game.igdb_id)
+
+    def test_get_igdb_data_skips_missing_game_data(self):
+        game = models.Game.objects.create(name="Test Game", rank=1, igdb_id=None)
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {}
+
+        game.get_igdb_data(igdb_ids=123, api_client=fake_api, cache_results=False)
+
+        self.assertFalse(models.IGDBGameData.objects.filter(game=game).exists())
+
+    def test_get_igdb_data_reconnects_orphaned_record(self):
+        game = models.Game.objects.create(name="Test Game", rank=1, igdb_id=None)
+        orphan = models.IGDBGameData.objects.create(
+            game=None,
+            igdb_id=555,
+            artwork_id="old",
+            url="https://example.com/old",
+            is_primary=True,
+        )
+        fake_api = mock.Mock()
+        fake_api.get_game_info_by_id.return_value = {
+            "slug": "test-game",
+            "cover": "new_cover",
+            "url": "https://example.com/new",
+            "youtube_video_id": "vid",
+            "developers": [],
+            "series": [],
+        }
+
+        game.get_igdb_data(igdb_ids=555, api_client=fake_api, cache_results=False)
+
+        orphan.refresh_from_db()
+        self.assertEqual(orphan.game, game)
+        self.assertEqual(orphan.artwork_id, "new_cover")
+        self.assertEqual(game.primary_igdb_game_data, orphan)
 
 
 class GameWikipediaTests(TestCase):
@@ -576,6 +653,80 @@ class GameWikipediaTests(TestCase):
             game=game, page_title="Pokémon Red"
         )
         self.assertFalse(secondary.is_primary)
+
+    @mock.patch("games.services.wiki_genre_service.WikiGenreService")
+    def test_get_wikipedia_data_uses_game_name_when_none(self, mock_service_class):
+        """Test get_wikipedia_data() uses game name when page_titles is None."""
+        from games.services.wiki_genre_service import GenreResult, GenreSource
+
+        game = models.Game.objects.create(name="Test Game", rank=1)
+
+        mock_service = mock_service_class.return_value
+        mock_service.get_genre.return_value = GenreResult(
+            game_name="Test Game",
+            source=GenreSource.WIKIPEDIA,
+            primary_genre="Action",
+            all_genres=["Action"],
+            source_url="https://en.wikipedia.org/wiki/Test_Game",
+        )
+
+        game.get_wikipedia_data()
+
+        wiki_data = models.WikipediaGameData.objects.get(game=game)
+        self.assertEqual(wiki_data.page_title, "Test Game")
+
+    @mock.patch("games.services.wiki_genre_service.WikiGenreService")
+    def test_get_wikipedia_data_non_string_page_titles(self, mock_service_class):
+        """Test get_wikipedia_data() handles non-string page_titles."""
+        from games.services.wiki_genre_service import GenreResult, GenreSource
+
+        game = models.Game.objects.create(name="Test Game", rank=1)
+
+        mock_service = mock_service_class.return_value
+        mock_service.get_genre.return_value = GenreResult(
+            game_name="Test Game",
+            source=GenreSource.WIKIPEDIA,
+            primary_genre="Action",
+            all_genres=["Action"],
+            source_url="https://en.wikipedia.org/wiki/Test_Game",
+        )
+
+        game.get_wikipedia_data(page_titles=123)
+
+        wiki_data = models.WikipediaGameData.objects.get(game=game)
+        self.assertEqual(wiki_data.page_title, "123")
+
+    @mock.patch("games.services.genre_normalizer.get_or_create_genre")
+    @mock.patch("games.services.genre_normalizer.normalize_genre")
+    @mock.patch("games.services.wiki_genre_service.WikiGenreService")
+    def test_get_wikipedia_data_skips_invalid_and_duplicate_genres(
+        self, mock_service_class, mock_normalize, mock_get_or_create
+    ):
+        """Test get_wikipedia_data skips invalid and duplicate genres."""
+        from games.services.wiki_genre_service import GenreResult, GenreSource
+
+        game = models.Game.objects.create(name="Test Game", rank=1)
+
+        mock_service = mock_service_class.return_value
+        mock_service.get_genre.return_value = GenreResult(
+            game_name="Test Game",
+            source=GenreSource.WIKIPEDIA,
+            primary_genre="Action",
+            all_genres=["action", "action", "invalid"],
+            source_url="https://en.wikipedia.org/wiki/Test_Game",
+        )
+
+        action_genre, _ = models.WikipediaGenre.objects.get_or_create(
+            name="Action", slug="action", defaults={"level": 0}
+        )
+        mock_normalize.side_effect = (
+            lambda name: None if name == "Invalid" else name
+        )
+        mock_get_or_create.return_value = action_genre
+
+        game.get_wikipedia_data(page_titles="Test Game")
+
+        self.assertEqual(game.wikipedia_genres.count(), 1)
 
 
 class ModelHelpersTests(TestCase):
@@ -874,6 +1025,29 @@ class IGDBGameDataTests(TestCase):
             self.igdb_data.image_og,
             "https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.jpg",
         )
+
+
+class HLTBGameDataTests(TestCase):
+    """Tests for HLTBGameData model."""
+
+    def test_str_with_game(self):
+        game = models.Game.objects.create(name="HLTB Game", rank=1, igdb_id=200)
+        data = models.HLTBGameData.objects.create(
+            game=game,
+            igdb_id=200,
+            hltb_id="hltb200",
+            main_story_hours=12.5,
+            is_primary=True,
+        )
+        self.assertEqual(str(data), "HLTB data for HLTB Game (12.5h)")
+
+    def test_str_without_game(self):
+        data = models.HLTBGameData.objects.create(
+            game=None,
+            igdb_id=999,
+            hltb_id="hltb999",
+        )
+        self.assertEqual(str(data), "Orphaned HLTB data (IGDB: 999)")
 
 
 class WikipediaGameDataTests(TestCase):
@@ -1374,3 +1548,20 @@ class GameThumbnailPropertiesTests(TestCase):
         """Test thumbnail_square returns None when no primary IGDB data."""
         game = models.Game.objects.create(name="No IGDB Game 5", rank=5, igdb_id=14)
         self.assertIsNone(game.thumbnail_square)
+
+    def test_thumbnail_properties_with_primary_igdb(self):
+        """Test thumbnail properties return values when primary IGDB data exists."""
+        game = models.Game.objects.create(name="IGDB Game", rank=1, igdb_id=15)
+        igdb_data = models.IGDBGameData.objects.create(
+            game=game,
+            igdb_id=15,
+            artwork_id="art123",
+            url="https://example.com/igdb",
+            is_primary=True,
+        )
+        game.primary_igdb_game_data = igdb_data
+        game.save(update_fields=["primary_igdb_game_data"])
+
+        self.assertEqual(game.image_og, igdb_data.image_og)
+        self.assertEqual(game.homepage_thumb_small, igdb_data.homepage_thumb_small)
+        self.assertEqual(game.thumbnail_square, igdb_data.thumbnail_square)

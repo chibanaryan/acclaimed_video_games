@@ -8,6 +8,9 @@ Note: All book API views require staff access (IsStaffOrHide permission).
 Tests must use staff users to access these endpoints.
 """
 
+import importlib
+from unittest import mock
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -402,6 +405,14 @@ class BookAllDataAPITests(StaffAPITestMixin, TestCase):
         )
         self.book.authors.add(self.author)
         self.book.genres.add(self.genre)
+        self.goodreads_data = models.GoodreadsBookData.objects.create(
+            book=self.book,
+            goodreads_id="123",
+            cover_image_url="https://example.com/cover.jpg",
+            is_primary=True,
+        )
+        self.book.primary_goodreads_book_data = self.goodreads_data
+        self.book.save()
 
     def test_get_all_data(self):
         """Test GET /api/books/all/ returns complete data."""
@@ -419,6 +430,7 @@ class BookAllDataAPITests(StaffAPITestMixin, TestCase):
         books = data["data"]["books"]
         self.assertEqual(len(books), 1)
         self.assertEqual(books[0]["n"], "Test Book")
+        self.assertEqual(books[0]["c"], "https://example.com/cover.jpg")
 
 
 class ReadBookAPITests(StaffAPITestMixin, TestCase):
@@ -475,6 +487,12 @@ class ReadBookAPITests(StaffAPITestMixin, TestCase):
                 user=self.user, goodreads_id="12345"
             ).exists()
         )
+
+    def test_mark_book_as_read_requires_goodreads_id(self):
+        """Test POST without goodreads_id returns 400."""
+        response = self.client.post("/api/books/read-books/", {}, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "goodreads_id is required.")
 
     def test_mark_book_as_read_removes_want_to_read(self):
         """Test marking as read removes from want-to-read."""
@@ -570,6 +588,12 @@ class WantToReadBookAPITests(StaffAPITestMixin, TestCase):
             ).exists()
         )
 
+    def test_add_to_want_to_read_requires_goodreads_id(self):
+        """Test POST without goodreads_id returns 400."""
+        response = self.client.post("/api/books/want-to-read/", {}, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "goodreads_id is required.")
+
     def test_add_already_read_book_fails(self):
         """Test adding a read book to want-to-read fails."""
         # Staff user is already logged in via mixin
@@ -602,3 +626,18 @@ class WantToReadBookAPITests(StaffAPITestMixin, TestCase):
         # Staff user is already logged in via mixin
         response = self.client.delete("/api/books/want-to-read/99999/")
         self.assertEqual(response.status_code, 404)
+
+
+class PostgresSearchFieldsTests(TestCase):
+    """Tests for PostgreSQL-specific search fields."""
+
+    def test_postgres_search_fields_added(self):
+        """Test postgres vendor adds full-text search fields."""
+        import books.api.views as views
+
+        with mock.patch("django.db.connection.vendor", "postgresql"):
+            importlib.reload(views)
+            self.assertIn("name__search", views.BookListView.search_fields)
+            self.assertIn("name__search", views.AuthorListView.search_fields)
+
+        importlib.reload(views)

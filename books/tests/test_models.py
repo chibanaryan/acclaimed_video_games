@@ -129,6 +129,15 @@ class BookGenreModelTests(TestCase):
         self.assertIn(child.id, ids)
         self.assertNotIn(root.id, ids)
 
+    def test_get_descendant_ids_include_self(self):
+        """Test get_descendant_ids includes self when requested."""
+        root = models.BookGenre.objects.create(name="Root")
+        child = models.BookGenre.objects.create(name="Child", parent=root)
+
+        ids = root.get_descendant_ids(include_self=True)
+        self.assertIn(root.id, ids)
+        self.assertIn(child.id, ids)
+
     def test_is_root_property(self):
         """Test is_root property."""
         root = models.BookGenre.objects.create(name="Root")
@@ -204,6 +213,21 @@ class BookModelTests(TestCase):
         # Refresh from database to get fresh object
         book.refresh_from_db()
         self.assertEqual(book.thumbnail, "https://example.com/cover.jpg")
+
+    def test_image_from_goodreads_data(self):
+        """Test image property uses primary Goodreads data."""
+        book = models.Book.objects.create(name="Test", rank=1, goodreads_id="123")
+        goodreads_data = models.GoodreadsBookData.objects.create(
+            book=book,
+            goodreads_id="123",
+            cover_image_url="https://example.com/cover.jpg",
+            is_primary=True,
+        )
+        book.primary_goodreads_book_data = goodreads_data
+        book.save()
+
+        book.refresh_from_db()
+        self.assertEqual(book.image, "https://example.com/cover.jpg")
 
     def test_thumbnail_none_without_goodreads_data(self):
         """Test thumbnail property returns None without Goodreads data."""
@@ -313,6 +337,17 @@ class GoodreadsBookDataModelTests(TestCase):
         self.assertEqual(
             data.goodreads_book_url,
             "https://www.goodreads.com/book/show/12345",
+        )
+
+    def test_goodreads_book_url_fallback(self):
+        """Test goodreads_book_url falls back to stored URL."""
+        data = models.GoodreadsBookData.objects.create(
+            goodreads_id="",
+            goodreads_url="https://goodreads.example/book/123",
+        )
+        self.assertEqual(
+            data.goodreads_book_url,
+            "https://goodreads.example/book/123",
         )
 
     def test_thumbnail_property(self):

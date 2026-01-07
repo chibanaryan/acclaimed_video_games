@@ -242,6 +242,22 @@ class SavedFilterSetAPITests(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_rename_name_too_long(self):
+        """Test that rename enforces name max length."""
+        saved = SavedFilterSet.objects.create(user=self.user, name="Test", filters={})
+
+        self.client.force_authenticate(user=self.user)
+        url = reverse("games-api:saved-filter-detail", kwargs={"pk": saved.id})
+
+        response = self.client.patch(
+            url,
+            data={"name": "x" * 256},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("255", response.json()["error"])
+
     def test_delete_saved_filter(self):
         """Test deleting a saved filter."""
         saved = SavedFilterSet.objects.create(

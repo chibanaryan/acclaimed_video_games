@@ -354,7 +354,7 @@ class OpenLibraryApi:
 
         # Find best match using scoring
         best_match = None
-        best_score = -1
+        best_score = 0
         title_lower = title.lower()
         author_lower = author.lower() if author else None
 
@@ -373,12 +373,12 @@ class OpenLibraryApi:
             # Exact title match
             if result_title == title_lower:
                 score += 50
+            # Title starts with our search (stronger than general contains)
+            elif result_title.startswith(title_lower):
+                score += 40
             # Title contains our search
             elif title_lower in result_title:
                 score += 30
-            # Title starts with our search
-            elif result_title.startswith(title_lower):
-                score += 20
 
             # Prefer older publications (likely the original)
             pub_year = result.get("first_publish_year")

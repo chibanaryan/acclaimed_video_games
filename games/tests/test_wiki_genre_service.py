@@ -714,6 +714,225 @@ class WikiGenreServiceTests(SimpleTestCase):
 
         self.assertEqual(url, "https://en.wikipedia.org/wiki/Counter-Strike_1.6")
 
+    @mock.patch("time.sleep")
+    @mock.patch("time.time")
+    def test_wait_for_rate_limit_sleeps_when_needed(self, mock_time, mock_sleep):
+        """Test rate limiting sleeps when calls are too close together."""
+        service = WikiGenreService(delay=1.0)
+        mock_time.side_effect = [0.5, 1.0]
+        service.last_request_time = 0.0
+
+        service._wait_for_rate_limit()
+
+        mock_sleep.assert_called_once_with(0.5)
+
+    def test_search_wikipedia_fallback_match(self):
+        """Test fallback non-strict search is used when strict fails."""
+        with mock.patch.object(
+            self.service, "_search_single_name", side_effect=[None, "https://example.com"]
+        ):
+            url = self.service._search_wikipedia("Maniac Mansion II")
+
+        self.assertEqual(url, "https://example.com")
+
+    def test_resolve_redirect_returns_original_when_no_wiki(self):
+        """Test _resolve_redirect returns original URL without /wiki/."""
+        url = "https://example.com/page"
+        self.assertEqual(self.service._resolve_redirect(url), url)
+
+    def test_resolve_redirect_returns_original_on_no_response(self):
+        """Test _resolve_redirect returns original URL when request fails."""
+        with mock.patch.object(self.service, "_make_request", return_value=None):
+            url = "https://en.wikipedia.org/wiki/Original"
+            self.assertEqual(self.service._resolve_redirect(url), url)
+
+    def test_resolve_redirect_returns_canonical(self):
+        """Test _resolve_redirect returns canonical URL when different."""
+        response = DummyResponse(
+            200,
+            {
+                "query": {
+                    "pages": {
+                        "123": {"title": "New Title"},
+                    }
+                }
+            },
+        )
+        with mock.patch.object(self.service, "_make_request", return_value=response):
+            url = "https://en.wikipedia.org/wiki/Old_Title"
+            resolved = self.service._resolve_redirect(url)
+        self.assertEqual(resolved, "https://en.wikipedia.org/wiki/New_Title")
+
+    def test_resolve_redirect_handles_bad_json(self):
+        """Test _resolve_redirect handles JSON parsing errors."""
+        class BadResponse:
+            def json(self):
+                raise ValueError("bad json")
+
+        with mock.patch.object(self.service, "_make_request", return_value=BadResponse()):
+            url = "https://en.wikipedia.org/wiki/Old_Title"
+            self.assertEqual(self.service._resolve_redirect(url), url)
+
+    def test_search_single_name_handles_no_response(self):
+        """Test _search_single_name skips when response is None."""
+        with mock.patch.object(self.service, "_make_request", return_value=None):
+            url = self.service._search_single_name("Test Game")
+        self.assertIsNone(url)
+
+    def test_search_single_name_handles_invalid_response_type(self):
+        """Test _search_single_name handles invalid response types."""
+        response = DummyResponse(200, {"bad": "data"})
+        with mock.patch.object(self.service, "_make_request", return_value=response):
+            url = self.service._search_single_name("Test Game")
+        self.assertIsNone(url)
+
+    def test_search_single_name_skips_year_mismatch(self):
+        """Test _search_single_name skips results with mismatched year."""
+        response = DummyResponse(
+            200,
+            [
+                "Test Game (1999 video game)",
+                ["Test Game (1999 video game)"],
+                [""],
+                ["https://en.wikipedia.org/wiki/Test_Game_(1999_video_game)"],
+            ],
+        )
+        call_state = {"count": 0}
+
+        def fake_request(*args, **kwargs):
+            call_state["count"] += 1
+            if call_state["count"] == 1:
+                return response
+            return None
+
+        with mock.patch.object(self.service, "_make_request", side_effect=fake_request):
+            url = self.service._search_single_name("Test Game", year=2000)
+        self.assertIsNone(url)
+
+    def test_search_single_name_non_strict_requires_video_game_page(self):
+        """Test non-strict search requires a video game page."""
+        response = DummyResponse(
+            200,
+            [
+                "Test Game",
+                ["Test Game"],
+                [""],
+                ["https://en.wikipedia.org/wiki/Test_Game"],
+            ],
+        )
+        with mock.patch.object(self.service, "_make_request", return_value=response):
+            with mock.patch.object(
+                self.service, "_is_video_game_page", return_value=False
+            ):
+                url = self.service._search_single_name(
+                    "Test Game", strict=False
+                )
+        self.assertIsNone(url)
+
+    def test_search_single_name_handles_json_error(self):
+        """Test _search_single_name handles JSON parsing errors."""
+        class BadResponse:
+            def json(self):
+                raise ValueError("bad json")
+
+        with mock.patch.object(self.service, "_make_request", return_value=BadResponse()):
+            url = self.service._search_single_name("Test Game")
+        self.assertIsNone(url)
+
+    def test_is_video_game_page_returns_false_on_no_response(self):
+        """Test _is_video_game_page returns False when response is None."""
+        with mock.patch.object(self.service, "_make_request", return_value=None):
+            self.assertFalse(self.service._is_video_game_page("https://example.com"))
+
+    def test_is_video_game_page_detects_indicators(self):
+        """Test _is_video_game_page returns True with developer indicator."""
+        html = """
+        <html>
+        <table class="infobox">
+            <tr><th>Developer</th><td>Test Studio</td></tr>
+        </table>
+        </html>
+        """
+        response = DummyResponse(200, text=html)
+        with mock.patch.object(self.service, "_make_request", return_value=response):
+            self.assertTrue(self.service._is_video_game_page("https://example.com"))
+
+    def test_is_valid_search_result_remainder_empty(self):
+        """Test exact match with no remainder is valid."""
+        self.assertTrue(self.service._is_valid_search_result("Doom", "Doom "))
+
+    def test_is_valid_search_result_remainder_colon(self):
+        """Test match with colon remainder is valid."""
+        self.assertTrue(self.service._is_valid_search_result("Doom", "Doom: Final"))
+
+    def test_get_genre_from_url_success(self):
+        """Test get_genre_from_url returns Wikipedia genre result."""
+        from games.services.wiki_genre_service import GenreSource
+
+        with mock.patch.object(
+            self.service, "_scrape_infobox_genres", return_value=["RPG", "Action"]
+        ):
+            result = self.service.get_genre_from_url(
+                "Test Game", "https://en.wikipedia.org/wiki/Test_Game"
+            )
+
+        self.assertEqual(result.source, GenreSource.WIKIPEDIA)
+        self.assertEqual(result.primary_genre, "RPG")
+        self.assertEqual(result.all_genres, ["RPG", "Action"])
+
+    def test_scrape_infobox_genres_returns_empty_on_no_response(self):
+        """Test _scrape_infobox_genres returns [] when response is None."""
+        with mock.patch.object(self.service, "_make_request", return_value=None):
+            genres = self.service._scrape_infobox_genres(
+                "https://en.wikipedia.org/wiki/Test"
+            )
+        self.assertEqual(genres, [])
+
+    def test_scrape_infobox_genres_handles_missing_data_cell(self):
+        """Test _scrape_infobox_genres skips rows without data cell."""
+        html = """
+        <html>
+        <table class="infobox">
+            <tr><th>Genre</th></tr>
+        </table>
+        </html>
+        """
+        response = DummyResponse(200, text=html)
+        with mock.patch.object(self.service, "_make_request", return_value=response):
+            genres = self.service._scrape_infobox_genres(
+                "https://en.wikipedia.org/wiki/Test"
+            )
+        self.assertEqual(genres, [])
+
+    def test_scrape_infobox_genres_removes_hidden_content(self):
+        """Test _scrape_infobox_genres removes hidden content."""
+        html = """
+        <html>
+        <table class="infobox">
+            <tr>
+                <th>Genre</th>
+                <td>Action<span class="reference">[1]</span>
+                    <span style="display:none">Hidden</span>
+                </td>
+            </tr>
+        </table>
+        </html>
+        """
+        response = DummyResponse(200, text=html)
+        with mock.patch.object(self.service, "_make_request", return_value=response):
+            genres = self.service._scrape_infobox_genres(
+                "https://en.wikipedia.org/wiki/Test"
+            )
+        self.assertEqual(genres, ["Action"])
+
+    def test_get_genre_from_url_returns_failed_on_no_genres(self):
+        """Test get_genre_from_url returns FAILED when no genres found."""
+        with mock.patch.object(self.service, "_scrape_infobox_genres", return_value=[]):
+            result = self.service.get_genre_from_url(
+                "Test Game", "https://en.wikipedia.org/wiki/Test"
+            )
+        self.assertEqual(result.source, GenreSource.FAILED)
+
 
 class GenreResultTests(SimpleTestCase):
     """Tests for GenreResult dataclass."""

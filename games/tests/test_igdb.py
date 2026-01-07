@@ -30,9 +30,11 @@ class IgbdApiTests(SimpleTestCase):
         self.api.company_cache = OrderedDict()
         self.api.game_cache = OrderedDict()
         self.api.genre_cache = OrderedDict()
+        self.api.series_cache = OrderedDict()
         self.api.company_cache_max_size = 1000
         self.api.game_cache_max_size = 1000
         self.api.genre_cache_max_size = 500
+        self.api.series_cache_max_size = 500
         self.api.release_date_statuses = {}
         self.api.release_dates = {}
         self.api.themes = {1: "Action"}
@@ -1014,6 +1016,137 @@ class IgbdApiTests(SimpleTestCase):
                 result = igdb.get_api()
         self.assertIsNone(result)
         self.assertIn("Network error", cm.output[0])
+
+    def test_series_cache_get_and_set(self):
+        """Test series cache get and set behavior."""
+        self.api.series_cache[1] = {"id": 1, "name": "Series One"}
+
+        result = self.api._get_from_series_cache(1)
+        self.assertEqual(result, {"id": 1, "name": "Series One"})
+
+        # Update existing entry
+        self.api._set_in_series_cache(1, {"id": 1, "name": "Series One Updated"})
+        self.assertEqual(self.api.series_cache[1]["name"], "Series One Updated")
+
+        # Evict oldest when full
+        self.api.series_cache_max_size = 1
+        self.api._set_in_series_cache(2, {"id": 2, "name": "Series Two"})
+        self.assertIn(2, self.api.series_cache)
+        self.assertNotIn(1, self.api.series_cache)
+
+    def test_series_cache_miss_returns_none(self):
+        """Test series cache miss returns None."""
+        self.assertIsNone(self.api._get_from_series_cache(999))
+
+    def test_get_companies_by_ids_caches_results(self):
+        """Test company batch fetch stores results in cache."""
+        response = DummyResponse(
+            200, [{"id": 5, "name": "Foo", "slug": "foo", "parent": None}]
+        )
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=response):
+            result = self.api.get_companies_by_ids([5], cache_results=True)
+
+        self.assertIn(5, result)
+        self.assertIn(5, self.api.company_cache)
+
+    def test_get_games_info_by_ids_handles_publishers_and_series(self):
+        """Test batch game info handles publishers, series, videos, and caching."""
+        game_payload = [
+            {
+                "id": 1,
+                "slug": "sample-game",
+                "url": "https://example.com",
+                "cover": {"url": "//images/cover.jpg"},
+                "themes": [1],
+                "genres": [{"id": 2, "name": "Adventure"}],
+                "summary": "Summary",
+                "storyline": "Story",
+                "involved_companies": [
+                    {
+                        "company": 10,
+                        "developer": False,
+                        "supporting": False,
+                        "publisher": True,
+                        "porting": False,
+                    }
+                ],
+                "collections": [
+                    {"id": 55, "name": "Series Name", "slug": "series-name"}
+                ],
+                "videos": [{"video_id": "vid123"}],
+            }
+        ]
+        response = DummyResponse(200, game_payload)
+
+        companies_initial = {
+            10: {"id": 10, "name": "Pub Co", "slug": "pub", "parent": 11}
+        }
+        companies_parent = {
+            11: {"id": 11, "name": "Parent Co", "slug": "parent", "parent": 10}
+        }
+
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=response):
+            with mock.patch.object(
+                self.api,
+                "get_companies_by_ids",
+                side_effect=[companies_initial, companies_parent],
+            ):
+                result = self.api.get_games_info_by_ids([1], cache_results=True)
+
+        game_data = result[1]
+        self.assertEqual(game_data["cover"], "cover.jpg")
+        self.assertEqual(game_data["youtube_video_id"], "vid123")
+        self.assertEqual(game_data["series"][0]["id"], 55)
+        self.assertIn(1, self.api.game_cache)
+        self.assertIn(55, self.api.series_cache)
+
+    def test_get_game_info_by_id_handles_series_and_cycles(self):
+        """Test single game info handles series data and parent cycles."""
+        game_payload = [
+            {
+                "id": 2,
+                "slug": "single-game",
+                "url": "https://example.com",
+                "cover": {"url": "//images/cover.jpg"},
+                "themes": [1],
+                "genres": [{"id": 2, "name": "Adventure"}],
+                "summary": "Summary",
+                "storyline": "Story",
+                "involved_companies": [
+                    {
+                        "company": 20,
+                        "developer": False,
+                        "supporting": False,
+                        "publisher": True,
+                        "porting": False,
+                    }
+                ],
+                "collections": [
+                    {"id": 77, "name": "Series Two", "slug": "series-two"}
+                ],
+                "videos": [{"video_id": "vid999"}],
+            }
+        ]
+        response = DummyResponse(200, game_payload)
+
+        companies_initial = {
+            20: {"id": 20, "name": "Pub Two", "slug": "pub-two", "parent": 21}
+        }
+        companies_parent = {
+            21: {"id": 21, "name": "Parent Two", "slug": "parent-two", "parent": 20}
+        }
+
+        with mock.patch.object(self.api, "_make_request_with_retry", return_value=response):
+            with mock.patch.object(
+                self.api,
+                "get_companies_by_ids",
+                side_effect=[companies_initial, companies_parent],
+            ):
+                result = self.api.get_game_info_by_id(2, cache_results=True)
+
+        self.assertEqual(result["youtube_video_id"], "vid999")
+        self.assertEqual(result["series"][0]["id"], 77)
+        self.assertIn(77, self.api.series_cache)
 
 
 class YouTubeEmbeddableTests(SimpleTestCase):
