@@ -308,6 +308,11 @@ class HierarchicalGenreFilterTest(TestCase):
 
     def setUp(self):
         """Create test data with genre hierarchy and games."""
+        # Clear cache to ensure no stale data from previous tests
+        from django.core.cache import cache
+
+        cache.clear()
+
         # Create root categories
         self.action = WikipediaGenre.objects.create(
             name="Action Filter Test",

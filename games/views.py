@@ -80,14 +80,8 @@ def _get_played_game_ids(user):
     return ids
 
 
-def invalidate_played_games_cache(user_id):
-    """Invalidate the played games cache for a specific user."""
-    cache.delete(f"played_games_{user_id}")
-
-
-def invalidate_want_to_play_cache(user_id):
-    """Invalidate the want-to-play games cache for a specific user."""
-    cache.delete(f"want_to_play_games_{user_id}")
+# Import cache invalidation functions from centralized cache module
+from games.cache import invalidate_played_games_cache, invalidate_want_to_play_cache
 
 
 def _get_want_to_play_game_ids(user):
@@ -510,8 +504,8 @@ class ContactThankYouView(TemplateView):
 def download_games_csv(request):
     """Download games list as CSV, respecting current filters."""
     # Get filtered queryset using same logic as HomePageView
-    # Include wikipedia_genres prefetch for CSV export
-    qs = models.Game.objects.with_relations().prefetch_related("wikipedia_genres")
+    # with_relations() already includes all needed prefetches (developers, platforms, genres, series)
+    qs = models.Game.objects.with_relations()
 
     # Add played status annotation for authenticated users
     user = request.user

@@ -507,19 +507,21 @@ class AuthorDetailView(StaffOnlyMixin, DetailView):
         context = super().get_context_data(**kwargs)
         author = context["author"]
 
-        # Get all books by this author (sorted by rank)
-        context["author_books"] = author.books.all()
-        context["books_count"] = author.books.count()
+        # Use prefetched books data to avoid N+1 queries
+        # books are already prefetched and sorted by rank in get_queryset()
+        books_list = list(author.books.all())
+        context["author_books"] = books_list
+        context["books_count"] = len(books_list)
 
-        # Best ranked book
-        if author.books.exists():
-            context["best_book"] = author.books.order_by("rank").first()
+        # Best ranked book (already sorted by rank, so first is best)
+        if books_list:
+            context["best_book"] = books_list[0]
 
         # Check read status for authenticated users
         if self.request.user.is_authenticated:
             read_ids = set(_get_read_book_ids(self.request.user))
             context["read_count"] = sum(
-                1 for book in author.books.all()
+                1 for book in books_list
                 if book.goodreads_id in read_ids
             )
 

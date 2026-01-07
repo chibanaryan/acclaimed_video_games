@@ -215,31 +215,37 @@ class WikipediaGenreCacheInvalidationTests(TestCase):
         """Test that saving a genre invalidates its descendant cache."""
         genre = WikipediaGenre.objects.create(name=f"Action-{self.unique_id}")
 
-        # Pre-populate cache
-        cache_key = f"{config.CACHE_VERSION}:genre_descendants:{genre.id}"
-        cache.set(cache_key, {"descendants": []})
+        # Pre-populate cache (both include_self variants)
+        cache_key_true = f"{config.CACHE_VERSION}:genre_descendants:{genre.id}:True"
+        cache_key_false = f"{config.CACHE_VERSION}:genre_descendants:{genre.id}:False"
+        cache.set(cache_key_true, {"descendants": []})
+        cache.set(cache_key_false, {"descendants": []})
 
         # Update genre (change a non-slug field to avoid unique constraint)
         genre.description = "Updated description"
         genre.save()
 
-        # Cache should be invalidated
-        self.assertIsNone(cache.get(cache_key))
+        # Both cache variants should be invalidated
+        self.assertIsNone(cache.get(cache_key_true))
+        self.assertIsNone(cache.get(cache_key_false))
 
     def test_genre_delete_invalidates_cache(self):
         """Test that deleting a genre invalidates cache."""
         genre = WikipediaGenre.objects.create(name=f"RPG-{self.unique_id}")
         genre_id = genre.id
 
-        # Pre-populate cache
-        cache_key = f"{config.CACHE_VERSION}:genre_descendants:{genre_id}"
-        cache.set(cache_key, {"descendants": []})
+        # Pre-populate cache (both include_self variants)
+        cache_key_true = f"{config.CACHE_VERSION}:genre_descendants:{genre_id}:True"
+        cache_key_false = f"{config.CACHE_VERSION}:genre_descendants:{genre_id}:False"
+        cache.set(cache_key_true, {"descendants": []})
+        cache.set(cache_key_false, {"descendants": []})
 
         # Delete genre
         genre.delete()
 
-        # Cache should be invalidated
-        self.assertIsNone(cache.get(cache_key))
+        # Both cache variants should be invalidated
+        self.assertIsNone(cache.get(cache_key_true))
+        self.assertIsNone(cache.get(cache_key_false))
 
     def test_child_genre_invalidates_ancestor_caches(self):
         """Test that changing a child genre invalidates ancestor caches."""
@@ -248,16 +254,19 @@ class WikipediaGenreCacheInvalidationTests(TestCase):
             name=f"RTS-{self.unique_id}", parent=parent
         )
 
-        # Pre-populate parent's cache
-        parent_cache_key = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}"
-        cache.set(parent_cache_key, {"descendants": [child.id]})
+        # Pre-populate parent's cache (both variants)
+        parent_cache_key_true = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:True"
+        parent_cache_key_false = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:False"
+        cache.set(parent_cache_key_true, {"descendants": [child.id]})
+        cache.set(parent_cache_key_false, {"descendants": [child.id]})
 
         # Update child (change a non-slug field)
         child.description = "Real-time strategy games"
         child.save()
 
-        # Parent's cache should be invalidated
-        self.assertIsNone(cache.get(parent_cache_key))
+        # Parent's cache should be invalidated (both variants)
+        self.assertIsNone(cache.get(parent_cache_key_true))
+        self.assertIsNone(cache.get(parent_cache_key_false))
 
 
 class InvalidateGenreDescendantCacheTests(TestCase):
@@ -278,27 +287,36 @@ class InvalidateGenreDescendantCacheTests(TestCase):
         """Test invalidating a specific genre's cache."""
         genre = WikipediaGenre.objects.create(name=f"Puzzle-{self.unique_id}")
 
-        cache_key = f"{config.CACHE_VERSION}:genre_descendants:{genre.id}"
-        cache.set(cache_key, {"data": "cached"})
+        cache_key_true = f"{config.CACHE_VERSION}:genre_descendants:{genre.id}:True"
+        cache_key_false = f"{config.CACHE_VERSION}:genre_descendants:{genre.id}:False"
+        cache.set(cache_key_true, {"data": "cached"})
+        cache.set(cache_key_false, {"data": "cached"})
 
         invalidate_genre_descendant_cache(genre.id)
 
-        self.assertIsNone(cache.get(cache_key))
+        self.assertIsNone(cache.get(cache_key_true))
+        self.assertIsNone(cache.get(cache_key_false))
 
     def test_invalidate_all_genres(self):
         """Test invalidating all genre caches when no ID provided."""
         genre1 = WikipediaGenre.objects.create(name=f"Adventure-{self.unique_id}")
         genre2 = WikipediaGenre.objects.create(name=f"Horror-{self.unique_id}")
 
-        cache_key1 = f"{config.CACHE_VERSION}:genre_descendants:{genre1.id}"
-        cache_key2 = f"{config.CACHE_VERSION}:genre_descendants:{genre2.id}"
-        cache.set(cache_key1, {"data": "cached1"})
-        cache.set(cache_key2, {"data": "cached2"})
+        cache_key1_true = f"{config.CACHE_VERSION}:genre_descendants:{genre1.id}:True"
+        cache_key1_false = f"{config.CACHE_VERSION}:genre_descendants:{genre1.id}:False"
+        cache_key2_true = f"{config.CACHE_VERSION}:genre_descendants:{genre2.id}:True"
+        cache_key2_false = f"{config.CACHE_VERSION}:genre_descendants:{genre2.id}:False"
+        cache.set(cache_key1_true, {"data": "cached1"})
+        cache.set(cache_key1_false, {"data": "cached1"})
+        cache.set(cache_key2_true, {"data": "cached2"})
+        cache.set(cache_key2_false, {"data": "cached2"})
 
         invalidate_genre_descendant_cache()
 
-        self.assertIsNone(cache.get(cache_key1))
-        self.assertIsNone(cache.get(cache_key2))
+        self.assertIsNone(cache.get(cache_key1_true))
+        self.assertIsNone(cache.get(cache_key1_false))
+        self.assertIsNone(cache.get(cache_key2_true))
+        self.assertIsNone(cache.get(cache_key2_false))
 
     def test_invalidate_nonexistent_genre_does_not_raise(self):
         """Test that invalidating a non-existent genre doesn't raise."""
@@ -315,20 +333,29 @@ class InvalidateGenreDescendantCacheTests(TestCase):
             name=f"Racing-{self.unique_id}", parent=parent
         )
 
-        # Pre-populate all caches
-        gp_key = f"{config.CACHE_VERSION}:genre_descendants:{grandparent.id}"
-        p_key = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}"
-        c_key = f"{config.CACHE_VERSION}:genre_descendants:{child.id}"
-        cache.set(gp_key, {"data": "gp"})
-        cache.set(p_key, {"data": "p"})
-        cache.set(c_key, {"data": "c"})
+        # Pre-populate all caches (both variants for each)
+        gp_key_true = f"{config.CACHE_VERSION}:genre_descendants:{grandparent.id}:True"
+        gp_key_false = f"{config.CACHE_VERSION}:genre_descendants:{grandparent.id}:False"
+        p_key_true = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:True"
+        p_key_false = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:False"
+        c_key_true = f"{config.CACHE_VERSION}:genre_descendants:{child.id}:True"
+        c_key_false = f"{config.CACHE_VERSION}:genre_descendants:{child.id}:False"
+        cache.set(gp_key_true, {"data": "gp"})
+        cache.set(gp_key_false, {"data": "gp"})
+        cache.set(p_key_true, {"data": "p"})
+        cache.set(p_key_false, {"data": "p"})
+        cache.set(c_key_true, {"data": "c"})
+        cache.set(c_key_false, {"data": "c"})
 
         # Invalidate child's cache
         invalidate_genre_descendant_cache(child.id)
 
-        # Child's cache should be invalidated
-        self.assertIsNone(cache.get(c_key))
+        # Child's cache should be invalidated (both variants)
+        self.assertIsNone(cache.get(c_key_true))
+        self.assertIsNone(cache.get(c_key_false))
         # Parent's cache should also be invalidated (ancestor)
-        self.assertIsNone(cache.get(p_key))
+        self.assertIsNone(cache.get(p_key_true))
+        self.assertIsNone(cache.get(p_key_false))
         # Grandparent's cache should also be invalidated (ancestor)
-        self.assertIsNone(cache.get(gp_key))
+        self.assertIsNone(cache.get(gp_key_true))
+        self.assertIsNone(cache.get(gp_key_false))

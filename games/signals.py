@@ -7,7 +7,7 @@ import logging
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from games.models import Developer, Game, Post, WikipediaGenre
+from games.models import Developer, Game, PlayedGame, Post, WantToPlayGame, WikipediaGenre
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +123,20 @@ def invalidate_developer_cache_on_game_change(sender, instance, pk_set, **kwargs
 
 
 # =============================================================================
+# Homepage Hero Stats Cache Invalidation
+# =============================================================================
+
+
+@receiver([post_save, post_delete], sender=Game)
+def invalidate_hero_stats_on_game_change(sender, instance, **kwargs):
+    """Invalidate homepage hero stats cache when Game count changes."""
+    from django.core.cache import cache
+
+    cache.delete("homepage_hero_stats")
+    logger.debug("Homepage hero stats cache invalidated (Game changed)")
+
+
+# =============================================================================
 # WikipediaGenre Hierarchy Cache Invalidation
 # =============================================================================
 
@@ -139,22 +153,29 @@ def invalidate_genre_descendant_cache(genre_id=None):
     from games import config
 
     if genre_id:
-        # Invalidate this genre's cache
-        cache.delete(f"{config.CACHE_VERSION}:genre_descendants:{genre_id}")
+        # Invalidate this genre's cache (both include_self variants)
+        cache.delete(f"{config.CACHE_VERSION}:genre_descendants:{genre_id}:True")
+        cache.delete(f"{config.CACHE_VERSION}:genre_descendants:{genre_id}:False")
         # Also invalidate ancestor caches since their descendants changed
         try:
             genre = WikipediaGenre.objects.get(id=genre_id)
             for ancestor in genre.get_ancestors():
-                cache.delete(f"{config.CACHE_VERSION}:genre_descendants:{ancestor.id}")
+                cache.delete(
+                    f"{config.CACHE_VERSION}:genre_descendants:{ancestor.id}:True"
+                )
+                cache.delete(
+                    f"{config.CACHE_VERSION}:genre_descendants:{ancestor.id}:False"
+                )
         except WikipediaGenre.DoesNotExist:
             pass
     else:
-        # Invalidate all genre descendant caches
+        # Invalidate all genre descendant caches (both include_self variants)
         # Note: This uses pattern delete which may not work with all cache backends
         # For production, consider using cache versioning instead
         all_genres = WikipediaGenre.objects.values_list("id", flat=True)
         for gid in all_genres:
-            cache.delete(f"{config.CACHE_VERSION}:genre_descendants:{gid}")
+            cache.delete(f"{config.CACHE_VERSION}:genre_descendants:{gid}:True")
+            cache.delete(f"{config.CACHE_VERSION}:genre_descendants:{gid}:False")
 
 
 @receiver([post_save, post_delete], sender=WikipediaGenre)
@@ -162,3 +183,26 @@ def invalidate_genre_cache_on_change(sender, instance, **kwargs):
     """Invalidate genre descendant cache when WikipediaGenre changes."""
     invalidate_genre_descendant_cache(instance.id)
     logger.debug(f"Genre descendant cache invalidated (WikipediaGenre {instance.id})")
+
+
+# =============================================================================
+# User Tracking Cache Invalidation (PlayedGame / WantToPlayGame)
+# =============================================================================
+
+
+@receiver([post_save, post_delete], sender=PlayedGame)
+def invalidate_played_game_cache(sender, instance, **kwargs):
+    """Invalidate played games cache when PlayedGame changes."""
+    from games.cache import invalidate_played_games_cache
+
+    invalidate_played_games_cache(instance.user_id)
+    logger.debug(f"Played games cache invalidated (user {instance.user_id})")
+
+
+@receiver([post_save, post_delete], sender=WantToPlayGame)
+def invalidate_want_to_play_game_cache(sender, instance, **kwargs):
+    """Invalidate want-to-play games cache when WantToPlayGame changes."""
+    from games.cache import invalidate_want_to_play_cache
+
+    invalidate_want_to_play_cache(instance.user_id)
+    logger.debug(f"Want-to-play games cache invalidated (user {instance.user_id})")

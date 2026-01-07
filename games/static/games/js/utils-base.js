@@ -666,6 +666,28 @@ function joinNames(names) {
     return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
 }
 
+/**
+ * Create a throttled scroll handler that updates a boolean based on scroll position.
+ * Uses requestAnimationFrame for smooth performance.
+ * @param {function} setShow - Callback to set visibility (receives boolean)
+ * @param {number} threshold - Scroll threshold in pixels (default 300)
+ */
+function createScrollShowHandler(setShow, threshold) {
+    threshold = threshold || 300;
+    var throttled = false;
+    window.addEventListener('scroll', function() {
+        if (!throttled) {
+            throttled = true;
+            requestAnimationFrame(function() {
+                setShow(window.scrollY > threshold);
+                throttled = false;
+            });
+        }
+    });
+}
+
 // Signal that utils-base is ready for Alpine
 window.utilsBaseReady = true;
+// Dispatch event for listeners waiting on utils-base (avoids polling)
+window.dispatchEvent(new CustomEvent('utils-base-ready'));
 

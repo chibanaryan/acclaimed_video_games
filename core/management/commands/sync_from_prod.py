@@ -8,10 +8,8 @@ from django.core.management.base import BaseCommand
 from games.models import (
     Developer,
     Game,
-    GameQuote,
     HLTBGameData,
     IGDBGameData,
-    IGDBGenre,
     List,
     ListMembership,
     Platform,
@@ -23,9 +21,7 @@ from games.models import (
     SiteMetadata,
     Snippet,
     WantToPlayGame,
-    WikipediaCountry,
     WikipediaGameData,
-    WikipediaGameMode,
     WikipediaGenre,
 )
 
@@ -156,7 +152,6 @@ class Command(BaseCommand):
         SavedFilterSet.objects.all().delete()
         # Then: models that reference Game
         ListMembership.objects.all().delete()
-        GameQuote.objects.all().delete()
         IGDBGameData.objects.all().delete()
         WikipediaGameData.objects.all().delete()
         HLTBGameData.objects.all().delete()
@@ -168,10 +163,7 @@ class Command(BaseCommand):
         # Then: referenced models
         Developer.objects.all().delete()
         Series.objects.all().delete()
-        IGDBGenre.objects.all().delete()
         WikipediaGenre.objects.all().delete()
-        WikipediaCountry.objects.all().delete()
-        WikipediaGameMode.objects.all().delete()
         Platform.objects.all().delete()
         # Finally: standalone models
         Post.objects.all().delete()
