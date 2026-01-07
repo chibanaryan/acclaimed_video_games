@@ -255,96 +255,6 @@ class BookSeries(models.Model):
         super().save(*args, **kwargs)
 
 
-class GoodreadsBookData(ExternalDataBase):
-    """
-    Supplemental Goodreads book data.
-
-    Multiple records per book supported (e.g., different editions).
-    One record marked as primary for default display.
-
-    Metadata persists when books are deleted (SET_NULL) to allow reconnection
-    when books are re-imported.
-    """
-
-    book = models.ForeignKey(
-        "Book",
-        on_delete=models.SET_NULL,
-        related_name="goodreads_book_data_set",
-        null=True,
-        blank=True,
-    )
-    goodreads_id = models.CharField(
-        max_length=50,
-        db_index=True,
-        help_text="Goodreads book ID for this specific edition/entry",
-    )
-    goodreads_url = models.URLField(
-        null=True,
-        blank=True,
-        help_text="Goodreads book detail page URL",
-    )
-    cover_image_url = models.URLField(
-        null=True,
-        blank=True,
-        help_text="Cover image URL from Goodreads",
-    )
-    average_rating = models.DecimalField(
-        max_digits=3,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Average rating on Goodreads (0.00-5.00)",
-    )
-    ratings_count = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Number of ratings on Goodreads",
-    )
-    reviews_count = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Number of text reviews on Goodreads",
-    )
-    description = models.TextField(
-        null=True,
-        blank=True,
-        help_text="Book description from Goodreads",
-    )
-
-    class Meta:
-        db_table = "books_goodreadsbookdata"
-        verbose_name = "Goodreads Book Data"
-        verbose_name_plural = "Goodreads Book Data"
-        indexes = [
-            models.Index(fields=["book", "is_primary"]),
-            models.Index(fields=["goodreads_id"]),
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["book"],
-                condition=models.Q(is_primary=True) & models.Q(book__isnull=False),
-                name="unique_primary_goodreads_per_book",
-            )
-        ]
-
-    def __str__(self) -> str:
-        if self.book:
-            return f"Goodreads data for {self.book.name} (ID: {self.goodreads_id})"
-        return f"Orphaned Goodreads data (ID: {self.goodreads_id})"
-
-    @cached_property
-    def thumbnail(self) -> Optional[str]:
-        """Get thumbnail URL for cover art."""
-        return self.cover_image_url
-
-    @property
-    def goodreads_book_url(self) -> Optional[str]:
-        """Generate Goodreads book URL."""
-        if self.goodreads_id:
-            return f"https://www.goodreads.com/book/show/{self.goodreads_id}"
-        return self.goodreads_url
-
-
 class WikipediaBookData(ExternalDataBase):
     """
     Supplemental Wikipedia/Wikidata book data.
@@ -430,7 +340,6 @@ class BookQuerySet(models.QuerySet):
             "genres",
         ).select_related(
             "series",
-            "primary_goodreads_book_data",
             "primary_wikipedia_book_data",
         )
 
@@ -538,15 +447,14 @@ class Book(MediaItemBase):
         help_text="Position in the series (e.g., 1, 2, 2.5 for novellas)",
     )
 
-    # Fast access to primary records (OneToOne for performance)
-    primary_goodreads_book_data = models.OneToOneField(
-        "GoodreadsBookData",
-        on_delete=models.SET_NULL,
+    # Cover image URL (from Open Library or other sources)
+    cover_image_url = models.URLField(
         null=True,
         blank=True,
-        related_name="primary_book",
-        help_text="Primary Goodreads book data for display",
+        help_text="URL to book cover image",
     )
+
+    # Fast access to primary Wikipedia record (OneToOne for performance)
     primary_wikipedia_book_data = models.OneToOneField(
         "WikipediaBookData",
         on_delete=models.SET_NULL,
@@ -579,17 +487,13 @@ class Book(MediaItemBase):
 
     @cached_property
     def thumbnail(self) -> Optional[str]:
-        """Get thumbnail URL from primary Goodreads data."""
-        if self.primary_goodreads_book_data:
-            return self.primary_goodreads_book_data.cover_image_url
-        return None
+        """Get thumbnail URL for the book cover."""
+        return self.cover_image_url
 
     @cached_property
     def image(self) -> Optional[str]:
-        """Get full-size image URL from primary Goodreads data."""
-        if self.primary_goodreads_book_data:
-            return self.primary_goodreads_book_data.cover_image_url
-        return None
+        """Get full-size image URL for the book cover."""
+        return self.cover_image_url
 
     def get_display_authors(self, max_count: int = None) -> list:
         """

@@ -15,6 +15,12 @@ urlpatterns = [
         views.ToggleReadBookView.as_view(),
         name="toggle-read",
     ),
+    # Goodreads import
+    path(
+        "import/",
+        views.GoodreadsImportView.as_view(),
+        name="goodreads-import",
+    ),
     # Author routes (must be before <slug:slug>/ to avoid matching "authors" as a slug)
     path("authors/", views.AuthorListView.as_view(), name="author-list"),
     path("authors/<slug:slug>/", views.AuthorDetailView.as_view(), name="author-detail"),

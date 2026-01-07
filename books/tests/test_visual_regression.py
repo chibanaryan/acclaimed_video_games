@@ -69,16 +69,8 @@ class TemplateStructureTests(StaffClientMixin, TestCase):
             year_published=2020,
             goodreads_id="12345",
             page_count=350,
-        )
-        # Create and link GoodreadsBookData for thumbnail
-        goodreads_data = models.GoodreadsBookData.objects.create(
-            book=self.book,
-            goodreads_id="12345",
             cover_image_url="https://example.com/cover.jpg",
-            is_primary=True,
         )
-        self.book.primary_goodreads_book_data = goodreads_data
-        self.book.save()
 
         self.book.authors.add(self.author)
         self.book.genres.add(self.genre)
@@ -193,16 +185,8 @@ class ServerRenderedOutputTests(StaffClientMixin, TestCase):
             year_published=2023,
             goodreads_id="99999",
             page_count=1250,  # Large number to test formatting
-        )
-        # Create and link GoodreadsBookData for thumbnail
-        goodreads_data = models.GoodreadsBookData.objects.create(
-            book=self.book,
-            goodreads_id="99999",
             cover_image_url="https://example.com/cover.jpg",
-            is_primary=True,
         )
-        self.book.primary_goodreads_book_data = goodreads_data
-        self.book.save()
 
         self.book.authors.add(self.author1, self.author2)
         self.book.genres.add(self.genre1, self.genre2, self.genre3)

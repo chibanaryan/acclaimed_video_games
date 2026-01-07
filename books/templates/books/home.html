@@ -44,6 +44,12 @@
                 <span>Sign Up</span>
             </button>
             {% endif %}
+            {% if user.is_staff %}
+            <a href="{% url 'books:goodreads-import' %}" class="btn btn-outline gap-2">
+                <span class="mdi mdi-bookmark-plus"></span>
+                <span>Import Goodreads</span>
+            </a>
+            {% endif %}
             <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-primary gap-2">
                 <span class="mdi mdi-heart"></span>
                 <span>Support This Project</span>

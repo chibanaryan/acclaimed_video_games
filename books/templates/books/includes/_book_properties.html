@@ -96,25 +96,6 @@
         </td>
     </tr>
     {% endif %}
-    {% if book.primary_goodreads_book_data.goodreads_book_url %}
-    <tr>
-        <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Goodreads:</td>
-        <td class="pb-3 align-middle">
-            <a href="{{ book.primary_goodreads_book_data.goodreads_book_url }}" target="_blank" class="link link-accent inline-flex items-center gap-1">
-                Goodreads <span class="mdi mdi-open-in-new text-sm"></span>
-            </a>
-            {% if book.primary_goodreads_book_data.average_rating %}
-            <div class="text-base-content/50 text-sm mt-1">
-                <span class="mdi mdi-star text-warning text-xs"></span>
-                {{ book.primary_goodreads_book_data.average_rating }}/5
-                {% if book.primary_goodreads_book_data.ratings_count %}
-                <span class="text-base-content/40">({{ book.primary_goodreads_book_data.ratings_count|intcomma }} ratings)</span>
-                {% endif %}
-            </div>
-            {% endif %}
-        </td>
-    </tr>
-    {% endif %}
     {% if book.open_library_id %}
     <tr>
         <td class="text-base-content/70 font-semibold pr-4 pb-3 align-middle whitespace-nowrap">Open Library:</td>

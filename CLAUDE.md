@@ -169,7 +169,6 @@ Books-specific models (behind `BOOKS_ENABLED` feature flag):
 - **BookSeries** - Book series with position tracking
 - **BookListMembership** - Book positions within lists
 - **ReadBook/WantToReadBook** - User tracking for books (like PlayedGame/WantToPlayGame)
-- **GoodreadsBookData** - External metadata from Open Library (cover, rating, etc.)
 - **WikipediaBookData** - Wikipedia metadata for books
 
 ### API Architecture

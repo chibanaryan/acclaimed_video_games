@@ -100,7 +100,6 @@ class BookDetailView(RetrieveAPIView):
     lookup_field = "slug"
     serializer_class = serializers.BookDetailSerializer
     queryset = models.Book.objects.select_related(
-        "primary_goodreads_book_data",
         "primary_wikipedia_book_data",
     ).prefetch_related(
         Prefetch(
@@ -313,14 +312,13 @@ class BookSearchAPIView(APIView):
 
         books = (
             models.Book.objects.filter(name__icontains=q)
-            .select_related("primary_goodreads_book_data")
             .only(
                 "id",
                 "name",
                 "slug",
                 "year_published",
                 "rank",
-                "primary_goodreads_book_data__cover_image_url",
+                "cover_image_url",
             )
             .order_by("rank")[:limit]
         )
@@ -379,14 +377,13 @@ class UnifiedBookSearchView(APIView):
         # Search books
         books = (
             models.Book.objects.filter(name__icontains=q)
-            .select_related("primary_goodreads_book_data")
             .only(
                 "id",
                 "name",
                 "slug",
                 "year_published",
                 "rank",
-                "primary_goodreads_book_data__cover_image_url",
+                "cover_image_url",
             )
             .order_by("rank")[:book_limit]
         )
@@ -455,10 +452,7 @@ class BookAllDataView(APIView):
 
         # Fetch all books with required relations
         books = (
-            models.Book.objects.select_related(
-                "primary_goodreads_book_data",
-            )
-            .prefetch_related(
+            models.Book.objects.prefetch_related(
                 "authors",
                 "genres",
             )
@@ -485,11 +479,6 @@ class BookAllDataView(APIView):
             # Collect genre IDs
             genre_ids = [g.id for g in book.genres.all()]
 
-            # Get cover image from primary GoodReads data
-            cover_image = None
-            if book.primary_goodreads_book_data:
-                cover_image = book.primary_goodreads_book_data.cover_image_url
-
             books_data.append(
                 {
                     "id": book.id,
@@ -498,7 +487,7 @@ class BookAllDataView(APIView):
                     "s": book.slug,
                     "r": book.rank,
                     "y": book.year_published,
-                    "c": cover_image,  # Cover image URL
+                    "c": book.cover_image_url,  # Cover image URL
                     "au": author_ids,  # Author IDs
                     "g": genre_ids,  # Genre IDs
                     "lc": book.list_count,  # List count

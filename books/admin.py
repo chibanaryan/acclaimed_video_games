@@ -114,7 +114,6 @@ class BookAdmin(admin.ModelAdmin):
         "year_published",
         "goodreads_id",
         "wikidata_id",
-        "_goodreads_data_link",
         "_wikipedia_data_link",
         "_genres_display",
     ]
@@ -124,7 +123,7 @@ class BookAdmin(admin.ModelAdmin):
         "authors",
         "genres",
     ]
-    raw_id_fields = ["series", "primary_goodreads_book_data", "primary_wikipedia_book_data"]
+    raw_id_fields = ["series", "primary_wikipedia_book_data"]
     readonly_fields = ["created", "modified"]
 
     def get_queryset(self, request):
@@ -134,7 +133,6 @@ class BookAdmin(admin.ModelAdmin):
             .get_queryset(request)
             .select_related(
                 "series",
-                "primary_goodreads_book_data",
                 "primary_wikipedia_book_data",
             )
             .prefetch_related(
@@ -149,56 +147,12 @@ class BookAdmin(admin.ModelAdmin):
         genres = [genre.name for genre in obj.genres.all()]
         return ", ".join(genres) if genres else "-"
 
-    @admin.display(description="Goodreads Data")
-    def _goodreads_data_link(self, obj):
-        """Display link to Goodreads data admin page."""
-        if obj.primary_goodreads_book_data:
-            url = f"/admin/books/goodreadsbookdata/{obj.primary_goodreads_book_data.id}/change/"
-            return format_html('<a href="{}">View</a>', url)
-        return "-"
-
     @admin.display(description="Wikipedia Data")
     def _wikipedia_data_link(self, obj):
         """Display link to Wikipedia data admin page."""
         if obj.primary_wikipedia_book_data:
             url = f"/admin/books/wikipediabookdata/{obj.primary_wikipedia_book_data.id}/change/"
             return format_html('<a href="{}">View</a>', url)
-        return "-"
-
-
-@admin.register(models.GoodreadsBookData)
-class GoodreadsBookDataAdmin(admin.ModelAdmin):
-    """Admin interface for Goodreads book data records."""
-
-    list_display = [
-        "book",
-        "goodreads_id",
-        "average_rating",
-        "ratings_count",
-        "_goodreads_link",
-        "_description_preview",
-        "is_primary",
-        "fetched_at",
-        "updated_at",
-    ]
-    list_filter = ["is_primary", "fetched_at", "updated_at"]
-    search_fields = ["book__name", "goodreads_id", "description"]
-    raw_id_fields = ["book"]
-    readonly_fields = ["fetched_at", "updated_at"]
-
-    @admin.display(description="Goodreads URL")
-    def _goodreads_link(self, obj):
-        """Display clickable Goodreads URL."""
-        url = obj.goodreads_book_url
-        if url:
-            return format_html('<a href="{}" target="_blank">View</a>', url)
-        return "-"
-
-    @admin.display(description="Description")
-    def _description_preview(self, obj):
-        """Display truncated description."""
-        if obj.description:
-            return Truncator(obj.description).words(10)
         return "-"
 
 
