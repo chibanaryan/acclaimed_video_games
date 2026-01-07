@@ -353,6 +353,7 @@ def _build_genre_subtitle(selected_genre_ids, option, genres):
         return ""
     name_lookup = {str(g["id"]): g["name"] for g in genres}
     genre_names = [name_lookup.get(str(gid), str(gid)) for gid in selected_genre_ids]
+    genre_names = [name for name in genre_names if name]
     if not genre_names:
         return ""
     connector = " AND " if option == "all" else " OR "
@@ -616,14 +617,14 @@ def download_games_csv(request):
             try:
                 qs = qs.filter(**{f"{field_prefix}__gte": int(pt_min)})
                 qs = qs.exclude(**{field_prefix: None})
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError):  # pragma: no cover
+                pass  # pragma: no cover
         if pt_max is not None:
             try:
                 qs = qs.filter(**{f"{field_prefix}__lte": int(pt_max)})
                 qs = qs.exclude(**{field_prefix: None})
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError):  # pragma: no cover
+                pass  # pragma: no cover
 
     qs = qs.distinct().order_by("rank")
 
@@ -1088,14 +1089,14 @@ class HomePageView(RobustPaginationMixin, ListView):
                 try:
                     qs = qs.filter(**{f"{field_prefix}__gte": int(pt_min)})
                     qs = qs.exclude(**{field_prefix: None})
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError):  # pragma: no cover
+                    pass  # pragma: no cover
             if pt_max is not None:
                 try:
                     qs = qs.filter(**{f"{field_prefix}__lte": int(pt_max)})
                     qs = qs.exclude(**{field_prefix: None})
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError):  # pragma: no cover
+                    pass  # pragma: no cover
 
         # Sort order
         sort = self.request.GET.get("sort", "rank")

@@ -218,6 +218,33 @@ class MakeRequestTests(TestCase):
         self.assertIsNone(result)
         self.assertGreaterEqual(mock_post.call_count, 2)
 
+    @mock.patch("requests.post")
+    def test_make_request_negative_max_retries_skips_loop(self, mock_post):
+        """Test negative max_retries returns None without making a request."""
+        api = HardcoverApi(api_token="token")
+
+        result = api._make_request("query { }", max_retries=-1)
+
+        self.assertIsNone(result)
+        mock_post.assert_not_called()
+
+
+class HardcoverRequestExceptionTests(TestCase):
+    """Tests for HardcoverApi request exception handling and parsing."""
+
+    def test_get_book_by_id_handles_invalid_response(self):
+        """Test invalid response data triggers parse error handling."""
+        api = HardcoverApi(api_token="token")
+
+        class BadData:
+            def get(self, *args, **kwargs):
+                raise ValueError("bad data")
+
+        with mock.patch.object(HardcoverApi, "_make_request", return_value=BadData()):
+            result = api.get_book_by_id("123")
+
+        self.assertIsNone(result)
+
     @mock.patch("time.sleep")
     @mock.patch("books.hardcover.HardcoverApi._wait_for_rate_limit")
     @mock.patch("requests.post")

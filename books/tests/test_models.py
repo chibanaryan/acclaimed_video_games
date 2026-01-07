@@ -129,6 +129,15 @@ class BookGenreModelTests(TestCase):
         self.assertIn(child.id, ids)
         self.assertNotIn(root.id, ids)
 
+    def test_get_descendant_ids_include_self(self):
+        """Test get_descendant_ids includes self when requested."""
+        root = models.BookGenre.objects.create(name="Root")
+        child = models.BookGenre.objects.create(name="Child", parent=root)
+
+        ids = root.get_descendant_ids(include_self=True)
+        self.assertIn(root.id, ids)
+        self.assertIn(child.id, ids)
+
     def test_is_root_property(self):
         """Test is_root property."""
         root = models.BookGenre.objects.create(name="Root")

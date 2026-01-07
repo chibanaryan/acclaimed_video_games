@@ -196,6 +196,31 @@ class IGDBProgressViewTests(TestCase):
             self.assertEqual(response["content-type"], "text/event-stream")
 
 
+class WikipediaPageProgressViewTests(TestCase):
+    """Tests for WikipediaPageProgressView."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="tester2", password="pass")
+        self.client = Client()
+
+    def test_wikipedia_progress_view_get(self):
+        """Test WikipediaPageProgressView.get() returns streaming response."""
+        self.client.login(username="tester2", password="pass")
+
+        with mock.patch(
+            "games.views.utils.import_wikipedia_pages_with_progress"
+        ) as mock_progress:
+            mock_progress.return_value = iter(["data: test\n\n"])
+
+            response = self.client.get(
+                "/import/wikipedia-page-progress/?force=true"
+            )
+
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response["content-type"], "text/event-stream")
+
+
 class GameListSeriesFilterTests(TestCase):
     """Tests for series filtering in GameListView."""
 
@@ -237,7 +262,7 @@ class GameListSeriesFilterTests(TestCase):
 
     def test_series_list_in_context(self):
         """Test that series_list is included in the view context."""
-        response = self.client.get("/")
+        response = self.client.get("/", HTTP_X_REQUESTED_WITH="XMLHttpRequest")
         self.assertEqual(response.status_code, 200)
         self.assertIn("series_list", response.context)
 
@@ -273,3 +298,54 @@ class GenreSubtitleTests(TestCase):
         genres = [{"id": 1, "name": "Action"}]
         result = views._build_genre_subtitle([999], "any", genres)
         self.assertEqual(result, "Genre: 999")
+
+    def test_build_genre_subtitle_empty_names(self):
+        """Test subtitle returns empty when names are blank."""
+        genres = [{"id": 1, "name": ""}]
+        result = views._build_genre_subtitle([1], "any", genres)
+        self.assertEqual(result, "")
+
+
+class PlayedFilterTests(TestCase):
+    """Tests for _apply_played_filter helper."""
+
+    def test_apply_played_filter_invalid_value_returns_queryset(self):
+        """Test invalid played param returns unmodified queryset."""
+        game = models.Game.objects.create(name="Test Game", rank=1, igdb_id=100)
+        User = get_user_model()
+        user = User.objects.create_user(username="tester", password="pass")
+
+        qs = models.Game.objects.all()
+        filtered = views._apply_played_filter(qs, user, "maybe")
+
+        self.assertEqual(list(filtered), [game])
+
+
+class FilterTitleTests(TestCase):
+    """Tests for _build_filter_title helper."""
+
+    def test_build_filter_title_with_hltb_max_only(self):
+        """Test title includes hltb max-only label."""
+        filters = {
+            "start": None,
+            "end": None,
+            "genres": [],
+            "platforms": [],
+            "series": [],
+            "played": "",
+            "hltb_mode": "main",
+            "hltb_min": None,
+            "hltb_max": 5,
+        }
+        title = views._build_filter_title(filters, [], [], 1980, 2020)
+
+        self.assertIn("<5 Hour", title)
+
+
+class PlatformSegmentTests(TestCase):
+    """Tests for _build_platform_segment helper."""
+
+    def test_build_platform_segment_uses_platform_name(self):
+        platforms = [{"id": 1, "code": "UNK", "name": "Mystery Box"}]
+        result = views._build_platform_segment([1], platforms)
+        self.assertEqual(result, "Mystery Box Games")

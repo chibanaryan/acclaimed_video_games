@@ -1,3 +1,7 @@
+import importlib
+from unittest import mock
+
+from django.core.cache import cache
 from django.contrib.flatpages.models import FlatPage
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -26,6 +30,10 @@ class GameListApiTests(TestCase):
         )
         self.game1.platforms.add(self.platform_pc)
         self.game1.developers.add(self.developer)
+        self.genre = models.WikipediaGenre.objects.create(
+            name="Test Genre", slug="test-genre", level=0
+        )
+        self.game1.wikipedia_genres.add(self.genre)
 
         self.game2 = models.Game.objects.create(
             name="Beta Saga",
@@ -49,6 +57,10 @@ class GameListApiTests(TestCase):
 
     def test_filter_by_developer(self):
         names = self._get_game_names(developer=str(self.developer.igdb_id))
+        self.assertEqual(names, ["Alpha Quest"])
+
+    def test_filter_by_genre(self):
+        names = self._get_game_names(genres=str(self.genre.id))
         self.assertEqual(names, ["Alpha Quest"])
 
     def test_order_by_parameter_applies(self):
@@ -442,6 +454,7 @@ class GameAllDataViewTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        cache.clear()
         self.platform = models.Platform.objects.create(code="PC", name="PC")
         self.root_dev = models.Developer.objects.create(
             name="Test Company", slug="test-company", igdb_id=100
@@ -465,6 +478,28 @@ class GameAllDataViewTests(TestCase):
         self.game.platforms.add(self.platform)
         self.game.developers.add(self.developer)
         self.game.wikipedia_genres.add(self.genre)
+        self.series = models.Series.objects.create(
+            name="Test Series", slug="test-series", igdb_id=999
+        )
+        self.game.series.add(self.series)
+        self.igdb_data = models.IGDBGameData.objects.create(
+            game=self.game,
+            igdb_id=1234,
+            artwork_id="co1234",
+            url="https://igdb.com/game/1234",
+            is_primary=True,
+        )
+        self.game.primary_igdb_game_data = self.igdb_data
+        self.hltb_data = models.HLTBGameData.objects.create(
+            game=self.game,
+            igdb_id=1234,
+            hltb_id="hltb123",
+            main_story_hours=10.5,
+            completionist_hours=25.0,
+            is_primary=True,
+        )
+        self.game.primary_hltb_game_data = self.hltb_data
+        self.game.save()
 
     def test_all_data_endpoint_returns_correct_structure(self):
         """Test that all data endpoint returns correct structure."""
@@ -502,14 +537,21 @@ class GameAllDataViewTests(TestCase):
         self.assertIn("dv", game)  # developer IDs
         self.assertIn("p", game)  # platform IDs
         self.assertIn("g", game)  # genre IDs
+        self.assertIn("sr", game)  # series IDs
+        self.assertIn("pt", game)  # main story playtime
+        self.assertIn("ptc", game)  # completionist playtime
 
         # Check values
         self.assertEqual(game["n"], "Test Game")
         self.assertEqual(game["r"], 1)
         self.assertEqual(game["y"], 2020)
+        self.assertEqual(game["a"], "co1234")
         self.assertIn(self.developer.id, game["dv"])
         self.assertIn(self.platform.id, game["p"])
         self.assertIn(self.genre.id, game["g"])
+        self.assertIn(self.series.id, game["sr"])
+        self.assertEqual(game["pt"], 10.5)
+        self.assertEqual(game["ptc"], 25.0)
 
     def test_all_data_developers_reference_data(self):
         """Test that developers reference data is correct."""
@@ -557,6 +599,17 @@ class GameAllDataViewTests(TestCase):
         self.assertEqual(child_genre["l"], 1)  # level
         self.assertEqual(child_genre["p"], self.genre.id)  # parent_id
 
+    def test_all_data_series_reference_data(self):
+        """Test that series reference data is included."""
+        response = self.client.get("/api/games/all/")
+        data = response.json()
+        series_data = data["data"]["series"]
+
+        series_key = str(self.series.id)
+        self.assertIn(series_key, series_data)
+        self.assertEqual(series_data[series_key]["n"], "Test Series")
+        self.assertEqual(series_data[series_key]["s"], "test-series")
+
     def test_all_data_platforms_reference_data(self):
         """Test that platforms reference data is correct."""
         response = self.client.get("/api/games/all/")
@@ -577,15 +630,23 @@ class GameAllDataViewTests(TestCase):
         game = games[0]
         # Check series IDs field is present (even if empty)
         self.assertIn("sr", game)
-        # Without a series, should be empty list
-        self.assertEqual(game["sr"], [])
+        # With series in setup, should include series id
+        self.assertIn(self.series.id, game["sr"])
 
     def test_all_data_games_without_optional_data(self):
         """Test that games without optional data return None for those fields."""
+        # Clear optional data from the existing game in setup
+        self.game.series.clear()
+        models.Game.objects.filter(id=self.game.id).update(
+            primary_igdb_game_data_id=None,
+            primary_hltb_game_data_id=None,
+        )
+        self.game.refresh_from_db()
         response = self.client.get("/api/games/all/")
         data = response.json()
-        games = data["data"]["games"]
-        game = games[0]
+        games_list = data["data"]["games"]
+        game = next((g for g in games_list if g["n"] == "Test Game"), None)
+        self.assertIsNotNone(game)
 
         # When no IGDB data attached, artwork should be None
         self.assertIsNone(game["a"])
@@ -841,3 +902,44 @@ class DeveloperSearchSerializerTests(TestCase):
 
         serializer = serializers.DeveloperSearchSerializer(root_annotated)
         self.assertEqual(serializer.data["root_slug"], "valve-ss")
+
+
+class WikipediaGenreTreeViewTests(TestCase):
+    """Tests for WikipediaGenreTreeView endpoint."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.parent = models.WikipediaGenre.objects.create(
+            name="Action Tree", slug="action-tree", level=0, display_order=1
+        )
+        models.WikipediaGenre.objects.create(
+            name="Shooter Tree",
+            slug="shooter-tree",
+            parent=self.parent,
+            level=1,
+            display_order=1,
+        )
+
+    def test_genre_tree_endpoint_returns_roots(self):
+        response = self.client.get("/api/genres/tree/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        items = data.get("results", data)
+        action_root = next(
+            (item for item in items if item["name"] == "Action Tree"), None
+        )
+        self.assertIsNotNone(action_root)
+
+
+class PostgresSearchFieldTests(TestCase):
+    """Tests for PostgreSQL-specific search fields."""
+
+    def test_postgres_search_fields_added(self):
+        import games.api.views as views
+
+        with mock.patch("django.db.connection.vendor", "postgresql"):
+            importlib.reload(views)
+            self.assertIn("name__search", views.GameListView.search_fields)
+            self.assertIn("name__search", views.DeveloperListAPIView.search_fields)
+
+        importlib.reload(views)

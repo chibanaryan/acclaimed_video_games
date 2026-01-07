@@ -161,6 +161,28 @@ class SourceOrderTests(TestCase):
         self.assertEqual(order, ["openlibrary"])
 
 
+class IsbnLookupTests(TestCase):
+    """Tests for ISBN lookup error handling."""
+
+    @mock.patch("books.book_metadata.openlibrary.get_api")
+    @mock.patch("books.book_metadata.hardcover.get_api")
+    def test_isbn_lookup_hardcover_exception(self, mock_get_hardcover, mock_get_openlibrary):
+        """Test Hardcover ISBN lookup exceptions are handled gracefully."""
+        mock_openlibrary = mock.Mock()
+        mock_openlibrary.search_by_isbn.return_value = None
+        mock_get_openlibrary.return_value = mock_openlibrary
+
+        mock_hardcover = mock.Mock()
+        mock_hardcover.get_book_by_isbn.side_effect = Exception("boom")
+        mock_get_hardcover.return_value = mock_hardcover
+
+        service = BookMetadataService()
+
+        result = service._lookup_by_isbn("9780000000000")
+
+        self.assertIsNone(result)
+
+
 class NormalizationTests(TestCase):
     """Tests for result normalization methods."""
 
