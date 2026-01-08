@@ -106,6 +106,24 @@ class WikiPageLookupService:
             user_agent=self.user_agent,
         )
 
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - clean up sessions."""
+        self.close()
+        return False
+
+    def close(self):
+        """Close HTTP sessions to free resources."""
+        if self.session:
+            self.session.close()
+            self.session = None
+        if self.wiki_genre_service:
+            self.wiki_genre_service.close()
+            self.wiki_genre_service = None
+
     def _wait_for_rate_limit(self) -> None:
         """Enforce rate limiting between requests (thread-safe)."""
         with self.rate_limit_lock:

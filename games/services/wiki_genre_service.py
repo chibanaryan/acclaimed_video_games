@@ -87,6 +87,21 @@ class WikiGenreService:
         self.session.headers.update({"User-Agent": self.user_agent})
         self.last_request_time: float = 0.0
 
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - clean up session."""
+        self.close()
+        return False
+
+    def close(self):
+        """Close the HTTP session to free resources."""
+        if self.session:
+            self.session.close()
+            self.session = None
+
     def _wait_for_rate_limit(self) -> None:
         """Enforce rate limiting between requests."""
         elapsed = time.time() - self.last_request_time

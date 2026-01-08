@@ -1,6 +1,10 @@
 {# HLTB Playtime Filter - Simple Short/Medium/Long buckets with dual-range slider #}
 <div class="hltb-filter"
      x-data="{
+         // Store handler references for cleanup
+         _hltbCountsHandler: null,
+         _hltbResetHandler: null,
+
          countsReady: false,
          presetCounts: {
              'short': 0,
@@ -11,13 +15,15 @@
 
          init() {
              // Listen for count updates from client-side filtering
-             window.addEventListener('hltb-counts-update', (event) => {
+             this._hltbCountsHandler = (event) => {
                  this.presetCounts = event.detail;
                  this.countsReady = true;
-             });
+             };
+             window.addEventListener('hltb-counts-update', this._hltbCountsHandler);
 
              // Listen for reset events
-             window.addEventListener('hltb-reset', () => this.handleReset());
+             this._hltbResetHandler = () => this.handleReset();
+             window.addEventListener('hltb-reset', this._hltbResetHandler);
 
              // Show custom range if min/max are set but no preset matches
              this.$watch('filters.hltb_min', () => this.updateCustomVisibility());
@@ -25,6 +31,16 @@
 
              // Initialize countsReady after short delay
              setTimeout(() => { this.countsReady = true; }, 150);
+         },
+
+         destroy() {
+             // Clean up event listeners when component is destroyed
+             if (this._hltbCountsHandler) {
+                 window.removeEventListener('hltb-counts-update', this._hltbCountsHandler);
+             }
+             if (this._hltbResetHandler) {
+                 window.removeEventListener('hltb-reset', this._hltbResetHandler);
+             }
          },
 
          handleReset() {
