@@ -26,13 +26,8 @@
     RankDistributionChart.prototype.init = function() {
         var self = this;
 
-        // Listen for updates
-        window.addEventListener('rank-distribution-update', function(event) {
-            if (Array.isArray(event.detail)) {
-                self.bins = event.detail;
-                self.render();
-            }
-        });
+        // Note: Updates are handled by a single global listener (setupGlobalListener)
+        // to prevent memory leaks from per-instance listeners accumulating
 
         // Event delegation for hover rects (single listener instead of per-rect)
         this.rectsContainer.addEventListener('mouseenter', function(e) {
@@ -164,6 +159,37 @@
         return bin.count + ' game' + (bin.count !== 1 ? 's' : '') + ' ranked ' + bin.binStart + '-' + bin.binEnd;
     };
 
+    // Cleanup method for memory leak prevention
+    RankDistributionChart.prototype.destroy = function() {
+        // No per-instance listeners to clean up - global listener handles updates
+        // This method is called when chart container is removed from DOM
+    };
+
+    // Track all active charts for global event handling (memory leak fix)
+    var activeCharts = [];
+    var globalListenerInitialized = false;
+
+    function setupGlobalListener() {
+        if (globalListenerInitialized) return;
+        globalListenerInitialized = true;
+
+        window.addEventListener('rank-distribution-update', function(event) {
+            if (Array.isArray(event.detail)) {
+                // Update all charts that are still in the DOM
+                activeCharts = activeCharts.filter(function(chart) {
+                    if (document.contains(chart.container)) {
+                        chart.bins = event.detail;
+                        chart.render();
+                        return true;
+                    }
+                    // Chart container removed from DOM, clean up
+                    chart.destroy();
+                    return false;
+                });
+            }
+        });
+    }
+
     // Auto-initialize on DOM ready
     function initCharts() {
         var containers = document.querySelectorAll('.rank-distribution');
@@ -180,8 +206,12 @@
                 }
             }
 
-            container._rankDistributionChart = new RankDistributionChart(container, initialBins);
+            var chart = new RankDistributionChart(container, initialBins);
+            container._rankDistributionChart = chart;
+            activeCharts.push(chart);
         });
+
+        setupGlobalListener();
     }
 
     // Initialize when DOM is ready
@@ -191,8 +221,20 @@
         initCharts();
     }
 
+    // Prune charts whose containers are no longer in the DOM
+    function pruneStaleCharts() {
+        activeCharts = activeCharts.filter(function(chart) {
+            if (document.contains(chart.container)) {
+                return true;
+            }
+            chart.destroy();
+            return false;
+        });
+    }
+
     // Also re-initialize after HTMX swaps
     document.addEventListener('htmx:afterSwap', function() {
+        pruneStaleCharts();
         initCharts();
     });
 
