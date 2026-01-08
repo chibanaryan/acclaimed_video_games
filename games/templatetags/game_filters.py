@@ -450,14 +450,28 @@ def child_developer_ids(sub_developers):
     Extract developer IDs from a list of sub_developer dicts.
 
     Args:
-        sub_developers: List of dicts with 'developer' key containing Developer objects
+        sub_developers: List of dicts with 'developer' key containing Developer
+            objects or dicts with an 'id' field
 
     Returns:
         List of developer IDs
     """
     if not sub_developers:
         return []
-    return [d["developer"].id for d in sub_developers if "developer" in d]
+    ids = []
+    for dev_data in sub_developers:
+        dev = None
+        if isinstance(dev_data, dict):
+            dev = dev_data.get("developer")
+        if dev is None:
+            continue
+        if isinstance(dev, dict):
+            dev_id = dev.get("id")
+        else:
+            dev_id = getattr(dev, "id", None)
+        if dev_id is not None:
+            ids.append(dev_id)
+    return ids
 
 
 @register.simple_tag
