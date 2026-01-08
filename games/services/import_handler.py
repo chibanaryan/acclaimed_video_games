@@ -366,6 +366,10 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
         # Queue the event for immediate streaming
         _queue_event(json.dumps(data))
 
+    # Initialize services to None for safe cleanup in finally block
+    service = None
+    genre_service = None
+
     try:
         # Create services
         service = WikiPageLookupService(progress_callback=progress_callback)
@@ -609,6 +613,11 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
             except Exception as e:
                 _queue_event(json.dumps({"event": "error", "error": str(e)}))
             finally:
+                # Clean up services to release HTTP sessions
+                if service:
+                    service.close()
+                if genre_service:
+                    genre_service.close()
                 # Signal that we're done
                 _queue_event(None)
 

@@ -5,14 +5,26 @@
 
 <div class="genre-filter"
      x-data="{
+         // Store handler reference for cleanup
+         _genreCountsHandler: null,
+
          init() {
              // Listen for filtered count updates from client-side filtering
-             window.addEventListener('genre-counts-update', (event) => {
+             this._genreCountsHandler = (event) => {
                  this.updateFilteredCounts(event.detail);
                  this.countsReady = true;
-             });
+             };
+             window.addEventListener('genre-counts-update', this._genreCountsHandler);
+
              // Initialize expanded state from localStorage
              this.loadExpandedState();
+         },
+
+         destroy() {
+             // Clean up event listeners when component is destroyed
+             if (this._genreCountsHandler) {
+                 window.removeEventListener('genre-counts-update', this._genreCountsHandler);
+             }
          },
 
          // Counts are only shown after client-side calculation

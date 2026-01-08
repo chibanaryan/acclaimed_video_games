@@ -5,19 +5,37 @@
 
 <div class="platform-filter"
      x-data="{
+         // Store handler references for cleanup
+         _platformCountsHandler: null,
+         _platformGroupCountsHandler: null,
+
          init() {
              // Listen for filtered count updates from client-side filtering
-             window.addEventListener('platform-counts-update', (event) => {
+             this._platformCountsHandler = (event) => {
                  this.updateFilteredCounts(event.detail);
                  this.countsReady = true;
-             });
+             };
+             window.addEventListener('platform-counts-update', this._platformCountsHandler);
+
              // Listen for group count updates (deduplicated manufacturer/form factor counts)
-             window.addEventListener('platform-group-counts-update', (event) => {
+             this._platformGroupCountsHandler = (event) => {
                  this.groupCounts = event.detail;
                  this.countsReady = true;
-             });
+             };
+             window.addEventListener('platform-group-counts-update', this._platformGroupCountsHandler);
+
              // Initialize expanded state from localStorage
              this.loadExpandedState();
+         },
+
+         destroy() {
+             // Clean up event listeners when component is destroyed
+             if (this._platformCountsHandler) {
+                 window.removeEventListener('platform-counts-update', this._platformCountsHandler);
+             }
+             if (this._platformGroupCountsHandler) {
+                 window.removeEventListener('platform-group-counts-update', this._platformGroupCountsHandler);
+             }
          },
 
          // Counts are only shown after client-side calculation

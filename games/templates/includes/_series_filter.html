@@ -2,6 +2,10 @@
 {# Uses seriesList from parent AdvancedFilters component #}
 <div class="series-filter"
      x-data="{
+         // Store handler references for cleanup
+         _seriesResetHandler: null,
+         _seriesCountsHandler: null,
+
          searchQuery: '',
          countsReady: false,
          init() {
@@ -9,7 +13,8 @@
              this.selectedSeries = filters.series || [];
 
              // Listen for reset events
-             window.addEventListener('series-reset', () => this.handleReset());
+             this._seriesResetHandler = () => this.handleReset();
+             window.addEventListener('series-reset', this._seriesResetHandler);
 
              // Sync with parent filters when they change (e.g., saved filters applied)
              this.$watch('filters.series', (value) => {
@@ -17,13 +22,25 @@
              });
 
              // Listen for filtered count updates from client-side filtering
-             window.addEventListener('series-counts-update', (event) => {
+             this._seriesCountsHandler = (event) => {
                  this.updateFilteredCounts(event.detail);
-             });
+             };
+             window.addEventListener('series-counts-update', this._seriesCountsHandler);
 
              // Mark counts ready after a short delay (series doesn't have server-side counts)
              setTimeout(() => { this.countsReady = true; }, 150);
          },
+
+         destroy() {
+             // Clean up event listeners when component is destroyed
+             if (this._seriesResetHandler) {
+                 window.removeEventListener('series-reset', this._seriesResetHandler);
+             }
+             if (this._seriesCountsHandler) {
+                 window.removeEventListener('series-counts-update', this._seriesCountsHandler);
+             }
+         },
+
          selectedSeries: [],
 
          handleReset() {
