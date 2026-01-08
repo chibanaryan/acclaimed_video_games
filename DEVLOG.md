@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-08
+
+- Fix memory leaks: add guard to initYearPreview() and HTMX cleanup handler for developerFilter hashchange listener
+
 ## 2026-01-07
 
 - Fix view mode flash: add inline script to set correct CSS before Alpine initializes (prevents list→grid flash on page load)

@@ -2,6 +2,28 @@
  * Alpine.js component for developer filtering on developer detail pages
  * Provides client-side filtering with hierarchical checkbox selection
  */
+
+// Explicit cleanup before HTMX swaps to ensure destroy() is called
+// (Alpine's destroy hook may not fire reliably during HTMX swaps)
+if (typeof window._developerFilterHtmxCleanupInitialized === 'undefined') {
+    window._developerFilterHtmxCleanupInitialized = true;
+    document.addEventListener('htmx:beforeSwap', (e) => {
+        const swapTarget = e.detail.target;
+        if (!swapTarget) return;
+
+        const filterEl = swapTarget.matches('[x-data*="developerFilter"]')
+            ? swapTarget
+            : swapTarget.querySelector('[x-data*="developerFilter"]');
+
+        if (filterEl && typeof Alpine !== 'undefined') {
+            const component = Alpine.$data(filterEl);
+            if (component && typeof component.destroy === 'function') {
+                component.destroy();
+            }
+        }
+    });
+}
+
 function developerFilter() {
     return {
         // State
@@ -478,6 +500,15 @@ function developerFilter() {
         },
 
         /**
+         * Cleanup method for memory leak prevention
+         */
+        destroy() {
+            if (this._hashchangeListener) {
+                window.removeEventListener('hashchange', this._hashchangeListener);
+            }
+        },
+
+        /**
          * Initialize component - parse URL hash for deep linking
          */
         init() {
@@ -534,7 +565,8 @@ function developerFilter() {
             }
 
             // Listen for hash changes (browser back/forward)
-            window.addEventListener('hashchange', () => {
+            // Store reference for cleanup in destroy() to prevent memory leaks
+            this._hashchangeListener = () => {
                 // Re-parse hash when it changes
                 const newHash = window.location.hash;
                 if (newHash.startsWith('#developers=')) {
@@ -545,7 +577,8 @@ function developerFilter() {
                 }
                 this.updateIndeterminateStates();
                 this.dispatchRankDistribution();
-            });
+            };
+            window.addEventListener('hashchange', this._hashchangeListener);
 
             // Sort games on initial load and initialize chart
             this.$nextTick(() => {

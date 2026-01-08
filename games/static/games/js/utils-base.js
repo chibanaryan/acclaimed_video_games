@@ -507,10 +507,15 @@ function createUnifiedSearchData(apiUrl, developerLimit = 3, gameLimit = 5, seri
 // YEAR PREVIEW UTILITIES
 // ============================================================
 
+// Guard to prevent duplicate listener registration (memory leak fix)
+var _yearPreviewInitialized = false;
+
 /**
  * Initializes year preview highlighting during year grid drag selection
  */
 function initYearPreview() {
+    if (_yearPreviewInitialized) return;
+    _yearPreviewInitialized = true;
     window.addEventListener('year-preview', handleYearPreview);
 }
 
