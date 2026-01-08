@@ -9,10 +9,12 @@ from unittest import mock
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.cache import cache
+from django.http import StreamingHttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
 from core.models import User
+from games import config
 from games import constants
 from games.models import (
     Developer,
@@ -28,7 +30,7 @@ from games.models import (
     WantToPlayGame,
     WikipediaGenre,
 )
-from games.views import _build_filter_cache_key
+from games.views import HomePageView, _build_filter_cache_key
 
 
 class HomePageViewTest(TestCase):
@@ -179,6 +181,59 @@ class HomePageViewTest(TestCase):
         response = self.client.get(reverse("home"))
         content = response.content.decode("utf-8")
         self.assertIn("Sign Up", content)
+
+    def test_home_page_cache_payload_preserves_headers_and_cookies(self):
+        cache_key = f"home_page:{config.CACHE_VERSION}:default"
+        cache.set(
+            cache_key,
+            {
+                "content": b"cached home",
+                "status": 200,
+                "content_type": "text/html; charset=utf-8",
+                "headers": {"X-Test-Header": "1"},
+                "cookies": {
+                    "ab_test": {
+                        "value": "A",
+                        "path": "/",
+                        "max_age": 60,
+                        "secure": False,
+                        "httponly": False,
+                        "samesite": "Lax",
+                    }
+                },
+            },
+            60,
+        )
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.content, b"cached home")
+        self.assertEqual(response["X-Test-Header"], "1")
+        self.assertEqual(response.cookies["ab_test"].value, "A")
+
+    def test_home_page_legacy_cache_payload_is_evicted(self):
+        cache_key = f"home_page:{config.CACHE_VERSION}:default"
+        cache.set(cache_key, "legacy", 60)
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        cached = cache.get(cache_key)
+        self.assertIsInstance(cached, dict)
+        self.assertIn("content", cached)
+
+    def test_home_page_streaming_response_not_cached(self):
+        cache_key = f"home_page:{config.CACHE_VERSION}:default"
+        with mock.patch.object(
+            HomePageView,
+            "get",
+            return_value=StreamingHttpResponse([b"chunk"]),
+        ):
+            response = self.client.get(reverse("home"))
+        self.assertTrue(response.streaming)
+        self.assertIsNone(cache.get(cache_key))
+
+    def test_home_page_query_string_not_cached(self):
+        cache_key = f"home_page:{config.CACHE_VERSION}:default"
+        response = self.client.get(reverse("home") + "?q=test")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(cache.get(cache_key))
 
     def test_sort_direction_parameter(self):
         """Test that sort direction parameter is accepted."""

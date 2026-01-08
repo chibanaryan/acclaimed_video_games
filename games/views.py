@@ -944,9 +944,68 @@ class HomePageView(RobustPaginationMixin, ListView):
     context_object_name = "games"
     paginate_by = 100
     paginate_orphans = 0
+    CACHE_HEADER_SKIP = {
+        "content-length",
+        "content-type",
+        "transfer-encoding",
+        "connection",
+    }
+
+    @classmethod
+    def _serialize_headers(cls, response):
+        headers = {}
+        for name, value in response.headers.items():
+            if name.lower() in cls.CACHE_HEADER_SKIP:
+                continue
+            headers[name] = value
+        return headers
+
+    @staticmethod
+    def _serialize_cookies(response):
+        cookies = {}
+        for name, morsel in response.cookies.items():
+            max_age = morsel["max-age"] or None
+            if max_age is not None:
+                try:
+                    max_age = int(max_age)
+                except (TypeError, ValueError):
+                    max_age = None
+            cookies[name] = {
+                "value": morsel.value,
+                "expires": morsel["expires"] or None,
+                "max_age": max_age,
+                "path": morsel["path"] or "/",
+                "domain": morsel["domain"] or None,
+                "secure": bool(morsel["secure"]),
+                "httponly": bool(morsel["httponly"]),
+                "samesite": morsel["samesite"] or None,
+            }
+        return cookies
+
+    @classmethod
+    def _apply_cached_headers(cls, response, headers):
+        for name, value in (headers or {}).items():
+            if name.lower() in cls.CACHE_HEADER_SKIP:
+                continue
+            response[name] = value
+
+    @staticmethod
+    def _apply_cached_cookies(response, cookies):
+        for name, data in (cookies or {}).items():
+            response.set_cookie(
+                name,
+                data.get("value", ""),
+                expires=data.get("expires") or None,
+                max_age=data.get("max_age"),
+                path=data.get("path") or "/",
+                domain=data.get("domain") or None,
+                secure=bool(data.get("secure")),
+                httponly=bool(data.get("httponly")),
+                samesite=data.get("samesite") or None,
+            )
 
     def dispatch(self, request, *args, **kwargs):
-        """Cache full page responses for anonymous users to reduce TTFB."""
+        """Cache rendered home page content for anonymous users to reduce TTFB."""
         # Only cache for anonymous, non-HTMX full-page requests
         is_htmx = (
             request.headers.get("HX-Request")
@@ -958,23 +1017,50 @@ class HomePageView(RobustPaginationMixin, ListView):
         if request.user.is_authenticated or is_htmx or request.method != "GET":
             return super().dispatch(request, *args, **kwargs)
 
-        # Build cache key from sorted query params
+        # Only cache the default home page (no query string)
         query_string = request.META.get("QUERY_STRING", "")
-        cache_key = f"home_page:{config.CACHE_VERSION}:{query_string}"
+        if query_string:
+            return super().dispatch(request, *args, **kwargs)
+        cache_key = f"home_page:{config.CACHE_VERSION}:default"
 
-        # Check cache
-        cached_response = cache.get(cache_key)
-        if cached_response is not None:
-            return cached_response
+        # Check cache (store only rendered content to avoid retaining request/context)
+        cached_payload = cache.get(cache_key)
+        if cached_payload is not None:
+            if isinstance(cached_payload, dict) and "content" in cached_payload:
+                from django.http import HttpResponse
+
+                content = cached_payload.get("content", b"")
+                status = cached_payload.get("status", 200)
+                content_type = cached_payload.get("content_type")
+                response = HttpResponse(
+                    content,
+                    status=status,
+                    content_type=content_type or "text/html; charset=utf-8",
+                )
+                self._apply_cached_headers(response, cached_payload.get("headers"))
+                self._apply_cached_cookies(response, cached_payload.get("cookies"))
+                return response
+            # Drop legacy cached payloads (response objects) and rebuild.
+            cache.delete(cache_key)
 
         # Generate response and cache it
         response = super().dispatch(request, *args, **kwargs)
 
-        # Only cache successful responses (render TemplateResponse first)
-        if response.status_code == 200:
+        # Only cache successful, non-streaming responses (render first)
+        if response.status_code == 200 and not getattr(response, "streaming", False):
             if hasattr(response, "render"):
                 response.render()
-            cache.set(cache_key, response, config.CACHE_TIMEOUT_HOME_PAGE)
+            cache.set(
+                cache_key,
+                {
+                    "content": response.content,
+                    "status": response.status_code,
+                    "content_type": response.get("Content-Type"),
+                    "headers": self._serialize_headers(response),
+                    "cookies": self._serialize_cookies(response),
+                },
+                config.CACHE_TIMEOUT_HOME_PAGE,
+            )
 
         return response
 
