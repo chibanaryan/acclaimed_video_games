@@ -1222,6 +1222,83 @@ class DeveloperDetailViewTest(TestCase):
         self.assertTrue(response.context.get("cached_flag"))
         cache.delete(cache_key)
 
+    def test_cached_context_hydrates_developers(self):
+        """Test cached context hydration returns Developer instances."""
+        from django.core.cache import cache
+        from games import config
+        from games.views import DeveloperDetailView
+
+        subsidiary = Developer.objects.create(name="Sub Dev", parent=self.dev)
+        sub_game = Game.objects.create(name="Sub Game", rank=3, year_of_release=2022)
+        sub_game.developers.add(subsidiary)
+
+        cache_key = f"{config.CACHE_VERSION}:developer_detail:{self.dev.id}"
+        cache.set(
+            cache_key,
+            {
+                "cache_schema_version": DeveloperDetailView.CACHE_SCHEMA_VERSION,
+                "subsidiaries_serialized": [
+                    {
+                        "developer_id": subsidiary.id,
+                        "developer": {
+                            "id": subsidiary.id,
+                            "name": subsidiary.name,
+                            "igdb_url": subsidiary.igdb_url,
+                            "slug": subsidiary.slug,
+                        },
+                        "game_ids": [sub_game.id],
+                        "games_count": 1,
+                        "sub_developers": [],
+                        "total_games_count": 1,
+                        "total_developers_count": 0,
+                    }
+                ],
+                "root_game_ids": [self.game1.id, self.game2.id],
+                "all_game_ids": [self.game1.id, self.game2.id, sub_game.id],
+                "total_games": 3,
+                "subsidiaries_count": 2,
+                "developers_flat": [],
+                "developer_game_map_json": "{}",
+                "developer_child_map_json": "{}",
+                "game_rank_map_json": "{}",
+                "game_data_map_json": "{}",
+                "game_developer_map": {},
+                "rank_distribution": [],
+            },
+            60,
+        )
+
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": self.dev.slug})
+        )
+        subsidiaries_with_games = response.context.get("subsidiaries_with_games", [])
+        self.assertTrue(subsidiaries_with_games)
+        self.assertIsInstance(subsidiaries_with_games[0]["developer"], Developer)
+        self.assertEqual(
+            subsidiaries_with_games[0]["developer"].id, subsidiary.id
+        )
+
+    def test_cache_schema_mismatch_is_ignored(self):
+        """Test cache schema mismatches are ignored."""
+        from django.core.cache import cache
+        from games import config
+        from games.views import DeveloperDetailView
+
+        cache_key = f"{config.CACHE_VERSION}:developer_detail:{self.dev.id}"
+        cache.set(
+            cache_key,
+            {
+                "cache_schema_version": DeveloperDetailView.CACHE_SCHEMA_VERSION - 1,
+                "cached_flag": True,
+            },
+            60,
+        )
+
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": self.dev.slug})
+        )
+        self.assertIsNone(response.context.get("cached_flag"))
+
     def test_cycle_in_subsidiaries_is_handled(self):
         """Test subsidiary cycles do not cause infinite recursion."""
         parent = Developer.objects.create(name="Parent Dev", slug="parent-dev")

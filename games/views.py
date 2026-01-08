@@ -1846,6 +1846,8 @@ class DeveloperDetailView(DetailView):
     Caches expensive context computation for 24 hours.
     """
 
+    CACHE_SCHEMA_VERSION = 2
+
     model = models.Developer
     template_name = "developers/developer_detail.html"
     context_object_name = "developer"
@@ -1876,7 +1878,19 @@ class DeveloperDetailView(DetailView):
         from games import config
 
         cache_key = f"{config.CACHE_VERSION}:developer_detail:{developer.id}"
-        return cache.get(cache_key)
+        cached = cache.get(cache_key)
+        if isinstance(cached, dict):
+            cached_schema = cached.get("cache_schema_version")
+            if cached_schema is not None and cached_schema != self.CACHE_SCHEMA_VERSION:
+                cache.delete(cache_key)
+                return None
+            if cached_schema == self.CACHE_SCHEMA_VERSION:
+                return cached
+            # Drop legacy cached payloads that stored model objects.
+            if "all_games" in cached and "subsidiaries_with_games" in cached:
+                cache.delete(cache_key)
+                return None
+        return cached
 
     def _set_cached_context(self, developer, context_data):
         """Cache the expensive context data for this developer."""
@@ -1886,6 +1900,101 @@ class DeveloperDetailView(DetailView):
 
         cache_key = f"{config.CACHE_VERSION}:developer_detail:{developer.id}"
         cache.set(cache_key, context_data, config.CACHE_TIMEOUT_24_HOURS)
+
+    @staticmethod
+    def _serialize_developer(developer):
+        return {
+            "id": developer.id,
+            "name": developer.name,
+            "igdb_url": developer.igdb_url,
+            "slug": developer.slug,
+        }
+
+    def _serialize_subsidiaries(self, devs_data):
+        serialized = []
+        for dev_data in devs_data:
+            serialized.append(
+                {
+                    "developer_id": dev_data["developer"].id,
+                    "developer": self._serialize_developer(dev_data["developer"]),
+                    "game_ids": [g.id for g in dev_data["games"]],
+                    "games_count": dev_data["games_count"],
+                    "sub_developers": self._serialize_subsidiaries(
+                        dev_data["sub_developers"]
+                    ),
+                    "total_games_count": dev_data["total_games_count"],
+                    "total_developers_count": dev_data["total_developers_count"],
+                }
+            )
+        return serialized
+
+    @staticmethod
+    def _collect_developer_ids(serialized):
+        developer_ids = set()
+        stack = list(serialized or [])
+        while stack:
+            dev_data = stack.pop()
+            if not isinstance(dev_data, dict):
+                continue
+            dev_id = dev_data.get("developer_id")
+            if dev_id is None:
+                dev = dev_data.get("developer")
+                if isinstance(dev, dict):
+                    dev_id = dev.get("id")
+                else:
+                    dev_id = getattr(dev, "id", None)
+            if dev_id is not None:
+                developer_ids.add(dev_id)
+            stack.extend(dev_data.get("sub_developers", []) or [])
+        return developer_ids
+
+    def _hydrate_subsidiaries(self, serialized, games_by_id, developers_by_id):
+        hydrated = []
+        for dev_data in serialized:
+            game_ids = dev_data.get("game_ids", [])
+            games = [games_by_id[gid] for gid in game_ids if gid in games_by_id]
+            dev_id = dev_data.get("developer_id")
+            dev = dev_data.get("developer")
+            if dev_id is None:
+                if isinstance(dev, dict):
+                    dev_id = dev.get("id")
+                else:
+                    dev_id = getattr(dev, "id", None)
+            dev_obj = developers_by_id.get(dev_id) if dev_id is not None else None
+            if dev_obj is None:
+                dev_obj = dev
+            sub_devs = self._hydrate_subsidiaries(
+                dev_data.get("sub_developers", []), games_by_id, developers_by_id
+            )
+            hydrated.append(
+                {
+                    "developer": dev_obj,
+                    "games": games,
+                    "games_count": dev_data.get("games_count", len(games)),
+                    "sub_developers": sub_devs,
+                    "total_games_count": dev_data.get("total_games_count", len(games)),
+                    "total_developers_count": dev_data.get(
+                        "total_developers_count", len(sub_devs)
+                    ),
+                }
+            )
+        return hydrated
+
+    @staticmethod
+    def _fetch_games_by_ids(game_ids):
+        from games.models import Game
+
+        if not game_ids:
+            return [], {}
+
+        games = list(
+            Game.objects.filter(id__in=game_ids)
+            .select_related("primary_hltb_game_data")
+            .prefetch_related("developers", "platforms", "wikipedia_genres")
+        )
+        games_by_id = {game.id: game for game in games}
+        ordered_games = [games_by_id[gid] for gid in game_ids if gid in games_by_id]
+        return ordered_games, games_by_id
 
     def flatten_developers(
         self, devs_data, parent_id=None, level=0, continues_at_levels=None
@@ -1943,7 +2052,48 @@ class DeveloperDetailView(DetailView):
         # Try to get cached context first
         cached = self._get_cached_context(developer)
         if cached is not None:
-            context.update(cached)
+            if (
+                isinstance(cached, dict)
+                and cached.get("cache_schema_version") == self.CACHE_SCHEMA_VERSION
+            ):
+                all_game_ids = cached.get("all_game_ids", [])
+                all_games, games_by_id = self._fetch_games_by_ids(all_game_ids)
+                developer_ids = self._collect_developer_ids(
+                    cached.get("subsidiaries_serialized", [])
+                )
+                developers_by_id = models.Developer.objects.in_bulk(developer_ids)
+                root_game_ids = cached.get("root_game_ids", [])
+                root_games = [
+                    games_by_id[gid] for gid in root_game_ids if gid in games_by_id
+                ]
+                subsidiaries_with_games = self._hydrate_subsidiaries(
+                    cached.get("subsidiaries_serialized", []),
+                    games_by_id,
+                    developers_by_id,
+                )
+
+                context.update(
+                    {
+                        "subsidiaries_with_games": subsidiaries_with_games,
+                        "root_games": root_games,
+                        "total_games": cached.get("total_games", 0),
+                        "subsidiaries_count": cached.get("subsidiaries_count", 0),
+                        "developers_flat": cached.get("developers_flat", []),
+                        "all_games": all_games,
+                        "developer_game_map_json": cached.get(
+                            "developer_game_map_json", "{}"
+                        ),
+                        "developer_child_map_json": cached.get(
+                            "developer_child_map_json", "{}"
+                        ),
+                        "game_rank_map_json": cached.get("game_rank_map_json", "{}"),
+                        "game_data_map_json": cached.get("game_data_map_json", "{}"),
+                        "game_developer_map": cached.get("game_developer_map", {}),
+                        "rank_distribution": cached.get("rank_distribution", []),
+                    }
+                )
+            else:
+                context.update(cached)
             return context
 
         # Recursively gather subsidiaries with nested structure
@@ -2175,13 +2325,16 @@ class DeveloperDetailView(DetailView):
 
         # Cache the expensive context data (excluding objects that can't be cached)
         # We cache everything that's JSON-serializable or simple Python objects
+        serialized_subsidiaries = self._serialize_subsidiaries(subsidiaries_with_games)
+        all_game_ids_ordered = [game.id for game in all_games]
         cacheable_context = {
-            "subsidiaries_with_games": subsidiaries_with_games,
-            "root_games": root_games,
+            "cache_schema_version": self.CACHE_SCHEMA_VERSION,
+            "subsidiaries_serialized": serialized_subsidiaries,
+            "root_game_ids": root_game_ids,
+            "all_game_ids": all_game_ids_ordered,
             "total_games": total_games,
             "subsidiaries_count": context["subsidiaries_count"],
             "developers_flat": devs_flat,
-            "all_games": all_games,
             "developer_game_map_json": context["developer_game_map_json"],
             "developer_child_map_json": context["developer_child_map_json"],
             "game_rank_map_json": context["game_rank_map_json"],
