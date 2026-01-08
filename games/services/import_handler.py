@@ -101,11 +101,27 @@ def import_igdb_with_progress(update_relationships: bool = False):
     from games import igdb
     from games.services.igdb_importer import IGDBImportService
 
-    # Use a queue to pass events from callback to generator in real-time
-    event_queue = queue.Queue()
+    # Use a bounded queue to prevent unbounded memory growth if the client is slow/disconnects
+    event_queue = queue.Queue(maxsize=1000)
 
     # Event to signal when client disconnects
     stop_event = threading.Event()
+
+    def _queue_event(payload) -> None:
+        """Best-effort enqueue that drops oldest events if the queue is full."""
+        if stop_event.is_set():
+            return
+        try:
+            event_queue.put_nowait(payload)
+        except queue.Full:
+            try:
+                event_queue.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                event_queue.put_nowait(payload)
+            except queue.Full:
+                return
 
     def progress_callback(event_type: str, data: dict) -> None:  # pragma: no cover
         """Callback to stream service events to SSE client."""
@@ -113,7 +129,7 @@ def import_igdb_with_progress(update_relationships: bool = False):
         if "event" not in data:
             data["event"] = event_type
         # Queue the event for immediate streaming
-        event_queue.put(json.dumps(data))
+        _queue_event(json.dumps(data))
 
     try:
         if update_relationships:
@@ -124,19 +140,19 @@ def import_igdb_with_progress(update_relationships: bool = False):
 
             total_games = games.count()
             if total_games == 0:
-                event_queue.put(
+                _queue_event(
                     json.dumps(
                         {"event": "error", "error": "No games with IGDB data found"}
                     )
                 )
-                event_queue.put(None)
+                _queue_event(None)
             else:
                 # Run relationship update in a thread
                 def run_update():
                     try:
                         api_client = igdb.get_api()
                         if not api_client:
-                            event_queue.put(
+                            _queue_event(
                                 json.dumps(
                                     {
                                         "event": "error",
@@ -225,9 +241,9 @@ def import_igdb_with_progress(update_relationships: bool = False):
                             },
                         )
                     except Exception as e:
-                        event_queue.put(json.dumps({"event": "error", "error": str(e)}))
+                        _queue_event(json.dumps({"event": "error", "error": str(e)}))
                     finally:
-                        event_queue.put(None)
+                        _queue_event(None)
 
                 import_thread = threading.Thread(target=run_update, daemon=True)
                 import_thread.start()
@@ -251,10 +267,10 @@ def import_igdb_with_progress(update_relationships: bool = False):
                 try:
                     service.import_games(games)
                 except Exception as e:
-                    event_queue.put(json.dumps({"event": "error", "error": str(e)}))
+                    _queue_event(json.dumps({"event": "error", "error": str(e)}))
                 finally:
                     # Signal that we're done
-                    event_queue.put(None)
+                    _queue_event(None)
 
             import_thread = threading.Thread(target=run_import, daemon=True)
             import_thread.start()
@@ -319,11 +335,27 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
     from games.services.wiki_page_lookup_service import WikiPageLookupService
     from games.services.wiki_genre_service import WikiGenreService
 
-    # Use a queue to pass events from callback to generator in real-time
-    event_queue = queue.Queue()
+    # Use a bounded queue to prevent unbounded memory growth if the client is slow/disconnects
+    event_queue = queue.Queue(maxsize=1000)
 
     # Event to signal when client disconnects
     stop_event = threading.Event()
+
+    def _queue_event(payload) -> None:
+        """Best-effort enqueue that drops oldest events if the queue is full."""
+        if stop_event.is_set():
+            return
+        try:
+            event_queue.put_nowait(payload)
+        except queue.Full:
+            try:
+                event_queue.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                event_queue.put_nowait(payload)
+            except queue.Full:
+                return
 
     def progress_callback(event_type: str, data: dict) -> None:  # pragma: no cover
         """Callback to stream service events to SSE client."""
@@ -332,7 +364,7 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
             data["event"] = event_type
 
         # Queue the event for immediate streaming
-        event_queue.put(json.dumps(data))
+        _queue_event(json.dumps(data))
 
     try:
         # Create services
@@ -575,10 +607,10 @@ def import_wikipedia_pages_with_progress(force_refresh: bool = False):
                 )
 
             except Exception as e:
-                event_queue.put(json.dumps({"event": "error", "error": str(e)}))
+                _queue_event(json.dumps({"event": "error", "error": str(e)}))
             finally:
                 # Signal that we're done
-                event_queue.put(None)
+                _queue_event(None)
 
         lookup_thread = threading.Thread(target=run_lookup, daemon=True)
         lookup_thread.start()
@@ -695,8 +727,27 @@ def import_batch_with_progress(data: Dict[str, Any]):
     import queue
     import threading
 
-    # Use a queue to pass events from callback to generator in real-time
-    event_queue = queue.Queue()
+    # Use a bounded queue to prevent unbounded memory growth if the client is slow/disconnects
+    event_queue = queue.Queue(maxsize=1000)
+
+    # Event to signal when client disconnects
+    stop_event = threading.Event()
+
+    def _queue_event(payload) -> None:
+        """Best-effort enqueue that drops oldest events if the queue is full."""
+        if stop_event.is_set():
+            return
+        try:
+            event_queue.put_nowait(payload)
+        except queue.Full:
+            try:
+                event_queue.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                event_queue.put_nowait(payload)
+            except queue.Full:
+                return
 
     def progress_callback(event_type: str, data: dict) -> None:
         """Callback to stream service events to SSE client."""
@@ -704,7 +755,7 @@ def import_batch_with_progress(data: Dict[str, Any]):
         if "event" not in data:
             data["event"] = event_type
         # Queue the event for immediate streaming
-        event_queue.put(json.dumps(data))
+        _queue_event(json.dumps(data))
 
     import_sequence = [
         ("platforms_file", "Platforms", import_platforms),
@@ -719,6 +770,11 @@ def import_batch_with_progress(data: Dict[str, Any]):
             try:
                 with transaction.atomic():
                     for field_name, display_name, handler in import_sequence:
+                        # Best-effort cancellation between files if client disconnects.
+                        if stop_event.is_set():
+                            raise RuntimeError(
+                                "Import canceled: client disconnected"
+                            )
                         file_obj = data.get(field_name)
                         if not file_obj:
                             continue
@@ -728,7 +784,7 @@ def import_batch_with_progress(data: Dict[str, Any]):
                             display_name.upper().replace(" ", "_")
                         )
                         if validation_error:
-                            event_queue.put(
+                            _queue_event(
                                 json.dumps(
                                     {
                                         "event": "error",
@@ -744,7 +800,7 @@ def import_batch_with_progress(data: Dict[str, Any]):
                             f = TextIOWrapper(file_obj, encoding="utf-8")
                             handler(f, progress_callback)
                         except Exception as e:
-                            event_queue.put(
+                            _queue_event(
                                 json.dumps(
                                     {
                                         "event": "error",
@@ -755,33 +811,37 @@ def import_batch_with_progress(data: Dict[str, Any]):
                             )
 
             except Exception as e:  # pragma: no cover
-                event_queue.put(json.dumps({"event": "error", "message": str(e)}))
+                _queue_event(json.dumps({"event": "error", "message": str(e)}))
             finally:
                 # Signal that we're done
-                event_queue.put(None)
+                _queue_event(None)
 
         import_thread = threading.Thread(target=run_import, daemon=True)
         import_thread.start()
 
         # Stream events as they come in from the queue
-        while True:
-            try:
-                # Wait for event with timeout to detect if thread is stuck
-                event_json = event_queue.get(timeout=30)
+        try:
+            while True:
+                try:
+                    # Wait for event with timeout to detect if thread is stuck
+                    event_json = event_queue.get(timeout=30)
 
-                # None signals the end of the import
-                if event_json is None:
+                    # None signals the end of the import
+                    if event_json is None:
+                        break
+
+                    # Yield the event in SSE format
+                    yield f"data: {event_json}\n\n"
+                except queue.Empty:
+                    # Timeout waiting for events
+                    error_msg = "Import timeout - no progress for 30 seconds"
+                    yield (
+                        f"data: {json.dumps({'event': 'error', 'message': error_msg})}\n\n"
+                    )
                     break
-
-                # Yield the event in SSE format
-                yield f"data: {event_json}\n\n"
-            except queue.Empty:
-                # Timeout waiting for events
-                error_msg = "Import timeout - no progress for 30 seconds"
-                yield (
-                    f"data: {json.dumps({'event': 'error', 'message': error_msg})}\n\n"
-                )
-                break
+        except GeneratorExit:  # pragma: no cover
+            stop_event.set()
+            raise
 
     except Exception as e:
         # Yield error event
