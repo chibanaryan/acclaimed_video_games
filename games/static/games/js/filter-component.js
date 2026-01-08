@@ -8,6 +8,34 @@
  *   <div x-data="filterComponent({ minYear: 1970, maxYear: 2025 })">
  */
 
+// Window flag to prevent duplicate global listener registration (memory leak fix)
+// Using window property instead of let to avoid "Identifier already declared" on re-execution
+if (typeof window._filterComponentGlobalListenersInitialized === 'undefined') {
+    window._filterComponentGlobalListenersInitialized = false;
+}
+
+// Explicit cleanup before HTMX swaps to ensure destroy() is called
+// (Alpine's destroy hook may not fire reliably during HTMX swaps)
+if (typeof window._filterComponentHtmxCleanupInitialized === 'undefined') {
+    window._filterComponentHtmxCleanupInitialized = true;
+    document.addEventListener('htmx:beforeSwap', (e) => {
+        // Check if the swap target contains or is the filter component
+        const swapTarget = e.detail.target;
+        if (!swapTarget) return;
+
+        const filterEl = swapTarget.matches('[x-data*="filterComponent"]')
+            ? swapTarget
+            : swapTarget.querySelector('[x-data*="filterComponent"]');
+
+        if (filterEl && typeof Alpine !== 'undefined') {
+            const component = Alpine.$data(filterEl);
+            if (component && typeof component.destroy === 'function') {
+                component.destroy();
+            }
+        }
+    });
+}
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('filterComponent', (config) => ({
         // Configuration passed from template
@@ -37,6 +65,10 @@ document.addEventListener('alpine:init', () => {
         _debouncedDisplay: null,
         clientFilterReady: false,
         _csf: null,
+        // Store listener references for cleanup (memory leak fix)
+        _popstateListener: null,
+        _gameStatusListener: null,
+        _mobileFilterListener: null,
 
         // Saved filters state
         savedFiltersOpen: false,
@@ -71,6 +103,19 @@ document.addEventListener('alpine:init', () => {
                 }
             }
             return cookieValue;
+        },
+
+        // Cleanup method for memory leak prevention
+        destroy() {
+            if (this._popstateListener) {
+                window.removeEventListener('popstate', this._popstateListener);
+            }
+            if (this._gameStatusListener) {
+                window.removeEventListener('game-status-changed', this._gameStatusListener);
+            }
+            if (this._mobileFilterListener) {
+                window.removeEventListener('mobile-filter-opened', this._mobileFilterListener);
+            }
         },
 
         init() {
@@ -122,14 +167,45 @@ document.addEventListener('alpine:init', () => {
                     sessionStorage.setItem('gameListScrollPos', window.scrollY.toString());
                 };
 
-                document.addEventListener('click', (e) => {
-                    const link = e.target.closest("a[href*='/game/']");
-                    if (link) {
-                        saveScrollPosition();
-                    }
-                });
+                // Only register global listeners once to prevent memory leaks
+                if (!window._filterComponentGlobalListenersInitialized) {
+                    window._filterComponentGlobalListenersInitialized = true;
 
-                window.addEventListener('popstate', (event) => {
+                    document.addEventListener('click', (e) => {
+                        const link = e.target.closest("a[href*='/game/']");
+                        if (link) {
+                            saveScrollPosition();
+                        }
+                    });
+
+                    // Helper to safely get Alpine component data
+                    // Note: There is only ONE filterComponent per page (in the sidebar).
+                    // If multiple instances are ever needed, update to querySelectorAll + iterate.
+                    const getFilterComponent = () => {
+                        const el = document.querySelector('[x-data*="filterComponent"]');
+                        return el ? Alpine.$data(el) : null;
+                    };
+
+                    document.addEventListener('add-platform', (e) => {
+                        const component = getFilterComponent();
+                        if (component) component.addPlatform(e.detail);
+                    });
+                    document.addEventListener('add-platforms', (e) => {
+                        const component = getFilterComponent();
+                        if (component) component.addPlatforms(e.detail);
+                    });
+                    document.addEventListener('add-genre', (e) => {
+                        const component = getFilterComponent();
+                        if (component) component.addGenre(e.detail);
+                    });
+                    document.addEventListener('add-genres', (e) => {
+                        const component = getFilterComponent();
+                        if (component) component.addGenres(e.detail);
+                    });
+                }
+
+                // Store and register instance-specific listeners (cleanup in destroy())
+                this._popstateListener = (event) => {
                     const params = new URLSearchParams(window.location.search);
                     this.filters.q = params.get('q') || '';
                     this.filters.start = params.get('start') ? parseInt(params.get('start')) : this.minYear;
@@ -152,7 +228,8 @@ document.addEventListener('alpine:init', () => {
                     } else {
                         setLoading('game-results-container');
                     }
-                });
+                };
+                window.addEventListener('popstate', this._popstateListener);
 
                 this.$watch('filters.q', val => {
                     if (!this.initialized) return;
@@ -162,24 +239,21 @@ document.addEventListener('alpine:init', () => {
                 setTimeout(() => { if (typeof initLoadMore === 'function') initLoadMore(); }, 150);
                 if (typeof initYearPreview === 'function') initYearPreview();
 
-                document.addEventListener('add-platform', (e) => this.addPlatform(e.detail));
-                document.addEventListener('add-platforms', (e) => this.addPlatforms(e.detail));
-                document.addEventListener('add-genre', (e) => this.addGenre(e.detail));
-                document.addEventListener('add-genres', (e) => this.addGenres(e.detail));
-
-                window.addEventListener('game-status-changed', (event) => {
+                this._gameStatusListener = (event) => {
                     if (this.filters.played && this.clientFilterReady) {
                         this.performClientUpdate({ historyMethod: 'replaceState' });
                     }
-                });
+                };
+                window.addEventListener('game-status-changed', this._gameStatusListener);
 
-                window.addEventListener('mobile-filter-opened', () => {
+                this._mobileFilterListener = () => {
                     if (this.clientFilterReady) {
                         this.updateFacetCounts();
                     } else {
                         this.dispatchInitialCounts();
                     }
-                });
+                };
+                window.addEventListener('mobile-filter-opened', this._mobileFilterListener);
 
                 this.initialized = true;
                 this.initClientFiltering();
