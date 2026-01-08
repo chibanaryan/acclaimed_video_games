@@ -7,8 +7,8 @@
 
 {% block pre_alpine %}
     {# Filter component - preloaded, will be loaded dynamically with Alpine #}
-    <link rel="preload" href="{% static 'games/js/filter-component.min.js' %}?v=3" as="script">
-    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=3');</script>
+    <link rel="preload" href="{% static 'games/js/filter-component.min.js' %}?v=4" as="script">
+    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=4');</script>
 {% endblock %}
 
 {% block extra_head %}
@@ -223,4 +223,3 @@
 </script>
 {% endif %}
 {% endblock %}
-

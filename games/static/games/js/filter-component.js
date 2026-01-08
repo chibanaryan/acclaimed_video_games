@@ -732,12 +732,6 @@ document.addEventListener('alpine:init', () => {
                 return this.performClientUpdate({ historyMethod });
             }
 
-            if (partial) {
-                this.isLoading = true;
-                setLoading('game-results-container');
-                return;
-            }
-
             const signal = this.fetchManager.newRequest();
             this.isLoading = true;
             setLoading('game-results-container');

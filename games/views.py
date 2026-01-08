@@ -1,4 +1,6 @@
 import csv
+import hashlib
+import json
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlencode
@@ -60,6 +62,32 @@ def _get_hero_stats():
         }
         cache.set(cache_key, stats, config.CACHE_TIMEOUT_24_HOURS)
     return stats
+
+
+def _normalize_cache_filters(filters, keys):
+    normalized = {}
+    for key in keys:
+        value = filters.get(key)
+        if value is None:
+            continue
+        if isinstance(value, str) and value == "":
+            continue
+        if isinstance(value, (list, tuple, set)) and not value:
+            continue
+        if isinstance(value, (list, tuple, set)):
+            normalized[key] = sorted(str(v) for v in value)
+        else:
+            normalized[key] = value
+    return normalized
+
+
+def _build_filter_cache_key(prefix, filters, keys, user_id=None):
+    payload = _normalize_cache_filters(filters, keys)
+    if user_id is not None:
+        payload["user"] = user_id
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.md5(raw.encode()).hexdigest()
+    return f"{prefix}:{config.CACHE_VERSION}:{digest}"
 
 
 def _get_played_game_ids(user):
@@ -366,8 +394,10 @@ def _apply_played_filter(qs, user, played_param):
         return qs
     if played_param == "yes":
         return qs.filter(is_played_by_user=True)
+    elif played_param == "want":
+        return qs.filter(is_want_to_play_by_user=True)
     elif played_param == "no":
-        return qs.filter(is_played_by_user=False)
+        return qs.filter(is_played_by_user=False, is_want_to_play_by_user=False)
     return qs
 
 
@@ -1290,6 +1320,13 @@ class HomePageView(RobustPaginationMixin, ListView):
             "year": year_param,
             "decade": decade_param,
         }
+        q = q_param
+        played_cache_user_id = (
+            self.request.user.id
+            if played_param and self.request.user.is_authenticated
+            else None
+        )
+        apply_played_filter = played_cache_user_id is not None
 
         context["genres"] = genres
         context["platforms"] = platforms
@@ -1337,109 +1374,147 @@ class HomePageView(RobustPaginationMixin, ListView):
 
         # Get year counts for heatmap grid based on current filters (excluding year)
         # This allows users to see which years have games given their other filters
-        base_qs = models.Game.objects.all()
+        year_counts_cache_key = _build_filter_cache_key(
+            "home_year_counts",
+            filters,
+            keys=["q", "genres", "platforms", "played"],
+            user_id=played_cache_user_id,
+        )
+        year_counts = cache.get(year_counts_cache_key)
+        if year_counts is None:
+            base_qs = models.Game.objects.all()
 
-        # Add played status annotation for authenticated users
-        if self.request.user.is_authenticated:
-            base_qs = base_qs.with_played_status(self.request.user)
+            # Add played status annotation only when the played filter is active
+            if apply_played_filter:
+                base_qs = base_qs.with_played_status(self.request.user)
 
-        # Apply search filter (same as get_queryset)
-        q = self.request.GET.get("q")
-        if q:
-            base_qs = base_qs.filter(name__icontains=q)
+            # Apply search filter (same as get_queryset)
+            if q:
+                base_qs = base_qs.filter(name__icontains=q)
 
-        # Apply genre filter (single-select, so match_all doesn't matter)
-        genres_param = self.request.GET.get("genres")
-        if genres_param:
-            genre_ids = [int(x) for x in genres_param.split(",")]
-            base_qs = utils.apply_genre_filter(
-                base_qs, genre_ids, match_all=False, use_wikipedia=True
+            # Apply genre filter (single-select, so match_all doesn't matter)
+            genres_param = self.request.GET.get("genres")
+            if genres_param:
+                genre_ids = [int(x) for x in genres_param.split(",")]
+                base_qs = utils.apply_genre_filter(
+                    base_qs, genre_ids, match_all=False, use_wikipedia=True
+                )
+
+            # Apply platform filter (same as get_queryset, with virtual ID expansion)
+            platforms_param = self.request.GET.get("platforms")
+            if platforms_param:
+                platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
+                base_qs = utils.apply_platform_filter(base_qs, platform_ids)
+
+            # Apply played status filter
+            base_qs = _apply_played_filter(base_qs, self.request.user, played_param)
+
+            # Calculate year counts from filtered base queryset
+            # Use distinct=True to avoid counting games multiple times when M2M JOINs
+            # cause duplicate rows (e.g., a game with WIN+MAC platforms matched twice)
+            all_years = range(min_year, max_year + 1)
+            year_count_map = {
+                entry["year_of_release"]: entry["count"]
+                for entry in base_qs.values("year_of_release")
+                .annotate(count=Count("id", distinct=True))
+                .order_by("year_of_release")
+            }
+            year_counts = [
+                {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
+            ]
+            cache.set(
+                year_counts_cache_key, year_counts, config.CACHE_TIMEOUT_5_MINUTES
             )
 
-        # Apply platform filter (same as get_queryset, with virtual ID expansion)
-        platforms_param = self.request.GET.get("platforms")
-        if platforms_param:
-            platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
-            base_qs = utils.apply_platform_filter(base_qs, platform_ids)
-
-        # Apply played status filter
-        base_qs = _apply_played_filter(base_qs, self.request.user, played_param)
-
-        # Calculate year counts from filtered base queryset
-        # Use distinct=True to avoid counting games multiple times when M2M JOINs
-        # cause duplicate rows (e.g., a game with WIN+MAC platforms matched twice)
-        all_years = range(min_year, max_year + 1)
-        year_count_map = {
-            entry["year_of_release"]: entry["count"]
-            for entry in base_qs.values("year_of_release")
-            .annotate(count=Count("id", distinct=True))
-            .order_by("year_of_release")
-        }
-        all_years_with_counts = [
-            {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
-        ]
-
-        context["year_counts"] = all_years_with_counts
+        context["year_counts"] = year_counts
 
         # FACETED COUNTS FOR GENRES
         # Apply all filters EXCEPT genres (standard faceting for single-select)
-        genre_facet_qs = models.Game.objects.all()
-        if self.request.user.is_authenticated:
-            genre_facet_qs = genre_facet_qs.with_played_status(self.request.user)
-        if q:
-            genre_facet_qs = genre_facet_qs.filter(name__icontains=q)
-        genre_facet_qs = utils.apply_year_filters(
-            genre_facet_qs,
-            decade=decade_param,
-            year=year_param,
-            start=start_param,
-            end=end_param,
+        genre_counts_cache_key = _build_filter_cache_key(
+            "home_genre_counts",
+            filters,
+            keys=["q", "start", "end", "platforms", "played"],
+            user_id=played_cache_user_id,
         )
-        if platforms_param:
-            platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
-            genre_facet_qs = utils.apply_platform_filter(genre_facet_qs, platform_ids)
-        genre_facet_qs = _apply_played_filter(
-            genre_facet_qs, self.request.user, played_param
-        )
+        genre_counts = cache.get(genre_counts_cache_key)
+        if genre_counts is None:
+            genre_facet_qs = models.Game.objects.all()
+            if apply_played_filter:
+                genre_facet_qs = genre_facet_qs.with_played_status(self.request.user)
+            if q:
+                genre_facet_qs = genre_facet_qs.filter(name__icontains=q)
+            genre_facet_qs = utils.apply_year_filters(
+                genre_facet_qs,
+                decade=decade_param,
+                year=year_param,
+                start=start_param,
+                end=end_param,
+            )
+            if platforms_param:
+                platform_ids = _expand_platform_virtual_ids(platforms_param, platforms)
+                genre_facet_qs = utils.apply_platform_filter(
+                    genre_facet_qs, platform_ids
+                )
+            genre_facet_qs = _apply_played_filter(
+                genre_facet_qs, self.request.user, played_param
+            )
 
-        # Standard faceted counting (single-select mode)
-        genre_counts = dict(
-            genre_facet_qs.values("wikipedia_genres__id")
-            .exclude(wikipedia_genres__id__isnull=True)
-            .annotate(count=Count("id", distinct=True))
-            .values_list("wikipedia_genres__id", "count")
-        )
+            # Standard faceted counting (single-select mode)
+            genre_counts = dict(
+                genre_facet_qs.values("wikipedia_genres__id")
+                .exclude(wikipedia_genres__id__isnull=True)
+                .annotate(count=Count("id", distinct=True))
+                .values_list("wikipedia_genres__id", "count")
+            )
+            cache.set(
+                genre_counts_cache_key, genre_counts, config.CACHE_TIMEOUT_5_MINUTES
+            )
 
         # FACETED COUNTS FOR PLATFORMS
         # Base: apply all filters EXCEPT platforms (q, year, genres)
-        platform_facet_qs = models.Game.objects.all()
-        if self.request.user.is_authenticated:
-            platform_facet_qs = platform_facet_qs.with_played_status(self.request.user)
-        if q:
-            platform_facet_qs = platform_facet_qs.filter(name__icontains=q)
-        platform_facet_qs = utils.apply_year_filters(
-            platform_facet_qs,
-            decade=decade_param,
-            year=year_param,
-            start=start_param,
-            end=end_param,
+        platform_counts_cache_key = _build_filter_cache_key(
+            "home_platform_counts",
+            filters,
+            keys=["q", "start", "end", "genres", "played"],
+            user_id=played_cache_user_id,
         )
-        if genres_param:
-            genre_ids = [int(x) for x in genres_param.split(",")]
-            platform_facet_qs = utils.apply_genre_filter(
-                platform_facet_qs, genre_ids, match_all=False, use_wikipedia=True
+        platform_counts = cache.get(platform_counts_cache_key)
+        if platform_counts is None:
+            platform_facet_qs = models.Game.objects.all()
+            if apply_played_filter:
+                platform_facet_qs = platform_facet_qs.with_played_status(
+                    self.request.user
+                )
+            if q:
+                platform_facet_qs = platform_facet_qs.filter(name__icontains=q)
+            platform_facet_qs = utils.apply_year_filters(
+                platform_facet_qs,
+                decade=decade_param,
+                year=year_param,
+                start=start_param,
+                end=end_param,
             )
-        platform_facet_qs = _apply_played_filter(
-            platform_facet_qs, self.request.user, played_param
-        )
+            if genres_param:
+                genre_ids = [int(x) for x in genres_param.split(",")]
+                platform_facet_qs = utils.apply_genre_filter(
+                    platform_facet_qs, genre_ids, match_all=False, use_wikipedia=True
+                )
+            platform_facet_qs = _apply_played_filter(
+                platform_facet_qs, self.request.user, played_param
+            )
 
-        # Count games per platform
-        platform_counts = dict(
-            platform_facet_qs.values("platforms__id")
-            .exclude(platforms__id__isnull=True)
-            .annotate(count=Count("id", distinct=True))
-            .values_list("platforms__id", "count")
-        )
+            # Count games per platform
+            platform_counts = dict(
+                platform_facet_qs.values("platforms__id")
+                .exclude(platforms__id__isnull=True)
+                .annotate(count=Count("id", distinct=True))
+                .values_list("platforms__id", "count")
+            )
+            cache.set(
+                platform_counts_cache_key,
+                platform_counts,
+                config.CACHE_TIMEOUT_5_MINUTES,
+            )
 
         # Merge filtered counts into genres/platforms lists
         genres_with_filtered = [
@@ -1462,17 +1537,48 @@ class HomePageView(RobustPaginationMixin, ListView):
 
         # Rank distribution (10 bins of 100 ranks each)
         # Uses the filtered queryset to show distribution of current results
-        rank_bins = []
-        bin_size = 100
-        for i in range(10):
-            bin_start = i * bin_size + 1
-            bin_end = (i + 1) * bin_size
-            count = (
+        rank_dist_cache_key = _build_filter_cache_key(
+            "home_rank_dist",
+            filters,
+            keys=[
+                "q",
+                "start",
+                "end",
+                "genres",
+                "platforms",
+                "series",
+                "played",
+                "hltb_mode",
+                "hltb_min",
+                "hltb_max",
+            ],
+            user_id=played_cache_user_id,
+        )
+        rank_bins = cache.get(rank_dist_cache_key)
+        if rank_bins is None:
+            rank_bins = []
+            bin_size = 100
+            counts = [0] * 10
+            ranks = (
                 self.get_queryset()
-                .filter(rank__gte=bin_start, rank__lte=bin_end)
-                .count()
+                .filter(rank__gte=1, rank__lte=1000)
+                .order_by()
+                .values_list("id", "rank")
             )
-            rank_bins.append({"binStart": bin_start, "binEnd": bin_end, "count": count})
+            for _, rank in ranks:
+                if rank:
+                    idx = (rank - 1) // bin_size
+                    if 0 <= idx < 10:
+                        counts[idx] += 1
+            for i in range(10):
+                bin_start = i * bin_size + 1
+                bin_end = (i + 1) * bin_size
+                rank_bins.append(
+                    {"binStart": bin_start, "binEnd": bin_end, "count": counts[i]}
+                )
+            cache.set(
+                rank_dist_cache_key, rank_bins, config.CACHE_TIMEOUT_5_MINUTES
+            )
         context["rank_distribution"] = rank_bins
 
         # Load More context
