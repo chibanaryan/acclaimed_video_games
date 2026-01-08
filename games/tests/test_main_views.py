@@ -25,8 +25,10 @@ from games.models import (
     Post,
     Publication,
     SiteMetadata,
+    WantToPlayGame,
     WikipediaGenre,
 )
+from games.views import _build_filter_cache_key
 
 
 class HomePageViewTest(TestCase):
@@ -807,6 +809,7 @@ class GameSearchPlayedFilterTest(TestCase):
         # Mark games 1 and 2 as played by the user
         PlayedGame.objects.create(user=self.user, game=self.game1, igdb_id=1001)
         PlayedGame.objects.create(user=self.user, game=self.game2, igdb_id=1002)
+        WantToPlayGame.objects.create(user=self.user, game=self.game3, igdb_id=1003)
 
     def test_played_filter_ignored_when_not_authenticated(self):
         """Test that played filter is ignored for anonymous users."""
@@ -835,6 +838,17 @@ class GameSearchPlayedFilterTest(TestCase):
         self.assertEqual(response.status_code, 200)
         games = list(response.context["games"])
         # Should only show unplayed games
+        self.assertEqual(len(games), 0)
+        self.assertNotIn(self.game1, games)
+        self.assertNotIn(self.game2, games)
+        self.assertNotIn(self.game3, games)
+
+    def test_played_filter_want_shows_want_to_play_games(self):
+        """Test that played=want filter shows only want-to-play games."""
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(reverse("home") + "?played=want")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
         self.assertEqual(len(games), 1)
         self.assertIn(self.game3, games)
         self.assertNotIn(self.game1, games)
@@ -878,6 +892,35 @@ class GameSearchPlayedFilterTest(TestCase):
         self.assertEqual(response.status_code, 200)
         # For anonymous users, played should be empty
         self.assertEqual(response.context["filters"]["played"], "")
+
+
+class FilterCacheKeyTest(TestCase):
+    def test_cache_key_stable_for_reordered_lists(self):
+        filters_a = {
+            "q": "zelda",
+            "start": 1990,
+            "end": 1999,
+            "genres": ["2", "1"],
+            "platforms": ["3", "2"],
+        }
+        filters_b = {
+            "q": "zelda",
+            "start": 1990,
+            "end": 1999,
+            "genres": ["1", "2"],
+            "platforms": ["2", "3"],
+        }
+        key_a = _build_filter_cache_key(
+            "home_year_counts",
+            filters_a,
+            keys=["q", "start", "end", "genres", "platforms"],
+        )
+        key_b = _build_filter_cache_key(
+            "home_year_counts",
+            filters_b,
+            keys=["q", "start", "end", "genres", "platforms"],
+        )
+        self.assertEqual(key_a, key_b)
 
 
 class GameSearchLoadMoreTest(TestCase):

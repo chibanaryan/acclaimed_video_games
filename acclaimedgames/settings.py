@@ -16,6 +16,7 @@ if local_env.exists():
 # Define TEST_MODE early for Sentry configuration
 # Check both Django's manage.py test and pytest
 TEST_MODE = "test" in sys.argv or "pytest" in sys.modules
+RUNNING_DEVSERVER = "runserver" in sys.argv
 
 SENTRY_DSN = env("SENTRY_DSN", default=None)
 # Don't initialize Sentry during test runs to avoid capturing test errors
@@ -106,8 +107,8 @@ MIDDLEWARE = [
     "games.middleware.HTMXPushURLMiddleware",  # HTMX history support
 ]
 
-# Only enable cache middleware in production (not in DEBUG or TEST mode)
-if not DEBUG and not TEST_MODE:
+# Only enable cache middleware in production (not in DEBUG/TEST or dev server)
+if not DEBUG and not TEST_MODE and not RUNNING_DEVSERVER:
     MIDDLEWARE.insert(0, "django.middleware.cache.UpdateCacheMiddleware")
     MIDDLEWARE.append("django.middleware.cache.FetchFromCacheMiddleware")
 
@@ -225,9 +226,16 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-# Cache configuration - use dummy cache for development if no CACHE_URL set
+# Cache configuration
 cache_url = env("CACHE_URL", default=None)
-if cache_url:
+if DEBUG and not TEST_MODE and (not cache_url or cache_url.startswith("dbcache")):
+    # Avoid dbcache in local dev (requires createcachetable in each new worktree).
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+elif cache_url:
     CACHES = {
         "default": env.cache(),
     }
@@ -354,7 +362,7 @@ X_FRAME_OPTIONS = "DENY"  # Prevent clickjacking
 
 # Production-only security settings (require HTTPS)
 # Exclude TEST_MODE since tests run with DEBUG=False but shouldn't have HTTPS redirect
-if not DEBUG and not TEST_MODE:
+if not DEBUG and not TEST_MODE and not RUNNING_DEVSERVER:
     SECURE_HSTS_SECONDS = 31536000  # 1 year - enable HTTP Strict Transport Security
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
