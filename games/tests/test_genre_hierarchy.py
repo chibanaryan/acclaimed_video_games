@@ -50,8 +50,8 @@ class GenreNormalizerTest(TestCase):
 
     def test_normalize_puzzle_platformer(self):
         """Test that puzzle platformers are distinct from action platformers."""
-        self.assertEqual(normalize_genre("Puzzle-platform"), "Puzzle Platformer")
-        self.assertEqual(normalize_genre("Puzzle platformer"), "Puzzle Platformer")
+        self.assertEqual(normalize_genre("Puzzle-platform"), "Puzzle-Platformer")
+        self.assertEqual(normalize_genre("Puzzle platformer"), "Puzzle-Platformer")
 
     def test_normalize_action_rpg_variants(self):
         """Test that Action RPG variants normalize correctly."""
@@ -174,7 +174,7 @@ class GetGenreParentNameTest(TestCase):
 
     def test_puzzle_genres_hierarchy(self):
         """Test that puzzle genres are correctly parented."""
-        self.assertEqual(get_genre_parent_name("Puzzle Platformer"), "Puzzle")
+        self.assertEqual(get_genre_parent_name("Puzzle-Platformer"), "Puzzle")
 
     def test_returns_none_for_root_category(self):
         """Test that root categories return None."""

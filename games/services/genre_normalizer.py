@@ -77,8 +77,8 @@ GENRE_MAPPING = {
     "Platform game": "Platform",
     "Cinematic platform": "Platform",
     "Cinematic platformer": "Platform",
-    "Puzzle-platform": "Puzzle Platformer",
-    "Puzzle platformer": "Puzzle Platformer",
+    "Puzzle-platform": "Puzzle-Platformer",
+    "Puzzle platformer": "Puzzle-Platformer",
     "Immersive sim": "Immersive Sim",
     # Role-playing genres
     "Role-playing": "Role-Playing",
@@ -280,7 +280,7 @@ GENRE_HIERARCHY = {
     ],
     "Puzzle": [
         "Puzzle",
-        "Puzzle Platformer",
+        "Puzzle-Platformer",
         "Match-Three",
         "Block Breaker",
         "Incremental",

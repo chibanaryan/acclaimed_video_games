@@ -34,7 +34,7 @@ GENRES_TO_REPARENT = [
 NEW_GENRES = [
     ("Hack and Slash", "Action"),
     ("Extreme Sports", "Sports"),
-    ("Puzzle Platformer", "Puzzle"),
+    ("Puzzle-Platformer", "Puzzle"),
 ]
 
 
