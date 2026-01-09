@@ -26,7 +26,7 @@ GENRE_MAPPING = {
     "Action": "Action",
     "Beat 'em up": "Beat 'em Up",
     "Beat em up": "Beat 'em Up",
-    "Hack and slash": "Beat 'em Up",
+    "Hack and slash": "Hack and Slash",
     "Fighting": "Fighting",
     "First-person shooter": "First-Person Shooter",
     "First-person hero shooter": "First-Person Shooter",
@@ -77,7 +77,8 @@ GENRE_MAPPING = {
     "Platform game": "Platform",
     "Cinematic platform": "Platform",
     "Cinematic platformer": "Platform",
-    "Puzzle-platform": "Platform",
+    "Puzzle-platform": "Puzzle Platformer",
+    "Puzzle platformer": "Puzzle Platformer",
     "Immersive sim": "Immersive Sim",
     # Role-playing genres
     "Role-playing": "Role-Playing",
@@ -153,7 +154,7 @@ GENRE_MAPPING = {
     "Ice hockey": "Ice Hockey",
     "Boxing": "Boxing",
     "Snowboarding": "Snowboarding",
-    "Extreme sports": "Snowboarding",
+    "Extreme sports": "Extreme Sports",
     "Sports management": "Sports Management",
     # Puzzle genres
     "Puzzle": "Puzzle",
@@ -187,10 +188,10 @@ GENRE_MAPPING = {
     "Location-based game": "Location-Based",
     # Additional adventure variants
     "Graphic adventure": "Point-and-Click",  # Classic adventure games
-    "Exploration": "Walking Simulator",  # Exploration games
+    "Exploration": None,  # Too vague - exploration games span many genres
     # Invalid/removed entries (map to None)
     "(minigame)": None,
-    "Minigame": "Interactive Drama",
+    "Minigame": None,  # Not a meaningful genre classification
     "Minigames": None,
     "Various": None,  # Too vague (UFO 50)
     "Snake": None,  # Too specific (single game type)
@@ -206,6 +207,7 @@ GENRE_HIERARCHY = {
     "Action": [
         "Action",
         "Beat 'em Up",
+        "Hack and Slash",
         "Fighting",
         "First-Person Shooter",
         "Third-Person Shooter",
@@ -217,6 +219,11 @@ GENRE_HIERARCHY = {
         "Battle Royale",
         "MOBA",
         "Vehicular Combat",
+        "Maze",
+        "Platform",
+        "Metroidvania",
+        "Racing",
+        "Kart Racing",
     ],
     "Adventure": [
         "Action-Adventure",
@@ -226,9 +233,7 @@ GENRE_HIERARCHY = {
         "Visual Novel",
         "Walking Simulator",
         "Escape Room",
-        "Metroidvania",
         "Dungeon Crawler",
-        "Platform",
         "Immersive Sim",
     ],
     "Role-Playing": [
@@ -259,9 +264,6 @@ GENRE_HIERARCHY = {
         "Flight Simulation",
         "Space Combat",
         "Vehicle Simulation",
-        "Racing",
-        "Kart Racing",
-        "Pinball",
         "God Game",
     ],
     "Sports": [
@@ -273,13 +275,14 @@ GENRE_HIERARCHY = {
         "Ice Hockey",
         "Boxing",
         "Snowboarding",
+        "Extreme Sports",
         "Sports Management",
     ],
     "Puzzle": [
         "Puzzle",
+        "Puzzle Platformer",
         "Match-Three",
         "Block Breaker",
-        "Maze",
         "Incremental",
     ],
     "Party & Casual": [
@@ -289,6 +292,7 @@ GENRE_HIERARCHY = {
         "Digital Card Game",
         "Educational",
         "Exercise",
+        "Pinball",
     ],
     "Hybrid & Specialized": [
         "Sandbox",

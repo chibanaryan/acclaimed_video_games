@@ -3,6 +3,10 @@
 ## 2026-01-08
 
 - Fix memory leaks: add guard to initYearPreview() and HTMX cleanup handler for developerFilter hashchange listener
+- Fix genre hierarchy: move Maze/Platform/Metroidvania/Racing/Kart Racing to Action, Pinball to Party & Casual
+- Fix genre mappings: Hack and Slash and Extreme Sports now separate genres (not mapped to Beat 'em Up/Snowboarding)
+- Fix genre mappings: Exploration and Minigame now map to None (too vague for meaningful categorization)
+- Add Puzzle Platformer as distinct genre under Puzzle (separate from action Platform)
 
 ## 2026-01-07
 

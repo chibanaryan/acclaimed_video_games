@@ -48,6 +48,11 @@ class GenreNormalizerTest(TestCase):
         self.assertEqual(normalize_genre("Platform game"), "Platform")
         self.assertEqual(normalize_genre("Cinematic platformer"), "Platform")
 
+    def test_normalize_puzzle_platformer(self):
+        """Test that puzzle platformers are distinct from action platformers."""
+        self.assertEqual(normalize_genre("Puzzle-platform"), "Puzzle Platformer")
+        self.assertEqual(normalize_genre("Puzzle platformer"), "Puzzle Platformer")
+
     def test_normalize_action_rpg_variants(self):
         """Test that Action RPG variants normalize correctly."""
         self.assertEqual(normalize_genre("Action RPG"), "Action RPG")
@@ -63,9 +68,20 @@ class GenreNormalizerTest(TestCase):
     def test_normalize_invalid_genres_to_none(self):
         """Test that invalid/meta genres normalize to None."""
         self.assertIsNone(normalize_genre("(minigame)"))
+        self.assertIsNone(normalize_genre("Minigame"))
         self.assertIsNone(normalize_genre("Minigames"))
         self.assertIsNone(normalize_genre("Various"))
         self.assertIsNone(normalize_genre("Art game"))
+        # Exploration is too vague to categorize
+        self.assertIsNone(normalize_genre("Exploration"))
+
+    def test_normalize_hack_and_slash(self):
+        """Test that Hack and slash normalizes to its own genre, not Beat 'em Up."""
+        self.assertEqual(normalize_genre("Hack and slash"), "Hack and Slash")
+
+    def test_normalize_extreme_sports(self):
+        """Test that Extreme sports normalizes to its own genre, not Snowboarding."""
+        self.assertEqual(normalize_genre("Extreme sports"), "Extreme Sports")
 
     def test_normalize_unknown_genre_returns_as_is(self):
         """Test that unknown genres are returned as-is."""
@@ -126,10 +142,39 @@ class GetGenreParentNameTest(TestCase):
         """Test that child genres return their parent category."""
         # First-Person Shooter should be under Action
         self.assertEqual(get_genre_parent_name("First-Person Shooter"), "Action")
-        # Platform should be under Adventure
-        self.assertEqual(get_genre_parent_name("Platform"), "Adventure")
+        # Platform should be under Action (reflex-based gameplay)
+        self.assertEqual(get_genre_parent_name("Platform"), "Action")
         # Action RPG should be under Role-Playing
         self.assertEqual(get_genre_parent_name("Action RPG"), "Role-Playing")
+
+    def test_action_genres_hierarchy(self):
+        """Test that action-oriented genres are correctly parented under Action."""
+        action_genres = [
+            "Maze",        # Arcade action games like Pac-Man
+            "Platform",    # Reflex-based platformers like Mario
+            "Metroidvania",  # Action-exploration games
+            "Racing",      # Fast-paced racing games
+            "Kart Racing",   # Arcade racing games like Mario Kart
+            "Hack and Slash",  # Combat-focused action games like Diablo
+        ]
+        for genre in action_genres:
+            self.assertEqual(
+                get_genre_parent_name(genre), "Action",
+                f"{genre} should be under Action"
+            )
+
+    def test_sports_genres_hierarchy(self):
+        """Test that sports-related genres are correctly parented under Sports."""
+        self.assertEqual(get_genre_parent_name("Extreme Sports"), "Sports")
+        self.assertEqual(get_genre_parent_name("Snowboarding"), "Sports")
+
+    def test_party_casual_genres_hierarchy(self):
+        """Test that casual/party genres are correctly parented."""
+        self.assertEqual(get_genre_parent_name("Pinball"), "Party & Casual")
+
+    def test_puzzle_genres_hierarchy(self):
+        """Test that puzzle genres are correctly parented."""
+        self.assertEqual(get_genre_parent_name("Puzzle Platformer"), "Puzzle")
 
     def test_returns_none_for_root_category(self):
         """Test that root categories return None."""
