@@ -147,7 +147,7 @@ GENRE_MAPPING = {
     "Sports": "Sports",
     "Sports game": "Sports",
     "American football": "Football (American)",
-    "Football": "Football (American)",
+    "Football": "Football (Association)",
     "Association football": "Football (Association)",
     "Soccer": "Football (Association)",
     "Basketball": "Basketball",
