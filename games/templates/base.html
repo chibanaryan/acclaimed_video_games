@@ -23,7 +23,7 @@
     <meta property="og:title" content="{% block og_title %}Acclaimed Video Games{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Discover the most critically acclaimed video games of all time, ranked by aggregating hundreds of critic lists.{% endblock %}">
     <meta property="og:url" content="{% block og_url %}https://www.acclaimedvideogames.com{{ request.path }}{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}https://www.acclaimedvideogames.com{% static 'games/avg_og_image.png' %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}https://www.acclaimedvideogames.com{% static 'games/brand/og-image.png' %}{% endblock %}">
     <meta property="og:site_name" content="Acclaimed Video Games">
 
     {# Twitter Card Tags #}
@@ -31,20 +31,25 @@
     <meta name="twitter:site" content="@AVGRankings">
     <meta name="twitter:title" content="{% block twitter_title %}Acclaimed Video Games{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Discover the most critically acclaimed video games of all time.{% endblock %}">
-    <meta name="twitter:image" content="{% block twitter_image %}https://www.acclaimedvideogames.com{% static 'games/avg_og_image.png' %}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}https://www.acclaimedvideogames.com{% static 'games/brand/og-image.png' %}{% endblock %}">
 
     {# Preconnect to external domains for faster resource loading #}
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
     <link rel="dns-prefetch" href="https://images.igdb.com">
 
     {# Favicon #}
-    <link rel="icon" type="image/x-icon" href="{% static 'games/avg_logo_dark_small.png' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'games/brand/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'games/brand/favicon-16.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'games/brand/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="64x64" href="{% static 'games/brand/favicon-64.png' %}">
 
     {# Tailwind CSS + DaisyUI - django-tailwind handles optimal loading #}
     {% tailwind_css %}
 
     {# Preload MDI icon font to prevent sidebar jitter - critical for navigation icons #}
     <link rel="preload" href="{% static 'games/fonts/materialdesignicons-webfont.woff2' %}" as="font" type="font/woff2" crossorigin>
+    {# Preload Montserrat font for site title #}
+    <link rel="preload" href="{% static 'games/fonts/Montserrat-SemiBold.woff2' %}" as="font" type="font/woff2" crossorigin>
 
     {# Material Design Icons - Inlined subset CSS (~1KB) - eliminates render-blocking request #}
     {# Only includes the ~10 icons actually used + font-face with font-display: swap #}

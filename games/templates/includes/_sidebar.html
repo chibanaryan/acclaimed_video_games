@@ -1,45 +1,7 @@
 {% load static game_filters %}
 <div class="flex flex-col h-full">
     {# TOP CONTAINER: Logo + Navigation + Search - Always visible #}
-    <div class="shrink-0 p-4">
-        {# Logo at top #}
-        <div class="mb-4">
-            <a href="{% url 'home' %}" class="block">
-                {# White logo for dark theme #}
-                <picture class="w-full max-w-[160px] mx-auto show-dark block">
-                    <source type="image/webp"
-                            srcset="{% static 'games/avg_logo_web.webp' %} 548w,
-                                    {% static 'games/avg_logo.webp' %} 1092w"
-                            sizes="160px">
-                    <img src="{% static 'games/avg_logo_web.png' %}"
-                         srcset="{% static 'games/avg_logo_web.png' %} 548w,
-                                 {% static 'games/avg_logo.png' %} 1092w"
-                         sizes="160px"
-                         alt="Acclaimed Video Games"
-                         width="1092"
-                         height="737"
-                         fetchpriority="high"
-                         class="w-full">
-                </picture>
-                {# Dark logo for light theme #}
-                <picture class="w-full max-w-[160px] mx-auto show-light block">
-                    <source type="image/webp"
-                            srcset="{% static 'games/avg_logo_dark_web.webp' %} 548w,
-                                    {% static 'games/avg_logo_dark.webp' %} 1092w"
-                            sizes="160px">
-                    <img src="{% static 'games/avg_logo_dark_web.png' %}"
-                         srcset="{% static 'games/avg_logo_dark_web.png' %} 548w,
-                                 {% static 'games/avg_logo_dark.png' %} 1092w"
-                         sizes="160px"
-                         alt="Acclaimed Video Games"
-                         width="1092"
-                         height="737"
-                         fetchpriority="high"
-                         class="w-full">
-                </picture>
-            </a>
-        </div>
-
+    <div class="shrink-0 px-4 py-6">
         {# Main navigation: Rankings, Developers, Source Lists #}
         <nav class="mb-3">
             {% if BOOKS_ENABLED %}
@@ -200,18 +162,32 @@
             <div class="p-4 pt-4 border-t border-base-content/10">
         {# Secondary navigation #}
         <ul class="menu gap-1 mb-3">
+            {% if not user.is_authenticated %}
             <li>
-                {% if user.is_authenticated %}
-                <button type="button" class="auth-modal-trigger w-full text-left" data-auth-screen="profile">
-                    <span class="mdi mdi-account-circle text-xl"></span>
-                    {{ user.name|default:user.email|default:"Account" }}
+                <button type="button" class="auth-modal-trigger w-full text-left" data-auth-screen="signup">
+                    <span class="mdi mdi-gamepad text-xl"></span>
+                    Sign Up
                 </button>
-                {% else %}
+            </li>
+            <li>
                 <button type="button" class="auth-modal-trigger w-full text-left">
                     <span class="mdi mdi-login text-xl"></span>
                     Login
                 </button>
-                {% endif %}
+            </li>
+            {% else %}
+            <li>
+                <button type="button" class="auth-modal-trigger w-full text-left" data-auth-screen="profile">
+                    <span class="mdi mdi-account-circle text-xl"></span>
+                    {{ user.name|default:user.email|default:"Account" }}
+                </button>
+            </li>
+            {% endif %}
+            <li>
+                <a href="{% url 'page-detail' slug='donate' %}">
+                    <span class="mdi mdi-heart text-xl"></span>
+                    Donate
+                </a>
             </li>
             <li>
                 <a href="{% url 'page-detail' slug='about' %}">

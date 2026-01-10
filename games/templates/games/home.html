@@ -76,64 +76,39 @@
 
 {% block content %}
 <div class="flex flex-col w-full">
-{# Hero section for homepage - side by side on desktop, stacked on mobile #}
-<div class="hero flex flex-col md:flex-row items-center justify-center gap-2 md:gap-2">
-    {# Logo #}
-    <a href="{% url 'home' %}" class="block flex-shrink-0" style="max-width: 280px;">
-        {# Dark theme logo (white text) - shown in dark themes #}
-        <picture class="show-dark block">
-            <source type="image/webp"
-                    srcset="{% static 'games/avg_logo_web.webp' %} 548w, {% static 'games/avg_logo.webp' %} 1092w"
-                    sizes="280px">
-            <img src="{% static 'games/avg_logo.png' %}"
-                 srcset="{% static 'games/avg_logo_web.png' %} 548w, {% static 'games/avg_logo.png' %} 1092w"
-                 sizes="280px"
-                 alt="Acclaimed Video Games"
-                 width="1092"
-                 height="737"
-                 class="w-full h-auto"
-                 style="aspect-ratio: 1092/737"
-                 fetchpriority="high">
-        </picture>
-        {# Light theme logo (black text) - shown in light themes #}
-        <picture class="show-light block">
-            <source type="image/webp"
-                    srcset="{% static 'games/avg_logo_dark_web.webp' %} 548w, {% static 'games/avg_logo_dark.webp' %} 1092w"
-                    sizes="280px">
-            <img src="{% static 'games/avg_logo_dark.png' %}"
-                 srcset="{% static 'games/avg_logo_dark_web.png' %} 548w, {% static 'games/avg_logo_dark.png' %} 1092w"
-                 sizes="280px"
-                 alt="Acclaimed Video Games"
-                 width="1092"
-                 height="737"
-                 class="w-full h-auto"
-                 style="aspect-ratio: 1092/737"
-                 fetchpriority="high">
-        </picture>
-    </a>
-    {# Content to the right on desktop #}
-    <div class="flex flex-col items-center text-center gap-3">
-        {# Action Buttons #}
-        <div class="flex flex-wrap justify-center gap-2">
-            {% if not user.is_authenticated %}
-            <button type="button" class="btn btn-primary gap-2 auth-modal-trigger" data-auth-screen="signup">
-                <span class="mdi mdi-gamepad"></span>
-                <span>Sign Up</span>
-            </button>
-            {% endif %}
-            <a href="{% url 'page-detail' slug='donate' %}" class="btn btn-primary gap-2">
-                <span class="mdi mdi-heart"></span>
-                <span>Support This Project</span>
-            </a>
+{# Hero section for homepage #}
+<div class="hero">
+    <div class="flex flex-col items-center justify-center gap-4 w-full py-2">
+        {# Centered group: Logo + Title and Buttons/Tagline side-by-side #}
+        <div class="flex flex-col md:flex-row items-center gap-6 md:gap-12 justify-center w-full">
+            {# Left: Logo + Site Title #}
+            <div class="flex-shrink-0 flex items-center gap-4">
+                <a href="{% url 'home' %}">
+                    <img src="{% static 'games/brand/logo-site.svg' %}"
+                         alt="Acclaimed Video Games"
+                         width="135"
+                         height="135"
+                         fetchpriority="high">
+                </a>
+                <h1 class="site-title text-base-content text-center md:text-center text-3xl leading-tight">
+                    <span class="block">Acclaimed</span>
+                    <span class="block">Video Games</span>
+                </h1>
+            </div>
+
+            {# Right: Tagline and Update Info #}
+            <div class="flex flex-col items-center md:items-center gap-3">
+                {# Tagline and Update Info #}
+                <p class="text-base text-base-content/70 max-w-md text-center md:text-center">
+                    The top {{ game_count|default:"1,000"|intcomma }} most recommended games across {{ list_count|intcomma }} critic lists from {{ publication_count|intcomma }} publications.
+                </p>
+                {% if last_update %}
+                <p class="text-sm text-base-content/70 text-center md:text-center">
+                    Updated: {{ last_update|date:"F j, Y" }}
+                </p>
+                {% endif %}
+            </div>
         </div>
-        <p class="text-base text-base-content/70 max-w-md">
-            The top {{ game_count|default:"1,000"|intcomma }} most recommended games across {{ list_count|intcomma }} critic lists from {{ publication_count|intcomma }} publications.
-        </p>
-        {% if last_update %}
-        <p class="text-sm text-base-content/70">
-            Updated: {{ last_update|date:"F j, Y" }}
-        </p>
-        {% endif %}
     </div>
 </div>
 

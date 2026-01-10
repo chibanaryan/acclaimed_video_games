@@ -5,8 +5,8 @@
     {# Nav items that can overflow to hamburger menu #}
     <div class="flex-1 min-w-0 overflow-hidden" x-ref="navContainer">
         <div id="mobile-nav-items" class="flex gap-1 items-center nav-calculating" x-ref="navItems">
-            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm btn-square shrink-0 nav-item{% if request.resolver_match.url_name == 'home' or media_type == 'games' %} btn-active{% endif %}" data-nav-item="rankings" aria-label="Rankings">
-                <span class="mdi mdi-medal text-xl"></span>
+            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm btn-square shrink-0 nav-item{% if request.resolver_match.url_name == 'home' or media_type == 'games' %} btn-active{% endif %}" data-nav-item="rankings" aria-label="Rankings" title="">
+                <span class="mdi mdi-medal text-lg"></span>
             </a>
 
             {% if BOOKS_ENABLED %}
@@ -37,7 +37,7 @@
 
                 {# Search dropdown panel #}
                 <div x-show="showSearchDropdown" x-cloak
-                     class="fixed left-4 right-4 top-24 bg-base-200 rounded-box shadow-lg z-[99999]">
+                     class="fixed left-4 right-4 top-[64px] bg-base-200 rounded-box shadow-lg z-[99999]">
                     <div class="p-4">
                         <label for="nav-search-mobile" class="sr-only">Search games, developers, and series</label>
                         <label class="input input-bordered input-sm w-full bg-base-100">

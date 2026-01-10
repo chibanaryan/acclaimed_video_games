@@ -1,5 +1,13 @@
 # Developer Log
 
+## 2026-01-10
+
+- Reorganize header: move logo from sidebar to desktop header next to site title
+- Update brand assets: new logo-site.svg, favicon.ico, favicon PNGs (16/32/64), and og-image.png
+- Move Sign Up and Donate buttons from header to sidebar bottom section
+- Adjust header spacing and title sizing for better logo/text proportions
+- Remove logo from sidebar and mobile navigation
+
 ## 2026-01-08
 
 - Fix memory leaks: add guard to initYearPreview() and HTMX cleanup handler for developerFilter hashchange listener

@@ -177,6 +177,24 @@
   src: url('/static/games/fonts/Handjet-ExtraBold.woff2') format('woff2');
 }
 
+/* Montserrat - Modern geometric sans-serif for site branding */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/static/games/fonts/Montserrat-SemiBold.woff2') format('woff2');
+}
+
+/* Site title styling */
+.site-title {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+
 /* Alpine.js cloak - hide elements until Alpine initializes */
 [x-cloak] {
   display: none !important;
