@@ -212,7 +212,8 @@ document.addEventListener('alpine:init', () => {
                     this.filters.end = params.get('end') ? parseInt(params.get('end')) : this.maxYear;
                     this.filters.sort = params.get('sort') || 'rank';
                     this.filters.sortDirection = params.get('dir') || 'asc';
-                    this.filters.played = params.get('played') || '';
+                    const playedParam = params.get('played');
+                    this.filters.played = playedParam ? playedParam.split(',').filter(s => s) : [];
                     const genresParam = params.get('genres');
                     this.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
                     const platformsParam = params.get('platforms');
@@ -240,7 +241,7 @@ document.addEventListener('alpine:init', () => {
                 if (typeof initYearPreview === 'function') initYearPreview();
 
                 this._gameStatusListener = (event) => {
-                    if (this.filters.played && this.clientFilterReady) {
+                    if (this.filters.played && this.filters.played.length > 0 && this.clientFilterReady) {
                         this.performClientUpdate({ historyMethod: 'replaceState' });
                     }
                 };
@@ -274,7 +275,7 @@ document.addEventListener('alpine:init', () => {
                    (this.filters.series && this.filters.series.length > 0) ||
                    this.filters.start !== this.minYear ||
                    this.filters.end !== this.maxYear ||
-                   this.filters.played ||
+                   (this.filters.played && this.filters.played.length > 0) ||
                    this.filters.hltb_min !== null ||
                    this.filters.hltb_max !== null;
         },
@@ -358,7 +359,7 @@ document.addEventListener('alpine:init', () => {
             this.filters.platforms = f.platforms || [];
             this.filters.series = f.series || [];
             this.filters.sort = f.sort || 'rank';
-            this.filters.played = f.played || '';
+            this.filters.played = Array.isArray(f.played) ? f.played : (f.played ? f.played.split(',').filter(s => s) : []);
             this.filters.hltb_mode = f.hltb_mode || 'main';
             this.filters.hltb_min = f.hltb_min || null;
             this.filters.hltb_max = f.hltb_max || null;
@@ -611,12 +612,21 @@ document.addEventListener('alpine:init', () => {
             if (seriesLabel) titleParts += ' ' + seriesLabel;
             titleParts += ' Games' + timeSuffix;
 
-            if (this.filters.played === 'yes') {
-                titleParts += ': Played';
-            } else if (this.filters.played === 'want') {
-                titleParts += ': Want to Play';
-            } else if (this.filters.played === 'no') {
-                titleParts += ': Untracked';
+            // Handle array-based played filter for title
+            const played = this.filters.played;
+            if (Array.isArray(played) && played.length > 0) {
+                const statusLabels = [];
+                if (played.includes('yes')) statusLabels.push('Played');
+                if (played.includes('want')) statusLabels.push('Want to Play');
+                if (played.includes('no')) statusLabels.push('Untracked');
+                if (statusLabels.length > 0) {
+                    titleParts += ': ' + statusLabels.join(' + ');
+                }
+            } else if (typeof played === 'string' && played) {
+                // Backwards compatibility for string values
+                if (played === 'yes') titleParts += ': Played';
+                else if (played === 'want') titleParts += ': Want to Play';
+                else if (played === 'no') titleParts += ': Untracked';
             }
 
             return titleParts;
@@ -717,7 +727,23 @@ document.addEventListener('alpine:init', () => {
         },
 
         resetPlayed() {
-            this.filters.played = '';
+            this.filters.played = [];
+            if (this.initialized) this.debouncedFilterUpdate();
+        },
+
+        togglePlayedStatus(status) {
+            // Ensure filters.played is an array
+            if (!Array.isArray(this.filters.played)) {
+                this.filters.played = [];
+            }
+            const index = this.filters.played.indexOf(status);
+            if (index === -1) {
+                // Add status to array
+                this.filters.played = [...this.filters.played, status];
+            } else {
+                // Remove status from array
+                this.filters.played = this.filters.played.filter(s => s !== status);
+            }
             if (this.initialized) this.debouncedFilterUpdate();
         },
 
@@ -728,7 +754,7 @@ document.addEventListener('alpine:init', () => {
             this.filters.genres = [];
             this.filters.platforms = [];
             this.filters.series = [];
-            this.filters.played = '';
+            this.filters.played = [];
             this.filters.sort = 'rank';
             this.filters.hltb_mode = 'main';
             this.filters.hltb_preset = '';

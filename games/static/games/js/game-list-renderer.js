@@ -256,8 +256,9 @@ class GameListRenderer extends BaseMediaListRenderer {
 
 
     /**
-     * Render the game status button by cloning template
+     * Render the game status dropdown button by cloning template
      * Handles 3 states: played, want to play, untracked
+     * Shows dropdown with only non-current status options
      * @private
      * @returns {DocumentFragment|null}
      */
@@ -292,19 +293,18 @@ class GameListRenderer extends BaseMediaListRenderer {
             'none': "You aren't tracking this game."
         };
         const ariaLabels = {
-            'played': 'Played - click to untrack',
-            'want': 'Want to play - click to mark as played',
-            'none': 'Not tracked - click to add to wishlist'
+            'played': 'Played - click to change',
+            'want': 'Want to play - click to change',
+            'none': 'Not tracked - click to change'
         };
-        wrapper.dataset.tip = tooltips[status];
+
         wrapper.dataset.igdbId = igdbId;
         wrapper.dataset.status = status;
-        wrapper.setAttribute('hx-post', `/game/${igdbId}/toggle-played/`);
-        wrapper.setAttribute('hx-headers', `{"X-CSRFToken": "${csrfToken}"}`);
 
-        // Set aria-label on the button for accessibility
+        // Set tooltip and aria-label on the button
         const button = wrapper.querySelector('[data-slot="played-button"]');
         if (button) {
+            button.dataset.tip = tooltips[status];
             button.setAttribute('aria-label', ariaLabels[status]);
         }
 
@@ -325,6 +325,43 @@ class GameListRenderer extends BaseMediaListRenderer {
             wantIcon.classList.remove('hidden');
         } else if (untrackedIcon) {
             untrackedIcon.classList.remove('hidden');
+        }
+
+        // Set up dropdown menu buttons with HTMX attributes
+        const btnPlayed = wrapper.querySelector('[data-slot="btn-played"]');
+        const btnWant = wrapper.querySelector('[data-slot="btn-want"]');
+        const btnNone = wrapper.querySelector('[data-slot="btn-none"]');
+        const menuPlayed = wrapper.querySelector('[data-slot="menu-played"]');
+        const menuWant = wrapper.querySelector('[data-slot="menu-want"]');
+        const menuNone = wrapper.querySelector('[data-slot="menu-none"]');
+
+        // Set HTMX post URLs with status parameter
+        if (btnPlayed) {
+            btnPlayed.setAttribute('hx-post', `/game/${igdbId}/toggle-played/?status=played`);
+            btnPlayed.setAttribute('hx-headers', `{"X-CSRFToken": "${csrfToken}"}`);
+        }
+        if (btnWant) {
+            btnWant.setAttribute('hx-post', `/game/${igdbId}/toggle-played/?status=want`);
+            btnWant.setAttribute('hx-headers', `{"X-CSRFToken": "${csrfToken}"}`);
+        }
+        if (btnNone) {
+            btnNone.setAttribute('hx-post', `/game/${igdbId}/toggle-played/?status=none`);
+            btnNone.setAttribute('hx-headers', `{"X-CSRFToken": "${csrfToken}"}`);
+        }
+
+        // Show/hide menu items based on current status (hide current status option)
+        if (status === 'played' && menuPlayed) {
+            menuPlayed.classList.add('hidden');
+        }
+        if (status === 'want' && menuWant) {
+            menuWant.classList.add('hidden');
+        }
+        if (status === 'none' && menuNone) {
+            menuNone.classList.add('hidden');
+        }
+        // Show "Untracked" option when currently tracking (played or want)
+        if (status !== 'none' && menuNone) {
+            menuNone.classList.remove('hidden');
         }
 
         return fragment;
@@ -647,8 +684,9 @@ class GameListRenderer extends BaseMediaListRenderer {
     }
 
     /**
-     * Fallback: Render game status button as string (legacy behavior)
+     * Fallback: Render game status dropdown button as string
      * Handles 3 states: played, want to play, untracked
+     * Shows dropdown with only non-current status options
      * @private
      */
     _renderPlayedButtonString(game) {
@@ -668,21 +706,70 @@ class GameListRenderer extends BaseMediaListRenderer {
         // Icon based on status
         let innerHtml;
         if (status === 'played') {
-            innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><img src="${this._staticUrls.marioStar}" srcset="${this._staticUrls.marioStar} 1x, ${this._staticUrls.marioStar2x} 2x" alt="Played" width="32" height="32" class="w-6 h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`;
+            innerHtml = `<span class="flex items-center justify-center w-6 h-6"><img src="${this._staticUrls.marioStar}" srcset="${this._staticUrls.marioStar} 1x, ${this._staticUrls.marioStar2x} 2x" alt="Played" width="32" height="32" class="w-6 h-6 drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"></span>`;
         } else if (status === 'want') {
-            innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><span class="mdi mdi-star-plus-outline text-2xl text-warning"></span></span>`;
+            innerHtml = `<span class="flex items-center justify-center w-6 h-6"><span class="mdi mdi-star-plus-outline text-2xl text-warning"></span></span>`;
         } else {
-            innerHtml = `<span class="w-6 h-6 flex items-center justify-center"><span class="mdi mdi-star-outline text-2xl text-base-content/30"></span></span>`;
+            innerHtml = `<span class="flex items-center justify-center w-6 h-6"><span class="mdi mdi-star-outline text-2xl text-base-content/30"></span></span>`;
         }
 
         const ariaLabels = {
-            'played': 'Played - click to untrack',
-            'want': 'Want to play - click to mark as played',
-            'none': 'Not tracked - click to add to wishlist'
+            'played': 'Played - click to change',
+            'want': 'Want to play - click to change',
+            'none': 'Not tracked - click to change'
         };
         const ariaLabel = ariaLabels[status];
 
-        return `<div class="desktop:tooltip desktop:tooltip-top played-button-wrapper cursor-pointer" data-tip="${tooltipText}" data-igdb-id="${igdbId}" data-status="${status}" hx-post="/game/${igdbId}/toggle-played/" hx-trigger="click" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "${csrfToken}"}' onclick="event.stopPropagation()"><button class="played-button flex items-center justify-center h-8 w-8 min-w-8 shrink-0 pointer-events-none" aria-label="${ariaLabel}">${innerHtml}</button></div>`;
+        // Build dropdown menu items (only show non-current status options)
+        // Common button classes and HTMX attributes for dropdown items
+        const btnClass = 'flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap';
+        const hxAttrs = (targetStatus) =>
+            `hx-post="/game/${igdbId}/toggle-played/?status=${targetStatus}" ` +
+            `hx-target="closest .played-button-wrapper" hx-swap="outerHTML" ` +
+            `hx-headers='{"X-CSRFToken": "${csrfToken}"}'`;
+
+        let menuItems = '';
+        if (status !== 'played') {
+            menuItems += `<li><button type="button" class="${btnClass}" ${hxAttrs('played')}>` +
+                `<span class="w-5 h-5 flex items-center justify-center">` +
+                `<img src="${this._staticUrls.marioStar}" alt="" class="w-5 h-5"></span>` +
+                `<span>Played</span></button></li>`;
+        }
+        if (status !== 'want') {
+            menuItems += `<li><button type="button" class="${btnClass}" ${hxAttrs('want')}>` +
+                `<span class="w-5 h-5 flex items-center justify-center">` +
+                `<span class="mdi mdi-star-plus-outline text-xl text-warning"></span></span>` +
+                `<span>Want to Play</span></button></li>`;
+        }
+        if (status !== 'none') {
+            menuItems += `<li><button type="button" class="${btnClass}" ${hxAttrs('none')}>` +
+                `<span class="w-5 h-5 flex items-center justify-center">` +
+                `<span class="mdi mdi-star-outline text-xl text-base-content/30"></span></span>` +
+                `<span>Untracked</span></button></li>`;
+        }
+
+        // Use x-data for Alpine.js dropdown toggle with z-index management
+        // Dropdown positioned above button (bottom-full) for list rows
+        return `<div class="played-button-wrapper relative" ` +
+            `x-data="{ open: false, zHigh: false }" ` +
+            `x-effect="if (open) { zHigh = true } else { setTimeout(() => zHigh = false, 100) }" ` +
+            `:class="{ 'z-[9999]': zHigh, 'z-10': !zHigh }" ` +
+            `@click.away="open = false" ` +
+            `@open-played-dropdown.window="if ($event.detail !== $el) open = false" ` +
+            `data-igdb-id="${igdbId}" data-status="${status}" onclick="event.stopPropagation()">` +
+            `<button @click="$dispatch('open-played-dropdown', $el.closest('.played-button-wrapper')); open = !open" ` +
+            `class="played-button desktop:tooltip desktop:tooltip-top flex items-center justify-center shrink-0 cursor-pointer h-8 w-8 min-w-8" ` +
+            `data-tip="${tooltipText}" aria-label="${ariaLabel}" aria-haspopup="true" :aria-expanded="open">` +
+            `${innerHtml}</button>` +
+            `<ul x-show="open" x-cloak ` +
+            `x-transition:enter="transition ease-out duration-100" ` +
+            `x-transition:enter-start="opacity-0 scale-95" ` +
+            `x-transition:enter-end="opacity-100 scale-100" ` +
+            `x-transition:leave="transition ease-in duration-75" ` +
+            `x-transition:leave-start="opacity-100 scale-100" ` +
+            `x-transition:leave-end="opacity-0 scale-95" ` +
+            `class="absolute bottom-full mb-1 left-0 menu bg-base-100 rounded-box shadow-lg p-1 min-w-max">` +
+            `${menuItems}</ul></div>`;
     }
 
     /**

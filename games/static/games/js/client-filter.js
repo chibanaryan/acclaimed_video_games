@@ -296,20 +296,32 @@ class GameFilterEngine {
             }
 
             // Game status filter (requires window.playedGameIds, window.wantToPlayGameIds, window.isAuthenticated)
-            // Values: 'yes' (played), 'want' (want to play), 'no' (untracked), '' (all)
+            // Supports array for multi-select: ['yes', 'want'] shows both played and want-to-play
+            // Also supports string values for backwards compatibility
             if (played && window.isAuthenticated && game.i) {
                 const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
                 const isGameWantToPlay = window.wantToPlayGameIds && window.wantToPlayGameIds.has(game.i);
 
-                if (played === 'yes' && !isGamePlayed) {
-                    continue;
-                }
-                if (played === 'want' && !isGameWantToPlay) {
-                    continue;
-                }
-                if (played === 'no' && (isGamePlayed || isGameWantToPlay)) {
-                    // 'no' means untracked - neither played nor want to play
-                    continue;
+                // Handle array-based multi-select
+                if (Array.isArray(played) && played.length > 0) {
+                    const matchesAny = played.some(p => {
+                        if (p === 'yes') return isGamePlayed;
+                        if (p === 'want') return isGameWantToPlay;
+                        if (p === 'no') return !isGamePlayed && !isGameWantToPlay;
+                        return false;
+                    });
+                    if (!matchesAny) continue;
+                } else if (typeof played === 'string') {
+                    // Backwards compatibility for string values
+                    if (played === 'yes' && !isGamePlayed) {
+                        continue;
+                    }
+                    if (played === 'want' && !isGameWantToPlay) {
+                        continue;
+                    }
+                    if (played === 'no' && (isGamePlayed || isGameWantToPlay)) {
+                        continue;
+                    }
                 }
             }
 

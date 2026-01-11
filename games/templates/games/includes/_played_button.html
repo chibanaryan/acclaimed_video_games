@@ -1,43 +1,107 @@
-{# Game status toggle button - HTMX-enabled #}
-{# Cycles through: Untracked -> Want to Play -> Played -> Untracked #}
-{# Icons: star-outline -> star-plus-outline -> Mario Star PNG #}
+{# Game status dropdown button - HTMX-enabled #}
+{# Click to open dropdown, select status directly #}
+{# Icons: star-outline (none) -> star-plus-outline (want) -> Mario Star PNG (played) #}
 {# Sizes: Default w-6/text-2xl, Large w-10/text-5xl #}
 {# Pass size='large' for bigger button on game detail page #}
 {% load static %}
 {% if user.is_authenticated and game.igdb_id %}
-<div class="desktop:tooltip {% if size == 'large' %}desktop:tooltip-bottom{% else %}desktop:tooltip-top{% endif %} played-button-wrapper cursor-pointer z-10"
-    data-tip="{% if is_played %}You have played this game!{% elif is_want_to_play %}You want to play this game!{% else %}You aren't tracking this game.{% endif %}"
+<div class="played-button-wrapper relative"
+    x-data="{ open: false, zHigh: false }"
+    x-effect="if (open) { zHigh = true } else { setTimeout(() => zHigh = false, 100) }"
+    :class="{ 'z-[9999]': zHigh, 'z-10': !zHigh }"
+    @click.away="open = false"
+    @open-played-dropdown.window="if ($event.detail !== $el) open = false"
     data-igdb-id="{{ game.igdb_id }}"
     data-status="{% if is_played %}played{% elif is_want_to_play %}want{% else %}none{% endif %}"
     {% if size == 'large' %}data-size="large"{% endif %}
-    hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}{% if size == 'large' %}?size=large{% endif %}"
-    hx-trigger="click"
-    hx-swap="outerHTML"
-    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
     onclick="event.stopPropagation()">
-<button
-    class="played-button flex items-center justify-center shrink-0 pointer-events-none {% if size == 'large' %}h-12 w-12 min-w-12{% else %}h-8 w-8 min-w-8{% endif %}"
-    aria-label="{% if is_played %}Played - click to untrack{% elif is_want_to_play %}Want to play - click to mark as played{% else %}Not tracked - click to add to wishlist{% endif %}">
-    {% if is_played %}
-    {# Played state - Mario Star #}
-    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-appear{% else %} star-idle{% endif %}">
-        <img src="{% static 'games/images/mario-star.png' %}"
-             srcset="{% static 'games/images/mario-star.png' %} 1x, {% static 'games/images/mario-star@2x.png' %} 2x"
-             alt="Played" width="32" height="32"
-             class="{% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %} drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
-    </span>
-    {% elif is_want_to_play %}
-    {# Want to Play state - Star with plus #}
-    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-appear{% endif %}">
-        <span class="mdi mdi-star-plus-outline {% if size == 'large' %}text-5xl{% else %}text-2xl{% endif %} text-warning"></span>
-    </span>
-    {% else %}
-    {# Untracked state - Empty star outline #}
-    <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-disappear{% endif %}">
-        <span class="mdi mdi-star-outline {% if size == 'large' %}text-5xl{% else %}text-2xl{% endif %} text-base-content/30"></span>
-    </span>
-    {% endif %}
-</button>
+    {# Current status button - opens dropdown #}
+    <button
+        @click="$dispatch('open-played-dropdown', $el.closest('.played-button-wrapper')); open = !open"
+        class="played-button desktop:tooltip {% if size == 'large' %}desktop:tooltip-bottom{% else %}desktop:tooltip-top{% endif %} flex items-center justify-center shrink-0 cursor-pointer {% if size == 'large' %}h-12 w-12 min-w-12{% else %}h-8 w-8 min-w-8{% endif %}"
+        data-tip="{% if is_played %}You have played this game!{% elif is_want_to_play %}You want to play this game!{% else %}You aren't tracking this game.{% endif %}"
+        aria-label="{% if is_played %}Played - click to change{% elif is_want_to_play %}Want to play - click to change{% else %}Not tracked - click to change{% endif %}"
+        aria-haspopup="true"
+        :aria-expanded="open">
+        {% if is_played %}
+        {# Played state - Mario Star #}
+        <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-appear{% else %} star-idle{% endif %}">
+            <img src="{% static 'games/images/mario-star.png' %}"
+                 srcset="{% static 'games/images/mario-star.png' %} 1x, {% static 'games/images/mario-star@2x.png' %} 2x"
+                 alt="Played" width="32" height="32"
+                 class="{% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %} drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]">
+        </span>
+        {% elif is_want_to_play %}
+        {# Want to Play state - Star with plus #}
+        <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}{% if just_toggled %} star-appear{% endif %}">
+            <span class="mdi mdi-star-plus-outline {% if size == 'large' %}text-5xl{% else %}text-2xl{% endif %} text-warning"></span>
+        </span>
+        {% else %}
+        {# Untracked state - Empty star outline (no animation - should appear at normal size) #}
+        <span class="flex items-center justify-center {% if size == 'large' %}w-10 h-10{% else %}w-6 h-6{% endif %}">
+            <span class="mdi mdi-star-outline {% if size == 'large' %}text-5xl{% else %}text-2xl{% endif %} text-base-content/30"></span>
+        </span>
+        {% endif %}
+    </button>
+
+    {# Dropdown menu - shows only non-current status options #}
+    <ul x-show="open" x-cloak
+        x-transition:enter="transition ease-out duration-100"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="absolute {% if size == 'large' %}top-full mt-1{% else %}bottom-full mb-1{% endif %} left-0 menu bg-base-100 rounded-box shadow-lg p-1 min-w-max">
+        {% if not is_played %}
+        {# Show "Played" option #}
+        <li>
+            <button type="button"
+                class="flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap"
+                hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}?status=played{% if size == 'large' %}&size=large{% endif %}"
+                hx-target="closest .played-button-wrapper"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                <span class="w-5 h-5 flex items-center justify-center">
+                    <img src="{% static 'games/images/mario-star.png' %}" alt="" class="w-5 h-5">
+                </span>
+                <span>Played</span>
+            </button>
+        </li>
+        {% endif %}
+        {% if not is_want_to_play %}
+        {# Show "Want to Play" option #}
+        <li>
+            <button type="button"
+                class="flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap"
+                hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}?status=want{% if size == 'large' %}&size=large{% endif %}"
+                hx-target="closest .played-button-wrapper"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                <span class="w-5 h-5 flex items-center justify-center">
+                    <span class="mdi mdi-star-plus-outline text-xl text-warning"></span>
+                </span>
+                <span>Want to Play</span>
+            </button>
+        </li>
+        {% endif %}
+        {% if is_played or is_want_to_play %}
+        {# Show "Untracked" option only if currently tracking #}
+        <li>
+            <button type="button"
+                class="flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap"
+                hx-post="{% url 'toggle-played-game' igdb_id=game.igdb_id %}?status=none{% if size == 'large' %}&size=large{% endif %}"
+                hx-target="closest .played-button-wrapper"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                <span class="w-5 h-5 flex items-center justify-center">
+                    <span class="mdi mdi-star-outline text-xl text-base-content/30"></span>
+                </span>
+                <span>Untracked</span>
+            </button>
+        </li>
+        {% endif %}
+    </ul>
 </div>
 <script data-played-sync>
 (function() {
@@ -68,10 +132,15 @@
             var btn = wrapper.querySelector('.played-button');
             var otherBtn = otherWrapper.querySelector('.played-button');
             if (btn && otherBtn) {
-                otherBtn.innerHTML = btn.innerHTML;
+                // Copy the icon content (first child span of button)
+                var iconSpan = btn.querySelector('span');
+                var otherIconSpan = otherBtn.querySelector('span');
+                if (iconSpan && otherIconSpan) {
+                    otherIconSpan.innerHTML = iconSpan.innerHTML;
+                    otherIconSpan.className = iconSpan.className;
+                }
             }
             otherWrapper.dataset.status = status;
-            otherWrapper.dataset.tip = wrapper.dataset.tip;
         }
     });
 

@@ -3,7 +3,7 @@
 {# Uses Alpine.js for interactivity #}
 {% load game_filters %}
 {% load humanize %}
-{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "series": [], "rank_display": "filtered", "sort": "rank", "sortDirection": "asc", "hltb_mode": "main", "hltb_min": null, "hltb_max": null}</script>{% endif %}
+{% if filters %}{{ filters|json_script:"filters-data" }}{% else %}<script id="filters-data" type="application/json">{"q": "", "start": {{ min_year }}, "end": {{ max_year }}, "genres": [], "platforms": [], "series": [], "played": [], "rank_display": "filtered", "sort": "rank", "sortDirection": "asc", "hltb_mode": "main", "hltb_min": null, "hltb_max": null}</script>{% endif %}
 {% if genres %}{{ genres|json_script:"genres-data" }}{% else %}<script id="genres-data" type="application/json">[]</script>{% endif %}
 {% if platforms %}{{ platforms|json_script:"platforms-data" }}{% else %}<script id="platforms-data" type="application/json">[]</script>{% endif %}
 {% if series_list %}{{ series_list|json_script:"series-data" }}{% else %}<script id="series-data" type="application/json">[]</script>{% endif %}
@@ -204,6 +204,7 @@
                         <button type="button"
                                 class="btn btn-ghost btn-xs text-base-content/40 cursor-not-allowed"
                                 title="Sign in to save filters"
+                                aria-label="Sign in to save filters"
                                 onclick="return false;">
                             <span class="mdi mdi-bookmark-outline text-sm"></span>
                             <span>Saved</span>
@@ -225,44 +226,38 @@
                     </div>
                 </div>
 
-                {# Game Status filter - All, Unplayed, Want to Play, Played #}
+                {# Game Status filter - Multi-select toggle buttons #}
                 <div class="mb-4 pb-3 border-b border-base-100">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="mdi mdi-star-outline text-xl text-accent"></span>
                         <span class="font-bold text-base">Game Status</span>
-                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/70 hover:text-error" @click="resetPlayed()" title="Clear status filter" x-cloak x-show="filters.played">
+                        <button type="button" class="btn btn-ghost btn-xs ml-auto text-base-content/70 hover:text-error" @click="resetPlayed()" title="Clear status filter" x-cloak x-show="filters.played && filters.played.length > 0">
                             <span class="mdi mdi-close text-xs"></span>
                             <span class="text-xs">Clear</span>
                         </button>
                     </div>
                     <div class="flex justify-center">
-                        <div class="join" title="Filter by game status">
-                            <input type="radio" name="played-filter" class="join-item btn btn-sm"
-                                   aria-label="All" :checked="!filters.played"
-                                   @click="filters.played = ''; debouncedFilterUpdate()">
+                        <div class="join" title="Filter by game status (multi-select)">
+                            <button type="button" class="join-item btn btn-sm"
+                                   :class="{ 'btn-primary': !filters.played || filters.played.length === 0 }"
+                                   @click="filters.played = []; debouncedFilterUpdate()">All</button>
                             {% if user.is_authenticated %}
-                            <input type="radio" name="played-filter" class="join-item btn btn-sm"
-                                   :checked="filters.played === 'no'"
-                                   @click="filters.played = 'no'; debouncedFilterUpdate()"
-                                   aria-label="☆ Untracked">
-                            <input type="radio" name="played-filter" class="join-item btn btn-sm"
-                                   :checked="filters.played === 'want'"
-                                   @click="filters.played = 'want'; debouncedFilterUpdate()"
-                                   aria-label="★+ Want">
-                            <input type="radio" name="played-filter" class="join-item btn btn-sm"
-                                   :checked="filters.played === 'yes'"
-                                   @click="filters.played = 'yes'; debouncedFilterUpdate()"
-                                   aria-label="★ Played">
+                            <button type="button" class="join-item btn btn-sm"
+                                   :class="{ 'btn-primary': filters.played && filters.played.includes('no') }"
+                                   @click="togglePlayedStatus('no')">☆ Untracked</button>
+                            <button type="button" class="join-item btn btn-sm"
+                                   :class="{ 'btn-primary': filters.played && filters.played.includes('want') }"
+                                   @click="togglePlayedStatus('want')">★+ Want</button>
+                            <button type="button" class="join-item btn btn-sm"
+                                   :class="{ 'btn-primary': filters.played && filters.played.includes('yes') }"
+                                   @click="togglePlayedStatus('yes')">★ Played</button>
                             {% else %}
-                            <input type="radio" name="played-filter" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
-                                   aria-label="☆ Untracked" title="Sign in to track games"
-                                   onclick="return false;">
-                            <input type="radio" name="played-filter" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
-                                   aria-label="★+ Want" title="Sign in to track games"
-                                   onclick="return false;">
-                            <input type="radio" name="played-filter" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
-                                   aria-label="★ Played" title="Sign in to track games"
-                                   onclick="return false;">
+                            <button type="button" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
+                                   title="Sign in to track games" aria-label="Sign in to filter by untracked games">☆ Untracked</button>
+                            <button type="button" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
+                                   title="Sign in to track games" aria-label="Sign in to filter by want to play games">★+ Want</button>
+                            <button type="button" class="join-item btn btn-sm opacity-40 cursor-not-allowed"
+                                   title="Sign in to track games" aria-label="Sign in to filter by played games">★ Played</button>
                             {% endif %}
                         </div>
                     </div>
