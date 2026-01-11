@@ -80,8 +80,8 @@ class GenreNormalizerTest(TestCase):
         self.assertEqual(normalize_genre("Hack and slash"), "Hack and Slash")
 
     def test_normalize_extreme_sports(self):
-        """Test that Extreme sports normalizes to its own genre, not Snowboarding."""
-        self.assertEqual(normalize_genre("Extreme sports"), "Extreme Sports")
+        """Test that Extreme sports normalizes to Sports (consolidated single-game genre)."""
+        self.assertEqual(normalize_genre("Extreme sports"), "Sports")
 
     def test_normalize_unknown_genre_returns_as_is(self):
         """Test that unknown genres are returned as-is."""
@@ -140,8 +140,8 @@ class GetGenreParentNameTest(TestCase):
 
     def test_returns_parent_for_child_genre(self):
         """Test that child genres return their parent category."""
-        # First-Person Shooter should be under Action
-        self.assertEqual(get_genre_parent_name("First-Person Shooter"), "Action")
+        # First-Person Shooter should be under Shooter (new category)
+        self.assertEqual(get_genre_parent_name("First-Person Shooter"), "Shooter")
         # Platform should be under Action (reflex-based gameplay)
         self.assertEqual(get_genre_parent_name("Platform"), "Action")
         # Action RPG should be under Role-Playing
@@ -153,9 +153,8 @@ class GetGenreParentNameTest(TestCase):
             "Maze",        # Arcade action games like Pac-Man
             "Platform",    # Reflex-based platformers like Mario
             "Metroidvania",  # Action-exploration games
-            "Racing",      # Fast-paced racing games
-            "Kart Racing",   # Arcade racing games like Mario Kart
             "Hack and Slash",  # Combat-focused action games like Diablo
+            "Survival",    # Survival games (moved from Hybrid & Specialized)
         ]
         for genre in action_genres:
             self.assertEqual(
@@ -163,24 +162,79 @@ class GetGenreParentNameTest(TestCase):
                 f"{genre} should be under Action"
             )
 
+    def test_racing_genres_hierarchy(self):
+        """Test that racing genres are correctly parented under Racing & Sports."""
+        # Racing and Kart Racing are children of Racing & Sports
+        self.assertEqual(
+            get_genre_parent_name("Kart Racing"), "Racing & Sports",
+            "Kart Racing should be under Racing & Sports"
+        )
+        self.assertEqual(
+            get_genre_parent_name("Racing"), "Racing & Sports",
+            "Racing should be under Racing & Sports"
+        )
+
+    def test_shooter_genres_hierarchy(self):
+        """Test that shooter genres are correctly parented under Shooter (new category)."""
+        # Note: "Shooter" itself is now a root category, these are its children
+        shooter_child_genres = [
+            "First-Person Shooter",
+            "Third-Person Shooter",
+            "Light Gun Shooter",
+            "Tactical Shooter",
+            "Run and Gun",
+        ]
+        for genre in shooter_child_genres:
+            self.assertEqual(
+                get_genre_parent_name(genre), "Shooter",
+                f"{genre} should be under Shooter"
+            )
+
     def test_sports_genres_hierarchy(self):
-        """Test that sports-related genres are correctly parented under Sports."""
-        self.assertEqual(get_genre_parent_name("Extreme Sports"), "Sports")
-        self.assertEqual(get_genre_parent_name("Snowboarding"), "Sports")
+        """Test that sports-related genres are correctly parented under Racing & Sports."""
+        # Sports is now a sub-genre under Racing & Sports
+        self.assertEqual(get_genre_parent_name("Sports"), "Racing & Sports")
+        # Snowboarding remains as a sub-genre
+        self.assertEqual(get_genre_parent_name("Snowboarding"), "Racing & Sports")
+        # Football variants remain as sub-genres
+        self.assertEqual(get_genre_parent_name("Football (American)"), "Racing & Sports")
+        self.assertEqual(get_genre_parent_name("Football (Association)"), "Racing & Sports")
 
-    def test_party_casual_genres_hierarchy(self):
-        """Test that casual/party genres are correctly parented."""
-        self.assertEqual(get_genre_parent_name("Pinball"), "Party & Casual")
+    def test_puzzle_casual_genres_hierarchy(self):
+        """Test that puzzle and casual genres are correctly parented under Puzzle & Casual."""
+        # Puzzle is now a sub-genre under Puzzle & Casual
+        self.assertEqual(get_genre_parent_name("Puzzle"), "Puzzle & Casual")
+        self.assertEqual(get_genre_parent_name("Puzzle-Platformer"), "Puzzle & Casual")
+        self.assertEqual(get_genre_parent_name("Match-Three"), "Puzzle & Casual")
+        # Casual genres also under Puzzle & Casual
+        self.assertEqual(get_genre_parent_name("Music"), "Puzzle & Casual")
+        self.assertEqual(get_genre_parent_name("Party"), "Puzzle & Casual")
+        self.assertEqual(get_genre_parent_name("Educational"), "Puzzle & Casual")
 
-    def test_puzzle_genres_hierarchy(self):
-        """Test that puzzle genres are correctly parented."""
-        self.assertEqual(get_genre_parent_name("Puzzle-Platformer"), "Puzzle")
+    def test_adventure_genres_hierarchy(self):
+        """Test that adventure genres are correctly parented."""
+        # Horror moved from Hybrid & Specialized
+        self.assertEqual(get_genre_parent_name("Horror"), "Adventure")
+        self.assertEqual(get_genre_parent_name("Point-and-Click"), "Adventure")
+
+    def test_simulation_genres_hierarchy(self):
+        """Test that simulation genres are correctly parented."""
+        # Sandbox moved from Hybrid & Specialized
+        self.assertEqual(get_genre_parent_name("Sandbox"), "Simulation")
+        self.assertEqual(get_genre_parent_name("Life Simulation"), "Simulation")
+
+    def test_role_playing_genres_hierarchy(self):
+        """Test that role-playing genres are correctly parented."""
+        # Massively Multiplayer moved from Hybrid & Specialized
+        self.assertEqual(get_genre_parent_name("Massively Multiplayer"), "Role-Playing")
+        self.assertEqual(get_genre_parent_name("MMORPG"), "Role-Playing")
 
     def test_returns_none_for_root_category(self):
         """Test that root categories return None."""
         self.assertIsNone(get_genre_parent_name("Action"))
         self.assertIsNone(get_genre_parent_name("Adventure"))
         self.assertIsNone(get_genre_parent_name("Role-Playing"))
+        self.assertIsNone(get_genre_parent_name("Shooter"))  # New root category
 
     def test_returns_none_for_unknown_genre(self):
         """Test that unknown genres return None."""
@@ -216,16 +270,16 @@ class GetOrCreateGenreTest(TestCase):
 
     def test_creates_child_genre_with_parent(self):
         """Test creating a child genre with proper parent from hierarchy."""
-        # First-Person Shooter is under Action in GENRE_HIERARCHY
-        # get_or_create_genre should create Action parent if it doesn't exist
+        # First-Person Shooter is under Shooter in GENRE_HIERARCHY (new category)
+        # get_or_create_genre should create Shooter parent if it doesn't exist
         fps = get_or_create_genre("First-Person Shooter")
 
         self.assertEqual(fps.name, "First-Person Shooter")
-        # Verify parent exists and is Action
+        # Verify parent exists and is Shooter
         self.assertIsNotNone(fps.parent)
-        self.assertEqual(fps.parent.name, "Action")
+        self.assertEqual(fps.parent.name, "Shooter")
         self.assertEqual(fps.level, 1)
-        self.assertIn("Action", fps.path)
+        self.assertIn("Shooter", fps.path)
         self.assertIn("First-Person Shooter", fps.path)
 
     def test_creates_root_genre_for_category(self):
@@ -239,23 +293,23 @@ class GetOrCreateGenreTest(TestCase):
 
     def test_recursively_creates_parent_when_nonexistent(self):
         """Test that parent genre is recursively created when it doesn't exist."""
-        # Remove any existing Action genre to force recursive creation
-        WikipediaGenre.objects.filter(name="Action").delete()
+        # Remove any existing Shooter genre to force recursive creation
+        WikipediaGenre.objects.filter(name="Shooter").delete()
 
-        # First-Person Shooter should create Action parent recursively (lines 354-356)
+        # First-Person Shooter should create Shooter parent recursively
         fps = get_or_create_genre("First-Person Shooter")
 
         # Verify FPS was created with proper parent
         self.assertEqual(fps.name, "First-Person Shooter")
         self.assertEqual(fps.level, 1)
 
-        # Verify Action parent was recursively created
+        # Verify Shooter parent was recursively created
         self.assertIsNotNone(fps.parent)
-        self.assertEqual(fps.parent.name, "Action")
+        self.assertEqual(fps.parent.name, "Shooter")
         self.assertEqual(fps.parent.level, 0)
 
         # Verify path is correct
-        self.assertEqual(fps.path, "Action > First-Person Shooter")
+        self.assertEqual(fps.path, "Shooter > First-Person Shooter")
 
 
 class WikipediaGenreHierarchyTest(TestCase):

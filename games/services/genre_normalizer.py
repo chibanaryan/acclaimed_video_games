@@ -69,7 +69,7 @@ GENRE_MAPPING = {
     "Interactive novel": "Interactive Drama",
     "Visual novel": "Visual Novel",
     "Walking simulator": "Walking Simulator",
-    "Escape the room": "Escape Room",
+    "Escape the room": "Adventure",  # Consolidated: only 1 game
     "Metroidvania": "Metroidvania",
     "Dungeon crawl": "Dungeon Crawler",
     "Platform": "Platform",
@@ -79,7 +79,7 @@ GENRE_MAPPING = {
     "Cinematic platformer": "Platform",
     "Puzzle-platform": "Puzzle-Platformer",
     "Puzzle platformer": "Puzzle-Platformer",
-    "Immersive sim": "Immersive Sim",
+    "Immersive sim": "Adventure",  # Consolidated: only 1 game
     # Role-playing genres
     "Role-playing": "Role-Playing",
     "RPG": "Role-Playing",
@@ -91,7 +91,7 @@ GENRE_MAPPING = {
     "Roguelike": "Roguelike",
     "Roguelite": "Roguelike",
     "Roguelike deck-building": "Roguelike",
-    "Dungeon management game": "Dungeon Management",
+    "Dungeon management game": "Role-Playing",  # Consolidated: only 1 game
     # Strategy genres
     "Strategy": "Strategy",
     "Real-time strategy": "Real-Time Strategy",
@@ -107,13 +107,13 @@ GENRE_MAPPING = {
     "4X": "4X Strategy",
     "4X Strategy": "4X Strategy",
     "Grand strategy": "Grand Strategy",
-    "Tower defense": "Tower Defense",
+    "Tower defense": "Strategy",  # Consolidated: only 1 game
     "Tactical": "Tactical",
     # Simulation genres
     "Simulation": "Simulation",
     "Life simulation": "Life Simulation",
-    "Business simulation": "Business Simulation",
-    "Business simulation game": "Business Simulation",
+    "Business simulation": "Simulation",  # Consolidated: only 1 game
+    "Business simulation game": "Simulation",  # Consolidated: only 1 game
     "City-building": "City Building",
     "City-building game": "City Building",
     "Construction and management sim": "Construction & Management",
@@ -129,15 +129,15 @@ GENRE_MAPPING = {
     "Space simulation": "Space Simulation",
     "Space trading and combat": "Space Combat",
     "Space trading and combat simulator": "Space Combat",
-    "Vehicle simulation game": "Vehicle Simulation",
-    "Driving": "Driving",
+    "Vehicle simulation game": "Simulation",  # Consolidated: only 1 game
+    "Driving": "Simulation",  # Consolidated: only 1 game
     "Racing": "Racing",
     "Sim racing": "Racing",
     "Racing simulation": "Racing",
     "Racing simulator": "Racing",
     "Simulation racing game": "Racing",
     "Kart racing": "Kart Racing",
-    "Pinball": "Pinball",
+    "Pinball": "Party & Casual",  # Consolidated: only 1 game
     "Social simulation": "Life Simulation",
     "Social simulator": "Life Simulation",
     "Farm life sim": "Life Simulation",
@@ -150,43 +150,43 @@ GENRE_MAPPING = {
     "Football": "Football (Association)",
     "Association football": "Football (Association)",
     "Soccer": "Football (Association)",
-    "Basketball": "Basketball",
-    "Baseball": "Baseball",
-    "Ice hockey": "Ice Hockey",
-    "Boxing": "Boxing",
-    "Snowboarding": "Snowboarding",
-    "Extreme sports": "Extreme Sports",
-    "Sports management": "Sports Management",
+    "Basketball": "Sports",  # Consolidated: only 1 game
+    "Baseball": "Sports",  # Consolidated: only 1 game
+    "Ice hockey": "Sports",  # Consolidated: only 1 game
+    "Boxing": "Sports",  # Consolidated: only 1 game
+    "Snowboarding": "Snowboarding",  # Keep: 3 games
+    "Extreme sports": "Sports",  # Consolidated: only 1 game
+    "Sports management": "Sports",  # Consolidated: only 1 game
     # Puzzle genres
     "Puzzle": "Puzzle",
     "Match-three": "Match-Three",
     "Match three": "Match-Three",
     "Tile-matching": "Match-Three",
-    "Block breaker": "Block Breaker",
+    "Block breaker": "Puzzle",  # Consolidated: only 1 game
     "Maze": "Maze",
-    "Incremental": "Incremental",
+    "Incremental": "Puzzle",  # Consolidated: only 1 game
     # Party & Casual genres
     "Party": "Party",
     "Music": "Music",
     "Rhythm": "Music",
     "Rhythm game": "Music",
     "Karaoke": "Music",
-    "Casual": "Casual",
-    "Digital collectible card game": "Digital Card Game",
-    "Educational": "Educational",
-    "Edutainment": "Educational",
-    "Exercise": "Exercise",
-    # Hybrid & Specialized genres
-    "Sandbox": "Sandbox",
-    "Survival": "Survival",
-    "Horror": "Horror",
-    "Psychological horror": "Horror",
-    "Survival horror": "Horror",
-    "Massively multiplayer online": "Massively Multiplayer",
-    "MMOG": "Massively Multiplayer",
-    "MMO": "Massively Multiplayer",
-    "Social deduction": "Social Deduction",
-    "Location-based game": "Location-Based",
+    "Casual": "Party & Casual",  # Consolidated: only 1 game
+    "Digital collectible card game": "Party & Casual",  # Consolidated: only 1 game
+    "Educational": "Educational",  # Keep: 2 games
+    "Edutainment": "Educational",  # Keep: maps to Educational
+    "Exercise": "Party & Casual",  # Consolidated: only 1 game
+    # Redistributed genres (formerly Hybrid & Specialized)
+    "Sandbox": "Sandbox",  # Moved to Simulation
+    "Survival": "Survival",  # Moved to Action
+    "Horror": "Horror",  # Moved to Adventure
+    "Psychological horror": "Horror",  # Moved to Adventure
+    "Survival horror": "Horror",  # Moved to Adventure
+    "Massively multiplayer online": "Massively Multiplayer",  # Moved to Role-Playing
+    "MMOG": "Massively Multiplayer",  # Moved to Role-Playing
+    "MMO": "Massively Multiplayer",  # Moved to Role-Playing
+    "Social deduction": "Party & Casual",  # Consolidated: only 1 game
+    "Location-based game": "Adventure",  # Consolidated: only 1 game
     # Additional adventure variants
     "Graphic adventure": "Point-and-Click",  # Classic adventure games
     "Exploration": None,  # Too vague - exploration games span many genres
@@ -205,26 +205,43 @@ GENRE_MAPPING = {
 # Hierarchy structure: category -> list of child genres
 # Used to assign proper parent when creating new genres
 GENRE_HIERARCHY = {
+    "Shooter": [  # NEW: Broken out from Action
+        "Shooter",
+        "First-Person Shooter",
+        "Third-Person Shooter",
+        "Light Gun Shooter",
+        "Tactical Shooter",
+        "Run and Gun",
+    ],
+    "Racing & Sports": [
+        "Racing",  # Was root, now sub-genre
+        "Sports",  # Was root, now sub-genre
+        "Kart Racing",
+        "Football (American)",
+        "Football (Association)",
+        "Snowboarding",
+    ],
+    "Puzzle & Casual": [
+        "Puzzle",  # Was root, now sub-genre
+        "Puzzle-Platformer",
+        "Match-Three",
+        "Party",
+        "Music",
+        "Educational",
+    ],
     "Action": [
         "Action",
         "Beat 'em Up",
         "Hack and Slash",
         "Fighting",
-        "First-Person Shooter",
-        "Third-Person Shooter",
-        "Light Gun Shooter",
-        "Shooter",
-        "Run and Gun",
         "Stealth",
-        "Tactical Shooter",
         "Battle Royale",
         "MOBA",
         "Vehicular Combat",
         "Maze",
         "Platform",
         "Metroidvania",
-        "Racing",
-        "Kart Racing",
+        "Survival",  # Moved from Hybrid & Specialized
     ],
     "Adventure": [
         "Action-Adventure",
@@ -233,9 +250,8 @@ GENRE_HIERARCHY = {
         "Interactive Drama",
         "Visual Novel",
         "Walking Simulator",
-        "Escape Room",
         "Dungeon Crawler",
-        "Immersive Sim",
+        "Horror",  # Moved from Hybrid & Specialized
     ],
     "Role-Playing": [
         "Role-Playing",
@@ -243,7 +259,7 @@ GENRE_HIERARCHY = {
         "Tactical RPG",
         "MMORPG",
         "Roguelike",
-        "Dungeon Management",
+        "Massively Multiplayer",  # Moved from Hybrid & Specialized
     ],
     "Strategy": [
         "Strategy",
@@ -253,58 +269,20 @@ GENRE_HIERARCHY = {
         "Turn-Based Tactics",
         "4X Strategy",
         "Grand Strategy",
-        "Tower Defense",
         "Tactical",
     ],
     "Simulation": [
         "Simulation",
         "Life Simulation",
-        "Business Simulation",
         "City Building",
         "Construction & Management",
         "Flight Simulation",
         "Space Combat",
         "Space Simulation",
-        "Vehicle Simulation",
-        "Driving",
         "God Game",
+        "Sandbox",  # Moved from Hybrid & Specialized
     ],
-    "Sports": [
-        "Sports",
-        "Football (American)",
-        "Football (Association)",
-        "Basketball",
-        "Baseball",
-        "Ice Hockey",
-        "Boxing",
-        "Snowboarding",
-        "Extreme Sports",
-        "Sports Management",
-    ],
-    "Puzzle": [
-        "Puzzle",
-        "Puzzle-Platformer",
-        "Match-Three",
-        "Block Breaker",
-        "Incremental",
-    ],
-    "Party & Casual": [
-        "Party",
-        "Music",
-        "Casual",
-        "Digital Card Game",
-        "Educational",
-        "Exercise",
-        "Pinball",
-    ],
-    "Hybrid & Specialized": [
-        "Sandbox",
-        "Survival",
-        "Horror",
-        "Massively Multiplayer",
-        "Social Deduction",
-        "Location-Based",
-    ],
+    # REMOVED: "Hybrid & Specialized" - genres redistributed to other categories
 }
 
 # Build reverse mapping: genre -> parent category

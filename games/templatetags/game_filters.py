@@ -384,15 +384,16 @@ def platform_svg_icon(platform):
 
 # Genre category icons - matches the filter components
 GENRE_CATEGORY_ICONS = {
-    "Action": "mdi-crosshairs",
+    "Shooter": "mdi-crosshairs",  # Target reticle for shooters
+    "Racing": "mdi-car-sports",  # NEW: Sports car for racing
+    "Action": "mdi-run-fast",  # Running figure for action
     "Adventure": "mdi-image-filter-hdr",
     "Role-Playing": "mdi-wizard-hat",
     "Strategy": "mdi-chess-knight",
-    "Simulation": "mdi-car-sports",
+    "Simulation": "mdi-cog",  # Gear for simulation
     "Sports": "mdi-basketball",
     "Puzzle": "mdi-puzzle",
     "Party & Casual": "mdi-party-popper",
-    "Hybrid & Specialized": "mdi-layers",
 }
 
 

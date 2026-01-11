@@ -2,6 +2,8 @@
 
 ## 2026-01-10
 
+- Merge genre categories: Racing + Sports → "Racing & Sports", Puzzle + Party & Casual → "Puzzle & Casual"
+- Consolidate 10 genre categories to 8, ensuring all have 5+ dropdown items
 - Reorganize header: move logo from sidebar to desktop header next to site title
 - Update brand assets: new logo-site.svg, favicon.ico, favicon PNGs (16/32/64), and og-image.png
 - Move Sign Up and Donate buttons from header to sidebar bottom section

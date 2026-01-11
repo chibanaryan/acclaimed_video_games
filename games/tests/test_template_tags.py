@@ -743,20 +743,20 @@ class GenreIconFilterTest(TestCase):
 
     def test_genre_with_parent_returns_parent_icon(self):
         """Test genre with parent returns parent's icon."""
-        shooter = self._make_genre("Shooter", parent_name="Action")
-        result = genre_icon(shooter)
-        self.assertEqual(result, "mdi-crosshairs")
+        fighting = self._make_genre("Fighting", parent_name="Action")
+        result = genre_icon(fighting)
+        self.assertEqual(result, "mdi-run-fast")
 
     def test_category_genre_returns_own_icon(self):
         """Test top-level category returns its own icon."""
         action = self._make_genre("Action", parent_name=None, level=0)
         result = genre_icon(action)
-        self.assertEqual(result, "mdi-crosshairs")
+        self.assertEqual(result, "mdi-run-fast")
 
     def test_string_category_name(self):
         """Test passing category name string directly."""
         result = genre_icon("Action")
-        self.assertEqual(result, "mdi-crosshairs")
+        self.assertEqual(result, "mdi-run-fast")
 
     def test_unknown_category_returns_default(self):
         """Test unknown category returns default icon."""

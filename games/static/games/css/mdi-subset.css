@@ -117,6 +117,8 @@
 .mdi-wizard-hat::before { content: "\F1477"; }
 .mdi-chess-knight::before { content: "\F0858"; }
 .mdi-crosshairs::before { content: "\F01A3"; }
+.mdi-boxing-glove::before { content: "\F0B65"; }
+.mdi-cog::before { content: "\F0493"; }
 .mdi-car-sports::before { content: "\F07AC"; }
 .mdi-airplane-takeoff::before { content: "\F05D5"; }
 .mdi-basketball::before { content: "\F0806"; }
