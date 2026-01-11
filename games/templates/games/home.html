@@ -83,16 +83,14 @@
         <div class="flex flex-col md:flex-row items-center gap-6 md:gap-12 justify-center w-full">
             {# Left: Logo + Site Title #}
             <div class="flex-shrink-0 flex items-center gap-4">
-                <a href="{% url 'home' %}">
-                    <img src="{% static 'games/brand/logo-site.svg' %}"
-                         alt="Acclaimed Video Games"
-                         width="135"
-                         height="135"
-                         fetchpriority="high">
-                </a>
-                <h1 class="site-title text-base-content text-center md:text-center text-3xl leading-tight">
-                    <span class="block">Acclaimed</span>
-                    <span class="block">Video Games</span>
+                <img src="{% static 'games/brand/logo-site.svg' %}"
+                     alt="Acclaimed Video Games"
+                     width="135"
+                     height="135"
+                     fetchpriority="high">
+                <h1 class="site-title text-base-content text-center md:text-center text-3xl leading-tight select-none">
+                    <span class="block select-none">Acclaimed</span>
+                    <span class="block select-none">Video Games</span>
                 </h1>
             </div>
 
