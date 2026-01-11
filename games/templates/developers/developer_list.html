@@ -106,11 +106,11 @@
                         class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                         @click="sortOpen = !sortOpen">
                     <span class="mdi mdi-sort text-base"></span>
-                    <span class="text-sm min-w-20 text-left" x-text="sort === 'games' ? '# Games' : (sort === 'studios' ? '# Subsidiaries' : (sort === 'rank' ? 'Top Rank' : 'Name (A-Z)'))"></span>
+                    <span class="text-sm" x-text="sort === 'games' ? '# Games' : (sort === 'studios' ? '# Subsidiaries' : (sort === 'rank' ? 'Top Rank' : 'Name (A-Z)'))"># Games</span>
                     <span class="mdi mdi-chevron-down text-xs"></span>
                 </button>
                 <ul x-show="sortOpen" x-cloak
-                    class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-44 p-2 mt-1"
+                    class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-fit p-2 mt-1"
                     @click="sortOpen = false">
                     <li><button type="button" @click="updateSort('games')" :class="sort === 'games' ? 'active' : ''"># Games</button></li>
                     <li><button type="button" @click="updateSort('studios')" :class="sort === 'studios' ? 'active' : ''"># Subsidiaries</button></li>

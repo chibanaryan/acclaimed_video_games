@@ -27,17 +27,17 @@
                     aria-haspopup="true"
                     :aria-expanded="sortOpen">
                 <span class="mdi mdi-sort text-base" aria-hidden="true"></span>
-                <span class="text-sm min-w-20 text-left" x-text="
+                <span class="text-sm" x-text="
                     filters.sort === 'rank' ? 'Rank' :
                     filters.sort === 'year' ? 'Year' :
                     filters.sort === 'name' ? 'A-Z' :
                     filters.sort === 'playtime' ? (filters.hltb_mode === 'completionist' ? 'Playtime (100%)' : 'Playtime') :
                     'Rank'
-                "></span>
+                ">Rank</span>
                 <span class="mdi mdi-chevron-down text-xs"></span>
             </button>
             <ul x-show="sortOpen" x-cloak
-                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1"
+                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-fit p-2 mt-1"
                 @click="sortOpen = false">
                 <li><button type="button" @click="updateSort('rank')" :class="filters.sort === 'rank' ? 'active' : ''">Rank</button></li>
                 <li><button type="button" @click="updateSort('year')" :class="filters.sort === 'year' ? 'active' : ''">Year</button></li>

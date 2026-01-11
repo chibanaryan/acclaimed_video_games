@@ -76,11 +76,11 @@
                     class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="sortOpen = !sortOpen">
                 <span class="mdi mdi-sort text-base"></span>
-                <span class="text-sm min-w-20 text-left" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"></span>
+                <span class="text-sm" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"># Lists</span>
                 <span class="mdi mdi-chevron-down text-xs"></span>
             </button>
             <ul x-show="sortOpen" x-cloak
-                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-36 p-2 mt-1">
+                class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-fit p-2 mt-1">
                 <li><button type="button" @click="updateSort('importance')" :class="sort === 'importance' ? 'active' : ''"># Lists</button></li>
                 <li><button type="button" @click="updateSort('alpha')" :class="sort === 'alpha' ? 'active' : ''">Alphabetical</button></li>
             </ul>
