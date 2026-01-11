@@ -200,7 +200,7 @@
     }
 })();
 </script>
-<div id="game-list-container" :class="'view-' + viewMode">
+<div id="game-list-container" class="isolate" :class="'view-' + viewMode">
     {# List view - game rows #}
     {% for game in games %}
         {% with index=page_obj.start_index|add:forloop.counter0 %}

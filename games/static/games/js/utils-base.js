@@ -226,7 +226,14 @@ function buildFilterParams(filters, options = {}) {
     }
     if (filters.sort && filters.sort !== 'rank') params.set('sort', filters.sort);
     if (filters.sortDirection && filters.sortDirection !== 'asc') params.set('dir', filters.sortDirection);
-    if (filters.played) params.set('played', filters.played);
+    // Handle played as array (multi-select) or string (backwards compatibility)
+    if (filters.played) {
+        if (Array.isArray(filters.played) && filters.played.length > 0) {
+            params.set('played', filters.played.join(','));
+        } else if (typeof filters.played === 'string' && filters.played) {
+            params.set('played', filters.played);
+        }
+    }
     if (filters.highlight) params.set('highlight', filters.highlight);
 
     // HLTB filter parameters

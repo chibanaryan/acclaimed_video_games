@@ -389,15 +389,32 @@ def _build_genre_subtitle(selected_genre_ids, option, genres):
 
 
 def _apply_played_filter(qs, user, played_param):
-    """Apply played status filter. Requires qs to have is_played_by_user annotation."""
+    """Apply played status filter. Requires qs to have is_played_by_user annotation.
+
+    Supports multi-select via comma-separated values (e.g., "no,want" shows both
+    untracked and want-to-play games).
+    """
     if not played_param or not user or not user.is_authenticated:
         return qs
-    if played_param == "yes":
-        return qs.filter(is_played_by_user=True)
-    elif played_param == "want":
-        return qs.filter(is_want_to_play_by_user=True)
-    elif played_param == "no":
-        return qs.filter(is_played_by_user=False, is_want_to_play_by_user=False)
+
+    # Parse comma-separated values for multi-select support
+    statuses = [s.strip() for s in played_param.split(",") if s.strip()]
+    if not statuses:
+        return qs
+
+    # Build Q objects for each selected status
+    q_filter = Q()
+    for status in statuses:
+        if status == "yes":
+            q_filter |= Q(is_played_by_user=True)
+        elif status == "want":
+            q_filter |= Q(is_want_to_play_by_user=True)
+        elif status == "no":
+            q_filter |= Q(is_played_by_user=False, is_want_to_play_by_user=False)
+
+    # Only apply filter if we have valid statuses
+    if q_filter:
+        return qs.filter(q_filter)
     return qs
 
 
@@ -730,7 +747,7 @@ def download_games_csv(request):
         "genres": [str(gid) for gid in genre_ids],
         "platforms": [str(pid) for pid in platform_ids],
         "series": series_ids_for_filter,
-        "played": played_param or "",
+        "played": [s.strip() for s in played_param.split(",") if s.strip()] if played_param else [],
         "rank_display": "filtered",
         "hltb_mode": hltb_mode,
         "hltb_preset": hltb_preset,
@@ -1395,7 +1412,7 @@ class HomePageView(RobustPaginationMixin, ListView):
             "genres": genres_param.split(",") if genres_param else [],
             "platforms": platforms_param.split(",") if platforms_param else [],
             "series": series_param.split(",") if series_param else [],
-            "played": played_param if self.request.user.is_authenticated else "",
+            "played": [s.strip() for s in played_param.split(",") if s.strip()] if played_param and self.request.user.is_authenticated else [],
             "rank_display": "filtered" if has_any_filter else "alltime",
             "sort": sort_param,
             "sortDirection": dir_param,
@@ -3540,12 +3557,10 @@ class AuthLogoutView(View):
 
 class TogglePlayedGameView(LoginRequiredMixin, View):
     """
-    Cycle a game's status: none → want → played → none.
+    Set or cycle a game's tracking status.
 
-    State transitions:
-    - none (untracked) → want to play
-    - want to play → played (removes want, adds played)
-    - played → none (removes played)
+    If `status` query param is provided (none, want, played), sets directly.
+    Otherwise cycles: none → want → played → none.
 
     States are mutually exclusive - a game cannot be both
     "want to play" and "played" simultaneously.
@@ -3562,31 +3577,58 @@ class TogglePlayedGameView(LoginRequiredMixin, View):
             user=request.user, igdb_id=igdb_id
         ).exists()
 
-        # Cycle through states: none → want → played → none
-        if is_played:
-            # played → none: Remove from played
-            models.PlayedGame.objects.filter(
-                user=request.user, igdb_id=igdb_id
-            ).delete()
-            new_is_played = False
-            new_is_want_to_play = False
-        elif is_want_to_play:
-            # want → played: Remove from want, add to played
-            models.WantToPlayGame.objects.filter(
-                user=request.user, igdb_id=igdb_id
-            ).delete()
-            models.PlayedGame.objects.create(
-                user=request.user, igdb_id=igdb_id, game=game
-            )
-            new_is_played = True
-            new_is_want_to_play = False
+        # Check for explicit status parameter
+        target_status = request.GET.get("status")
+
+        if target_status in ("none", "want", "played"):
+            # Direct status set - clear existing and set new
+            if is_played:
+                models.PlayedGame.objects.filter(
+                    user=request.user, igdb_id=igdb_id
+                ).delete()
+            if is_want_to_play:
+                models.WantToPlayGame.objects.filter(
+                    user=request.user, igdb_id=igdb_id
+                ).delete()
+
+            if target_status == "played":
+                models.PlayedGame.objects.create(
+                    user=request.user, igdb_id=igdb_id, game=game
+                )
+                new_is_played = True
+                new_is_want_to_play = False
+            elif target_status == "want":
+                models.WantToPlayGame.objects.create(
+                    user=request.user, igdb_id=igdb_id, game=game
+                )
+                new_is_played = False
+                new_is_want_to_play = True
+            else:  # none
+                new_is_played = False
+                new_is_want_to_play = False
         else:
-            # none → want: Add to want to play
-            models.WantToPlayGame.objects.create(
-                user=request.user, igdb_id=igdb_id, game=game
-            )
-            new_is_played = False
-            new_is_want_to_play = True
+            # Legacy cycle behavior: none → want → played → none
+            if is_played:
+                models.PlayedGame.objects.filter(
+                    user=request.user, igdb_id=igdb_id
+                ).delete()
+                new_is_played = False
+                new_is_want_to_play = False
+            elif is_want_to_play:
+                models.WantToPlayGame.objects.filter(
+                    user=request.user, igdb_id=igdb_id
+                ).delete()
+                models.PlayedGame.objects.create(
+                    user=request.user, igdb_id=igdb_id, game=game
+                )
+                new_is_played = True
+                new_is_want_to_play = False
+            else:
+                models.WantToPlayGame.objects.create(
+                    user=request.user, igdb_id=igdb_id, game=game
+                )
+                new_is_played = False
+                new_is_want_to_play = True
 
         # Invalidate caches
         cache.delete("user_played_games_distribution")

@@ -2,6 +2,7 @@
 
 ## 2026-01-10
 
+- Fix untracked star icon shrinking to 80% after toggling (remove star-disappear animation from untracked state)
 - Merge genre categories: Racing + Sports → "Racing & Sports", Puzzle + Party & Casual → "Puzzle & Casual"
 - Consolidate 10 genre categories to 8, ensuring all have 5+ dropdown items
 - Reorganize header: move logo from sidebar to desktop header next to site title
