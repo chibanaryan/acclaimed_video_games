@@ -964,7 +964,7 @@ tr.developer-row {
 }
 
 tr.developer-row:hover {
-  background: linear-gradient(to right, color-mix(in oklch, var(--color-primary) 12%, transparent) 40%, transparent 100%);
+  background-color: color-mix(in oklch, var(--color-primary) 12%, transparent);
   transform: translateY(-1px);
   border-left-color: var(--color-primary);
 }
