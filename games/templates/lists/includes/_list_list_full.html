@@ -76,7 +76,7 @@
                     class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="sortOpen = !sortOpen">
                 <span class="mdi mdi-sort text-base"></span>
-                <span class="text-sm min-w-[5.5rem]" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"></span>
+                <span class="text-sm min-w-20 text-left" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"></span>
                 <span class="mdi mdi-chevron-down text-xs"></span>
             </button>
             <ul x-show="sortOpen" x-cloak
@@ -85,9 +85,9 @@
                 <li><button type="button" @click="updateSort('alpha')" :class="sort === 'alpha' ? 'active' : ''">Alphabetical</button></li>
             </ul>
         </div>
-        {# Direction flip button - more prominent #}
+        {# Direction flip button #}
         <button type="button"
-                class="btn btn-ghost btn-sm gap-1 px-2"
+                class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                 @click="toggleSortDirection()"
                 :title="sortDirection === 'asc' ? 'Ascending order' : 'Descending order'">
             <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"></span>
@@ -95,7 +95,7 @@
         </button>
     </div>
     {# Mobile: Native select for touch compatibility #}
-    <div class="desktop:hidden flex items-center gap-2">
+    <div class="desktop:hidden flex items-center gap-1">
         <span class="mdi mdi-sort text-base text-base-content/70"></span>
         <select id="sort-select"
                 name="sort"

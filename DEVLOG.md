@@ -1,5 +1,10 @@
 # Developer Log
 
+## 2026-01-11
+
+- Unify sort dropdown styling across pages: add min-w-20 text-left, use muted colors for direction buttons
+- Add DaisyUI tooltips to list/grid view toggle buttons on games page
+
 ## 2026-01-10
 
 - Fix untracked star icon shrinking to 80% after toggling (remove star-disappear animation from untracked state)

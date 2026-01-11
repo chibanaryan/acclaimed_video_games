@@ -11,7 +11,7 @@
                             class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                             @click="sortOpen = !sortOpen">
                         <span class="mdi mdi-sort text-base"></span>
-                        <span class="text-sm" x-text="
+                        <span class="text-sm min-w-20 text-left" x-text="
                             sortBy === 'rank' ? 'Rank' :
                             sortBy === 'year' ? 'Year' :
                             sortBy === 'name' ? 'A-Z' :
@@ -29,9 +29,9 @@
                         <li><button type="button" @click="sortBy = 'playtime'; sortGames()" :class="sortBy === 'playtime' ? 'active' : ''">Playtime</button></li>
                     </ul>
                 </div>
-                {# Direction flip button - more prominent #}
+                {# Direction flip button #}
                 <button type="button"
-                        class="btn btn-ghost btn-sm gap-1 px-2"
+                        class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                         @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; sortGames()"
                         :title="sortDirection === 'asc' ? 'Ascending order' : 'Descending order'">
                     <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"></span>

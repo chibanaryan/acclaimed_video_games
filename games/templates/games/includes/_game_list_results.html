@@ -27,7 +27,7 @@
                     aria-haspopup="true"
                     :aria-expanded="sortOpen">
                 <span class="mdi mdi-sort text-base" aria-hidden="true"></span>
-                <span class="text-sm min-w-9" x-text="
+                <span class="text-sm min-w-20 text-left" x-text="
                     filters.sort === 'rank' ? 'Rank' :
                     filters.sort === 'year' ? 'Year' :
                     filters.sort === 'name' ? 'A-Z' :
@@ -45,9 +45,9 @@
                 <li><button type="button" @click="updateSort('playtime')" :class="filters.sort === 'playtime' ? 'active' : ''">Playtime</button></li>
             </ul>
         </div>
-        {# Direction flip button - more prominent #}
+        {# Direction flip button #}
         <button type="button"
-                class="btn btn-ghost btn-sm gap-1 px-2"
+                class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                 @click="toggleSortDirection()"
                 :title="(filters.sortDirection || 'asc') === 'asc' ? 'Ascending order' : 'Descending order'"
                 :aria-label="(filters.sortDirection || 'asc') === 'asc' ? 'Sort ascending, click to change' : 'Sort descending, click to change'">
@@ -56,22 +56,24 @@
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-2 pl-2">
-            <button type="button"
-                    class="btn btn-xs btn-ghost px-1.5"
-                    :class="viewMode === 'list' ? 'btn-active' : ''"
-                    @click="setViewMode('list')"
-                    title="List view"
-                    aria-label="List view">
-                <span class="mdi mdi-format-list-bulleted text-base" aria-hidden="true"></span>
-            </button>
-            <button type="button"
-                    class="btn btn-xs btn-ghost px-1.5"
-                    :class="viewMode === 'grid' ? 'btn-active' : ''"
-                    @click="setViewMode('grid')"
-                    title="Grid view"
-                    aria-label="Grid view">
-                <span class="mdi mdi-view-grid text-base" aria-hidden="true"></span>
-            </button>
+            <div class="tooltip tooltip-bottom" data-tip="List view">
+                <button type="button"
+                        class="btn btn-xs btn-ghost px-1.5"
+                        :class="viewMode === 'list' ? 'btn-active' : ''"
+                        @click="setViewMode('list')"
+                        aria-label="List view">
+                    <span class="mdi mdi-format-list-bulleted text-base" aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="tooltip tooltip-bottom" data-tip="Grid view">
+                <button type="button"
+                        class="btn btn-xs btn-ghost px-1.5"
+                        :class="viewMode === 'grid' ? 'btn-active' : ''"
+                        @click="setViewMode('grid')"
+                        aria-label="Grid view">
+                    <span class="mdi mdi-view-grid text-base" aria-hidden="true"></span>
+                </button>
+            </div>
         </div>
     </div>
     {# Result count - Middle #}
@@ -121,22 +123,24 @@
         </button>
         {# View toggle #}
         <div class="flex items-center border-l border-base-content/20 ml-1 pl-1">
-            <button type="button"
-                    class="btn btn-sm btn-ghost px-2 min-h-10"
-                    :class="viewMode === 'list' ? 'btn-active' : ''"
-                    @click="setViewMode('list')"
-                    aria-label="List view"
-                    title="List view">
-                <span class="mdi mdi-format-list-bulleted text-base" aria-hidden="true"></span>
-            </button>
-            <button type="button"
-                    class="btn btn-sm btn-ghost px-2 min-h-10"
-                    :class="viewMode === 'grid' ? 'btn-active' : ''"
-                    @click="setViewMode('grid')"
-                    aria-label="Grid view"
-                    title="Grid view">
-                <span class="mdi mdi-view-grid text-base" aria-hidden="true"></span>
-            </button>
+            <div class="tooltip tooltip-bottom" data-tip="List view">
+                <button type="button"
+                        class="btn btn-sm btn-ghost px-2 min-h-10"
+                        :class="viewMode === 'list' ? 'btn-active' : ''"
+                        @click="setViewMode('list')"
+                        aria-label="List view">
+                    <span class="mdi mdi-format-list-bulleted text-base" aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="tooltip tooltip-bottom" data-tip="Grid view">
+                <button type="button"
+                        class="btn btn-sm btn-ghost px-2 min-h-10"
+                        :class="viewMode === 'grid' ? 'btn-active' : ''"
+                        @click="setViewMode('grid')"
+                        aria-label="Grid view">
+                    <span class="mdi mdi-view-grid text-base" aria-hidden="true"></span>
+                </button>
+            </div>
         </div>
     </div>
     {# Result count - middle, can shrink #}

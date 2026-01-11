@@ -106,7 +106,7 @@
                         class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                         @click="sortOpen = !sortOpen">
                     <span class="mdi mdi-sort text-base"></span>
-                    <span class="text-sm" x-text="sort === 'games' ? '# Games' : (sort === 'studios' ? '# Subsidiaries' : (sort === 'rank' ? 'Top Rank' : 'Name (A-Z)'))"></span>
+                    <span class="text-sm min-w-20 text-left" x-text="sort === 'games' ? '# Games' : (sort === 'studios' ? '# Subsidiaries' : (sort === 'rank' ? 'Top Rank' : 'Name (A-Z)'))"></span>
                     <span class="mdi mdi-chevron-down text-xs"></span>
                 </button>
                 <ul x-show="sortOpen" x-cloak
@@ -118,17 +118,17 @@
                     <li><button type="button" @click="updateSort('name')" :class="sort === 'name' ? 'active' : ''">Name (A-Z)</button></li>
                 </ul>
             </div>
-            {# Direction flip button - more prominent #}
+            {# Direction flip button #}
             <button type="button"
-                    class="btn btn-ghost btn-sm gap-1 px-2"
+                    class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="toggleSortDirection()"
                     :title="sortDirection === 'asc' ? 'Ascending order' : 'Descending order'">
                 <span class="mdi text-base" :class="sortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"></span>
-                <span class="text-xs hidden xs:inline" x-text="sortDirection === 'asc' ? 'Asc' : 'Desc'"></span>
+                <span class="text-xs" x-text="sortDirection === 'asc' ? 'Asc' : 'Desc'"></span>
             </button>
         </div>
         {# Mobile: Native select for touch compatibility #}
-        <div class="desktop:hidden flex items-center gap-2">
+        <div class="desktop:hidden flex items-center gap-1">
             <span class="mdi mdi-sort text-base text-base-content/70"></span>
             <select class="select select-sm select-bordered bg-base-200"
                     style="width: fit-content; max-width: 100%;"
