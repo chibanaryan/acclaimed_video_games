@@ -477,14 +477,24 @@ class GameFilterEngine {
             const passesYear = (start === null || game.y === null || game.y >= start) &&
                                (end === null || game.y === null || game.y <= end);
 
-            // Check played status
+            // Check played status (supports both array and string formats)
             let passesPlayed = true;
             if (played && window.isAuthenticated && game.i) {
                 const isGamePlayed = window.playedGameIds && window.playedGameIds.has(game.i);
                 const isGameWantToPlay = window.wantToPlayGameIds && window.wantToPlayGameIds.has(game.i);
-                if (played === 'yes') passesPlayed = isGamePlayed;
-                else if (played === 'want') passesPlayed = isGameWantToPlay;
-                else if (played === 'no') passesPlayed = !isGamePlayed && !isGameWantToPlay;
+
+                if (Array.isArray(played) && played.length > 0) {
+                    passesPlayed = played.some(p => {
+                        if (p === 'yes') return isGamePlayed;
+                        if (p === 'want') return isGameWantToPlay;
+                        if (p === 'no') return !isGamePlayed && !isGameWantToPlay;
+                        return false;
+                    });
+                } else if (typeof played === 'string') {
+                    if (played === 'yes') passesPlayed = isGamePlayed;
+                    else if (played === 'want') passesPlayed = isGameWantToPlay;
+                    else if (played === 'no') passesPlayed = !isGamePlayed && !isGameWantToPlay;
+                }
             }
 
             const passesPlatform = platformSet.size === 0 || game.p.some(pid => platformSet.has(pid));

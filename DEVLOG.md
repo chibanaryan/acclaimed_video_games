@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-16
+
+- Fix facet counts not updating when play status filters (Played/Want to Play/Untracked) are applied
+
 ## 2026-01-11
 
 - Unify sort dropdown styling across pages: add min-w-20 text-left, use muted colors for direction buttons
