@@ -25,7 +25,8 @@
             var screen = trigger.dataset.authScreen;
             var url = '/auth/modal/login/';
             if (screen === 'profile') {
-                url = '/auth/modal/profile/';
+                // Add cache-buster to ensure fresh data every time
+                url = '/auth/modal/profile/?_=' + Date.now();
             } else if (screen === 'signup') {
                 url = '/auth/modal/signup/?direct=1';
             }

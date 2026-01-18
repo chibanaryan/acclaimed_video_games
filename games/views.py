@@ -28,6 +28,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.views import View
+from django.views.decorators.cache import never_cache
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
@@ -3384,6 +3385,7 @@ class EmailConfirmationView(TemplateView):
         return self.render_to_response({"success": False})
 
 
+@method_decorator(never_cache, name="get")
 class AuthModalProfileView(View):
     """Handle profile editing form in the auth modal (HTMX partial)."""
 
@@ -3442,7 +3444,6 @@ class AuthModalProfileView(View):
             },
         )
         response["HX-Push-Url"] = "false"
-        response["Cache-Control"] = "no-store"
         return response
 
     def post(self, request):
