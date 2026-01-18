@@ -466,6 +466,20 @@ class PlayedGameInline(admin.TabularInline):
         return False
 
 
+class WantToPlayGameInline(admin.TabularInline):
+    """Inline admin for WantToPlayGame on User admin."""
+
+    model = models.WantToPlayGame
+    extra = 0
+    fields = ["game", "igdb_id", "created"]
+    readonly_fields = ["game", "igdb_id", "created"]
+    can_delete = True
+    ordering = ["-created"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 class EmailAddressInline(admin.TabularInline):
     """Inline admin for allauth EmailAddress to show verification status."""
 
@@ -492,6 +506,7 @@ class UserAdmin(BaseUserAdmin):
         "email_subscribed",
         "email_verified_display",
         "played_games_count",
+        "want_to_play_count",
         "date_joined",
     ]
     list_filter = [
@@ -502,7 +517,7 @@ class UserAdmin(BaseUserAdmin):
     ]
     search_fields = ["email", "username"]
     ordering = ["-date_joined"]
-    inlines = [EmailAddressInline, PlayedGameInline]
+    inlines = [EmailAddressInline, PlayedGameInline, WantToPlayGameInline]
 
     # Extend the default fieldsets with our custom fields
     fieldsets = BaseUserAdmin.fieldsets + (
@@ -529,3 +544,8 @@ class UserAdmin(BaseUserAdmin):
     def played_games_count(self, obj):
         """Show count of games marked as played."""
         return obj.played_games.count()
+
+    @admin.display(description="Want to Play")
+    def want_to_play_count(self, obj):
+        """Show count of games marked as want to play."""
+        return obj.want_to_play_games.count()

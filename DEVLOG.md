@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-18
+
+- Fix profile modal showing stale played games count (add Cache-Control: no-store header)
+
 ## 2026-01-16
 
 - Fix facet counts not updating when play status filters (Played/Want to Play/Untracked) are applied

@@ -3442,6 +3442,7 @@ class AuthModalProfileView(View):
             },
         )
         response["HX-Push-Url"] = "false"
+        response["Cache-Control"] = "no-store"
         return response
 
     def post(self, request):
