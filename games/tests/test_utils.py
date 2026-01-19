@@ -64,6 +64,48 @@ class ImportHelpersTests(TestCase):
         # Platform is preserved for reconnection when games are re-imported
         self.assertEqual(models.Platform.objects.count(), 1)
 
+    def test_delete_existing_data_preserves_user_tracking(self):
+        """Verify User, PlayedGame, and WantToPlayGame records survive deletion."""
+        # Create user
+        user = User.objects.create_user(username="testplayer", email="test@example.com")
+
+        # Create games with igdb_ids
+        game1 = models.Game.objects.create(
+            name="Played Game", rank=1, igdb_id=1001, year_of_release=2020
+        )
+        game2 = models.Game.objects.create(
+            name="Want to Play Game", rank=2, igdb_id=1002, year_of_release=2021
+        )
+
+        # Create tracking records
+        played = models.PlayedGame.objects.create(
+            user=user, game=game1, igdb_id=game1.igdb_id
+        )
+        want_to_play = models.WantToPlayGame.objects.create(
+            user=user, game=game2, igdb_id=game2.igdb_id
+        )
+
+        # Delete game data
+        success, message = utils.delete_existing_data()
+
+        self.assertTrue(success)
+        self.assertEqual(models.Game.objects.count(), 0)
+
+        # User must survive
+        self.assertEqual(User.objects.filter(username="testplayer").count(), 1)
+
+        # PlayedGame must survive with null game but preserved igdb_id
+        played.refresh_from_db()
+        self.assertIsNone(played.game)
+        self.assertEqual(played.igdb_id, 1001)
+        self.assertEqual(played.user, user)
+
+        # WantToPlayGame must survive with null game but preserved igdb_id
+        want_to_play.refresh_from_db()
+        self.assertIsNone(want_to_play.game)
+        self.assertEqual(want_to_play.igdb_id, 1002)
+        self.assertEqual(want_to_play.user, user)
+
     def test_import_lists_counts_updates(self):
         pub = models.Publication.objects.create(name="IGN")
         models.List.objects.create(

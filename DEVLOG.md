@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-19
+
+- Clarify Delete Data button preserves user accounts and play tracking (update UI text, add regression test)
+
 ## 2026-01-18
 
 - Fix profile modal showing stale played games count (add Cache-Control: no-store header)
