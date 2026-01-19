@@ -277,7 +277,9 @@ document.addEventListener('alpine:init', () => {
                    this.filters.end !== this.maxYear ||
                    (this.filters.played && this.filters.played.length > 0) ||
                    this.filters.hltb_min !== null ||
-                   this.filters.hltb_max !== null;
+                   this.filters.hltb_max !== null ||
+                   (this.filters.sort && this.filters.sort !== 'rank') ||
+                   (this.filters.sortDirection && this.filters.sortDirection !== 'asc');
         },
 
         async initClientFiltering() {
@@ -1113,7 +1115,8 @@ document.addEventListener('alpine:init', () => {
                 loadMoreContainer.innerHTML = this._csf.renderer.getLoadMoreHtml({
                     hasMore: state.hasMore,
                     remaining: state.remaining,
-                    maxLoaded: state.loaded >= 1000
+                    maxLoaded: state.loaded >= state.total,
+                    total: state.total
                 });
 
                 if (state.hasMore) {

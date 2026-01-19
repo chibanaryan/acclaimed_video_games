@@ -2,6 +2,9 @@
 
 ## 2026-01-19
 
+- Remove hardcoded 1000 game limit: dynamic scaling for rank distribution, Load More, and pagination
+- Fix rank display: always show sequential position (1, 2, 3...) with global rank (#N) when sorted/filtered
+- Fix Jump to Rank: load up to page boundary for smooth Load More continuation
 - Clarify Delete Data button preserves user accounts and play tracking (update UI text, add regression test)
 
 ## 2026-01-18

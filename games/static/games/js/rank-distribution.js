@@ -1,15 +1,17 @@
 /**
  * Rank Distribution Chart Component
- * A compact SVG area chart showing game distribution across rankings (1-1000)
+ * A compact SVG area chart showing game distribution across rankings
+ * Supports dynamic max rank via data-max-rank attribute
  * Pure vanilla JS implementation - no Alpine.js dependency
  */
 
 (function() {
     'use strict';
 
-    function RankDistributionChart(container, initialBins) {
+    function RankDistributionChart(container, initialBins, maxRank) {
         this.container = container;
         this.bins = initialBins || [];
+        this.maxRank = maxRank || 1000;
         this.hoveredBin = null;
 
         this.svg = container.querySelector('.rank-distribution-svg');
@@ -19,6 +21,12 @@
         // Peak indicator is in the parent section's header
         var section = container.closest('.rank-distribution-section');
         this.peakLabel = section ? section.querySelector('.rank-distribution-peak') : null;
+
+        // X-axis labels
+        var axis = container.querySelector('.rank-distribution-axis');
+        this.axisMin = axis ? axis.querySelector('.rank-axis-min') : null;
+        this.axisMid = axis ? axis.querySelector('.rank-axis-mid') : null;
+        this.axisMax = axis ? axis.querySelector('.rank-axis-max') : null;
 
         this.init();
     }
@@ -106,6 +114,11 @@
             return;
         }
         this.svg.style.visibility = 'visible';
+
+        // Update x-axis labels based on maxRank
+        if (this.axisMin) this.axisMin.textContent = '1';
+        if (this.axisMid) this.axisMid.textContent = Math.ceil(this.maxRank / 2);
+        if (this.axisMax) this.axisMax.textContent = this.maxRank;
 
         // Update peak indicator
         var maxCount = this.getMaxCount();
@@ -206,7 +219,11 @@
                 }
             }
 
-            var chart = new RankDistributionChart(container, initialBins);
+            // Get max rank from data attribute (defaults to 1000 for backwards compatibility)
+            var maxRankAttr = container.getAttribute('data-max-rank');
+            var maxRank = maxRankAttr ? parseInt(maxRankAttr, 10) : 1000;
+
+            var chart = new RankDistributionChart(container, initialBins, maxRank);
             container._rankDistributionChart = chart;
             activeCharts.push(chart);
         });

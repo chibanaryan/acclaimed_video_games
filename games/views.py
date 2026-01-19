@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import json
+import math
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlencode
@@ -12,6 +13,7 @@ from django.core.cache import cache
 from django.db.models import (
     Case,
     Count,
+    Max,
     Prefetch,
     Q,
     When,
@@ -1658,32 +1660,51 @@ class HomePageView(RobustPaginationMixin, ListView):
             ],
             user_id=played_cache_user_id,
         )
-        rank_bins = cache.get(rank_dist_cache_key)
-        if rank_bins is None:
+        cached_rank_data = cache.get(rank_dist_cache_key)
+        if cached_rank_data is None:
+            # Get global max rank for consistent bin structure
+            max_rank = (
+                models.Game.objects.filter(rank__isnull=False)
+                .aggregate(max_rank=Max("rank"))["max_rank"]
+                or 0
+            )
+
             rank_bins = []
-            bin_size = 100
-            counts = [0] * 10
-            ranks = (
-                self.get_queryset()
-                .filter(rank__gte=1, rank__lte=1000)
-                .order_by()
-                .values_list("id", "rank")
-            )
-            for _, rank in ranks:
-                if rank:
-                    idx = (rank - 1) // bin_size
-                    if 0 <= idx < 10:
-                        counts[idx] += 1
-            for i in range(10):
-                bin_start = i * bin_size + 1
-                bin_end = (i + 1) * bin_size
-                rank_bins.append(
-                    {"binStart": bin_start, "binEnd": bin_end, "count": counts[i]}
+            if max_rank > 0:
+                bin_count = config.RANK_DISTRIBUTION_BIN_COUNT
+                bin_size = math.ceil(max_rank / bin_count)
+                counts = [0] * bin_count
+
+                # Get ranks from current queryset (respects filters)
+                ranks = (
+                    self.get_queryset()
+                    .filter(rank__gte=1, rank__lte=max_rank)
+                    .order_by()
+                    .values_list("id", "rank")
                 )
+                for _, rank in ranks:
+                    if rank:
+                        idx = (rank - 1) // bin_size
+                        if 0 <= idx < bin_count:
+                            counts[idx] += 1
+
+                for i in range(bin_count):
+                    bin_start = i * bin_size + 1
+                    bin_end = min((i + 1) * bin_size, max_rank)
+                    rank_bins.append(
+                        {"binStart": bin_start, "binEnd": bin_end, "count": counts[i]}
+                    )
+
+            cached_rank_data = {"rank_bins": rank_bins, "max_rank": max_rank}
             cache.set(
-                rank_dist_cache_key, rank_bins, config.CACHE_TIMEOUT_5_MINUTES
+                rank_dist_cache_key, cached_rank_data, config.CACHE_TIMEOUT_5_MINUTES
             )
+        else:
+            rank_bins = cached_rank_data["rank_bins"]
+            max_rank = cached_rank_data["max_rank"]
+
         context["rank_distribution"] = rank_bins
+        context["max_rank"] = max_rank
 
         # Load More context
         page_obj = context.get("page_obj")
@@ -1697,7 +1718,7 @@ class HomePageView(RobustPaginationMixin, ListView):
             context["remaining_count"] = max(
                 0, page_obj.paginator.count - page_obj.end_index()
             )
-            context["max_loaded"] = page_obj.end_index() >= 1000
+            context["max_loaded"] = page_obj.end_index() >= page_obj.paginator.count
 
         # Enable client-side filtering for fast subsequent interactions
         context["enable_client_filtering"] = True
@@ -2194,6 +2215,7 @@ class DeveloperDetailView(DetailView):
                         "game_data_map_json": cached.get("game_data_map_json", "{}"),
                         "game_developer_map": cached.get("game_developer_map", {}),
                         "rank_distribution": cached.get("rank_distribution", []),
+                        "max_rank": cached.get("max_rank", 0),
                     }
                 )
             else:
@@ -2414,18 +2436,30 @@ class DeveloperDetailView(DetailView):
                 game_developer_map[game_id].append(dev_id)
         context["game_developer_map"] = game_developer_map
 
-        # Rank distribution for visualization (10 bins of 100 ranks each)
-        # Same format as games list page for visual consistency
+        # Rank distribution for visualization - uses global max rank for consistency
+        # with the games list page (same bin structure across all pages)
+        max_rank = (
+            models.Game.objects.filter(rank__isnull=False)
+            .aggregate(max_rank=Max("rank"))["max_rank"]
+            or 0
+        )
+
         rank_bins = []
-        bin_size = 100
-        for i in range(10):
-            bin_start = i * bin_size + 1
-            bin_end = (i + 1) * bin_size
-            count = sum(
-                1 for g in all_games if g.rank and bin_start <= g.rank <= bin_end
-            )
-            rank_bins.append({"binStart": bin_start, "binEnd": bin_end, "count": count})
+        if max_rank > 0:
+            bin_count = config.RANK_DISTRIBUTION_BIN_COUNT
+            bin_size = math.ceil(max_rank / bin_count)
+            for i in range(bin_count):
+                bin_start = i * bin_size + 1
+                bin_end = min((i + 1) * bin_size, max_rank)
+                count = sum(
+                    1 for g in all_games if g.rank and bin_start <= g.rank <= bin_end
+                )
+                rank_bins.append(
+                    {"binStart": bin_start, "binEnd": bin_end, "count": count}
+                )
+
         context["rank_distribution"] = rank_bins
+        context["max_rank"] = max_rank
 
         # Cache the expensive context data (excluding objects that can't be cached)
         # We cache everything that's JSON-serializable or simple Python objects
@@ -2445,6 +2479,7 @@ class DeveloperDetailView(DetailView):
             "game_data_map_json": context["game_data_map_json"],
             "game_developer_map": game_developer_map,
             "rank_distribution": rank_bins,
+            "max_rank": max_rank,
         }
         self._set_cached_context(developer, cacheable_context)
 

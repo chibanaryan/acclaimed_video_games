@@ -8,7 +8,7 @@
         <span class="text-xs font-medium text-base-content/70">Rank Distribution</span>
         <span class="rank-distribution-peak text-xs text-base-content/40"></span>
     </div>
-    <div class="rank-distribution" data-bins='{{ rank_distribution|default:"[]"|tojson }}'>
+    <div class="rank-distribution" data-bins='{{ rank_distribution|default:"[]"|tojson }}' data-max-rank="{{ max_rank|default:1000 }}">
         {# SVG Chart - uses visibility to reserve space and prevent layout shift #}
         <svg viewBox="0 0 100 40"
              preserveAspectRatio="none"
@@ -30,11 +30,11 @@
             <g class="rank-distribution-rects"></g>
         </svg>
 
-        {# X-axis labels #}
+        {# X-axis labels - set by JS based on data-max-rank #}
         <div class="rank-distribution-axis">
-            <span>1</span>
-            <span>500</span>
-            <span>1000</span>
+            <span class="rank-axis-min">1</span>
+            <span class="rank-axis-mid"></span>
+            <span class="rank-axis-max"></span>
         </div>
 
         {# Tooltip - hidden by default #}

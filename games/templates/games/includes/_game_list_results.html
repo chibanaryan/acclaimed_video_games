@@ -234,9 +234,9 @@
 </div>
 {% elif max_loaded %}
 <div id="load-more-container" class="load-more-container text-center my-6">
-    <div class="alert alert-info">
-        <span class="mdi mdi-information-outline"></span>
-        <span>Showing maximum of 1,000 results. Refine your filters to see more specific results.</span>
+    <div class="text-base-content/50 text-sm">
+        <span class="mdi mdi-check-circle-outline"></span>
+        <span>All {{ total_count|intcomma }} results loaded</span>
     </div>
 </div>
 {% endif %}

@@ -445,7 +445,9 @@ class GameListRenderer extends BaseMediaListRenderer {
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const thumbnail = this._getThumbnail(game.a);
         const thumbnail2x = this._getThumbnail2x(game.a);
-        const displayRank = showRank === 'filtered' ? index : game.r;
+        // Always show sequential position (index) as the main rank
+        // Show global rank (#N) in parentheses when filtered/sorted
+        const displayRank = index;
         const showGlobalRank = showRank === 'filtered';
 
         // Set root element attributes
@@ -593,7 +595,8 @@ class GameListRenderer extends BaseMediaListRenderer {
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const thumbnail = this._getThumbnail(game.a);
         const thumbnail2x = this._getThumbnail2x(game.a);
-        const displayRank = showRank === 'filtered' ? index : game.r;
+        // Always show sequential position (index) as the main rank
+        const displayRank = index;
         const showGlobalRank = showRank === 'filtered';
 
         // Build developers HTML (in meta row)
@@ -793,7 +796,8 @@ class GameListRenderer extends BaseMediaListRenderer {
         const expanded = this.engine.expandGame(game);
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const thumbnail = this._getThumbnail(game.a);
-        const displayRank = showRank === 'filtered' ? index : game.r;
+        // Always show sequential position (index) as the main rank
+        const displayRank = index;
         const showRankInline = showRank !== 'none';
 
         // Build unified meta row: Developer, Platforms, Genres, Playtime, List count
@@ -916,7 +920,8 @@ class GameListRenderer extends BaseMediaListRenderer {
         const expanded = this.engine.expandGame(game);
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const thumbnail = this._getThumbnail(game.a);
-        const displayRank = showRank === 'filtered' ? index : game.r;
+        // Always show sequential position (index) as the main rank
+        const displayRank = index;
         const showRankInline = showRank !== 'none';
 
         // Build unified meta row: Developer, Platforms, Genres, Playtime, List count
@@ -1019,7 +1024,8 @@ class GameListRenderer extends BaseMediaListRenderer {
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const coverUrl = this._getCoverBig(game.a);
         const coverUrl2x = this._getCoverBig2x(game.a);
-        const displayRank = showRank === 'filtered' ? index : game.r;
+        // Always show sequential position (index) as the main rank
+        const displayRank = index;
 
         // Set root attributes
         card.id = `game-${game.id}-grid`;
@@ -1131,7 +1137,8 @@ class GameListRenderer extends BaseMediaListRenderer {
         const isHighlighted = this.highlightId && game.id === this.highlightId;
         const coverUrl = this._getCoverBig(game.a);
         const coverUrl2x = this._getCoverBig2x(game.a);
-        const displayRank = showRank === 'filtered' ? index : game.r;
+        // Always show sequential position (index) as the main rank
+        const displayRank = index;
         const showRankBadge = showRank !== 'none';
         const showGlobalRank = showRank === 'filtered';
 
@@ -1312,13 +1319,13 @@ class GameListRenderer extends BaseMediaListRenderer {
         }
 
         const loaded = Math.min(this.currentPage * this.PAGE_SIZE, this.currentItems.length);
-        const hasMore = loaded < this.currentItems.length && loaded < 1000; // Max 1000
+        const hasMore = loaded < this.currentItems.length;
 
         return {
             loaded,
             total: this.currentItems.length,
             hasMore,
-            remaining: Math.min(this.currentItems.length - loaded, 1000 - loaded)
+            remaining: this.currentItems.length - loaded
         };
     }
 
@@ -1385,25 +1392,18 @@ class GameListRenderer extends BaseMediaListRenderer {
 
     /**
      * Generate load more button HTML
-     * @param {Object} state - { hasMore, remaining, maxLoaded }
+     * @param {Object} state - { hasMore, remaining, maxLoaded, total }
      * @returns {string} HTML string
      */
     getLoadMoreHtml(state) {
-        const { hasMore, remaining, maxLoaded } = state;
+        const { hasMore, remaining, maxLoaded, total } = state;
 
-        if (maxLoaded) {
+        if (maxLoaded || !hasMore) {
+            const totalDisplay = total ? total.toLocaleString() : '';
             return `
-                <div class="alert alert-info">
-                    <span class="mdi mdi-information-outline"></span>
-                    <span>Showing maximum of 1,000 results. Refine your filters to see more specific results.</span>
-                </div>
-            `;
-        }
-
-        if (!hasMore) {
-            return `
-                <div class="text-base-content/70 text-center">
-                    All results loaded
+                <div class="text-base-content/50 text-sm">
+                    <span class="mdi mdi-check-circle-outline"></span>
+                    <span>All ${totalDisplay} results loaded</span>
                 </div>
             `;
         }

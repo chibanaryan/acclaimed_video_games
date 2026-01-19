@@ -201,14 +201,14 @@ class ClientSideFiltering {
         });
 
         const loaded = Math.min(100, filterResult.total);
-        const hasMore = filterResult.total > loaded && loaded < 1000;
+        const hasMore = filterResult.total > loaded;
 
         return {
             total: filterResult.total,
             loaded,
             hasMore,
-            remaining: Math.min(filterResult.total - loaded, 1000 - loaded),
-            maxLoaded: loaded >= 1000,
+            remaining: filterResult.total - loaded,
+            maxLoaded: loaded >= filterResult.total,
             facets: filterResult.facets
         };
     }
@@ -284,9 +284,13 @@ class ClientSideFiltering {
         if (params.get('platforms')) return 'filtered';
         if (params.get('series')) return 'filtered';
         if (params.get('played')) return 'filtered';
-        // Note: sort and sortDirection are intentionally NOT checked here
-        // Sorting changes the order but doesn't filter games, so it shouldn't
-        // affect whether we show the rank distribution
+
+        // Check sort - non-default sort or direction shows global rank (#N)
+        // to help users understand where games fall in the overall rankings
+        const sort = params.get('sort');
+        const sortDirection = params.get('dir');
+        if (sort && sort !== 'rank') return 'filtered';
+        if (sortDirection && sortDirection !== 'asc') return 'filtered';
 
         // Check year/decade filters
         if (params.get('year') || params.get('decade')) return 'filtered';
@@ -335,7 +339,8 @@ class ClientSideFiltering {
             loadMoreContainer.innerHTML = this.renderer.getLoadMoreHtml({
                 hasMore: state.hasMore,
                 remaining: state.remaining,
-                maxLoaded: state.loaded >= 1000
+                maxLoaded: state.loaded >= state.total,
+                total: state.total
             });
 
             if (state.hasMore) {

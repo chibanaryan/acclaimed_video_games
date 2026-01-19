@@ -92,12 +92,23 @@ class GameFilterEngine {
         this.platforms = data.platforms || {};
         this.genres = data.genres || [];
 
+        // Calculate and store max rank from games data
+        this.maxRank = Math.max(...this.games.map(g => g.r || 0), 0);
+
         // Lazy initialization flags - defer expensive index building
         this._genreMapBuilt = false;
         this._platformMappingBuilt = false;
         this._genreMap = null;
         this._genreDescendants = null;
         this._platformToGroups = null;
+    }
+
+    /**
+     * Get the maximum rank across all games
+     * @returns {number} Maximum rank value
+     */
+    getMaxRank() {
+        return this.maxRank;
     }
 
     /**
@@ -351,8 +362,8 @@ class GameFilterEngine {
         // Calculate faceted counts
         const facets = this._calculateFacets(filters);
 
-        // Add rank distribution of filtered results
-        facets.rankDistribution = this.getRankDistribution(results);
+        // Add rank distribution of filtered results (using global maxRank for consistency)
+        facets.rankDistribution = this.getRankDistribution(results, this.maxRank);
 
         return {
             games: results,
@@ -757,26 +768,30 @@ class GameFilterEngine {
     /**
      * Calculate rank distribution bins from an array of games
      * @param {Array} games - Array of game objects with rank (r) property
+     * @param {number} maxRank - Maximum rank (global max for consistent bin structure)
      * @param {number} binCount - Number of bins (default 10)
      * @returns {Array} Array of {binStart, binEnd, count} objects
      */
-    getRankDistribution(games, binCount = 10) {
-        const maxRank = 1000;
-        const binSize = Math.ceil(maxRank / binCount);
+    getRankDistribution(games, maxRank = null, binCount = 10) {
+        // Use provided maxRank or calculate from games
+        const effectiveMax = maxRank || Math.max(...games.map(g => g.r || 0), 0);
+        if (effectiveMax === 0) return [];
+
+        const binSize = Math.ceil(effectiveMax / binCount);
         const bins = [];
 
         // Initialize bins
         for (let i = 0; i < binCount; i++) {
             bins.push({
                 binStart: i * binSize + 1,
-                binEnd: Math.min((i + 1) * binSize, maxRank),
+                binEnd: Math.min((i + 1) * binSize, effectiveMax),
                 count: 0
             });
         }
 
         // Count games per bin
         for (const game of games) {
-            if (game.r && game.r >= 1 && game.r <= maxRank) {
+            if (game.r && game.r >= 1 && game.r <= effectiveMax) {
                 const binIndex = Math.floor((game.r - 1) / binSize);
                 if (binIndex >= 0 && binIndex < binCount) {
                     bins[binIndex].count++;

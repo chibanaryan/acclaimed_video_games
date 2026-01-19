@@ -286,10 +286,13 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
         return;
     }
 
-    // Calculate which games to render (from loaded to targetRank)
-    const gamesToRender = result.games.slice(loaded, targetRank);
+    // Round up to the next page boundary so "Load More" continues smoothly
+    // e.g., if targetRank=750 and perPage=100, load up to 800
     const total = result.total;
-    const newLoaded = Math.min(targetRank, total);
+    const pageBoundary = Math.ceil(targetRank / perPage) * perPage;
+    const loadUpTo = Math.min(pageBoundary, total);
+    const gamesToRender = result.games.slice(loaded, loadUpTo);
+    const newLoaded = loadUpTo;
 
     // Render games directly to container
     const renderer = csf.renderer;
@@ -333,13 +336,14 @@ function jumpToRankClientSide(csf, targetRank, loaded, perPage) {
     }
 
     // Update Load More button
-    const hasMore = newLoaded < total && newLoaded < 1000;
-    const remaining = Math.min(total - newLoaded, 1000 - newLoaded);
+    const hasMore = newLoaded < total;
+    const remaining = total - newLoaded;
     if (loadMoreContainer) {
         loadMoreContainer.innerHTML = renderer.getLoadMoreHtml({
             hasMore,
             remaining,
-            maxLoaded: newLoaded >= 1000
+            maxLoaded: newLoaded >= total,
+            total
         });
         if (hasMore) {
             csf._initLoadMoreButton(loadMoreContainer, gameListContainer, countContainer);
@@ -596,7 +600,8 @@ function handleLoadMoreCSF(csf) {
         loadMoreContainer.innerHTML = csf.renderer.getLoadMoreHtml({
             hasMore: state.hasMore,
             remaining: state.remaining,
-            maxLoaded: state.loaded >= 1000
+            maxLoaded: state.loaded >= state.total,
+            total: state.total
         });
     }
 
@@ -714,22 +719,12 @@ function updateLoadMoreButton(button, meta) {
 
     if (!meta.hasMore || meta.maxLoaded) {
         const container = button.parentElement;
-        if (meta.maxLoaded) {
-            container.innerHTML = `
-                <div class="notification is-dark">
-                    <span class="icon is-small mr-2">
-                        <span class="mdi mdi-information-outline"></span>
-                    </span>
-                    Showing maximum of 1,000 results. Refine your filters to see more specific results.
-                </div>
-            `;
-        } else {
-            container.innerHTML = `
-                <div class="has-text-grey-light has-text-centered">
-                    All ${meta.totalCount.toLocaleString()} results loaded
-                </div>
-            `;
-        }
+        container.innerHTML = `
+            <div class="text-base-content/50 text-sm">
+                <span class="mdi mdi-check-circle-outline"></span>
+                <span>All ${meta.totalCount.toLocaleString()} results loaded</span>
+            </div>
+        `;
     } else {
         button.disabled = false;
         button.dataset.nextPage = meta.nextPage;
