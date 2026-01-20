@@ -97,13 +97,16 @@ class ImportGamesTests(TestCase):
         self.assertEqual(game.wikidata_id, "Q17185964")
 
     def test_import_games_with_multiple_wikidata_ids(self):
-        """Test that only first Wikidata ID is stored when multiple exist."""
-        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964,Q99999\r\n"
+        """Test that all Wikidata IDs are stored and first is primary."""
+        data = "1\tTest Game\t2024\tPC\t12345\tQ17185964,Q99999,Q88888\r\n"
         success, message = utils.import_games(StringIO(data))
 
         self.assertTrue(success)
         game = models.Game.objects.get()
+        # Primary Wikidata ID should be the first one
         self.assertEqual(game.wikidata_id, "Q17185964")
+        # All Wikidata IDs should be stored in the array
+        self.assertEqual(game.all_wikidata_ids, ["Q17185964", "Q99999", "Q88888"])
 
     def test_import_games_with_empty_wikidata_id(self):
         """Test that empty Wikidata IDs are handled gracefully."""
@@ -356,6 +359,257 @@ class ImportGamesTests(TestCase):
         self.assertIsNotNone(played.game)
         self.assertEqual(played.game.name, "Test Game")
         self.assertEqual(played.igdb_id, 12345)
+
+    def test_import_games_with_multiple_igdb_ids(self):
+        """Test that all IGDB IDs are stored and first is primary."""
+        data = "1\tPokemon Red\t1996\tGB\t123,456,789\tQ12345\r\n"
+        success, message = utils.import_games(StringIO(data))
+
+        self.assertTrue(success)
+        game = models.Game.objects.get()
+        # Primary IGDB ID should be the first one
+        self.assertEqual(game.igdb_id, 123)
+        # All IGDB IDs should be stored in the array
+        self.assertEqual(game.all_igdb_ids, [123, 456, 789])
+
+    def test_import_games_single_id_backwards_compatible(self):
+        """Test that single ID imports still work and populate array fields."""
+        data = "1\tTest Game\t2024\tPC\t12345\tQ12345\r\n"
+        success, message = utils.import_games(StringIO(data))
+
+        self.assertTrue(success)
+        game = models.Game.objects.get()
+        # Primary IDs should be set
+        self.assertEqual(game.igdb_id, 12345)
+        self.assertEqual(game.wikidata_id, "Q12345")
+        # Array fields should contain single element
+        self.assertEqual(game.all_igdb_ids, [12345])
+        self.assertEqual(game.all_wikidata_ids, ["Q12345"])
+
+    def test_import_games_updates_multi_id_fields_on_reimport(self):
+        """Test that multi-ID fields are updated when game is re-imported."""
+        # First import with single IDs
+        data1 = "1\tTest Game\t2024\tPC\t12345\tQ111\r\n"
+        utils.import_games(StringIO(data1))
+        game = models.Game.objects.get()
+        self.assertEqual(game.all_igdb_ids, [12345])
+        self.assertEqual(game.all_wikidata_ids, ["Q111"])
+
+        # Re-import with additional alternate IDs
+        data2 = "1\tTest Game\t2024\tPC\t12345,67890\tQ111,Q222\r\n"
+        utils.import_games(StringIO(data2))
+        game.refresh_from_db()
+        # Arrays should be updated
+        self.assertEqual(game.all_igdb_ids, [12345, 67890])
+        self.assertEqual(game.all_wikidata_ids, ["Q111", "Q222"])
+        # Primary IDs unchanged
+        self.assertEqual(game.igdb_id, 12345)
+        self.assertEqual(game.wikidata_id, "Q111")
+
+        # Re-import with fewer IDs (remove alternates)
+        data3 = "1\tTest Game\t2024\tPC\t12345\tQ111\r\n"
+        utils.import_games(StringIO(data3))
+        game.refresh_from_db()
+        # Arrays should be reduced
+        self.assertEqual(game.all_igdb_ids, [12345])
+        self.assertEqual(game.all_wikidata_ids, ["Q111"])
+
+    def test_import_games_primary_igdb_id_change_reconnects_metadata(self):
+        """Test that changing primary IGDB ID reconnects orphaned metadata.
+
+        This simulates a real-world scenario where:
+        1. A game exists with IGDB ID 123 and has metadata
+        2. The game is deleted (e.g., removed from rankings), metadata is orphaned
+        3. Later, the game returns with a new primary IGDB ID (456) but includes
+           the old ID (123) as an alternate
+        4. The orphaned metadata should reconnect via the alternate ID
+        """
+        # Create orphaned metadata (simulating previous game that was deleted)
+        igdb_data = models.IGDBGameData.objects.create(
+            game=None,  # Orphaned - game was previously deleted
+            igdb_id=123,
+            artwork_id="original_art",
+            url="https://igdb.com/games/test",
+            is_primary=True,
+        )
+        igdb_data_id = igdb_data.id
+
+        # Import with 456 as new primary, 123 as alternate
+        # Should reconnect to orphaned metadata via alternate ID 123
+        data = "1\tTest Game\t2024\tPC\t456,123\tQ111\r\n"
+        utils.import_games(StringIO(data))
+
+        game = models.Game.objects.get()
+        igdb_data.refresh_from_db()
+
+        # Game should have 456 as primary
+        self.assertEqual(game.igdb_id, 456)
+        self.assertEqual(game.all_igdb_ids, [456, 123])
+        # Metadata should be reconnected to game via alternate ID (123)
+        self.assertEqual(igdb_data.game, game)
+        self.assertEqual(game.primary_igdb_game_data_id, igdb_data_id)
+
+    def test_import_games_primary_wikidata_id_change(self):
+        """Test that changing primary Wikidata ID preserves old metadata and clears genres."""
+        # First import with Q111 as primary
+        data1 = "1\tTest Game\t2024\tPC\t12345\tQ111,Q222\r\n"
+        utils.import_games(StringIO(data1))
+        game = models.Game.objects.get()
+
+        # Create Wikipedia metadata for original primary ID with genres
+        wiki_data = models.WikipediaGameData.objects.create(
+            game=game,
+            page_title="Test_Game",
+            wikidata_id="Q111",
+            primary_genre="Action",
+            all_genres="Action, Adventure",
+            is_primary=True,
+        )
+        game.primary_wikipedia_game_data = wiki_data
+        game.save(update_fields=["primary_wikipedia_game_data"])
+
+        # Add genres for the old Wikidata ID
+        action_genre, _ = models.WikipediaGenre.objects.get_or_create(
+            name="Action", defaults={"slug": "action"}
+        )
+        adventure_genre, _ = models.WikipediaGenre.objects.get_or_create(
+            name="Adventure", defaults={"slug": "adventure"}
+        )
+        game.wikipedia_genres.set([action_genre, adventure_genre])
+
+        # Verify initial state
+        self.assertEqual(game.wikidata_id, "Q111")
+        self.assertTrue(wiki_data.is_primary)
+        self.assertEqual(game.wikipedia_genres.count(), 2)
+
+        # Second import with Q222 as new primary (order changed)
+        data2 = "1\tTest Game\t2024\tPC\t12345\tQ222,Q111\r\n"
+        utils.import_games(StringIO(data2))
+
+        game.refresh_from_db()
+        wiki_data.refresh_from_db()
+
+        # Game should now have Q222 as primary
+        self.assertEqual(game.wikidata_id, "Q222")
+        self.assertEqual(game.all_wikidata_ids, ["Q222", "Q111"])
+        # Old metadata should still exist but marked non-primary
+        self.assertFalse(wiki_data.is_primary)
+        # Primary link should be cleared
+        self.assertIsNone(game.primary_wikipedia_game_data)
+        # Genres should be cleared (they belonged to Q111, not Q222)
+        self.assertEqual(game.wikipedia_genres.count(), 0)
+
+    def test_import_games_wikidata_id_change_restores_genres_from_new_metadata(self):
+        """Test that genres are restored from new Wikidata ID's metadata."""
+        # Create orphaned metadata for Q222 (the new primary) with different genres
+        new_wiki_data = models.WikipediaGameData.objects.create(
+            game=None,  # Orphaned
+            page_title="Test_Game_v2",
+            wikidata_id="Q222",
+            primary_genre="RPG",
+            all_genres="RPG, Strategy",
+            is_primary=True,
+        )
+
+        # First import with Q111 as primary
+        data1 = "1\tTest Game\t2024\tPC\t12345\tQ111\r\n"
+        utils.import_games(StringIO(data1))
+        game = models.Game.objects.get()
+
+        # Add genres for Q111
+        action_genre, _ = models.WikipediaGenre.objects.get_or_create(
+            name="Action", defaults={"slug": "action"}
+        )
+        game.wikipedia_genres.set([action_genre])
+        self.assertEqual(game.wikipedia_genres.count(), 1)
+        self.assertEqual(game.wikipedia_genres.first().name, "Action")
+
+        # Second import with Q222 as new primary
+        # Should reconnect to orphaned metadata and restore its genres
+        data2 = "1\tTest Game\t2024\tPC\t12345\tQ222,Q111\r\n"
+        utils.import_games(StringIO(data2))
+
+        game.refresh_from_db()
+        new_wiki_data.refresh_from_db()
+
+        # Game should have Q222 as primary
+        self.assertEqual(game.wikidata_id, "Q222")
+        # Should be reconnected to the Q222 metadata
+        self.assertEqual(game.primary_wikipedia_game_data, new_wiki_data)
+        # Genres should be restored from Q222's metadata (RPG -> Role-Playing, Strategy)
+        # Note: RPG is normalized to "Role-Playing" by the genre normalization logic
+        genre_names = list(game.wikipedia_genres.values_list("name", flat=True))
+        self.assertIn("Role-Playing", genre_names)  # RPG normalized to Role-Playing
+        self.assertIn("Strategy", genre_names)
+        self.assertNotIn("Action", genre_names)  # Old genre should be gone
+
+    def test_import_games_reconnects_via_alternate_igdb_id(self):
+        """Test reconnection works when metadata matches alternate IGDB ID."""
+        # Create orphaned metadata with IGDB ID 456
+        orphan_data = models.IGDBGameData.objects.create(
+            game=None,  # Orphaned
+            igdb_id=456,
+            artwork_id="test_art",
+            url="https://igdb.com/games/test",
+            is_primary=True,
+        )
+
+        # Import game with 123 as primary, 456 as alternate
+        data = "1\tTest Game\t2024\tPC\t123,456\tQ111\r\n"
+        utils.import_games(StringIO(data))
+
+        game = models.Game.objects.get()
+        orphan_data.refresh_from_db()
+
+        # Primary (123) doesn't have metadata, so it should reconnect via 456
+        self.assertEqual(game.primary_igdb_game_data, orphan_data)
+        self.assertEqual(orphan_data.game, game)
+
+    def test_import_games_reconnects_via_alternate_wikidata_id(self):
+        """Test reconnection works when metadata matches alternate Wikidata ID."""
+        # Create orphaned metadata with Wikidata ID Q222
+        orphan_data = models.WikipediaGameData.objects.create(
+            game=None,  # Orphaned
+            page_title="Test_Game",
+            wikidata_id="Q222",
+            primary_genre="Action",
+            is_primary=True,
+        )
+
+        # Import game with Q111 as primary, Q222 as alternate
+        data = "1\tTest Game\t2024\tPC\t12345\tQ111,Q222\r\n"
+        utils.import_games(StringIO(data))
+
+        game = models.Game.objects.get()
+        orphan_data.refresh_from_db()
+
+        # Primary (Q111) doesn't have metadata, so it should reconnect via Q222
+        self.assertEqual(game.primary_wikipedia_game_data, orphan_data)
+        self.assertEqual(orphan_data.game, game)
+
+    def test_import_games_reconnects_played_via_alternate_igdb_id(self):
+        """Test orphaned PlayedGame reconnects via alternate IGDB ID."""
+        user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+        # Create orphaned PlayedGame with IGDB ID 456 (not the primary)
+        played = models.PlayedGame.objects.create(
+            user=user,
+            game=None,  # Orphaned
+            igdb_id=456,
+        )
+
+        # Import game with 123 as primary, 456 as alternate
+        data = "1\tTest Game\t2024\tPC\t123,456\tQ111\r\n"
+        success, _ = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        # PlayedGame should be reconnected via the alternate ID
+        played.refresh_from_db()
+        self.assertIsNotNone(played.game)
+        self.assertEqual(played.game.name, "Test Game")
 
 
 class ImportPlatformsTests(TestCase):

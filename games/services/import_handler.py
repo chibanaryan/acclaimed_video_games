@@ -1397,102 +1397,160 @@ def import_games(
                 )
                 platform_objs.append(platform)
 
-            # Handle Wikidata ID (take first if multiple, strip whitespace)
-            wikidata_value = None
+            # Parse comma-separated IGDB IDs (first is primary)
+            all_igdb_ids = []
+            if igdb_id and igdb_id.strip():
+                all_igdb_ids = [
+                    int(x.strip())
+                    for x in igdb_id.split(",")
+                    if x.strip() and x.strip().isdigit()
+                ]
+            primary_igdb_id = all_igdb_ids[0] if all_igdb_ids else None
+
+            # Parse comma-separated Wikidata IDs (first is primary)
+            all_wikidata_ids = []
             if wikidata_id and wikidata_id.strip():
-                # Split by comma and take first ID only
-                wikidata_value = wikidata_id.split(",")[0].strip()
+                all_wikidata_ids = [x.strip() for x in wikidata_id.split(",") if x.strip()]
+            primary_wikidata_id = all_wikidata_ids[0] if all_wikidata_ids else None
+
+            # Fetch existing game's wikidata_id BEFORE update to detect primary change
+            old_wikidata_id = None
+            if primary_igdb_id:
+                try:
+                    existing_game = models.Game.objects.get(igdb_id=primary_igdb_id)
+                    old_wikidata_id = existing_game.wikidata_id
+                except models.Game.DoesNotExist:
+                    pass
 
             game, created = models.Game.objects.update_or_create(
-                igdb_id=igdb_id,
+                igdb_id=primary_igdb_id,
                 defaults={
                     "rank": int(rank),
                     "name": game_name,
                     "year_of_release": year,
-                    "wikidata_id": wikidata_value,
+                    "wikidata_id": primary_wikidata_id,
+                    "all_igdb_ids": all_igdb_ids,
+                    "all_wikidata_ids": all_wikidata_ids,
                 },
             )
             game.platforms.set(platform_objs)
-            imported_igdb_ids.add(igdb_id)
+            imported_igdb_ids.add(primary_igdb_id)
 
-            # Reconnect orphaned PlayedGame records
-            models.PlayedGame.objects.filter(
-                igdb_id=igdb_id,
-                game__isnull=True,
-            ).update(game=game)
+            # Reconnect orphaned PlayedGame and WantToPlayGame records - try all IGDB IDs
+            if all_igdb_ids:
+                models.PlayedGame.objects.filter(
+                    igdb_id__in=all_igdb_ids,
+                    game__isnull=True,
+                ).update(game=game)
+                models.WantToPlayGame.objects.filter(
+                    igdb_id__in=all_igdb_ids,
+                    game__isnull=True,
+                ).update(game=game)
+
+            # Handle primary Wikidata ID change - mark old metadata as non-primary
+            # This preserves historical data while allowing new primary to be set
+            # Note: IGDB ID change doesn't apply here as it's the lookup key - a change
+            # in primary IGDB ID creates a new game, and orphaned metadata is reconnected
+            # via the alternate ID fallback logic below.
+            needs_save = False
+            update_fields = []
+
+            if not created and old_wikidata_id and old_wikidata_id != primary_wikidata_id:
+                # Wikidata primary changed - mark old primary metadata as non-primary
+                if game.primary_wikipedia_game_data:
+                    game.primary_wikipedia_game_data.is_primary = False
+                    game.primary_wikipedia_game_data.save(update_fields=["is_primary"])
+                    game.primary_wikipedia_game_data = None
+                    update_fields.append("primary_wikipedia_game_data")
+                    needs_save = True
+                # Clear genres - they belong to the old Wikidata ID.
+                # If reconnection finds metadata for the new ID, genres will be restored.
+                game.wikipedia_genres.clear()
 
             # Reconnect to existing IGDB/Wikipedia metadata if not already connected
             # This handles both orphaned metadata (game=None) and metadata still
             # linked to this game but not set as primary
-            needs_save = False
-            update_fields = []
+            # Uses HLTB fallback pattern: try all IDs, primary first
 
-            # Reconnect IGDB data if available and not already linked
-            if igdb_id and not game.primary_igdb_game_data:
-                # Look for orphaned metadata (game=None) or metadata for this game
-                igdb_data = (
-                    models.IGDBGameData.objects.filter(igdb_id=igdb_id, is_primary=True)
-                    .filter(Q(game__isnull=True) | Q(game=game))
-                    .first()
-                )
-                if igdb_data:
-                    # Reconnect to game
-                    igdb_data.game = game
-                    igdb_data.save(update_fields=["game"])
-                    game.primary_igdb_game_data = igdb_data
-                    update_fields.append("primary_igdb_game_data")
-                    needs_save = True
-
-            # Reconnect Wikipedia data if available and not already linked
-            if wikidata_value and not game.primary_wikipedia_game_data:
-                # Look for orphaned metadata (game=None) or metadata for this game
-                wiki_data = (
-                    models.WikipediaGameData.objects.filter(
-                        wikidata_id=wikidata_value, is_primary=True
+            # Reconnect IGDB data - try all IDs (primary first)
+            if all_igdb_ids and not game.primary_igdb_game_data:
+                for igdb_id_to_try in all_igdb_ids:
+                    # Look for orphaned metadata (game=None) or metadata for this game
+                    igdb_data = (
+                        models.IGDBGameData.objects.filter(
+                            igdb_id=igdb_id_to_try, is_primary=True
+                        )
+                        .filter(Q(game__isnull=True) | Q(game=game))
+                        .first()
                     )
-                    .filter(Q(game__isnull=True) | Q(game=game))
-                    .first()
-                )
-                if wiki_data:
-                    # Reconnect to game
-                    wiki_data.game = game
-                    wiki_data.save(update_fields=["game"])
-                    game.primary_wikipedia_game_data = wiki_data
-                    update_fields.append("primary_wikipedia_game_data")
-                    needs_save = True
+                    if igdb_data:
+                        # Reconnect to game
+                        igdb_data.game = game
+                        igdb_data.save(update_fields=["game"])
+                        game.primary_igdb_game_data = igdb_data
+                        if "primary_igdb_game_data" not in update_fields:
+                            update_fields.append("primary_igdb_game_data")
+                        needs_save = True
+                        break  # Found one, stop searching
 
-                    # Restore wikipedia_genres from stored all_genres
-                    if wiki_data.all_genres:
-                        genre_names = [
-                            g.strip() for g in wiki_data.all_genres.split(",")
-                        ]
-                        wikipedia_genres = []
-                        seen_genres = set()
-                        for genre_name in genre_names:
-                            normalized = normalize_genre(genre_name)
-                            if normalized is None or normalized in seen_genres:
-                                continue
-                            seen_genres.add(normalized)
-                            genre = get_or_create_genre(normalized)
-                            wikipedia_genres.append(genre)
-                        if wikipedia_genres:
-                            game.wikipedia_genres.set(wikipedia_genres)
+            # Reconnect Wikipedia data - try all Wikidata IDs (primary first)
+            if all_wikidata_ids and not game.primary_wikipedia_game_data:
+                for wikidata_id_to_try in all_wikidata_ids:
+                    # Look for orphaned metadata (game=None) or metadata for this game
+                    wiki_data = (
+                        models.WikipediaGameData.objects.filter(
+                            wikidata_id=wikidata_id_to_try, is_primary=True
+                        )
+                        .filter(Q(game__isnull=True) | Q(game=game))
+                        .first()
+                    )
+                    if wiki_data:
+                        # Reconnect to game
+                        wiki_data.game = game
+                        wiki_data.save(update_fields=["game"])
+                        game.primary_wikipedia_game_data = wiki_data
+                        if "primary_wikipedia_game_data" not in update_fields:
+                            update_fields.append("primary_wikipedia_game_data")
+                        needs_save = True
 
-            # Reconnect HLTB data if available and not already linked
-            if igdb_id and not game.primary_hltb_game_data:
-                # Look for orphaned metadata (game=None) or metadata for this game
-                hltb_data = (
-                    models.HLTBGameData.objects.filter(igdb_id=igdb_id, is_primary=True)
-                    .filter(Q(game__isnull=True) | Q(game=game))
-                    .first()
-                )
-                if hltb_data:
-                    # Reconnect to game
-                    hltb_data.game = game
-                    hltb_data.save(update_fields=["game"])
-                    game.primary_hltb_game_data = hltb_data
-                    update_fields.append("primary_hltb_game_data")
-                    needs_save = True
+                        # Restore wikipedia_genres from stored all_genres
+                        if wiki_data.all_genres:
+                            genre_names = [
+                                g.strip() for g in wiki_data.all_genres.split(",")
+                            ]
+                            wikipedia_genres = []
+                            seen_genres = set()
+                            for genre_name in genre_names:
+                                normalized = normalize_genre(genre_name)
+                                if normalized is None or normalized in seen_genres:
+                                    continue
+                                seen_genres.add(normalized)
+                                genre = get_or_create_genre(normalized)
+                                wikipedia_genres.append(genre)
+                            if wikipedia_genres:
+                                game.wikipedia_genres.set(wikipedia_genres)
+                        break  # Found one, stop searching
+
+            # Reconnect HLTB data - try all IGDB IDs (HLTB uses igdb_id for reconnection)
+            if all_igdb_ids and not game.primary_hltb_game_data:
+                for igdb_id_to_try in all_igdb_ids:
+                    # Look for orphaned metadata (game=None) or metadata for this game
+                    hltb_data = (
+                        models.HLTBGameData.objects.filter(
+                            igdb_id=igdb_id_to_try, is_primary=True
+                        )
+                        .filter(Q(game__isnull=True) | Q(game=game))
+                        .first()
+                    )
+                    if hltb_data:
+                        # Reconnect to game
+                        hltb_data.game = game
+                        hltb_data.save(update_fields=["game"])
+                        game.primary_hltb_game_data = hltb_data
+                        if "primary_hltb_game_data" not in update_fields:
+                            update_fields.append("primary_hltb_game_data")
+                        needs_save = True
+                        break  # Found one, stop searching
 
             # Save if we reconnected any metadata
             if needs_save:
@@ -1533,6 +1591,7 @@ def import_games(
             )
             models.HLTBGameData.objects.filter(game__in=stale_games).update(game=None)
             models.PlayedGame.objects.filter(game__in=stale_games).update(game=None)
+            models.WantToPlayGame.objects.filter(game__in=stale_games).update(game=None)
             stale_games.delete()
 
         # Update year and decade ranks for all games

@@ -876,6 +876,16 @@ class Game(MediaItemBase):
         null=True, blank=True, db_index=True
     )
     igdb_id = models.IntegerField(null=True, blank=True, db_index=True)
+    all_igdb_ids = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="All IGDB IDs for this game (first is primary)",
+    )
+    all_wikidata_ids = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="All Wikidata IDs for this game (first is primary)",
+    )
 
     # Relationships
     wikipedia_genres = models.ManyToManyField(

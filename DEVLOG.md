@@ -1,5 +1,11 @@
 # Developer Log
 
+## 2026-01-20
+
+- Add support for multiple IGDB IDs and Wikidata IDs in import files (comma-separated, first is primary)
+- Auto-reconnect orphaned metadata via alternate IDs when primary ID changes (HLTB fallback pattern)
+- Clear and restore Wikipedia genres when Wikidata ID changes during import
+
 ## 2026-01-19
 
 - Remove hardcoded 1000 game limit: dynamic scaling for rank distribution, Load More, and pagination
