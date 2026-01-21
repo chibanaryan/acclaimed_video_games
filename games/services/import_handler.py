@@ -1443,7 +1443,8 @@ def import_platforms(
     """
     Import platform code/name pairs from a TSV file.
 
-    Deletes all existing platforms, then creates fresh ones from the import file.
+    Updates existing platforms, creates new ones, and deletes platforms not in the import.
+    Preserves year_start and year_end fields for existing platforms.
 
     Args:
         f: File object to read from
@@ -1465,18 +1466,25 @@ def import_platforms(
         progress_callback("start", {"total": total_rows, "file": "Platforms"})
 
     try:
-        # Delete all existing platforms first
-        deleted_count = models.Platform.objects.count()
-        # Clear M2M relationships before deleting
-        models.Game.platforms.through.objects.all().delete()
-        models.Platform.objects.all().delete()
+        # Get existing platforms to preserve year_start/year_end
+        existing_platforms = {p.code: p for p in models.Platform.objects.all()}
+        imported_codes = set()
 
         for code, name in rows:
             row_number += 1
             code = code.strip()
             name = name.strip()
+            imported_codes.add(code)
 
-            models.Platform.objects.create(code=code, name=name)
+            # Update or create platform, preserving year_start/year_end
+            platform, created = models.Platform.objects.get_or_create(
+                code=code,
+                defaults={"name": name}
+            )
+            if not created and platform.name != name:
+                # Update name if changed
+                platform.name = name
+                platform.save(update_fields=["name"])
             count += 1
 
             # Report progress
@@ -1498,15 +1506,28 @@ def import_platforms(
                     },
                 )
 
+        # Delete platforms that are no longer in the import file
+        deleted_count = 0
+        for code, platform in existing_platforms.items():
+            if code not in imported_codes:
+                # Clear M2M relationships before deleting
+                platform.games.clear()
+                platform.delete()
+                deleted_count += 1
+
+        # Calculate statistics
+        created_count = count - (len(existing_platforms) - deleted_count)
+        updated_count = count - created_count
+
         if progress_callback:
             progress_callback(
                 "complete",
-                {"count": count, "deleted": deleted_count},
+                {"count": count, "created": created_count, "updated": updated_count, "deleted": deleted_count},
             )
 
         return (
             True,
-            f"Platforms: {count} created (deleted {deleted_count} old)",
+            f"Platforms: {created_count} created, {updated_count} updated (deleted {deleted_count} old)",
         )
 
     except Exception as e:

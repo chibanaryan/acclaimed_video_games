@@ -710,7 +710,7 @@ class ImportPlatformsTests(TestCase):
         success, message = utils.import_platforms(StringIO(data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Platforms: 1 created (deleted 0 old)")
+        self.assertEqual(message, "Platforms: 1 created, 0 updated (deleted 0 old)")
         platform = models.Platform.objects.get()
         self.assertEqual(platform.name, "Personal Computer")
 
@@ -718,9 +718,30 @@ class ImportPlatformsTests(TestCase):
         success, message = utils.import_platforms(StringIO(updated_data))
 
         self.assertTrue(success)
-        self.assertEqual(message, "Platforms: 1 created (deleted 1 old)")
+        self.assertEqual(message, "Platforms: 0 created, 1 updated (deleted 0 old)")
         platform = models.Platform.objects.get()  # Get fresh instance
         self.assertEqual(platform.name, "PC (Updated)")
+
+    def test_import_platforms_preserves_year_fields(self):
+        """Test that year_start and year_end are preserved during platform import."""
+        # Create platform with year data
+        platform = models.Platform.objects.create(
+            code="PS1",
+            name="PlayStation",
+            year_start=1994,
+            year_end=2006
+        )
+
+        # Import with same code but different name
+        data = "PS1\tPlayStation 1\r\n"
+        success, message = utils.import_platforms(StringIO(data))
+
+        self.assertTrue(success)
+        # Refresh from database
+        platform = models.Platform.objects.get(code="PS1")
+        self.assertEqual(platform.name, "PlayStation 1")  # Name updated
+        self.assertEqual(platform.year_start, 1994)  # Year preserved
+        self.assertEqual(platform.year_end, 2006)  # Year preserved
 
     def test_import_platforms_with_progress_callback_line_687(self):
         """Test import_platforms progress callback at line 687 (row % 10 == 0)."""
