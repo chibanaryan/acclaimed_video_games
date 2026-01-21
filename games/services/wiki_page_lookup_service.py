@@ -5,7 +5,9 @@ Finds Wikipedia pages for games using Wikidata IDs as the primary method,
 with fallback to OpenSearch API. This is separate from genre scraping.
 """
 
+import difflib
 import logging
+import re
 import time
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
@@ -272,15 +274,11 @@ class WikiPageLookupService:
             # The response uses the Q-ID as key, or "-1" if not found
             for qid, entity in entities.items():
                 if qid.startswith("Q"):
-                    logger.debug(
-                        "Found Wikidata ID for page '%s': %s", page_title, qid
-                    )
+                    logger.debug("Found Wikidata ID for page '%s': %s", page_title, qid)
                     return qid
             return None
         except (ValueError, KeyError) as e:
-            logger.warning(
-                "Failed to get Wikidata ID for page '%s': %s", page_title, e
-            )
+            logger.warning("Failed to get Wikidata ID for page '%s': %s", page_title, e)
             return None
 
     def _lookup_via_wikidata(self, wikidata_id: str) -> Optional[
@@ -412,6 +410,90 @@ class WikiPageLookupService:
             )
             return None
 
+    def _normalize_title_for_comparison(self, title: str) -> str:
+        """
+        Normalize a title for similarity comparison.
+
+        Removes common Wikipedia disambiguation suffixes and normalizes whitespace.
+        """
+        # Remove common Wikipedia suffixes for video games
+        title = re.sub(
+            r"\s*\((video game|game|series|franchise|"
+            r"\d{4} video game|video game series)\).*$",
+            "",
+            title,
+            flags=re.IGNORECASE,
+        )
+
+        # Normalize whitespace and convert to lowercase
+        title = re.sub(r"\s+", " ", title).strip().lower()
+
+        return title
+
+    def _is_title_similar_enough(
+        self, game_name: str, page_title: str, threshold: float = 0.7
+    ) -> bool:
+        """
+        Check if a Wikipedia page title is similar enough to the game name.
+
+        Uses multiple checks to avoid false positives like "Sektori" -> "Sektor Gaza".
+
+        Args:
+            game_name: Original game name
+            page_title: Wikipedia page title from opensearch
+            threshold: Minimum similarity ratio (0.0-1.0). Default 0.7.
+
+        Returns:
+            True if titles are similar enough, False otherwise
+        """
+        # Normalize both titles
+        normalized_game = self._normalize_title_for_comparison(game_name)
+        normalized_page = self._normalize_title_for_comparison(page_title)
+
+        # Quick accept: one is a substring of the other
+        if normalized_game in normalized_page or normalized_page in normalized_game:
+            logger.debug(
+                "Title similarity check: '%s' vs '%s' = SUBSTRING MATCH",
+                normalized_game,
+                normalized_page,
+            )
+            return True
+
+        # Calculate character-level similarity
+        char_similarity = difflib.SequenceMatcher(
+            None, normalized_game, normalized_page
+        ).ratio()
+
+        # For strict matching, also check word-level overlap
+        # This catches cases like "Sektori" vs "Sektor Gaza" where
+        # character similarity is high but word overlap is low
+        game_words = set(normalized_game.split())
+        page_words = set(normalized_page.split())
+
+        if game_words and page_words:
+            # Calculate word overlap (Jaccard similarity)
+            word_overlap = len(game_words & page_words) / len(game_words | page_words)
+        else:
+            word_overlap = 0.0
+
+        # Require EITHER high character similarity OR decent word overlap
+        # This allows "StarCraft II: Wings of Liberty" (word overlap)
+        # but rejects "Sektori" vs "Sektor Gaza" (low word overlap)
+        passes = char_similarity >= threshold or word_overlap >= 0.4
+
+        logger.debug(
+            "Title similarity check: '%s' vs '%s' = "
+            "char:%.2f word:%.2f -> %s (threshold: char>=%.2f OR word>=0.4)",
+            normalized_game,
+            normalized_page,
+            char_similarity,
+            word_overlap,
+            "PASS" if passes else "FAIL",
+            threshold,
+        )
+
+        return passes
+
     def _lookup_via_opensearch(
         self, game_name: str, year: Optional[int] = None
     ) -> Optional[tuple[str, str]]:
@@ -440,6 +522,17 @@ class WikiPageLookupService:
                 import urllib.parse
 
                 page_title = urllib.parse.unquote(page_title).replace("_", " ")
+
+                # Validate title similarity to avoid false matches
+                # (e.g., "Sektori" should not match "Sektor Gaza")
+                if not self._is_title_similar_enough(game_name, page_title):
+                    logger.info(
+                        "Rejecting opensearch result for '%s': "
+                        "page title '%s' not similar enough",
+                        game_name,
+                        page_title,
+                    )
+                    return None
 
                 # Determine source based on search success
                 # This is approximate - WikiGenreService doesn't expose
@@ -579,7 +672,8 @@ class WikiPageLookupService:
                         "wikiquote_page_title": wikiquote_title,
                     }
                     logger.info(
-                        "Merging metadata from two Wikidata IDs for %s: %s (stored) + %s (page)",
+                        "Merging metadata from two Wikidata IDs for %s: "
+                        "%s (stored) + %s (page)",
                         game_name,
                         wikidata_id,
                         page_wikidata_id,

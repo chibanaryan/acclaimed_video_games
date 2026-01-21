@@ -14,6 +14,7 @@
 - Create populate_platform_years command to restore year data for all 74 platforms
 - Bump cache version to v11 to force global cache refresh after platform year population
 - Fix Wikipedia metadata fetch to process all Wikidata IDs (enables HLTB lookup for multi-version games)
+- Add title similarity validation to opensearch: reject false matches like "Sektori" → "Sektor Gaza"
 
 ## 2026-01-20
 
