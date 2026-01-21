@@ -216,18 +216,6 @@
     <span class="mdi mdi-check-circle text-2xl"></span>
     <span>{{ import_success_message }}</span>
 </div>
-<script nonce="{{ csp_nonce }}">
-    // Clear client-side cache after successful import
-    (async () => {
-        try {
-            const cache = new GameDataCache()
-            await cache.clearCache()
-            console.log('Cache cleared successfully after game import')
-        } catch (e) {
-            console.warn('Failed to clear cache after import:', e)
-        }
-    })()
-</script>
 {% endif %}
 
 <!-- Error Messages -->
@@ -839,15 +827,7 @@
                                 <span>IGDB data fetch completed! Fetched data for ${data.total} games.</span>
                             `
                             document.body.appendChild(alert)
-                            // Clear client-side cache before reloading
-                            setTimeout(async () => {
-                                try {
-                                    const cache = new GameDataCache()
-                                    await cache.clearCache()
-                                    console.log('Cache cleared successfully')
-                                } catch (e) {
-                                    console.warn('Failed to clear cache:', e)
-                                }
+                            setTimeout(() => {
                                 window.location.reload()
                             }, 2000)
                         }, 500)
@@ -947,15 +927,7 @@
                                 <span>Wikipedia page lookup completed! ${summaryText}.</span>
                             `
                             document.body.appendChild(alert)
-                            setTimeout(async () => {
-                                // Clear client-side cache before reloading
-                                try {
-                                    const cache = new GameDataCache()
-                                    await cache.clearCache()
-                                    console.log('Cache cleared successfully after Wikipedia fetch')
-                                } catch (e) {
-                                    console.warn('Failed to clear cache:', e)
-                                }
+                            setTimeout(() => {
                                 window.location.reload()
                             }, 2000)
                         }, 500)
@@ -1049,15 +1021,7 @@
                                     <span>Wikipedia force refresh completed! ${summaryText}.</span>
                                 `
                                 document.body.appendChild(alert)
-                                setTimeout(async () => {
-                                    // Clear client-side cache before reloading
-                                    try {
-                                        const cache = new GameDataCache()
-                                        await cache.clearCache()
-                                        console.log('Cache cleared successfully after Wikipedia force refresh')
-                                    } catch (e) {
-                                        console.warn('Failed to clear cache:', e)
-                                    }
+                                setTimeout(() => {
                                     window.location.reload()
                                 }, 2000)
                             }, 500)

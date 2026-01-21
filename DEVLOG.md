@@ -8,7 +8,8 @@
 - Update genre category icon: Party & Casual → Puzzle & Casual
 - Fix source lists import varchar(100) error: increase List.name and Publication.name to 255 chars
 - Add Heroku metadata refresh command to import page
-- Clear client-side IndexedDB cache after imports and metadata refreshes to prevent stale data
+- Fix played filter to use string instead of list (resolve filter title suffix issues)
+- Update test expectations for sequential rank display (position 1, 2, 3...) vs global ranks
 
 ## 2026-01-20
 
