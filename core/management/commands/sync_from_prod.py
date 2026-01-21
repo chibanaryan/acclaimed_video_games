@@ -181,8 +181,9 @@ class Command(BaseCommand):
 
         # Step 6: Clean up
         if not keep_fixture:
-            os.remove(fixture_path)
-            self.stdout.write("   Cleaned up fixture file")
+            if os.path.exists(fixture_path):
+                os.remove(fixture_path)
+                self.stdout.write("   Cleaned up fixture file")
         else:
             self.stdout.write(f"   Fixture kept at: {fixture_path}")
 

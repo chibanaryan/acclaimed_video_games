@@ -10,6 +10,9 @@
 - Add Heroku metadata refresh command to import page
 - Fix played filter to use string instead of list (resolve filter title suffix issues)
 - Update test expectations for sequential rank display (position 1, 2, 3...) vs global ranks
+- Preserve platform year_start/year_end fields during imports (use get_or_create pattern)
+- Create populate_platform_years command to restore year data for all 74 platforms
+- Bump cache version to v11 to force global cache refresh after platform year population
 
 ## 2026-01-20
 

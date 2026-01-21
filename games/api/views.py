@@ -503,7 +503,8 @@ def _compute_game_data_version():
     # v8: Added 'ptc' (playtime_completionist) field for HLTB 100% filtering
     # v9: Updated HLTB bucket boundaries (short: 0-10h, medium: 10-30h, long: 30+h)
     # v10: Removed game_modes - no longer supported
-    SCHEMA_VERSION = "10"
+    # v11: Populated platform year_start/year_end data for all 74 platforms
+    SCHEMA_VERSION = "11"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()
