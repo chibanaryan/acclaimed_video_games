@@ -37,7 +37,7 @@ class GameListRenderer extends BaseMediaListRenderer {
      */
     _platformFamilies = {
         // Nintendo
-        'SW': 'nintendo', 'WiiU': 'nintendo', 'Wii': 'nintendo', 'GC': 'nintendo',
+        'SW': 'nintendo', 'SW2': 'nintendo', 'WiiU': 'nintendo', 'Wii': 'nintendo', 'GC': 'nintendo',
         'N64': 'nintendo', 'SNES': 'nintendo', 'NES': 'nintendo', 'GB': 'nintendo',
         'GBC': 'nintendo', 'GBA': 'nintendo', 'DS': 'nintendo', '3DS': 'nintendo', 'FDS': 'nintendo',
         // PlayStation

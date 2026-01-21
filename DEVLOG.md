@@ -2,6 +2,7 @@
 
 ## 2026-01-21
 
+- Add Switch 2 (SW2) to platform family mappings for filter dropdown and game row display
 - Fix orphaned "Party & Casual" genre: remap to "Party" under "Puzzle & Casual" hierarchy
 - Add genre mappings for Beat'em up, Extraction shooter, Puzzle-adventure, Dystopian (consolidate to existing categories)
 - Remove duplicate refresh_all_metadata_with_progress function (use management command directly)

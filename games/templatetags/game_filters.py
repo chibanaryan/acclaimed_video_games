@@ -90,6 +90,7 @@ def game_rank_url(rank, game_id=None, start=None, end=None):
 PLATFORM_FAMILIES = {
     # Nintendo
     "SW": "nintendo",  # Nintendo Switch
+    "SW2": "nintendo",  # Nintendo Switch 2
     "WiiU": "nintendo",
     "Wii": "nintendo",
     "GC": "nintendo",

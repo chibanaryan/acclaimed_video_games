@@ -12,9 +12,9 @@
 const PLATFORM_HIERARCHY = {
     nintendo: {
         name: 'Nintendo',
-        codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS'],
+        codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'SW2', 'GB', 'GBA', 'GBC', 'FDS'],
         formFactors: {
-            home: { name: 'Home Consoles', codes: ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW'] },
+            home: { name: 'Home Consoles', codes: ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW', 'SW2'] },
             handheld: { name: 'Handhelds', codes: ['GB', 'GBC', 'GBA', 'DS', '3DS'] }
         }
     },
