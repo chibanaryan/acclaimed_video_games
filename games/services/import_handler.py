@@ -781,9 +781,7 @@ def import_batch_with_progress(data: Dict[str, Any]):
                     for field_name, display_name, handler in import_sequence:
                         # Best-effort cancellation between files if client disconnects.
                         if stop_event.is_set():
-                            raise RuntimeError(
-                                "Import canceled: client disconnected"
-                            )
+                            raise RuntimeError("Import canceled: client disconnected")
                         file_obj = data.get(field_name)
                         if not file_obj:
                             continue
@@ -922,108 +920,6 @@ def import_batch(data: Dict[str, Any]) -> Tuple[bool, str]:
             metadata.save()
 
         summary = "\n".join(results)
-
-        # Automatically fetch IGDB data and update relationships after importing games
-        if games_file_imported:
-            import logging
-
-            logger = logging.getLogger(__name__)
-
-            # Count games needing IGDB data
-            games_needing_fetch = models.Game.objects.filter(
-                primary_igdb_game_data__isnull=True
-            ).count()
-
-            # Count games with metadata that need relationship updates
-            games_needing_relationships = models.Game.objects.filter(
-                primary_igdb_game_data__isnull=False
-            ).count()
-
-            logger.info(
-                f"Automatic IGDB processing: {games_needing_fetch} games need fetch, "
-                f"{games_needing_relationships} games have metadata"
-            )
-
-            if games_needing_fetch > 0 or games_needing_relationships > 0:
-                summary += "\n\nAutomatically fetching IGDB data and reconnecting relationships..."
-
-                try:
-                    from games import igdb
-
-                    api_client = igdb.get_api()
-                    if not api_client:
-                        summary += "\n⚠ IGDB API unavailable - skipping metadata fetch"
-                    else:
-                        # Step 1: Fetch IGDB data for games without metadata
-                        if games_needing_fetch > 0:
-                            from games.services.igdb_importer import IGDBImportService
-
-                            summary += f"\n→ Fetching IGDB data for {games_needing_fetch} games..."
-                            service = IGDBImportService(
-                                concurrency=8,
-                                batch_size=None,  # Auto-detect from tier
-                                use_pro_tier=None,  # Auto-detect from settings
-                            )
-                            games_to_fetch = models.Game.objects.filter(
-                                primary_igdb_game_data__isnull=True
-                            ).order_by("rank")
-
-                            processed, errors, _ = service.import_games(games_to_fetch)
-                            summary += (
-                                f"\n  ✓ Fetched {processed} games ({errors} errors)"
-                            )
-
-                        # Step 2: Update relationships for games with reconnected metadata
-                        # Refresh the count after fetch (some may have been fetched)
-                        games_with_metadata = models.Game.objects.filter(
-                            primary_igdb_game_data__isnull=False
-                        )
-
-                        # Only update relationships for games that have no developers/IGDB genres
-                        # (reconnected metadata with cleared M2M relationships)
-                        games_needing_relationships = [
-                            g for g in games_with_metadata if not g.developers.exists()
-                        ]
-
-                        if games_needing_relationships:
-                            summary += f"\n→ Reconnecting relationships for {len(games_needing_relationships)} games..."
-                            updated_count = 0
-                            error_count = 0
-                            batch_size = api_client.max_batch_size
-
-                            for batch_start in range(
-                                0, len(games_needing_relationships), batch_size
-                            ):
-                                batch_games = games_needing_relationships[
-                                    batch_start : batch_start + batch_size
-                                ]
-
-                                # Collect IGDB IDs for this batch
-                                igdb_ids = [g.igdb_id for g in batch_games if g.igdb_id]
-                                if not igdb_ids:
-                                    continue
-
-                                # Fetch all games in batch (single API call)
-                                games_data = api_client.get_games_info_by_ids(
-                                    igdb_ids, cache_results=True
-                                )
-
-                                # Update relationships for each game
-                                for game in batch_games:
-                                    if game.igdb_id and game.igdb_id in games_data:
-                                        try:
-                                            game._update_relationships_from_data(
-                                                games_data[game.igdb_id]
-                                            )
-                                            updated_count += 1
-                                        except Exception:
-                                            error_count += 1
-
-                            summary += f"\n  ✓ Reconnected {updated_count} relationships ({error_count} errors)"
-
-                except Exception as e:
-                    summary += f"\n⚠ Error during automatic IGDB processing: {e}"
-
         return (True, summary)
 
     except Exception as e:
@@ -1412,7 +1308,9 @@ def import_games(
             # Parse comma-separated Wikidata IDs (first is primary)
             all_wikidata_ids = []
             if wikidata_id and wikidata_id.strip():
-                all_wikidata_ids = [x.strip() for x in wikidata_id.split(",") if x.strip()]
+                all_wikidata_ids = [
+                    x.strip() for x in wikidata_id.split(",") if x.strip()
+                ]
             primary_wikidata_id = all_wikidata_ids[0] if all_wikidata_ids else None
 
             # Create game
@@ -1448,12 +1346,11 @@ def import_games(
             # Reconnect Wikipedia data - try all Wikidata IDs (primary first)
             if all_wikidata_ids:
                 for wikidata_id_to_try in all_wikidata_ids:
-                    wiki_data = (
-                        models.WikipediaGameData.objects.filter(
-                            wikidata_id=wikidata_id_to_try, is_primary=True, game__isnull=True
-                        )
-                        .first()
-                    )
+                    wiki_data = models.WikipediaGameData.objects.filter(
+                        wikidata_id=wikidata_id_to_try,
+                        is_primary=True,
+                        game__isnull=True,
+                    ).first()
                     if wiki_data:
                         wiki_data.game = game
                         wiki_data.save(update_fields=["game"])
@@ -1482,12 +1379,9 @@ def import_games(
             # Reconnect HLTB data - try all IGDB IDs
             if all_igdb_ids:
                 for igdb_id_to_try in all_igdb_ids:
-                    hltb_data = (
-                        models.HLTBGameData.objects.filter(
-                            igdb_id=igdb_id_to_try, is_primary=True, game__isnull=True
-                        )
-                        .first()
-                    )
+                    hltb_data = models.HLTBGameData.objects.filter(
+                        igdb_id=igdb_id_to_try, is_primary=True, game__isnull=True
+                    ).first()
                     if hltb_data:
                         hltb_data.game = game
                         hltb_data.save(update_fields=["game"])

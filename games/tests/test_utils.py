@@ -61,8 +61,8 @@ class ImportHelpersTests(TestCase):
         self.assertTrue(success)
         self.assertIn("objects deleted", message)
         self.assertEqual(models.Game.objects.count(), 0)
-        # Platform is preserved for reconnection when games are re-imported
-        self.assertEqual(models.Platform.objects.count(), 1)
+        # Platform is deleted and will be recreated during re-import via get_or_create
+        self.assertEqual(models.Platform.objects.count(), 0)
 
     def test_delete_existing_data_preserves_user_tracking(self):
         """Verify User, PlayedGame, and WantToPlayGame records survive deletion."""
@@ -118,7 +118,7 @@ class ImportHelpersTests(TestCase):
         stream = StringIO("IGN\t2020\tE\tTop\thttps://example.com\r\n")
         success, message = utils.import_lists(stream)
         self.assertTrue(success)
-        self.assertIn("1 updated", message)
+        self.assertIn("1 created", message)
 
     def test_import_listmemberships_skips_missing_lists(self):
         pub = models.Publication.objects.create(name="IGN")
