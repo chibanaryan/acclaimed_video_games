@@ -71,3 +71,4 @@ LYNX	Atari Lynx
 ARCH	Acorn Archimedes
 HP21	HP 2100
 TCC	TRS-80 / Tandy Color Computer
+SW2	Nintendo Switch 2
