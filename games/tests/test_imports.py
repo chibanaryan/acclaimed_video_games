@@ -611,6 +611,91 @@ class ImportGamesTests(TestCase):
         self.assertIsNotNone(played.game)
         self.assertEqual(played.game.name, "Test Game")
 
+    def test_import_games_normalizes_igdb_id_on_reconnect(self):
+        """Test that igdb_id is normalized to primary when reconnected via secondary."""
+        user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+
+        # Create orphaned PlayedGame with what will be a secondary ID
+        played = models.PlayedGame.objects.create(
+            user=user,
+            game=None,
+            igdb_id=67890,  # Will be secondary
+        )
+
+        # Import game with 12345 as primary, 67890 as secondary
+        data = "1\tTest Game\t2024\tPC\t12345,67890\tQ111\r\n"
+        success, _ = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        # PlayedGame should be reconnected and igdb_id normalized
+        played.refresh_from_db()
+        self.assertIsNotNone(played.game)
+        self.assertEqual(played.igdb_id, 12345)  # Normalized to primary
+
+    def test_import_games_merges_duplicate_played_records(self):
+        """Test that duplicate PlayedGame records are merged during import."""
+        user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+
+        # Create two orphaned records for same user with IDs that will merge
+        played1 = models.PlayedGame.objects.create(
+            user=user,
+            game=None,
+            igdb_id=12345,
+        )
+        import time
+
+        time.sleep(0.01)
+        models.PlayedGame.objects.create(
+            user=user,
+            game=None,
+            igdb_id=67890,
+        )
+
+        # Import game that merges both IDs
+        data = "1\tTest Game\t2024\tPC\t12345,67890\tQ111\r\n"
+        success, _ = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        game = models.Game.objects.get()
+
+        # Should have only one PlayedGame record (earliest kept)
+        remaining = models.PlayedGame.objects.filter(user=user, game=game)
+        self.assertEqual(remaining.count(), 1)
+        self.assertEqual(remaining.first().id, played1.id)
+
+    def test_import_games_normalizes_want_to_play_igdb_id(self):
+        """Test that WantToPlayGame igdb_id is also normalized to primary."""
+        user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
+
+        # Create orphaned WantToPlayGame with secondary ID
+        want = models.WantToPlayGame.objects.create(
+            user=user,
+            game=None,
+            igdb_id=67890,  # Will be secondary
+        )
+
+        # Import game with 12345 as primary, 67890 as secondary
+        data = "1\tTest Game\t2024\tPC\t12345,67890\tQ111\r\n"
+        success, _ = utils.import_games(StringIO(data))
+        self.assertTrue(success)
+
+        # WantToPlayGame should be reconnected and igdb_id normalized
+        want.refresh_from_db()
+        self.assertIsNotNone(want.game)
+        self.assertEqual(want.igdb_id, 12345)  # Normalized to primary
+
 
 class ImportPlatformsTests(TestCase):
 

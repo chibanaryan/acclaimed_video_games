@@ -5,6 +5,8 @@
 - Add support for multiple IGDB IDs and Wikidata IDs in import files (comma-separated, first is primary)
 - Auto-reconnect orphaned metadata via alternate IDs when primary ID changes (HLTB fallback pattern)
 - Clear and restore Wikipedia genres when Wikidata ID changes during import
+- Normalize PlayedGame/WantToPlayGame igdb_id to primary when reconnecting via secondary ID
+- Merge duplicate play tracking records when games are merged (keep earliest, delete duplicates)
 
 ## 2026-01-19
 

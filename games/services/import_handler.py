@@ -1436,16 +1436,18 @@ def import_games(
             game.platforms.set(platform_objs)
             imported_igdb_ids.add(primary_igdb_id)
 
-            # Reconnect orphaned PlayedGame and WantToPlayGame records - try all IGDB IDs
+            # Reconnect orphaned PlayedGame and WantToPlayGame records
+            # This also normalizes igdb_id to primary and handles duplicates
             if all_igdb_ids:
-                models.PlayedGame.objects.filter(
-                    igdb_id__in=all_igdb_ids,
-                    game__isnull=True,
-                ).update(game=game)
-                models.WantToPlayGame.objects.filter(
-                    igdb_id__in=all_igdb_ids,
-                    game__isnull=True,
-                ).update(game=game)
+                from games.services.user_tracking_service import (
+                    reconnect_tracking_records,
+                )
+
+                reconnect_tracking_records(
+                    game=game,
+                    igdb_ids=all_igdb_ids,
+                    primary_igdb_id=primary_igdb_id,
+                )
 
             # Handle primary Wikidata ID change - mark old metadata as non-primary
             # This preserves historical data while allowing new primary to be set
