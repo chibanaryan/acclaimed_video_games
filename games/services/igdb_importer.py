@@ -277,6 +277,12 @@ class IGDBImportService:
             Tuple of (success: bool, game: Game, error_msg: Optional[str])
         """
         try:
+            # Verify game still exists in database (might have been deleted/re-imported)
+            if not Game.objects.filter(pk=game.pk).exists():
+                with self.lock:
+                    self.error_count += 1
+                return (False, game, "Game no longer exists in database")
+
             game.get_igdb_data()
             game.save(update_fields=["slug", "description"])
             with self.lock:
@@ -326,6 +332,12 @@ class IGDBImportService:
 
             # Apply data to each game using Game.get_igdb_data()
             for igdb_id, game in game_id_map.items():
+                # Verify game still exists (might have been deleted/re-imported)
+                if not Game.objects.filter(pk=game.pk).exists():
+                    local_errors += 1
+                    results.append((False, game, "Game no longer exists in database"))
+                    continue
+
                 if igdb_id in games_data:
                     try:
                         # Use Game.get_igdb_data() with pre-fetched data
