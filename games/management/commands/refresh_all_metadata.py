@@ -131,10 +131,7 @@ class Command(BaseCommand):
         self._print_header(options)
 
         # [1/3] IGDB Refresh
-        if (
-            not options.get("wikipedia_only")
-            and not options.get("hltb_only")
-        ):
+        if not options.get("wikipedia_only") and not options.get("hltb_only"):
             try:
                 self._refresh_igdb(options)
             except Exception as e:
@@ -143,10 +140,7 @@ class Command(BaseCommand):
                 self.igdb_errors = -1  # Flag for total failure
 
         # [2/3] Wikipedia Refresh (now with asyncio concurrency)
-        if (
-            not options.get("igdb_only")
-            and not options.get("hltb_only")
-        ):
+        if not options.get("igdb_only") and not options.get("hltb_only"):
             try:
                 # Prepare games data before async context (avoid ORM in async)
                 games_qs = Game.objects.all().order_by("rank")
@@ -174,25 +168,18 @@ class Command(BaseCommand):
                 self.wikipedia_pages_failed = -1  # Flag for total failure
 
         # [3/3] HLTB Refresh
-        run_hltb = (
-            not options.get("igdb_only")
-            and not options.get("wikipedia_only")
-        )
+        run_hltb = not options.get("igdb_only") and not options.get("wikipedia_only")
 
         if run_hltb:
             try:
                 # Prepare HLTB games data before async context
                 hltb_games_list = []
-                games_qs = Game.objects.prefetch_related("platforms").order_by(
-                    "rank"
-                )
+                games_qs = Game.objects.prefetch_related("platforms").order_by("rank")
                 if options.get("limit"):
                     games_qs = games_qs[: options["limit"]]
 
                 for game in games_qs:
-                    platform_names = list(
-                        game.platforms.values_list("name", flat=True)
-                    )
+                    platform_names = list(game.platforms.values_list("name", flat=True))
                     hltb_games_list.append(
                         {
                             "id": game.id,
@@ -218,9 +205,7 @@ class Command(BaseCommand):
                 asyncio.run(self._refresh_hltb_async(hltb_games_list, options))
             except Exception as e:
                 logger.exception("HLTB refresh failed")
-                self.stdout.write(
-                    self.style.ERROR(f"\n  HLTB refresh failed: {e}")
-                )
+                self.stdout.write(self.style.ERROR(f"\n  HLTB refresh failed: {e}"))
                 self.hltb_not_found = -1
 
         # Print summary
@@ -605,27 +590,51 @@ class Command(BaseCommand):
                         return None
 
                     # Get HLTB ID from P2816 claim
+                    # Filter out deprecated claims and prefer
+                    # "preferred" rank over "normal"
                     claims = entity.get("claims", {})
                     hltb_id = None
                     p2816 = claims.get("P2816", [])
                     if p2816:
+                        # Filter out deprecated claims and sort by rank preference
+                        valid_claims = []
                         for claim in p2816:
-                            if claim.get("rank") != "deprecated":
-                                mainsnak = claim.get("mainsnak", {})
-                                datavalue = mainsnak.get("datavalue", {})
-                                hltb_id = datavalue.get("value")
-                                break
+                            rank = claim.get("rank", "normal")
+                            if rank != "deprecated":
+                                valid_claims.append((claim, rank))
+
+                        if valid_claims:
+                            # Sort by rank preference (preferred first, then normal)
+                            valid_claims.sort(
+                                key=lambda x: 0 if x[1] == "preferred" else 1
+                            )
+                            best_claim = valid_claims[0][0]
+                            mainsnak = best_claim.get("mainsnak", {})
+                            datavalue = mainsnak.get("datavalue", {})
+                            hltb_id = datavalue.get("value")
 
                     # Get Steam AppID from P1733 claim
+                    # Filter out deprecated claims and prefer
+                    # "preferred" rank over "normal"
                     steam_app_id = None
                     p1733 = claims.get("P1733", [])
                     if p1733:
+                        # Filter out deprecated claims and sort by rank preference
+                        valid_claims = []
                         for claim in p1733:
-                            if claim.get("rank") != "deprecated":
-                                mainsnak = claim.get("mainsnak", {})
-                                datavalue = mainsnak.get("datavalue", {})
-                                steam_app_id = datavalue.get("value")
-                                break
+                            rank = claim.get("rank", "normal")
+                            if rank != "deprecated":
+                                valid_claims.append((claim, rank))
+
+                        if valid_claims:
+                            # Sort by rank preference (preferred first, then normal)
+                            valid_claims.sort(
+                                key=lambda x: 0 if x[1] == "preferred" else 1
+                            )
+                            best_claim = valid_claims[0][0]
+                            mainsnak = best_claim.get("mainsnak", {})
+                            datavalue = mainsnak.get("datavalue", {})
+                            steam_app_id = datavalue.get("value")
 
                     return {
                         "page_title": page_title,
