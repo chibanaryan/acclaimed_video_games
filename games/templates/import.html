@@ -295,6 +295,12 @@
                 <div class="percentage">{{ wikipedia_counts.connected }} connected, {{ wikipedia_counts.orphaned }} orphaned</div>
                 <div class="percentage">{{ wikipedia_counts.games_needing }} game{{ wikipedia_counts.games_needing|pluralize }} need page{{ wikipedia_counts.games_needing|pluralize }}</div>
             </div>
+            <div class="igdb-status-card">
+                <div class="label">HLTB Metadata Records</div>
+                <div class="value">{{ hltb_counts.total }} record{{ hltb_counts.total|pluralize }}</div>
+                <div class="percentage">{{ hltb_counts.connected }} connected, {{ hltb_counts.orphaned }} orphaned</div>
+                <div class="percentage">{{ hltb_counts.games_needing }} game{{ hltb_counts.games_needing|pluralize }} need data</div>
+            </div>
         </div>
     </div>
 </div>

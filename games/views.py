@@ -2949,6 +2949,10 @@ class ImportView(LoginRequiredMixin, FormView):
         ).count()
         connected_wikipedia = total_wikipedia_metadata - orphaned_wikipedia
 
+        total_hltb_metadata = models.HLTBGameData.objects.count()
+        orphaned_hltb = models.HLTBGameData.objects.filter(game__isnull=True).count()
+        connected_hltb = total_hltb_metadata - orphaned_hltb
+
         # Count games that need metadata (for fetch button)
         games_needing_igdb = models.Game.objects.filter(
             primary_igdb_game_data__isnull=True
@@ -2956,6 +2960,9 @@ class ImportView(LoginRequiredMixin, FormView):
         games_needing_wikipedia = models.Game.objects.filter(
             Q(primary_wikipedia_game_data__isnull=True)
             | Q(primary_wikipedia_game_data__page_title="")
+        ).count()
+        games_needing_hltb = models.Game.objects.filter(
+            primary_hltb_game_data__isnull=True
         ).count()
 
         context["counts"] = {
@@ -3011,6 +3018,17 @@ class ImportView(LoginRequiredMixin, FormView):
             ),
             "estimate_seconds": wiki_estimate_seconds,
             "has_auth": has_wikidata_auth,
+        }
+        context["hltb_counts"] = {
+            "total": total_hltb_metadata,
+            "connected": connected_hltb,
+            "orphaned": orphaned_hltb,
+            "games_needing": games_needing_hltb,
+            "percentage": int(
+                (connected_hltb / total_hltb_metadata * 100)
+                if total_hltb_metadata > 0
+                else 0
+            ),
         }
 
         # Get persistent errors from session
