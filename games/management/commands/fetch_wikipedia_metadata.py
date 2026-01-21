@@ -521,10 +521,10 @@ class Command(BaseCommand):
 
     def _refresh_alternate_wikidata_records(self, game, page_service):
         """
-        Refresh metadata for all non-primary WikipediaGameData records.
+        Process all Wikidata IDs from game.all_wikidata_ids.
 
-        This updates HLTB IDs and other Wikidata metadata for alternate
-        WikipediaGameData entries (not the primary, which is handled separately).
+        Creates or updates WikipediaGameData records for all Wikidata IDs,
+        ensuring HLTB IDs from any alternate Wikidata entry are available.
 
         Args:
             game: Game instance
@@ -536,15 +536,23 @@ class Command(BaseCommand):
         records_updated = 0
         records_with_hltb_id = 0
 
-        # Get all non-primary WikipediaGameData records with wikidata_ids
-        alternate_records = game.wikipedia_game_data_set.filter(
-            is_primary=False,
-            wikidata_id__isnull=False,
-        ).exclude(wikidata_id="")
+        # Get all Wikidata IDs for this game
+        all_wikidata_ids = game.all_wikidata_ids or []
+        if not all_wikidata_ids and game.wikidata_id:
+            # Fallback to single wikidata_id if all_wikidata_ids is empty
+            all_wikidata_ids = [game.wikidata_id]
 
-        for wiki_data in alternate_records:
+        # Skip the primary ID (already processed in main loop)
+        primary_wikidata_id = game.wikidata_id
+        alternate_ids = [wid for wid in all_wikidata_ids if wid != primary_wikidata_id]
+
+        # Process each alternate Wikidata ID
+        for wikidata_id in alternate_ids:
+            if not wikidata_id or not wikidata_id.strip():
+                continue
+
             # Look up metadata via Wikidata API
-            wikidata_result = page_service._lookup_via_wikidata(wiki_data.wikidata_id)
+            wikidata_result = page_service._lookup_via_wikidata(wikidata_id)
 
             if wikidata_result:
                 (
@@ -554,39 +562,68 @@ class Command(BaseCommand):
                     wikiquote_title,
                 ) = wikidata_result
 
-                # Update the record with new metadata
-                update_fields = []
+                # Create or update WikipediaGameData record for this alternate ID
+                wiki_data, created = WikipediaGameData.objects.get_or_create(
+                    game=game,
+                    wikidata_id=wikidata_id,
+                    defaults={
+                        "page_title": page_title or "",
+                        "is_primary": False,
+                        "hltb_id": hltb_id,
+                        "steam_app_id": steam_app_id,
+                        "wikiquote_page_title": wikiquote_title,
+                    },
+                )
 
-                if hltb_id and hltb_id != wiki_data.hltb_id:
-                    wiki_data.hltb_id = hltb_id
-                    update_fields.append("hltb_id")
-                    records_with_hltb_id += 1
-                    logger.info(
-                        "Updated HLTB ID for %s (Wikidata %s): %s",
-                        game.name,
-                        wiki_data.wikidata_id,
-                        hltb_id,
-                    )
-
-                if steam_app_id and steam_app_id != wiki_data.steam_app_id:
-                    wiki_data.steam_app_id = steam_app_id
-                    update_fields.append("steam_app_id")
-                    logger.info(
-                        "Updated Steam AppID for %s (Wikidata %s): %s",
-                        game.name,
-                        wiki_data.wikidata_id,
-                        steam_app_id,
-                    )
-
-                if (
-                    wikiquote_title
-                    and wikiquote_title != wiki_data.wikiquote_page_title
-                ):
-                    wiki_data.wikiquote_page_title = wikiquote_title
-                    update_fields.append("wikiquote_page_title")
-
-                if update_fields:
-                    wiki_data.save(update_fields=update_fields)
+                if created:
                     records_updated += 1
+                    if hltb_id:
+                        records_with_hltb_id += 1
+                        logger.info(
+                            "Created WikipediaGameData for %s "
+                            "(Wikidata %s) with HLTB ID: %s",
+                            game.name,
+                            wikidata_id,
+                            hltb_id,
+                        )
+                else:
+                    # Update existing record
+                    update_fields = []
+
+                    if page_title and page_title != wiki_data.page_title:
+                        wiki_data.page_title = page_title
+                        update_fields.append("page_title")
+
+                    if hltb_id and hltb_id != wiki_data.hltb_id:
+                        wiki_data.hltb_id = hltb_id
+                        update_fields.append("hltb_id")
+                        records_with_hltb_id += 1
+                        logger.info(
+                            "Updated HLTB ID for %s (Wikidata %s): %s",
+                            game.name,
+                            wikidata_id,
+                            hltb_id,
+                        )
+
+                    if steam_app_id and steam_app_id != wiki_data.steam_app_id:
+                        wiki_data.steam_app_id = steam_app_id
+                        update_fields.append("steam_app_id")
+                        logger.info(
+                            "Updated Steam AppID for %s (Wikidata %s): %s",
+                            game.name,
+                            wikidata_id,
+                            steam_app_id,
+                        )
+
+                    if (
+                        wikiquote_title
+                        and wikiquote_title != wiki_data.wikiquote_page_title
+                    ):
+                        wiki_data.wikiquote_page_title = wikiquote_title
+                        update_fields.append("wikiquote_page_title")
+
+                    if update_fields:
+                        wiki_data.save(update_fields=update_fields)
+                        records_updated += 1
 
         return records_updated, records_with_hltb_id
