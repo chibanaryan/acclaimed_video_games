@@ -1,5 +1,12 @@
 # Developer Log
 
+## 2026-01-21
+
+- Fix orphaned "Party & Casual" genre: remap to "Party" under "Puzzle & Casual" hierarchy
+- Add genre mappings for Beat'em up, Extraction shooter, Puzzle-adventure, Dystopian (consolidate to existing categories)
+- Remove duplicate refresh_all_metadata_with_progress function (use management command directly)
+- Update genre category icon: Party & Casual → Puzzle & Casual
+
 ## 2026-01-20
 
 - Add support for multiple IGDB IDs and Wikidata IDs in import files (comma-separated, first is primary)

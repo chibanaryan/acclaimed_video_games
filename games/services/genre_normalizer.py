@@ -26,6 +26,7 @@ GENRE_MAPPING = {
     "Action": "Action",
     "Beat 'em up": "Beat 'em Up",
     "Beat em up": "Beat 'em Up",
+    "Beat'em up": "Beat 'em Up",  # Alternate spacing
     "Hack and slash": "Hack and Slash",
     "Fighting": "Fighting",
     "First-person shooter": "First-Person Shooter",
@@ -34,6 +35,7 @@ GENRE_MAPPING = {
     "Third-person shooter": "Third-Person Shooter",
     "Light gun shooter": "Light Gun Shooter",
     "Shooter": "Shooter",
+    "Extraction shooter": "Shooter",  # Consolidated: only 1 game
     "Shoot 'em up": "Shooter",
     "Bullet hell": "Shooter",
     "Scrolling shooter": "Shooter",
@@ -60,6 +62,7 @@ GENRE_MAPPING = {
     "Platform-adventure": "Action-Adventure",
     "Adventure": "Adventure",
     "Adventure game": "Adventure",
+    "Puzzle-adventure": "Adventure",  # Consolidated: only 1 game
     "Point-and-click adventure": "Point-and-Click",
     "Point-and-click": "Point-and-Click",
     "Interactive drama": "Interactive Drama",
@@ -137,7 +140,7 @@ GENRE_MAPPING = {
     "Racing simulator": "Racing",
     "Simulation racing game": "Racing",
     "Kart racing": "Kart Racing",
-    "Pinball": "Party & Casual",  # Consolidated: only 1 game
+    "Pinball": "Party",  # Consolidated: only 1 game, under Puzzle & Casual
     "Social simulation": "Life Simulation",
     "Social simulator": "Life Simulation",
     "Farm life sim": "Life Simulation",
@@ -165,17 +168,17 @@ GENRE_MAPPING = {
     "Block breaker": "Puzzle",  # Consolidated: only 1 game
     "Maze": "Maze",
     "Incremental": "Puzzle",  # Consolidated: only 1 game
-    # Party & Casual genres
+    # Puzzle & Casual genres (Party, Music, Educational are children of Puzzle & Casual)
     "Party": "Party",
     "Music": "Music",
     "Rhythm": "Music",
     "Rhythm game": "Music",
     "Karaoke": "Music",
-    "Casual": "Party & Casual",  # Consolidated: only 1 game
-    "Digital collectible card game": "Party & Casual",  # Consolidated: only 1 game
+    "Casual": "Party",  # Consolidated: only 1 game, under Puzzle & Casual
+    "Digital collectible card game": "Party",  # Consolidated: only 1 game, under Puzzle & Casual
     "Educational": "Educational",  # Keep: 2 games
     "Edutainment": "Educational",  # Keep: maps to Educational
-    "Exercise": "Party & Casual",  # Consolidated: only 1 game
+    "Exercise": "Party",  # Consolidated: only 1 game, under Puzzle & Casual
     # Redistributed genres (formerly Hybrid & Specialized)
     "Sandbox": "Sandbox",  # Moved to Simulation
     "Survival": "Survival",  # Moved to Action
@@ -185,12 +188,13 @@ GENRE_MAPPING = {
     "Massively multiplayer online": "Massively Multiplayer",  # Moved to Role-Playing
     "MMOG": "Massively Multiplayer",  # Moved to Role-Playing
     "MMO": "Massively Multiplayer",  # Moved to Role-Playing
-    "Social deduction": "Party & Casual",  # Consolidated: only 1 game
+    "Social deduction": "Party",  # Consolidated: only 1 game, under Puzzle & Casual
     "Location-based game": "Adventure",  # Consolidated: only 1 game
     # Additional adventure variants
     "Graphic adventure": "Point-and-Click",  # Classic adventure games
     "Exploration": None,  # Too vague - exploration games span many genres
     # Invalid/removed entries (map to None)
+    "Dystopian": None,  # Setting, not genre
     "(minigame)": None,
     "Minigame": None,  # Not a meaningful genre classification
     "Minigames": None,

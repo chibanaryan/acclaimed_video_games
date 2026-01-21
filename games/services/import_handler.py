@@ -1034,22 +1034,34 @@ def delete_existing_data() -> Tuple[bool, str]:
     """
     Delete all game-related data from the database.
 
-    Preserves IGDBGameData, WikipediaGameData, Developer, Genre, and Platform
-    for reconnection when games are re-imported.
+    Deletes: Games, Lists, ListMemberships, Publications, Developers, Series,
+             IGDBGameData, Platform.
+    Preserves (orphaned): WikipediaGameData, HLTBGameData, WikipediaGenre.
     """
     models_to_delete = [
         models.List,
         models.Publication,
         models.ListMembership,
         models.Game,
+        models.Developer,
+        models.Series,
+        models.IGDBGameData,
+        models.Platform,
     ]
 
     with transaction.atomic():
         # Orphan metadata records before deleting games
-        # This preserves IGDB, Wikipedia, and HLTB data for reconnection on re-import
-        models.IGDBGameData.objects.all().update(game=None)
+        # This preserves Wikipedia and HLTB data for reconnection on re-import
         models.WikipediaGameData.objects.all().update(game=None)
         models.HLTBGameData.objects.all().update(game=None)
+
+        # Clear primary IGDB relationship before deleting IGDBGameData
+        models.Game.objects.update(primary_igdb_game_data=None)
+
+        # Clear M2M relationships before deleting Developer, Series, Platform
+        models.Game.developers.through.objects.all().delete()
+        models.Game.series.through.objects.all().delete()
+        models.Game.platforms.through.objects.all().delete()
 
         # Delete objects
         total = 0
@@ -1153,9 +1165,8 @@ def import_lists(
     Import critic lists from a TSV file with columns:
     publisher, year, type, name, url.
 
-    Uses get_or_create for idempotent imports, and deletes lists
-    not in the import file (stale cleanup). Also deletes publications
-    that have no remaining lists.
+    Deletes all existing lists and publications, then creates fresh ones
+    from the import file.
 
     Args:
         f: File object to read from
@@ -1163,10 +1174,8 @@ def import_lists(
     """
     rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
-    updated = 0
     row_number = 0
     total_rows = 0
-    imported_list_ids = set()
 
     # Count total rows first
     current_pos = f.tell()
@@ -1179,29 +1188,28 @@ def import_lists(
         progress_callback("start", {"total": total_rows, "file": "Source Lists"})
 
     try:
+        # Delete all existing lists and publications before importing
+        lists_deleted = models.List.objects.count()
+        pubs_deleted = models.Publication.objects.count()
+        models.List.objects.all().delete()
+        models.Publication.objects.all().delete()
+
         for line_number, bits in enumerate(rows):
             row_number += 1
             publisher_name, year, type, name, url = bits
-            publisher, created = models.Publication.objects.get_or_create(
+            publisher, _ = models.Publication.objects.get_or_create(
                 name=publisher_name,
             )
 
-            source_list, created = models.List.objects.get_or_create(
+            models.List.objects.create(
                 publisher=publisher,
                 year=year,
                 name=name,
                 order=line_number + 1,
-                defaults={
-                    "url": url,
-                    "type": type[0],
-                },
+                url=url,
+                type=type[0],
             )
-            imported_list_ids.add(source_list.id)
-
-            if created:
-                count += 1
-            else:
-                updated += 1
+            count += 1
 
             # Report progress
             if (
@@ -1222,24 +1230,11 @@ def import_lists(
                     },
                 )
 
-        # Delete lists not in the import file (stale cleanup)
-        stale_lists = models.List.objects.exclude(id__in=imported_list_ids)
-        lists_deleted = stale_lists.count()
-        if lists_deleted > 0:
-            stale_lists.delete()
-
-        # Delete publications that have no remaining lists
-        orphan_pubs = models.Publication.objects.filter(lists__isnull=True)
-        pubs_deleted = orphan_pubs.count()
-        if pubs_deleted > 0:
-            orphan_pubs.delete()
-
         if progress_callback:
             progress_callback(
                 "complete",
                 {
                     "count": count,
-                    "updated": updated,
                     "lists_deleted": lists_deleted,
                     "publications_deleted": pubs_deleted,
                 },
@@ -1247,8 +1242,8 @@ def import_lists(
 
         return (
             True,
-            f"Lists: {count} created, {updated} updated, {lists_deleted} deleted; "
-            f"Publications: {pubs_deleted} orphaned deleted",
+            f"Lists: {count} created (deleted {lists_deleted} old); "
+            f"Publications: recreated (deleted {pubs_deleted} old)",
         )
 
     except Exception as e:
@@ -1352,9 +1347,9 @@ def import_games(
     Import games from a TSV file with columns:
     rank, name, year, platforms (comma-separated codes), IGDB id, Wikidata id.
 
-    Uses update_or_create for idempotent imports, and deletes games
-    not in the import file (stale cleanup). Orphans metadata before
-    deleting stale games so it can be reconnected on future imports.
+    Deletes all existing games and creates fresh ones. Orphans user tracking
+    (PlayedGame/WantToPlayGame) and metadata (Wikipedia/HLTB) before deleting,
+    then reconnects them after creating new games.
 
     Args:
         f: File object to read from
@@ -1367,10 +1362,8 @@ def import_games(
 
     rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
-    updated = 0
     row_number = 0
     total_rows = 0
-    imported_igdb_ids = set()
 
     # Count total rows first
     current_pos = f.tell()
@@ -1383,13 +1376,22 @@ def import_games(
         progress_callback("start", {"total": total_rows, "file": "Games"})
 
     try:
+        # Delete all existing games first
+        # Orphan user tracking and metadata so they can be reconnected
+        deleted_count = models.Game.objects.count()
+        models.PlayedGame.objects.all().update(game=None)
+        models.WantToPlayGame.objects.all().update(game=None)
+        models.WikipediaGameData.objects.all().update(game=None)
+        models.HLTBGameData.objects.all().update(game=None)
+        models.Game.objects.all().delete()
+
         for rank, game_name, year, platforms, igdb_id, wikidata_id in rows:
             row_number += 1
             platform_codes = platforms.split(",")
             platform_objs = []
             for code in platform_codes:
                 code = code.strip()
-                platform, created = models.Platform.objects.get_or_create(
+                platform, _ = models.Platform.objects.get_or_create(
                     code=code,
                     defaults={
                         "name": code,
@@ -1413,28 +1415,18 @@ def import_games(
                 all_wikidata_ids = [x.strip() for x in wikidata_id.split(",") if x.strip()]
             primary_wikidata_id = all_wikidata_ids[0] if all_wikidata_ids else None
 
-            # Fetch existing game's wikidata_id BEFORE update to detect primary change
-            old_wikidata_id = None
-            if primary_igdb_id:
-                try:
-                    existing_game = models.Game.objects.get(igdb_id=primary_igdb_id)
-                    old_wikidata_id = existing_game.wikidata_id
-                except models.Game.DoesNotExist:
-                    pass
-
-            game, created = models.Game.objects.update_or_create(
+            # Create game
+            game = models.Game.objects.create(
                 igdb_id=primary_igdb_id,
-                defaults={
-                    "rank": int(rank),
-                    "name": game_name,
-                    "year_of_release": year,
-                    "wikidata_id": primary_wikidata_id,
-                    "all_igdb_ids": all_igdb_ids,
-                    "all_wikidata_ids": all_wikidata_ids,
-                },
+                rank=int(rank),
+                name=game_name,
+                year_of_release=year,
+                wikidata_id=primary_wikidata_id,
+                all_igdb_ids=all_igdb_ids,
+                all_wikidata_ids=all_wikidata_ids,
             )
             game.platforms.set(platform_objs)
-            imported_igdb_ids.add(primary_igdb_id)
+            count += 1
 
             # Reconnect orphaned PlayedGame and WantToPlayGame records
             # This also normalizes igdb_id to primary and handles duplicates
@@ -1449,70 +1441,24 @@ def import_games(
                     primary_igdb_id=primary_igdb_id,
                 )
 
-            # Handle primary Wikidata ID change - mark old metadata as non-primary
-            # This preserves historical data while allowing new primary to be set
-            # Note: IGDB ID change doesn't apply here as it's the lookup key - a change
-            # in primary IGDB ID creates a new game, and orphaned metadata is reconnected
-            # via the alternate ID fallback logic below.
-            needs_save = False
+            # Reconnect to existing Wikipedia/HLTB metadata
             update_fields = []
-
-            if not created and old_wikidata_id and old_wikidata_id != primary_wikidata_id:
-                # Wikidata primary changed - mark old primary metadata as non-primary
-                if game.primary_wikipedia_game_data:
-                    game.primary_wikipedia_game_data.is_primary = False
-                    game.primary_wikipedia_game_data.save(update_fields=["is_primary"])
-                    game.primary_wikipedia_game_data = None
-                    update_fields.append("primary_wikipedia_game_data")
-                    needs_save = True
-                # Clear genres - they belong to the old Wikidata ID.
-                # If reconnection finds metadata for the new ID, genres will be restored.
-                game.wikipedia_genres.clear()
-
-            # Reconnect to existing IGDB/Wikipedia metadata if not already connected
-            # This handles both orphaned metadata (game=None) and metadata still
-            # linked to this game but not set as primary
-            # Uses HLTB fallback pattern: try all IDs, primary first
-
-            # Reconnect IGDB data - try all IDs (primary first)
-            if all_igdb_ids and not game.primary_igdb_game_data:
-                for igdb_id_to_try in all_igdb_ids:
-                    # Look for orphaned metadata (game=None) or metadata for this game
-                    igdb_data = (
-                        models.IGDBGameData.objects.filter(
-                            igdb_id=igdb_id_to_try, is_primary=True
-                        )
-                        .filter(Q(game__isnull=True) | Q(game=game))
-                        .first()
-                    )
-                    if igdb_data:
-                        # Reconnect to game
-                        igdb_data.game = game
-                        igdb_data.save(update_fields=["game"])
-                        game.primary_igdb_game_data = igdb_data
-                        if "primary_igdb_game_data" not in update_fields:
-                            update_fields.append("primary_igdb_game_data")
-                        needs_save = True
-                        break  # Found one, stop searching
+            needs_save = False
 
             # Reconnect Wikipedia data - try all Wikidata IDs (primary first)
-            if all_wikidata_ids and not game.primary_wikipedia_game_data:
+            if all_wikidata_ids:
                 for wikidata_id_to_try in all_wikidata_ids:
-                    # Look for orphaned metadata (game=None) or metadata for this game
                     wiki_data = (
                         models.WikipediaGameData.objects.filter(
-                            wikidata_id=wikidata_id_to_try, is_primary=True
+                            wikidata_id=wikidata_id_to_try, is_primary=True, game__isnull=True
                         )
-                        .filter(Q(game__isnull=True) | Q(game=game))
                         .first()
                     )
                     if wiki_data:
-                        # Reconnect to game
                         wiki_data.game = game
                         wiki_data.save(update_fields=["game"])
                         game.primary_wikipedia_game_data = wiki_data
-                        if "primary_wikipedia_game_data" not in update_fields:
-                            update_fields.append("primary_wikipedia_game_data")
+                        update_fields.append("primary_wikipedia_game_data")
                         needs_save = True
 
                         # Restore wikipedia_genres from stored all_genres
@@ -1531,37 +1477,27 @@ def import_games(
                                 wikipedia_genres.append(genre)
                             if wikipedia_genres:
                                 game.wikipedia_genres.set(wikipedia_genres)
-                        break  # Found one, stop searching
+                        break
 
-            # Reconnect HLTB data - try all IGDB IDs (HLTB uses igdb_id for reconnection)
-            if all_igdb_ids and not game.primary_hltb_game_data:
+            # Reconnect HLTB data - try all IGDB IDs
+            if all_igdb_ids:
                 for igdb_id_to_try in all_igdb_ids:
-                    # Look for orphaned metadata (game=None) or metadata for this game
                     hltb_data = (
                         models.HLTBGameData.objects.filter(
-                            igdb_id=igdb_id_to_try, is_primary=True
+                            igdb_id=igdb_id_to_try, is_primary=True, game__isnull=True
                         )
-                        .filter(Q(game__isnull=True) | Q(game=game))
                         .first()
                     )
                     if hltb_data:
-                        # Reconnect to game
                         hltb_data.game = game
                         hltb_data.save(update_fields=["game"])
                         game.primary_hltb_game_data = hltb_data
-                        if "primary_hltb_game_data" not in update_fields:
-                            update_fields.append("primary_hltb_game_data")
+                        update_fields.append("primary_hltb_game_data")
                         needs_save = True
-                        break  # Found one, stop searching
+                        break
 
-            # Save if we reconnected any metadata
             if needs_save:
                 game.save(update_fields=update_fields)
-
-            if created:
-                count += 1
-            else:
-                updated += 1
 
             # Report progress
             if (
@@ -1582,20 +1518,6 @@ def import_games(
                     },
                 )
 
-        # Delete games not in the import file (stale cleanup)
-        stale_games = models.Game.objects.exclude(igdb_id__in=imported_igdb_ids)
-        deleted_count = stale_games.count()
-        if deleted_count > 0:
-            # Orphan metadata before deleting games so it can be reconnected later
-            models.IGDBGameData.objects.filter(game__in=stale_games).update(game=None)
-            models.WikipediaGameData.objects.filter(game__in=stale_games).update(
-                game=None
-            )
-            models.HLTBGameData.objects.filter(game__in=stale_games).update(game=None)
-            models.PlayedGame.objects.filter(game__in=stale_games).update(game=None)
-            models.WantToPlayGame.objects.filter(game__in=stale_games).update(game=None)
-            stale_games.delete()
-
         # Update year and decade ranks for all games
         games_ranked, years_processed = update_year_decade_ranks()
 
@@ -1604,7 +1526,6 @@ def import_games(
                 "complete",
                 {
                     "count": count,
-                    "updated": updated,
                     "deleted": deleted_count,
                     "ranks_updated": games_ranked,
                 },
@@ -1612,7 +1533,7 @@ def import_games(
 
         return (
             True,
-            f"Games: {count} created, {updated} updated, {deleted_count} deleted, "
+            f"Games: {count} created (deleted {deleted_count} old), "
             f"{games_ranked} ranks calculated",
         )
 
@@ -1628,8 +1549,7 @@ def import_platforms(
     """
     Import platform code/name pairs from a TSV file.
 
-    Uses update_or_create for idempotent imports, and deletes platforms
-    not in the import file (stale cleanup).
+    Deletes all existing platforms, then creates fresh ones from the import file.
 
     Args:
         f: File object to read from
@@ -1637,10 +1557,8 @@ def import_platforms(
     """
     rows = csv.reader(f, delimiter="\t", lineterminator="\r\n")
     count = 0
-    updated = 0
     row_number = 0
     total_rows = 0
-    imported_codes = set()
 
     # Count total rows first
     current_pos = f.tell()
@@ -1653,23 +1571,19 @@ def import_platforms(
         progress_callback("start", {"total": total_rows, "file": "Platforms"})
 
     try:
+        # Delete all existing platforms first
+        deleted_count = models.Platform.objects.count()
+        # Clear M2M relationships before deleting
+        models.Game.platforms.through.objects.all().delete()
+        models.Platform.objects.all().delete()
+
         for code, name in rows:
             row_number += 1
             code = code.strip()
             name = name.strip()
-            imported_codes.add(code)
 
-            platform, created = models.Platform.objects.update_or_create(
-                code=code,
-                defaults={
-                    "name": name,
-                },
-            )
-
-            if created:
-                count += 1
-            else:
-                updated += 1
+            models.Platform.objects.create(code=code, name=name)
+            count += 1
 
             # Report progress
             if (
@@ -1690,21 +1604,15 @@ def import_platforms(
                     },
                 )
 
-        # Delete platforms not in the import file (stale cleanup)
-        stale_platforms = models.Platform.objects.exclude(code__in=imported_codes)
-        deleted_count = stale_platforms.count()
-        if deleted_count > 0:
-            stale_platforms.delete()
-
         if progress_callback:
             progress_callback(
                 "complete",
-                {"count": count, "updated": updated, "deleted": deleted_count},
+                {"count": count, "deleted": deleted_count},
             )
 
         return (
             True,
-            f"Platforms: {count} created, {updated} updated, {deleted_count} deleted",
+            f"Platforms: {count} created (deleted {deleted_count} old)",
         )
 
     except Exception as e:

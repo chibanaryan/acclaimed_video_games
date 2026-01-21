@@ -585,6 +585,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Progress Indicators -->
@@ -605,6 +606,7 @@
                 <div id="wikipedia-progress-text" class="text-sm opacity-70">Starting...</div>
             </div>
         </div>
+
     </div>
 </div>
 
@@ -1065,15 +1067,5 @@
             activeEventSource = null
         }
     })
-
-    // Helper function to format seconds
-    function formatTime(seconds) {
-        if (seconds === 0) return '0s'
-        if (seconds < 60) return Math.round(seconds) + 's'
-        const minutes = Math.floor(seconds / 60)
-        const secs = Math.round(seconds % 60)
-        return `${minutes}m ${secs}s`
-    }
-
 </script>
 {% endblock %}

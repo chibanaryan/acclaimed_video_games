@@ -392,8 +392,7 @@ GENRE_CATEGORY_ICONS = {
     "Strategy": "mdi-chess-knight",
     "Simulation": "mdi-cog",  # Gear for simulation
     "Sports": "mdi-basketball",
-    "Puzzle": "mdi-puzzle",
-    "Party & Casual": "mdi-party-popper",
+    "Puzzle & Casual": "mdi-puzzle",  # Combined Puzzle + Party & Casual
 }
 
 
