@@ -8,6 +8,7 @@
 - Update genre category icon: Party & Casual → Puzzle & Casual
 - Fix source lists import varchar(100) error: increase List.name and Publication.name to 255 chars
 - Add Heroku metadata refresh command to import page
+- Clear client-side IndexedDB cache after imports and metadata refreshes to prevent stale data
 
 ## 2026-01-20
 
