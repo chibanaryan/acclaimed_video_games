@@ -6,6 +6,8 @@
 - Add genre mappings for Beat'em up, Extraction shooter, Puzzle-adventure, Dystopian (consolidate to existing categories)
 - Remove duplicate refresh_all_metadata_with_progress function (use management command directly)
 - Update genre category icon: Party & Casual → Puzzle & Casual
+- Fix source lists import varchar(100) error: increase List.name and Publication.name to 255 chars
+- Add Heroku metadata refresh command to import page
 
 ## 2026-01-20
 

@@ -326,8 +326,8 @@ class PublicationBase(models.Model):
     - Additional metadata fields (e.g., website URL, description)
     """
 
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=100, db_index=True)
+    name = models.CharField(max_length=255, unique=True)
+    slug = models.SlugField(max_length=255, db_index=True)
 
     class Meta:
         abstract = True
@@ -362,7 +362,7 @@ class ListBase(models.Model):
     # Import at class level because choices/default are evaluated at class definition time
     from core import constants as core_constants
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     url = models.URLField(null=True, blank=True)
     year = models.PositiveSmallIntegerField(db_index=True)
     type = models.CharField(

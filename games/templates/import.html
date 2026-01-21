@@ -280,10 +280,6 @@
                 <div class="value">{{ counts.series }}</div>
             </div>
             <div class="status-card">
-                <div class="label">IGDB Genres</div>
-                <div class="value">{{ counts.igdb_genres }}</div>
-            </div>
-            <div class="status-card">
                 <div class="label">Wikipedia Genres</div>
                 <div class="value">{{ counts.wikipedia_genres }}</div>
             </div>
@@ -582,6 +578,10 @@
                         <span class="text-xs opacity-70">
                             Processes all {{ counts.games }} games
                         </span>
+                    </div>
+                    <div class="mt-4 p-3 bg-base-200 rounded-lg">
+                        <p class="text-xs font-semibold mb-1">Heroku command for full metadata refresh (IGDB + Wikipedia + HLTB):</p>
+                        <code class="text-xs break-all select-all">heroku run -- python manage.py refresh_all_metadata</code>
                     </div>
                 </div>
             </div>
