@@ -24,39 +24,48 @@ def update_year_decade_ranks() -> Tuple[int, int]:
     Uses efficient database queries to calculate ranking positions
     within each year and decade based on the global rank field.
 
-    On PostgreSQL: Uses window functions for optimal performance (single query).
+    On PostgreSQL: Uses raw SQL with window functions for optimal performance.
     On SQLite: Falls back to chunked processing to avoid memory issues.
 
     Returns:
         Tuple of (games_updated, years_processed)
     """
-    from django.db.models import F, Window
-    from django.db.models.functions import RowNumber, Floor
-
     # Check database backend
     is_postgres = connection.vendor == "postgresql"
 
     if is_postgres:
-        # PostgreSQL: Use window functions for optimal performance
+        # PostgreSQL: Use raw SQL with window functions for optimal performance
         with transaction.atomic():
-            # Update year_rank using window function
-            models.Game.objects.update(
-                year_rank=Window(
-                    expression=RowNumber(),
-                    partition_by=[F("year_of_release")],
-                    order_by=[F("rank").asc()],
-                )
-            )
+            with connection.cursor() as cursor:
+                # Update year_rank using window function
+                cursor.execute("""
+                    UPDATE games_game
+                    SET year_rank = subquery.row_num
+                    FROM (
+                        SELECT id,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY year_of_release
+                                   ORDER BY rank ASC
+                               ) as row_num
+                        FROM games_game
+                    ) AS subquery
+                    WHERE games_game.id = subquery.id
+                """)
 
-            # Update decade_rank using window function
-            # Calculate decade as floor(year / 10) * 10
-            models.Game.objects.update(
-                decade_rank=Window(
-                    expression=RowNumber(),
-                    partition_by=[Floor(F("year_of_release") / 10) * 10],
-                    order_by=[F("rank").asc()],
-                )
-            )
+                # Update decade_rank using window function
+                cursor.execute("""
+                    UPDATE games_game
+                    SET decade_rank = subquery.row_num
+                    FROM (
+                        SELECT id,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY (year_of_release / 10) * 10
+                                   ORDER BY rank ASC
+                               ) as row_num
+                        FROM games_game
+                    ) AS subquery
+                    WHERE games_game.id = subquery.id
+                """)
 
         games_updated = models.Game.objects.count()
         years_count = models.Game.objects.values("year_of_release").distinct().count()
