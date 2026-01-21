@@ -61,19 +61,25 @@ class RankingUtilsTests(TestCase):
     def test_update_year_decade_ranks_postgresql_path(
         self, mock_game_objects, mock_connection
     ):
-        """Test that PostgreSQL path uses window functions for ranking.
+        """Test that PostgreSQL path uses raw SQL with window functions.
 
         This test mocks the database operations to verify the PostgreSQL code
-        path is executed correctly when vendor is 'postgresql'.
+        path executes raw SQL correctly when vendor is 'postgresql'.
         """
         from games.services.ranking_service import update_year_decade_ranks
 
         # Mock the connection vendor to be PostgreSQL
         mock_connection.vendor = "postgresql"
 
+        # Mock the cursor for raw SQL execution
+        mock_cursor = mock.MagicMock()
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
         # Mock count() and values().distinct().count() for the return values
         mock_game_objects.count.return_value = 5
-        mock_game_objects.values.return_value.distinct.return_value.count.return_value = 3
+        mock_game_objects.values.return_value.distinct.return_value.count.return_value = (
+            3
+        )
 
         games_updated, years_processed = update_year_decade_ranks()
 
@@ -81,8 +87,8 @@ class RankingUtilsTests(TestCase):
         self.assertEqual(games_updated, 5)
         self.assertEqual(years_processed, 3)
 
-        # Verify update was called twice (year_rank and decade_rank)
-        self.assertEqual(mock_game_objects.update.call_count, 2)
+        # Verify raw SQL was executed twice (year_rank and decade_rank)
+        self.assertEqual(mock_cursor.execute.call_count, 2)
 
 
 class GameIgdbTests(TestCase):
@@ -719,9 +725,7 @@ class GameWikipediaTests(TestCase):
         action_genre, _ = models.WikipediaGenre.objects.get_or_create(
             name="Action", slug="action", defaults={"level": 0}
         )
-        mock_normalize.side_effect = (
-            lambda name: None if name == "Invalid" else name
-        )
+        mock_normalize.side_effect = lambda name: None if name == "Invalid" else name
         mock_get_or_create.return_value = action_genre
 
         game.get_wikipedia_data(page_titles="Test Game")
@@ -919,9 +923,7 @@ class IGDBGameDataTests(TestCase):
 
     def test_image_2x(self):
         """Test image_2x property returns correct WebP URL."""
-        expected = (
-            "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/test_artwork_id.webp"
-        )
+        expected = "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/test_artwork_id.webp"
         self.assertEqual(self.igdb_data.image_2x, expected)
 
     def test_homepage_thumb_small(self):
@@ -1485,18 +1487,14 @@ class WikipediaGameDataEdgeCaseTests(TestCase):
             wikidata_id="Q12345",
             game=None,  # orphaned
         )
-        self.assertEqual(
-            str(wiki_data), "Orphaned Wikipedia data (Wikidata: Q12345)"
-        )
+        self.assertEqual(str(wiki_data), "Orphaned Wikipedia data (Wikidata: Q12345)")
 
     def test_str_orphaned_wikipedia_data_no_wikidata_id(self):
         """Test __str__ for orphaned WikipediaGameData with no wikidata_id."""
         wiki_data = models.WikipediaGameData.objects.create(
             game=None,  # orphaned
         )
-        self.assertEqual(
-            str(wiki_data), "Orphaned Wikipedia data (Wikidata: unknown)"
-        )
+        self.assertEqual(str(wiki_data), "Orphaned Wikipedia data (Wikidata: unknown)")
 
     def test_wikiquote_url_returns_url_when_exists(self):
         """Test wikiquote_url returns formatted URL when page title exists."""

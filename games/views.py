@@ -684,7 +684,9 @@ def download_games_csv(request):
     min_year, max_year = _get_year_bounds()
     genres_lookup = utils.get_or_set_cache(
         "search_genres_list_with_counts",
-        models.WikipediaGenre.objects.annotate(game_count=Count("games_with_wikipedia_genre")),
+        models.WikipediaGenre.objects.annotate(
+            game_count=Count("games_with_wikipedia_genre")
+        ),
         ["id", "name", "game_count"],
         order_by="name",
         transform_id=True,
@@ -750,7 +752,11 @@ def download_games_csv(request):
         "genres": [str(gid) for gid in genre_ids],
         "platforms": [str(pid) for pid in platform_ids],
         "series": series_ids_for_filter,
-        "played": [s.strip() for s in played_param.split(",") if s.strip()] if played_param else [],
+        "played": (
+            [s.strip() for s in played_param.split(",") if s.strip()]
+            if played_param
+            else []
+        ),
         "rank_display": "filtered",
         "hltb_mode": hltb_mode,
         "hltb_preset": hltb_preset,
@@ -1415,7 +1421,11 @@ class HomePageView(RobustPaginationMixin, ListView):
             "genres": genres_param.split(",") if genres_param else [],
             "platforms": platforms_param.split(",") if platforms_param else [],
             "series": series_param.split(",") if series_param else [],
-            "played": [s.strip() for s in played_param.split(",") if s.strip()] if played_param and self.request.user.is_authenticated else [],
+            "played": (
+                played_param
+                if played_param and self.request.user.is_authenticated
+                else ""
+            ),
             "rank_display": "filtered" if has_any_filter else "alltime",
             "sort": sort_param,
             "sortDirection": dir_param,
@@ -1664,8 +1674,9 @@ class HomePageView(RobustPaginationMixin, ListView):
         if cached_rank_data is None:
             # Get global max rank for consistent bin structure
             max_rank = (
-                models.Game.objects.filter(rank__isnull=False)
-                .aggregate(max_rank=Max("rank"))["max_rank"]
+                models.Game.objects.filter(rank__isnull=False).aggregate(
+                    max_rank=Max("rank")
+                )["max_rank"]
                 or 0
             )
 
@@ -2439,8 +2450,9 @@ class DeveloperDetailView(DetailView):
         # Rank distribution for visualization - uses global max rank for consistency
         # with the games list page (same bin structure across all pages)
         max_rank = (
-            models.Game.objects.filter(rank__isnull=False)
-            .aggregate(max_rank=Max("rank"))["max_rank"]
+            models.Game.objects.filter(rank__isnull=False).aggregate(
+                max_rank=Max("rank")
+            )["max_rank"]
             or 0
         )
 
@@ -2581,25 +2593,41 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
                 "lists",
                 filter=Q(lists__type=constants.LIST_ALLTIME)
                 & year_filter
-                & (Q() if not type_code or type_code == constants.LIST_ALLTIME else Q(pk__in=[])),
+                & (
+                    Q()
+                    if not type_code or type_code == constants.LIST_ALLTIME
+                    else Q(pk__in=[])
+                ),
             ),
             decade_count=Count(
                 "lists",
                 filter=Q(lists__type=constants.LIST_DECADE)
                 & year_filter
-                & (Q() if not type_code or type_code == constants.LIST_DECADE else Q(pk__in=[])),
+                & (
+                    Q()
+                    if not type_code or type_code == constants.LIST_DECADE
+                    else Q(pk__in=[])
+                ),
             ),
             misc_count=Count(
                 "lists",
                 filter=Q(lists__type=constants.LIST_MISC)
                 & year_filter
-                & (Q() if not type_code or type_code == constants.LIST_MISC else Q(pk__in=[])),
+                & (
+                    Q()
+                    if not type_code or type_code == constants.LIST_MISC
+                    else Q(pk__in=[])
+                ),
             ),
             eoy_count=Count(
                 "lists",
                 filter=Q(lists__type=constants.LIST_EOY)
                 & year_filter
-                & (Q() if not type_code or type_code == constants.LIST_EOY else Q(pk__in=[])),
+                & (
+                    Q()
+                    if not type_code or type_code == constants.LIST_EOY
+                    else Q(pk__in=[])
+                ),
             ),
             # Total filtered count
             total_count=Count("lists", filter=list_filter if list_filter else Q()),

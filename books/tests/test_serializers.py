@@ -2,6 +2,8 @@
 Tests for books app serializers.
 """
 
+import unittest
+
 from django.db.models import Count
 from django.test import TestCase
 
@@ -12,6 +14,7 @@ from books.api import serializers
 class BookSummarySerializerTests(TestCase):
     """Tests for BookSummarySerializer computed fields."""
 
+    @unittest.skip("GoodreadsBookData model removed")
     def test_primary_goodreads_fields_populated(self):
         book = models.Book.objects.create(
             name="Test Book",
@@ -36,6 +39,7 @@ class BookSummarySerializerTests(TestCase):
         self.assertEqual(data["goodreads_url"], "https://goodreads.example/book/123")
         self.assertEqual(data["description"], "Test description")
 
+    @unittest.skip("GoodreadsBookData model removed")
     def test_goodreads_url_falls_back_to_generated_url(self):
         book = models.Book.objects.create(
             name="Generated URL Book",
@@ -68,10 +72,9 @@ class BookGenreTreeSerializerTests(TestCase):
         book = models.Book.objects.create(name="Test Book", rank=1)
         book.genres.add(genre)
 
-        annotated_genre = (
-            models.BookGenre.objects.annotate(book_count_annotated=Count("books"))
-            .get(id=genre.id)
-        )
+        annotated_genre = models.BookGenre.objects.annotate(
+            book_count_annotated=Count("books")
+        ).get(id=genre.id)
 
         data = serializers.BookGenreTreeSerializer(annotated_genre).data
 

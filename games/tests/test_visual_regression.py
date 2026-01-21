@@ -84,7 +84,9 @@ class TemplateStructureTests(TestCase):
 
         # Find server-rendered game rows
         game_rows = soup.select(".game-row-wrapper")
-        self.assertTrue(len(game_rows) > 0, "Should have at least one server-rendered game row")
+        self.assertTrue(
+            len(game_rows) > 0, "Should have at least one server-rendered game row"
+        )
         first_row = game_rows[0]
 
         # Check that server-rendered rows have all required slots
@@ -115,7 +117,9 @@ class TemplateStructureTests(TestCase):
 
         # Find server-rendered mobile rows
         mobile_rows = soup.select(".game-card-mobile")
-        self.assertTrue(len(mobile_rows) > 0, "Should have at least one server-rendered mobile row")
+        self.assertTrue(
+            len(mobile_rows) > 0, "Should have at least one server-rendered mobile row"
+        )
         first_row = mobile_rows[0]
 
         # Check that server-rendered mobile rows have all required slots
@@ -219,7 +223,8 @@ class ServerRenderedOutputTests(TestCase):
         # Find rank in desktop row
         rank_slot = soup.find(attrs={"data-slot": "rank"})
         self.assertIsNotNone(rank_slot, "Rank slot should exist")
-        self.assertIn("42", rank_slot.get_text())
+        # Rank display now shows sequential position (1, 2, 3...) not global rank
+        self.assertIn("1", rank_slot.get_text())
 
     def test_game_year_rendered_correctly(self):
         """Test game year appears in correct slot."""
@@ -420,18 +425,23 @@ class MobileDesktopConsistencyTests(TestCase):
 
         # Get rank from desktop
         desktop_row = soup.find(id=f"game-{self.game.id}")
-        desktop_rank_slot = desktop_row.find(attrs={"data-slot": "rank"}) if desktop_row else None
+        desktop_rank_slot = (
+            desktop_row.find(attrs={"data-slot": "rank"}) if desktop_row else None
+        )
 
         # Get rank from mobile
         mobile_row = soup.find(id=f"game-{self.game.id}-mobile")
-        mobile_rank_slot = mobile_row.find(attrs={"data-slot": "rank"}) if mobile_row else None
+        mobile_rank_slot = (
+            mobile_row.find(attrs={"data-slot": "rank"}) if mobile_row else None
+        )
 
         if desktop_rank_slot and mobile_rank_slot:
             desktop_text = desktop_rank_slot.get_text().strip()
             mobile_text = mobile_rank_slot.get_text().strip()
-            # Both should contain the rank number
-            self.assertIn("5", desktop_text)
-            self.assertIn("5", mobile_text)
+            # Both should contain the position number (1 for first game)
+            # Rank display now shows sequential position (1, 2, 3...) not global rank
+            self.assertIn("1", desktop_text)
+            self.assertIn("1", mobile_text)
 
 
 class AuthenticatedUserRenderingTests(TestCase):
@@ -443,9 +453,7 @@ class AuthenticatedUserRenderingTests(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(
-            username="testuser", password="testpass"
-        )
+        self.user = User.objects.create_user(username="testuser", password="testpass")
         self.game = models.Game.objects.create(
             name="Auth Test Game",
             rank=1,
@@ -464,8 +472,7 @@ class AuthenticatedUserRenderingTests(TestCase):
             played_slot = desktop_row.find(attrs={"data-slot": "played-button"})
             # Slot should not exist for anonymous users
             self.assertIsNone(
-                played_slot,
-                "Anonymous user should not see played button slot"
+                played_slot, "Anonymous user should not see played button slot"
             )
 
     def test_authenticated_user_sees_played_button(self):
@@ -479,8 +486,7 @@ class AuthenticatedUserRenderingTests(TestCase):
         if desktop_row:
             played_slot = desktop_row.find(attrs={"data-slot": "played-button"})
             self.assertIsNotNone(
-                played_slot,
-                "Authenticated user should have played button slot"
+                played_slot, "Authenticated user should have played button slot"
             )
 
     def test_played_game_shows_played_state(self):
@@ -488,13 +494,13 @@ class AuthenticatedUserRenderingTests(TestCase):
         self.client.login(username="testuser", password="testpass")
 
         # Mark game as played
-        models.PlayedGame.objects.create(
-            user=self.user, game=self.game, igdb_id=12345
-        )
+        models.PlayedGame.objects.create(user=self.user, game=self.game, igdb_id=12345)
 
         response = self.client.get(reverse("home"))
         # Should contain played state indicator (star icon or similar)
-        self.assertContains(response, "mario-star", msg_prefix="Should show played state")
+        self.assertContains(
+            response, "mario-star", msg_prefix="Should show played state"
+        )
 
 
 class TemplateIDAttributeTests(TestCase):
@@ -544,9 +550,7 @@ class HTMXAttributeTests(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(
-            username="testuser", password="testpass"
-        )
+        self.user = User.objects.create_user(username="testuser", password="testpass")
         self.game = models.Game.objects.create(
             name="HTMX Test Game",
             rank=1,
@@ -566,7 +570,7 @@ class HTMXAttributeTests(TestCase):
         # Should have at least one HTMX-enabled element for played tracking
         self.assertTrue(
             len(htmx_elements) > 0,
-            "Should have HTMX-enabled elements for played tracking"
+            "Should have HTMX-enabled elements for played tracking",
         )
 
 

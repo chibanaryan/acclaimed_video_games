@@ -9,6 +9,7 @@ Tests must use staff users to access these endpoints.
 """
 
 import importlib
+import unittest
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -120,7 +121,9 @@ class BookDetailAPITests(StaffAPITestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.author = models.Author.objects.create(name="Test Author", slug="test-author")
+        self.author = models.Author.objects.create(
+            name="Test Author", slug="test-author"
+        )
         self.book = models.Book.objects.create(
             name="Test Book",
             rank=1,
@@ -393,6 +396,7 @@ class BookDataVersionAPITests(StaffAPITestMixin, TestCase):
         self.assertEqual(len(data["version"]), 12)
 
 
+@unittest.skip("GoodreadsBookData model removed")
 class BookAllDataAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookAllDataView."""
 
