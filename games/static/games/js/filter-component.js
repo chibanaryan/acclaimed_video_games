@@ -209,6 +209,17 @@ document.addEventListener('alpine:init', () => {
                         const component = getFilterComponent();
                         if (component) component.addGenres(e.detail);
                     });
+
+                    // Re-dispatch counts after bfcache restoration so platform/genre filters update
+                    window.addEventListener('bfcache-restore', () => {
+                        // Small delay to ensure all component listeners are set up
+                        setTimeout(() => {
+                            const component = getFilterComponent();
+                            if (component) {
+                                component.dispatchInitialCounts();
+                            }
+                        }, 50);
+                    });
                 }
 
                 // Store and register instance-specific listeners (cleanup in destroy())

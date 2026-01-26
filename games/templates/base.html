@@ -380,14 +380,25 @@
             if (event.persisted) {
                 // Reinitialize Alpine.js if it was loaded
                 if (window.Alpine) {
-                    // Clear Alpine's internal data stack so components re-evaluate
+                    // First, call destroy() on all components to clean up event listeners
+                    // Must be done BEFORE destroyTree clears the data stack
                     document.querySelectorAll('[x-data]').forEach(function(el) {
-                        el._x_dataStack = undefined;
+                        if (el._x_dataStack) {
+                            var data = Alpine.$data(el);
+                            if (data && typeof data.destroy === 'function') {
+                                data.destroy();
+                            }
+                        }
                     });
+
+                    // Use destroyTree to properly clean up x-for generated DOM
+                    // (prevents duplicate elements from accumulating)
+                    Alpine.destroyTree(document.body);
                     Alpine.initTree(document.body);
                 }
 
                 // Dispatch event so other scripts can react to bfcache restoration
+                // (e.g., filter-component re-dispatches counts for platform/genre filters)
                 window.dispatchEvent(new CustomEvent('bfcache-restore'));
             }
         });

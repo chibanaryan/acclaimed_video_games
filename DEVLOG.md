@@ -1,5 +1,10 @@
 # Developer Log
 
+## 2026-01-26
+
+- Fix year heatmap duplication on bfcache back navigation: use Alpine.destroyTree for proper x-for cleanup
+- Add bfcache-restore listener to re-dispatch filter counts after component reinitialization
+
 ## 2026-01-25
 
 - Fix jumpy scroll when navigating back to rankings with highlight: replace bfcache reload with Alpine.js reinitialization
