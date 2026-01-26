@@ -282,16 +282,71 @@ class HLTBGameDataAdmin(admin.ModelAdmin):
     _hltb_link.short_description = "HLTB Link"
 
 
+class ListMembershipInline(admin.TabularInline):
+    """Inline admin for ListMembership on List admin page."""
+
+    model = models.ListMembership
+    extra = 3
+    autocomplete_fields = ["game"]
+    ordering = ["rank"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("game")
+
+
 @admin.register(models.List)
 class ListAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "order", "publisher", "type"]
+    list_display = ["__str__", "order", "publisher", "type", "membership_count"]
     list_filter = ["type", "publisher"]
     search_fields = ["name"]
+    inlines = [ListMembershipInline]
+
+    def get_queryset(self, request):
+        from django.db.models import Count
+
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(_membership_count=Count("listmembership"))
+        )
+
+    @admin.display(description="Games", ordering="_membership_count")
+    def membership_count(self, obj):
+        return getattr(obj, "_membership_count", 0)
 
 
 @admin.register(models.ListMembership)
 class ListMembershipAdmin(admin.ModelAdmin):
-    pass
+    """Admin interface for ListMembership records."""
+
+    list_display = ["game_name", "list_name", "publisher_name", "rank", "list_type"]
+    list_filter = ["list__type", "list__publisher"]
+    search_fields = ["game__name", "list__name"]
+    raw_id_fields = ["list", "game"]
+    ordering = ["list", "rank"]
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("list", "list__publisher", "game")
+        )
+
+    @admin.display(description="Game", ordering="game__name")
+    def game_name(self, obj):
+        return obj.game.name if obj.game else "-"
+
+    @admin.display(description="List", ordering="list__name")
+    def list_name(self, obj):
+        return obj.list.name if obj.list else "-"
+
+    @admin.display(description="Publisher", ordering="list__publisher__name")
+    def publisher_name(self, obj):
+        return obj.list.publisher.name if obj.list and obj.list.publisher else "-"
+
+    @admin.display(description="Type")
+    def list_type(self, obj):
+        return obj.list.get_type_label() if obj.list else "-"
 
 
 @admin.register(models.Publication)
