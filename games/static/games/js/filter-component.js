@@ -155,12 +155,19 @@ document.addEventListener('alpine:init', () => {
                     partial: true, historyMethod: 'pushState', preservePage: true
                 }), 150);
 
+                // Restore scroll position, but not if there's a highlight parameter
+                // (highlight scroll will handle positioning in that case)
                 const savedScrollPos = sessionStorage.getItem('gameListScrollPos');
-                if (savedScrollPos) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const hasHighlight = urlParams.has('highlight');
+                if (savedScrollPos && !hasHighlight) {
                     setTimeout(() => {
                         window.scrollTo(0, parseInt(savedScrollPos));
                         sessionStorage.removeItem('gameListScrollPos');
                     }, 100);
+                } else if (savedScrollPos) {
+                    // Still clear the saved position even if we're not using it
+                    sessionStorage.removeItem('gameListScrollPos');
                 }
 
                 const saveScrollPosition = () => {

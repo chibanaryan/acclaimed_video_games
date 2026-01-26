@@ -372,12 +372,23 @@
             });
         });
 
-        // Force reload when page is loaded from browser back-forward cache
-        // This ensures Alpine.js components reinitialize properly with all event handlers
+        // Handle browser back-forward cache (bfcache) restoration
+        // Instead of forcing a full reload (which causes jarring scroll jumps),
+        // reinitialize Alpine.js components in place to preserve scroll position
         window.addEventListener('pageshow', function(event) {
-            // event.persisted is true when page is loaded from bfcache (back-forward cache)
+            // event.persisted is true when page is loaded from bfcache
             if (event.persisted) {
-                window.location.reload();
+                // Reinitialize Alpine.js if it was loaded
+                if (window.Alpine) {
+                    // Clear Alpine's internal data stack so components re-evaluate
+                    document.querySelectorAll('[x-data]').forEach(function(el) {
+                        el._x_dataStack = undefined;
+                    });
+                    Alpine.initTree(document.body);
+                }
+
+                // Dispatch event so other scripts can react to bfcache restoration
+                window.dispatchEvent(new CustomEvent('bfcache-restore'));
             }
         });
 

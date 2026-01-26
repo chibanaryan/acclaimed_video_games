@@ -2,6 +2,8 @@
 
 ## 2026-01-25
 
+- Fix jumpy scroll when navigating back to rankings with highlight: replace bfcache reload with Alpine.js reinitialization
+- Skip scroll position restoration when highlight param present (let highlight scroll handle positioning)
 - Add "Group by List Type" toggle to Source Lists page (All-time, Decade, Misc, EOY sections)
 - Add Year and Alphabetical sort options for list type grouping
 - Auto-switch sort direction when changing sort type (alpha→asc, year→desc)
