@@ -12,12 +12,14 @@
         // Get all current filter values from the form
         const yearEl = document.querySelector('[name=year]');
         const typeEl = document.querySelector('[name=type]');
-        const sortEl = document.querySelector('#sort-select');
+        const sortEl = document.querySelector('[name=sort]');
+        const groupByEl = document.querySelector('[name=group_by]');
         const searchEl = document.getElementById('publication-search');
 
         const year = yearEl ? yearEl.value : '';
         const type = typeEl ? typeEl.value : '';
-        const sort = sortEl ? sortEl.value : 'importance';
+        const sort = sortEl ? sortEl.value : '';
+        const groupBy = groupByEl ? groupByEl.value : 'publication';
         const q = searchEl ? searchEl.value : '';
 
         const url = new URL(window.location);
@@ -32,8 +34,13 @@
         if (q) url.searchParams.set('q', q);
         else url.searchParams.delete('q');
 
-        // Only add sort if not default
-        if (sort && sort !== 'importance') url.searchParams.set('sort', sort);
+        // Only add group_by if not default
+        if (groupBy && groupBy !== 'publication') url.searchParams.set('group_by', groupBy);
+        else url.searchParams.delete('group_by');
+
+        // Only add sort if not default for the current group mode
+        const defaultSort = groupBy === 'type' ? 'release' : 'importance';
+        if (sort && sort !== defaultSort) url.searchParams.set('sort', sort);
         else url.searchParams.delete('sort');
 
         // Reset to page 1 on filter change
@@ -79,7 +86,7 @@ Year published: ">
                    hx-target="#filter-results-wrapper"
                    hx-trigger="input changed delay:300ms"
                    hx-swap="innerHTML"
-                   hx-include="[name='year'], [name='type'], [name='sort'], [name='dir']"
+                   hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='group_by']"
                    x-on:htmx:after-request="updateUrl($event)"
                    autocomplete="off">
             <button type="button"

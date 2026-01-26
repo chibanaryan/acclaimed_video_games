@@ -1,5 +1,11 @@
 # Developer Log
 
+## 2026-01-25
+
+- Add "Group by List Type" toggle to Source Lists page (All-time, Decade, Misc, EOY sections)
+- Add Year and Alphabetical sort options for list type grouping
+- Auto-switch sort direction when changing sort type (alpha→asc, year→desc)
+
 ## 2026-01-21
 
 - Add Switch 2 (SW2) to platform family mappings for filter dropdown and game row display

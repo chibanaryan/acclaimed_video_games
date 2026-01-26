@@ -1849,6 +1849,93 @@ class ListListFacetedFilterTest(TestCase):
         pub_names = [g["publication"].name for g in groups]
         self.assertNotIn("Polygon", pub_names)
 
+    # --- Group by Type tests ---
+
+    def test_group_by_type_loads(self):
+        """Test that group_by=type loads correctly."""
+        response = self.client.get(reverse("list-list") + "?group_by=type")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["group_by"], "type")
+        self.assertIn("type_groups", response.context)
+
+    def test_group_by_type_has_correct_structure(self):
+        """Test that type_groups has correct structure."""
+        response = self.client.get(reverse("list-list") + "?group_by=type")
+        type_groups = response.context["type_groups"]
+        # Should have groups for types present in data
+        type_codes = [g["type_code"] for g in type_groups]
+        self.assertIn("A", type_codes)  # list1 is type A
+        self.assertIn("E", type_codes)  # list2 is type E
+
+    def test_group_by_type_sort_options(self):
+        """Test that type grouping uses correct sort options."""
+        response = self.client.get(reverse("list-list") + "?group_by=type")
+        sort_options = response.context["sort_options"]
+        sort_values = [s[0] for s in sort_options]
+        self.assertIn("alpha", sort_values)
+        self.assertIn("release", sort_values)
+        self.assertNotIn("importance", sort_values)
+
+    def test_group_by_publication_sort_options(self):
+        """Test that publication grouping uses correct sort options."""
+        response = self.client.get(reverse("list-list") + "?group_by=publication")
+        sort_options = response.context["sort_options"]
+        sort_values = [s[0] for s in sort_options]
+        self.assertIn("importance", sort_values)
+        self.assertIn("alpha", sort_values)
+        self.assertNotIn("release", sort_values)
+
+    def test_group_by_invalid_defaults_to_publication(self):
+        """Test that invalid group_by value defaults to publication."""
+        response = self.client.get(reverse("list-list") + "?group_by=invalid")
+        self.assertEqual(response.context["group_by"], "publication")
+
+    def test_type_group_with_year_filter(self):
+        """Test type grouping with year filter applied."""
+        response = self.client.get(reverse("list-list") + "?group_by=type&year=2020")
+        type_groups = response.context["type_groups"]
+        # 2020 has: IGN 2020 All-time (A) and GS 2020 End-of-year (E)
+        type_codes = [g["type_code"] for g in type_groups]
+        self.assertIn("A", type_codes)  # IGN 2020 All-time
+        self.assertIn("E", type_codes)  # GS 2020 End-of-year
+        self.assertEqual(len(type_codes), 2)
+
+    def test_type_group_sort_release_desc(self):
+        """Test type grouping with release order sorting."""
+        response = self.client.get(
+            reverse("list-list") + "?group_by=type&sort=release&dir=desc"
+        )
+        self.assertEqual(response.context["sort"], "release")
+        self.assertEqual(response.context["sort_direction"], "desc")
+
+    def test_type_group_sort_alpha(self):
+        """Test type grouping with alphabetical sorting."""
+        response = self.client.get(
+            reverse("list-list") + "?group_by=type&sort=alpha&dir=asc"
+        )
+        self.assertEqual(response.context["sort"], "alpha")
+        self.assertEqual(response.context["sort_direction"], "asc")
+
+    def test_type_group_default_sort_is_release_desc(self):
+        """Test that default sort for type grouping is release descending."""
+        response = self.client.get(reverse("list-list") + "?group_by=type")
+        self.assertEqual(response.context["sort"], "release")
+        self.assertEqual(response.context["sort_direction"], "desc")
+
+    def test_type_group_lists_are_flat(self):
+        """Test that type groups contain flat list of lists (not nested)."""
+        response = self.client.get(reverse("list-list") + "?group_by=type")
+        type_groups = response.context["type_groups"]
+        for group in type_groups:
+            # Each type group should have 'lists' key with actual List objects
+            self.assertIn("lists", group)
+            self.assertIn("total_count", group)
+            for item in group["lists"]:
+                # Each item should be a List object with publisher
+                self.assertTrue(hasattr(item, "publisher"))
+                self.assertTrue(hasattr(item, "year"))
+                self.assertTrue(hasattr(item, "name"))
+
 
 class PageDetailViewTest(TestCase):
     """Test the page detail view."""

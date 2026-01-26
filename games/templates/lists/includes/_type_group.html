@@ -1,0 +1,96 @@
+{# Single type group with flat list of lists #}
+{% load game_filters %}
+{% load humanize %}
+
+<div class="type-group border border-base-content/10 rounded-lg"
+     x-data="{ expanded: true }"
+     @publications-expand-all.window="expanded = true"
+     @publications-collapse-all.window="expanded = false"
+     data-type-code="{{ type_group.type_code }}">
+    {# Type header - always visible #}
+    <button @click="expanded = !expanded"
+            class="w-full flex items-center gap-3 p-3 hover:bg-base-200/50 transition-colors rounded-t-lg cursor-pointer text-left"
+            aria-label="Toggle {{ type_group.type_label }} lists">
+        {# Expand/collapse chevron #}
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="h-5 w-5 shrink-0 text-base-content/70 transition-transform duration-200"
+             :class="{ 'rotate-90': expanded }"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+
+        {# Type label #}
+        <span class="font-semibold">{{ type_group.type_label }}</span>
+
+        {# Count #}
+        <span class="text-sm text-base-content/70">
+            {{ type_group.total_count|intcomma }} list{{ type_group.total_count|pluralize }}
+        </span>
+    </button>
+
+    {# Collapsible content - flat list of lists #}
+    <div x-show="expanded"
+         x-collapse
+         x-cloak
+         class="border-t border-base-content/10">
+
+        {# Desktop table view #}
+        <div class="hidden md:block">
+            <table class="table table-fixed w-full">
+                <colgroup>
+                    <col style="width: 10%;">
+                    <col style="width: 25%;">
+                    <col style="width: 65%;">
+                </colgroup>
+                <thead>
+                    <tr class="text-xs text-base-content/70">
+                        <th class="py-2 pl-4">Year</th>
+                        <th class="py-2">Publication</th>
+                        <th class="py-2">List Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in type_group.lists %}
+                    <tr class="list-row hover:bg-base-200/30">
+                        <td class="py-2 pl-4 tabular-nums">{{ item.year }}</td>
+                        <td class="py-2 text-base-content/80">{{ item.publisher.name }}</td>
+                        <td class="py-2">
+                            {% if item.url %}
+                            <a href="{{ item.url }}" target="_blank" rel="noopener" class="link link-hover inline-flex items-center gap-1">
+                                {{ item.name }}
+                                <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
+                            </a>
+                            {% else %}
+                            {{ item.name }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Mobile card view #}
+        <div class="md:hidden py-3 px-4 space-y-3">
+            {% for item in type_group.lists %}
+            <div class="list-row py-2 border-b border-base-content/5 last:border-0">
+                <div class="flex items-baseline gap-2 text-sm">
+                    <span class="tabular-nums text-base-content/70">{{ item.year }}</span>
+                    <span class="text-base-content/60">&middot;</span>
+                    <span class="text-base-content/80">{{ item.publisher.name }}</span>
+                </div>
+                <div class="text-sm mt-1">
+                    {% if item.url %}
+                    <a href="{{ item.url }}" target="_blank" rel="noopener" class="link link-hover">
+                        {{ item.name }}
+                        <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
+                    </a>
+                    {% else %}
+                    {{ item.name }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

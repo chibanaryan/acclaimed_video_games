@@ -1,0 +1,16 @@
+{# Type group results - lists grouped by type #}
+{% load humanize %}
+{% load game_filters %}
+
+{% if type_groups %}
+<div id="type-groups-container" class="space-y-4 pb-8">
+    {% for type_group in type_groups %}
+    {% include 'lists/includes/_type_group.html' %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert">
+    <span class="mdi mdi-information-outline"></span>
+    <span>No lists found matching your filters.</span>
+</div>
+{% endif %}

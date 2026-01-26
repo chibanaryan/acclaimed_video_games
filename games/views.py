@@ -2530,9 +2530,11 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     htmx_partial_template = "lists/includes/_list_list_content.html"
 
     def get_template_names(self):
-        # Append mode for Load More - returns just publication groups
+        # Append mode for Load More (publication grouping only)
         if self.request.GET.get("append") == "true":
-            return ["lists/includes/_list_list_append.html"]
+            group_by = self.request.GET.get("group_by", "publication")
+            if group_by == "publication":
+                return ["lists/includes/_list_list_append.html"]
         return super().get_template_names()
 
     def _get_list_filters(self):
@@ -2540,6 +2542,11 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         year_value = self.request.GET.get("year")
         type_slug = self.request.GET.get("type")
         search_query = self.request.GET.get("q", "").strip()
+        group_by = self.request.GET.get("group_by", "publication")
+
+        # Validate group_by
+        if group_by not in ("publication", "type"):
+            group_by = "publication"
 
         try:
             year_value = int(year_value) if year_value else None
@@ -2548,7 +2555,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
         type_code = constants.LIST_TYPE_CODES.get(type_slug) if type_slug else None
 
-        return year_value, type_slug, type_code, search_query
+        return year_value, type_slug, type_code, search_query, group_by
 
     def _get_filtered_list_queryset(self, year_value, type_code):
         """Build base list queryset with filters applied."""
@@ -2559,9 +2566,143 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             qs = qs.filter(type=type_code)
         return qs
 
+    def _build_type_group_context(
+        self, context, year_value, type_slug, type_code, search_query,
+        sort, sort_direction, group_by
+    ):
+        """Build context for type-grouped view.
+
+        Groups lists by type (All-time, Decade, Misc, EOY), showing a flat
+        list of all lists within each type section.
+        """
+        type_groups = []
+        grand_total_lists = 0
+
+        for type_code_iter in constants.LIST_TYPE_IMPORTANCE_ORDER:
+            type_label = constants.get_list_type_label(type_code_iter)
+
+            # Skip if filtering by type and this isn't the selected type
+            if type_code and type_code != type_code_iter:
+                continue
+
+            # Build list queryset for this type
+            lists_qs = models.List.objects.filter(type=type_code_iter)
+            if year_value:
+                lists_qs = lists_qs.filter(year=year_value)
+            if search_query:
+                lists_qs = lists_qs.filter(publisher__name__icontains=search_query)
+
+            # Select related publisher for efficient access
+            lists_qs = lists_qs.select_related("publisher")
+
+            total_list_count = lists_qs.count()
+            if total_list_count == 0:
+                continue
+
+            grand_total_lists += total_list_count
+
+            # Apply sorting
+            if sort == "alpha":
+                # Sort by publication name, then list name
+                if sort_direction == "asc":
+                    lists_qs = lists_qs.order_by(
+                        Lower("publisher__name"), Lower("name")
+                    )
+                else:
+                    lists_qs = lists_qs.order_by(
+                        Lower("publisher__name").desc(), Lower("name").desc()
+                    )
+            else:  # "release" - sort by year
+                if sort_direction == "desc":
+                    lists_qs = lists_qs.order_by(
+                        "-year", Lower("publisher__name"), Lower("name")
+                    )
+                else:
+                    lists_qs = lists_qs.order_by(
+                        "year", Lower("publisher__name"), Lower("name")
+                    )
+
+            # Load all lists for this type
+            lists = list(lists_qs)
+
+            type_groups.append({
+                "type_code": type_code_iter,
+                "type_label": type_label,
+                "lists": lists,
+                "total_count": total_list_count,
+            })
+
+        # --- FACETED COUNTS FOR FILTERS ---
+        # Year counts: filtered by type only (NOT year)
+        year_base_qs = models.List.objects.all()
+        if type_code:
+            year_base_qs = year_base_qs.filter(type=type_code)
+
+        list_year_counts = list(
+            year_base_qs.values("year").annotate(count=Count("id")).order_by("-year")
+        )
+
+        year_str = str(year_value) if year_value else None
+        filtered_years = [
+            y for y in list_year_counts if y["count"] > 0 or str(y["year"]) == year_str
+        ]
+
+        # Type counts: filtered by year only (NOT type)
+        type_base_qs = models.List.objects.all()
+        if year_value:
+            type_base_qs = type_base_qs.filter(year=year_value)
+
+        type_counts_raw = list(
+            type_base_qs.values("type").annotate(count=Count("id")).order_by("type")
+        )
+
+        filtered_types = []
+        for t in type_counts_raw:
+            t["slug"] = constants.LIST_TYPE_SLUGS.get(t["type"], t["type"])
+            if t["count"] > 0 or t["type"] == type_code:
+                filtered_types.append(t)
+
+        filtered_types.sort(
+            key=lambda t: constants.LIST_TYPE_PRIORITY.get(t["type"], 99)
+        )
+
+        # Build context
+        context["type_groups"] = type_groups
+        context["meta"] = {"lists": {"years": filtered_years}}
+        context["list_types"] = constants.LIST_TYPES
+        context["type_counts"] = filtered_types
+        context["filters"] = {
+            "year": str(year_value) if year_value else None,
+            "type": type_slug,
+            "q": search_query,
+        }
+        context["sort"] = sort
+        context["sort_direction"] = sort_direction
+        context["group_by"] = group_by
+        context["grand_total_list_count"] = grand_total_lists
+
+        # Sort options for type grouping mode
+        context["sort_options"] = [
+            ("release", "Year"),
+            ("alpha", "Alphabetical"),
+        ]
+
+        # Total lists count
+        context["total_list_count"] = grand_total_lists
+
+        return context
+
     def get_queryset(self):
         """Get publications with list counts, filtered and sorted."""
-        year_value, type_slug, type_code, search_query = self._get_list_filters()
+        year_value, type_slug, type_code, search_query, group_by = self._get_list_filters()
+
+        # Store group_by for use in get_context_data
+        self.group_by = group_by
+
+        # For type grouping, we handle data in get_context_data instead
+        if group_by == "type":
+            return models.Publication.objects.none()
+
         sort = self.request.GET.get("sort", "importance")
         # Default direction depends on sort type: desc for importance, asc for alpha
         default_dir = "asc" if sort == "alpha" else "desc"
@@ -2686,11 +2827,24 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        year_value, type_slug, type_code, search_query = self._get_list_filters()
-        sort = self.request.GET.get("sort", "importance")
-        # Default direction depends on sort type: desc for importance, asc for alpha
-        default_dir = "asc" if sort == "alpha" else "desc"
+        year_value, type_slug, type_code, search_query, group_by = self._get_list_filters()
+
+        # Default sort depends on group_by mode
+        if group_by == "type":
+            sort = self.request.GET.get("sort", "release")
+            default_dir = "desc" if sort == "release" else "asc"
+        else:
+            sort = self.request.GET.get("sort", "importance")
+            default_dir = "asc" if sort == "alpha" else "desc"
+
         sort_direction = self.request.GET.get("dir", default_dir)
+
+        # Handle type grouping mode
+        if group_by == "type":
+            return self._build_type_group_context(
+                context, year_value, type_slug, type_code, search_query,
+                sort, sort_direction, group_by
+            )
 
         # Build the publication groups with their lists
         publication_groups = []
@@ -2781,6 +2935,13 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         }
         context["sort"] = sort
         context["sort_direction"] = sort_direction
+        context["group_by"] = group_by
+
+        # Sort options for publication grouping mode
+        context["sort_options"] = [
+            ("importance", "# Lists"),
+            ("alpha", "Alphabetical"),
+        ]
 
         # Total list count for display (loaded publications only)
         total_lists = sum(g["total_count"] for g in publication_groups)

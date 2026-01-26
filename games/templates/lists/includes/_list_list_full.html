@@ -4,7 +4,9 @@
 {% load humanize %}
 
 <h2 id="results-count" class="text-xl text-base-content/85 mb-4">
-    {% if page_obj %}
+    {% if group_by == 'type' %}
+    {{ total_list_count|intcomma }} of {{ grand_total_list_count|intcomma }} list{{ grand_total_list_count|pluralize }}
+    {% elif page_obj %}
     <span id="loaded-count">{{ loaded_count|intcomma }}</span> of {{ total_count|intcomma }} publication{{ total_count|pluralize }}
     (<span id="loaded-list-count">{{ total_list_count|intcomma }}</span> of {{ grand_total_list_count|intcomma }} list{{ grand_total_list_count|pluralize }})
     {% else %}
@@ -15,17 +17,69 @@
 <div class="flex flex-wrap items-center gap-2 mb-6 min-h-[2.5rem]"
      x-data="{
         allExpanded: false,
-        sort: '{{ sort|default:'importance' }}',
+        groupBy: '{{ group_by|default:'publication' }}',
+        sort: '{{ sort }}',
         sortDirection: '{{ sort_direction|default:'desc' }}',
         sortOpen: false,
+        getSortLabel() {
+            const labels = {
+                importance: '# Lists',
+                alpha: 'Alphabetical',
+                release: 'Year'
+            };
+            return labels[this.sort] || this.sort;
+        },
+        updateGroupBy(newGroupBy) {
+            this.groupBy = newGroupBy;
+            // Reset sort to appropriate default for new group mode
+            if (newGroupBy === 'type') {
+                this.sort = 'release';
+                this.sortDirection = 'desc';
+            } else {
+                this.sort = 'importance';
+                this.sortDirection = 'desc';
+            }
+
+            const url = new URL(window.location);
+            if (newGroupBy !== 'publication') {
+                url.searchParams.set('group_by', newGroupBy);
+            } else {
+                url.searchParams.delete('group_by');
+            }
+            url.searchParams.delete('sort');
+            url.searchParams.delete('dir');
+            url.searchParams.delete('page');
+            window.history.pushState({}, '', url);
+
+            htmx.ajax('GET', '{% url 'list-list' %}', {
+                target: '#filter-results-wrapper',
+                swap: 'innerHTML',
+                values: {
+                    group_by: newGroupBy,
+                    type: document.getElementById('filter-list-type')?.value || '',
+                    year: document.getElementById('filter-list-year')?.value || '',
+                    q: document.getElementById('publication-search')?.value || ''
+                }
+            });
+        },
         updateSort(newSort) {
             this.sort = newSort;
             this.sortOpen = false;
+            // Set appropriate default direction for the sort type
+            // Alphabetical: ascending (A-Z), Year/# Lists: descending (newest/most first)
+            this.sortDirection = newSort === 'alpha' ? 'asc' : 'desc';
             const url = new URL(window.location);
-            if (newSort !== 'importance') {
+            const defaultSort = this.groupBy === 'type' ? 'release' : 'importance';
+            if (newSort !== defaultSort) {
                 url.searchParams.set('sort', newSort);
             } else {
                 url.searchParams.delete('sort');
+            }
+            // Update direction in URL (only if not default 'desc')
+            if (this.sortDirection !== 'desc') {
+                url.searchParams.set('dir', this.sortDirection);
+            } else {
+                url.searchParams.delete('dir');
             }
             url.searchParams.delete('page');
             window.history.pushState({}, '', url);
@@ -33,6 +87,7 @@
                 target: '#filter-results-wrapper',
                 swap: 'innerHTML',
                 values: {
+                    group_by: this.groupBy,
                     sort: newSort,
                     dir: this.sortDirection,
                     type: document.getElementById('filter-list-type')?.value || '',
@@ -55,6 +110,7 @@
                 target: '#filter-results-wrapper',
                 swap: 'innerHTML',
                 values: {
+                    group_by: this.groupBy,
                     sort: this.sort,
                     dir: this.sortDirection,
                     type: document.getElementById('filter-list-type')?.value || '',
@@ -65,8 +121,31 @@
         }
      }">
     {# Hidden inputs for HTMX includes #}
+    <input type="hidden" name="group_by" :value="groupBy">
     <input type="hidden" name="sort" :value="sort">
     <input type="hidden" name="dir" :value="sortDirection">
+
+    {# Group by toggle #}
+    <div class="flex items-center gap-2">
+        <span class="text-sm text-base-content/70 hidden sm:inline">Group by:</span>
+        <div class="join">
+            <button type="button"
+                    class="join-item btn btn-sm"
+                    :class="{ 'btn-primary': groupBy === 'publication' }"
+                    @click="updateGroupBy('publication')">
+                Publication
+            </button>
+            <button type="button"
+                    class="join-item btn btn-sm"
+                    :class="{ 'btn-primary': groupBy === 'type' }"
+                    @click="updateGroupBy('type')">
+                List Type
+            </button>
+        </div>
+    </div>
+
+    {# Separator #}
+    <div class="w-px h-6 bg-base-content/20"></div>
 
     {# Sort toggle - far left #}
     {# Desktop: Custom dropdown with direction button #}
@@ -76,13 +155,14 @@
                     class="flex items-center gap-1 text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
                     @click="sortOpen = !sortOpen">
                 <span class="mdi mdi-sort text-base"></span>
-                <span class="text-sm" x-text="sort === 'importance' ? '# Lists' : 'Alphabetical'"># Lists</span>
+                <span class="text-sm" x-text="getSortLabel()"></span>
                 <span class="mdi mdi-chevron-down text-xs"></span>
             </button>
             <ul x-show="sortOpen" x-cloak
                 class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow-lg z-50 w-fit p-2 mt-1">
-                <li><button type="button" @click="updateSort('importance')" :class="sort === 'importance' ? 'active' : ''"># Lists</button></li>
-                <li><button type="button" @click="updateSort('alpha')" :class="sort === 'alpha' ? 'active' : ''">Alphabetical</button></li>
+                {% for sort_value, sort_label in sort_options %}
+                <li><button type="button" @click="updateSort('{{ sort_value }}')" :class="sort === '{{ sort_value }}' ? 'active' : ''">{{ sort_label }}</button></li>
+                {% endfor %}
             </ul>
         </div>
         {# Direction flip button #}
@@ -98,12 +178,13 @@
     <div class="desktop:hidden flex items-center gap-1">
         <span class="mdi mdi-sort text-base text-base-content/70"></span>
         <select id="sort-select"
-                name="sort"
+                name="sort-mobile"
                 class="select select-sm select-bordered bg-base-200"
                 style="width: fit-content; max-width: 100%;"
                 @change="updateSort($event.target.value)">
-            <option value="importance" :selected="sort === 'importance'"># Lists</option>
-            <option value="alpha" :selected="sort === 'alpha'">Alphabetical</option>
+            {% for sort_value, sort_label in sort_options %}
+            <option value="{{ sort_value }}" :selected="sort === '{{ sort_value }}'">{{ sort_label }}</option>
+            {% endfor %}
         </select>
         {# Direction flip button #}
         <button type="button"
@@ -126,7 +207,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q']"
+            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q'], [name='group_by']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All list types</option>
@@ -146,7 +227,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q']"
+            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q'], [name='group_by']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All years</option>
@@ -157,9 +238,9 @@
         {% endfor %}
     </select>
 
-    {# Clear filters button - preserves sort, direction, and search query #}
+    {# Clear filters button - preserves sort, direction, group_by, and search query #}
     {% if filters.year or filters.type %}
-    <a href="{% url 'list-list' %}{% if sort != 'importance' or sort_direction != 'desc' or filters.q %}?{% if sort != 'importance' %}sort={{ sort }}{% endif %}{% if sort_direction != 'desc' %}{% if sort != 'importance' %}&{% endif %}dir={{ sort_direction }}{% endif %}{% if filters.q %}{% if sort != 'importance' or sort_direction != 'desc' %}&{% endif %}q={{ filters.q }}{% endif %}{% endif %}"
+    <a href="{% url 'list-list' %}{% if group_by != 'publication' or sort != 'importance' or sort_direction != 'desc' or filters.q %}?{% if group_by != 'publication' %}group_by={{ group_by }}{% endif %}{% if sort != 'importance' and sort != 'release' %}{% if group_by != 'publication' %}&{% endif %}sort={{ sort }}{% endif %}{% if sort_direction != 'desc' %}{% if group_by != 'publication' or sort != 'importance' %}&{% endif %}dir={{ sort_direction }}{% endif %}{% if filters.q %}{% if group_by != 'publication' or sort != 'importance' or sort_direction != 'desc' %}&{% endif %}q={{ filters.q }}{% endif %}{% endif %}"
        class="btn btn-ghost btn-sm">
         <span class="mdi mdi-close"></span>
         <span>Clear filters</span>
@@ -173,19 +254,21 @@
     <button type="button"
             class="btn btn-ghost btn-sm text-base-content/70"
             @click="allExpanded = !allExpanded; $dispatch(allExpanded ? 'publications-expand-all' : 'publications-collapse-all')"
-            :title="allExpanded ? 'Collapse all publications' : 'Expand all publications'">
+            :title="allExpanded ? 'Collapse all' : 'Expand all'">
         <span class="mdi" :class="allExpanded ? 'mdi-unfold-less-horizontal' : 'mdi-unfold-more-horizontal'"></span>
         <span x-text="allExpanded ? 'Collapse All' : 'Expand All'"></span>
     </button>
 </div>
 
-{# Badge legend row - compact, without label #}
+{# Badge legend row - only show for publication grouping (type grouping shows badges in headers) #}
+{% if group_by != 'type' %}
 <div class="flex items-center gap-3 mb-4 text-xs text-base-content/60">
     <span class="badge badge-xs badge-info">All time</span>
     <span class="badge badge-xs badge-success">Decade</span>
     <span class="badge badge-xs badge-warning">Misc</span>
     <span class="badge badge-xs badge-error">EOY</span>
 </div>
+{% endif %}
 
 <div id="results-container">
     {% include 'lists/includes/_list_list_results.html' %}

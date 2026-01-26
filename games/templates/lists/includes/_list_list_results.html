@@ -1,6 +1,14 @@
-{# List search results partial - publication groups with expand/collapse #}
+{# List search results partial - publication groups or type groups with expand/collapse #}
 {% load humanize %}
 {% load game_filters %}
+
+{% if group_by == 'type' %}
+{# Type grouping mode #}
+{% include 'lists/includes/_type_group_results.html' %}
+<div class="h-6"></div>
+
+{% else %}
+{# Publication grouping mode (default) #}
 {% if publication_groups %}
 <div id="publication-groups-container" class="space-y-2">
     {% for group in publication_groups %}
@@ -26,4 +34,5 @@
     <span class="mdi mdi-information-outline"></span>
     <span>No publications found matching your filters.</span>
 </div>
+{% endif %}
 {% endif %}
