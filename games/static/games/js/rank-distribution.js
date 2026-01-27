@@ -255,6 +255,21 @@
         initCharts();
     });
 
+    // Re-render charts after bfcache restoration
+    // The bfcache preserves chart.bins from before navigation, so render() restores
+    // the visual state immediately. The filter component's bfcache-restore handler
+    // then dispatches rank-distribution-update with fresh data to correct any staleness.
+    window.addEventListener('bfcache-restore', function() {
+        activeCharts = activeCharts.filter(function(chart) {
+            if (document.contains(chart.container)) {
+                chart.render();
+                return true;
+            }
+            chart.destroy();
+            return false;
+        });
+    });
+
     // Export for manual initialization if needed
     window.RankDistributionChart = RankDistributionChart;
 })();

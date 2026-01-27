@@ -216,12 +216,35 @@ document.addEventListener('alpine:init', () => {
                         setTimeout(() => {
                             const component = getFilterComponent();
                             if (component) {
+                                // Sync filter state from URL params (Alpine reinitializes
+                                // from #filters-data which may not match the URL after
+                                // client-side filtering changed it via pushState)
+                                const params = new URLSearchParams(window.location.search);
+                                component.filters.q = params.get('q') || '';
+                                component.filters.start = params.get('start') ? parseInt(params.get('start')) : component.minYear;
+                                component.filters.end = params.get('end') ? parseInt(params.get('end')) : component.maxYear;
+                                component.filters.sort = params.get('sort') || 'rank';
+                                component.filters.sortDirection = params.get('dir') || 'asc';
+                                const playedParam = params.get('played');
+                                component.filters.played = playedParam ? playedParam.split(',').filter(s => s) : [];
+                                const genresParam = params.get('genres');
+                                component.filters.genres = genresParam ? genresParam.split(',').filter(id => id) : [];
+                                const platformsParam = params.get('platforms');
+                                component.filters.platforms = platformsParam ? platformsParam.split(',').filter(id => id) : [];
+                                const seriesParam = params.get('series');
+                                component.filters.series = seriesParam ? seriesParam.split(',').filter(id => id) : [];
+                                component.filters.hltb_mode = params.get('hltb_mode') || 'main';
+                                component.filters.hltb_min = params.get('hltb_min') ? parseInt(params.get('hltb_min')) : null;
+                                component.filters.hltb_max = params.get('hltb_max') ? parseInt(params.get('hltb_max')) : null;
+                                component.filters.hltb_preset = component.calculateHltbPreset(component.filters.hltb_min, component.filters.hltb_max);
+
                                 if (component.clientFilterReady) {
                                     // Recalculate all counts from cached data (includes HLTB)
                                     component.updateFacetCounts();
                                 } else {
-                                    // Fall back to server-rendered counts (no HLTB)
-                                    component.dispatchInitialCounts();
+                                    // Fall back to server-rendered counts (skip rank distribution
+                                    // since the chart preserves correct bins via bfcache)
+                                    component.dispatchInitialCounts({ skipRankDistribution: true });
                                 }
                             }
                         }, 50);
@@ -1078,7 +1101,7 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        dispatchInitialCounts() {
+        dispatchInitialCounts(options = {}) {
             console.log('[CSF] Dispatching initial counts from server-rendered data');
 
             const yearCountsEl = document.getElementById('year-counts-update');
@@ -1128,6 +1151,21 @@ document.addEventListener('alpine:init', () => {
                     window.dispatchEvent(new CustomEvent('hltb-counts-update', { detail: hltbCounts }));
                 } catch (e) {
                     console.error('Error parsing HLTB counts:', e);
+                }
+            }
+
+            // Skip rank distribution on bfcache restore: the server-rendered data
+            // reflects the initial page load state, not the current filters. The chart
+            // preserves its bins via bfcache and gets fresh data from initClientFiltering().
+            if (!options.skipRankDistribution) {
+                const rankDistEl = document.getElementById('rank-distribution-update');
+                if (rankDistEl) {
+                    try {
+                        const rankDist = JSON.parse(rankDistEl.textContent);
+                        window.dispatchEvent(new CustomEvent('rank-distribution-update', { detail: rankDist }));
+                    } catch (e) {
+                        console.error('Error parsing rank distribution:', e);
+                    }
                 }
             }
         },

@@ -2,6 +2,8 @@
 
 ## 2026-01-27
 
+- Fix rank distribution chart not restoring on bfcache back navigation
+- Sync filter state from URL params on bfcache restore (prevents x-show mismatch after Alpine reinit)
 - Add sortable Played and Want to Play count columns in User admin (annotated queryset, eliminates N+1 queries)
 
 ## 2026-01-26
