@@ -2,6 +2,7 @@
 
 ## 2026-01-27
 
+- Add donate button to mobile navigation (was missing, only existed in desktop sidebar)
 - Fix rank distribution chart not restoring on bfcache back navigation
 - Sync filter state from URL params on bfcache restore (prevents x-show mismatch after Alpine reinit)
 - Add sortable Played and Want to Play count columns in User admin (annotated queryset, eliminates N+1 queries)
