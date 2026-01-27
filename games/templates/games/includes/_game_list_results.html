@@ -11,6 +11,9 @@
 {% if platform_counts_json %}
 <script type="application/json" id="platform-counts-update">{{ platform_counts_json|tojson }}</script>
 {% endif %}
+{% if hltb_counts_json %}
+<script type="application/json" id="hltb-counts-update">{{ hltb_counts_json|tojson }}</script>
+{% endif %}
 {% if rank_distribution %}
 <script type="application/json" id="rank-distribution-update">{{ rank_distribution|tojson }}</script>
 {% endif %}

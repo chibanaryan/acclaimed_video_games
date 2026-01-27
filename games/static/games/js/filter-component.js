@@ -216,7 +216,13 @@ document.addEventListener('alpine:init', () => {
                         setTimeout(() => {
                             const component = getFilterComponent();
                             if (component) {
-                                component.dispatchInitialCounts();
+                                if (component.clientFilterReady) {
+                                    // Recalculate all counts from cached data (includes HLTB)
+                                    component.updateFacetCounts();
+                                } else {
+                                    // Fall back to server-rendered counts (no HLTB)
+                                    component.dispatchInitialCounts();
+                                }
                             }
                         }, 50);
                     });
@@ -1112,6 +1118,16 @@ document.addEventListener('alpine:init', () => {
                     window.dispatchEvent(new CustomEvent('series-counts-update', { detail: seriesCounts }));
                 } catch (e) {
                     console.error('Error parsing series counts:', e);
+                }
+            }
+
+            const hltbCountsEl = document.getElementById('hltb-counts-update');
+            if (hltbCountsEl) {
+                try {
+                    const hltbCounts = JSON.parse(hltbCountsEl.textContent);
+                    window.dispatchEvent(new CustomEvent('hltb-counts-update', { detail: hltbCounts }));
+                } catch (e) {
+                    console.error('Error parsing HLTB counts:', e);
                 }
             }
         },

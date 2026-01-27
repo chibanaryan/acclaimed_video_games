@@ -1651,6 +1651,32 @@ class HomePageView(RobustPaginationMixin, ListView):
             str(k): v for k, v in platform_counts.items()
         }
 
+        # HLTB preset counts for filter (short/medium/long buckets)
+        # Uses main_story_hours by default (same as client-side filter initial state)
+        hltb_counts = models.Game.objects.filter(
+            primary_hltb_game_data__main_story_hours__isnull=False
+        ).aggregate(
+            short=Count(
+                "id",
+                filter=Q(primary_hltb_game_data__main_story_hours__lt=10),
+                distinct=True,
+            ),
+            medium=Count(
+                "id",
+                filter=Q(
+                    primary_hltb_game_data__main_story_hours__gte=10,
+                    primary_hltb_game_data__main_story_hours__lt=30,
+                ),
+                distinct=True,
+            ),
+            long=Count(
+                "id",
+                filter=Q(primary_hltb_game_data__main_story_hours__gte=30),
+                distinct=True,
+            ),
+        )
+        context["hltb_counts_json"] = hltb_counts
+
         # Rank distribution (10 bins of 100 ranks each)
         # Uses the filtered queryset to show distribution of current results
         rank_dist_cache_key = _build_filter_cache_key(
