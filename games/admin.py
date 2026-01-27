@@ -592,17 +592,24 @@ class UserAdmin(BaseUserAdmin):
 
     readonly_fields = ["unsubscribe_token", "date_subscribed"]
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            _played_games_count=Count("played_games", distinct=True),
+            _want_to_play_count=Count("want_to_play_games", distinct=True),
+        )
+
     @admin.display(description="Email Verified", boolean=True)
     def email_verified_display(self, obj):
         """Show email verification status from allauth EmailAddress."""
         return obj.email_verified
 
-    @admin.display(description="Played")
+    @admin.display(description="Played", ordering="_played_games_count")
     def played_games_count(self, obj):
         """Show count of games marked as played."""
-        return obj.played_games.count()
+        return obj._played_games_count
 
-    @admin.display(description="Want to Play")
+    @admin.display(description="Want to Play", ordering="_want_to_play_count")
     def want_to_play_count(self, obj):
         """Show count of games marked as want to play."""
-        return obj.want_to_play_games.count()
+        return obj._want_to_play_count

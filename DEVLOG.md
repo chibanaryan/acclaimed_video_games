@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-01-27
+
+- Add sortable Played and Want to Play count columns in User admin (annotated queryset, eliminates N+1 queries)
+
 ## 2026-01-26
 
 - Fix year heatmap duplication on bfcache back navigation: use Alpine.destroyTree for proper x-for cleanup
