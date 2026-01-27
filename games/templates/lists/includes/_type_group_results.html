@@ -1,13 +1,70 @@
-{# Type group results - lists grouped by type #}
+{# Type-filtered results - flat table of lists for the selected type #}
 {% load humanize %}
 {% load game_filters %}
 
 {% if type_groups %}
-<div id="type-groups-container" class="space-y-4 pb-8">
-    {% for type_group in type_groups %}
-    {% include 'lists/includes/_type_group.html' %}
-    {% endfor %}
+{% with type_group=type_groups.0 %}
+<div class="border border-base-content/10 rounded-lg">
+    {# Desktop table view #}
+    <div class="hidden md:block">
+        <table class="table table-fixed w-full">
+            <colgroup>
+                <col style="width: 10%;">
+                <col style="width: 25%;">
+                <col style="width: 65%;">
+            </colgroup>
+            <thead>
+                <tr class="text-xs text-base-content/70">
+                    <th class="py-2 pl-4">Year</th>
+                    <th class="py-2">Publication</th>
+                    <th class="py-2">List Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in type_group.lists %}
+                <tr class="list-row hover:bg-base-200/30">
+                    <td class="py-2 pl-4 tabular-nums">{{ item.year }}</td>
+                    <td class="py-2 text-base-content/80">{{ item.publisher.name }}</td>
+                    <td class="py-2">
+                        {% if item.url %}
+                        <a href="{{ item.url }}" target="_blank" rel="noopener" class="link link-hover inline-flex items-center gap-1">
+                            {{ item.name }}
+                            <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
+                        </a>
+                        {% else %}
+                        {{ item.name }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Mobile card view #}
+    <div class="md:hidden py-3 px-4 space-y-3">
+        {% for item in type_group.lists %}
+        <div class="list-row py-2 border-b border-base-content/5 last:border-0">
+            <div class="flex items-baseline gap-2 text-sm">
+                <span class="tabular-nums text-base-content/70">{{ item.year }}</span>
+                <span class="text-base-content/60">&middot;</span>
+                <span class="text-base-content/80">{{ item.publisher.name }}</span>
+            </div>
+            <div class="text-sm mt-1">
+                {% if item.url %}
+                <a href="{{ item.url }}" target="_blank" rel="noopener" class="link link-hover">
+                    {{ item.name }}
+                    <span class="mdi mdi-open-in-new text-xs opacity-50"></span>
+                </a>
+                {% else %}
+                {{ item.name }}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
+{% endwith %}
 {% else %}
 <div class="alert">
     <span class="mdi mdi-information-outline"></span>

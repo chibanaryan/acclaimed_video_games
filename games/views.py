@@ -2568,11 +2568,6 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         year_value = self.request.GET.get("year")
         type_slug = self.request.GET.get("type")
         search_query = self.request.GET.get("q", "").strip()
-        group_by = self.request.GET.get("group_by", "publication")
-
-        # Validate group_by
-        if group_by not in ("publication", "type"):
-            group_by = "publication"
 
         try:
             year_value = int(year_value) if year_value else None
@@ -2580,6 +2575,10 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             year_value = None
 
         type_code = constants.LIST_TYPE_CODES.get(type_slug) if type_slug else None
+
+        # Auto-determine group_by based on type filter
+        # Single type selected → year-based view; All types → publication grouping
+        group_by = "type" if type_code else "publication"
 
         return year_value, type_slug, type_code, search_query, group_by
 
@@ -2705,7 +2704,15 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         context["sort"] = sort
         context["sort_direction"] = sort_direction
         context["group_by"] = group_by
-        context["grand_total_list_count"] = grand_total_lists
+        # Grand total: all lists (filtered by year/search but NOT type)
+        grand_total_qs = models.List.objects.all()
+        if year_value:
+            grand_total_qs = grand_total_qs.filter(year=year_value)
+        if search_query:
+            grand_total_qs = grand_total_qs.filter(
+                publisher__name__icontains=search_query
+            )
+        context["grand_total_list_count"] = grand_total_qs.count()
 
         # Sort options for type grouping mode
         context["sort_options"] = [
@@ -2713,7 +2720,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             ("alpha", "Alphabetical"),
         ]
 
-        # Total lists count
+        # Total lists count (filtered by type)
         context["total_list_count"] = grand_total_lists
 
         return context
@@ -2729,7 +2736,8 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         if group_by == "type":
             return models.Publication.objects.none()
 
-        sort = self.request.GET.get("sort", "importance")
+        raw_sort = self.request.GET.get("sort", "")
+        sort = raw_sort if raw_sort in ("importance", "alpha") else "importance"
         # Default direction depends on sort type: desc for importance, asc for alpha
         default_dir = "asc" if sort == "alpha" else "desc"
         sort_direction = self.request.GET.get("dir", default_dir)
@@ -2856,11 +2864,14 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         year_value, type_slug, type_code, search_query, group_by = self._get_list_filters()
 
         # Default sort depends on group_by mode
+        # Normalize sort to valid options for the current mode to handle
+        # stale values when the type filter switches the grouping mode
+        raw_sort = self.request.GET.get("sort", "")
         if group_by == "type":
-            sort = self.request.GET.get("sort", "release")
+            sort = raw_sort if raw_sort in ("release", "alpha") else "release"
             default_dir = "desc" if sort == "release" else "asc"
         else:
-            sort = self.request.GET.get("sort", "importance")
+            sort = raw_sort if raw_sort in ("importance", "alpha") else "importance"
             default_dir = "asc" if sort == "alpha" else "desc"
 
         sort_direction = self.request.GET.get("dir", default_dir)

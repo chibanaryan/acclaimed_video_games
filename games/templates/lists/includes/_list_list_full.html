@@ -17,7 +17,6 @@
 <div class="flex flex-wrap items-center gap-2 mb-6 min-h-[2.5rem]"
      x-data="{
         allExpanded: false,
-        groupBy: '{{ group_by|default:'publication' }}',
         sort: '{{ sort }}',
         sortDirection: '{{ sort_direction|default:'desc' }}',
         sortOpen: false,
@@ -29,39 +28,6 @@
             };
             return labels[this.sort] || this.sort;
         },
-        updateGroupBy(newGroupBy) {
-            this.groupBy = newGroupBy;
-            // Reset sort to appropriate default for new group mode
-            if (newGroupBy === 'type') {
-                this.sort = 'release';
-                this.sortDirection = 'desc';
-            } else {
-                this.sort = 'importance';
-                this.sortDirection = 'desc';
-            }
-
-            const url = new URL(window.location);
-            if (newGroupBy !== 'publication') {
-                url.searchParams.set('group_by', newGroupBy);
-            } else {
-                url.searchParams.delete('group_by');
-            }
-            url.searchParams.delete('sort');
-            url.searchParams.delete('dir');
-            url.searchParams.delete('page');
-            window.history.pushState({}, '', url);
-
-            htmx.ajax('GET', '{% url 'list-list' %}', {
-                target: '#filter-results-wrapper',
-                swap: 'innerHTML',
-                values: {
-                    group_by: newGroupBy,
-                    type: document.getElementById('filter-list-type')?.value || '',
-                    year: document.getElementById('filter-list-year')?.value || '',
-                    q: document.getElementById('publication-search')?.value || ''
-                }
-            });
-        },
         updateSort(newSort) {
             this.sort = newSort;
             this.sortOpen = false;
@@ -69,7 +35,9 @@
             // Alphabetical: ascending (A-Z), Year/# Lists: descending (newest/most first)
             this.sortDirection = newSort === 'alpha' ? 'asc' : 'desc';
             const url = new URL(window.location);
-            const defaultSort = this.groupBy === 'type' ? 'release' : 'importance';
+            // Default sort depends on current group mode (determined by type filter)
+            const hasTypeFilter = document.getElementById('filter-list-type')?.value;
+            const defaultSort = hasTypeFilter ? 'release' : 'importance';
             if (newSort !== defaultSort) {
                 url.searchParams.set('sort', newSort);
             } else {
@@ -87,7 +55,6 @@
                 target: '#filter-results-wrapper',
                 swap: 'innerHTML',
                 values: {
-                    group_by: this.groupBy,
                     sort: newSort,
                     dir: this.sortDirection,
                     type: document.getElementById('filter-list-type')?.value || '',
@@ -110,7 +77,6 @@
                 target: '#filter-results-wrapper',
                 swap: 'innerHTML',
                 values: {
-                    group_by: this.groupBy,
                     sort: this.sort,
                     dir: this.sortDirection,
                     type: document.getElementById('filter-list-type')?.value || '',
@@ -121,31 +87,8 @@
         }
      }">
     {# Hidden inputs for HTMX includes #}
-    <input type="hidden" name="group_by" :value="groupBy">
     <input type="hidden" name="sort" :value="sort">
     <input type="hidden" name="dir" :value="sortDirection">
-
-    {# Group by toggle #}
-    <div class="flex items-center gap-2">
-        <span class="text-sm text-base-content/70 hidden sm:inline">Group by:</span>
-        <div class="join">
-            <button type="button"
-                    class="join-item btn btn-sm"
-                    :class="{ 'btn-primary': groupBy === 'publication' }"
-                    @click="updateGroupBy('publication')">
-                Publication
-            </button>
-            <button type="button"
-                    class="join-item btn btn-sm"
-                    :class="{ 'btn-primary': groupBy === 'type' }"
-                    @click="updateGroupBy('type')">
-                List Type
-            </button>
-        </div>
-    </div>
-
-    {# Separator #}
-    <div class="w-px h-6 bg-base-content/20"></div>
 
     {# Sort toggle - far left #}
     {# Desktop: Custom dropdown with direction button #}
@@ -207,7 +150,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q'], [name='group_by']"
+            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All list types</option>
@@ -227,7 +170,7 @@
             hx-target="#filter-results-wrapper"
             hx-trigger="change"
             hx-swap="innerHTML"
-            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q'], [name='group_by']"
+            hx-include="[name='year'], [name='type'], [name='sort'], [name='dir'], [name='q']"
             hx-on:htmx:before-request="this.blur()"
             x-on:htmx:after-request="updateUrl($event)">
         <option value="">All years</option>
@@ -238,9 +181,9 @@
         {% endfor %}
     </select>
 
-    {# Clear filters button - preserves sort, direction, group_by, and search query #}
+    {# Clear filters button - preserves sort, direction, and search query #}
     {% if filters.year or filters.type %}
-    <a href="{% url 'list-list' %}{% if group_by != 'publication' or sort != 'importance' or sort_direction != 'desc' or filters.q %}?{% if group_by != 'publication' %}group_by={{ group_by }}{% endif %}{% if sort != 'importance' and sort != 'release' %}{% if group_by != 'publication' %}&{% endif %}sort={{ sort }}{% endif %}{% if sort_direction != 'desc' %}{% if group_by != 'publication' or sort != 'importance' %}&{% endif %}dir={{ sort_direction }}{% endif %}{% if filters.q %}{% if group_by != 'publication' or sort != 'importance' or sort_direction != 'desc' %}&{% endif %}q={{ filters.q }}{% endif %}{% endif %}"
+    <a href="{% url 'list-list' %}{% if sort == 'alpha' or sort_direction != 'desc' or filters.q %}?{% if sort == 'alpha' %}sort=alpha{% endif %}{% if sort_direction != 'desc' %}{% if sort == 'alpha' %}&{% endif %}dir={{ sort_direction }}{% endif %}{% if filters.q %}{% if sort == 'alpha' or sort_direction != 'desc' %}&{% endif %}q={{ filters.q }}{% endif %}{% endif %}"
        class="btn btn-ghost btn-sm">
         <span class="mdi mdi-close"></span>
         <span>Clear filters</span>
@@ -250,7 +193,8 @@
     {# Spacer to push expand button to right #}
     <div class="flex-grow"></div>
 
-    {# Expand/Collapse All button - far right #}
+    {# Expand/Collapse All button - only for publication grouping (has collapsible sections) #}
+    {% if group_by != 'type' %}
     <button type="button"
             class="btn btn-ghost btn-sm text-base-content/70"
             @click="allExpanded = !allExpanded; $dispatch(allExpanded ? 'publications-expand-all' : 'publications-collapse-all')"
@@ -258,6 +202,7 @@
         <span class="mdi" :class="allExpanded ? 'mdi-unfold-less-horizontal' : 'mdi-unfold-more-horizontal'"></span>
         <span x-text="allExpanded ? 'Collapse All' : 'Expand All'"></span>
     </button>
+    {% endif %}
 </div>
 
 {# Badge legend row - only show for publication grouping (type grouping shows badges in headers) #}

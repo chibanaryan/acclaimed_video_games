@@ -4,6 +4,7 @@
 
 - Fix year heatmap duplication on bfcache back navigation: use Alpine.destroyTree for proper x-for cleanup
 - Add bfcache-restore listener to re-dispatch filter counts after component reinitialization
+- Replace "Group by" toggle with auto-grouping: type filter selects flat year view, all types shows publication grouping
 
 ## 2026-01-25
 
