@@ -1,5 +1,12 @@
 # Developer Log
 
+## 2026-02-03
+
+- Add IGDB orphan reconnection during file import (matches Wikipedia/HLTB pattern)
+- Prioritize games without metadata in refresh_all_metadata command
+- Add streaming progress for batch file imports to prevent Gunicorn timeout
+- Add defensive error handling to import page for database inconsistent states
+
 ## 2026-01-27
 
 - Add donate button to mobile navigation (was missing, only existed in desktop sidebar)

@@ -3435,6 +3435,48 @@ class WikipediaPageProgressView(LoginRequiredMixin, View):
         )
 
 
+class BatchImportProgressView(LoginRequiredMixin, View):
+    """
+    Streams batch file import progress via Server-Sent Events (SSE).
+
+    Accepts POST requests with file uploads and streams progress in real-time.
+    This prevents Gunicorn timeout for large imports by keeping the connection alive.
+    """
+
+    def post(self, request, *args, **kwargs):
+        """Stream batch import progress as SSE events."""
+        import_data = {
+            "platforms_file": request.FILES.get("platforms_file"),
+            "lists_file": request.FILES.get("lists_file"),
+            "games_file": request.FILES.get("games_file"),
+            "memberships_file": request.FILES.get("memberships_file"),
+        }
+
+        # Check if any files were provided
+        if not any(import_data.values()):
+
+            def error_generator():
+                yield f"data: {json.dumps({'event': 'error', 'message': 'No files provided'})}\n\n"
+
+            return StreamingHttpResponse(
+                error_generator(),
+                content_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Accel-Buffering": "no",
+                },
+            )
+
+        return StreamingHttpResponse(
+            utils.import_batch_with_progress(import_data),
+            content_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+
 # =============================================================================
 # Newsletter Subscription Views
 # =============================================================================

@@ -330,7 +330,7 @@
             </div>
         </div>
 
-        <form method="POST" action="." enctype="multipart/form-data">
+        <form method="POST" action="." enctype="multipart/form-data" id="batch-import-form">
             {% csrf_token %}
 
             <!-- Platforms File -->
@@ -747,8 +747,11 @@
                 }
             })
 
-            // Form submission handling
-            form.addEventListener('submit', () => {
+            // Form submission handling (for non-batch forms like seed data)
+            form.addEventListener('submit', (e) => {
+                // Skip the batch import form - it has its own handler
+                if (form.id === 'batch-import-form') return
+
                 let submitBtn = form.querySelector('#import-submit')
                 if (submitBtn) {
                     submitBtn.disabled = true
@@ -760,6 +763,161 @@
                     seedBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span>Loading...'
                 }
             })
+        }
+
+        // Streaming batch import handler
+        const batchForm = document.getElementById('batch-import-form')
+        if (batchForm) {
+            batchForm.addEventListener('submit', async (e) => {
+                e.preventDefault()
+
+                const submitBtn = document.getElementById('import-submit')
+                const progressContainer = document.getElementById('batch-progress-container')
+                const errorsContainer = document.getElementById('batch-errors')
+                const errorList = document.getElementById('batch-error-list')
+
+                // Check if any files are selected
+                const formData = new FormData(batchForm)
+                const hasFiles = ['platforms_file', 'lists_file', 'games_file', 'memberships_file']
+                    .some(name => formData.get(name) && formData.get(name).size > 0)
+
+                if (!hasFiles) {
+                    alert('Please select at least one file to import.')
+                    return
+                }
+
+                // Disable button and show progress
+                submitBtn.disabled = true
+                submitBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span>Importing...'
+                progressContainer.classList.add('active')
+                errorsContainer.style.display = 'none'
+                errorList.innerHTML = ''
+
+                // Show progress items for files that are being imported
+                const fileTypes = [
+                    { field: 'platforms_file', id: 'platforms' },
+                    { field: 'lists_file', id: 'lists' },
+                    { field: 'games_file', id: 'games' },
+                    { field: 'memberships_file', id: 'memberships' }
+                ]
+
+                for (const ft of fileTypes) {
+                    const file = formData.get(ft.field)
+                    const progressItem = document.getElementById(`${ft.id}-progress-item`)
+                    if (file && file.size > 0) {
+                        progressItem.style.display = 'block'
+                        document.getElementById(`${ft.id}-status`).textContent = 'Waiting...'
+                        document.getElementById(`${ft.id}-progress-bar`).style.width = '0%'
+                        document.getElementById(`${ft.id}-percentage`).textContent = '0%'
+                    } else {
+                        progressItem.style.display = 'none'
+                    }
+                }
+
+                try {
+                    const response = await fetch('{% url "batch-import-progress" %}', {
+                        method: 'POST',
+                        body: formData
+                    })
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error: ${response.status}`)
+                    }
+
+                    const reader = response.body.getReader()
+                    const decoder = new TextDecoder()
+                    let buffer = ''
+                    let hasError = false
+                    let currentFile = null
+
+                    while (true) {
+                        const { done, value } = await reader.read()
+                        if (done) break
+
+                        buffer += decoder.decode(value, { stream: true })
+
+                        // Process complete SSE events
+                        const lines = buffer.split('\n')
+                        buffer = lines.pop() // Keep incomplete line in buffer
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6))
+
+                                    if (data.event === 'start') {
+                                        currentFile = data.file
+                                        const fileId = getFileId(currentFile)
+                                        if (fileId) {
+                                            document.getElementById(`${fileId}-status`).textContent = 'Processing...'
+                                            document.getElementById(`${fileId}-total`).textContent = data.total
+                                        }
+                                    } else if (data.event === 'progress') {
+                                        const fileId = getFileId(currentFile)
+                                        if (fileId && data.current && data.total) {
+                                            const pct = Math.round((data.current / data.total) * 100)
+                                            document.getElementById(`${fileId}-progress-bar`).style.width = `${pct}%`
+                                            document.getElementById(`${fileId}-percentage`).textContent = `${pct}%`
+                                            document.getElementById(`${fileId}-current`).textContent = data.current
+                                        }
+                                    } else if (data.event === 'complete') {
+                                        const fileId = getFileId(currentFile || data.file)
+                                        if (fileId) {
+                                            document.getElementById(`${fileId}-status`).textContent = 'Complete'
+                                            document.getElementById(`${fileId}-progress-bar`).style.width = '100%'
+                                            document.getElementById(`${fileId}-percentage`).textContent = '100%'
+                                        }
+                                    } else if (data.event === 'error') {
+                                        hasError = true
+                                        errorsContainer.style.display = 'block'
+                                        const errorMsg = data.file
+                                            ? `${data.file}: ${data.message}`
+                                            : data.message
+                                        errorList.innerHTML += `<div>${errorMsg}</div>`
+                                    }
+                                } catch (parseError) {
+                                    console.error('Error parsing SSE data:', parseError, line)
+                                }
+                            }
+                        }
+                    }
+
+                    // Import complete
+                    if (!hasError) {
+                        // Show success and reload
+                        const alert = document.createElement('div')
+                        alert.className = 'alert alert-success shadow-lg fixed top-4 right-4 w-96 z-50'
+                        alert.innerHTML = `
+                            <span class="mdi mdi-check-circle"></span>
+                            <span>Import completed successfully!</span>
+                        `
+                        document.body.appendChild(alert)
+                        setTimeout(() => window.location.reload(), 2000)
+                    } else {
+                        // Reset button for retry
+                        submitBtn.disabled = false
+                        submitBtn.innerHTML = '<span class="mdi mdi-upload"></span>Import Files'
+                    }
+
+                } catch (error) {
+                    console.error('Import error:', error)
+                    errorsContainer.style.display = 'block'
+                    errorList.innerHTML = `<div>Connection error: ${error.message}</div>`
+                    submitBtn.disabled = false
+                    submitBtn.innerHTML = '<span class="mdi mdi-upload"></span>Import Files'
+                }
+            })
+        }
+
+        // Helper to map file display names to element IDs
+        function getFileId(fileName) {
+            const map = {
+                'Platforms': 'platforms',
+                'Source Lists': 'lists',
+                'Games': 'games',
+                'Game Positions': 'memberships'
+            }
+            return map[fileName] || null
         }
     })
 </script>

@@ -33,6 +33,11 @@ urlpatterns = [
         views.WikipediaPageProgressView.as_view(),
         name="wikipedia-page-progress",
     ),
+    path(
+        "import/batch-progress/",
+        views.BatchImportProgressView.as_view(),
+        name="batch-import-progress",
+    ),
     # Custom email confirmation page (must be before allauth include)
     path(
         "accounts/confirm-email/<str:key>/",
