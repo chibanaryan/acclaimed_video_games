@@ -21,6 +21,7 @@ from decimal import Decimal
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db.models import Case, IntegerField, Value, When
 
 from games import config
 from games.models import Game, HLTBGameData, WikipediaGameData
@@ -143,7 +144,14 @@ class Command(BaseCommand):
         if not options.get("igdb_only") and not options.get("hltb_only"):
             try:
                 # Prepare games data before async context (avoid ORM in async)
-                games_qs = Game.objects.all().order_by("rank")
+                # Prioritize games without Wikipedia metadata first
+                games_qs = Game.objects.all().annotate(
+                    has_metadata=Case(
+                        When(primary_wikipedia_game_data__isnull=False, then=Value(1)),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ).order_by("has_metadata", "rank")
                 if options.get("limit"):
                     games_qs = games_qs[: options["limit"]]
 
@@ -173,8 +181,15 @@ class Command(BaseCommand):
         if run_hltb:
             try:
                 # Prepare HLTB games data before async context
+                # Prioritize games without HLTB metadata first
                 hltb_games_list = []
-                games_qs = Game.objects.prefetch_related("platforms").order_by("rank")
+                games_qs = Game.objects.prefetch_related("platforms").annotate(
+                    has_metadata=Case(
+                        When(primary_hltb_game_data__isnull=False, then=Value(1)),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ).order_by("has_metadata", "rank")
                 if options.get("limit"):
                     games_qs = games_qs[: options["limit"]]
 
@@ -259,7 +274,14 @@ class Command(BaseCommand):
             mode_desc.append(f"concurrency={service.concurrency}")
 
         # Get games to process (all with IGDB IDs)
-        games = Game.objects.exclude(igdb_id__isnull=True).order_by("rank")
+        # Prioritize games without IGDB metadata first
+        games = Game.objects.exclude(igdb_id__isnull=True).annotate(
+            has_metadata=Case(
+                When(primary_igdb_game_data__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).order_by("has_metadata", "rank")
 
         if options.get("limit"):
             games = games[: options["limit"]]
@@ -336,7 +358,14 @@ class Command(BaseCommand):
         genre_service = WikiGenreService()
 
         # Get games to process (all games)
-        games = Game.objects.all().order_by("rank")
+        # Prioritize games without Wikipedia metadata first
+        games = Game.objects.all().annotate(
+            has_metadata=Case(
+                When(primary_wikipedia_game_data__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).order_by("has_metadata", "rank")
 
         if options.get("limit"):
             games = games[: options["limit"]]

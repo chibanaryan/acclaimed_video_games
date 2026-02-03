@@ -3160,102 +3160,150 @@ class ImportView(LoginRequiredMixin, FormView):
         """Add database object counts and persistent errors to context."""
         context = super().get_context_data(**kwargs)
 
-        # Get all counts in a single aggregation query (optimized)
-        total_games = models.Game.objects.count()
+        try:
+            # Get all counts in a single aggregation query (optimized)
+            total_games = models.Game.objects.count()
 
-        # Count metadata records (not games)
-        # This persists when games are deleted (metadata is orphaned)
-        total_igdb_metadata = models.IGDBGameData.objects.count()
-        orphaned_igdb = models.IGDBGameData.objects.filter(game__isnull=True).count()
-        connected_igdb = total_igdb_metadata - orphaned_igdb
+            # Count metadata records (not games)
+            # This persists when games are deleted (metadata is orphaned)
+            total_igdb_metadata = models.IGDBGameData.objects.count()
+            orphaned_igdb = models.IGDBGameData.objects.filter(
+                game__isnull=True
+            ).count()
+            connected_igdb = total_igdb_metadata - orphaned_igdb
 
-        total_wikipedia_metadata = models.WikipediaGameData.objects.count()
-        orphaned_wikipedia = models.WikipediaGameData.objects.filter(
-            game__isnull=True
-        ).count()
-        connected_wikipedia = total_wikipedia_metadata - orphaned_wikipedia
+            total_wikipedia_metadata = models.WikipediaGameData.objects.count()
+            orphaned_wikipedia = models.WikipediaGameData.objects.filter(
+                game__isnull=True
+            ).count()
+            connected_wikipedia = total_wikipedia_metadata - orphaned_wikipedia
 
-        total_hltb_metadata = models.HLTBGameData.objects.count()
-        orphaned_hltb = models.HLTBGameData.objects.filter(game__isnull=True).count()
-        connected_hltb = total_hltb_metadata - orphaned_hltb
+            total_hltb_metadata = models.HLTBGameData.objects.count()
+            orphaned_hltb = models.HLTBGameData.objects.filter(
+                game__isnull=True
+            ).count()
+            connected_hltb = total_hltb_metadata - orphaned_hltb
 
-        # Count games that need metadata (for fetch button)
-        games_needing_igdb = models.Game.objects.filter(
-            primary_igdb_game_data__isnull=True
-        ).count()
-        games_needing_wikipedia = models.Game.objects.filter(
-            Q(primary_wikipedia_game_data__isnull=True)
-            | Q(primary_wikipedia_game_data__page_title="")
-        ).count()
-        games_needing_hltb = models.Game.objects.filter(
-            primary_hltb_game_data__isnull=True
-        ).count()
+            # Count games that need metadata (for fetch button)
+            games_needing_igdb = models.Game.objects.filter(
+                primary_igdb_game_data__isnull=True
+            ).count()
+            games_needing_wikipedia = models.Game.objects.filter(
+                Q(primary_wikipedia_game_data__isnull=True)
+                | Q(primary_wikipedia_game_data__page_title="")
+            ).count()
+            games_needing_hltb = models.Game.objects.filter(
+                primary_hltb_game_data__isnull=True
+            ).count()
 
-        context["counts"] = {
-            "platforms": models.Platform.objects.count(),
-            "publications": models.Publication.objects.count(),
-            "lists": models.List.objects.count(),
-            "games": total_games,
-            "memberships": models.ListMembership.objects.count(),
-            "developers": models.Developer.objects.count(),
-            "series": models.Series.objects.count(),
-            "wikipedia_genres": models.WikipediaGenre.objects.count(),
-        }
-        # Calculate time estimates for fetching metadata
-        # IGDB: ~8-10 games/sec with default settings
-        igdb_estimate_seconds = (
-            int(games_needing_igdb / 9) if games_needing_igdb > 0 else 0
-        )
+            context["counts"] = {
+                "platforms": models.Platform.objects.count(),
+                "publications": models.Publication.objects.count(),
+                "lists": models.List.objects.count(),
+                "games": total_games,
+                "memberships": models.ListMembership.objects.count(),
+                "developers": models.Developer.objects.count(),
+                "series": models.Series.objects.count(),
+                "wikipedia_genres": models.WikipediaGenre.objects.count(),
+            }
+            # Calculate time estimates for fetching metadata
+            # IGDB: ~8-10 games/sec with default settings
+            igdb_estimate_seconds = (
+                int(games_needing_igdb / 9) if games_needing_igdb > 0 else 0
+            )
 
-        # Wikipedia: depends on authentication
-        # Optimized to reuse page URLs from lookup (2 network requests per game)
-        # Authenticated: ~1.0 games/sec, Unauthenticated: ~0.4 games/sec
-        from django.conf import settings
+            # Wikipedia: depends on authentication
+            # Optimized to reuse page URLs from lookup (2 network requests per game)
+            # Authenticated: ~1.0 games/sec, Unauthenticated: ~0.4 games/sec
+            from django.conf import settings
 
-        has_wikidata_auth = bool(getattr(settings, "WIKIDATA_ACCESS_TOKEN", None))
-        wiki_games_per_sec = 1.0 if has_wikidata_auth else 0.4
-        wiki_estimate_seconds = (
-            int(games_needing_wikipedia / wiki_games_per_sec)
-            if games_needing_wikipedia > 0
-            else 0
-        )
-
-        context["igdb_counts"] = {
-            "total": total_igdb_metadata,
-            "connected": connected_igdb,
-            "orphaned": orphaned_igdb,
-            "games_needing": games_needing_igdb,
-            "percentage": int(
-                (connected_igdb / total_igdb_metadata * 100)
-                if total_igdb_metadata > 0
+            has_wikidata_auth = bool(getattr(settings, "WIKIDATA_ACCESS_TOKEN", None))
+            wiki_games_per_sec = 1.0 if has_wikidata_auth else 0.4
+            wiki_estimate_seconds = (
+                int(games_needing_wikipedia / wiki_games_per_sec)
+                if games_needing_wikipedia > 0
                 else 0
-            ),
-            "estimate_seconds": igdb_estimate_seconds,
-        }
-        context["wikipedia_counts"] = {
-            "total": total_wikipedia_metadata,
-            "connected": connected_wikipedia,
-            "orphaned": orphaned_wikipedia,
-            "games_needing": games_needing_wikipedia,
-            "percentage": int(
-                (connected_wikipedia / total_wikipedia_metadata * 100)
-                if total_wikipedia_metadata > 0
-                else 0
-            ),
-            "estimate_seconds": wiki_estimate_seconds,
-            "has_auth": has_wikidata_auth,
-        }
-        context["hltb_counts"] = {
-            "total": total_hltb_metadata,
-            "connected": connected_hltb,
-            "orphaned": orphaned_hltb,
-            "games_needing": games_needing_hltb,
-            "percentage": int(
-                (connected_hltb / total_hltb_metadata * 100)
-                if total_hltb_metadata > 0
-                else 0
-            ),
-        }
+            )
+
+            context["igdb_counts"] = {
+                "total": total_igdb_metadata,
+                "connected": connected_igdb,
+                "orphaned": orphaned_igdb,
+                "games_needing": games_needing_igdb,
+                "percentage": int(
+                    (connected_igdb / total_igdb_metadata * 100)
+                    if total_igdb_metadata > 0
+                    else 0
+                ),
+                "estimate_seconds": igdb_estimate_seconds,
+            }
+            context["wikipedia_counts"] = {
+                "total": total_wikipedia_metadata,
+                "connected": connected_wikipedia,
+                "orphaned": orphaned_wikipedia,
+                "games_needing": games_needing_wikipedia,
+                "percentage": int(
+                    (connected_wikipedia / total_wikipedia_metadata * 100)
+                    if total_wikipedia_metadata > 0
+                    else 0
+                ),
+                "estimate_seconds": wiki_estimate_seconds,
+                "has_auth": has_wikidata_auth,
+            }
+            context["hltb_counts"] = {
+                "total": total_hltb_metadata,
+                "connected": connected_hltb,
+                "orphaned": orphaned_hltb,
+                "games_needing": games_needing_hltb,
+                "percentage": int(
+                    (connected_hltb / total_hltb_metadata * 100)
+                    if total_hltb_metadata > 0
+                    else 0
+                ),
+            }
+        except Exception as e:
+            # If database queries fail, provide safe defaults so page still loads
+            logger.exception("Error loading import page counts")
+            context["counts"] = {
+                "platforms": 0,
+                "publications": 0,
+                "lists": 0,
+                "games": 0,
+                "memberships": 0,
+                "developers": 0,
+                "series": 0,
+                "wikipedia_genres": 0,
+            }
+            context["igdb_counts"] = {
+                "total": 0,
+                "connected": 0,
+                "orphaned": 0,
+                "games_needing": 0,
+                "percentage": 0,
+                "estimate_seconds": 0,
+            }
+            context["wikipedia_counts"] = {
+                "total": 0,
+                "connected": 0,
+                "orphaned": 0,
+                "games_needing": 0,
+                "percentage": 0,
+                "estimate_seconds": 0,
+                "has_auth": False,
+            }
+            context["hltb_counts"] = {
+                "total": 0,
+                "connected": 0,
+                "orphaned": 0,
+                "games_needing": 0,
+                "percentage": 0,
+            }
+            context["import_errors"] = [
+                f"Error loading page data: {e}. The database may be in an "
+                "inconsistent state."
+            ]
+            context["import_success_message"] = None
+            return context
 
         # Get persistent errors from session
         import_errors = self.request.session.pop("import_errors", None)

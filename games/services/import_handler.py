@@ -1279,6 +1279,7 @@ def import_games(
         models.WantToPlayGame.objects.all().update(game=None)
         models.WikipediaGameData.objects.all().update(game=None)
         models.HLTBGameData.objects.all().update(game=None)
+        models.IGDBGameData.objects.all().update(game=None)
         models.Game.objects.all().delete()
 
         for rank, game_name, year, platforms, igdb_id, wikidata_id in rows:
@@ -1387,6 +1388,20 @@ def import_games(
                         hltb_data.save(update_fields=["game"])
                         game.primary_hltb_game_data = hltb_data
                         update_fields.append("primary_hltb_game_data")
+                        needs_save = True
+                        break
+
+            # Reconnect IGDB data - try all IGDB IDs (primary first)
+            if all_igdb_ids:
+                for igdb_id_to_try in all_igdb_ids:
+                    igdb_data = models.IGDBGameData.objects.filter(
+                        igdb_id=igdb_id_to_try, is_primary=True, game__isnull=True
+                    ).first()
+                    if igdb_data:
+                        igdb_data.game = game
+                        igdb_data.save(update_fields=["game"])
+                        game.primary_igdb_game_data = igdb_data
+                        update_fields.append("primary_igdb_game_data")
                         needs_save = True
                         break
 

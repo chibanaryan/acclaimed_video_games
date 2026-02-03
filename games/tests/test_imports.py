@@ -185,8 +185,10 @@ class ImportGamesTests(TestCase):
         # Get fresh game instance (old one was deleted)
         game = models.Game.objects.get()
 
-        # IGDB metadata won't be automatically reconnected (happens via manual fetch)
-        self.assertIsNone(game.primary_igdb_game_data)
+        # IGDB metadata SHOULD be automatically reconnected
+        self.assertIsNotNone(game.primary_igdb_game_data)
+        self.assertEqual(game.primary_igdb_game_data.id, igdb_data_id)
+        self.assertEqual(game.primary_igdb_game_data.artwork_id, "test_artwork")
 
         # Wikipedia metadata SHOULD be automatically reconnected
         self.assertIsNotNone(game.primary_wikipedia_game_data)
@@ -254,11 +256,12 @@ class ImportGamesTests(TestCase):
         # Verify game was recreated
         game = models.Game.objects.get()
 
-        # IGDB metadata won't be automatically reconnected (happens via manual fetch button)
-        self.assertIsNone(game.primary_igdb_game_data)
-        # But IGDB data remains orphaned and available for reconnection later
+        # IGDB metadata SHOULD be automatically reconnected
+        self.assertIsNotNone(game.primary_igdb_game_data)
+        self.assertEqual(game.primary_igdb_game_data.id, igdb_data_id)
+        # Verify IGDB metadata is no longer orphaned
         igdb_data.refresh_from_db()
-        self.assertIsNone(igdb_data.game)
+        self.assertEqual(igdb_data.game, game)
 
         # Wikipedia metadata SHOULD be automatically reconnected
         self.assertIsNotNone(game.primary_wikipedia_game_data)
@@ -269,8 +272,8 @@ class ImportGamesTests(TestCase):
         wiki_data.refresh_from_db()
         self.assertEqual(wiki_data.game, game)
 
-    def test_import_games_skips_reconnection_if_already_connected(self):
-        """Test that import doesn't overwrite existing metadata connections."""
+    def test_import_games_reconnects_igdb_metadata(self):
+        """Test that import reconnects orphaned IGDB metadata."""
         # Create game with IGDB metadata
         data = "1\tTest Game\t2024\tPC\t12345\tQ17185964\r\n"
         success, message = utils.import_games(StringIO(data))
@@ -289,6 +292,8 @@ class ImportGamesTests(TestCase):
         game.primary_igdb_game_data = igdb_primary
         game.save(update_fields=["primary_igdb_game_data"])
 
+        igdb_primary_id = igdb_primary.id
+
         # Create secondary IGDB record (not primary)
         models.IGDBGameData.objects.create(
             game=game,
@@ -302,13 +307,14 @@ class ImportGamesTests(TestCase):
         success, message = utils.import_games(StringIO(data))
         self.assertTrue(success)
 
-        # Game is recreated without IGDB metadata (automatic fetch was removed)
+        # Game is recreated WITH IGDB metadata reconnected
         game = models.Game.objects.get()  # Get fresh instance (old one deleted)
-        self.assertIsNone(game.primary_igdb_game_data)
+        self.assertIsNotNone(game.primary_igdb_game_data)
+        self.assertEqual(game.primary_igdb_game_data.id, igdb_primary_id)
 
-        # Original IGDB metadata records are now orphaned
+        # Original primary IGDB metadata record is reconnected
         igdb_primary.refresh_from_db()
-        self.assertIsNone(igdb_primary.game)
+        self.assertEqual(igdb_primary.game, game)
 
     def test_import_games_orphans_played_games_on_delete(self):
         """Test that PlayedGame records are orphaned when games are deleted."""
@@ -421,14 +427,14 @@ class ImportGamesTests(TestCase):
         self.assertEqual(game.all_wikidata_ids, ["Q111"])
 
     def test_import_games_primary_igdb_id_change_reconnects_metadata(self):
-        """Test that changing primary IGDB ID no longer reconnects orphaned metadata.
+        """Test that changing primary IGDB ID reconnects orphaned metadata via alternate ID.
 
         This simulates a real-world scenario where:
         1. A game exists with IGDB ID 123 and has metadata
         2. The game is deleted (e.g., removed from rankings), metadata is orphaned
         3. Later, the game returns with a new primary IGDB ID (456) but includes
            the old ID (123) as an alternate
-        4. The orphaned metadata will NOT be automatically reconnected (happens via manual fetch)
+        4. The orphaned metadata WILL be automatically reconnected via alternate ID
         """
         # Create orphaned metadata (simulating previous game that was deleted)
         igdb_data = models.IGDBGameData.objects.create(
@@ -440,7 +446,7 @@ class ImportGamesTests(TestCase):
         )
 
         # Import with 456 as new primary, 123 as alternate
-        # IGDB metadata will NOT be automatically reconnected
+        # IGDB metadata WILL be automatically reconnected via alternate ID
         data = "1\tTest Game\t2024\tPC\t456,123\tQ111\r\n"
         utils.import_games(StringIO(data))
 
@@ -450,10 +456,10 @@ class ImportGamesTests(TestCase):
         # Game should have 456 as primary
         self.assertEqual(game.igdb_id, 456)
         self.assertEqual(game.all_igdb_ids, [456, 123])
-        # IGDB metadata will NOT be automatically reconnected (removed feature)
-        self.assertIsNone(game.primary_igdb_game_data)
-        # Metadata remains orphaned (will be reconnected via manual "Fetch IGDB Data" button)
-        self.assertIsNone(igdb_data.game)
+        # IGDB metadata WILL be automatically reconnected via alternate ID 123
+        self.assertEqual(game.primary_igdb_game_data, igdb_data)
+        # Metadata is no longer orphaned
+        self.assertEqual(igdb_data.game, game)
 
     def test_import_games_primary_wikidata_id_change(self):
         """Test that changing primary Wikidata ID preserves old metadata and clears genres."""
@@ -550,7 +556,7 @@ class ImportGamesTests(TestCase):
         self.assertNotIn("Action", genre_names)  # Old genre should be gone
 
     def test_import_games_reconnects_via_alternate_igdb_id(self):
-        """Test that IGDB metadata is NOT automatically reconnected via alternate ID."""
+        """Test that IGDB metadata IS automatically reconnected via alternate ID."""
         # Create orphaned metadata with IGDB ID 456
         orphan_data = models.IGDBGameData.objects.create(
             game=None,  # Orphaned
@@ -567,9 +573,9 @@ class ImportGamesTests(TestCase):
         game = models.Game.objects.get()
         orphan_data.refresh_from_db()
 
-        # IGDB metadata is NOT automatically reconnected (happens via manual fetch)
-        self.assertIsNone(game.primary_igdb_game_data)
-        self.assertIsNone(orphan_data.game)
+        # Primary (123) doesn't have metadata, so it should reconnect via 456
+        self.assertEqual(game.primary_igdb_game_data, orphan_data)
+        self.assertEqual(orphan_data.game, game)
 
     def test_import_games_reconnects_via_alternate_wikidata_id(self):
         """Test reconnection works when metadata matches alternate Wikidata ID."""
