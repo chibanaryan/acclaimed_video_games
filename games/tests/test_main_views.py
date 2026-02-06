@@ -1329,9 +1329,7 @@ class DeveloperDetailViewTest(TestCase):
         subsidiaries_with_games = response.context.get("subsidiaries_with_games", [])
         self.assertTrue(subsidiaries_with_games)
         self.assertIsInstance(subsidiaries_with_games[0]["developer"], Developer)
-        self.assertEqual(
-            subsidiaries_with_games[0]["developer"].id, subsidiary.id
-        )
+        self.assertEqual(subsidiaries_with_games[0]["developer"].id, subsidiary.id)
 
     def test_cache_schema_mismatch_is_ignored(self):
         """Test cache schema mismatches are ignored."""
@@ -1375,13 +1373,9 @@ class DeveloperDetailViewTest(TestCase):
         root = Developer.objects.create(name="Root Dev", slug="root-dev")
         child = Developer.objects.create(name="Child Dev", parent=root)
         grandchild = Developer.objects.create(name="Grand Dev", parent=child)
-        great_grandchild = Developer.objects.create(
-            name="Great Dev", parent=grandchild
-        )
+        great_grandchild = Developer.objects.create(name="Great Dev", parent=grandchild)
 
-        game_root = Game.objects.create(
-            name="Root Game", rank=5, year_of_release=2019
-        )
+        game_root = Game.objects.create(name="Root Game", rank=5, year_of_release=2019)
         game_child = Game.objects.create(
             name="Child Game", rank=6, year_of_release=2020
         )
@@ -2254,6 +2248,35 @@ class RobotsTxtViewTest(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("Sitemap:", content)
         self.assertIn("sitemap.xml", content)
+
+    def test_robots_txt_blocks_aggressive_crawlers(self):
+        """Test that aggressive crawlers are blocked."""
+        response = self.client.get(reverse("robots-txt"))
+        content = response.content.decode("utf-8")
+        for bot in [
+            "AhrefsBot",
+            "SemrushBot",
+            "MJ12bot",
+            "DotBot",
+            "BLEXBot",
+            "PetalBot",
+            "BaiduSpider",
+        ]:
+            self.assertIn(f"User-agent: {bot}", content)
+
+    def test_robots_txt_has_crawl_delay(self):
+        """Test that crawl delay is set."""
+        response = self.client.get(reverse("robots-txt"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Crawl-delay: 10", content)
+
+    def test_robots_txt_disallows_expensive_paths(self):
+        """Test that expensive/internal paths are disallowed."""
+        response = self.client.get(reverse("robots-txt"))
+        content = response.content.decode("utf-8")
+        self.assertIn("Disallow: /admin/", content)
+        self.assertIn("Disallow: /api/", content)
+        self.assertIn("Disallow: /import/", content)
 
 
 class SitemapViewTest(TestCase):
@@ -3547,7 +3570,9 @@ class PlatformVirtualIdTests(TestCase):
 
     def setUp(self):
         # Create test platforms with the expected codes
-        self.nes = Platform.objects.create(code="NES", name="Nintendo Entertainment System")
+        self.nes = Platform.objects.create(
+            code="NES", name="Nintendo Entertainment System"
+        )
         self.snes = Platform.objects.create(code="SNES", name="Super Nintendo")
         self.pc = Platform.objects.create(code="PC", name="PC")
 

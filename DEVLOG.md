@@ -1,5 +1,12 @@
 # Developer Log
 
+## 2026-02-05
+
+- Add rate limiting middleware (120 req/min, 1200 req/hr per IP) to protect against bot/crawler abuse
+- Tune Gunicorn: 3 workers, 30s timeout, max-requests 1000 (prevents worker starvation from slow requests)
+- Improve robots.txt: block aggressive crawlers, add crawl-delay, disallow expensive filtered queries
+- Add DRF API throttling (60 req/min anonymous)
+
 ## 2026-02-03
 
 - Add IGDB orphan reconnection during file import (matches Wikipedia/HLTB pattern)

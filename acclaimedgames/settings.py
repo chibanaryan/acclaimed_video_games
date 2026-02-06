@@ -37,7 +37,9 @@ BOOKS_ENABLED = DEBUG or TEST_MODE
 
 SECRET_KEY = env(
     "SECRET_KEY",
-    default="django-insecure-dev-key-change-in-production" if (DEBUG or TEST_MODE) else None,
+    default=(
+        "django-insecure-dev-key-change-in-production" if (DEBUG or TEST_MODE) else None
+    ),
 )  # Required - no default for security in production
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -93,6 +95,7 @@ TAILWIND_APP_NAME = "theme"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Must be after SecurityMiddleware
+    "games.middleware.RateLimitMiddleware",  # Bot/crawler rate limiting
     "django.middleware.gzip.GZipMiddleware",  # Compress HTML responses (48 KiB savings)
     # "games.csp_middleware.CSPMiddleware",  # Disabled: nonce mismatch
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -294,6 +297,8 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"anon": "60/minute"},
 }
 
 IGDB_CLIENT_ID = env("IGDB_CLIENT_ID", default="XXX")
@@ -351,6 +356,10 @@ LOGGING = {
         "games.utils": {
             "handlers": ["console"],
             "level": "ERROR" if TEST_MODE else "INFO",
+        },
+        "games.middleware": {
+            "handlers": ["console"],
+            "level": "ERROR" if TEST_MODE else "WARNING",
         },
     },
 }

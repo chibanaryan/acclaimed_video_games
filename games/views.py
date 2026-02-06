@@ -2592,8 +2592,15 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         return qs
 
     def _build_type_group_context(
-        self, context, year_value, type_slug, type_code, search_query,
-        sort, sort_direction, group_by
+        self,
+        context,
+        year_value,
+        type_slug,
+        type_code,
+        search_query,
+        sort,
+        sort_direction,
+        group_by,
     ):
         """Build context for type-grouped view.
 
@@ -2650,12 +2657,14 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             # Load all lists for this type
             lists = list(lists_qs)
 
-            type_groups.append({
-                "type_code": type_code_iter,
-                "type_label": type_label,
-                "lists": lists,
-                "total_count": total_list_count,
-            })
+            type_groups.append(
+                {
+                    "type_code": type_code_iter,
+                    "type_label": type_label,
+                    "lists": lists,
+                    "total_count": total_list_count,
+                }
+            )
 
         # --- FACETED COUNTS FOR FILTERS ---
         # Year counts: filtered by type only (NOT year)
@@ -2727,7 +2736,9 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
     def get_queryset(self):
         """Get publications with list counts, filtered and sorted."""
-        year_value, type_slug, type_code, search_query, group_by = self._get_list_filters()
+        year_value, type_slug, type_code, search_query, group_by = (
+            self._get_list_filters()
+        )
 
         # Store group_by for use in get_context_data
         self.group_by = group_by
@@ -2861,7 +2872,9 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        year_value, type_slug, type_code, search_query, group_by = self._get_list_filters()
+        year_value, type_slug, type_code, search_query, group_by = (
+            self._get_list_filters()
+        )
 
         # Default sort depends on group_by mode
         # Normalize sort to valid options for the current mode to handle
@@ -2879,8 +2892,14 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         # Handle type grouping mode
         if group_by == "type":
             return self._build_type_group_context(
-                context, year_value, type_slug, type_code, search_query,
-                sort, sort_direction, group_by
+                context,
+                year_value,
+                type_slug,
+                type_code,
+                search_query,
+                sort,
+                sort_direction,
+                group_by,
             )
 
         # Build the publication groups with their lists
@@ -3126,9 +3145,44 @@ def custom_404_view(request, exception):
 def robots_txt(request):
     """
     Serve robots.txt for search engine crawlers.
+
+    Blocks aggressive/low-value crawlers and disallows expensive filtered
+    query patterns that can overwhelm the server.
     """
-    content = """User-agent: *
+    content = """\
+# Aggressive/low-value crawlers - block entirely
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: BaiduSpider
+Disallow: /
+
+# All other crawlers
+User-agent: *
 Allow: /
+Crawl-delay: 10
+Disallow: /admin/
+Disallow: /import/
+Disallow: /api/
+Disallow: /*?*start=
+Disallow: /*?*end=
+Disallow: /*?*highlight=
+Disallow: /*?*page=
 
 Sitemap: https://www.acclaimedvideogames.com/sitemap.xml
 """

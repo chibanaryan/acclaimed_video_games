@@ -127,3 +127,12 @@ WIKIDATA_UNAUTHENTICATED_DELAY = 2.0  # seconds (safely under 0.14 req/sec limit
 # Note: Game mode (P404) and country (P495) labels are now fetched dynamically
 # from Wikidata and cached in WikipediaGameMode/WikipediaCountry database tables.
 # See WikiPageLookupService._get_or_create_game_mode() and _get_or_create_country()
+
+# =============================================================================
+# Rate Limiting (bot/crawler protection)
+# =============================================================================
+
+RATE_LIMIT_PER_MINUTE = 120  # ~2 req/sec avg; accommodates HTMX filter bursts
+RATE_LIMIT_PER_HOUR = 1200
+RATE_LIMIT_BLOCK_DURATION = 60  # seconds
+RATE_LIMIT_CACHE_PREFIX = "rl"
