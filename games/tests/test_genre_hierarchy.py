@@ -72,8 +72,8 @@ class GenreNormalizerTest(TestCase):
         self.assertIsNone(normalize_genre("Minigames"))
         self.assertIsNone(normalize_genre("Various"))
         self.assertIsNone(normalize_genre("Art game"))
-        # Exploration is too vague to categorize
-        self.assertIsNone(normalize_genre("Exploration"))
+        # Exploration maps to Walking Simulator (only 1 game: Edith Finch)
+        self.assertEqual(normalize_genre("Exploration"), "Walking Simulator")
 
     def test_normalize_hack_and_slash(self):
         """Test that Hack and slash normalizes to its own genre, not Beat 'em Up."""

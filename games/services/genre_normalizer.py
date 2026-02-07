@@ -192,7 +192,7 @@ GENRE_MAPPING = {
     "Location-based game": "Adventure",  # Consolidated: only 1 game
     # Additional adventure variants
     "Graphic adventure": "Point-and-Click",  # Classic adventure games
-    "Exploration": None,  # Too vague - exploration games span many genres
+    "Exploration": "Walking Simulator",  # Only 1 game (Edith Finch) - walking sim fits
     # Invalid/removed entries (map to None)
     "Dystopian": None,  # Setting, not genre
     "(minigame)": None,
