@@ -2,6 +2,7 @@
 
 ## 2026-02-07
 
+- Fix horizontal overflow on small phone screens (responsive logo + title sizing in hero section)
 - Fix missing genre for What Remains of Edith Finch (map "Exploration" → "Walking Simulator")
 - Add accent-insensitive search across all search functions (navbar, unified, client-side filters)
 - Searching "Pokemon" now finds "Pokémon", "Ragnarok" finds "Ragnarök", etc.
