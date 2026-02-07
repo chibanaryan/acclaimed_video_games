@@ -1123,10 +1123,10 @@ class HomePageView(RobustPaginationMixin, ListView):
             .with_list_count()
         )
 
-        # Basic search by name
+        # Basic search by name (accent-insensitive via name_normalized)
         q = self.request.GET.get("q")
         if q:
-            qs = qs.filter(name__icontains=q)
+            qs = qs.filter(Q(name__icontains=q) | Q(name_normalized__icontains=q))
 
         # Year range filtering using utility function
         # Support legacy decade/year params from old GameListView

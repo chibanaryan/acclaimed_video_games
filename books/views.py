@@ -9,7 +9,7 @@ from collections import defaultdict
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.cache import cache
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Q
 from django.db.models.functions import Lower
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
@@ -168,7 +168,7 @@ class BookHomePageView(StaffOnlyMixin, RobustPaginationMixin, ListView):
         # Basic search by name
         q = self.request.GET.get("q")
         if q:
-            qs = qs.filter(name__icontains=q)
+            qs = qs.filter(Q(name__icontains=q) | Q(name_normalized__icontains=q))
 
         # Year range filtering
         start = self.request.GET.get("start")
@@ -457,7 +457,7 @@ class AuthorListView(StaffOnlyMixin, RobustPaginationMixin, HTMXPartialMixin, Li
         # Search filter
         q = self.request.GET.get("q")
         if q:
-            qs = qs.filter(name__icontains=q)
+            qs = qs.filter(Q(name__icontains=q) | Q(name_normalized__icontains=q))
 
         # Sort parameter
         sort = self.request.GET.get("sort", "books")
@@ -642,7 +642,7 @@ class BookSearchView(StaffOnlyMixin, ListView):
 
         q = self.request.GET.get("q", "").strip()
         if q:
-            qs = qs.filter(name__icontains=q)
+            qs = qs.filter(Q(name__icontains=q) | Q(name_normalized__icontains=q))
         else:
             qs = qs.none()
 
