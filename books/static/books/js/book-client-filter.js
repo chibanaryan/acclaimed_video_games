@@ -58,6 +58,15 @@ class BookFilterEngine {
     }
 
     /**
+     * Strip diacritics/accents from a string for accent-insensitive matching.
+     * e.g. "Pokémon" → "Pokemon", "Ragnarök" → "Ragnarok"
+     * @private
+     */
+    _stripDiacritics(str) {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    /**
      * Filter books based on criteria
      *
      * @param {Object} filters - Filter criteria
@@ -87,7 +96,7 @@ class BookFilterEngine {
             read = ''
         } = filters;
 
-        const normalizedQuery = q.toLowerCase().trim();
+        const normalizedQuery = this._stripDiacritics(q.toLowerCase().trim());
         const genreIds = genres.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const authorIds = authors.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const authorSet = new Set(authorIds);
@@ -99,15 +108,15 @@ class BookFilterEngine {
         let results = [];
 
         for (const book of this.books) {
-            // Text search filter (searches name and author names)
+            // Text search filter (searches name and author names, accent-insensitive)
             if (normalizedQuery) {
-                const nameMatch = book.n.toLowerCase().includes(normalizedQuery);
+                const nameMatch = this._stripDiacritics(book.n.toLowerCase()).includes(normalizedQuery);
                 // Also search author names
                 let authorMatch = false;
                 if (book.au) {
                     for (const authorId of book.au) {
                         const author = this.authors[authorId];
-                        if (author && author.n.toLowerCase().includes(normalizedQuery)) {
+                        if (author && this._stripDiacritics(author.n.toLowerCase()).includes(normalizedQuery)) {
                             authorMatch = true;
                             break;
                         }
@@ -275,14 +284,14 @@ class BookFilterEngine {
 
         // Create base filter functions (without genre/author)
         const passesBaseFilters = (book) => {
-            const normalizedQuery = (q || '').toLowerCase().trim();
+            const normalizedQuery = this._stripDiacritics((q || '').toLowerCase().trim());
             if (normalizedQuery) {
-                const nameMatch = book.n.toLowerCase().includes(normalizedQuery);
+                const nameMatch = this._stripDiacritics(book.n.toLowerCase()).includes(normalizedQuery);
                 let authorMatch = false;
                 if (book.au) {
                     for (const authorId of book.au) {
                         const author = this.authors[authorId];
-                        if (author && author.n.toLowerCase().includes(normalizedQuery)) {
+                        if (author && this._stripDiacritics(author.n.toLowerCase()).includes(normalizedQuery)) {
                             authorMatch = true;
                             break;
                         }
@@ -400,15 +409,15 @@ class BookFilterEngine {
 
         // Calculate year counts (apply all filters EXCEPT year filters)
         for (const book of this.books) {
-            // Apply search filter only (no year filter)
-            const normalizedQuery = (q || '').toLowerCase().trim();
+            // Apply search filter only (no year filter, accent-insensitive)
+            const normalizedQuery = this._stripDiacritics((q || '').toLowerCase().trim());
             if (normalizedQuery) {
-                const nameMatch = book.n.toLowerCase().includes(normalizedQuery);
+                const nameMatch = this._stripDiacritics(book.n.toLowerCase()).includes(normalizedQuery);
                 let authorMatch = false;
                 if (book.au) {
                     for (const authorId of book.au) {
                         const author = this.authors[authorId];
-                        if (author && author.n.toLowerCase().includes(normalizedQuery)) {
+                        if (author && this._stripDiacritics(author.n.toLowerCase()).includes(normalizedQuery)) {
                             authorMatch = true;
                             break;
                         }

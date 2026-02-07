@@ -1,5 +1,11 @@
 # Developer Log
 
+## 2026-02-07
+
+- Fix missing genre for What Remains of Edith Finch (map "Exploration" → "Walking Simulator")
+- Add accent-insensitive search across all search functions (navbar, unified, client-side filters)
+- Searching "Pokemon" now finds "Pokémon", "Ragnarok" finds "Ragnarök", etc.
+
 ## 2026-02-05
 
 - Add rate limiting middleware (120 req/min, 1200 req/hr per IP) to protect against bot/crawler abuse

@@ -143,6 +143,15 @@ class GameFilterEngine {
     }
 
     /**
+     * Strip diacritics/accents from a string for accent-insensitive matching.
+     * e.g. "Pokémon" → "Pokemon", "Ragnarök" → "Ragnarok"
+     * @private
+     */
+    _stripDiacritics(str) {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    /**
      * Build mapping from platform IDs to their manufacturer/form factor groups
      * @private
      */
@@ -221,7 +230,7 @@ class GameFilterEngine {
             hltb_max = null
         } = filters;
 
-        const normalizedQuery = q.toLowerCase().trim();
+        const normalizedQuery = this._stripDiacritics(q.toLowerCase().trim());
         const genreIds = genres.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const platformIds = platforms.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const platformSet = new Set(platformIds);
@@ -235,8 +244,8 @@ class GameFilterEngine {
         let results = [];
 
         for (const game of this.games) {
-            // Text search filter
-            if (normalizedQuery && !game.n.toLowerCase().includes(normalizedQuery)) {
+            // Text search filter (accent-insensitive)
+            if (normalizedQuery && !this._stripDiacritics(game.n.toLowerCase()).includes(normalizedQuery)) {
                 continue;
             }
 
@@ -445,7 +454,7 @@ class GameFilterEngine {
 
         // Pre-compute filter parameters once
         const { q, start, end, platforms, genres, genreOption, series, played, hltb_mode = 'main', hltb_min = null, hltb_max = null } = currentFilters;
-        const normalizedQuery = (q || '').toLowerCase().trim();
+        const normalizedQuery = this._stripDiacritics((q || '').toLowerCase().trim());
         const matchAll = genreOption !== 'any';
 
         const genreIds = (genres || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
@@ -481,8 +490,8 @@ class GameFilterEngine {
 
         // Single pass through all games
         for (const game of this.games) {
-            // Compute individual filter results once per game
-            const passesText = !normalizedQuery || game.n.toLowerCase().includes(normalizedQuery);
+            // Compute individual filter results once per game (accent-insensitive)
+            const passesText = !normalizedQuery || this._stripDiacritics(game.n.toLowerCase()).includes(normalizedQuery);
             if (!passesText) continue; // Early exit - text filter applies to all facets
 
             const passesYear = (start === null || game.y === null || game.y >= start) &&

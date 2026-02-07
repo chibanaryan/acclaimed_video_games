@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.contrib.flatpages.models import FlatPage
 from django.db import connection
-from django.db.models import Count, F, Min, Prefetch
+from django.db.models import Count, F, Min, Prefetch, Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -12,6 +12,8 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView, Response
+
+from unidecode import unidecode
 
 from .. import config, models, utils
 from . import serializers
@@ -360,8 +362,11 @@ class GameSearchAPIView(APIView):
             return JsonResponse({"results": [], "count": 0})
 
         # Search games by name (only fetch required fields for performance)
+        # Search both original name and normalized (accent-stripped) version
         games = (
-            models.Game.objects.filter(name__icontains=q)
+            models.Game.objects.filter(
+                Q(name__icontains=q) | Q(name_normalized__icontains=q)
+            )
             .select_related("primary_igdb_game_data")
             .only(
                 "id",
@@ -408,10 +413,13 @@ class UnifiedSearchView(APIView):
             return JsonResponse({"developers": [], "games": [], "series": []})
 
         # Search developers - find developers with games
+        # Use unidecode to also match accented names with ASCII queries
+        q_normalized = unidecode(q)
+        dev_query = Q(name__icontains=q)
+        if q_normalized != q:
+            dev_query |= Q(name__icontains=q_normalized)
         developers = (
-            models.Developer.objects.filter(
-                name__icontains=q,
-            )
+            models.Developer.objects.filter(dev_query)
             .select_related("parent")
             .annotate(games_count=Count("developed_games"))
             .filter(games_count__gt=0)
@@ -434,9 +442,11 @@ class UnifiedSearchView(APIView):
                 }
             )
 
-        # Search games by name (only fetch required fields for performance)
+        # Search games by name and normalized name for accent-insensitive matching
         games = (
-            models.Game.objects.filter(name__icontains=q)
+            models.Game.objects.filter(
+                Q(name__icontains=q) | Q(name_normalized__icontains=q)
+            )
             .select_related("primary_igdb_game_data")
             .only(
                 "id",
@@ -463,8 +473,12 @@ class UnifiedSearchView(APIView):
             )
 
         # Search series by name (only show series with 2+ games, like the filter)
+        # Use unidecode to also match accented series names with ASCII queries
+        series_query = Q(name__icontains=q)
+        if q_normalized != q:
+            series_query |= Q(name__icontains=q_normalized)
         series = (
-            models.Series.objects.filter(name__icontains=q)
+            models.Series.objects.filter(series_query)
             .annotate(games_count=Count("games"))
             .filter(games_count__gte=2)
             .order_by("-games_count")[:series_limit]

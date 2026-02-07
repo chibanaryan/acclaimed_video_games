@@ -294,6 +294,31 @@ class GameSearchAPIViewTests(TestCase):
         self.assertEqual(data["count"], 1)
         self.assertEqual(data["results"][0]["name"], "Super Mario Bros")
 
+    def test_search_accent_insensitive(self):
+        """Test that ASCII query finds accented game names via name_normalized."""
+        game = models.Game.objects.create(
+            name="Pokémon Red",
+            rank=10,
+            year_of_release=1996,
+            slug="pokemon-red",
+        )
+        # Verify name_normalized was populated by save()
+        game.refresh_from_db()
+        self.assertEqual(game.name_normalized, "Pokemon Red")
+
+        # ASCII query should find accented name
+        response = self.client.get("/api/games/search/", {"q": "Pokemon"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["results"][0]["name"], "Pokémon Red")
+
+        # Accented query should also work
+        response = self.client.get("/api/games/search/", {"q": "Pokémon"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 1)
+
 
 class UnifiedSearchViewTests(TestCase):
     """Test the UnifiedSearchView for unified navbar search."""
@@ -425,6 +450,19 @@ class UnifiedSearchViewTests(TestCase):
         if len(data["games"]) > 1:
             # First game should have lower rank (better) than second
             self.assertLessEqual(data["games"][0]["rank"], data["games"][1]["rank"])
+
+    def test_unified_search_accent_insensitive_games(self):
+        """Test that ASCII query finds accented game names in unified search."""
+        models.Game.objects.create(
+            name="Pokémon Red",
+            rank=10,
+            year_of_release=1996,
+            slug="pokemon-red",
+        )
+        response = self.client.get("/api/unified-search/", {"q": "Pokemon"})
+        data = response.json()
+        self.assertEqual(len(data["games"]), 1)
+        self.assertEqual(data["games"][0]["name"], "Pokémon Red")
 
 
 class GameDataVersionViewTests(TestCase):
