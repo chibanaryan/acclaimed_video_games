@@ -2551,7 +2551,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     model = models.Publication
     template_name = "lists/list_list.html"
     context_object_name = "publication_groups"
-    paginate_by = 30
+    paginate_by = 50
     paginate_orphans = 0
     htmx_partial_template = "lists/includes/_list_list_content.html"
 
