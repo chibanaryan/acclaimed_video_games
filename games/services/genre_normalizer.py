@@ -50,7 +50,7 @@ GENRE_MAPPING = {
     "Run and gun": "Run and Gun",
     "Stealth": "Stealth",
     "Tactical shooter": "Tactical Shooter",
-    "Tactical first-person shooter": "Tactical Shooter",
+    "Tactical first-person shooter": "Tactical First-Person Shooter",
     "Battle royale": "Battle Royale",
     "Battle Royale": "Battle Royale",
     "MOBA": "MOBA",
@@ -215,6 +215,7 @@ GENRE_HIERARCHY = {
         "Third-Person Shooter",
         "Light Gun Shooter",
         "Tactical Shooter",
+        "Tactical First-Person Shooter",
         "Run and Gun",
     ],
     "Racing & Sports": [
