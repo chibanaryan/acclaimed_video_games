@@ -597,9 +597,13 @@ class WikiGenreService:
                     if genres:
                         return genres
 
-                # Use get_text with pipe separator to catch all breaks
-                # This handles commas, <br>, and other separators
-                raw_text = data_cell.get_text(separator="|", strip=True)
+                # Replace <br> tags with pipe delimiter, then get text
+                # without separator so adjacent <a> tags merge naturally
+                # (e.g. <a>Tactical</a> <a>first-person shooter</a> stays
+                # as one genre instead of splitting into two)
+                for br in data_cell.find_all("br"):
+                    br.replace_with("|")
+                raw_text = data_cell.get_text()
                 raw_text = self._clean_genre_text(raw_text)
 
                 # Split by pipe or comma

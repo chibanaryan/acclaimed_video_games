@@ -50,6 +50,7 @@ GENRE_MAPPING = {
     "Run and gun": "Run and Gun",
     "Stealth": "Stealth",
     "Tactical shooter": "Tactical Shooter",
+    "Tactical first-person shooter": "Tactical Shooter",
     "Battle royale": "Battle Royale",
     "Battle Royale": "Battle Royale",
     "MOBA": "MOBA",
@@ -111,7 +112,6 @@ GENRE_MAPPING = {
     "4X Strategy": "4X Strategy",
     "Grand strategy": "Grand Strategy",
     "Tower defense": "Strategy",  # Consolidated: only 1 game
-    "Tactical": "Tactical",
     # Simulation genres
     "Simulation": "Simulation",
     "Life simulation": "Life Simulation",
@@ -273,7 +273,6 @@ GENRE_HIERARCHY = {
         "Turn-Based Tactics",
         "4X Strategy",
         "Grand Strategy",
-        "Tactical",
     ],
     "Simulation": [
         "Simulation",
