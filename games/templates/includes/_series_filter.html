@@ -76,11 +76,19 @@
              return count === 0 && this.isSelected(seriesId);
          },
 
+         normalizeSearchText(value) {
+             const lower = String(value || '').toLowerCase();
+             if (typeof lower.normalize !== 'function') {
+                 return lower;
+             }
+             return lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+         },
+
          get filteredSeries() {
              let list = seriesList;
              if (this.searchQuery) {
-                 const query = this.searchQuery.toLowerCase();
-                 list = list.filter(s => s.name.toLowerCase().includes(query));
+                 const query = this.normalizeSearchText(this.searchQuery);
+                 list = list.filter(s => this.normalizeSearchText(s.name).includes(query));
              }
              // Sort by effective count descending, then name
              list = list.sort((a, b) => {
