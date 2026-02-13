@@ -1493,8 +1493,7 @@ def import_platforms(
 
             # Update or create platform, preserving year_start/year_end
             platform, created = models.Platform.objects.get_or_create(
-                code=code,
-                defaults={"name": name}
+                code=code, defaults={"name": name}
             )
             if not created and platform.name != name:
                 # Update name if changed
@@ -1537,7 +1536,12 @@ def import_platforms(
         if progress_callback:
             progress_callback(
                 "complete",
-                {"count": count, "created": created_count, "updated": updated_count, "deleted": deleted_count},
+                {
+                    "count": count,
+                    "created": created_count,
+                    "updated": updated_count,
+                    "deleted": deleted_count,
+                },
             )
 
         return (

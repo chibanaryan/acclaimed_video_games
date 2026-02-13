@@ -10,271 +10,817 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('games', '0079_add_media_type_to_list'),
+        ("games", "0079_add_media_type_to_list"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='BookSeries',
+            name="BookSeries",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(db_index=True, max_length=200, unique=True)),
-                ('slug', models.SlugField(max_length=210, unique=True)),
-                ('goodreads_id', models.CharField(blank=True, db_index=True, help_text='Goodreads series ID', max_length=50, null=True, unique=True)),
-                ('description', models.TextField(blank=True, help_text='Series description', null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(db_index=True, max_length=200, unique=True)),
+                ("slug", models.SlugField(max_length=210, unique=True)),
+                (
+                    "goodreads_id",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Goodreads series ID",
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(
+                        blank=True, help_text="Series description", null=True
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Book Series',
-                'verbose_name_plural': 'Book Series',
-                'ordering': ['name'],
+                "verbose_name": "Book Series",
+                "verbose_name_plural": "Book Series",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='Author',
+            name="Author",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(db_index=True, max_length=200)),
-                ('slug', models.SlugField(blank=True, help_text='URL-friendly identifier (only for root creators)', max_length=210, null=True)),
-                ('goodreads_id', models.CharField(blank=True, db_index=True, help_text='Goodreads author ID', max_length=50, null=True)),
-                ('goodreads_url', models.URLField(blank=True, help_text='Goodreads author profile URL', null=True)),
-                ('open_library_id', models.CharField(blank=True, db_index=True, help_text="Open Library author ID (e.g., 'OL123456A')", max_length=50, null=True)),
-                ('birth_date', models.DateField(blank=True, help_text="Author's birth date", null=True)),
-                ('death_date', models.DateField(blank=True, help_text="Author's death date (null if living)", null=True)),
-                ('bio', models.TextField(blank=True, help_text='Author biography', null=True)),
-                ('parent', models.ForeignKey(blank=True, help_text='Parent creator in the ownership hierarchy', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='subsidiaries', to='books.author')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(db_index=True, max_length=200)),
+                (
+                    "slug",
+                    models.SlugField(
+                        blank=True,
+                        help_text="URL-friendly identifier (only for root creators)",
+                        max_length=210,
+                        null=True,
+                    ),
+                ),
+                (
+                    "goodreads_id",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Goodreads author ID",
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "goodreads_url",
+                    models.URLField(
+                        blank=True, help_text="Goodreads author profile URL", null=True
+                    ),
+                ),
+                (
+                    "open_library_id",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Open Library author ID (e.g., 'OL123456A')",
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "birth_date",
+                    models.DateField(
+                        blank=True, help_text="Author's birth date", null=True
+                    ),
+                ),
+                (
+                    "death_date",
+                    models.DateField(
+                        blank=True,
+                        help_text="Author's death date (null if living)",
+                        null=True,
+                    ),
+                ),
+                (
+                    "bio",
+                    models.TextField(
+                        blank=True, help_text="Author biography", null=True
+                    ),
+                ),
+                (
+                    "parent",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Parent creator in the ownership hierarchy",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subsidiaries",
+                        to="books.author",
+                    ),
+                ),
             ],
             options={
-                'verbose_name_plural': 'Authors',
-                'ordering': ['name'],
+                "verbose_name_plural": "Authors",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='BookGenre',
+            name="BookGenre",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('slug', models.SlugField(blank=True, help_text='URL-friendly identifier', max_length=110, null=True, unique=True)),
-                ('level', models.PositiveSmallIntegerField(db_index=True, default=0, help_text='Hierarchy depth: 0=root, 1=category, 2+=subgenre')),
-                ('display_order', models.PositiveSmallIntegerField(db_index=True, default=0, help_text='Manual ordering within parent category')),
-                ('path', models.CharField(blank=True, db_index=True, help_text="Full hierarchy path (e.g., 'Fiction > Science Fiction > Space Opera')", max_length=300)),
-                ('description', models.TextField(blank=True, help_text='Optional description of the genre')),
-                ('icon_name', models.CharField(blank=True, help_text="Icon identifier for UI (e.g., 'genre-fiction')", max_length=50)),
-                ('parent', models.ForeignKey(blank=True, help_text='Parent genre (NULL for root categories)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='children', to='books.bookgenre')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, unique=True)),
+                (
+                    "slug",
+                    models.SlugField(
+                        blank=True,
+                        help_text="URL-friendly identifier",
+                        max_length=110,
+                        null=True,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "level",
+                    models.PositiveSmallIntegerField(
+                        db_index=True,
+                        default=0,
+                        help_text="Hierarchy depth: 0=root, 1=category, 2+=subgenre",
+                    ),
+                ),
+                (
+                    "display_order",
+                    models.PositiveSmallIntegerField(
+                        db_index=True,
+                        default=0,
+                        help_text="Manual ordering within parent category",
+                    ),
+                ),
+                (
+                    "path",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Full hierarchy path (e.g., 'Fiction > Science Fiction > Space Opera')",
+                        max_length=300,
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(
+                        blank=True, help_text="Optional description of the genre"
+                    ),
+                ),
+                (
+                    "icon_name",
+                    models.CharField(
+                        blank=True,
+                        help_text="Icon identifier for UI (e.g., 'genre-fiction')",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "parent",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Parent genre (NULL for root categories)",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="children",
+                        to="books.bookgenre",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Book Genre',
-                'verbose_name_plural': 'Book Genres',
-                'ordering': ['level', 'display_order', 'name'],
+                "verbose_name": "Book Genre",
+                "verbose_name_plural": "Book Genres",
+                "ordering": ["level", "display_order", "name"],
             },
         ),
         migrations.CreateModel(
-            name='Book',
+            name="Book",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(db_index=True, max_length=200)),
-                ('name_normalized', models.CharField(blank=True, db_index=True, help_text='ASCII-only version of name for search matching', max_length=200, null=True)),
-                ('slug', models.SlugField(blank=True, help_text='URL-friendly identifier', max_length=210, null=True)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('rank', models.IntegerField(db_index=True)),
-                ('year_rank', models.IntegerField(blank=True, db_index=True, help_text='Rank within release year', null=True)),
-                ('decade_rank', models.IntegerField(blank=True, db_index=True, help_text='Rank within release decade', null=True)),
-                ('wikidata_id', models.CharField(blank=True, db_index=True, help_text="Wikidata entity ID (e.g., 'Q12345')", max_length=20, null=True)),
-                ('created', models.DateTimeField(auto_now_add=True, db_index=True, null=True)),
-                ('modified', models.DateTimeField(auto_now=True, db_index=True)),
-                ('year_published', models.PositiveSmallIntegerField(blank=True, db_index=True, help_text='Year the book was first published', null=True)),
-                ('page_count', models.PositiveIntegerField(blank=True, help_text='Number of pages in the book', null=True)),
-                ('isbn', models.CharField(blank=True, db_index=True, help_text='ISBN-10 identifier', max_length=13, null=True)),
-                ('isbn13', models.CharField(blank=True, db_index=True, help_text='ISBN-13 identifier', max_length=17, null=True)),
-                ('goodreads_id', models.CharField(blank=True, db_index=True, help_text='Primary Goodreads book ID', max_length=50, null=True)),
-                ('open_library_id', models.CharField(blank=True, db_index=True, help_text="Open Library work ID (e.g., 'OL123456W')", max_length=50, null=True)),
-                ('series_position', models.DecimalField(blank=True, decimal_places=1, help_text='Position in the series (e.g., 1, 2, 2.5 for novellas)', max_digits=5, null=True)),
-                ('authors', models.ManyToManyField(blank=True, help_text='Book authors', related_name='books', to='books.author')),
-                ('genres', models.ManyToManyField(blank=True, help_text='Book genres', related_name='books', to='books.bookgenre')),
-                ('series', models.ForeignKey(blank=True, help_text='Book series this book belongs to', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='books', to='books.bookseries')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(db_index=True, max_length=200)),
+                (
+                    "name_normalized",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="ASCII-only version of name for search matching",
+                        max_length=200,
+                        null=True,
+                    ),
+                ),
+                (
+                    "slug",
+                    models.SlugField(
+                        blank=True,
+                        help_text="URL-friendly identifier",
+                        max_length=210,
+                        null=True,
+                    ),
+                ),
+                ("description", models.TextField(blank=True, null=True)),
+                ("rank", models.IntegerField(db_index=True)),
+                (
+                    "year_rank",
+                    models.IntegerField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Rank within release year",
+                        null=True,
+                    ),
+                ),
+                (
+                    "decade_rank",
+                    models.IntegerField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Rank within release decade",
+                        null=True,
+                    ),
+                ),
+                (
+                    "wikidata_id",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Wikidata entity ID (e.g., 'Q12345')",
+                        max_length=20,
+                        null=True,
+                    ),
+                ),
+                (
+                    "created",
+                    models.DateTimeField(auto_now_add=True, db_index=True, null=True),
+                ),
+                ("modified", models.DateTimeField(auto_now=True, db_index=True)),
+                (
+                    "year_published",
+                    models.PositiveSmallIntegerField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Year the book was first published",
+                        null=True,
+                    ),
+                ),
+                (
+                    "page_count",
+                    models.PositiveIntegerField(
+                        blank=True, help_text="Number of pages in the book", null=True
+                    ),
+                ),
+                (
+                    "isbn",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="ISBN-10 identifier",
+                        max_length=13,
+                        null=True,
+                    ),
+                ),
+                (
+                    "isbn13",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="ISBN-13 identifier",
+                        max_length=17,
+                        null=True,
+                    ),
+                ),
+                (
+                    "goodreads_id",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Primary Goodreads book ID",
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "open_library_id",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Open Library work ID (e.g., 'OL123456W')",
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "series_position",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=1,
+                        help_text="Position in the series (e.g., 1, 2, 2.5 for novellas)",
+                        max_digits=5,
+                        null=True,
+                    ),
+                ),
+                (
+                    "authors",
+                    models.ManyToManyField(
+                        blank=True,
+                        help_text="Book authors",
+                        related_name="books",
+                        to="books.author",
+                    ),
+                ),
+                (
+                    "genres",
+                    models.ManyToManyField(
+                        blank=True,
+                        help_text="Book genres",
+                        related_name="books",
+                        to="books.bookgenre",
+                    ),
+                ),
+                (
+                    "series",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Book series this book belongs to",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="books",
+                        to="books.bookseries",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['rank'],
+                "ordering": ["rank"],
             },
         ),
         migrations.CreateModel(
-            name='BookListMembership',
+            name="BookListMembership",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('rank', models.PositiveSmallIntegerField(blank=True, help_text="Book's position in the list (lower is better)", null=True)),
-                ('book', models.ForeignKey(help_text='The book appearing in the list', on_delete=django.db.models.deletion.CASCADE, related_name='lists', to='books.book')),
-                ('list', models.ForeignKey(help_text='The list this book appears on', on_delete=django.db.models.deletion.CASCADE, to='games.list')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "rank",
+                    models.PositiveSmallIntegerField(
+                        blank=True,
+                        help_text="Book's position in the list (lower is better)",
+                        null=True,
+                    ),
+                ),
+                (
+                    "book",
+                    models.ForeignKey(
+                        help_text="The book appearing in the list",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="lists",
+                        to="books.book",
+                    ),
+                ),
+                (
+                    "list",
+                    models.ForeignKey(
+                        help_text="The list this book appears on",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="games.list",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'books_booklistmembership',
+                "db_table": "books_booklistmembership",
             },
         ),
         migrations.CreateModel(
-            name='GoodreadsBookData',
+            name="GoodreadsBookData",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('is_primary', models.BooleanField(db_index=True, default=False, help_text='Primary record for display (only one per media item)')),
-                ('fetched_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('goodreads_id', models.CharField(db_index=True, help_text='Goodreads book ID for this specific edition/entry', max_length=50)),
-                ('goodreads_url', models.URLField(blank=True, help_text='Goodreads book detail page URL', null=True)),
-                ('cover_image_url', models.URLField(blank=True, help_text='Cover image URL from Goodreads', null=True)),
-                ('average_rating', models.DecimalField(blank=True, decimal_places=2, help_text='Average rating on Goodreads (0.00-5.00)', max_digits=3, null=True)),
-                ('ratings_count', models.PositiveIntegerField(blank=True, help_text='Number of ratings on Goodreads', null=True)),
-                ('reviews_count', models.PositiveIntegerField(blank=True, help_text='Number of text reviews on Goodreads', null=True)),
-                ('description', models.TextField(blank=True, help_text='Book description from Goodreads', null=True)),
-                ('book', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='goodreads_book_data_set', to='books.book')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "is_primary",
+                    models.BooleanField(
+                        db_index=True,
+                        default=False,
+                        help_text="Primary record for display (only one per media item)",
+                    ),
+                ),
+                ("fetched_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "goodreads_id",
+                    models.CharField(
+                        db_index=True,
+                        help_text="Goodreads book ID for this specific edition/entry",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "goodreads_url",
+                    models.URLField(
+                        blank=True,
+                        help_text="Goodreads book detail page URL",
+                        null=True,
+                    ),
+                ),
+                (
+                    "cover_image_url",
+                    models.URLField(
+                        blank=True,
+                        help_text="Cover image URL from Goodreads",
+                        null=True,
+                    ),
+                ),
+                (
+                    "average_rating",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        help_text="Average rating on Goodreads (0.00-5.00)",
+                        max_digits=3,
+                        null=True,
+                    ),
+                ),
+                (
+                    "ratings_count",
+                    models.PositiveIntegerField(
+                        blank=True,
+                        help_text="Number of ratings on Goodreads",
+                        null=True,
+                    ),
+                ),
+                (
+                    "reviews_count",
+                    models.PositiveIntegerField(
+                        blank=True,
+                        help_text="Number of text reviews on Goodreads",
+                        null=True,
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(
+                        blank=True,
+                        help_text="Book description from Goodreads",
+                        null=True,
+                    ),
+                ),
+                (
+                    "book",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="goodreads_book_data_set",
+                        to="books.book",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Goodreads Book Data',
-                'verbose_name_plural': 'Goodreads Book Data',
-                'db_table': 'books_goodreadsbookdata',
+                "verbose_name": "Goodreads Book Data",
+                "verbose_name_plural": "Goodreads Book Data",
+                "db_table": "books_goodreadsbookdata",
             },
         ),
         migrations.AddField(
-            model_name='book',
-            name='primary_goodreads_book_data',
-            field=models.OneToOneField(blank=True, help_text='Primary Goodreads book data for display', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='primary_book', to='books.goodreadsbookdata'),
+            model_name="book",
+            name="primary_goodreads_book_data",
+            field=models.OneToOneField(
+                blank=True,
+                help_text="Primary Goodreads book data for display",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="primary_book",
+                to="books.goodreadsbookdata",
+            ),
         ),
         migrations.CreateModel(
-            name='ReadBook',
+            name="ReadBook",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('goodreads_id', models.CharField(db_index=True, help_text='Goodreads book ID for reconnection after reimport', max_length=50)),
-                ('book', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='read_by', to='books.book')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                (
+                    "goodreads_id",
+                    models.CharField(
+                        db_index=True,
+                        help_text="Goodreads book ID for reconnection after reimport",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "book",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="read_by",
+                        to="books.book",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'db_table': 'books_readbook',
+                "db_table": "books_readbook",
             },
         ),
         migrations.CreateModel(
-            name='WantToReadBook',
+            name="WantToReadBook",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('goodreads_id', models.CharField(db_index=True, help_text='Goodreads book ID for reconnection after reimport', max_length=50)),
-                ('book', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='want_to_read_by', to='books.book')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                (
+                    "goodreads_id",
+                    models.CharField(
+                        db_index=True,
+                        help_text="Goodreads book ID for reconnection after reimport",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "book",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="want_to_read_by",
+                        to="books.book",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Want to Read Book',
-                'verbose_name_plural': 'Want to Read Books',
-                'db_table': 'books_wanttoreadbook',
+                "verbose_name": "Want to Read Book",
+                "verbose_name_plural": "Want to Read Books",
+                "db_table": "books_wanttoreadbook",
             },
         ),
         migrations.CreateModel(
-            name='WikipediaBookData',
+            name="WikipediaBookData",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('is_primary', models.BooleanField(db_index=True, default=False, help_text='Primary record for display (only one per media item)')),
-                ('fetched_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('wikidata_id', models.CharField(blank=True, db_index=True, help_text="Wikidata entity ID (e.g., 'Q12345')", max_length=20, null=True)),
-                ('page_title', models.CharField(db_index=True, help_text='Wikipedia page title', max_length=300)),
-                ('primary_genre', models.CharField(blank=True, max_length=200, null=True)),
-                ('all_genres', models.TextField(blank=True, null=True)),
-                ('lookup_source', models.CharField(blank=True, max_length=50, null=True)),
-                ('book', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='wikipedia_book_data_set', to='books.book')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "is_primary",
+                    models.BooleanField(
+                        db_index=True,
+                        default=False,
+                        help_text="Primary record for display (only one per media item)",
+                    ),
+                ),
+                ("fetched_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "wikidata_id",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        help_text="Wikidata entity ID (e.g., 'Q12345')",
+                        max_length=20,
+                        null=True,
+                    ),
+                ),
+                (
+                    "page_title",
+                    models.CharField(
+                        db_index=True, help_text="Wikipedia page title", max_length=300
+                    ),
+                ),
+                (
+                    "primary_genre",
+                    models.CharField(blank=True, max_length=200, null=True),
+                ),
+                ("all_genres", models.TextField(blank=True, null=True)),
+                (
+                    "lookup_source",
+                    models.CharField(blank=True, max_length=50, null=True),
+                ),
+                (
+                    "book",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="wikipedia_book_data_set",
+                        to="books.book",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Wikipedia Book Data',
-                'verbose_name_plural': 'Wikipedia Book Data',
-                'db_table': 'books_wikipediabookdata',
+                "verbose_name": "Wikipedia Book Data",
+                "verbose_name_plural": "Wikipedia Book Data",
+                "db_table": "books_wikipediabookdata",
             },
         ),
         migrations.AddField(
-            model_name='book',
-            name='primary_wikipedia_book_data',
-            field=models.OneToOneField(blank=True, help_text='Primary Wikipedia book data for display', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='primary_book', to='books.wikipediabookdata'),
+            model_name="book",
+            name="primary_wikipedia_book_data",
+            field=models.OneToOneField(
+                blank=True,
+                help_text="Primary Wikipedia book data for display",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="primary_book",
+                to="books.wikipediabookdata",
+            ),
         ),
         migrations.AddIndex(
-            model_name='author',
-            index=models.Index(fields=['goodreads_id'], name='books_autho_goodrea_64f1c4_idx'),
+            model_name="author",
+            index=models.Index(
+                fields=["goodreads_id"], name="books_autho_goodrea_64f1c4_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='author',
-            index=models.Index(fields=['open_library_id'], name='books_autho_open_li_1a7043_idx'),
+            model_name="author",
+            index=models.Index(
+                fields=["open_library_id"], name="books_autho_open_li_1a7043_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='bookgenre',
-            index=models.Index(fields=['name'], name='books_bookg_name_a6760a_idx'),
+            model_name="bookgenre",
+            index=models.Index(fields=["name"], name="books_bookg_name_a6760a_idx"),
         ),
         migrations.AddIndex(
-            model_name='bookgenre',
-            index=models.Index(fields=['parent', 'level'], name='books_bookg_parent__8f7caa_idx'),
+            model_name="bookgenre",
+            index=models.Index(
+                fields=["parent", "level"], name="books_bookg_parent__8f7caa_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='bookgenre',
-            index=models.Index(fields=['level', 'display_order'], name='books_bookg_level_3e44cf_idx'),
+            model_name="bookgenre",
+            index=models.Index(
+                fields=["level", "display_order"], name="books_bookg_level_3e44cf_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='booklistmembership',
-            index=models.Index(fields=['list', 'rank'], name='books_bookl_list_id_cff43c_idx'),
+            model_name="booklistmembership",
+            index=models.Index(
+                fields=["list", "rank"], name="books_bookl_list_id_cff43c_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='booklistmembership',
-            index=models.Index(fields=['book', 'list'], name='books_bookl_book_id_5d199f_idx'),
+            model_name="booklistmembership",
+            index=models.Index(
+                fields=["book", "list"], name="books_bookl_book_id_5d199f_idx"
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='booklistmembership',
-            unique_together={('list', 'book')},
+            name="booklistmembership",
+            unique_together={("list", "book")},
         ),
         migrations.AddIndex(
-            model_name='goodreadsbookdata',
-            index=models.Index(fields=['book', 'is_primary'], name='books_goodr_book_id_4756ab_idx'),
+            model_name="goodreadsbookdata",
+            index=models.Index(
+                fields=["book", "is_primary"], name="books_goodr_book_id_4756ab_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='goodreadsbookdata',
-            index=models.Index(fields=['goodreads_id'], name='books_goodr_goodrea_6d228d_idx'),
+            model_name="goodreadsbookdata",
+            index=models.Index(
+                fields=["goodreads_id"], name="books_goodr_goodrea_6d228d_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='goodreadsbookdata',
-            constraint=models.UniqueConstraint(condition=models.Q(('is_primary', True), ('book__isnull', False)), fields=('book',), name='unique_primary_goodreads_per_book'),
+            model_name="goodreadsbookdata",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("is_primary", True), ("book__isnull", False)),
+                fields=("book",),
+                name="unique_primary_goodreads_per_book",
+            ),
         ),
         migrations.AddIndex(
-            model_name='readbook',
-            index=models.Index(fields=['user', 'book'], name='books_readb_user_id_c0893c_idx'),
+            model_name="readbook",
+            index=models.Index(
+                fields=["user", "book"], name="books_readb_user_id_c0893c_idx"
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='readbook',
-            unique_together={('user', 'goodreads_id')},
+            name="readbook",
+            unique_together={("user", "goodreads_id")},
         ),
         migrations.AddIndex(
-            model_name='wanttoreadbook',
-            index=models.Index(fields=['user', 'book'], name='books_wantt_user_id_dfc223_idx'),
+            model_name="wanttoreadbook",
+            index=models.Index(
+                fields=["user", "book"], name="books_wantt_user_id_dfc223_idx"
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='wanttoreadbook',
-            unique_together={('user', 'goodreads_id')},
+            name="wanttoreadbook",
+            unique_together={("user", "goodreads_id")},
         ),
         migrations.AddIndex(
-            model_name='wikipediabookdata',
-            index=models.Index(fields=['book', 'is_primary'], name='books_wikip_book_id_563b56_idx'),
+            model_name="wikipediabookdata",
+            index=models.Index(
+                fields=["book", "is_primary"], name="books_wikip_book_id_563b56_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='wikipediabookdata',
-            index=models.Index(fields=['wikidata_id'], name='books_wikip_wikidat_a83477_idx'),
+            model_name="wikipediabookdata",
+            index=models.Index(
+                fields=["wikidata_id"], name="books_wikip_wikidat_a83477_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='wikipediabookdata',
-            constraint=models.UniqueConstraint(condition=models.Q(('is_primary', True), ('book__isnull', False)), fields=('book',), name='unique_primary_wikipedia_per_book'),
+            model_name="wikipediabookdata",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("is_primary", True), ("book__isnull", False)),
+                fields=("book",),
+                name="unique_primary_wikipedia_per_book",
+            ),
         ),
         migrations.AddIndex(
-            model_name='book',
-            index=models.Index(fields=['year_published', 'rank'], name='books_book_year_pu_4bb76e_idx'),
+            model_name="book",
+            index=models.Index(
+                fields=["year_published", "rank"], name="books_book_year_pu_4bb76e_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='book',
-            index=models.Index(fields=['goodreads_id'], name='books_book_goodrea_ddad6d_idx'),
+            model_name="book",
+            index=models.Index(
+                fields=["goodreads_id"], name="books_book_goodrea_ddad6d_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='book',
-            index=models.Index(fields=['isbn'], name='books_book_isbn_54becd_idx'),
+            model_name="book",
+            index=models.Index(fields=["isbn"], name="books_book_isbn_54becd_idx"),
         ),
         migrations.AddIndex(
-            model_name='book',
-            index=models.Index(fields=['isbn13'], name='books_book_isbn13_826edb_idx'),
+            model_name="book",
+            index=models.Index(fields=["isbn13"], name="books_book_isbn13_826edb_idx"),
         ),
     ]

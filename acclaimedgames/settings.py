@@ -135,7 +135,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "games.context_processors.csp_nonce",  # CSP nonce for templates
                 "games.context_processors.feature_flags",  # Feature flags
-                "games.context_processors.media_type",  # Current media type (games/books)
+                "games.context_processors.media_type",  # Current media type
             ],
             # In development/tests, don't use cached template loader
             # This ensures template changes are picked up immediately

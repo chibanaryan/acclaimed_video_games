@@ -6,25 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('books', '0002_booklist_bookpublication_and_more'),
+        ("books", "0002_booklist_bookpublication_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='book',
-            name='primary_goodreads_book_data',
+            model_name="book",
+            name="primary_goodreads_book_data",
         ),
         migrations.AddField(
-            model_name='book',
-            name='cover_image_url',
-            field=models.URLField(blank=True, help_text='URL to book cover image', null=True),
+            model_name="book",
+            name="cover_image_url",
+            field=models.URLField(
+                blank=True, help_text="URL to book cover image", null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='booklistmembership',
-            name='rank',
-            field=models.PositiveSmallIntegerField(blank=True, help_text='Position in the list (lower is better)', null=True),
+            model_name="booklistmembership",
+            name="rank",
+            field=models.PositiveSmallIntegerField(
+                blank=True,
+                help_text="Position in the list (lower is better)",
+                null=True,
+            ),
         ),
         migrations.DeleteModel(
-            name='GoodreadsBookData',
+            name="GoodreadsBookData",
         ),
     ]

@@ -215,7 +215,10 @@ class MakeRequestTests(TestCase):
         api = OpenLibraryApi()
         mock_response = mock.Mock()
         mock_response.status_code = 200
-        mock_get.side_effect = [requests.RequestException("Connection error"), mock_response]
+        mock_get.side_effect = [
+            requests.RequestException("Connection error"),
+            mock_response,
+        ]
 
         result = api._make_request("http://example.com")
 
@@ -250,9 +253,7 @@ class SearchBooksTests(TestCase):
         mock_response = mock.Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            "docs": [
-                {"title": "Test Book", "author_name": ["Author"]}
-            ]
+            "docs": [{"title": "Test Book", "author_name": ["Author"]}]
         }
         mock_request.return_value = mock_response
 
@@ -407,7 +408,7 @@ class GetWorkTests(TestCase):
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "title": "Work Title",
-            "description": "A description"
+            "description": "A description",
         }
         mock_request.return_value = mock_response
 
@@ -582,9 +583,7 @@ class GetCoverUrlTests(TestCase):
 
         url = api.get_cover_url(12345, size="M")
 
-        self.assertEqual(
-            url, "https://covers.openlibrary.org/b/id/12345-M.jpg"
-        )
+        self.assertEqual(url, "https://covers.openlibrary.org/b/id/12345-M.jpg")
 
     def test_cover_url_different_sizes(self):
         """Test cover URL with different sizes."""
@@ -612,9 +611,7 @@ class GetBookInfoTests(TestCase):
 
     @mock.patch.object(OpenLibraryApi, "get_work")
     @mock.patch.object(OpenLibraryApi, "search_books")
-    def test_get_book_info_returns_comprehensive_data(
-        self, mock_search, mock_get_work
-    ):
+    def test_get_book_info_returns_comprehensive_data(self, mock_search, mock_get_work):
         """Test get_book_info returns all expected fields."""
         api = OpenLibraryApi()
         mock_search.return_value = [
@@ -673,14 +670,10 @@ class GetBookInfoTests(TestCase):
 
     @mock.patch.object(OpenLibraryApi, "get_work")
     @mock.patch.object(OpenLibraryApi, "search_books")
-    def test_get_book_info_description_dict_format(
-        self, mock_search, mock_get_work
-    ):
+    def test_get_book_info_description_dict_format(self, mock_search, mock_get_work):
         """Test description extraction from dict format."""
         api = OpenLibraryApi()
-        mock_search.return_value = [
-            {"title": "Book", "key": "/works/OL1W"}
-        ]
+        mock_search.return_value = [{"title": "Book", "key": "/works/OL1W"}]
         mock_get_work.return_value = {
             "description": {"type": "/type/text", "value": "Nested description"}
         }
@@ -691,9 +684,7 @@ class GetBookInfoTests(TestCase):
 
     @mock.patch.object(OpenLibraryApi, "get_work")
     @mock.patch.object(OpenLibraryApi, "search_books")
-    def test_get_book_info_title_starts_with_match(
-        self, mock_search, mock_get_work
-    ):
+    def test_get_book_info_title_starts_with_match(self, mock_search, mock_get_work):
         """Test scoring boosts title that starts with search term."""
         api = OpenLibraryApi()
         mock_search.return_value = [
@@ -709,9 +700,7 @@ class GetBookInfoTests(TestCase):
 
     @mock.patch.object(OpenLibraryApi, "get_work")
     @mock.patch.object(OpenLibraryApi, "search_books")
-    def test_get_book_info_prefers_older_publications(
-        self, mock_search, mock_get_work
-    ):
+    def test_get_book_info_prefers_older_publications(self, mock_search, mock_get_work):
         """Test scoring boosts publications before 2000."""
         api = OpenLibraryApi()
         mock_search.return_value = [
@@ -727,9 +716,7 @@ class GetBookInfoTests(TestCase):
 
     @mock.patch.object(OpenLibraryApi, "get_work")
     @mock.patch.object(OpenLibraryApi, "search_books")
-    def test_get_book_info_defaults_to_first_result(
-        self, mock_search, mock_get_work
-    ):
+    def test_get_book_info_defaults_to_first_result(self, mock_search, mock_get_work):
         """Test defaults to first result when no matching scores."""
         api = OpenLibraryApi()
         mock_search.return_value = [

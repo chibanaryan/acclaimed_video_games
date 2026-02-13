@@ -6,33 +6,33 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0084_remove_gamequote'),
+        ("games", "0084_remove_gamequote"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='game',
-            name='genres',
+            model_name="game",
+            name="genres",
         ),
         migrations.RemoveField(
-            model_name='game',
-            name='wikipedia_countries',
+            model_name="game",
+            name="wikipedia_countries",
         ),
         migrations.RemoveField(
-            model_name='game',
-            name='wikipedia_game_modes',
+            model_name="game",
+            name="wikipedia_game_modes",
         ),
         migrations.RemoveField(
-            model_name='igdbgamedata',
-            name='description',
+            model_name="igdbgamedata",
+            name="description",
         ),
         migrations.DeleteModel(
-            name='IGDBGenre',
+            name="IGDBGenre",
         ),
         migrations.DeleteModel(
-            name='WikipediaCountry',
+            name="WikipediaCountry",
         ),
         migrations.DeleteModel(
-            name='WikipediaGameMode',
+            name="WikipediaGameMode",
         ),
     ]

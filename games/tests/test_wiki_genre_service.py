@@ -729,7 +729,9 @@ class WikiGenreServiceTests(SimpleTestCase):
     def test_search_wikipedia_fallback_match(self):
         """Test fallback non-strict search is used when strict fails."""
         with mock.patch.object(
-            self.service, "_search_single_name", side_effect=[None, "https://example.com"]
+            self.service,
+            "_search_single_name",
+            side_effect=[None, "https://example.com"],
         ):
             url = self.service._search_wikipedia("Maniac Mansion II")
 
@@ -765,11 +767,14 @@ class WikiGenreServiceTests(SimpleTestCase):
 
     def test_resolve_redirect_handles_bad_json(self):
         """Test _resolve_redirect handles JSON parsing errors."""
+
         class BadResponse:
             def json(self):
                 raise ValueError("bad json")
 
-        with mock.patch.object(self.service, "_make_request", return_value=BadResponse()):
+        with mock.patch.object(
+            self.service, "_make_request", return_value=BadResponse()
+        ):
             url = "https://en.wikipedia.org/wiki/Old_Title"
             self.assertEqual(self.service._resolve_redirect(url), url)
 
@@ -824,18 +829,19 @@ class WikiGenreServiceTests(SimpleTestCase):
             with mock.patch.object(
                 self.service, "_is_video_game_page", return_value=False
             ):
-                url = self.service._search_single_name(
-                    "Test Game", strict=False
-                )
+                url = self.service._search_single_name("Test Game", strict=False)
         self.assertIsNone(url)
 
     def test_search_single_name_handles_json_error(self):
         """Test _search_single_name handles JSON parsing errors."""
+
         class BadResponse:
             def json(self):
                 raise ValueError("bad json")
 
-        with mock.patch.object(self.service, "_make_request", return_value=BadResponse()):
+        with mock.patch.object(
+            self.service, "_make_request", return_value=BadResponse()
+        ):
             url = self.service._search_single_name("Test Game")
         self.assertIsNone(url)
 

@@ -145,13 +145,19 @@ class Command(BaseCommand):
             try:
                 # Prepare games data before async context (avoid ORM in async)
                 # Prioritize games without Wikipedia metadata first
-                games_qs = Game.objects.all().annotate(
-                    has_metadata=Case(
-                        When(primary_wikipedia_game_data__isnull=False, then=Value(1)),
-                        default=Value(0),
-                        output_field=IntegerField(),
+                games_qs = (
+                    Game.objects.all()
+                    .annotate(
+                        has_metadata=Case(
+                            When(
+                                primary_wikipedia_game_data__isnull=False, then=Value(1)
+                            ),
+                            default=Value(0),
+                            output_field=IntegerField(),
+                        )
                     )
-                ).order_by("has_metadata", "rank")
+                    .order_by("has_metadata", "rank")
+                )
                 if options.get("limit"):
                     games_qs = games_qs[: options["limit"]]
 
@@ -183,13 +189,17 @@ class Command(BaseCommand):
                 # Prepare HLTB games data before async context
                 # Prioritize games without HLTB metadata first
                 hltb_games_list = []
-                games_qs = Game.objects.prefetch_related("platforms").annotate(
-                    has_metadata=Case(
-                        When(primary_hltb_game_data__isnull=False, then=Value(1)),
-                        default=Value(0),
-                        output_field=IntegerField(),
+                games_qs = (
+                    Game.objects.prefetch_related("platforms")
+                    .annotate(
+                        has_metadata=Case(
+                            When(primary_hltb_game_data__isnull=False, then=Value(1)),
+                            default=Value(0),
+                            output_field=IntegerField(),
+                        )
                     )
-                ).order_by("has_metadata", "rank")
+                    .order_by("has_metadata", "rank")
+                )
                 if options.get("limit"):
                     games_qs = games_qs[: options["limit"]]
 
@@ -275,13 +285,17 @@ class Command(BaseCommand):
 
         # Get games to process (all with IGDB IDs)
         # Prioritize games without IGDB metadata first
-        games = Game.objects.exclude(igdb_id__isnull=True).annotate(
-            has_metadata=Case(
-                When(primary_igdb_game_data__isnull=False, then=Value(1)),
-                default=Value(0),
-                output_field=IntegerField(),
+        games = (
+            Game.objects.exclude(igdb_id__isnull=True)
+            .annotate(
+                has_metadata=Case(
+                    When(primary_igdb_game_data__isnull=False, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
             )
-        ).order_by("has_metadata", "rank")
+            .order_by("has_metadata", "rank")
+        )
 
         if options.get("limit"):
             games = games[: options["limit"]]
@@ -359,13 +373,17 @@ class Command(BaseCommand):
 
         # Get games to process (all games)
         # Prioritize games without Wikipedia metadata first
-        games = Game.objects.all().annotate(
-            has_metadata=Case(
-                When(primary_wikipedia_game_data__isnull=False, then=Value(1)),
-                default=Value(0),
-                output_field=IntegerField(),
+        games = (
+            Game.objects.all()
+            .annotate(
+                has_metadata=Case(
+                    When(primary_wikipedia_game_data__isnull=False, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
             )
-        ).order_by("has_metadata", "rank")
+            .order_by("has_metadata", "rank")
+        )
 
         if options.get("limit"):
             games = games[: options["limit"]]
@@ -559,7 +577,9 @@ class Command(BaseCommand):
                 f"({delay}s delay, {concurrency} concurrent)"
             )
         else:
-            delay = 4.0  # With 1 concurrent: 1/(0.5+4.0) = 0.22 req/sec, ~0.11/sec with 2 reqs/game
+            # With 1 concurrent: 1/(0.5+4.0) = 0.22 req/sec.
+            # Accounting for 2 requests/game => ~0.11 req/sec.
+            delay = 4.0
             concurrency = 1  # Sequential to stay well under 0.14/sec limit
             self.stdout.write(
                 self.style.WARNING(

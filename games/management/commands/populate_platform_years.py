@@ -129,6 +129,7 @@ class Command(BaseCommand):
         self.stdout.write("")
         self.stdout.write(
             self.style.SUCCESS(
-                f"✓ Updated {updated_count} platforms, {missing_count} missing year data"
+                f"✓ Updated {updated_count} platforms, "
+                f"{missing_count} missing year data"
             )
         )

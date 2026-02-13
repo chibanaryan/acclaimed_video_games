@@ -31,9 +31,9 @@ class Command(BaseCommand):
         orphaned_read = ReadBook.objects.filter(book__isnull=True)
         orphaned_want = WantToReadBook.objects.filter(book__isnull=True)
 
-        orphaned_ids = set(
-            orphaned_read.values_list("goodreads_id", flat=True)
-        ) | set(orphaned_want.values_list("goodreads_id", flat=True))
+        orphaned_ids = set(orphaned_read.values_list("goodreads_id", flat=True)) | set(
+            orphaned_want.values_list("goodreads_id", flat=True)
+        )
 
         if not orphaned_ids:
             self.stdout.write(self.style.SUCCESS("No orphaned entries found."))

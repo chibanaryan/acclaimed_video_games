@@ -11,9 +11,7 @@ def forwards(apps, schema_editor):
     Game = apps.get_model("games", "Game")
 
     try:
-        tactical_fps = WikipediaGenre.objects.get(
-            name="Tactical First-Person Shooter"
-        )
+        tactical_fps = WikipediaGenre.objects.get(name="Tactical First-Person Shooter")
     except WikipediaGenre.DoesNotExist:
         return
 

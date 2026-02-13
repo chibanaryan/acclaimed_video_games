@@ -427,7 +427,9 @@ class ImportGamesTests(TestCase):
         self.assertEqual(game.all_wikidata_ids, ["Q111"])
 
     def test_import_games_primary_igdb_id_change_reconnects_metadata(self):
-        """Test that changing primary IGDB ID reconnects orphaned metadata via alternate ID.
+        """
+        Test that changing primary IGDB ID reconnects orphaned metadata
+        via alternate ID.
 
         This simulates a real-world scenario where:
         1. A game exists with IGDB ID 123 and has metadata
@@ -462,7 +464,10 @@ class ImportGamesTests(TestCase):
         self.assertEqual(igdb_data.game, game)
 
     def test_import_games_primary_wikidata_id_change(self):
-        """Test that changing primary Wikidata ID preserves old metadata and clears genres."""
+        """
+        Test that changing primary Wikidata ID preserves old metadata
+        and clears genres.
+        """
         # First import with Q111 as primary
         data1 = "1\tTest Game\t2024\tPC\t12345\tQ111,Q222\r\n"
         utils.import_games(StringIO(data1))
@@ -732,10 +737,7 @@ class ImportPlatformsTests(TestCase):
         """Test that year_start and year_end are preserved during platform import."""
         # Create platform with year data
         platform = models.Platform.objects.create(
-            code="PS1",
-            name="PlayStation",
-            year_start=1994,
-            year_end=2006
+            code="PS1", name="PlayStation", year_start=1994, year_end=2006
         )
 
         # Import with same code but different name

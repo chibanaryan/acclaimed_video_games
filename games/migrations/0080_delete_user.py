@@ -11,9 +11,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0079_add_media_type_to_list'),
+        ("games", "0079_add_media_type_to_list"),
         # Depend on core.0001 so core.User exists before we remove games.User
-        ('core', '0001_initial'),
+        ("core", "0001_initial"),
     ]
 
     operations = [
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.DeleteModel(
-                    name='User',
+                    name="User",
                 ),
             ],
             database_operations=[

@@ -6,33 +6,54 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0080_delete_user'),
+        ("games", "0080_delete_user"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='game',
-            name='decade_rank',
-            field=models.IntegerField(blank=True, db_index=True, help_text='Rank within release decade', null=True),
+            model_name="game",
+            name="decade_rank",
+            field=models.IntegerField(
+                blank=True,
+                db_index=True,
+                help_text="Rank within release decade",
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='game',
-            name='name',
+            model_name="game",
+            name="name",
             field=models.CharField(db_index=True, max_length=200),
         ),
         migrations.AlterField(
-            model_name='game',
-            name='name_normalized',
-            field=models.CharField(blank=True, db_index=True, help_text='ASCII-only version of name for search matching', max_length=200, null=True),
+            model_name="game",
+            name="name_normalized",
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                help_text="ASCII-only version of name for search matching",
+                max_length=200,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='game',
-            name='slug',
-            field=models.SlugField(blank=True, help_text='URL-friendly identifier', max_length=210, null=True),
+            model_name="game",
+            name="slug",
+            field=models.SlugField(
+                blank=True,
+                help_text="URL-friendly identifier",
+                max_length=210,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='game',
-            name='year_rank',
-            field=models.IntegerField(blank=True, db_index=True, help_text='Rank within release year', null=True),
+            model_name="game",
+            name="year_rank",
+            field=models.IntegerField(
+                blank=True,
+                db_index=True,
+                help_text="Rank within release year",
+                null=True,
+            ),
         ),
     ]

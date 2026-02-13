@@ -78,9 +78,7 @@ class HardcoverApi:
                 time.sleep(self.min_request_interval - elapsed)
             self.last_request_time = time.time()
 
-    def _get_from_cache(
-        self, cache: OrderedDict, key: str
-    ) -> Optional[Any]:
+    def _get_from_cache(self, cache: OrderedDict, key: str) -> Optional[Any]:
         """Get item from cache with LRU update."""
         with self.cache_lock:
             if key in cache:
@@ -89,9 +87,7 @@ class HardcoverApi:
                 return value
         return None
 
-    def _set_in_cache(
-        self, cache: OrderedDict, key: str, value: Any
-    ) -> None:
+    def _set_in_cache(self, cache: OrderedDict, key: str, value: Any) -> None:
         """Set item in cache with LRU eviction."""
         with self.cache_lock:
             if key in cache:
@@ -101,7 +97,10 @@ class HardcoverApi:
             cache[key] = value
 
     def _make_request(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, max_retries: int = 3
+        self,
+        query: str,
+        variables: Optional[Dict[str, Any]] = None,
+        max_retries: int = 3,
     ) -> Optional[Dict[str, Any]]:
         """
         Make a GraphQL request with rate limiting and retry logic.
@@ -131,7 +130,7 @@ class HardcoverApi:
 
                 if response.status_code == 429:
                     if retry_count < max_retries:
-                        wait_time = 2 ** retry_count
+                        wait_time = 2**retry_count
                         logger.warning(
                             "Rate limited by Hardcover. Retrying in %d seconds...",
                             wait_time,
@@ -218,6 +217,7 @@ class HardcoverApi:
             results = data.get("search", {}).get("results", [])
             if isinstance(results, str):
                 import json
+
                 results = json.loads(results)
 
             self._set_in_cache(self.search_cache, cache_key, results)

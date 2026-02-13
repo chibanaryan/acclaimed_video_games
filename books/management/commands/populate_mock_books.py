@@ -13,7 +13,6 @@ from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.utils.text import slugify
 
 from books.models import (
     Author,
@@ -389,7 +388,10 @@ class Command(BaseCommand):
                 "page_count": 1225,
                 "authors": ["leo-tolstoy"],
                 "genres": ["fiction", "literary-fiction", "historical-fiction"],
-                "description": "Epic novel depicting Russian society during the Napoleonic Wars.",
+                "description": (
+                    "Epic novel depicting Russian society during the "
+                    "Napoleonic Wars."
+                ),
                 "goodreads_id": "656",
                 "isbn13": "9780143039990",
             },
@@ -413,7 +415,10 @@ class Command(BaseCommand):
                 "page_count": 432,
                 "authors": ["jane-austen"],
                 "genres": ["fiction", "romance", "classic"],
-                "description": "A witty social commentary on marriage and class in Regency England.",
+                "description": (
+                    "A witty social commentary on marriage and class in "
+                    "Regency England."
+                ),
                 "goodreads_id": "1885",
                 "isbn13": "9780141439518",
             },
@@ -463,7 +468,9 @@ class Command(BaseCommand):
                 "genres": ["fiction", "fantasy", "epic-fantasy"],
                 "series": "lord-of-the-rings",
                 "series_position": 1,
-                "description": "The beginning of Frodo's quest to destroy the One Ring.",
+                "description": (
+                    "The beginning of Frodo's quest to destroy the One Ring."
+                ),
                 "goodreads_id": "34",
                 "isbn13": "9780618640157",
             },
@@ -477,7 +484,10 @@ class Command(BaseCommand):
                 "genres": ["fiction", "science-fiction", "space-opera"],
                 "series": "dune",
                 "series_position": 1,
-                "description": "An epic science fiction tale of politics, religion, and ecology.",
+                "description": (
+                    "An epic science fiction tale of politics, religion, "
+                    "and ecology."
+                ),
                 "goodreads_id": "234225",
                 "isbn13": "9780441172719",
             },
@@ -489,7 +499,9 @@ class Command(BaseCommand):
                 "page_count": 796,
                 "authors": ["fyodor-dostoevsky"],
                 "genres": ["fiction", "literary-fiction", "classic"],
-                "description": "A philosophical novel about faith, doubt, and morality.",
+                "description": (
+                    "A philosophical novel about faith, doubt, and morality."
+                ),
                 "goodreads_id": "4934",
                 "isbn13": "9780374528379",
             },
@@ -514,7 +526,9 @@ class Command(BaseCommand):
                 "page_count": 127,
                 "authors": ["ernest-hemingway"],
                 "genres": ["fiction", "literary-fiction", "classic"],
-                "description": "An aging fisherman's epic struggle with a giant marlin.",
+                "description": (
+                    "An aging fisherman's epic struggle with a giant marlin."
+                ),
                 "goodreads_id": "2165",
                 "isbn13": "9780684801223",
             },
@@ -526,7 +540,9 @@ class Command(BaseCommand):
                 "page_count": 489,
                 "authors": ["charles-dickens"],
                 "genres": ["fiction", "historical-fiction", "classic"],
-                "description": "A story of love and sacrifice during the French Revolution.",
+                "description": (
+                    "A story of love and sacrifice during the French " "Revolution."
+                ),
                 "goodreads_id": "1953",
                 "isbn13": "9780141439600",
             },
@@ -606,7 +622,10 @@ class Command(BaseCommand):
                 "page_count": 210,
                 "authors": ["philip-k-dick"],
                 "genres": ["fiction", "science-fiction", "cyberpunk"],
-                "description": "A bounty hunter pursues rogue androids in post-apocalyptic Earth.",
+                "description": (
+                    "A bounty hunter pursues rogue androids in "
+                    "post-apocalyptic Earth."
+                ),
                 "goodreads_id": "36402034",
                 "isbn13": "9780345404473",
             },
@@ -683,7 +702,9 @@ class Command(BaseCommand):
                 "page_count": 287,
                 "authors": ["cormac-mccarthy"],
                 "genres": ["fiction", "dystopian", "literary-fiction"],
-                "description": "A father and son journey through post-apocalyptic America.",
+                "description": (
+                    "A father and son journey through post-apocalyptic " "America."
+                ),
                 "goodreads_id": "6288",
                 "isbn13": "9780307387899",
             },
@@ -809,7 +830,11 @@ class Command(BaseCommand):
         for book in books:
             # Set cover image URL if book has a goodreads_id
             if book.goodreads_id and not book.cover_image_url:
-                book.cover_image_url = f"https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/{book.goodreads_id}.jpg"
+                book.cover_image_url = (
+                    "https://images-na.ssl-images-amazon.com/images/S/"
+                    "compressed.photo.goodreads.com/books/"
+                    f"{book.goodreads_id}.jpg"
+                )
                 book.save(update_fields=["cover_image_url"])
 
             # Create Wikipedia data

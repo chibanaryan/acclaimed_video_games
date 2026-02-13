@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.db.models import Count, Q
 
 from core.models import User
-from games import config, models
+from games import config
 
 
 def get_played_games_distribution():

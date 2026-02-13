@@ -77,9 +77,9 @@ class RankingUtilsTests(TestCase):
 
         # Mock count() and values().distinct().count() for the return values
         mock_game_objects.count.return_value = 5
-        mock_game_objects.values.return_value.distinct.return_value.count.return_value = (
-            3
-        )
+        mock_values = mock_game_objects.values.return_value
+        mock_distinct = mock_values.distinct.return_value
+        mock_distinct.count.return_value = 3
 
         games_updated, years_processed = update_year_decade_ranks()
 
@@ -923,7 +923,10 @@ class IGDBGameDataTests(TestCase):
 
     def test_image_2x(self):
         """Test image_2x property returns correct WebP URL."""
-        expected = "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/test_artwork_id.webp"
+        expected = (
+            "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/"
+            "test_artwork_id.webp"
+        )
         self.assertEqual(self.igdb_data.image_2x, expected)
 
     def test_homepage_thumb_small(self):

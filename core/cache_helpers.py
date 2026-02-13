@@ -11,7 +11,9 @@ from django.core.cache import cache
 from django.db.models import Max, Min
 
 
-def get_year_bounds(model_class, year_field, cache_key, cache_timeout, default_min=1970):
+def get_year_bounds(
+    model_class, year_field, cache_key, cache_timeout, default_min=1970
+):
     """
     Return cached global min/max years for a model.
 

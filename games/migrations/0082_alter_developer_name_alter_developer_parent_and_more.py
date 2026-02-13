@@ -7,23 +7,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0081_game_inherit_media_item_base'),
+        ("games", "0081_game_inherit_media_item_base"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='developer',
-            name='name',
+            model_name="developer",
+            name="name",
             field=models.CharField(db_index=True, max_length=200),
         ),
         migrations.AlterField(
-            model_name='developer',
-            name='parent',
-            field=models.ForeignKey(blank=True, help_text='Parent creator in the ownership hierarchy', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='subsidiaries', to='games.developer'),
+            model_name="developer",
+            name="parent",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Parent creator in the ownership hierarchy",
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subsidiaries",
+                to="games.developer",
+            ),
         ),
         migrations.AlterField(
-            model_name='developer',
-            name='slug',
-            field=models.SlugField(blank=True, help_text='URL-friendly identifier (only for root creators)', max_length=210, null=True),
+            model_name="developer",
+            name="slug",
+            field=models.SlugField(
+                blank=True,
+                help_text="URL-friendly identifier (only for root creators)",
+                max_length=210,
+                null=True,
+            ),
         ),
     ]

@@ -13,14 +13,18 @@ app_name = "books-api"
 urlpatterns = [
     # Search endpoints
     path("search/", views.BookSearchAPIView.as_view(), name="book-search"),
-    path("unified-search/", views.UnifiedBookSearchView.as_view(), name="unified-search"),
+    path(
+        "unified-search/", views.UnifiedBookSearchView.as_view(), name="unified-search"
+    ),
     # Book list endpoints
     path("", views.BookListView.as_view(), name="book-list"),
     path("all/", views.BookAllDataView.as_view(), name="book-all-data"),
     path("version/", views.BookDataVersionView.as_view(), name="book-data-version"),
     # Author endpoints
     path("authors/", views.AuthorListView.as_view(), name="author-list"),
-    path("authors/<slug:slug>/", views.AuthorDetailView.as_view(), name="author-detail"),
+    path(
+        "authors/<slug:slug>/", views.AuthorDetailView.as_view(), name="author-detail"
+    ),
     path(
         "authors/by-id/<int:goodreads_id>/",
         views.AuthorDetailByIdView.as_view(),

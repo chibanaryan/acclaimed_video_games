@@ -4,7 +4,6 @@ from django.db.models import Count
 from django.forms import ModelForm
 from django.http import HttpRequest
 from django.utils.html import format_html
-from django.utils.text import Truncator
 
 from core.models import User
 from . import models

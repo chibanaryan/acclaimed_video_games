@@ -20,7 +20,8 @@ def feature_flags(request):
 
     return {
         # Books feature is hidden until ready for public release
-        "BOOKS_ENABLED": os.environ.get("BOOKS_ENABLED", "").lower() == "true",
+        "BOOKS_ENABLED": os.environ.get("BOOKS_ENABLED", "").lower()
+        == "true",
     }
 
 

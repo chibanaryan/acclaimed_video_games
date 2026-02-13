@@ -8,7 +8,6 @@ patterns established in the games app.
 from django.contrib import admin
 from django.db.models import Count
 from django.utils.html import format_html
-from django.utils.text import Truncator
 
 from . import models
 
@@ -151,7 +150,10 @@ class BookAdmin(admin.ModelAdmin):
     def _wikipedia_data_link(self, obj):
         """Display link to Wikipedia data admin page."""
         if obj.primary_wikipedia_book_data:
-            url = f"/admin/books/wikipediabookdata/{obj.primary_wikipedia_book_data.id}/change/"
+            url = (
+                f"/admin/books/wikipediabookdata/"
+                f"{obj.primary_wikipedia_book_data.id}/change/"
+            )
             return format_html('<a href="{}">View</a>', url)
         return "-"
 
@@ -195,7 +197,9 @@ class WikipediaBookDataAdmin(admin.ModelAdmin):
         """Display clickable Wikipedia URL."""
         url = obj.wikipedia_url
         if url:
-            return format_html('<a href="{}" target="_blank">{}</a>', url, obj.page_title)
+            return format_html(
+                '<a href="{}" target="_blank">{}</a>', url, obj.page_title
+            )
         return "-"
 
 

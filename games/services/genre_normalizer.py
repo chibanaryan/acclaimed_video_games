@@ -175,7 +175,8 @@ GENRE_MAPPING = {
     "Rhythm game": "Music",
     "Karaoke": "Music",
     "Casual": "Party",  # Consolidated: only 1 game, under Puzzle & Casual
-    "Digital collectible card game": "Party",  # Consolidated: only 1 game, under Puzzle & Casual
+    # Consolidated: only 1 game, under Puzzle & Casual.
+    "Digital collectible card game": "Party",
     "Educational": "Educational",  # Keep: 2 games
     "Edutainment": "Educational",  # Keep: maps to Educational
     "Exercise": "Party",  # Consolidated: only 1 game, under Puzzle & Casual

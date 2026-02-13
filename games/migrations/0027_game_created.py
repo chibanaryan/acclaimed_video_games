@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0026_alter_developer_igdb_id_alter_developeralias_igdb_id_and_more'),
+        ("games", "0026_alter_developer_igdb_id_alter_developeralias_igdb_id_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='game',
-            name='created',
+            model_name="game",
+            name="created",
             field=models.DateTimeField(auto_now_add=True, db_index=True, null=True),
         ),
     ]

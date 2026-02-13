@@ -8,7 +8,6 @@ following the same patterns established in the games app.
 from functools import cached_property
 from typing import Optional
 
-from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
@@ -136,7 +135,9 @@ class BookGenre(models.Model):
         max_length=300,
         blank=True,
         db_index=True,
-        help_text="Full hierarchy path (e.g., 'Fiction > Science Fiction > Space Opera')",
+        help_text=(
+            "Full hierarchy path " "(e.g., 'Fiction > Science Fiction > Space Opera')"
+        ),
     )
 
     # Optional metadata

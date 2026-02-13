@@ -1,8 +1,8 @@
 import csv
 import hashlib
 import json
+import logging
 import math
-from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -38,8 +38,11 @@ from core.cache_helpers import get_year_bounds
 from core.mixins import HTMXPartialMixin, RobustPaginationMixin
 from core.models import User
 from games import config, constants, models, utils
+from games.cache import invalidate_played_games_cache, invalidate_want_to_play_cache
 from games.forms import ImportForm, ContactForm
 from games.services.percentile_service import calculate_percentile
+
+logger = logging.getLogger(__name__)
 
 
 def _get_year_bounds():
@@ -105,10 +108,6 @@ def _get_played_game_ids(user):
         )
         cache.set(cache_key, ids, 300)  # 5 minutes
     return ids
-
-
-# Import cache invalidation functions from centralized cache module
-from games.cache import invalidate_played_games_cache, invalidate_want_to_play_cache
 
 
 def _get_want_to_play_game_ids(user):
@@ -551,7 +550,8 @@ class ContactThankYouView(TemplateView):
 def download_games_csv(request):
     """Download games list as CSV, respecting current filters."""
     # Get filtered queryset using same logic as HomePageView
-    # with_relations() already includes all needed prefetches (developers, platforms, genres, series)
+    # with_relations() already includes all needed prefetches:
+    # developers, platforms, genres, and series.
     qs = models.Game.objects.with_relations()
 
     # Add played status annotation for authenticated users
@@ -2819,7 +2819,8 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             total_count=Count("lists", filter=list_filter if list_filter else Q()),
             # Importance score for sorting
             # When type filter is applied: sort by count of that type
-            # When no type filter: weighted score (All-time: 1000, Decade: 100, Misc: 10, EOY: 1)
+            # When no type filter: weighted score
+            # (All-time: 1000, Decade: 100, Misc: 10, EOY: 1)
             importance_score=(
                 Count("lists", filter=list_filter if list_filter else Q())
                 if type_code
@@ -3510,7 +3511,8 @@ class BatchImportProgressView(LoginRequiredMixin, View):
         if not any(import_data.values()):
 
             def error_generator():
-                yield f"data: {json.dumps({'event': 'error', 'message': 'No files provided'})}\n\n"
+                payload = {"event": "error", "message": "No files provided"}
+                yield f"data: {json.dumps(payload)}\n\n"
 
             return StreamingHttpResponse(
                 error_generator(),

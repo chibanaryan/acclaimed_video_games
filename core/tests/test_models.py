@@ -21,7 +21,9 @@ class CoreBaseModelStrTests(TestCase):
 
     def test_user_tracking_base_str(self):
         class DummyTracking(models.UserTrackingBase):
-            user = django_models.ForeignKey(models.User, on_delete=django_models.CASCADE)
+            user = django_models.ForeignKey(
+                models.User, on_delete=django_models.CASCADE
+            )
 
             class Meta:
                 app_label = "core"

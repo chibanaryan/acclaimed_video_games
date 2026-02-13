@@ -10,12 +10,10 @@ Note: Full database integration requires the Book model from Phase 4.2.
 Until then, this command supports standalone search functionality.
 """
 
-import asyncio
 import csv
 import logging
 import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from django.core.management.base import BaseCommand
 
@@ -187,7 +185,7 @@ class Command(BaseCommand):
     def _handle_database_mode(self, options):
         """Handle database mode (requires Book model)."""
         try:
-            from books.models import Book
+            __import__("books.models")
         except ImportError:
             self.stdout.write(
                 self.style.ERROR(
@@ -251,6 +249,7 @@ class Command(BaseCommand):
         # JSON output
         if options.get("json"):
             import json
+
             self.stdout.write(json.dumps(results, indent=2, default=str))
             return
 
@@ -269,9 +268,7 @@ class Command(BaseCommand):
             year = result.get("first_publish_year", result.get("year", ""))
             source = result.get("source", "unknown")
 
-            self.stdout.write(
-                f"  {idx}. {title} ({year}) - {authors} [{source}]"
-            )
+            self.stdout.write(f"  {idx}. {title} ({year}) - {authors} [{source}]")
 
         self.stdout.write(f"\nTotal results: {len(results)}")
 
@@ -279,14 +276,16 @@ class Command(BaseCommand):
         """Write results to CSV file."""
         with open(output_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow([
-                "Title",
-                "Authors",
-                "Year",
-                "ISBN",
-                "Subjects",
-                "Source",
-            ])
+            writer.writerow(
+                [
+                    "Title",
+                    "Authors",
+                    "Year",
+                    "ISBN",
+                    "Subjects",
+                    "Source",
+                ]
+            )
 
             for result in results:
                 authors = result.get("author_name", result.get("authors", []))
@@ -301,11 +300,13 @@ class Command(BaseCommand):
                 if isinstance(subjects, list):
                     subjects = "; ".join(subjects[:5])
 
-                writer.writerow([
-                    result.get("title", ""),
-                    authors,
-                    result.get("first_publish_year", result.get("year", "")),
-                    isbns,
-                    subjects,
-                    result.get("source", ""),
-                ])
+                writer.writerow(
+                    [
+                        result.get("title", ""),
+                        authors,
+                        result.get("first_publish_year", result.get("year", "")),
+                        isbns,
+                        subjects,
+                        result.get("source", ""),
+                    ]
+                )

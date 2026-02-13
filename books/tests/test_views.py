@@ -9,7 +9,7 @@ Tests must use staff users to access these views.
 """
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from books import models
@@ -38,7 +38,9 @@ class BookHomePageViewTests(StaffUserTestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.author = models.Author.objects.create(name="Test Author", slug="test-author")
+        self.author = models.Author.objects.create(
+            name="Test Author", slug="test-author"
+        )
         self.genre = models.BookGenre.objects.create(name="Fiction")
 
         self.book1 = models.Book.objects.create(
@@ -311,7 +313,9 @@ class BookDetailViewTests(StaffUserTestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.author = models.Author.objects.create(name="Test Author", slug="test-author")
+        self.author = models.Author.objects.create(
+            name="Test Author", slug="test-author"
+        )
         self.genre = models.BookGenre.objects.create(name="Fiction")
         self.series = models.BookSeries.objects.create(name="Test Series")
 
@@ -473,7 +477,9 @@ class AuthorListViewTests(StaffUserTestMixin, TestCase):
 
     def test_sort_by_name(self):
         """Test sorting by name ascending."""
-        response = self.client.get(reverse("books:author-list"), {"sort": "name", "dir": "asc"})
+        response = self.client.get(
+            reverse("books:author-list"), {"sort": "name", "dir": "asc"}
+        )
         authors = list(response.context["authors"])
         self.assertEqual(authors[0].name, "Alpha Author")
         self.assertEqual(authors[1].name, "Beta Author")
@@ -630,9 +636,7 @@ class ToggleReadBookViewTests(StaffUserTestMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
         # Log in as non-staff user
-        regular_user = User.objects.create_user(
-            username="regularuser", password="testpass"
-        )
+        User.objects.create_user(username="regularuser", password="testpass")
         self.client.login(username="regularuser", password="testpass")
         response = self.client.post(
             reverse("books:toggle-read", kwargs={"goodreads_id": "12345"})

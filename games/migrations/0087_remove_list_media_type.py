@@ -6,21 +6,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0086_alter_publication_options_alter_list_table_and_more'),
+        ("games", "0086_alter_publication_options_alter_list_table_and_more"),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='list',
-            name='games_list_media_t_61af03_idx',
+            model_name="list",
+            name="games_list_media_t_61af03_idx",
         ),
         migrations.RemoveField(
-            model_name='list',
-            name='media_type',
+            model_name="list",
+            name="media_type",
         ),
         migrations.AlterField(
-            model_name='listmembership',
-            name='rank',
-            field=models.PositiveSmallIntegerField(blank=True, help_text='Position in the list (lower is better)', null=True),
+            model_name="listmembership",
+            name="rank",
+            field=models.PositiveSmallIntegerField(
+                blank=True,
+                help_text="Position in the list (lower is better)",
+                null=True,
+            ),
         ),
     ]

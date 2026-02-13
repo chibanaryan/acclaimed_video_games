@@ -359,7 +359,8 @@ class ListBase(models.Model):
     its own publisher FK pointing to its concrete Publication model.
     """
 
-    # Import at class level because choices/default are evaluated at class definition time
+    # Import at class level because choices/default are evaluated
+    # at class definition time.
     from core import constants as core_constants
 
     name = models.CharField(max_length=255)

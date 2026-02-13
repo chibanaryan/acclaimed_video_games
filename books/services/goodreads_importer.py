@@ -105,9 +105,7 @@ def _determine_status(row: Dict[str, str], header_map: Dict[str, str]) -> Option
     if date_read:
         return "read"
 
-    exclusive_shelf = _normalize_shelf(
-        _get_value(row, header_map, "exclusive shelf")
-    )
+    exclusive_shelf = _normalize_shelf(_get_value(row, header_map, "exclusive shelf"))
     shelves = set(_split_shelves(_get_value(row, header_map, "bookshelves")))
     shelves_with_positions = set(
         _split_shelves(_get_value(row, header_map, "bookshelves with positions"))

@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('books', '0003_remove_book_primary_goodreads_book_data_and_more'),
+        ("books", "0003_remove_book_primary_goodreads_book_data_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='booklist',
-            name='name',
+            model_name="booklist",
+            name="name",
             field=models.CharField(max_length=255),
         ),
         migrations.AlterField(
-            model_name='bookpublication',
-            name='name',
+            model_name="bookpublication",
+            name="name",
             field=models.CharField(max_length=255, unique=True),
         ),
         migrations.AlterField(
-            model_name='bookpublication',
-            name='slug',
+            model_name="bookpublication",
+            name="slug",
             field=models.SlugField(max_length=255),
         ),
     ]

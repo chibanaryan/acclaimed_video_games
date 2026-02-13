@@ -106,8 +106,7 @@ class GoodreadsImporterTests(TestCase):
         book.authors.add(author)
 
         csv_data = (
-            "Book Id,Title,Author,Exclusive Shelf\n"
-            "777,Title Match,Jane Doe,read\n"
+            "Book Id,Title,Author,Exclusive Shelf\n" "777,Title Match,Jane Doe,read\n"
         )
 
         summary = import_goodreads_csv(StringIO(csv_data), self.user)

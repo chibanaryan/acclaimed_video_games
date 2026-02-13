@@ -63,7 +63,9 @@ class TemplateStructureTests(TestCase):
         self.game.platforms.add(self.platform)
 
     def test_desktop_template_has_required_slots(self):
-        """Verify desktop row includes all data-slot attributes for JS template cloning."""
+        """
+        Verify desktop row includes all required data-slot attributes.
+        """
         response = self.client.get(reverse("home"))
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -102,7 +104,9 @@ class TemplateStructureTests(TestCase):
             )
 
     def test_mobile_template_has_required_slots(self):
-        """Verify mobile row includes all data-slot attributes for JS template cloning."""
+        """
+        Verify mobile row includes all required data-slot attributes.
+        """
         response = self.client.get(reverse("home"))
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -607,6 +611,6 @@ class PlatformFamilyRenderingTests(TestCase):
 
         # When grouped (3+), should show icon with count, not individual codes
         # Look for the count badge (font-size: 8px indicates grouped display)
-        text = platforms_slot.get_text()
+        platforms_slot.get_text()
         # Should NOT show all individual codes when grouped
         # Instead should show Nintendo icon with count

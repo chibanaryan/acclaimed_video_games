@@ -1043,7 +1043,9 @@ class IgbdApiTests(SimpleTestCase):
         response = DummyResponse(
             200, [{"id": 5, "name": "Foo", "slug": "foo", "parent": None}]
         )
-        with mock.patch.object(self.api, "_make_request_with_retry", return_value=response):
+        with mock.patch.object(
+            self.api, "_make_request_with_retry", return_value=response
+        ):
             result = self.api.get_companies_by_ids([5], cache_results=True)
 
         self.assertIn(5, result)
@@ -1085,7 +1087,9 @@ class IgbdApiTests(SimpleTestCase):
             11: {"id": 11, "name": "Parent Co", "slug": "parent", "parent": 10}
         }
 
-        with mock.patch.object(self.api, "_make_request_with_retry", return_value=response):
+        with mock.patch.object(
+            self.api, "_make_request_with_retry", return_value=response
+        ):
             with mock.patch.object(
                 self.api,
                 "get_companies_by_ids",
@@ -1121,9 +1125,7 @@ class IgbdApiTests(SimpleTestCase):
                         "porting": False,
                     }
                 ],
-                "collections": [
-                    {"id": 77, "name": "Series Two", "slug": "series-two"}
-                ],
+                "collections": [{"id": 77, "name": "Series Two", "slug": "series-two"}],
                 "videos": [{"video_id": "vid999"}],
             }
         ]
@@ -1136,7 +1138,9 @@ class IgbdApiTests(SimpleTestCase):
             21: {"id": 21, "name": "Parent Two", "slug": "parent-two", "parent": 20}
         }
 
-        with mock.patch.object(self.api, "_make_request_with_retry", return_value=response):
+        with mock.patch.object(
+            self.api, "_make_request_with_retry", return_value=response
+        ):
             with mock.patch.object(
                 self.api,
                 "get_companies_by_ids",
@@ -1171,9 +1175,7 @@ class YouTubeEmbeddableTests(SimpleTestCase):
         """Embeddable video returns True."""
         mock_response = mock.Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "items": [{"status": {"embeddable": True}}]
-        }
+        mock_response.json.return_value = {"items": [{"status": {"embeddable": True}}]}
         mock_get.return_value = mock_response
 
         result = igdb.is_youtube_video_embeddable("test123")
@@ -1184,9 +1186,7 @@ class YouTubeEmbeddableTests(SimpleTestCase):
         """Non-embeddable video returns False."""
         mock_response = mock.Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "items": [{"status": {"embeddable": False}}]
-        }
+        mock_response.json.return_value = {"items": [{"status": {"embeddable": False}}]}
         mock_get.return_value = mock_response
 
         result = igdb.is_youtube_video_embeddable("test123")

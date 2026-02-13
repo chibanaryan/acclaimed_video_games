@@ -213,9 +213,7 @@ class WikipediaPageProgressViewTests(TestCase):
         ) as mock_progress:
             mock_progress.return_value = iter(["data: test\n\n"])
 
-            response = self.client.get(
-                "/import/wikipedia-page-progress/?force=true"
-            )
+            response = self.client.get("/import/wikipedia-page-progress/?force=true")
 
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response["content-type"], "text/event-stream")

@@ -80,7 +80,10 @@ class GenreNormalizerTest(TestCase):
         self.assertEqual(normalize_genre("Hack and slash"), "Hack and Slash")
 
     def test_normalize_extreme_sports(self):
-        """Test that Extreme sports normalizes to Sports (consolidated single-game genre)."""
+        """
+        Test that Extreme sports normalizes to Sports
+        (consolidated single-game genre).
+        """
         self.assertEqual(normalize_genre("Extreme sports"), "Sports")
 
     def test_normalize_unknown_genre_returns_as_is(self):
@@ -150,32 +153,38 @@ class GetGenreParentNameTest(TestCase):
     def test_action_genres_hierarchy(self):
         """Test that action-oriented genres are correctly parented under Action."""
         action_genres = [
-            "Maze",        # Arcade action games like Pac-Man
-            "Platform",    # Reflex-based platformers like Mario
+            "Maze",  # Arcade action games like Pac-Man
+            "Platform",  # Reflex-based platformers like Mario
             "Metroidvania",  # Action-exploration games
             "Hack and Slash",  # Combat-focused action games like Diablo
-            "Survival",    # Survival games (moved from Hybrid & Specialized)
+            "Survival",  # Survival games (moved from Hybrid & Specialized)
         ]
         for genre in action_genres:
             self.assertEqual(
-                get_genre_parent_name(genre), "Action",
-                f"{genre} should be under Action"
+                get_genre_parent_name(genre),
+                "Action",
+                f"{genre} should be under Action",
             )
 
     def test_racing_genres_hierarchy(self):
         """Test that racing genres are correctly parented under Racing & Sports."""
         # Racing and Kart Racing are children of Racing & Sports
         self.assertEqual(
-            get_genre_parent_name("Kart Racing"), "Racing & Sports",
-            "Kart Racing should be under Racing & Sports"
+            get_genre_parent_name("Kart Racing"),
+            "Racing & Sports",
+            "Kart Racing should be under Racing & Sports",
         )
         self.assertEqual(
-            get_genre_parent_name("Racing"), "Racing & Sports",
-            "Racing should be under Racing & Sports"
+            get_genre_parent_name("Racing"),
+            "Racing & Sports",
+            "Racing should be under Racing & Sports",
         )
 
     def test_shooter_genres_hierarchy(self):
-        """Test that shooter genres are correctly parented under Shooter (new category)."""
+        """
+        Test that shooter genres are correctly parented
+        under Shooter (new category).
+        """
         # Note: "Shooter" itself is now a root category, these are its children
         shooter_child_genres = [
             "First-Person Shooter",
@@ -186,22 +195,33 @@ class GetGenreParentNameTest(TestCase):
         ]
         for genre in shooter_child_genres:
             self.assertEqual(
-                get_genre_parent_name(genre), "Shooter",
-                f"{genre} should be under Shooter"
+                get_genre_parent_name(genre),
+                "Shooter",
+                f"{genre} should be under Shooter",
             )
 
     def test_sports_genres_hierarchy(self):
-        """Test that sports-related genres are correctly parented under Racing & Sports."""
+        """
+        Test that sports-related genres are correctly parented
+        under Racing & Sports.
+        """
         # Sports is now a sub-genre under Racing & Sports
         self.assertEqual(get_genre_parent_name("Sports"), "Racing & Sports")
         # Snowboarding remains as a sub-genre
         self.assertEqual(get_genre_parent_name("Snowboarding"), "Racing & Sports")
         # Football variants remain as sub-genres
-        self.assertEqual(get_genre_parent_name("Football (American)"), "Racing & Sports")
-        self.assertEqual(get_genre_parent_name("Football (Association)"), "Racing & Sports")
+        self.assertEqual(
+            get_genre_parent_name("Football (American)"), "Racing & Sports"
+        )
+        self.assertEqual(
+            get_genre_parent_name("Football (Association)"), "Racing & Sports"
+        )
 
     def test_puzzle_casual_genres_hierarchy(self):
-        """Test that puzzle and casual genres are correctly parented under Puzzle & Casual."""
+        """
+        Test that puzzle and casual genres are correctly parented
+        under Puzzle & Casual.
+        """
         # Puzzle is now a sub-genre under Puzzle & Casual
         self.assertEqual(get_genre_parent_name("Puzzle"), "Puzzle & Casual")
         self.assertEqual(get_genre_parent_name("Puzzle-Platformer"), "Puzzle & Casual")

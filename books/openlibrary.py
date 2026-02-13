@@ -72,9 +72,7 @@ class OpenLibraryApi:
                 time.sleep(self.min_request_interval - elapsed)
             self.last_request_time = time.time()
 
-    def _get_from_cache(
-        self, cache: OrderedDict, key: str
-    ) -> Optional[Any]:
+    def _get_from_cache(self, cache: OrderedDict, key: str) -> Optional[Any]:
         """Get item from cache with LRU update."""
         with self.cache_lock:
             if key in cache:
@@ -83,9 +81,7 @@ class OpenLibraryApi:
                 return value
         return None
 
-    def _set_in_cache(
-        self, cache: OrderedDict, key: str, value: Any
-    ) -> None:
+    def _set_in_cache(self, cache: OrderedDict, key: str, value: Any) -> None:
         """Set item in cache with LRU eviction."""
         with self.cache_lock:
             if key in cache:
@@ -115,7 +111,7 @@ class OpenLibraryApi:
 
                 if response.status_code == 429:
                     if retry_count < max_retries:
-                        wait_time = 2 ** retry_count
+                        wait_time = 2**retry_count
                         logger.warning(
                             "Rate limited by Open Library. Retrying in %d seconds...",
                             wait_time,

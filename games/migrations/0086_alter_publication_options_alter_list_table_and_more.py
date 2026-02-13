@@ -6,24 +6,24 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0085_remove_wikipedia_country_gamemode_igdbgenre_description'),
+        ("games", "0085_remove_wikipedia_country_gamemode_igdbgenre_description"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='publication',
-            options={'ordering': ['name']},
+            name="publication",
+            options={"ordering": ["name"]},
         ),
         migrations.AlterModelTable(
-            name='list',
-            table='games_list',
+            name="list",
+            table="games_list",
         ),
         migrations.AlterModelTable(
-            name='listmembership',
-            table='games_listmembership',
+            name="listmembership",
+            table="games_listmembership",
         ),
         migrations.AlterModelTable(
-            name='publication',
-            table='games_publication',
+            name="publication",
+            table="games_publication",
         ),
     ]

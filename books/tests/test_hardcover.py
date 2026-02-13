@@ -39,10 +39,7 @@ class HardcoverApiInitTests(TestCase):
     def test_custom_initialization(self):
         """Test API initializes with custom values."""
         api = HardcoverApi(
-            api_token="custom_token",
-            rate_limit=2.0,
-            cache_size=100,
-            timeout=15.0
+            api_token="custom_token", rate_limit=2.0, cache_size=100, timeout=15.0
         )
         self.assertEqual(api.timeout, 15.0)
         self.assertEqual(api.min_request_interval, 2.0)
@@ -194,7 +191,7 @@ class MakeRequestTests(TestCase):
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "data": None,
-            "errors": [{"message": "Not found"}]
+            "errors": [{"message": "Not found"}],
         }
         mock_post.return_value = mock_response
 
@@ -205,7 +202,9 @@ class MakeRequestTests(TestCase):
     @mock.patch("time.sleep")
     @mock.patch("books.hardcover.HardcoverApi._wait_for_rate_limit")
     @mock.patch("requests.post")
-    def test_rate_limit_max_retries_exceeded(self, mock_post, mock_rate_limit, mock_sleep):
+    def test_rate_limit_max_retries_exceeded(
+        self, mock_post, mock_rate_limit, mock_sleep
+    ):
         """Test rate limit returns None after max retries."""
         api = HardcoverApi(api_token="token")
         mock_response_429 = mock.Mock()
@@ -258,7 +257,7 @@ class HardcoverRequestExceptionTests(TestCase):
         mock_response_200.json.return_value = {"data": {"result": "success"}}
         mock_post.side_effect = [
             requests.RequestException("Connection error"),
-            mock_response_200
+            mock_response_200,
         ]
 
         result = api._make_request("query { }")
@@ -269,7 +268,9 @@ class HardcoverRequestExceptionTests(TestCase):
     @mock.patch("time.sleep")
     @mock.patch("books.hardcover.HardcoverApi._wait_for_rate_limit")
     @mock.patch("requests.post")
-    def test_request_exception_max_retries(self, mock_post, mock_rate_limit, mock_sleep):
+    def test_request_exception_max_retries(
+        self, mock_post, mock_rate_limit, mock_sleep
+    ):
         """Test request exception returns None after max retries."""
         import requests
 
@@ -302,6 +303,7 @@ class SearchBooksTests(TestCase):
         """Test search handles results as JSON string."""
         api = HardcoverApi(api_token="token")
         import json
+
         mock_request.return_value = {
             "search": {"results": json.dumps([{"title": "Book"}])}
         }
@@ -371,9 +373,7 @@ class GetBookByIdTests(TestCase):
     def test_get_book_by_id_returns_data(self, mock_request):
         """Test get_book_by_id returns book data."""
         api = HardcoverApi(api_token="token")
-        mock_request.return_value = {
-            "books": [{"id": 123, "title": "Test Book"}]
-        }
+        mock_request.return_value = {"books": [{"id": 123, "title": "Test Book"}]}
 
         result = api.get_book_by_id(123)
 
@@ -484,7 +484,7 @@ class GetBookInfoTests(TestCase):
                 "cached_contributors": [{"name": "Author Name"}],
                 "cached_tags": [{"tag": "Fiction"}],
                 "cached_image": "https://example.com/cover.jpg",
-                "editions": [{"isbn_13": "9780123456789"}]
+                "editions": [{"isbn_13": "9780123456789"}],
             }
         ]
 
@@ -542,8 +542,8 @@ class GetBookInfoTests(TestCase):
                 "cached_contributors": [
                     {"author": {"name": "Nested Author"}},
                     {"name": "Direct Name"},
-                    "String Author"
-                ]
+                    "String Author",
+                ],
             }
         ]
 
@@ -586,7 +586,7 @@ class GetBookInfoTests(TestCase):
             {
                 "id": 1,
                 "title": "Book",
-                "cached_tags": ["Fiction", "Mystery", {"tag": "Thriller"}]
+                "cached_tags": ["Fiction", "Mystery", {"tag": "Thriller"}],
             }
         ]
 
@@ -606,8 +606,8 @@ class GetBookInfoTests(TestCase):
                 "title": "Book",
                 "editions": [
                     {"isbn_13": "9780123456789", "isbn_10": "0123456789"},
-                    {"isbn_10": "1234567890"}
-                ]
+                    {"isbn_10": "1234567890"},
+                ],
             }
         ]
 
@@ -622,11 +622,7 @@ class GetBookInfoTests(TestCase):
         """Test get_book_info handles invalid release date gracefully."""
         api = HardcoverApi(api_token="token")
         mock_search.return_value = [
-            {
-                "id": 1,
-                "title": "Book",
-                "release_date": "invalid-date"
-            }
+            {"id": 1, "title": "Book", "release_date": "invalid-date"}
         ]
 
         result = api.get_book_info("Book")

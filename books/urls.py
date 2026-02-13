@@ -23,7 +23,9 @@ urlpatterns = [
     ),
     # Author routes (must be before <slug:slug>/ to avoid matching "authors" as a slug)
     path("authors/", views.AuthorListView.as_view(), name="author-list"),
-    path("authors/<slug:slug>/", views.AuthorDetailView.as_view(), name="author-detail"),
+    path(
+        "authors/<slug:slug>/", views.AuthorDetailView.as_view(), name="author-detail"
+    ),
     # Book detail (catch-all slug pattern, must be last)
     path("<slug:slug>/", views.BookDetailView.as_view(), name="book-detail"),
 ]

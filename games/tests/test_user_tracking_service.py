@@ -107,7 +107,7 @@ class ReconnectTrackingRecordsTests(TestCase):
         )
         # Force a later created timestamp
         time.sleep(0.01)
-        played2 = PlayedGame.objects.create(
+        PlayedGame.objects.create(
             user=self.user,
             game=None,
             igdb_id=67890,
@@ -251,7 +251,10 @@ class ReconnectTrackingRecordsTests(TestCase):
         self.assertEqual(stats["want_reconnected"], 0)
 
     def test_both_played_and_want_reconnected(self):
-        """Test both PlayedGame and WantToPlayGame are reconnected for different users."""
+        """
+        Test both PlayedGame and WantToPlayGame are reconnected
+        for different users.
+        """
         PlayedGame.objects.create(
             user=self.user,
             game=None,

@@ -6,15 +6,15 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0082_alter_developer_name_alter_developer_parent_and_more'),
+        ("games", "0082_alter_developer_name_alter_developer_parent_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='game',
-            name='primary_protondb_game_data',
+            model_name="game",
+            name="primary_protondb_game_data",
         ),
         migrations.DeleteModel(
-            name='ProtonDBGameData',
+            name="ProtonDBGameData",
         ),
     ]

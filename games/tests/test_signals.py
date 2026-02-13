@@ -255,8 +255,12 @@ class WikipediaGenreCacheInvalidationTests(TestCase):
         )
 
         # Pre-populate parent's cache (both variants)
-        parent_cache_key_true = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:True"
-        parent_cache_key_false = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:False"
+        parent_cache_key_true = (
+            f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:True"
+        )
+        parent_cache_key_false = (
+            f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:False"
+        )
         cache.set(parent_cache_key_true, {"descendants": [child.id]})
         cache.set(parent_cache_key_false, {"descendants": [child.id]})
 
@@ -335,7 +339,9 @@ class InvalidateGenreDescendantCacheTests(TestCase):
 
         # Pre-populate all caches (both variants for each)
         gp_key_true = f"{config.CACHE_VERSION}:genre_descendants:{grandparent.id}:True"
-        gp_key_false = f"{config.CACHE_VERSION}:genre_descendants:{grandparent.id}:False"
+        gp_key_false = (
+            f"{config.CACHE_VERSION}:genre_descendants:{grandparent.id}:False"
+        )
         p_key_true = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:True"
         p_key_false = f"{config.CACHE_VERSION}:genre_descendants:{parent.id}:False"
         c_key_true = f"{config.CACHE_VERSION}:genre_descendants:{child.id}:True"

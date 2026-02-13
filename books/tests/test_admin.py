@@ -165,14 +165,14 @@ class BookFiltersTests(TestCase):
         # Create test authors
         author1 = models.Author.objects.create(name="Author One", slug="author-one")
         author2 = models.Author.objects.create(name="Author Two", slug="author-two")
-        author3 = models.Author.objects.create(
-            name="Author Three", slug="author-three"
-        )
+        author3 = models.Author.objects.create(name="Author Three", slug="author-three")
         author4 = models.Author.objects.create(name="Author Four", slug="author-four")
         author5 = models.Author.objects.create(name="Author Five", slug="author-five")
 
         # Test with 2 authors (under limit)
-        self.assertEqual(format_author_list([author1, author2]), "Author One, Author Two")
+        self.assertEqual(
+            format_author_list([author1, author2]), "Author One, Author Two"
+        )
 
         # Test with 3 authors (at limit)
         self.assertEqual(
@@ -300,17 +300,13 @@ class BookFiltersTests(TestCase):
         from books.templatetags.book_filters import author_display_name
 
         # Create parent and child author
-        parent = models.Author.objects.create(
-            name="Stephen King", slug="stephen-king"
-        )
+        parent = models.Author.objects.create(name="Stephen King", slug="stephen-king")
         child = models.Author.objects.create(
             name="Richard Bachman", slug="richard-bachman", parent=parent
         )
 
         self.assertEqual(author_display_name(parent), "Stephen King")
-        self.assertEqual(
-            author_display_name(child), "Richard Bachman (Stephen King)"
-        )
+        self.assertEqual(author_display_name(child), "Richard Bachman (Stephen King)")
         self.assertEqual(author_display_name(None), "")
 
         # Clean up

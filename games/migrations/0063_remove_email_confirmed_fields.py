@@ -19,7 +19,7 @@ def migrate_email_confirmed_to_emailaddress(apps, schema_editor):
     # Check if email_confirmed column exists in the database
     with connection.cursor() as cursor:
         # Get column names for games_user table
-        if connection.vendor == 'sqlite':
+        if connection.vendor == "sqlite":
             cursor.execute("PRAGMA table_info(games_user)")
             columns = [row[1] for row in cursor.fetchall()]
         else:
@@ -29,7 +29,7 @@ def migrate_email_confirmed_to_emailaddress(apps, schema_editor):
             )
             columns = [row[0] for row in cursor.fetchall()]
 
-        if 'email_confirmed' not in columns:
+        if "email_confirmed" not in columns:
             # Column doesn't exist (fresh database), nothing to migrate
             return
 
@@ -44,7 +44,9 @@ def migrate_email_confirmed_to_emailaddress(apps, schema_editor):
 
         for user_id, email, email_confirmed in cursor.fetchall():
             # Check if EmailAddress already exists for this user
-            if not EmailAddress.objects.filter(user_id=user_id, email__iexact=email).exists():
+            if not EmailAddress.objects.filter(
+                user_id=user_id, email__iexact=email
+            ).exists():
                 # Create EmailAddress with verified status based on old email_confirmed
                 EmailAddress.objects.create(
                     user_id=user_id,
@@ -68,7 +70,7 @@ def remove_email_confirmed_columns(apps, schema_editor):
     SQLite doesn't support DROP COLUMN in all versions, so we skip for SQLite
     (the columns just become orphaned but don't cause issues).
     """
-    if connection.vendor == 'sqlite':
+    if connection.vendor == "sqlite":
         # SQLite doesn't support DROP COLUMN before version 3.35.0
         # Skip silently - the columns remain but are harmless
         return
@@ -82,7 +84,7 @@ def remove_email_confirmed_columns(apps, schema_editor):
         existing_columns = [row[0] for row in cursor.fetchall()]
 
         for column in existing_columns:
-            cursor.execute(f'ALTER TABLE games_user DROP COLUMN {column}')
+            cursor.execute(f"ALTER TABLE games_user DROP COLUMN {column}")
 
         # Try to drop the index if it exists
         try:

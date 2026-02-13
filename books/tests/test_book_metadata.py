@@ -166,7 +166,9 @@ class IsbnLookupTests(TestCase):
 
     @mock.patch("books.book_metadata.openlibrary.get_api")
     @mock.patch("books.book_metadata.hardcover.get_api")
-    def test_isbn_lookup_hardcover_exception(self, mock_get_hardcover, mock_get_openlibrary):
+    def test_isbn_lookup_hardcover_exception(
+        self, mock_get_hardcover, mock_get_openlibrary
+    ):
         """Test Hardcover ISBN lookup exceptions are handled gracefully."""
         mock_openlibrary = mock.Mock()
         mock_openlibrary.search_by_isbn.return_value = None
@@ -265,7 +267,9 @@ class NormalizeOpenLibraryWorkTests(TestCase):
         mock_hc.return_value = None
         mock_ol_api = mock.Mock()
         mock_ol_api.get_author.return_value = {"name": "Test Author"}
-        mock_ol_api.get_cover_url.return_value = "http://covers.openlibrary.org/b/id/123-L.jpg"
+        mock_ol_api.get_cover_url.return_value = (
+            "http://covers.openlibrary.org/b/id/123-L.jpg"
+        )
         mock_ol.return_value = mock_ol_api
 
         service = BookMetadataService()

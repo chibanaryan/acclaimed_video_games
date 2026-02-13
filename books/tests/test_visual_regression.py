@@ -18,7 +18,6 @@ Reference files that must stay in sync:
 
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
-from django.template import Context, Template
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -76,7 +75,9 @@ class TemplateStructureTests(StaffClientMixin, TestCase):
         self.book.genres.add(self.genre)
 
     def test_desktop_template_has_required_slots(self):
-        """Verify desktop row includes all data-slot attributes for JS template cloning."""
+        """
+        Verify desktop row includes all required data-slot attributes.
+        """
         response = self.client.get(reverse("books:home"))
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -97,11 +98,14 @@ class TemplateStructureTests(StaffClientMixin, TestCase):
 
         # Find server-rendered book rows
         book_rows = soup.select(".book-row-wrapper")
-        self.assertTrue(len(book_rows) > 0, "Should have at least one server-rendered book row")
+        self.assertTrue(
+            len(book_rows) > 0, "Should have at least one server-rendered book row"
+        )
         first_row = book_rows[0]
 
         # Check that server-rendered rows have all required slots
-        # (these same templates are used for JS cloning when enable_client_filtering is True)
+        # These same templates are used for JS cloning
+        # when enable_client_filtering is True.
         for slot in required_slots:
             # Check if slot is on the element itself or in children
             if first_row.get("data-slot") == slot:
@@ -114,7 +118,9 @@ class TemplateStructureTests(StaffClientMixin, TestCase):
             )
 
     def test_mobile_template_has_required_slots(self):
-        """Verify mobile row includes all data-slot attributes for JS template cloning."""
+        """
+        Verify mobile row includes all required data-slot attributes.
+        """
         response = self.client.get(reverse("books:home"))
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -129,7 +135,9 @@ class TemplateStructureTests(StaffClientMixin, TestCase):
 
         # Find server-rendered mobile rows
         mobile_rows = soup.select(".book-card-mobile")
-        self.assertTrue(len(mobile_rows) > 0, "Should have at least one server-rendered mobile row")
+        self.assertTrue(
+            len(mobile_rows) > 0, "Should have at least one server-rendered mobile row"
+        )
         first_row = mobile_rows[0]
 
         # Check that server-rendered mobile rows have all required slots
@@ -174,9 +182,13 @@ class ServerRenderedOutputTests(StaffClientMixin, TestCase):
         self.author2 = models.Author.objects.create(
             name="Secondary Author", slug="secondary-author"
         )
-        self.genre1 = models.BookGenre.objects.create(name="Science Fiction", slug="sci-fi")
+        self.genre1 = models.BookGenre.objects.create(
+            name="Science Fiction", slug="sci-fi"
+        )
         self.genre2 = models.BookGenre.objects.create(name="Fantasy", slug="fantasy")
-        self.genre3 = models.BookGenre.objects.create(name="Adventure", slug="adventure")
+        self.genre3 = models.BookGenre.objects.create(
+            name="Adventure", slug="adventure"
+        )
 
         self.book = models.Book.objects.create(
             name="Test Book Title",
@@ -192,7 +204,9 @@ class ServerRenderedOutputTests(StaffClientMixin, TestCase):
         self.book.genres.add(self.genre1, self.genre2, self.genre3)
 
         # Create list memberships for list_count
-        pub = models.BookPublication.objects.create(name="Test Publisher", slug="test-pub")
+        pub = models.BookPublication.objects.create(
+            name="Test Publisher", slug="test-pub"
+        )
         for i in range(7):
             book_list = models.BookList.objects.create(
                 name=f"Test List {i}",
@@ -390,7 +404,7 @@ class BookWithoutOptionalFieldsTests(StaffClientMixin, TestCase):
 
         soup = BeautifulSoup(response.content, "html.parser")
         # Year slot should exist but be empty or hidden
-        year_slot = soup.find(attrs={"data-slot": "year"})
+        self.assertIsNotNone(soup.find(attrs={"data-slot": "year"}))
         # Should not cause rendering issues
 
     def test_book_without_authors_renders(self):
@@ -408,10 +422,8 @@ class BookWithoutOptionalFieldsTests(StaffClientMixin, TestCase):
         """Test book without page_count renders without error."""
         response = self.client.get(reverse("books:home"))
         self.assertEqual(response.status_code, 200)
-
-        soup = BeautifulSoup(response.content, "html.parser")
         # Page count slot should not appear or be empty when null
-        # Server rendering should not show "None pages" or similar
+        self.assertNotContains(response, "None pages")
 
     def test_book_with_zero_list_count_renders(self):
         """Test book with 0 list count renders without showing list count."""
@@ -465,11 +477,15 @@ class MobileDesktopConsistencyTests(StaffClientMixin, TestCase):
 
         # Get rank from desktop
         desktop_rank = soup.find(id=f"book-{self.book.id}")
-        desktop_rank_slot = desktop_rank.find(attrs={"data-slot": "rank"}) if desktop_rank else None
+        desktop_rank_slot = (
+            desktop_rank.find(attrs={"data-slot": "rank"}) if desktop_rank else None
+        )
 
         # Get rank from mobile
         mobile_rank = soup.find(id=f"book-{self.book.id}-mobile")
-        mobile_rank_slot = mobile_rank.find(attrs={"data-slot": "rank"}) if mobile_rank else None
+        mobile_rank_slot = (
+            mobile_rank.find(attrs={"data-slot": "rank"}) if mobile_rank else None
+        )
 
         if desktop_rank_slot and mobile_rank_slot:
             desktop_text = desktop_rank_slot.get_text().strip()
@@ -499,9 +515,7 @@ class AuthenticatedUserRenderingTests(StaffClientMixin, TestCase):
     def test_non_staff_user_gets_404(self):
         """Test non-staff users get 404 (books is staff-only)."""
         # Create and login as non-staff user
-        non_staff = User.objects.create_user(
-            username="regularuser", password="regularpass"
-        )
+        User.objects.create_user(username="regularuser", password="regularpass")
         self.client.login(username="regularuser", password="regularpass")
         response = self.client.get(reverse("books:home"))
         self.assertEqual(response.status_code, 404)
@@ -517,10 +531,7 @@ class AuthenticatedUserRenderingTests(StaffClientMixin, TestCase):
         desktop_row = soup.find(id=f"book-{self.book.id}")
         if desktop_row:
             read_slot = desktop_row.find(attrs={"data-slot": "read-button"})
-            self.assertIsNotNone(
-                read_slot,
-                "Staff user should have read button slot"
-            )
+            self.assertIsNotNone(read_slot, "Staff user should have read button slot")
 
     def test_read_book_shows_read_state(self):
         """Test book marked as read shows correct state."""
@@ -541,6 +552,7 @@ class AuthenticatedUserRenderingTests(StaffClientMixin, TestCase):
         )
 
         response = self.client.get(reverse("books:home"))
+        self.assertEqual(response.status_code, 200)
         # Should contain want to read state indicator (bookmark icon or text)
         # The exact text depends on template implementation
 
@@ -611,3 +623,7 @@ class HTMXAttributeTests(StaffClientMixin, TestCase):
 
         # Should have at least one HTMX-enabled button for read tracking
         # (Either in the dropdown or as a direct button)
+        self.assertTrue(
+            len(htmx_buttons) > 0,
+            "Should have HTMX-enabled elements for read tracking",
+        )

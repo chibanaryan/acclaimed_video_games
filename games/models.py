@@ -1464,7 +1464,6 @@ class Game(MediaItemBase):
             Dictionary mapping type labels to lists of membership data
         """
         from collections import defaultdict
-        from . import constants
 
         grouped = defaultdict(list)
         # Use .all() to leverage prefetch_related from views when available

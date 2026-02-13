@@ -38,7 +38,8 @@ def update_year_decade_ranks() -> Tuple[int, int]:
         with transaction.atomic():
             with connection.cursor() as cursor:
                 # Update year_rank using window function
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE games_game
                     SET year_rank = subquery.row_num
                     FROM (
@@ -50,10 +51,12 @@ def update_year_decade_ranks() -> Tuple[int, int]:
                         FROM games_game
                     ) AS subquery
                     WHERE games_game.id = subquery.id
-                """)
+                """
+                )
 
                 # Update decade_rank using window function
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE games_game
                     SET decade_rank = subquery.row_num
                     FROM (
@@ -65,7 +68,8 @@ def update_year_decade_ranks() -> Tuple[int, int]:
                         FROM games_game
                     ) AS subquery
                     WHERE games_game.id = subquery.id
-                """)
+                """
+                )
 
         games_updated = models.Game.objects.count()
         years_count = models.Game.objects.values("year_of_release").distinct().count()

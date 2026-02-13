@@ -7,7 +7,14 @@ import logging
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from games.models import Developer, Game, PlayedGame, Post, WantToPlayGame, WikipediaGenre
+from games.models import (
+    Developer,
+    Game,
+    PlayedGame,
+    Post,
+    WantToPlayGame,
+    WikipediaGenre,
+)
 
 logger = logging.getLogger(__name__)
 

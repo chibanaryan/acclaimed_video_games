@@ -122,7 +122,9 @@ class BookMetadataService:
                     result = self._hardcover_api.get_book_info(title, author)
                     if result:
                         result["source"] = "hardcover"
-                        result["source_ids"] = {"hardcover_id": result.get("hardcover_id")}
+                        result["source_ids"] = {
+                            "hardcover_id": result.get("hardcover_id")
+                        }
                         # Normalize field names
                         result = self._normalize_hardcover_result(result)
                         return result
@@ -183,9 +185,7 @@ class BookMetadataService:
 
         return sources
 
-    def _normalize_openlibrary_result(
-        self, result: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _normalize_openlibrary_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """Normalize Open Library result to standard format."""
         return {
             "title": result.get("title"),
@@ -223,16 +223,16 @@ class BookMetadataService:
 
         # Get cover
         cover_id = edition.get("covers", [None])[0]
-        cover_url = (
-            self.openlibrary_api.get_cover_url(cover_id)
-            if cover_id
-            else None
-        )
+        cover_url = self.openlibrary_api.get_cover_url(cover_id) if cover_id else None
 
         return {
             "title": edition.get("title") or work.get("title"),
             "authors": authors,
-            "year": edition.get("publish_date", "")[:4] if edition.get("publish_date") else None,
+            "year": (
+                edition.get("publish_date", "")[:4]
+                if edition.get("publish_date")
+                else None
+            ),
             "isbn": [isbn],
             "cover_url": cover_url,
             "genres": work.get("subjects", [])[:10],
@@ -245,9 +245,7 @@ class BookMetadataService:
             },
         }
 
-    def _normalize_hardcover_result(
-        self, result: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _normalize_hardcover_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """Normalize Hardcover result to standard format."""
         return {
             "title": result.get("title"),

@@ -188,9 +188,7 @@ class BookModelTests(TestCase):
 
     def test_decade_property(self):
         """Test decade property calculation."""
-        book = models.Book.objects.create(
-            name="Test", rank=1, year_published=1995
-        )
+        book = models.Book.objects.create(name="Test", rank=1, year_published=1995)
         self.assertEqual(book.decade, 1990)
 
     def test_decade_property_none_when_no_year(self):
@@ -281,7 +279,9 @@ class BookModelTests(TestCase):
         """Test get_display_authors respects max_count."""
         book = models.Book.objects.create(name="Test", rank=1)
         for i in range(5):
-            author = models.Author.objects.create(name=f"Author {i}", slug=f"author-{i}")
+            author = models.Author.objects.create(
+                name=f"Author {i}", slug=f"author-{i}"
+            )
             book.authors.add(author)
 
         result = book.get_display_authors(max_count=2)
@@ -465,7 +465,9 @@ class BookQuerySetTests(TestCase):
         self.user = User.objects.create_user(username="testuser", password="testpass")
 
         # Create some books with relationships
-        self.author = models.Author.objects.create(name="Test Author", slug="test-author")
+        self.author = models.Author.objects.create(
+            name="Test Author", slug="test-author"
+        )
         self.genre = models.BookGenre.objects.create(name="Fiction")
         self.series = models.BookSeries.objects.create(name="Test Series")
 

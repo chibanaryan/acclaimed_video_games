@@ -139,7 +139,11 @@ def backwards(apps, schema_editor):
             sports.save()
 
             # Move sports-related children back under Sports
-            for name in ["Football (American)", "Football (Association)", "Snowboarding"]:
+            for name in [
+                "Football (American)",
+                "Football (Association)",
+                "Snowboarding",
+            ]:
                 child = WikipediaGenre.objects.filter(
                     name=name, parent=sports_racing_root
                 ).first()
