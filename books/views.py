@@ -258,8 +258,9 @@ class BookHomePageView(StaffOnlyMixin, RobustPaginationMixin, ListView):
         genres_list = cache.get(genres_cache_key)
         if genres_list is None:
             genres_list = list(
-                models.BookGenre.objects.order_by("level", "display_order", "name")
-                .values("id", "name", "slug", "level", "parent_id", "path")
+                models.BookGenre.objects.order_by(
+                    "level", "display_order", "name"
+                ).values("id", "name", "slug", "level", "parent_id", "path")
             )
             cache.set(genres_cache_key, genres_list, config.CACHE_TIMEOUT_24_HOURS)
         context["genres"] = genres_list
@@ -419,7 +420,9 @@ class BookDetailView(StaffOnlyMixin, DetailView):
         total_book_count = cache.get("total_book_count")
         if total_book_count is None:
             total_book_count = models.Book.objects.count()
-            cache.set("total_book_count", total_book_count, config.CACHE_TIMEOUT_24_HOURS)
+            cache.set(
+                "total_book_count", total_book_count, config.CACHE_TIMEOUT_24_HOURS
+            )
         context["total_book_count"] = total_book_count
 
         return context
@@ -457,7 +460,7 @@ class AuthorListView(StaffOnlyMixin, RobustPaginationMixin, HTMXPartialMixin, Li
         # Search filter
         q = self.request.GET.get("q")
         if q:
-            qs = qs.filter(Q(name__icontains=q) | Q(name_normalized__icontains=q))
+            qs = qs.filter(Q(name__icontains=q))
 
         # Sort parameter
         sort = self.request.GET.get("sort", "books")
@@ -488,7 +491,9 @@ class AuthorListView(StaffOnlyMixin, RobustPaginationMixin, HTMXPartialMixin, Li
                 "total_authors": models.Author.objects.count(),
                 "authors_with_books": models.Author.objects.annotate(
                     books_count=Count("books")
-                ).filter(books_count__gt=0).count(),
+                )
+                .filter(books_count__gt=0)
+                .count(),
             }
             cache.set(stats_cache_key, stats, config.CACHE_TIMEOUT_24_HOURS)
         context.update(stats)
@@ -546,8 +551,7 @@ class AuthorDetailView(StaffOnlyMixin, DetailView):
         if self.request.user.is_authenticated:
             read_ids = set(_get_read_book_ids(self.request.user))
             context["read_count"] = sum(
-                1 for book in books_list
-                if book.goodreads_id in read_ids
+                1 for book in books_list if book.goodreads_id in read_ids
             )
 
         return context
@@ -646,7 +650,7 @@ class BookSearchView(StaffOnlyMixin, ListView):
         else:
             qs = qs.none()
 
-        return qs.order_by("rank")[:self.paginate_by]
+        return qs.order_by("rank")[: self.paginate_by]
 
 
 def _get_list_type_label(list_type):

@@ -2568,6 +2568,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         year_value = self.request.GET.get("year")
         type_slug = self.request.GET.get("type")
         search_query = self.request.GET.get("q", "").strip()
+        group_by = self.request.GET.get("group_by", "publication").strip().lower()
 
         try:
             year_value = int(year_value) if year_value else None
@@ -2576,9 +2577,8 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
         type_code = constants.LIST_TYPE_CODES.get(type_slug) if type_slug else None
 
-        # Auto-determine group_by based on type filter
-        # Single type selected → year-based view; All types → publication grouping
-        group_by = "type" if type_code else "publication"
+        if group_by not in ("publication", "type"):
+            group_by = "publication"
 
         return year_value, type_slug, type_code, search_query, group_by
 

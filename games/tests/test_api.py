@@ -464,6 +464,55 @@ class UnifiedSearchViewTests(TestCase):
         self.assertEqual(len(data["games"]), 1)
         self.assertEqual(data["games"][0]["name"], "Pokémon Red")
 
+    def test_unified_search_accent_insensitive_developers(self):
+        """Test that ASCII query finds accented developer names."""
+        pokemon_dev = models.Developer.objects.create(
+            name="Pokémon Studios",
+            slug="pokemon-studios",
+            igdb_id=40,
+        )
+        pokemon_game = models.Game.objects.create(
+            name="Pokemon Studio Test",
+            rank=20,
+            year_of_release=2000,
+            slug="pokemon-studio-test",
+        )
+        pokemon_game.developers.add(pokemon_dev)
+
+        response = self.client.get("/api/unified-search/", {"q": "Pokemon"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        developer_names = [dev["name"] for dev in data["developers"]]
+        self.assertIn("Pokémon Studios", developer_names)
+
+    def test_unified_search_accent_insensitive_series(self):
+        """Test that ASCII query finds accented series names."""
+        pokemon_series = models.Series.objects.create(
+            name="Pokémon Chronicles",
+            slug="pokemon-chronicles",
+            igdb_id=9999,
+        )
+        pokemon_game_1 = models.Game.objects.create(
+            name="Pokemon Chronicle I",
+            rank=30,
+            year_of_release=2001,
+            slug="pokemon-chronicle-i",
+        )
+        pokemon_game_2 = models.Game.objects.create(
+            name="Pokemon Chronicle II",
+            rank=31,
+            year_of_release=2002,
+            slug="pokemon-chronicle-ii",
+        )
+        pokemon_game_1.series.add(pokemon_series)
+        pokemon_game_2.series.add(pokemon_series)
+
+        response = self.client.get("/api/unified-search/", {"q": "Pokemon"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        series_names = [series["name"] for series in data["series"]]
+        self.assertIn("Pokémon Chronicles", series_names)
+
 
 class GameDataVersionViewTests(TestCase):
     """Test the GameDataVersionView endpoint."""
