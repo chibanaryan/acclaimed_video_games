@@ -1433,28 +1433,39 @@ class Game(MediaItemBase):
         Returns:
             List of Developer objects, filtered and optionally limited
         """
-        developers = list(self.developers.all())
+        cache = getattr(self, "_display_developers_cache", None)
+        if cache is None:
+            cache = {}
+            self._display_developers_cache = cache
 
-        if len(developers) <= 1:
-            return developers
+        if max_count in cache:
+            return cache[max_count]
 
-        # Build set of all ancestor IDs across all developers
-        ancestor_ids = set()
-        for dev in developers:
-            # Walk up the parent chain and collect ancestor IDs
-            current = dev.parent
-            visited = set()
-            while current and current.id not in visited:
-                ancestor_ids.add(current.id)
-                visited.add(current.id)
-                current = current.parent
+        if None not in cache:
+            developers = list(self.developers.all())
 
-        # Filter out any developer that is an ancestor of another
-        filtered = [dev for dev in developers if dev.id not in ancestor_ids]
+            if len(developers) <= 1:
+                cache[None] = developers
+            else:
+                # Build set of all ancestor IDs across all developers
+                ancestor_ids = set()
+                for dev in developers:
+                    # Walk up the parent chain and collect ancestor IDs
+                    current = dev.parent
+                    visited = set()
+                    while current and current.id not in visited:
+                        ancestor_ids.add(current.id)
+                        visited.add(current.id)
+                        current = current.parent
 
-        if max_count is not None:
-            return filtered[:max_count]
-        return filtered
+                # Filter out any developer that is an ancestor of another
+                cache[None] = [dev for dev in developers if dev.id not in ancestor_ids]
+
+        if max_count is None:
+            return cache[None]
+
+        cache[max_count] = cache[None][:max_count]
+        return cache[max_count]
 
     @property
     def lists_grouped_by_type(self) -> Dict[str, list]:

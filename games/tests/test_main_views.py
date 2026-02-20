@@ -9,8 +9,10 @@ from unittest import mock
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.cache import cache
+from django.db import connection
 from django.http import StreamingHttpResponse
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from core.models import User
@@ -249,6 +251,37 @@ class HomePageViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         filters = response.context.get("filters", {})
         self.assertEqual(filters.get("sortDirection"), "asc")
+
+    def test_home_query_avoids_lazy_developer_root_lookups(self):
+        """Home search should not trigger per-row developer root queries."""
+        root = Developer.objects.create(name="Root Studio", slug="root-studio")
+        sub1 = Developer.objects.create(name="Sub 1", parent=root)
+        sub2 = Developer.objects.create(name="Sub 2", parent=sub1)
+        sub3 = Developer.objects.create(name="Sub 3", parent=sub2)
+        sub4 = Developer.objects.create(name="Sub 4", parent=sub3)
+
+        for i in range(6):
+            game = Game.objects.create(
+                name=f"Deep Chain Game {i}",
+                rank=100 + i,
+                year_of_release=2020 + i,
+            )
+            game.developers.add(sub4)
+
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(
+                reverse("home") + "?q=Deep+Chain+Game",
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        lazy_root_queries = [
+            q
+            for q in queries.captured_queries
+            if 'FROM "games_developer"' in q["sql"]
+            and 'WHERE "games_developer"."id" =' in q["sql"]
+        ]
+        self.assertEqual(lazy_root_queries, [])
 
 
 class ContactPageViewTest(TestCase):
@@ -1687,14 +1720,15 @@ class ListListViewTest(TestCase):
         self.assertEqual(groups[0]["lists"][0].year, 2020)
 
     def test_filter_by_type(self):
-        """Test filtering lists by type using URL slug."""
+        """Type filter should auto-switch to type-grouped view."""
         response = self.client.get(reverse("list-list") + "?type=all-time")
         self.assertEqual(response.status_code, 200)
-        groups = response.context["publication_groups"]
-        # Only IGN has all-time lists
-        self.assertEqual(len(groups), 1)
-        self.assertEqual(groups[0]["publication"].name, "IGN")
-        self.assertEqual(groups[0]["lists"][0].type, "A")
+        self.assertEqual(response.context["group_by"], "type")
+        type_groups = response.context["type_groups"]
+        self.assertEqual(len(type_groups), 1)
+        self.assertEqual(type_groups[0]["type_code"], "A")
+        self.assertEqual(type_groups[0]["total_count"], 1)
+        self.assertEqual(type_groups[0]["lists"][0].type, "A")
 
     def test_search_filter(self):
         """Test filtering publications by search query."""
@@ -1812,6 +1846,23 @@ class ListListViewTest(TestCase):
         self.assertEqual(groups[0]["publication"].name, "GameSpot")
         self.assertEqual(groups[1]["publication"].name, "IGN")
 
+    def test_publication_group_query_budget(self):
+        """Publication grouping should avoid per-publication list queries."""
+        for i in range(20):
+            pub = Publication.objects.create(name=f"Pub {i:02d}")
+            List.objects.create(
+                name=f"List {i:02d}",
+                publisher=pub,
+                year=2020,
+                type="E",
+            )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(reverse("list-list") + "?year=2020")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(len(queries), 20)
+
 
 class ListListFacetedFilterTest(TestCase):
     """Test faceted filter counts on list list view."""
@@ -1866,15 +1917,15 @@ class ListListFacetedFilterTest(TestCase):
         self.assertNotIn("Polygon", pub_names)  # 0 count in 2020
 
     def test_publication_groups_filter_by_type(self):
-        """Publication groups should reflect type filter."""
+        """Type filter should auto-switch to type-grouped view."""
         response = self.client.get(reverse("list-list") + "?type=end-of-year")
-        groups = response.context["publication_groups"]
-        pub_names = [g["publication"].name for g in groups]
+        self.assertEqual(response.context["group_by"], "type")
+        type_groups = response.context["type_groups"]
+        type_codes = [g["type_code"] for g in type_groups]
 
-        # End-of-year: IGN has 1, GameSpot has 2, Polygon has 0
-        self.assertIn("IGN", pub_names)
-        self.assertIn("GameSpot", pub_names)
-        self.assertNotIn("Polygon", pub_names)
+        # End-of-year only
+        self.assertEqual(type_codes, ["E"])
+        self.assertEqual(type_groups[0]["total_count"], 3)
 
     def test_type_counts_filter_by_year(self):
         """Type counts should reflect year filter."""
@@ -1890,11 +1941,11 @@ class ListListFacetedFilterTest(TestCase):
         """Multiple filters should combine to affect counts."""
         response = self.client.get(reverse("list-list") + "?year=2020&type=all-time")
 
-        # Only IGN 2020 All-time should match
-        groups = response.context["publication_groups"]
-        self.assertEqual(len(groups), 1)
-        self.assertEqual(groups[0]["publication"].name, "IGN")
-        self.assertEqual(len(groups[0]["lists"]), 1)
+        self.assertEqual(response.context["group_by"], "type")
+        type_groups = response.context["type_groups"]
+        self.assertEqual(len(type_groups), 1)
+        self.assertEqual(type_groups[0]["type_code"], "A")
+        self.assertEqual(len(type_groups[0]["lists"]), 1)
 
         # Year counts (filtered by type only)
         years = response.context["meta"]["lists"]["years"]

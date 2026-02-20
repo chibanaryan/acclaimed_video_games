@@ -36,7 +36,65 @@
             </div>
             {# Meta row: Developer, Platforms, Genres, Playtime, List count - wraps as needed #}
             <div class="text-xs text-base-content/65" data-slot="meta">
-                {% if game %}{% with display_devs=game.get_display_developers %}{% if display_devs %}<span class="whitespace-nowrap" data-slot="primary-developer">{% for dev in display_devs %}{{ dev.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}{% if game.platforms.count > 0 %} <span class="whitespace-nowrap">{% if game.get_display_developers %}<span class="text-base-content/30">|</span> {% endif %}<span data-slot="platforms">{% for family in game.platforms.all|platform_families_grouped %}{% if family.count >= 3 %}<span class="inline-flex items-center" title="{{ family.tooltip }}">{% if family.svg_icon %}<svg class="w-3 h-3" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ family.svg_icon }}"></use></svg>{% elif family.icon %}<span class="mdi {{ family.icon }}" aria-hidden="true"></span>{% endif %}<span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">{{ family.count }}</span></span>{% else %}{% for p in family.platforms %}<span title="{{ p.name }}">{{ p.code }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</span></span>{% endif %}{% if game.wikipedia_genres.count > 0 %} <span class="whitespace-nowrap">{% if game.platforms.count > 0 or game.get_display_developers %}<span class="text-base-content/30">|</span> {% endif %}<span data-slot="genres">{% for g in game.wikipedia_genres.all %}{{ g.name }}{% if not forloop.last %}<span class="text-base-content/30"> / </span>{% endif %}{% endfor %}</span></span>{% endif %}{% if game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours %} <span class="whitespace-nowrap">{% if game.wikipedia_genres.count > 0 or game.platforms.count > 0 or game.get_display_developers %}<span class="text-base-content/30">|</span> {% endif %}<span class="tabular-nums" data-slot="playtime" title="Playtime">{{ game.primary_hltb_game_data.main_story_hours|format_playtime }}</span></span>{% endif %}{% if game.list_count %} <span class="whitespace-nowrap">{% if game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours or game.wikipedia_genres.count > 0 or game.platforms.count > 0 or game.get_display_developers %}<span class="text-base-content/30">|</span> {% endif %}<span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span></span>{% endif %}{% endif %}
+                {% if game %}
+                    {% with display_devs=game.get_display_developers %}
+                        {% if display_devs %}
+                        <span class="whitespace-nowrap" data-slot="primary-developer">
+                            {% for dev in display_devs %}{{ dev.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        </span>
+                        {% endif %}
+
+                        {% if game.platforms.count > 0 %}
+                        <span class="whitespace-nowrap">
+                            {% if display_devs %}<span class="text-base-content/30">|</span> {% endif %}
+                            <span data-slot="platforms">
+                                {% for family in game.platforms.all|platform_families_grouped %}
+                                    {% if family.count >= 3 %}
+                                    <span class="inline-flex items-center" title="{{ family.tooltip }}">
+                                        {% if family.svg_icon %}
+                                        <svg class="w-3 h-3" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ family.svg_icon }}"></use></svg>
+                                        {% elif family.icon %}
+                                        <span class="mdi {{ family.icon }}" aria-hidden="true"></span>
+                                        {% endif %}
+                                        <span class="tabular-nums font-bold" style="font-size: 8px; margin-left: 1px;">{{ family.count }}</span>
+                                    </span>
+                                    {% else %}
+                                        {% for p in family.platforms %}
+                                        <span title="{{ p.name }}">{{ p.code }}</span>{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </span>
+                        </span>
+                        {% endif %}
+
+                        {% if game.wikipedia_genres.count > 0 %}
+                        <span class="whitespace-nowrap">
+                            {% if game.platforms.count > 0 or display_devs %}<span class="text-base-content/30">|</span> {% endif %}
+                            <span data-slot="genres">
+                                {% for g in game.wikipedia_genres.all %}
+                                {{ g.name }}{% if not forloop.last %}<span class="text-base-content/30"> / </span>{% endif %}
+                                {% endfor %}
+                            </span>
+                        </span>
+                        {% endif %}
+
+                        {% if game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours %}
+                        <span class="whitespace-nowrap">
+                            {% if game.wikipedia_genres.count > 0 or game.platforms.count > 0 or display_devs %}<span class="text-base-content/30">|</span> {% endif %}
+                            <span class="tabular-nums" data-slot="playtime" title="Playtime">{{ game.primary_hltb_game_data.main_story_hours|format_playtime }}</span>
+                        </span>
+                        {% endif %}
+
+                        {% if game.list_count %}
+                        <span class="whitespace-nowrap">
+                            {% if game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours or game.wikipedia_genres.count > 0 or game.platforms.count > 0 or display_devs %}<span class="text-base-content/30">|</span> {% endif %}
+                            <span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span>
+                        </span>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
             </div>
         </div>
     </div>

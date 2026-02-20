@@ -1,6 +1,8 @@
 from unittest import mock
 
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 
 from core.models import User
 from .. import constants, models, utils
@@ -1325,6 +1327,27 @@ class GameDisplayDevelopersTests(TestCase):
 
         result = game.get_display_developers()
         self.assertEqual(result, [])
+
+    def test_get_display_developers_memoizes_results_by_max_count(self):
+        """Repeated calls should reuse cached display developers."""
+        parent = models.Developer.objects.create(name="Nintendo", slug="nintendo")
+        child = models.Developer.objects.create(name="Nintendo EPD", parent=parent)
+        game = models.Game.objects.create(name="Zelda Test", rank=1, igdb_id=99)
+        game.developers.add(parent, child)
+
+        with CaptureQueriesContext(connection):
+            first = game.get_display_developers()
+
+        with CaptureQueriesContext(connection) as second_ctx:
+            second = game.get_display_developers()
+
+        with CaptureQueriesContext(connection) as third_ctx:
+            limited = game.get_display_developers(max_count=1)
+
+        self.assertEqual(first, second)
+        self.assertEqual(limited, first[:1])
+        self.assertEqual(len(second_ctx), 0)
+        self.assertEqual(len(third_ctx), 0)
 
 
 class UserModelTests(TestCase):

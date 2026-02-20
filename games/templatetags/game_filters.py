@@ -12,7 +12,7 @@ Alternatively, use {% load core_filters %} for just the common filters.
 
 from django import template
 
-from games import constants
+from games import config, constants
 
 # Import shared filters to make them available via {% load game_filters %}
 from core.templatetags.core_filters import (
@@ -475,9 +475,31 @@ def child_developer_ids(sub_developers):
     return ids
 
 
-@register.simple_tag
-def has_published_articles():
+@register.simple_tag(takes_context=True)
+def has_published_articles(context=None):
     """Check if there are any published articles."""
+    from django.core.cache import cache
+
     from games.models import Article
 
-    return Article.objects.filter(status=Article.Status.PUBLISHED).exists()
+    request = context.get("request") if context is not None else None
+    request_cache_attr = "_has_published_articles"
+
+    if request is not None and hasattr(request, request_cache_attr):
+        return getattr(request, request_cache_attr)
+
+    # Keep direct calls (e.g., unit tests) deterministic and avoid cross-test
+    # leakage from shared cache when there is no request object.
+    if request is None:
+        return Article.objects.filter(status=Article.Status.PUBLISHED).exists()
+
+    cache_key = f"{config.CACHE_VERSION}:has_published_articles"
+    has_articles = cache.get(cache_key)
+    if has_articles is None:
+        has_articles = Article.objects.filter(status=Article.Status.PUBLISHED).exists()
+        cache.set(cache_key, has_articles, config.CACHE_TIMEOUT_5_MINUTES)
+
+    if request is not None:
+        setattr(request, request_cache_attr, has_articles)
+
+    return has_articles

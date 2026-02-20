@@ -47,7 +47,76 @@
         </div>
         {# Metadata row - always visible, indented for hierarchy #}
         <div class="game-row-details text-base-content/80 text-sm ml-4" data-slot="meta-row">
-            {% if game %}{% with display_devs=game.get_display_developers %}{% if display_devs %}<span class="whitespace-nowrap" data-slot="primary-developer">{% for dev in display_devs %}{% with root=dev.display_root_developer %}{% if root.slug %}<a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-hover">{{ dev.name }}</a>{% else %}{{ dev.name }}{% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}{% endif %}{% if game and game.platforms.count > 0 %} <span class="whitespace-nowrap">{% if game.get_display_developers %}<span class="text-base-content/30">|</span> {% endif %}<span data-slot="platforms">{% for family in game.platforms.all|platform_families_grouped %}{% if family.count >= 3 %}<span class="tooltip tooltip-top inline-flex items-start hover:text-primary cursor-pointer transition-colors" data-tip="{{ family.tooltip }}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-platforms', {detail: {platformIds: '{{ family.platform_ids_str }}', gameId: '{{ game.id }}'} }))">{% if family.svg_icon %}<svg class="w-3.5 h-3.5" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ family.svg_icon }}"></use></svg>{% elif family.icon %}<span class="mdi {{ family.icon }} text-sm leading-none" aria-hidden="true"></span>{% endif %}<span class="tabular-nums font-bold leading-none" style="font-size: 8px; margin-left: 1px; margin-top: -2px;">{{ family.count }}</span></span>{% if not forloop.last %}, {% endif %}{% else %}{% for p in family.platforms %}<span class="tooltip tooltip-top hover:text-primary cursor-pointer transition-colors" data-tip="{{ p.name }}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-platforms', {detail: {platformIds: '{{ p.id }}', gameId: '{{ game.id }}'} }))">{{ p.code }}</span>{% if not forloop.last %}, {% elif not forloop.parentloop.last %}, {% endif %}{% endfor %}{% endif %}{% endfor %}</span></span>{% endif %}{% if game and game.wikipedia_genres.count > 0 %} <span class="whitespace-nowrap">{% if game.platforms.count > 0 or game.get_display_developers %}<span class="text-base-content/30">|</span> {% endif %}<span data-slot="genres">{% for g in game.wikipedia_genres.all %}<button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '{{ g.id }}', gameId: '{{ game.id }}'} }))" title="{{ g.name }}">{{ g.name }}</button>{% if not forloop.last %}<span class="text-base-content/30"> / </span>{% endif %}{% endfor %}</span></span>{% endif %}{% if game and game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours %} <span class="whitespace-nowrap">{% if game.wikipedia_genres.count > 0 or game.platforms.count > 0 or game.get_display_developers %}<span class="text-base-content/30">|</span> {% endif %}<span class="tabular-nums" data-slot="playtime" title="HowLongToBeat playtime">{{ game.primary_hltb_game_data.main_story_hours|format_playtime }}</span></span>{% endif %}{% if game and game.list_count %} <span class="whitespace-nowrap">{% if game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours or game.wikipedia_genres.count > 0 or game.platforms.count > 0 or game.get_display_developers %}<span class="text-base-content/30">|</span> {% endif %}<span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span></span>{% endif %}
+            {% if game %}
+                {% with display_devs=game.get_display_developers %}
+                    {% if display_devs %}
+                    <span class="whitespace-nowrap" data-slot="primary-developer">
+                        {% for dev in display_devs %}
+                            {% with root=dev.display_root_developer %}
+                                {% if root.slug %}
+                                <a href="{% url 'developer-detail' slug=root.slug %}{% if dev.id != root.id %}#developer-{{ dev.id }}-game-{{ game.id }}{% else %}#game-{{ game.id }}{% endif %}" class="link link-hover">{{ dev.name }}</a>
+                                {% else %}
+                                {{ dev.name }}
+                                {% endif %}
+                            {% endwith %}
+                            {% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </span>
+                    {% endif %}
+
+                    {% if game.platforms.count > 0 %}
+                    <span class="whitespace-nowrap">
+                        {% if display_devs %}<span class="text-base-content/30">|</span> {% endif %}
+                        <span data-slot="platforms">
+                            {% for family in game.platforms.all|platform_families_grouped %}
+                                {% if family.count >= 3 %}
+                                <span class="tooltip tooltip-top inline-flex items-start hover:text-primary cursor-pointer transition-colors" data-tip="{{ family.tooltip }}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-platforms', {detail: {platformIds: '{{ family.platform_ids_str }}', gameId: '{{ game.id }}'} }))">
+                                    {% if family.svg_icon %}
+                                    <svg class="w-3.5 h-3.5" aria-hidden="true"><use href="{% static 'games/images/platform-icons.svg' %}#{{ family.svg_icon }}"></use></svg>
+                                    {% elif family.icon %}
+                                    <span class="mdi {{ family.icon }} text-sm leading-none" aria-hidden="true"></span>
+                                    {% endif %}
+                                    <span class="tabular-nums font-bold leading-none" style="font-size: 8px; margin-left: 1px; margin-top: -2px;">{{ family.count }}</span>
+                                </span>
+                                {% if not forloop.last %}, {% endif %}
+                                {% else %}
+                                    {% for p in family.platforms %}
+                                    <span class="tooltip tooltip-top hover:text-primary cursor-pointer transition-colors" data-tip="{{ p.name }}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-platforms', {detail: {platformIds: '{{ p.id }}', gameId: '{{ game.id }}'} }))">{{ p.code }}</span>
+                                    {% if not forloop.last %}, {% elif not forloop.parentloop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </span>
+                    {% endif %}
+
+                    {% if game.wikipedia_genres.count > 0 %}
+                    <span class="whitespace-nowrap">
+                        {% if game.platforms.count > 0 or display_devs %}<span class="text-base-content/30">|</span> {% endif %}
+                        <span data-slot="genres">
+                            {% for g in game.wikipedia_genres.all %}
+                            <button type="button" class="hover:text-primary cursor-pointer transition-colors" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('add-genre', {detail: {genreId: '{{ g.id }}', gameId: '{{ game.id }}'} }))" title="{{ g.name }}">{{ g.name }}</button>
+                            {% if not forloop.last %}<span class="text-base-content/30"> / </span>{% endif %}
+                            {% endfor %}
+                        </span>
+                    </span>
+                    {% endif %}
+
+                    {% if game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours %}
+                    <span class="whitespace-nowrap">
+                        {% if game.wikipedia_genres.count > 0 or game.platforms.count > 0 or display_devs %}<span class="text-base-content/30">|</span> {% endif %}
+                        <span class="tabular-nums" data-slot="playtime" title="HowLongToBeat playtime">{{ game.primary_hltb_game_data.main_story_hours|format_playtime }}</span>
+                    </span>
+                    {% endif %}
+
+                    {% if game.list_count %}
+                    <span class="whitespace-nowrap">
+                        {% if game.primary_hltb_game_data and game.primary_hltb_game_data.main_story_hours or game.wikipedia_genres.count > 0 or game.platforms.count > 0 or display_devs %}<span class="text-base-content/30">|</span> {% endif %}
+                        <span class="tabular-nums" data-slot="list-count">{{ game.list_count }} lists</span>
+                    </span>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
         </div>
     </div>
     </div>{# Close game-row #}

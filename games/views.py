@@ -1119,6 +1119,11 @@ class HomePageView(RobustPaginationMixin, ListView):
     def get_queryset(self):
         qs = (
             models.Game.objects.with_relations()
+            .prefetch_related(
+                "developers__parent__parent",
+                "developers__parent__parent__parent",
+                "developers__parent__parent__parent__parent",
+            )
             .with_played_status(self.request.user)
             .with_list_count()
         )
@@ -2559,7 +2564,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     def get_template_names(self):
         # Append mode for Load More (publication grouping only)
         if self.request.GET.get("append") == "true":
-            group_by = self.request.GET.get("group_by", "publication")
+            _, _, _, _, group_by = self._get_list_filters()
             if group_by == "publication":
                 return ["lists/includes/_list_list_append.html"]
         return super().get_template_names()
@@ -2569,7 +2574,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
         year_value = self.request.GET.get("year")
         type_slug = self.request.GET.get("type")
         search_query = self.request.GET.get("q", "").strip()
-        group_by = self.request.GET.get("group_by", "publication").strip().lower()
+        group_by_param = self.request.GET.get("group_by")
 
         try:
             year_value = int(year_value) if year_value else None
@@ -2578,8 +2583,14 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
 
         type_code = constants.LIST_TYPE_CODES.get(type_slug) if type_slug else None
 
-        if group_by not in ("publication", "type"):
-            group_by = "publication"
+        # Auto-determine grouping from type filter unless explicitly overridden.
+        # This restores flat type-grouped results when a list type is selected.
+        if group_by_param is None or group_by_param.strip() == "":
+            group_by = "type" if type_code else "publication"
+        else:
+            group_by = group_by_param.strip().lower()
+            if group_by not in ("publication", "type"):
+                group_by = "publication"
 
         return year_value, type_slug, type_code, search_query, group_by
 
@@ -2918,19 +2929,27 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             output_field=IntegerField(),
         )
 
-        for pub in publications:
-            # Get lists for this publication, filtered and sorted
-            lists_qs = models.List.objects.filter(publisher=pub)
+        publication_ids = [pub.id for pub in publications]
+        lists_by_publication_id = {}
+        if publication_ids:
+            lists_qs = models.List.objects.filter(publisher_id__in=publication_ids)
             if year_value:
                 lists_qs = lists_qs.filter(year=year_value)
             if type_code:
                 lists_qs = lists_qs.filter(type=type_code)
 
-            # Sort by type importance, then year descending
-            lists_qs = lists_qs.annotate(type_priority=type_priority).order_by(
-                "type_priority", "-year", "name"
+            # Sort by publisher, then type importance, then year descending.
+            lists_qs = (
+                lists_qs.select_related("publisher")
+                .annotate(type_priority=type_priority)
+                .order_by("publisher_id", "type_priority", "-year", "name")
             )
+            for list_obj in lists_qs:
+                lists_by_publication_id.setdefault(list_obj.publisher_id, []).append(
+                    list_obj
+                )
 
+        for pub in publications:
             publication_groups.append(
                 {
                     "publication": pub,
@@ -2939,7 +2958,7 @@ class ListListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
                     "misc_count": pub.misc_count,
                     "eoy_count": pub.eoy_count,
                     "total_count": pub.total_count,
-                    "lists": list(lists_qs),
+                    "lists": lists_by_publication_id.get(pub.id, []),
                 }
             )
 
