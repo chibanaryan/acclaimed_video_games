@@ -65,6 +65,21 @@ class GenreNormalizerTest(TestCase):
         self.assertEqual(normalize_genre("Scrolling shooter"), "Shooter")
         self.assertEqual(normalize_genre("Twin-stick shooter"), "Shooter")
 
+    def test_normalize_tactical_variants(self):
+        """Test that tactical variants normalize to Tactical Shooter."""
+        self.assertEqual(normalize_genre("Tactical"), "Tactical Shooter")
+        self.assertEqual(normalize_genre("tactical"), "Tactical Shooter")
+        self.assertEqual(
+            normalize_genre("Tactical first-person shooter"), "Tactical Shooter"
+        )
+
+    def test_normalize_delivery_sim_variants(self):
+        """Test that delivery sim variants normalize to Simulation."""
+        self.assertEqual(normalize_genre("Delivery sim"), "Simulation")
+        self.assertEqual(normalize_genre("delivery sim"), "Simulation")
+        self.assertEqual(normalize_genre("Delivery simulation"), "Simulation")
+        self.assertEqual(normalize_genre("Delivery simulator"), "Simulation")
+
     def test_normalize_invalid_genres_to_none(self):
         """Test that invalid/meta genres normalize to None."""
         self.assertIsNone(normalize_genre("(minigame)"))
@@ -118,6 +133,11 @@ class GenreNormalizerTest(TestCase):
     def test_normalize_genres_empty_list(self):
         """Test normalizing an empty list."""
         self.assertEqual(normalize_genres([]), [])
+
+    def test_normalize_genres_dedupes_delivery_sim_and_simulation(self):
+        """Test canonical deduping for delivery sim normalization."""
+        result = normalize_genres(["Delivery sim", "Simulation"])
+        self.assertEqual(result, ["Simulation"])
 
     def test_get_mapping_stats(self):
         """Test the mapping statistics function."""
