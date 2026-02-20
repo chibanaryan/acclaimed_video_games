@@ -537,6 +537,7 @@ class WikiGenreService:
 
         # Clean up whitespace
         text = text.strip()
+        text = re.sub(r"\s+", " ", text)
 
         return text
 

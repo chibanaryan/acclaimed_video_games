@@ -49,6 +49,8 @@ GENRE_MAPPING = {
     "Tube shooter": "Shooter",
     "Run and gun": "Run and Gun",
     "Stealth": "Stealth",
+    "Tactical": "Tactical Shooter",
+    "tactical": "Tactical Shooter",
     "Tactical shooter": "Tactical Shooter",
     "Tactical first-person shooter": "Tactical Shooter",
     "Battle royale": "Battle Royale",
@@ -133,6 +135,10 @@ GENRE_MAPPING = {
     "Space trading and combat": "Space Combat",
     "Space trading and combat simulator": "Space Combat",
     "Vehicle simulation game": "Simulation",  # Consolidated: only 1 game
+    "Delivery sim": "Simulation",  # Consolidated: singleton variant
+    "delivery sim": "Simulation",  # Lowercase variant
+    "Delivery simulation": "Simulation",  # Variant from infobox wording
+    "Delivery simulator": "Simulation",  # Variant from infobox wording
     "Driving": "Simulation",  # Consolidated: only 1 game
     "Racing": "Racing",
     "Sim racing": "Racing",

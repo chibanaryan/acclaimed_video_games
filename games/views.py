@@ -683,7 +683,7 @@ def download_games_csv(request):
     # Build filename based on filters
     min_year, max_year = _get_year_bounds()
     genres_lookup = utils.get_or_set_cache(
-        "search_genres_list_with_counts",
+        f"search_genres_list_with_counts:{config.CACHE_VERSION}",
         models.WikipediaGenre.objects.annotate(
             game_count=Count("games_with_wikipedia_genre")
         ),
@@ -1258,7 +1258,10 @@ class HomePageView(RobustPaginationMixin, ListView):
         # Convert IDs to strings for proper Alpine.js binding
         # Includes game_count for heatmap visualization and hierarchy fields
         # Filter out genres with 0 games (but keep parents if children have games)
-        genres = cache.get("search_wikipedia_genres_list_with_counts")
+        genre_cache_key = (
+            f"search_wikipedia_genres_list_with_counts:{config.CACHE_VERSION}"
+        )
+        genres = cache.get(genre_cache_key)
         if genres is None:
             all_genres = list(
                 models.WikipediaGenre.objects.annotate(
@@ -1292,7 +1295,7 @@ class HomePageView(RobustPaginationMixin, ListView):
                 if g["game_count"] > 0 or g["id"] in parents_with_games
             ]
             cache.set(
-                "search_wikipedia_genres_list_with_counts",
+                genre_cache_key,
                 genres,
                 config.CACHE_TIMEOUT_DEFAULT,
             )

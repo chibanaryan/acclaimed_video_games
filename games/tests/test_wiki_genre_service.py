@@ -182,6 +182,32 @@ class WikiGenreServiceTests(SimpleTestCase):
 
         self.assertEqual(genres, ["First-person shooter", "Action-adventure"])
 
+    def test_scrape_infobox_genres_keeps_tactical_phrase_from_adjacent_links(self):
+        """
+        Adjacent links for tactical + first-person shooter should stay one genre.
+        """
+        html = """
+        <html>
+        <table class="infobox">
+            <tr>
+                <th>Genre</th>
+                <td>
+                    <a href="/wiki/Tactical_shooter">Tactical</a>
+                    <a href="/wiki/First-person_shooter">first-person shooter</a>
+                </td>
+            </tr>
+        </table>
+        </html>
+        """
+        mock_response = DummyResponse(200, text=html)
+
+        with mock.patch.object(self.service.session, "get", return_value=mock_response):
+            genres = self.service._scrape_infobox_genres(
+                "https://en.wikipedia.org/wiki/Test"
+            )
+
+        self.assertEqual(genres, ["Tactical first-person shooter"])
+
     def test_scrape_infobox_genres_cleans_references(self):
         """Test that reference marks are cleaned from genre text."""
         html = """
