@@ -10,6 +10,7 @@ and other magic values that were previously scattered across the codebase.
 # =============================================================================
 
 CACHE_TIMEOUT_5_MINUTES = 60 * 5  # 300 seconds
+CACHE_TIMEOUT_1_MINUTE = 60  # 60 seconds
 CACHE_TIMEOUT_1_HOUR = 60 * 60  # 3600 seconds
 CACHE_TIMEOUT_24_HOURS = 60 * 60 * 24  # 86400 seconds
 CACHE_TIMEOUT_DEFAULT = CACHE_TIMEOUT_24_HOURS
