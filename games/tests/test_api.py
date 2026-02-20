@@ -640,6 +640,52 @@ class GameAllDataViewTests(TestCase):
         self.assertEqual(game["pt"], 10.5)
         self.assertEqual(game["ptc"], 25.0)
 
+    def test_all_data_game_arrays_use_deterministic_ordering(self):
+        """Test deterministic ordering for dv/p/g/sr arrays."""
+        dev_a = models.Developer.objects.create(
+            name="A Studio", slug="a-studio", igdb_id=102
+        )
+        dev_z = models.Developer.objects.create(
+            name="Z Studio", slug="z-studio", igdb_id=103
+        )
+        self.game.developers.add(dev_z, dev_a)
+
+        platform_arcade = models.Platform.objects.create(code="ARC", name="Arcade")
+        platform_xbox = models.Platform.objects.create(code="XBX", name="Xbox")
+        self.game.platforms.add(platform_xbox, platform_arcade)
+
+        genre_alpha = models.WikipediaGenre.objects.create(
+            name="Alpha Genre", slug="alpha-genre", display_order=0
+        )
+        genre_zeta = models.WikipediaGenre.objects.create(
+            name="Zeta Genre", slug="zeta-genre", display_order=2
+        )
+        self.game.wikipedia_genres.add(genre_alpha, genre_zeta, self.child_genre)
+
+        series_alpha = models.Series.objects.create(
+            name="Alpha Series", slug="alpha-series", igdb_id=1001
+        )
+        series_zeta = models.Series.objects.create(
+            name="Zeta Series", slug="zeta-series", igdb_id=1002
+        )
+        self.game.series.add(series_zeta, series_alpha)
+
+        response = self.client.get("/api/games/all/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        game = next(g for g in data["data"]["games"] if g["id"] == self.game.id)
+
+        self.assertEqual(game["dv"], [dev_a.id, self.developer.id, dev_z.id])
+        self.assertEqual(
+            game["p"],
+            [platform_arcade.id, self.platform.id, platform_xbox.id],
+        )
+        self.assertEqual(
+            game["g"],
+            [genre_alpha.id, self.genre.id, genre_zeta.id, self.child_genre.id],
+        )
+        self.assertEqual(game["sr"], [series_alpha.id, self.series.id, series_zeta.id])
+
     def test_all_data_developers_reference_data(self):
         """Test that developers reference data is correct."""
         response = self.client.get("/api/games/all/")

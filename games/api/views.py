@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 
 from django.contrib.flatpages.models import FlatPage
@@ -604,126 +605,223 @@ class GameAllDataView(APIView):
     def get(self, request):
         version = _compute_game_data_version()
 
-        # Fetch all games with required relations
-        games = (
-            models.Game.objects.select_related(
-                "primary_igdb_game_data",
-                "primary_hltb_game_data",
+        # Fetch base game rows with scalar fields only (no model instantiation)
+        game_rows = list(
+            models.Game.objects.values(
+                "id",
+                "igdb_id",
+                "name",
+                "slug",
+                "rank",
+                "year_of_release",
+                "primary_igdb_game_data__artwork_id",
+                "primary_hltb_game_data__main_story_hours",
+                "primary_hltb_game_data__completionist_hours",
             )
-            .prefetch_related(
-                "developers__parent",
-                "platforms",
-                "wikipedia_genres",
-                "series",
-            )
-            .with_list_count()
+            .annotate(list_count=Count("lists", distinct=True))
             .order_by("rank")
         )
+        game_ids = [row["id"] for row in game_rows]
 
-        # Build games list with minimal field names
-        games_data = []
+        # Group related IDs via through tables (ordered for deterministic output)
+        game_developer_ids = defaultdict(list)
+        used_developer_ids = set()
+        if game_ids:
+            for game_id, developer_id in (
+                models.Game.developers.through.objects.filter(game_id__in=game_ids)
+                .order_by("game_id", "developer__name", "developer_id")
+                .values_list("game_id", "developer_id")
+            ):
+                game_developer_ids[game_id].append(developer_id)
+                used_developer_ids.add(developer_id)
+
+        game_platform_ids = defaultdict(list)
+        used_platform_ids = set()
+        if game_ids:
+            for game_id, platform_id in (
+                models.Game.platforms.through.objects.filter(game_id__in=game_ids)
+                .order_by("game_id", "platform__name", "platform_id")
+                .values_list("game_id", "platform_id")
+            ):
+                game_platform_ids[game_id].append(platform_id)
+                used_platform_ids.add(platform_id)
+
+        game_genre_ids = defaultdict(list)
+        if game_ids:
+            genre_links = models.Game.wikipedia_genres.through.objects.filter(
+                game_id__in=game_ids
+            ).order_by(
+                "game_id",
+                "wikipediagenre__level",
+                "wikipediagenre__display_order",
+                "wikipediagenre__name",
+                "wikipediagenre_id",
+            )
+            for game_id, genre_id in genre_links.values_list(
+                "game_id", "wikipediagenre_id"
+            ):
+                game_genre_ids[game_id].append(genre_id)
+
+        game_series_ids = defaultdict(list)
+        used_series_ids = set()
+        if game_ids:
+            for game_id, series_id in (
+                models.Game.series.through.objects.filter(game_id__in=game_ids)
+                .order_by("game_id", "series__name", "series_id")
+                .values_list("game_id", "series_id")
+            ):
+                game_series_ids[game_id].append(series_id)
+                used_series_ids.add(series_id)
+
+        # Developers: fetch only game-linked developers + their immediate parents.
+        developer_rows = {}
+        pending_ids = set(used_developer_ids)
+        while pending_ids:
+            fetched_rows = list(
+                models.Developer.objects.filter(id__in=pending_ids).values(
+                    "id", "name", "parent_id", "slug"
+                )
+            )
+            for row in fetched_rows:
+                developer_rows[row["id"]] = row
+            pending_ids = {
+                row["parent_id"]
+                for row in fetched_rows
+                if row["parent_id"] and row["parent_id"] not in developer_rows
+            }
+
+        direct_parent_ids = {
+            developer_rows[dev_id]["parent_id"]
+            for dev_id in used_developer_ids
+            if dev_id in developer_rows and developer_rows[dev_id]["parent_id"]
+        }
+        response_developer_ids = used_developer_ids | direct_parent_ids
+
+        def _resolve_root_slug(dev_id):
+            current_id = dev_id
+            visited = set()
+            while current_id and current_id not in visited:
+                visited.add(current_id)
+                current = developer_rows.get(current_id)
+                if not current:
+                    break
+                if not current["parent_id"]:
+                    return current["slug"]
+                current_id = current["parent_id"]
+            current = developer_rows.get(dev_id)
+            return current["slug"] if current else None
+
         developers_dict = {}
-        platforms_dict = {}
-        series_dict = {}
+        for dev_id in sorted(
+            response_developer_ids,
+            key=lambda pk: developer_rows.get(pk, {}).get("name", ""),
+        ):
+            row = developer_rows.get(dev_id)
+            if not row:
+                continue
+            developers_dict[dev_id] = {
+                "n": row["name"],
+                "pa": row["parent_id"],
+                "s": _resolve_root_slug(dev_id),
+            }
 
-        for game in games:
-            # Collect developer IDs and build developer reference data
-            dev_ids = []
-            for dev in game.developers.all():
-                dev_ids.append(dev.id)
-                if dev.id not in developers_dict:
-                    # Get root developer slug for URL routing
-                    root = dev.root_developer
-                    developers_dict[dev.id] = {
-                        "n": dev.name,
-                        "pa": dev.parent_id,
-                        "s": root.slug if root else dev.slug,
-                    }
-                    # Also add parent chain to dict
-                    if dev.parent and dev.parent.id not in developers_dict:
-                        parent = dev.parent
-                        parent_root = parent.root_developer
-                        developers_dict[parent.id] = {
-                            "n": parent.name,
-                            "pa": parent.parent_id,
-                            "s": parent_root.slug if parent_root else parent.slug,
-                        }
+        platform_rows = models.Platform.objects.filter(id__in=used_platform_ids).values(
+            "id", "name", "code", "year_start", "year_end"
+        )
+        platforms_dict = {
+            row["id"]: {
+                "n": row["name"],
+                "c": row["code"],
+                "ys": row["year_start"],
+                "ye": row["year_end"],
+            }
+            for row in platform_rows
+        }
 
-            # Collect platform IDs
-            platform_ids = []
-            for platform in game.platforms.all():
-                platform_ids.append(platform.id)
-                if platform.id not in platforms_dict:
-                    platforms_dict[platform.id] = {
-                        "n": platform.name,
-                        "c": platform.code,
-                        "ys": platform.year_start,
-                        "ye": platform.year_end,
-                    }
+        series_rows = models.Series.objects.filter(id__in=used_series_ids).values(
+            "id", "name", "slug"
+        )
+        series_dict = {
+            row["id"]: {
+                "n": row["name"],
+                "s": row["slug"],
+            }
+            for row in series_rows
+        }
 
-            # Collect genre IDs
-            genre_ids = [g.id for g in game.wikipedia_genres.all()]
+        # Build all genres and descendants from one in-memory hierarchy map.
+        genre_rows = list(
+            models.WikipediaGenre.objects.values(
+                "id", "name", "slug", "parent_id", "level", "display_order"
+            ).order_by("level", "display_order", "name")
+        )
+        children_by_parent_id = defaultdict(list)
+        for row in genre_rows:
+            if row["parent_id"] is not None:
+                children_by_parent_id[row["parent_id"]].append(row["id"])
 
-            # Collect series IDs and build series reference data
-            series_ids = []
-            for s in game.series.all():
-                series_ids.append(s.id)
-                if s.id not in series_dict:
-                    series_dict[s.id] = {
-                        "n": s.name,
-                        "s": s.slug,
-                    }
+        descendant_ids_by_genre_id = {}
 
-            # Get artwork ID from primary IGDB data
-            artwork_id = None
-            if game.primary_igdb_game_data:
-                artwork_id = game.primary_igdb_game_data.artwork_id
+        def _get_descendant_ids(genre_id):
+            if genre_id in descendant_ids_by_genre_id:
+                return descendant_ids_by_genre_id[genre_id]
 
-            # Get playtime from HLTB data (as decimal for precise filtering)
-            playtime = None
-            playtime_completionist = None
-            if game.primary_hltb_game_data:
-                if game.primary_hltb_game_data.main_story_hours:
-                    playtime = float(game.primary_hltb_game_data.main_story_hours)
-                if game.primary_hltb_game_data.completionist_hours:
-                    playtime_completionist = float(
-                        game.primary_hltb_game_data.completionist_hours
-                    )
+            stack = [(genre_id, False)]
+            while stack:
+                current_id, expanded = stack.pop()
+                if current_id in descendant_ids_by_genre_id:
+                    continue
+                if expanded:
+                    descendants = []
+                    for child_id in children_by_parent_id.get(current_id, []):
+                        descendants.append(child_id)
+                        descendants.extend(descendant_ids_by_genre_id.get(child_id, []))
+                    descendant_ids_by_genre_id[current_id] = descendants
+                    continue
 
+                stack.append((current_id, True))
+                children = children_by_parent_id.get(current_id, [])
+                for child_id in reversed(children):
+                    if child_id not in descendant_ids_by_genre_id:
+                        stack.append((child_id, False))
+
+            return descendant_ids_by_genre_id.get(genre_id, [])
+
+        genres_data = [
+            {
+                "id": row["id"],
+                "n": row["name"],
+                "s": row["slug"],
+                "p": row["parent_id"],
+                "l": row["level"],
+                "d": _get_descendant_ids(row["id"]),
+            }
+            for row in genre_rows
+        ]
+
+        # Assemble games preserving existing compressed keys/semantics.
+        games_data = []
+        for row in game_rows:
+            playtime = row["primary_hltb_game_data__main_story_hours"]
+            completionist = row["primary_hltb_game_data__completionist_hours"]
             games_data.append(
                 {
-                    "id": game.id,
-                    "i": game.igdb_id,  # IGDB ID for played game tracking
-                    "n": game.name,
-                    "s": game.slug,
-                    "r": game.rank,
-                    "y": game.year_of_release,
-                    "a": artwork_id,
-                    "dv": dev_ids,  # Changed from "st" to "dv" for developers
-                    "p": platform_ids,
-                    "g": genre_ids,
-                    "sr": series_ids,
-                    "lc": game.list_count,  # List count for display
-                    "pt": playtime,  # Main story playtime in hours from HLTB
-                    "ptc": playtime_completionist,  # Completionist playtime
-                }
-            )
-
-        # Build genre hierarchy with descendant IDs for client-side expansion
-        genres_data = []
-        all_genres = models.WikipediaGenre.objects.prefetch_related("children").all()
-
-        # Pre-compute descendant IDs for each genre
-        for genre in all_genres:
-            descendant_ids = genre.get_descendant_ids(include_self=False)
-            genres_data.append(
-                {
-                    "id": genre.id,
-                    "n": genre.name,
-                    "s": genre.slug,
-                    "p": genre.parent_id,
-                    "l": genre.level,
-                    "d": descendant_ids,
+                    "id": row["id"],
+                    "i": row["igdb_id"],  # IGDB ID for played game tracking
+                    "n": row["name"],
+                    "s": row["slug"],
+                    "r": row["rank"],
+                    "y": row["year_of_release"],
+                    "a": row["primary_igdb_game_data__artwork_id"],
+                    "dv": game_developer_ids.get(row["id"], []),
+                    "p": game_platform_ids.get(row["id"], []),
+                    "g": game_genre_ids.get(row["id"], []),
+                    "sr": game_series_ids.get(row["id"], []),
+                    "lc": row["list_count"],  # List count for display
+                    "pt": float(playtime) if playtime is not None else None,
+                    "ptc": (
+                        float(completionist) if completionist is not None else None
+                    ),
                 }
             )
 

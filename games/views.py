@@ -1446,6 +1446,11 @@ class HomePageView(RobustPaginationMixin, ListView):
             else None
         )
         apply_played_filter = played_cache_user_id is not None
+        facet_cache_timeout = (
+            config.CACHE_TIMEOUT_1_MINUTE
+            if q_param or apply_played_filter
+            else config.CACHE_TIMEOUT_5_MINUTES
+        )
 
         context["genres"] = genres
         context["platforms"] = platforms
@@ -1541,9 +1546,7 @@ class HomePageView(RobustPaginationMixin, ListView):
             year_counts = [
                 {"year": x, "count": year_count_map.get(x, 0)} for x in all_years
             ]
-            cache.set(
-                year_counts_cache_key, year_counts, config.CACHE_TIMEOUT_5_MINUTES
-            )
+            cache.set(year_counts_cache_key, year_counts, facet_cache_timeout)
 
         context["year_counts"] = year_counts
 
@@ -1585,9 +1588,7 @@ class HomePageView(RobustPaginationMixin, ListView):
                 .annotate(count=Count("id", distinct=True))
                 .values_list("wikipedia_genres__id", "count")
             )
-            cache.set(
-                genre_counts_cache_key, genre_counts, config.CACHE_TIMEOUT_5_MINUTES
-            )
+            cache.set(genre_counts_cache_key, genre_counts, facet_cache_timeout)
 
         # FACETED COUNTS FOR PLATFORMS
         # Base: apply all filters EXCEPT platforms (q, year, genres)
@@ -1632,7 +1633,7 @@ class HomePageView(RobustPaginationMixin, ListView):
             cache.set(
                 platform_counts_cache_key,
                 platform_counts,
-                config.CACHE_TIMEOUT_5_MINUTES,
+                facet_cache_timeout,
             )
 
         # Merge filtered counts into genres/platforms lists
@@ -1736,9 +1737,7 @@ class HomePageView(RobustPaginationMixin, ListView):
                     )
 
             cached_rank_data = {"rank_bins": rank_bins, "max_rank": max_rank}
-            cache.set(
-                rank_dist_cache_key, cached_rank_data, config.CACHE_TIMEOUT_5_MINUTES
-            )
+            cache.set(rank_dist_cache_key, cached_rank_data, facet_cache_timeout)
         else:
             rank_bins = cached_rank_data["rank_bins"]
             max_rank = cached_rank_data["max_rank"]
@@ -1859,7 +1858,6 @@ class DeveloperListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
             dev.recursive_studios_count = hierarchy["recursive_subsidiary_counts"].get(
                 dev.id, 0
             )
-            dev._cached_game_ids = hierarchy["recursive_game_ids"].get(dev.id, set())
 
         # Filter out developers with no games (direct or through subsidiaries)
         developers = [d for d in developers if d.recursive_games_count > 0]

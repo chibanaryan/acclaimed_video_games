@@ -978,6 +978,80 @@ class FilterCacheKeyTest(TestCase):
         self.assertEqual(key_a, key_b)
 
 
+class HomeFacetCacheTimeoutTest(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.platform = Platform.objects.create(code="PC", name="PC")
+        self.genre = WikipediaGenre.objects.create(
+            name="Timeout Genre", slug="timeout-genre"
+        )
+        self.game = Game.objects.create(
+            name="Timeout Test Game",
+            rank=1,
+            year_of_release=2020,
+            igdb_id=4444,
+            slug="timeout-test-game",
+        )
+        self.game.platforms.add(self.platform)
+        self.game.wikipedia_genres.add(self.genre)
+        self.user = User.objects.create_user(
+            username="timeout-user",
+            email="timeout@example.com",
+            password="testpass123",
+        )
+        PlayedGame.objects.create(
+            user=self.user,
+            game=self.game,
+            igdb_id=self.game.igdb_id,
+        )
+
+    def _get_facet_cache_timeouts(self, cache_set_mock):
+        prefixes = (
+            "home_year_counts:",
+            "home_genre_counts:",
+            "home_platform_counts:",
+            "home_rank_dist:",
+        )
+        return [
+            call.args[2]
+            for call in cache_set_mock.call_args_list
+            if len(call.args) >= 3
+            and isinstance(call.args[0], str)
+            and call.args[0].startswith(prefixes)
+        ]
+
+    def test_filter_facet_caches_use_five_minutes_without_query(self):
+        with mock.patch("games.views.cache.set") as cache_set_mock:
+            response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        timeouts = self._get_facet_cache_timeouts(cache_set_mock)
+        self.assertEqual(len(timeouts), 4)
+        self.assertTrue(
+            all(timeout == config.CACHE_TIMEOUT_5_MINUTES for timeout in timeouts)
+        )
+
+    def test_filter_facet_caches_use_one_minute_with_query(self):
+        with mock.patch("games.views.cache.set") as cache_set_mock:
+            response = self.client.get(reverse("home") + "?q=timeout")
+        self.assertEqual(response.status_code, 200)
+        timeouts = self._get_facet_cache_timeouts(cache_set_mock)
+        self.assertEqual(len(timeouts), 4)
+        self.assertTrue(
+            all(timeout == config.CACHE_TIMEOUT_1_MINUTE for timeout in timeouts)
+        )
+
+    def test_filter_facet_caches_use_one_minute_with_played_filter(self):
+        self.client.login(username="timeout-user", password="testpass123")
+        with mock.patch("games.views.cache.set") as cache_set_mock:
+            response = self.client.get(reverse("home") + "?played=yes")
+        self.assertEqual(response.status_code, 200)
+        timeouts = self._get_facet_cache_timeouts(cache_set_mock)
+        self.assertEqual(len(timeouts), 4)
+        self.assertTrue(
+            all(timeout == config.CACHE_TIMEOUT_1_MINUTE for timeout in timeouts)
+        )
+
+
 class GameSearchLoadMoreTest(TestCase):
     """Test the Load More functionality in game search."""
 
