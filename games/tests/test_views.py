@@ -125,6 +125,18 @@ class ImportViewIntegrationTests(TestCase):
         self.assertIsNone(response2.context.get("import_success_message"))
         self.assertIsNone(response2.context.get("import_errors"))
 
+    @mock.patch("games.views.models.Game.objects.count", side_effect=Exception("boom"))
+    def test_get_context_data_handles_count_errors(self, _mock_count):
+        """Import page should render safe defaults if count queries fail."""
+        self.client.login(username="tester", password="pass")
+        response = self.client.get(reverse("import"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["counts"]["games"], 0)
+        self.assertEqual(response.context["igdb_counts"]["total"], 0)
+        self.assertEqual(response.context["wikipedia_counts"]["has_auth"], False)
+        self.assertIn("Error loading page data", response.context["import_errors"][0])
+        self.assertIsNone(response.context["import_success_message"])
+
     @mock.patch("games.views.utils.import_batch", return_value=(True, "Loaded"))
     @mock.patch("builtins.open", new_callable=mock_open, read_data=b"test data")
     @mock.patch("games.views.Path")
@@ -217,6 +229,35 @@ class WikipediaPageProgressViewTests(TestCase):
 
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response["content-type"], "text/event-stream")
+
+
+class BatchImportProgressViewTests(TestCase):
+    """Tests for BatchImportProgressView."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="batchtester", password="pass")
+        self.client = Client()
+        self.client.login(username="batchtester", password="pass")
+
+    def test_batch_progress_without_files_streams_error_event(self):
+        response = self.client.post(reverse("batch-import-progress"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["content-type"], "text/event-stream")
+        payload = next(response.streaming_content).decode("utf-8")
+        self.assertIn("No files provided", payload)
+
+    @mock.patch("games.views.utils.import_batch_with_progress")
+    def test_batch_progress_with_files_streams_import_generator(self, mock_progress):
+        mock_progress.return_value = iter(["data: ok\n\n"])
+        upload = SimpleUploadedFile("PlatformDB.txt", b"PC\tPersonal Computer")
+        response = self.client.post(
+            reverse("batch-import-progress"),
+            {"platforms_file": upload},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["content-type"], "text/event-stream")
+        mock_progress.assert_called_once()
 
 
 class GameListSeriesFilterTests(TestCase):
@@ -316,6 +357,14 @@ class PlayedFilterTests(TestCase):
         qs = models.Game.objects.all()
         filtered = views._apply_played_filter(qs, user, "maybe")
 
+        self.assertEqual(list(filtered), [game])
+
+    def test_apply_played_filter_with_only_empty_tokens_returns_queryset(self):
+        """Empty comma tokens should not apply any filter."""
+        game = models.Game.objects.create(name="Token Game", rank=2, igdb_id=101)
+        user = get_user_model().objects.create_user(username="tokens", password="pass")
+        qs = models.Game.objects.all()
+        filtered = views._apply_played_filter(qs, user, " , , ")
         self.assertEqual(list(filtered), [game])
 
 

@@ -6,20 +6,16 @@ when games are imported.
 """
 
 import logging
-from typing import TYPE_CHECKING
 
 from django.db import transaction
 
 from games.cache import invalidate_played_games_cache, invalidate_want_to_play_cache
 
-if TYPE_CHECKING:
-    from games.models import Game
-
 logger = logging.getLogger(__name__)
 
 
 def reconnect_tracking_records(
-    game: "Game",
+    game,
     igdb_ids: list[int],
     primary_igdb_id: int,
 ) -> dict:
@@ -105,7 +101,7 @@ def reconnect_tracking_records(
 
 def _reconnect_model_records(
     model_class,
-    game: "Game",
+    game,
     igdb_ids: list[int],
     primary_igdb_id: int,
 ) -> dict:

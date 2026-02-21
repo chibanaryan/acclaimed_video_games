@@ -300,6 +300,86 @@ class TogglePlayedGameViewTests(TestCase):
         # Should contain the button element
         self.assertIn(b"button", response.content)
 
+    def test_explicit_status_played_replaces_want_to_play(self):
+        """status=played should clear want-to-play and create played record."""
+        from django.urls import reverse
+
+        WantToPlayGame.objects.create(
+            user=self.user,
+            game=self.game,
+            igdb_id=self.game.igdb_id,
+        )
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(f"{url}?status=played")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertFalse(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+    def test_explicit_status_want_replaces_played(self):
+        """status=want should clear played and create want-to-play record."""
+        from django.urls import reverse
+
+        PlayedGame.objects.create(
+            user=self.user,
+            game=self.game,
+            igdb_id=self.game.igdb_id,
+        )
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(f"{url}?status=want")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertTrue(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
+    def test_explicit_status_none_clears_both_tracking_rows(self):
+        """status=none should remove both played and want-to-play records."""
+        from django.urls import reverse
+
+        PlayedGame.objects.create(
+            user=self.user,
+            game=self.game,
+            igdb_id=self.game.igdb_id,
+        )
+        WantToPlayGame.objects.create(
+            user=self.user,
+            game=self.game,
+            igdb_id=self.game.igdb_id,
+        )
+        self.client.force_login(self.user)
+        url = reverse("toggle-played-game", kwargs={"igdb_id": self.game.igdb_id})
+
+        response = self.client.post(f"{url}?status=none")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            PlayedGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+        self.assertFalse(
+            WantToPlayGame.objects.filter(
+                user=self.user, igdb_id=self.game.igdb_id
+            ).exists()
+        )
+
 
 class ProfilePlayedCountTests(TestCase):
     """Test cases for played game count in profile view."""

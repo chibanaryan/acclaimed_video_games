@@ -10,7 +10,7 @@ from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.db import connection
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -210,6 +210,31 @@ class HomePageViewTest(TestCase):
         self.assertEqual(response.content, b"cached home")
         self.assertEqual(response["X-Test-Header"], "1")
         self.assertEqual(response.cookies["ab_test"].value, "A")
+
+    def test_home_page_serialize_headers_includes_non_skipped(self):
+        response = HttpResponse("ok")
+        response["X-Custom"] = "value"
+        response["Content-Type"] = "text/plain"
+        serialized = HomePageView._serialize_headers(response)
+        self.assertIn("X-Custom", serialized)
+        self.assertEqual(serialized["X-Custom"], "value")
+        self.assertNotIn("Content-Type", serialized)
+
+    def test_home_page_serialize_cookies_invalid_max_age_becomes_none(self):
+        response = HttpResponse("ok")
+        response.set_cookie("example", "1", max_age=10)
+        response.cookies["example"]["max-age"] = "not-a-number"
+        serialized = HomePageView._serialize_cookies(response)
+        self.assertIn("example", serialized)
+        self.assertIsNone(serialized["example"]["max_age"])
+
+    def test_home_page_apply_cached_headers_skips_reserved_headers(self):
+        response = HttpResponse("ok")
+        HomePageView._apply_cached_headers(
+            response, {"X-Cache-Hit": "1", "Content-Type": "application/json"}
+        )
+        self.assertEqual(response["X-Cache-Hit"], "1")
+        self.assertNotEqual(response["Content-Type"], "application/json")
 
     def test_home_page_legacy_cache_payload_is_evicted(self):
         cache_key = f"home_page:{config.CACHE_VERSION}:default"
@@ -1459,6 +1484,64 @@ class DeveloperDetailViewTest(TestCase):
         )
         self.assertIsNone(response.context.get("cached_flag"))
 
+    def test_cached_context_drops_legacy_payload_with_model_objects(self):
+        """Legacy cached payloads should be invalidated and ignored."""
+        from django.core.cache import cache
+        from games import config
+        from games.views import DeveloperDetailView
+
+        cache_key = f"{config.CACHE_VERSION}:developer_detail:{self.dev.id}"
+        cache.set(
+            cache_key,
+            {
+                "all_games": [self.game1],
+                "subsidiaries_with_games": [],
+            },
+            60,
+        )
+        view = DeveloperDetailView()
+        cached = view._get_cached_context(self.dev)
+        self.assertIsNone(cached)
+        self.assertIsNone(cache.get(cache_key))
+
+    def test_collect_developer_ids_handles_legacy_shapes(self):
+        """ID collection should handle non-dict items and developer fallback."""
+        from games.views import DeveloperDetailView
+
+        ids = DeveloperDetailView._collect_developer_ids(
+            [
+                None,
+                {"developer": {"id": 7}, "sub_developers": []},
+                {"developer": mock.Mock(id=8), "sub_developers": []},
+            ]
+        )
+        self.assertEqual(ids, {7, 8})
+
+    def test_hydrate_subsidiaries_handles_legacy_developer_objects(self):
+        """Hydration should fallback to embedded developer when lookup misses."""
+        from games.views import DeveloperDetailView
+
+        view = DeveloperDetailView()
+        legacy_obj = mock.Mock(id=42)
+        hydrated = view._hydrate_subsidiaries(
+            [
+                {"developer": legacy_obj, "game_ids": [], "sub_developers": []},
+                {"developer": {"id": 99, "name": "Legacy Dict"}, "game_ids": []},
+            ],
+            games_by_id={},
+            developers_by_id={},
+        )
+        self.assertEqual(hydrated[0]["developer"], legacy_obj)
+        self.assertEqual(hydrated[1]["developer"]["id"], 99)
+
+    def test_fetch_games_by_ids_empty_input(self):
+        """Fetching with no game IDs should return empty collections."""
+        from games.views import DeveloperDetailView
+
+        ordered, by_id = DeveloperDetailView._fetch_games_by_ids([])
+        self.assertEqual(ordered, [])
+        self.assertEqual(by_id, {})
+
     def test_cycle_in_subsidiaries_is_handled(self):
         """Test subsidiary cycles do not cause infinite recursion."""
         parent = Developer.objects.create(name="Parent Dev", slug="parent-dev")
@@ -1729,6 +1812,18 @@ class ListListViewTest(TestCase):
         self.assertEqual(type_groups[0]["type_code"], "A")
         self.assertEqual(type_groups[0]["total_count"], 1)
         self.assertEqual(type_groups[0]["lists"][0].type, "A")
+
+    def test_publication_group_with_type_filter_applies_type_code(self):
+        """Explicit publication grouping should still honor type filter."""
+        response = self.client.get(
+            reverse("list-list") + "?group_by=publication&type=all-time"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["group_by"], "publication")
+        groups = response.context["publication_groups"]
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["lists"][0].type, constants.LIST_ALLTIME)
+        self.assertEqual(response.context["grand_total_list_count"], 1)
 
     def test_search_filter(self):
         """Test filtering publications by search query."""
@@ -2033,6 +2128,28 @@ class ListListFacetedFilterTest(TestCase):
             reverse("list-list") + "?group_by=type&sort=alpha&dir=asc"
         )
         self.assertEqual(response.context["sort"], "alpha")
+        self.assertEqual(response.context["sort_direction"], "asc")
+
+    def test_type_group_sort_alpha_desc_with_search_filter(self):
+        """Type grouping should apply publisher search with alpha desc sorting."""
+        response = self.client.get(
+            reverse("list-list") + "?group_by=type&sort=alpha&dir=desc&q=IGN"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["sort"], "alpha")
+        self.assertEqual(response.context["sort_direction"], "desc")
+        self.assertEqual(response.context["grand_total_list_count"], 2)
+        for group in response.context["type_groups"]:
+            for list_obj in group["lists"]:
+                self.assertIn("IGN", list_obj.publisher.name)
+
+    def test_type_group_sort_release_ascending(self):
+        """Type grouping should support release-year ascending order."""
+        response = self.client.get(
+            reverse("list-list") + "?group_by=type&sort=release&dir=asc"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["sort"], "release")
         self.assertEqual(response.context["sort_direction"], "asc")
 
     def test_type_group_default_sort_is_release_desc(self):

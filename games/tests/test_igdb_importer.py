@@ -175,6 +175,37 @@ class IGDBImportServiceTests(TestCase):
         self.assertEqual(results[0][2], "No IGDB ID")
 
     @mock.patch("games.services.igdb_importer.get_api")
+    def test_process_game_handles_deleted_game(self, mock_get_api):
+        """Deleted games should be reported as errors in single-game mode."""
+        mock_api = mock.MagicMock()
+        mock_api.max_batch_size = 50
+        mock_get_api.return_value = mock_api
+        service = IGDBImportService()
+
+        models.Game.objects.filter(pk=self.game.pk).delete()
+        success, game, error = service._process_game(self.game)
+
+        self.assertFalse(success)
+        self.assertEqual(game.pk, self.game.pk)
+        self.assertEqual(error, "Game no longer exists in database")
+
+    @mock.patch("games.services.igdb_importer.get_api")
+    def test_process_game_batch_handles_deleted_game(self, mock_get_api):
+        """Deleted games should be reported as errors in batch mode."""
+        mock_api = mock.MagicMock()
+        mock_api.max_batch_size = 50
+        mock_api.get_games_info_by_ids.return_value = {self.game.igdb_id: {"slug": "x"}}
+        mock_get_api.return_value = mock_api
+        service = IGDBImportService()
+
+        models.Game.objects.filter(pk=self.game.pk).delete()
+        results = service._process_game_batch([self.game])
+
+        self.assertEqual(len(results), 1)
+        self.assertFalse(results[0][0])
+        self.assertEqual(results[0][2], "Game no longer exists in database")
+
+    @mock.patch("games.services.igdb_importer.get_api")
     def test_process_game_batch_exception_handling(self, mock_get_api):
         """Test _process_game_batch exception handling (lines 402-416)."""
         mock_api = mock.MagicMock()

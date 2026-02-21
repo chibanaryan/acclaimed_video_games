@@ -1,7 +1,7 @@
 from unittest import mock
 
 from django.contrib.admin.sites import AdminSite
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
 from core.models import User
 from games import admin, models
@@ -652,3 +652,95 @@ class SavedFilterSetAdminTests(TestCase):
         self.assertIn("2 genres", value)
         self.assertIn("1 platforms", value)
         self.assertIn("1990-2020", value)
+
+
+class AdditionalAdminCoverageTests(TestCase):
+    def setUp(self):
+        self.site = AdminSite()
+        self.factory = RequestFactory()
+        self.request = self.factory.get("/admin/")
+        self.user = User.objects.create_user(
+            username="admin-extra",
+            email="admin-extra@example.com",
+            password="pass",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.request.user = self.user
+
+    def test_game_admin_get_queryset_prefetches_primary_data(self):
+        game_admin = admin.GameAdmin(models.Game, self.site)
+        game = models.Game.objects.create(
+            name="Admin Coverage Game", rank=1, igdb_id=54321, year_of_release=2020
+        )
+        qs = game_admin.get_queryset(self.request)
+        obj = qs.get(pk=game.pk)
+        self.assertEqual(obj.id, game.id)
+
+    def test_list_membership_inline_get_queryset(self):
+        inline = admin.ListMembershipInline(models.List, self.site)
+        publication = models.Publication.objects.create(name="Inline Pub")
+        lst = models.List.objects.create(
+            name="Inline List", publisher=publication, year=2024, type="A"
+        )
+        game = models.Game.objects.create(
+            name="Inline Game", rank=2, year_of_release=2021
+        )
+        models.ListMembership.objects.create(list=lst, game=game, rank=1)
+        qs = inline.get_queryset(self.request)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first().game.name, "Inline Game")
+
+    def test_list_admin_membership_count_fallback_and_queryset(self):
+        list_admin = admin.ListAdmin(models.List, self.site)
+        publication = models.Publication.objects.create(name="List Pub")
+        lst = models.List.objects.create(
+            name="List Admin List", publisher=publication, year=2023, type="E"
+        )
+        qs = list_admin.get_queryset(self.request)
+        self.assertIsNotNone(qs.get(pk=lst.pk))
+        self.assertEqual(list_admin.membership_count(lst), 0)
+
+    def test_list_membership_admin_methods_handle_missing_relations(self):
+        membership_admin = admin.ListMembershipAdmin(models.ListMembership, self.site)
+        mock_obj = mock.Mock()
+        mock_obj.game = None
+        mock_obj.list = None
+        self.assertEqual(membership_admin.game_name(mock_obj), "-")
+        self.assertEqual(membership_admin.list_name(mock_obj), "-")
+        self.assertEqual(membership_admin.publisher_name(mock_obj), "-")
+        self.assertEqual(membership_admin.list_type(mock_obj), "-")
+        qs = membership_admin.get_queryset(self.request)
+        self.assertIsNotNone(qs)
+
+    def test_inline_has_add_permission_methods(self):
+        played_inline = admin.PlayedGameInline(User, self.site)
+        want_inline = admin.WantToPlayGameInline(User, self.site)
+        email_inline = admin.EmailAddressInline(User, self.site)
+        self.assertFalse(played_inline.has_add_permission(self.request))
+        self.assertFalse(want_inline.has_add_permission(self.request))
+        self.assertFalse(email_inline.has_add_permission(self.request))
+
+    def test_user_admin_queryset_and_display_fields(self):
+        game = models.Game.objects.create(
+            name="User Admin Game", rank=3, igdb_id=98765, year_of_release=2022
+        )
+        models.PlayedGame.objects.create(user=self.user, game=game, igdb_id=98765)
+        models.WantToPlayGame.objects.create(user=self.user, game=game, igdb_id=98766)
+        user_admin = admin.UserAdmin(User, self.site)
+        qs = user_admin.get_queryset(self.request)
+        annotated_user = qs.get(pk=self.user.pk)
+        self.assertIsNotNone(annotated_user._played_games_count)
+        self.assertIsNotNone(annotated_user._want_to_play_count)
+        self.assertEqual(
+            user_admin.email_verified_display(annotated_user),
+            annotated_user.email_verified,
+        )
+        self.assertEqual(
+            user_admin.played_games_count(annotated_user),
+            annotated_user._played_games_count,
+        )
+        self.assertEqual(
+            user_admin.want_to_play_count(annotated_user),
+            annotated_user._want_to_play_count,
+        )

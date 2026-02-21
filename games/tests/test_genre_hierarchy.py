@@ -443,6 +443,12 @@ class WikipediaGenreHierarchyTest(TestCase):
         self.assertEqual(len(ids), 3)
         self.assertNotIn(self.action_root.id, ids)
 
+    def test_get_descendant_ids_uses_cached_value(self):
+        """Second call should return cached descendant IDs."""
+        first = self.action_root.get_descendant_ids(include_self=False)
+        second = self.action_root.get_descendant_ids(include_self=False)
+        self.assertEqual(second, first)
+
     def test_get_ancestors_include_self_false(self):
         """Test get_ancestors without including self."""
         ancestors = list(self.fps.get_ancestors(include_self=False))

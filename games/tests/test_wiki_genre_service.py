@@ -54,6 +54,12 @@ class WikiGenreServiceTests(SimpleTestCase):
         self.assertEqual(service.user_agent, "CustomBot/1.0")
         self.assertEqual(service.progress_callback, callback)
 
+    def test_context_manager_closes_session(self):
+        """Context manager should return self and close session on exit."""
+        with WikiGenreService(delay=0.0) as service:
+            self.assertIsNotNone(service.session)
+        self.assertIsNone(service.session)
+
     def test_search_wikipedia_finds_page_with_video_game_suffix(self):
         """Test that Wikipedia search finds page with (video game) suffix."""
         mock_response = DummyResponse(

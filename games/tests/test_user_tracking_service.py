@@ -232,6 +232,44 @@ class ReconnectTrackingRecordsTests(TestCase):
         self.assertEqual(stats["played_reconnected"], 0)
         self.assertEqual(stats["want_reconnected"], 0)
 
+    def test_existing_primary_record_merges_orphaned_duplicates(self):
+        """
+        If primary record exists, orphaned records are deleted
+        and counted as merged.
+        """
+        game = Game.objects.create(
+            name="Test Game",
+            rank=1,
+            igdb_id=12345,
+            all_igdb_ids=[12345, 67890],
+        )
+        PlayedGame.objects.create(
+            user=self.user,
+            game=game,
+            igdb_id=12345,
+        )
+        orphan1 = PlayedGame.objects.create(
+            user=self.user,
+            game=None,
+            igdb_id=67890,
+        )
+        orphan2 = PlayedGame.objects.create(
+            user=self.user,
+            game=None,
+            igdb_id=77777,
+        )
+
+        stats = reconnect_tracking_records(
+            game=game,
+            igdb_ids=[12345, 67890, 77777],
+            primary_igdb_id=12345,
+        )
+
+        self.assertFalse(PlayedGame.objects.filter(pk=orphan1.pk).exists())
+        self.assertFalse(PlayedGame.objects.filter(pk=orphan2.pk).exists())
+        self.assertEqual(stats["played_reconnected"], 0)
+        self.assertEqual(stats["played_merged"], 2)
+
     def test_empty_igdb_ids_list(self):
         """Test that empty igdb_ids list doesn't cause errors."""
         game = Game.objects.create(

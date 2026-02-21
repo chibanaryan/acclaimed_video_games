@@ -79,6 +79,20 @@ class CSPMiddlewareTest(TestCase):
 
         self.assertNotEqual(request1.csp_nonce, request2.csp_nonce)
 
+    def test_static_font_paths_get_cors_headers(self):
+        """Font assets should receive permissive CORS headers."""
+        request = self.factory.get("/static/fonts/test.woff2")
+        response = self.middleware(request)
+        self.assertEqual(response["Access-Control-Allow-Origin"], "*")
+        self.assertIn("GET", response["Access-Control-Allow-Methods"])
+        self.assertIn("Content-Type", response["Access-Control-Allow-Headers"])
+
+    def test_admin_paths_skip_csp_header(self):
+        """Admin routes should bypass CSP header injection."""
+        request = self.factory.get("/admin/")
+        response = self.middleware(request)
+        self.assertNotIn("Content-Security-Policy", response)
+
 
 class CSPNonceContextProcessorTest(TestCase):
     """Test csp_nonce context processor."""

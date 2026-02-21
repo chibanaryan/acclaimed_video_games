@@ -4,13 +4,7 @@ omit =
     */migrations/*
     */tests/*
     */management/commands/*
-    games/admin.py
-    books/admin.py
-    games/services/llm_quote_service.py
-    games/services/wiki_page_lookup_service.py
     games/services/import_handler.py
-    games/csp_middleware.py
-    games/mixins.py
 
 [report]
 exclude_lines =

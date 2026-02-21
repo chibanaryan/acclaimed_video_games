@@ -8,7 +8,10 @@ Note: All book views require staff access (StaffOnlyMixin).
 Tests must use staff users to access these views.
 """
 
+from unittest import mock
+
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
@@ -31,6 +34,31 @@ class StaffUserTestMixin:
             is_staff=True,
         )
         self.client.login(username="staffuser", password="staffpass")
+
+
+class GoodreadsImportViewTests(StaffUserTestMixin, TestCase):
+    """Tests for GoodreadsImportView."""
+
+    def test_get_renders_import_form(self):
+        response = self.client.get(reverse("books:goodreads-import"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+
+    @mock.patch("books.views.import_goodreads_csv", side_effect=ValueError("Bad CSV"))
+    def test_post_adds_form_error_when_importer_raises_value_error(self, _mock_import):
+        upload = SimpleUploadedFile(
+            "goodreads.csv",
+            b"Book Id,Title,Author,Exclusive Shelf\n123,Book,Author,read\n",
+            content_type="text/csv",
+        )
+        response = self.client.post(
+            reverse("books:goodreads-import"),
+            {"file": upload},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+        self.assertIn("Bad CSV", response.context["form"].errors["file"][0])
+        self.assertIsNone(response.context.get("summary"))
 
 
 class BookHomePageViewTests(StaffUserTestMixin, TestCase):

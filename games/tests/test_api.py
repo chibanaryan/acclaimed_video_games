@@ -513,6 +513,58 @@ class UnifiedSearchViewTests(TestCase):
         series_names = [series["name"] for series in data["series"]]
         self.assertIn("Pokémon Chronicles", series_names)
 
+    def test_unified_search_series_skips_non_matches_and_respects_limit(self):
+        """Series search should skip non-matches and stop at series_limit."""
+        non_match_series = models.Series.objects.create(
+            name="Unrelated Franchise",
+            slug="unrelated-franchise",
+            igdb_id=8888,
+        )
+        for idx in range(3):
+            game = models.Game.objects.create(
+                name=f"Unrelated {idx}",
+                rank=100 + idx,
+                year_of_release=2000 + idx,
+                slug=f"unrelated-{idx}",
+            )
+            game.series.add(non_match_series)
+
+        match_series_1 = models.Series.objects.create(
+            name="Quest Line",
+            slug="quest-line",
+            igdb_id=8889,
+        )
+        match_series_2 = models.Series.objects.create(
+            name="Quest Legacy",
+            slug="quest-legacy",
+            igdb_id=8890,
+        )
+        for idx in range(2):
+            game = models.Game.objects.create(
+                name=f"Quest {idx}",
+                rank=200 + idx,
+                year_of_release=2010 + idx,
+                slug=f"quest-{idx}",
+            )
+            game.series.add(match_series_1)
+        for idx in range(2):
+            game = models.Game.objects.create(
+                name=f"Legacy {idx}",
+                rank=300 + idx,
+                year_of_release=2015 + idx,
+                slug=f"legacy-{idx}",
+            )
+            game.series.add(match_series_2)
+
+        response = self.client.get(
+            "/api/unified-search/",
+            {"q": "Quest", "series_limit": 1},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["series"]), 1)
+        self.assertIn("Quest", data["series"][0]["name"])
+
 
 class GameDataVersionViewTests(TestCase):
     """Test the GameDataVersionView endpoint."""
@@ -786,6 +838,87 @@ class GameAllDataViewTests(TestCase):
         # When no HLTB data attached, playtime should be None
         self.assertIsNone(game["pt"])
         self.assertIsNone(game["ptc"])
+
+    def test_all_data_falls_back_to_developer_slug_if_parent_row_missing(self):
+        """Missing parent rows should not break developer root slug resolution."""
+        original_filter = models.Developer.objects.filter
+
+        def fake_filter(*args, **kwargs):
+            ids = set(kwargs.get("id__in", []))
+
+            class FakeDeveloperRows:
+                def __init__(self, rows):
+                    self.rows = rows
+
+                def values(self, *_fields):
+                    return self.rows
+
+            if ids == {self.developer.id}:
+                return FakeDeveloperRows(
+                    [
+                        {
+                            "id": self.developer.id,
+                            "name": self.developer.name,
+                            "parent_id": 999999,
+                            "slug": self.developer.slug,
+                        }
+                    ]
+                )
+            if ids == {999999}:
+                return FakeDeveloperRows([])
+            return original_filter(*args, **kwargs)
+
+        with mock.patch(
+            "games.api.views.models.Developer.objects.filter", side_effect=fake_filter
+        ):
+            response = self.client.get("/api/games/all/")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        dev_data = data["data"]["developers"][str(self.developer.id)]
+        self.assertEqual(dev_data["s"], self.developer.slug)
+
+    def test_all_data_genre_descendant_builder_handles_duplicate_rows(self):
+        """Duplicate genre rows should still produce a valid descendant list."""
+        genre_rows = [
+            {
+                "id": self.genre.id,
+                "name": self.genre.name,
+                "slug": self.genre.slug,
+                "parent_id": None,
+                "level": 0,
+                "display_order": 0,
+            },
+            {
+                "id": self.child_genre.id,
+                "name": self.child_genre.name,
+                "slug": self.child_genre.slug,
+                "parent_id": self.genre.id,
+                "level": 1,
+                "display_order": 0,
+            },
+            {
+                "id": self.child_genre.id,
+                "name": self.child_genre.name,
+                "slug": self.child_genre.slug,
+                "parent_id": self.genre.id,
+                "level": 1,
+                "display_order": 0,
+            },
+        ]
+        fake_values = mock.MagicMock()
+        fake_values.order_by.return_value = genre_rows
+
+        with mock.patch(
+            "games.api.views.models.WikipediaGenre.objects.values",
+            return_value=fake_values,
+        ):
+            response = self.client.get("/api/games/all/")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        root = next(g for g in data["data"]["genres"] if g["id"] == self.genre.id)
+        self.assertIn(self.child_genre.id, root["d"])
 
 
 class IdNameSerializerTests(TestCase):

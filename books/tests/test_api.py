@@ -396,6 +396,73 @@ class BookDataVersionAPITests(StaffAPITestMixin, TestCase):
         self.assertEqual(len(data["version"]), 12)
 
 
+class BookAllDataAPIViewTests(StaffAPITestMixin, TestCase):
+    """Tests for the BookAllDataView endpoint."""
+
+    def setUp(self):
+        super().setUp()
+        self.author = models.Author.objects.create(
+            name="All Data Author", slug="all-data"
+        )
+        self.genre_root = models.BookGenre.objects.create(
+            name="Speculative Fiction", slug="spec-fic"
+        )
+        self.genre_child = models.BookGenre.objects.create(
+            name="Epic Fantasy",
+            slug="epic-fantasy",
+            parent=self.genre_root,
+            level=1,
+        )
+        publication = models.BookPublication.objects.create(name="NYT Books")
+        book_list = models.BookList.objects.create(
+            name="Top Books 2025",
+            publisher=publication,
+            year=2025,
+            type="A",
+        )
+
+        self.book = models.Book.objects.create(
+            name="All Data Book",
+            rank=1,
+            slug="all-data-book",
+            goodreads_id="12345",
+            year_published=2020,
+            page_count=321,
+            cover_image_url="https://example.com/cover.jpg",
+        )
+        self.book.authors.add(self.author)
+        self.book.genres.add(self.genre_root, self.genre_child)
+        models.BookListMembership.objects.create(list=book_list, book=self.book, rank=1)
+
+    def test_get_all_data_returns_books_authors_and_genres(self):
+        response = self.client.get("/api/books/all/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+
+        self.assertIn("version", payload)
+        self.assertEqual(len(payload["version"]), 12)
+        self.assertIn("data", payload)
+        self.assertIn("books", payload["data"])
+        self.assertIn("authors", payload["data"])
+        self.assertIn("genres", payload["data"])
+
+        books = payload["data"]["books"]
+        self.assertEqual(len(books), 1)
+        self.assertEqual(books[0]["n"], "All Data Book")
+        self.assertEqual(books[0]["gi"], "12345")
+        self.assertEqual(books[0]["pc"], 321)
+        self.assertEqual(books[0]["lc"], 1)
+
+        authors = payload["data"]["authors"]
+        self.assertIn(str(self.author.id), authors)
+        self.assertEqual(authors[str(self.author.id)]["n"], "All Data Author")
+
+        genres = {g["id"]: g for g in payload["data"]["genres"]}
+        self.assertIn(self.genre_root.id, genres)
+        self.assertIn(self.genre_child.id, genres)
+        self.assertIn(self.genre_child.id, genres[self.genre_root.id]["d"])
+
+
 @unittest.skip("GoodreadsBookData model removed")
 class BookAllDataAPITests(StaffAPITestMixin, TestCase):
     """Tests for the BookAllDataView."""

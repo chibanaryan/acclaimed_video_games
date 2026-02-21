@@ -896,6 +896,20 @@ class ChildDeveloperIdsFilterTest(TestCase):
         result = child_developer_ids(None)
         self.assertEqual(result, [])
 
+    def test_skips_missing_developer_entries(self):
+        """Entries without developer should be ignored."""
+        from games.templatetags.game_filters import child_developer_ids
+
+        result = child_developer_ids([{"developer": None}, {"foo": "bar"}])
+        self.assertEqual(result, [])
+
+    def test_extracts_ids_from_dict_developers(self):
+        """Dictionary developers should use their id field."""
+        from games.templatetags.game_filters import child_developer_ids
+
+        result = child_developer_ids([{"developer": {"id": 42}}])
+        self.assertEqual(result, [42])
+
 
 class HasPublishedArticlesTagTest(TestCase):
     """Test the has_published_articles template tag."""

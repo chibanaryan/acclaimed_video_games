@@ -153,3 +153,20 @@ class RateLimitMiddlewareTest(TestCase):
         self._block_ip()
         response = self.client.get("/games/")
         self.assertEqual(response.status_code, 429)
+
+    def test_block_key_cache_set_failure_is_ignored(self):
+        """
+        Rate limiter should still return 429
+        even if cache.set for block key fails.
+        """
+        with patch("games.middleware.cache.get", return_value=None):
+            with patch(
+                "games.middleware.RateLimitMiddleware._incr",
+                side_effect=[RATE_LIMIT_PER_MINUTE + 1, 1],
+            ):
+                with patch(
+                    "games.middleware.cache.set",
+                    side_effect=Exception("cache write failed"),
+                ):
+                    response = self.client.get("/")
+        self.assertEqual(response.status_code, 429)
