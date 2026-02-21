@@ -6,8 +6,7 @@
 {% block title %}Acclaimed Video Games{% endblock %}
 
 {% block pre_alpine %}
-    {# Filter component - preloaded, will be loaded dynamically with Alpine #}
-    <link rel="preload" href="{% static 'games/js/filter-component.min.js' %}?v=4" as="script">
+    {# Filter component - loaded dynamically with Alpine after explicit intent #}
     <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=4');</script>
 {% endblock %}
 
@@ -55,20 +54,66 @@
     {% endif %}
     </script>
     {% if enable_client_filtering %}
-    {# Client-side filtering - lazy-loaded during idle time for better main-thread performance #}
+    {# Client-side filtering - load on deep-linked filters or explicit user intent/demand #}
     <script nonce="{{ csp_nonce }}">
     (function() {
+        var csfLoaded = false;
+        var csfLoading = false;
+        var interactionEvents = ['pointerdown', 'touchstart', 'keydown'];
+        var csfScriptUrl = '{% static "games/js/client-side-filtering.bundle.min.js" %}?v=13';
+
+        function hasActiveFilterParams() {
+            var params = new URLSearchParams(window.location.search);
+            if (!params.toString()) return false;
+            var directKeys = ['highlight', 'q', 'genres', 'platforms', 'series', 'start', 'end', 'sort', 'dir', 'played'];
+            for (var i = 0; i < directKeys.length; i++) {
+                if (params.has(directKeys[i])) return true;
+            }
+            var entries = params.entries();
+            var next = entries.next();
+            while (!next.done) {
+                if (next.value[0].indexOf('hltb_') === 0) return true;
+                next = entries.next();
+            }
+            return false;
+        }
+
+        function removeInteractionListeners() {
+            interactionEvents.forEach(function(eventName) {
+                window.removeEventListener(eventName, loadCSF, true);
+            });
+        }
+
         function loadCSF() {
+            if (csfLoaded || csfLoading) return;
+            csfLoading = true;
+            removeInteractionListeners();
             var s = document.createElement('script');
-            s.src = '{% static "games/js/client-side-filtering.bundle.min.js" %}?v=13';
+            s.src = csfScriptUrl;
             s.defer = true;
+            s.onload = function() {
+                csfLoaded = true;
+                csfLoading = false;
+            };
+            s.onerror = function() {
+                csfLoading = false;
+            };
             document.head.appendChild(s);
         }
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(loadCSF, { timeout: 2000 });
-        } else {
-            setTimeout(loadCSF, 100);
+
+        if (hasActiveFilterParams()) {
+            loadCSF();
+            removeInteractionListeners();
+            return;
         }
+
+        // Load on first explicit interaction for standard visits
+        interactionEvents.forEach(function(eventName) {
+            window.addEventListener(eventName, loadCSF, { once: true, capture: true, passive: true });
+        });
+
+        // Load on explicit demand from filter component initialization
+        window.addEventListener('acclaimed:need-csf', loadCSF);
     })();
     </script>
     {% endif %}

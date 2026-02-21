@@ -33,8 +33,7 @@
     <meta name="twitter:description" content="{% block twitter_description %}Discover the most critically acclaimed video games of all time.{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}https://www.acclaimedvideogames.com{% static 'games/brand/og-image.png' %}{% endblock %}">
 
-    {# Preconnect to external domains for faster resource loading #}
-    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+    {# Preconnect/dns-prefetch to external domains for faster resource loading #}
     <link rel="dns-prefetch" href="https://images.igdb.com">
 
     {# Favicon #}
@@ -51,8 +50,8 @@
     {# Preload Montserrat font for site title #}
     <link rel="preload" href="{% static 'games/fonts/Montserrat-SemiBold.woff2' %}" as="font" type="font/woff2" crossorigin>
 
-    {# Material Design Icons - Inlined subset CSS (~1KB) - eliminates render-blocking request #}
-    {# Only includes the ~10 icons actually used + font-face with font-display: swap #}
+    {# Material Design Icons - inline CSS mappings + preloaded self-hosted subset font #}
+    {# Font file is generated via scripts/build_mdi_subset.sh and only includes used glyphs #}
     <style nonce="{{ csp_nonce }}">
 @font-face{font-family:"Material Design Icons";src:url("{% static 'games/fonts/materialdesignicons-webfont.woff2' %}") format("woff2");font-weight:normal;font-style:normal;font-display:swap}
 .mdi::before,.mdi-set{display:inline-block;font:normal normal normal 24px/1 "Material Design Icons";font-size:inherit;text-rendering:auto;line-height:inherit;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -70,10 +69,6 @@
     <script defer src="{% static 'games/js/utils-base.min.js' %}?v=3" nonce="{{ csp_nonce }}"></script>
 
     {# Alpine.js - deferred loading for better TBT scores #}
-    {# Scripts are preloaded but execution is delayed until user interaction #}
-    <link rel="preload" href="{% static 'games/js/rank-distribution.min.js' %}" as="script">
-    <link rel="preload" href="{% static 'games/js/vendor/alpine-collapse.min.js' %}" as="script">
-    <link rel="preload" href="{% static 'games/js/vendor/alpine.min.js' %}" as="script">
 
     {# Initialize Alpine scripts array - pages can add their components via pre_alpine block #}
     <script nonce="{{ csp_nonce }}">window.alpineScripts = [];</script>
@@ -92,50 +87,73 @@
     document.addEventListener('alpine:init', function() {
         document.body.classList.remove('alpine-loading');
     });
-    // Deferred Alpine loader - waits for user interaction AND utils-base.js
+    // Deferred Alpine loader - waits for post-render idle time and utils-base.js
     (function() {
         var loaded = false;
-        var interacted = false;
-        function tryLoadAlpine() {
+        var scheduled = false;
+        var domReady = document.readyState !== 'loading';
+        var utilsReady = !!window.utilsBaseReady;
+
+        function runIdle(callback, timeout) {
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(callback, { timeout: timeout || 1200 });
+            } else {
+                setTimeout(callback, 50);
+            }
+        }
+
+        function cleanup() {
+            document.removeEventListener('DOMContentLoaded', onDomReady);
+            window.removeEventListener('load', onWindowLoad);
+            window.removeEventListener('utils-base-ready', onUtilsReady);
+        }
+
+        function loadScripts() {
             if (loaded) return;
-            // Need both user interaction AND utils-base.js to be ready
-            if (!interacted || !window.utilsBaseReady) return;
             loaded = true;
             cleanup();
+
             var i = 0;
             function next() {
                 if (i >= window.alpineScripts.length) return;
                 var s = document.createElement('script');
                 s.src = window.alpineScripts[i++];
-                s.onload = next;
+                s.onload = function() {
+                    // Spread parse/execute work across idle slices where possible.
+                    runIdle(next, 300);
+                };
                 document.head.appendChild(s);
             }
-            if ('requestIdleCallback' in window) {
-                requestIdleCallback(function() { next(); }, { timeout: 100 });
-            } else {
-                next();
-            }
+            next();
         }
-        function onInteraction() {
-            interacted = true;
-            tryLoadAlpine();
+
+        function scheduleLoad() {
+            if (loaded || scheduled || !domReady || !utilsReady) return;
+            scheduled = true;
+            runIdle(loadScripts, 1200);
         }
-        function cleanup() {
-            ['scroll', 'click', 'touchstart', 'mousemove', 'keydown'].forEach(function(e) {
-                window.removeEventListener(e, onInteraction, { capture: true });
-            });
-            window.removeEventListener('utils-base-ready', tryLoadAlpine);
+
+        function onDomReady() {
+            domReady = true;
+            scheduleLoad();
         }
-        // Listen for user interaction
-        ['scroll', 'click', 'touchstart', 'mousemove', 'keydown'].forEach(function(e) {
-            window.addEventListener(e, onInteraction, { once: true, capture: true, passive: true });
-        });
-        // Listen for utils-base ready event (no polling needed)
-        window.addEventListener('utils-base-ready', tryLoadAlpine);
-        // If utils-base already loaded, check immediately
-        if (window.utilsBaseReady) tryLoadAlpine();
-        // Fallback: auto-load after 3 seconds
-        setTimeout(function() { interacted = true; tryLoadAlpine(); }, 3000);
+
+        function onUtilsReady() {
+            utilsReady = true;
+            scheduleLoad();
+        }
+
+        function onWindowLoad() {
+            domReady = true;
+            scheduleLoad();
+        }
+
+        if (!domReady) {
+            document.addEventListener('DOMContentLoaded', onDomReady, { once: true });
+        }
+        window.addEventListener('utils-base-ready', onUtilsReady);
+        window.addEventListener('load', onWindowLoad, { once: true });
+        scheduleLoad();
     })();
     </script>
 
@@ -273,7 +291,7 @@
     {# Auth Modal - modal-based authentication flow #}
     {% include 'includes/_auth_modal.html' %}
 
-    <audio id="naviSound" preload="auto">
+    <audio id="naviSound" preload="none">
         <source src="{% static 'audio/navi_fly.mp3' %}" type="audio/mpeg">
     </audio>
 
@@ -296,7 +314,7 @@
 
     {% block extra_scripts %}{% endblock %}
 
-    {# Google Analytics - Load on user interaction for better PageSpeed scores #}
+    {# Google Analytics - interaction-only loading for lower TBT on first paint #}
     <script nonce="{{ csp_nonce }}">
         function loadGoogleAnalytics() {
             var script = document.createElement('script');
@@ -311,15 +329,16 @@
             gtag('config', 'G-0591405Q89');
         }
 
-        // Load GA on first user interaction or after 5 seconds (whichever comes first)
+        // Load GA on first explicit user intent
         var gaLoaded = false;
+        var gaEvents = ['pointerdown', 'touchstart', 'keydown'];
         function initGA() {
             if (gaLoaded) return;
             gaLoaded = true;
 
             // Remove event listeners
-            ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(event) {
-                window.removeEventListener(event, initGA);
+            gaEvents.forEach(function(event) {
+                window.removeEventListener(event, initGA, true);
             });
 
             // Load GA with idle callback for smooth performance
@@ -331,12 +350,9 @@
         }
 
         // Load on first interaction
-        ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(event) {
-            window.addEventListener(event, initGA, { once: true, passive: true });
+        gaEvents.forEach(function(event) {
+            window.addEventListener(event, initGA, { once: true, capture: true, passive: true });
         });
-
-        // Fallback: load after 5 seconds even if no interaction
-        setTimeout(initGA, 5000);
     </script>
 
     {# HTMX Event Listeners - moved to end of body to prevent render blocking #}

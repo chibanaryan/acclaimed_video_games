@@ -1,6 +1,6 @@
-/* Material Design Icons - Subset CSS */
-/* Only includes the ~10 icons actually used in this project */
-/* Reduces 53+ KiB CDN file to ~1 KiB */
+/* Material Design Icons - subset mappings used by this project */
+/* Source glyph set is generated with scripts/build_mdi_subset.sh */
+/* Current WOFF2 payload is approximately 7 KiB */
 
 /* Font face declaration - self-hosted with font-display: swap for fast FCP */
 @font-face {

@@ -1,5 +1,14 @@
 # Developer Log
 
+## 2026-02-21
+
+- Reduce homepage main-thread cost by deferring Alpine/GA/CSF loading until explicit need/intent
+- Remove timed fallback loaders and low-signal triggers from deferred script initialization
+- Gate client-side filtering bundle load while preserving deep-link filter/highlight URL behavior
+- Fix default list "Load More" rank display to keep all-time rows from showing filtered-rank parentheses
+- Add reproducible MDI subset build script and regenerate icon font to a small codepoint subset
+- Document MDI subset workflow in AGENTS and update `/icons` skill to require subset rebuild
+
 ## 2026-02-07
 
 - Fix horizontal overflow on small phone screens (responsive logo + title sizing in hero section)

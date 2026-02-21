@@ -1,6 +1,6 @@
 # AGENTS.md (Canonical)
 
-Last synchronized: 2026-02-13
+Last synchronized: 2026-02-21
 
 This file is the canonical instruction source for Codex in this repository.
 
@@ -22,7 +22,7 @@ Use these skills for common workflows:
 - `/wikipedia` - Fetch Wikipedia metadata and genres
 - `/refresh-metadata` - Weekly metadata refresh (IGDB + Wikipedia)
 - `/test` - Run tests with coverage
-- `/icons` - Add Material Design Icons to the site
+- `/icons` - Add Material Design Icons to the site (including subset font rebuilds)
 - `/openlibrary` - Fetch book metadata from Open Library API
 
 ## Development Commands
@@ -450,6 +450,7 @@ python manage.py collectstatic --noinput
 - `theme/static_src/src/styles.css` - Main Tailwind CSS source file with custom components
 - `theme/static/css/dist/styles.css` - Compiled CSS output (auto-generated)
 - `games/static/games/css/mdi-subset.css` - Material Design Icons (self-hosted subset)
+- `games/static/games/fonts/materialdesignicons-webfont.woff2` - Generated MDI subset font
 
 **Adding Custom Styles:**
 Edit `theme/static_src/src/styles.css` and use Tailwind's `@layer` directive:
@@ -472,6 +473,27 @@ Themes are defined in `theme/static_src/src/styles.css` using DaisyUI's `@plugin
 }
 ```
 The theme switcher in the navigation allows users to change themes, with the selection persisted in localStorage.
+
+### MDI Subset Workflow
+
+Material Design Icons are shipped as a local WOFF2 subset to reduce transfer size.
+
+**Rebuild command:**
+```bash
+./scripts/build_mdi_subset.sh
+```
+
+**Dependencies:**
+- `pyftsubset` (from `fonttools`)
+- `brotli`
+- `zopfli`
+
+Install once if missing:
+```bash
+pip install fonttools brotli zopfli
+```
+
+The script scans icon codepoints from `games/templates/base.html` and `games/static/games/css/mdi-subset.css`, then rewrites `games/static/games/fonts/materialdesignicons-webfont.woff2` in place.
 
 ### JavaScript Workflow
 

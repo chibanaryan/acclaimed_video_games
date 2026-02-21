@@ -330,6 +330,10 @@ document.addEventListener('alpine:init', () => {
         },
 
         async initClientFiltering() {
+            // Explicitly request CSF bundle loading from the homepage loader.
+            // This keeps default visits lightweight while still allowing on-demand init.
+            window.dispatchEvent(new CustomEvent('acclaimed:need-csf'));
+
             let retries = 0;
             const maxRetries = 30;
             const self = this;
@@ -1178,7 +1182,8 @@ document.addEventListener('alpine:init', () => {
                 button.classList.add('loading');
                 button.disabled = true;
 
-                const state = this._csf.loadMore(gameListContainer);
+                const showRank = this.hasActiveFilters() ? 'filtered' : 'alltime';
+                const state = this._csf.loadMore(gameListContainer, { showRank });
 
                 if (countContainer) {
                     countContainer.innerHTML = this._csf.renderer.getResultSummaryHtml(state.loaded, state.total);

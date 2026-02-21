@@ -223,7 +223,7 @@ class ClientSideFiltering {
     loadMore(gameListContainer, options = {}) {
         if (!this.isInitialized) return null;
 
-        const { showRank = 'filtered' } = options;
+        const { showRank = this._computeShowRank() } = options;
 
         return this.renderer.loadMore(gameListContainer, {
             showRank
