@@ -824,9 +824,16 @@ class GameQuerySet(models.QuerySet):
 
     def with_relations(self):
         """Prefetch common relations for game lists and search results."""
+        from django.db.models import Prefetch
+
+        developer_qs = Developer.objects.select_related(
+            "parent",
+            "parent__parent",
+            "parent__parent__parent",
+            "parent__parent__parent__parent",
+        )
         return self.prefetch_related(
-            "developers",
-            "developers__parent",
+            Prefetch("developers", queryset=developer_qs),
             "platforms",
             "wikipedia_genres",
             "series",
@@ -1443,22 +1450,25 @@ class Game(MediaItemBase):
 
         if None not in cache:
             developers = list(self.developers.all())
-
-            if len(developers) <= 1:
+            if not developers:
                 cache[None] = developers
             else:
-                # Build set of all ancestor IDs across all developers
+                # Prefer prefetched parent links, but fall back to normal traversal
+                # so correctness is preserved when called outside prefetch-heavy paths.
                 ancestor_ids = set()
                 for dev in developers:
-                    # Walk up the parent chain and collect ancestor IDs
-                    current = dev.parent
-                    visited = set()
-                    while current and current.id not in visited:
-                        ancestor_ids.add(current.id)
-                        visited.add(current.id)
-                        current = current.parent
+                    current = dev
+                    visited = {dev.id}
+                    while current.parent_id and current.parent_id not in visited:
+                        parent = current._state.fields_cache.get("parent")
+                        if not parent:
+                            parent = current.parent
+                        ancestor_ids.add(parent.id)
+                        visited.add(parent.id)
+                        current = parent
+                    dev._prefetched_root = current
 
-                # Filter out any developer that is an ancestor of another
+                # Filter out any developer that is an ancestor of another.
                 cache[None] = [dev for dev in developers if dev.id not in ancestor_ids]
 
         if max_count is None:

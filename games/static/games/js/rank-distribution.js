@@ -8,10 +8,73 @@
 (function() {
     'use strict';
 
+    var DEFAULT_BIN_COUNT = 10;
+
+    function isValidBinsArray(value) {
+        if (!Array.isArray(value)) return false;
+        for (var i = 0; i < value.length; i++) {
+            var bin = value[i];
+            if (!bin || typeof bin !== 'object') return false;
+            if (typeof bin.binStart !== 'number' || typeof bin.binEnd !== 'number') return false;
+            if (typeof bin.count !== 'number') return false;
+        }
+        return true;
+    }
+
+    function createZeroBins(maxRank, binCount) {
+        if (!maxRank || maxRank <= 0) return [];
+        var safeBinCount = binCount || DEFAULT_BIN_COUNT;
+        var binSize = Math.ceil(maxRank / safeBinCount);
+        var bins = [];
+        for (var i = 0; i < safeBinCount; i++) {
+            bins.push({
+                binStart: i * binSize + 1,
+                binEnd: Math.min((i + 1) * binSize, maxRank),
+                count: 0,
+            });
+        }
+        return bins;
+    }
+
+    function parseBinsFromDataAttribute(container) {
+        if (!container) return [];
+        var dataAttr = container.getAttribute('data-bins');
+        if (!dataAttr) return [];
+        try {
+            var parsed = JSON.parse(dataAttr);
+            return isValidBinsArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function normalizeBins(rawBins, chart) {
+        if (isValidBinsArray(rawBins) && rawBins.length > 0) {
+            return rawBins;
+        }
+
+        var domBins = parseBinsFromDataAttribute(chart.container);
+        if (domBins.length > 0) {
+            return domBins;
+        }
+
+        if (Array.isArray(chart.bins) && chart.bins.length > 0) {
+            return chart.bins;
+        }
+
+        return createZeroBins(chart.maxRank, chart.binCount || DEFAULT_BIN_COUNT);
+    }
+
     function RankDistributionChart(container, initialBins, maxRank) {
         this.container = container;
-        this.bins = initialBins || [];
         this.maxRank = maxRank || 1000;
+        this.binCount =
+            Array.isArray(initialBins) && initialBins.length > 0
+                ? initialBins.length
+                : DEFAULT_BIN_COUNT;
+        this.bins = isValidBinsArray(initialBins)
+            ? initialBins
+            : createZeroBins(this.maxRank, this.binCount);
         this.hoveredBin = null;
 
         this.svg = container.querySelector('.rank-distribution-svg');
@@ -187,24 +250,37 @@
         globalListenerInitialized = true;
 
         window.addEventListener('rank-distribution-update', function(event) {
-            if (Array.isArray(event.detail)) {
-                // Update all charts that are still in the DOM
-                activeCharts = activeCharts.filter(function(chart) {
-                    if (document.contains(chart.container)) {
-                        chart.bins = event.detail;
-                        chart.render();
-                        return true;
+            // Update all charts that are still in the DOM
+            activeCharts = activeCharts.filter(function(chart) {
+                if (document.contains(chart.container)) {
+                    var incomingBins = event.detail;
+                    if (
+                        incomingBins &&
+                        typeof incomingBins === 'object' &&
+                        !Array.isArray(incomingBins) &&
+                        Array.isArray(incomingBins.bins)
+                    ) {
+                        incomingBins = incomingBins.bins;
                     }
-                    // Chart container removed from DOM, clean up
-                    chart.destroy();
-                    return false;
-                });
-            }
+                    var nextBins = normalizeBins(incomingBins, chart);
+                    chart.bins = nextBins;
+                    if (Array.isArray(nextBins) && nextBins.length > 0) {
+                        chart.binCount = nextBins.length;
+                    }
+                    chart.render();
+                    return true;
+                }
+                // Chart container removed from DOM, clean up
+                chart.destroy();
+                return false;
+            });
         });
     }
 
     // Auto-initialize on DOM ready
     function initCharts() {
+        pruneStaleCharts();
+
         var containers = document.querySelectorAll('.rank-distribution');
         containers.forEach(function(container) {
             if (container._rankDistributionChart) return; // Already initialized
@@ -222,6 +298,10 @@
             // Get max rank from data attribute (defaults to 1000 for backwards compatibility)
             var maxRankAttr = container.getAttribute('data-max-rank');
             var maxRank = maxRankAttr ? parseInt(maxRankAttr, 10) : 1000;
+
+            if (!isValidBinsArray(initialBins)) {
+                initialBins = createZeroBins(maxRank, DEFAULT_BIN_COUNT);
+            }
 
             var chart = new RankDistributionChart(container, initialBins, maxRank);
             container._rankDistributionChart = chart;
@@ -255,6 +335,12 @@
         initCharts();
     });
 
+    // Manual DOM swaps (non-HTMX) can replace chart containers.
+    // Allow other modules to request (re)initialization explicitly.
+    window.addEventListener('rank-distribution-init', function() {
+        initCharts();
+    });
+
     // Re-render charts after bfcache restoration
     // The bfcache preserves chart.bins from before navigation, so render() restores
     // the visual state immediately. The filter component's bfcache-restore handler
@@ -272,4 +358,5 @@
 
     // Export for manual initialization if needed
     window.RankDistributionChart = RankDistributionChart;
+    window.initRankDistributionCharts = initCharts;
 })();

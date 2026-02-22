@@ -167,6 +167,7 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
                 "DS",
                 "3DS",
                 "SW",
+                "SW2",
                 "GB",
                 "GBA",
                 "GBC",
@@ -227,7 +228,7 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
         ("Nintendo Handheld", ["GB", "GBC", "GBA", "DS", "3DS"]),
         (
             "Nintendo Home Console",
-            ["NES", "FDS", "SNES", "N64", "GC", "Wii", "WiiU", "SW"],
+            ["NES", "FDS", "SNES", "N64", "GC", "Wii", "WiiU", "SW", "SW2"],
         ),
         ("PlayStation Handheld", ["PSP", "PSV"]),
         ("PlayStation Home Console", ["PS", "PS2", "PS3", "PS4", "PS5", "PSVR"]),
@@ -291,6 +292,7 @@ def _expand_platform_virtual_ids(platforms_param, platforms):
             "Wii",
             "WiiU",
             "SW",
+            "SW2",
             "GB",
             "GBC",
             "GBA",
@@ -341,7 +343,17 @@ def _expand_platform_virtual_ids(platforms_param, platforms):
             "E60",
         ],
         # Form factor virtual IDs
-        "ff-nintendo-home": ["NES", "FDS", "SNES", "N64", "GC", "Wii", "WiiU", "SW"],
+        "ff-nintendo-home": [
+            "NES",
+            "FDS",
+            "SNES",
+            "N64",
+            "GC",
+            "Wii",
+            "WiiU",
+            "SW",
+            "SW2",
+        ],
         "ff-nintendo-handheld": ["GB", "GBC", "GBA", "DS", "3DS"],
         "ff-playstation-home": ["PS", "PS2", "PS3", "PS4", "PS5", "PSVR"],
         "ff-playstation-handheld": ["PSP", "PSV"],
@@ -1119,11 +1131,6 @@ class HomePageView(RobustPaginationMixin, ListView):
     def get_queryset(self):
         qs = (
             models.Game.objects.with_relations()
-            .prefetch_related(
-                "developers__parent__parent",
-                "developers__parent__parent__parent",
-                "developers__parent__parent__parent__parent",
-            )
             .with_played_status(self.request.user)
             .with_list_count()
         )

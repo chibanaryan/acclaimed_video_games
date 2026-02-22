@@ -64,6 +64,7 @@ document.addEventListener('alpine:init', () => {
         _debouncedFilter: null,
         _debouncedDisplay: null,
         clientFilterReady: false,
+        _clientFilteringInitRequested: false,
         _csf: null,
         // Store listener references for cleanup (memory leak fix)
         _popstateListener: null,
@@ -271,6 +272,9 @@ document.addEventListener('alpine:init', () => {
                     this.filters.hltb_min = params.get('hltb_min') ? parseInt(params.get('hltb_min')) : null;
                     this.filters.hltb_max = params.get('hltb_max') ? parseInt(params.get('hltb_max')) : null;
                     this.filters.hltb_preset = this.calculateHltbPreset(this.filters.hltb_min, this.filters.hltb_max);
+                    if (this.hasActiveFilters()) {
+                        this.requestClientFilteringInit('popstate');
+                    }
                     if (this.clientFilterReady) {
                         this.performClientUpdate();
                     } else {
@@ -304,7 +308,10 @@ document.addEventListener('alpine:init', () => {
                 window.addEventListener('mobile-filter-opened', this._mobileFilterListener);
 
                 this.initialized = true;
-                this.initClientFiltering();
+                this.dispatchInitialCounts();
+                if (this.hasActiveFilterParamsOnUrl()) {
+                    this.requestClientFilteringInit('initial-url');
+                }
             };
 
             // Use requestIdleCallback to defer non-critical init, fallback to setTimeout
@@ -327,6 +334,29 @@ document.addEventListener('alpine:init', () => {
                    this.filters.hltb_max !== null ||
                    (this.filters.sort && this.filters.sort !== 'rank') ||
                    (this.filters.sortDirection && this.filters.sortDirection !== 'asc');
+        },
+
+        hasActiveFilterParamsOnUrl() {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.toString()) return false;
+
+            const directKeys = ['highlight', 'q', 'genres', 'platforms', 'series', 'start', 'end', 'sort', 'dir', 'played'];
+            for (let i = 0; i < directKeys.length; i++) {
+                if (params.has(directKeys[i])) return true;
+            }
+
+            for (const [key] of params.entries()) {
+                if (key.indexOf('hltb_') === 0) return true;
+            }
+
+            return false;
+        },
+
+        requestClientFilteringInit(reason = 'interaction') {
+            if (this._clientFilteringInitRequested) return;
+            this._clientFilteringInitRequested = true;
+            console.log('[CSF] Initialization requested:', reason);
+            this.initClientFiltering();
         },
 
         async initClientFiltering() {
@@ -418,6 +448,7 @@ document.addEventListener('alpine:init', () => {
             this.filters.hltb_max = f.hltb_max || null;
             this.filters.hltb_preset = this.calculateHltbPreset(this.filters.hltb_min, this.filters.hltb_max);
             this.savedFiltersOpen = false;
+            this.requestClientFilteringInit('saved-filter');
             this.debouncedFilterUpdate();
 
             const resetFlag = () => {
@@ -901,6 +932,11 @@ document.addEventListener('alpine:init', () => {
                         { selector: '#game-results-container', targetId: 'game-results-container' }
                     ]);
                     updateDomElements(content);
+                    if (typeof window.initRankDistributionCharts === 'function') {
+                        window.initRankDistributionCharts();
+                    } else {
+                        window.dispatchEvent(new CustomEvent('rank-distribution-init'));
+                    }
                     if (typeof initLoadMore === 'function') initLoadMore();
 
                     const urlParams = new URLSearchParams(params.toString());
@@ -976,6 +1012,11 @@ document.addEventListener('alpine:init', () => {
                     const contentEl = document.getElementById('content');
                     if (contentEl) {
                         contentEl.innerHTML = html;
+                        if (typeof window.initRankDistributionCharts === 'function') {
+                            window.initRankDistributionCharts();
+                        } else {
+                            window.dispatchEvent(new CustomEvent('rank-distribution-init'));
+                        }
                     }
                 }
 
@@ -1204,11 +1245,13 @@ document.addEventListener('alpine:init', () => {
 
         updateResults() {
             if (!this.initialized || !this._debouncedUpdate) return;
+            this.requestClientFilteringInit('search');
             this._debouncedUpdate();
         },
 
         updateUrlAndResults() {
             if (!this.initialized) return;
+            this.requestClientFilteringInit('navigation');
             if (this._debouncedUpdate) this._debouncedUpdate.cancel();
             this.performUpdate({ partial: false, historyMethod: 'pushState' });
         },
@@ -1223,6 +1266,7 @@ document.addEventListener('alpine:init', () => {
 
         debouncedFilterUpdate() {
             if (this._debouncedFilter) {
+                this.requestClientFilteringInit('filter-change');
                 this._debouncedFilter();
             }
         },

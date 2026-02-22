@@ -561,7 +561,7 @@ function handleYearPreview(event) {
  */
 var PLATFORM_GROUPS = [
     // Big manufacturer groups (checked first to collapse when all are selected)
-    ['Nintendo', ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'GB', 'GBA', 'GBC', 'FDS']],
+    ['Nintendo', ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'SW2', 'GB', 'GBA', 'GBC', 'FDS']],
     ['PlayStation', ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'PSV', 'PSVR']],
     ['Sega', ['GEN', 'SMS', 'DC', 'SAT', 'GG', 'SCD']],
     // Other manufacturer groups
@@ -572,7 +572,7 @@ var PLATFORM_GROUPS = [
     ['Microcomputer', ['VC20', 'C64', 'AMI', 'CD32', 'ZXS', 'CPC', 'BBCM', 'ARCH', 'PC88', 'PC98', 'FM7', 'FMT', 'SX1', 'MSX', 'A8', 'AST', 'A2', 'T80', 'TCC', 'PDP', 'HP21', 'E60']],
     // Form factor groups (checked after manufacturer groups)
     ['Nintendo Handheld', ['GB', 'GBC', 'GBA', 'DS', '3DS']],
-    ['Nintendo Home Console', ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW']],
+    ['Nintendo Home Console', ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW', 'SW2']],
     ['PlayStation Handheld', ['PSP', 'PSV']],
     ['PlayStation Home Console', ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSVR']],
     ['Sega Handheld', ['GG']],
@@ -702,4 +702,3 @@ function createScrollShowHandler(setShow, threshold) {
 window.utilsBaseReady = true;
 // Dispatch event for listeners waiting on utils-base (avoids polling)
 window.dispatchEvent(new CustomEvent('utils-base-ready'));
-

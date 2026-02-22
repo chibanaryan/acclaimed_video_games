@@ -2,57 +2,7 @@
 {# Assumes parent has filters.start, filters.end from main Alpine.js state #}
 {# Props: min_year, max_year from context #}
 
-<div x-data="{
-        expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_time') || 'true'),
-        mode: 'decade',
-        decades: [
-            { label: '1970s', start: 1970, end: 1979 },
-            { label: '1980s', start: 1980, end: 1989 },
-            { label: '1990s', start: 1990, end: 1999 },
-            { label: '2000s', start: 2000, end: 2009 },
-            { label: '2010s', start: 2010, end: 2019 },
-            { label: '2020s', start: 2020, end: 2029 }
-        ],
-        isDecadeSelected(decade) {
-            return Number(filters.start) === decade.start && Number(filters.end) === decade.end;
-        },
-        toggleDecade(decade) {
-            if (this.isDecadeSelected(decade)) {
-                // Deselect: reset to full range
-                filters.start = {{ min_year }};
-                filters.end = {{ max_year }};
-            } else {
-                // Select this decade
-                filters.start = decade.start;
-                filters.end = decade.end;
-            }
-        },
-        selectDecade(decade) {
-            filters.start = decade.start;
-            filters.end = decade.end;
-        },
-        hasYearFilter() {
-            return filters.start !== {{ min_year }} || filters.end !== {{ max_year }};
-        },
-        clearYears() {
-            filters.start = {{ min_year }};
-            filters.end = {{ max_year }};
-        },
-        syncRangeSelects() {
-            // Sync the range select dropdowns with current filter values
-            setTimeout(() => {
-                if (this.$refs.startYear) this.$refs.startYear.value = filters.start;
-                if (this.$refs.endYear) this.$refs.endYear.value = filters.end;
-            }, 50);
-        },
-        init() {
-            this.$watch('expanded', val => localStorage.setItem('mobileFilterExpanded_time', JSON.stringify(val)));
-            // Sync range selects when switching to range mode
-            this.$watch('mode', val => {
-                if (val === 'range') this.syncRangeSelects();
-            });
-        }
-     }"
+<div x-data="mobileTimeFilterComponent({ filters, minYear: {{ min_year }}, maxYear: {{ max_year }} })"
      @year-reset.window="filters.start = {{ min_year }}; filters.end = {{ max_year }};"
      class="space-y-3">
 

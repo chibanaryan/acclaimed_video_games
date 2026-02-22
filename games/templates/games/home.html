@@ -6,8 +6,9 @@
 {% block title %}Acclaimed Video Games{% endblock %}
 
 {% block pre_alpine %}
-    {# Filter component - loaded dynamically with Alpine after explicit intent #}
-    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=4');</script>
+    {# Filter subcomponents + filter component factories (must load before Alpine core) #}
+    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-subcomponents.min.js" %}?v=1');</script>
+    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=5');</script>
 {% endblock %}
 
 {% block extra_head %}

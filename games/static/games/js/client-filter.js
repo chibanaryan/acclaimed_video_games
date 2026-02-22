@@ -9,7 +9,7 @@
  * Platform hierarchy for deduplicated group counting
  * Maps manufacturer/form factor keys to platform codes
  */
-const PLATFORM_HIERARCHY = {
+const PLATFORM_HIERARCHY = (typeof window !== 'undefined' && window.AV_PLATFORM_HIERARCHY) || {
     nintendo: {
         name: 'Nintendo',
         codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'SW2', 'GB', 'GBA', 'GBC', 'FDS'],

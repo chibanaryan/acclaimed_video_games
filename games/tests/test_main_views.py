@@ -3816,6 +3816,7 @@ class PlatformVirtualIdTests(TestCase):
             code="NES", name="Nintendo Entertainment System"
         )
         self.snes = Platform.objects.create(code="SNES", name="Super Nintendo")
+        self.sw2 = Platform.objects.create(code="SW2", name="Nintendo Switch 2")
         self.pc = Platform.objects.create(code="PC", name="PC")
 
     def test_expand_virtual_id_nintendo_manufacturer(self):
@@ -3825,12 +3826,28 @@ class PlatformVirtualIdTests(TestCase):
         platforms = [
             {"id": self.nes.id, "code": "NES"},
             {"id": self.snes.id, "code": "SNES"},
+            {"id": self.sw2.id, "code": "SW2"},
             {"id": self.pc.id, "code": "PC"},
         ]
         result = _expand_platform_virtual_ids("mfr-nintendo", platforms)
-        # Should include NES and SNES but not PC
+        # Should include NES/SNES/SW2 but not PC
         self.assertIn(self.nes.id, result)
         self.assertIn(self.snes.id, result)
+        self.assertIn(self.sw2.id, result)
+        self.assertNotIn(self.pc.id, result)
+
+    def test_expand_virtual_id_nintendo_home_form_factor_includes_sw2(self):
+        """Test that ff-nintendo-home expands to include Switch 2."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [
+            {"id": self.nes.id, "code": "NES"},
+            {"id": self.sw2.id, "code": "SW2"},
+            {"id": self.pc.id, "code": "PC"},
+        ]
+        result = _expand_platform_virtual_ids("ff-nintendo-home", platforms)
+        self.assertIn(self.nes.id, result)
+        self.assertIn(self.sw2.id, result)
         self.assertNotIn(self.pc.id, result)
 
     def test_expand_regular_id(self):

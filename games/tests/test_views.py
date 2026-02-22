@@ -396,3 +396,11 @@ class PlatformSegmentTests(TestCase):
         platforms = [{"id": 1, "code": "UNK", "name": "Mystery Box"}]
         result = views._build_platform_segment([1], platforms)
         self.assertEqual(result, "Mystery Box Games")
+
+    def test_build_platform_segment_groups_switch2_under_nintendo(self):
+        platforms = [
+            {"id": 1, "code": "SW", "name": "Nintendo Switch"},
+            {"id": 2, "code": "SW2", "name": "Nintendo Switch 2"},
+        ]
+        result = views._build_platform_segment([1, 2], platforms)
+        self.assertEqual(result, "Nintendo Games")
