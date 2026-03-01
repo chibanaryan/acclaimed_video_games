@@ -40,6 +40,7 @@ from core.models import User
 from games import config, constants, models, utils
 from games.cache import invalidate_played_games_cache, invalidate_want_to_play_cache
 from games.forms import ImportForm, ContactForm
+from games.services import contact_spam_guard
 from games.services.percentile_service import calculate_percentile
 
 logger = logging.getLogger(__name__)
@@ -538,6 +539,16 @@ class ContactFormView(FormView):
         category = form.cleaned_data["category"]
         message = form.cleaned_data["message"]
 
+        decision = contact_spam_guard.evaluate(self.request, form.cleaned_data)
+        if not decision.allowed:
+            logger.warning(
+                "Contact submission blocked (reason=%s ip=%s category=%s)",
+                decision.reason,
+                decision.client_ip,
+                category,
+            )
+            return redirect(self.success_url)
+
         # Send the email
         email_sent = utils.send_contact_email(name, email, category, message)
 
@@ -551,6 +562,24 @@ class ContactFormView(FormView):
             return self.form_invalid(form)
 
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """Handle invalid submissions, silently dropping honeypot spam."""
+        if self._honeypot_only_error(form):
+            client_ip = contact_spam_guard.get_client_ip(self.request)
+            category = self.request.POST.get("category", "")
+            logger.warning(
+                "Contact submission blocked (reason=honeypot ip=%s category=%s)",
+                client_ip,
+                category,
+            )
+            return redirect(self.success_url)
+        return super().form_invalid(form)
+
+    @staticmethod
+    def _honeypot_only_error(form):
+        error_fields = set(form.errors.keys())
+        return error_fields == {"website"}
 
 
 class ContactThankYouView(TemplateView):

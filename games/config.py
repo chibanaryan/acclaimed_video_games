@@ -137,3 +137,14 @@ RATE_LIMIT_PER_MINUTE = 120  # ~2 req/sec avg; accommodates HTMX filter bursts
 RATE_LIMIT_PER_HOUR = 1200
 RATE_LIMIT_BLOCK_DURATION = 60  # seconds
 RATE_LIMIT_CACHE_PREFIX = "rl"
+
+# =============================================================================
+# Contact Form Anti-Spam
+# =============================================================================
+
+CONTACT_RATE_LIMIT_PER_10_MIN = 3
+CONTACT_RATE_LIMIT_PER_24_HOURS = 10
+CONTACT_DUPLICATE_WINDOW_SECONDS = CACHE_TIMEOUT_24_HOURS
+CONTACT_RATE_LIMIT_WINDOW_SECONDS = 60 * 10
+CONTACT_SPAM_CACHE_PREFIX = "contact_spam"
+CONTACT_PLACEHOLDER_DOMAINS = {"example.com", "example.org", "example.net"}

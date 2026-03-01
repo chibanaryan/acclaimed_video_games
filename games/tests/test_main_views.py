@@ -106,14 +106,12 @@ class HomePageViewTest(TestCase):
 
     def test_contact_form_post_valid(self):
         """Test valid contact form submission."""
-        from unittest import mock
-
         with mock.patch("games.utils.send_contact_email", return_value=True):
             response = self.client.post(
                 reverse("contact"),
                 {
                     "name": "Test User",
-                    "email": "test@example.com",
+                    "email": "test@realdomain.com",
                     "category": "general",
                     "message": "Test message",
                     "website": "",  # Honeypot
@@ -129,7 +127,7 @@ class HomePageViewTest(TestCase):
             reverse("contact"),
             {
                 "name": "",  # Missing name
-                "email": "test@example.com",
+                "email": "test@realdomain.com",
                 "category": "general",
                 "message": "Test message",
                 "website": "",
@@ -143,31 +141,54 @@ class HomePageViewTest(TestCase):
 
     def test_contact_form_honeypot_spam(self):
         """Test contact form with honeypot filled (spam)."""
-        response = self.client.post(
-            reverse("contact"),
-            {
-                "name": "Test User",
-                "email": "test@example.com",
-                "category": "general",
-                "message": "Test message",
-                "website": "http://spam.com",  # Honeypot filled
-            },
-        )
-        # Should stay on same page with errors
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("form", response.context)
-        self.assertFalse(response.context["form"].is_valid())
+        with mock.patch("games.utils.send_contact_email") as mock_send:
+            response = self.client.post(
+                reverse("contact"),
+                {
+                    "name": "Test User",
+                    "email": "test@realdomain.com",
+                    "category": "general",
+                    "message": "Test message",
+                    "website": "http://spam.com",  # Honeypot filled
+                },
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("contact_thank_you"))
+        mock_send.assert_not_called()
+
+    def test_contact_form_rate_limited_spam_redirects_without_email_send(self):
+        """Blocked spam submissions should redirect without sending email."""
+        decision = mock.Mock()
+        decision.allowed = False
+        decision.reason = "rate_limit"
+        decision.client_ip = "127.0.0.1"
+
+        with mock.patch(
+            "games.services.contact_spam_guard.evaluate", return_value=decision
+        ):
+            with mock.patch("games.utils.send_contact_email") as mock_send:
+                response = self.client.post(
+                    reverse("contact"),
+                    {
+                        "name": "Test User",
+                        "email": "test@realdomain.com",
+                        "category": "general",
+                        "message": "Test message",
+                        "website": "",
+                    },
+                )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("contact_thank_you"))
+        mock_send.assert_not_called()
 
     def test_contact_form_email_failure(self):
         """Test contact form when email sending fails."""
-        from unittest import mock
-
         with mock.patch("games.utils.send_contact_email", return_value=False):
             response = self.client.post(
                 reverse("contact"),
                 {
                     "name": "Test User",
-                    "email": "test@example.com",
+                    "email": "test@realdomain.com",
                     "category": "general",
                     "message": "Test message",
                     "website": "",
