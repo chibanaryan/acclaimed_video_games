@@ -320,7 +320,7 @@ else:
 EMAIL_HOST = "smtp-relay.brevo.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "9c6ed8001@smtp-brevo.com"
+EMAIL_HOST_USER = env("BREVO_SMTP_USER", default="")
 EMAIL_HOST_PASSWORD = env("BREVO_SMTP_KEY", default="")
 
 DEFAULT_FROM_EMAIL = "Acclaimed Video Games <contact@acclaimedvideogames.com>"

@@ -1,5 +1,11 @@
 # Developer Log
 
+## 2026-03-04
+
+- Remove hardcoded YouTube API key fallback from source; require env-based key configuration
+- Move Brevo SMTP username to `BREVO_SMTP_USER` environment variable in settings
+- Document `BREVO_SMTP_USER` and `BREVO_SMTP_KEY` in `.env.example` for production setup
+
 ## 2026-02-21
 
 - Reduce homepage main-thread cost by deferring Alpine/GA/CSF loading until explicit need/intent

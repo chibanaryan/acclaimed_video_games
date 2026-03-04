@@ -12,9 +12,7 @@ from games import config
 logger = logging.getLogger(__name__)
 
 
-YOUTUBE_API_KEY = getattr(
-    settings, "YOUTUBE_API_KEY", "AIzaSyBhUFykcuzqSXNNYd_yLeW9M-XURqjOlTU"
-)
+YOUTUBE_API_KEY = getattr(settings, "YOUTUBE_API_KEY", "")
 
 
 def is_youtube_video_embeddable(video_id: str, timeout: float = 5.0) -> bool:
