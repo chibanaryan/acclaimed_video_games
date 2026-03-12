@@ -434,8 +434,8 @@ async function fetchPage(page) {
     const metaScript = doc.getElementById('load-more-meta');
     const meta = metaScript ? JSON.parse(metaScript.textContent) : null;
 
-    // Get all game rows
-    const rows = doc.querySelectorAll('.game-row');
+    // Get all game rows (wrapper for desktop, card for mobile)
+    const rows = doc.querySelectorAll('.game-row-wrapper, .game-card-mobile');
 
     return { page, rows, meta };
 }
@@ -658,7 +658,7 @@ async function handleLoadMore(event) {
         // Append game rows without animation (instant load)
         const gameList = document.getElementById('game-list-container');
         if (gameList) {
-            const allRows = doc.querySelectorAll('.game-row');
+            const allRows = doc.querySelectorAll('.game-row-wrapper, .game-card-mobile');
             allRows.forEach((row) => {
                 gameList.appendChild(row);
             });

@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-03-11
+
+- Fix played button (star icon) not appearing on "Load More" rows for logged-in users
+
 ## 2026-03-04
 
 - Remove hardcoded YouTube API key fallback from source; require env-based key configuration
