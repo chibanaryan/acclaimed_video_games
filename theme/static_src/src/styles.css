@@ -1246,7 +1246,7 @@ input[type="number"] {
 
 /* =============================================================================
    Rank Distribution Chart
-   A compact SVG area chart showing game distribution across rankings (1-1000)
+   A compact SVG area chart showing game distribution across the current ranking range
    ============================================================================= */
 @layer components {
   .rank-distribution-section {
@@ -1569,4 +1569,3 @@ input[type="number"] {
 .game-card-enter {
   animation: game-card-enter 0.25s ease-out forwards;
 }
-

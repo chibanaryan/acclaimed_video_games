@@ -326,7 +326,8 @@
                     <li><strong>Games</strong> - Game database with rank, year, platforms</li>
                     <li><strong>Game Positions</strong> - Where each game appears in each list</li>
                 </ol>
-                <p class="text-sm mt-2 opacity-70">⚠️ Import may fail if prerequisites are missing</p>
+                <p class="text-sm mt-2">Uploading files here replaces the current ranking dataset in place. You do not need to delete data first.</p>
+                <p class="text-sm mt-2 opacity-70">Import may fail if prerequisites are missing.</p>
             </div>
         </div>
 
@@ -367,7 +368,7 @@
 
             <!-- Games File -->
             <div class="import-step{% if counts.games > 0 %} completed{% endif %}" data-step="3">
-                <h3>Games (Top1000.txt)</h3>
+                <h3>Games File (e.g. Top1400.txt)</h3>
                 <p class="text-sm text-base-content/70 mb-4">Tab-separated: <code class="bg-base-100 px-2 py-1 rounded">Rank&lt;tab&gt;Name&lt;tab&gt;Year&lt;tab&gt;Platforms&lt;tab&gt;IGDB_ID&lt;tab&gt;Wikidata_ID</code></p>
                 <div class="form-control">
                     <label class="input input-bordered flex items-center gap-2 cursor-pointer">
@@ -628,12 +629,12 @@
                         Delete Game Data
                     </h3>
                     <p class="text-sm opacity-70 mb-3">
-                        Deletes all games, lists, and publications. Preserves user accounts, played/want-to-play tracking, platforms, IGDB/Wikipedia metadata, and Developer/Genre objects for reconnection.
+                        Deletes ranked games, list memberships, lists, publications, platforms, developers, series, and connected IGDB records. Preserves user accounts, played/want-to-play tracking, and orphanable metadata such as Wikipedia records.
                     </p>
                     <form method="POST" action=".">
                         {% csrf_token %}
                         <input type="hidden" name="delete" value="true">
-                        <button class="btn btn-error btn-sm" onclick="return confirm('⚠️ This will delete games, lists, and publications.\n\nPreserves: user accounts, played/want-to-play tracking, platforms, and metadata.\n\nAre you sure?');">
+                        <button class="btn btn-error btn-sm" onclick="return confirm('This will delete ranked games, list memberships, lists, publications, platforms, developers, series, and connected IGDB records.\n\nIt preserves user accounts, played/want-to-play tracking, and orphanable metadata such as Wikipedia records.\n\nAre you sure?');">
                             <span class="mdi mdi-delete"></span>
                             Delete Game Data
                         </button>

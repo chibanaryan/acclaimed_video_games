@@ -1,6 +1,7 @@
 from io import BytesIO, StringIO
 from unittest import mock
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from core.models import User
@@ -17,6 +18,23 @@ class ImportDataRoutingTests(TestCase):
             result = utils.import_data({"delete": True})
         delete_mock.assert_called_once()
         self.assertEqual(result, ("ok", 0))
+
+    def test_import_data_prefers_batch_files_over_delete_handler(self):
+        upload = SimpleUploadedFile("PlatformDB.txt", b"PC\tPersonal Computer\r\n")
+
+        with mock.patch(
+            "games.services.import_handler.import_batch",
+            return_value=(True, "Imported"),
+        ) as batch_mock:
+            with mock.patch(
+                "games.services.import_handler.delete_existing_data",
+                return_value=(True, "Deleted"),
+            ) as delete_mock:
+                result = utils.import_data({"delete": True, "platforms_file": upload})
+
+        batch_mock.assert_called_once()
+        delete_mock.assert_not_called()
+        self.assertEqual(result, (True, "Imported"))
 
     def test_import_data_validates_type(self):
         stream = BytesIO(b"")

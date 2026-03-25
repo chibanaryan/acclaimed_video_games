@@ -1,381 +1,381 @@
 NA	2013	All Time	1001 Video Games You Must Play Before You Die	
 3DJuegos	2020	Decade	TOP 10: Los mejores juegos de la década	https://www.3djuegos.com/juegos/articulos/2215/0/top-10-los-mejores-juegos-de-la-decada/
-3DJuegos	2024	Misc	Los 20 MEJORES JUEGOS de NINTENDO DS	https://youtu.be/aD0K9a_5SzU
-3DJuegos	2023	Misc	Los 20 mejores juegos de 3DS	https://youtu.be/saPCVDR719I
-3DJuegos	2022	EOY	22 mejores juegos de 2022 que demuestran que, a pesar de todo, ha sido un gran año para jugar	https://www.3djuegos.com/ranking-tops/noticias/22-mejores-juegos-2022-que-demuestran-que-a-pesar-todo-ha-sido-gran-ano-para-jugar
-3DJuegos	2021	EOY	Los 25 mejores juegos del 2021	https://www.3djuegos.com/juegos/articulos/2715/0/los-25-mejores-juegos-del-2021-tienes-que-jugarlos-si-aun-no-lo-has-hecho/
-3DJuegos	2024	Misc	Los 20 MEJORES JUEGOS de XBOX 360	https://youtu.be/MHsYvDiJQ8o
-3DJuegos	2025	Misc	Los 20 mejores juegos de PS1	https://youtu.be/daPwtX0su6Y
-3DJuegos	2024	Misc	Los 20 mejores juegos de Game Boy Advance	https://youtu.be/lflopFOuzbI
-3DJuegos	2019	EOY	¡GOTY 2019! 3DJuegos elige el mejor videojuego del año 	https://www.3djuegos.com/juegos/sekiro-shadows-die-twice/noticias/goty-2019-3djuegos-elige-el-mejor-videojuego-del-ano-191228-1660
-3DJuegos	2023	EOY	Estos son los 20 mejores videojuegos del 2023 ordenados de peor a mejor	https://www.3djuegos.com/ranking-tops/noticias/estos-20-mejores-videojuegos-2023-ordenados-peor-a-mejor
 3DJuegos	2021	EOY	Los 25 mejores juegos de 2020 para la redacción de 3DJuegos	https://www.3djuegos.com/juegos/articulos/2211/0/los-25-mejores-juegos-de-2020-para-la-redaccion-de-3djuegos/
-3DJuegos	2025	EOY	Ha sido muy difícil hacer este top, pero aquí están los 25 mejores juegos de 2025	https://www.3djuegos.com/ranking-tops/noticias/menudo-ano-estos-25-mejores-juegos-2025
-3DJuegos	2024	EOY	Los 25 mejores videojuegos de 2024	https://www.3djuegos.com/ranking-tops/noticias/25-mejores-videojuegos-2024
-3DJuegos	2024	Misc	Los 20 mejores juegos de WII	https://youtu.be/T-nBU4jfiSQ
-3DJuegos	2025	Misc	Los 20 mejores videojuegos de WII U	https://youtu.be/SisvHvmkBKc
+3DJuegos	2022	EOY	22 mejores juegos de 2022 que demuestran que, a pesar de todo, ha sido un gran año para jugar	https://www.3djuegos.com/ranking-tops/noticias/22-mejores-juegos-2022-que-demuestran-que-a-pesar-todo-ha-sido-gran-ano-para-jugar
+3DJuegos	2023	EOY	Estos son los 20 mejores videojuegos del 2023 ordenados de peor a mejor	https://www.3djuegos.com/ranking-tops/noticias/estos-20-mejores-videojuegos-2023-ordenados-peor-a-mejor
+3DJuegos	2023	Misc	Los 20 mejores juegos de 3DS	https://youtu.be/saPCVDR719I
+3DJuegos	2019	EOY	¡GOTY 2019! 3DJuegos elige el mejor videojuego del año 	https://www.3djuegos.com/juegos/sekiro-shadows-die-twice/noticias/goty-2019-3djuegos-elige-el-mejor-videojuego-del-ano-191228-1660
+3DJuegos	2021	EOY	Los 25 mejores juegos del 2021	https://www.3djuegos.com/juegos/articulos/2715/0/los-25-mejores-juegos-del-2021-tienes-que-jugarlos-si-aun-no-lo-has-hecho/
+3DJuegos	2025	Misc	Los 20 mejores juegos de PS1	https://youtu.be/daPwtX0su6Y
 3DJuegos	2025	Misc	Los 20 mejores juegos de Nintendo 64	https://youtu.be/ysVmN-WXkvo
-3DJuegos	2024	Misc	20 mejores juegos de Game Boy y Game Boy Color	https://youtu.be/kelKvRiXb9Y
 3DJuegos	2024	Misc	Los 20 mejores juegos de PS2	https://youtu.be/-XCvh7zEVgk
 3DJuegos	2024	Misc	Los 20 mejores juegos de PS3	https://youtu.be/Y1KF6VcFvK8
+3DJuegos	2024	Misc	Los 20 mejores juegos de WII	https://youtu.be/T-nBU4jfiSQ
+3DJuegos	2024	Misc	20 mejores juegos de Game Boy y Game Boy Color	https://youtu.be/kelKvRiXb9Y
+3DJuegos	2025	Misc	Los 20 mejores videojuegos de WII U	https://youtu.be/SisvHvmkBKc
+3DJuegos	2025	EOY	Ha sido muy difícil hacer este top, pero aquí están los 25 mejores juegos de 2025	https://www.3djuegos.com/ranking-tops/noticias/menudo-ano-estos-25-mejores-juegos-2025
+3DJuegos	2024	Misc	Los 20 MEJORES JUEGOS de XBOX 360	https://youtu.be/MHsYvDiJQ8o
+3DJuegos	2024	Misc	Los 20 mejores juegos de Game Boy Advance	https://youtu.be/lflopFOuzbI
+3DJuegos	2024	EOY	Los 25 mejores videojuegos de 2024	https://www.3djuegos.com/ranking-tops/noticias/25-mejores-videojuegos-2024
+3DJuegos	2024	Misc	Los 20 MEJORES JUEGOS de NINTENDO DS	https://youtu.be/aD0K9a_5SzU
 4Players	2024	EOY	Unsere Spiele des Jahres 2024: Die 4P-Redaktion hat gewählt	https://www.4p.de/topliste/unsere-spiele-des-jahres-2024-die-4p-redaktion-gewaehlt-game-of-the-year-topliste/3280654
-Mashable	2018	EOY	The best video games of 2018	https://mashable.com/article/2018-best-video-games-of-the-year
 Mashable	2016	EOY	Here are the 10 best video games of 2016	https://mashable.com/article/game-of-the-year-2016-mashable
+Mashable	2018	EOY	The best video games of 2018	https://mashable.com/article/2018-best-video-games-of-the-year
 Stuff	2025	EOY	The best games of 2025 ranked	https://www.stuff.tv/features/the-best-games-of-2025-ranked-which-is-your-favourite/
-Mashable	2024	EOY	The best video games of 2024	https://mashable.com/article/best-video-games-2024
 Mashable	2025	EOY	The best video games of 2025	https://mashable.com/article/best-video-games-of-2025
+Mashable	2024	EOY	The best video games of 2024	https://mashable.com/article/best-video-games-2024
 Kotaku	2019	EOY	The 10 Best Games Of 2010	https://web.archive.org/web/20240722130807/https://www.kotaku.com.au/2019/12/the-10-best-games-of-2011/
 Areajugones	2019	Decade	Los mejores juegos de la década para PS4, Xbox One, Switch y PC	https://areajugones.sport.es/videojuegos/los-mejores-juegos-de-la-decada-para-ps4-xbox-one-switch-y-pc/
-CNN	2018	EOY	Ars Technica’s best games of 2018	https://arstechnica.com/gaming/2018/12/ars-technicas-best-games-of-2018/
-Ars Technica	2017	EOY	Ars Technica’s best video games of 2017	https://arstechnica.com/gaming/2017/12/ars-technicas-best-video-games-of-2017/
-Ars Technica	2003	EOY	Game.Ars: The GUGOYAs, 2003 edition (2002)	https://arstechnica.com/gaming/2003/01/gars-01262003/
-Ars Technica	2015	EOY	The best video games of 2015, as picked by the Ars editors	https://arstechnica.com/gaming/2015/12/the-best-video-games-of-2015-as-picked-by-the-ars-editors/
-Ars Technica	2016	EOY	Ars Technica’s best video games of 2016	https://arstechnica.com/gaming/2016/12/ars-technicas-best-video-games-of-2016/
-Ars Technica	2013	EOY	The 20 best (and three most disappointing) video games of 2013	https://arstechnica.com/gaming/2013/12/the-20-best-and-three-most-disappointing-video-games-of-2013/
-Ars Technica	2014	EOY	The 20 best games of 2014, as chosen by the Ars brain trust	https://arstechnica.com/gaming/2014/12/the-20-best-games-of-2014-as-chosen-by-the-ars-brain-trust/
 Ars Technica	2025	EOY	Ars Technica’s Top 20 video games of 2025	https://arstechnica.com/gaming/2025/12/ars-technicas-top-20-video-games-of-2025/
-Ars Technica	2012	EOY	Ars Technica’s 2012 Games of the Year	https://arstechnica.com/gaming/2012/12/ars-technicas-2012-games-of-the-year/
-Ars Technica	2020	EOY	Ars Technica’s best games of 2020	https://arstechnica.com/gaming/2020/12/ars-technicas-best-games-of-2020/
-Ars Technica	2019	EOY	Ars Technica’s best games of 2019	https://arstechnica.com/gaming/2019/12/ars-technicas-best-games-of-2019/
-Ars Technica	2022	EOY	Ars Technica’s best video games of 2022	https://arstechnica.com/gaming/2022/12/ars-technicas-best-video-games-of-2022/
-Ars Technica	2021	EOY	Ars Technica’s top 20 video games of 2021	https://arstechnica.com/gaming/2021/12/ars-technicas-top-20-video-games-of-2021/
-Ars Technica	2024	EOY	Ars Technica’s top 20 video games of 2024	https://arstechnica.com/gaming/2024/12/ars-technicas-top-20-video-games-of-2024/
-Ars Technica	2001	EOY	The first annual Game.Ars Über Game of the Year Awards (2000)	https://arstechnica.com/gaming/2001/01/gars-01092001/
-Ars Technica	2023	EOY	Ars Technica’s best video games of 2023	https://arstechnica.com/gaming/2023/12/ars-technicas-best-video-games-of-2023/
 Ars Technica	2011	EOY	Gaming’s biggest joys—and most bitter disappointments—of 2011	https://arstechnica.com/gaming/2011/12/the-best-and-most-disappointing-games-of-2011/
-BAFTA	2009	EOY	British Academy Games Awards 2009	https://awards.bafta.org/award/2009/games
-BAFTA	2025	EOY	BAFTA Games Awards 2025: Game of the Year	https://www.bafta.org/awards/games/
-BAFTA	2011	EOY	British Academy Games Awards 2011	https://awards.bafta.org/award/2011/games
-BAFTA	2010	EOY	British Academy Games Awards 2010	https://awards.bafta.org/award/2010/games
+Ars Technica	2003	EOY	Game.Ars: The GUGOYAs, 2003 edition (2002)	https://arstechnica.com/gaming/2003/01/gars-01262003/
+Ars Technica	2013	EOY	The 20 best (and three most disappointing) video games of 2013	https://arstechnica.com/gaming/2013/12/the-20-best-and-three-most-disappointing-video-games-of-2013/
+Ars Technica	2012	EOY	Ars Technica’s 2012 Games of the Year	https://arstechnica.com/gaming/2012/12/ars-technicas-2012-games-of-the-year/
+Ars Technica	2015	EOY	The best video games of 2015, as picked by the Ars editors	https://arstechnica.com/gaming/2015/12/the-best-video-games-of-2015-as-picked-by-the-ars-editors/
+Ars Technica	2014	EOY	The 20 best games of 2014, as chosen by the Ars brain trust	https://arstechnica.com/gaming/2014/12/the-20-best-games-of-2014-as-chosen-by-the-ars-brain-trust/
+Ars Technica	2017	EOY	Ars Technica’s best video games of 2017	https://arstechnica.com/gaming/2017/12/ars-technicas-best-video-games-of-2017/
+Ars Technica	2016	EOY	Ars Technica’s best video games of 2016	https://arstechnica.com/gaming/2016/12/ars-technicas-best-video-games-of-2016/
+Ars Technica	2019	EOY	Ars Technica’s best games of 2019	https://arstechnica.com/gaming/2019/12/ars-technicas-best-games-of-2019/
+CNN	2018	EOY	Ars Technica’s best games of 2018	https://arstechnica.com/gaming/2018/12/ars-technicas-best-games-of-2018/
+Ars Technica	2021	EOY	Ars Technica’s top 20 video games of 2021	https://arstechnica.com/gaming/2021/12/ars-technicas-top-20-video-games-of-2021/
+Ars Technica	2020	EOY	Ars Technica’s best games of 2020	https://arstechnica.com/gaming/2020/12/ars-technicas-best-games-of-2020/
+Ars Technica	2023	EOY	Ars Technica’s best video games of 2023	https://arstechnica.com/gaming/2023/12/ars-technicas-best-video-games-of-2023/
+Ars Technica	2022	EOY	Ars Technica’s best video games of 2022	https://arstechnica.com/gaming/2022/12/ars-technicas-best-video-games-of-2022/
+Ars Technica	2001	EOY	The first annual Game.Ars Über Game of the Year Awards (2000)	https://arstechnica.com/gaming/2001/01/gars-01092001/
+Ars Technica	2024	EOY	Ars Technica’s top 20 video games of 2024	https://arstechnica.com/gaming/2024/12/ars-technicas-top-20-video-games-of-2024/
 BAFTA	2006	EOY	British Academy Games Awards 2006	https://awards.bafta.org/award/2006/games
-BAFTA	2005	EOY	British Academy Games Awards 2005	https://awards.bafta.org/award/2005/games
-BAFTA	1999	EOY	Game of the Year 1999	https://awards.bafta.org/award/1999/interactive/games-award
-BAFTA	1998	EOY	Game of the Year 1998	https://web.archive.org/web/20150402113152/https://awards.bafta.org/award/1998/interactive/games
+BAFTA	2025	EOY	BAFTA Games Awards 2025: Game of the Year	https://www.bafta.org/awards/games/
+BAFTA	2007	EOY	British Academy Games Awards 2007	https://www.bafta.org/games/awards/2007-winners-nominees
 BAFTA	2023	EOY	2023 BAFTA Games Awards: The Winners	https://www.bafta.org/games/awards/2023-nominations-winners
 BAFTA	2024	EOY	20th BAFTA Games Awards: The Winners & Nominations	https://www.bafta.org/games/awards/2024-nominations-winners
 BAFTA	2021	EOY	2021 BAFTA Games Awards: The Winners	https://www.bafta.org/games/awards/2021-nominations-winners
 BAFTA	2022	EOY	2022 BAFTA Games Awards Winners	https://www.bafta.org/games/awards/2022-nominations-winners
 BAFTA	2019	EOY	BAFTA Games Awards winners 2019	https://www.bafta.org/games/awards/bafta-games-awards-nominations-winners-2019
-BAFTA	2020	EOY	2020 BAFTA Games Awards: The Winners	https://www.bafta.org/games/awards/bafta-games-awards-nominations-and-winners-2020
-BAFTA	2017	EOY	British Academy Games Awards Winners in 2017	https://www.bafta.org/games/games-awards-2017
-BAFTA	2018	EOY	British Academy Games Awards Winners in 2018	https://www.bafta.org/games/awards/games-awards-2018
+BAFTA	2009	EOY	British Academy Games Awards 2009	https://awards.bafta.org/award/2009/games
+BAFTA	2011	EOY	British Academy Games Awards 2011	https://awards.bafta.org/award/2011/games
+BAFTA	2010	EOY	British Academy Games Awards 2010	https://awards.bafta.org/award/2010/games
 BAFTA	2015	EOY	British Academy Games Awards 2015	https://awards.bafta.org/award/2015/games
 BAFTA	2016	EOY	British Academy Games Awards Winners in 2016	https://www.bafta.org/games/awards/games-awards-winners-in-2016
 BAFTA	2013	EOY	British Academy Games Awards 2013	https://awards.bafta.org/award/2013/games
 BAFTA	2014	EOY	British Academy Games Awards 2014	https://awards.bafta.org/award/2014/games
-BAFTA	2007	EOY	British Academy Games Awards 2007	https://www.bafta.org/games/awards/2007-winners-nominees
+BAFTA	2005	EOY	British Academy Games Awards 2005	https://awards.bafta.org/award/2005/games
+BAFTA	1999	EOY	Game of the Year 1999	https://awards.bafta.org/award/1999/interactive/games-award
 BAFTA	2012	EOY	British Academy Games Awards 2012	https://awards.bafta.org/award/2012/games
-Business Insider	2015	EOY	These are the 10 best games of the year (2015)	https://www.businessinsider.com/10-best-games-2015
+BAFTA	1998	EOY	Game of the Year 1998	https://web.archive.org/web/20150402113152/https://awards.bafta.org/award/1998/interactive/games
+BAFTA	2017	EOY	British Academy Games Awards Winners in 2017	https://www.bafta.org/games/games-awards-2017
+BAFTA	2018	EOY	British Academy Games Awards Winners in 2018	https://www.bafta.org/games/awards/games-awards-2018
+BAFTA	2020	EOY	2020 BAFTA Games Awards: The Winners	https://www.bafta.org/games/awards/bafta-games-awards-nominations-and-winners-2020
 Business Insider	2017	EOY	A ton of great games came out this year — these are the 10 best (2017)	https://www.businessinsider.com/best-video-games-2017-12
+Business Insider	2015	EOY	These are the 10 best games of the year (2015)	https://www.businessinsider.com/10-best-games-2015
 Benchmark.pl	2009	All Time	100 najlepszych gier XX wieku	https://www.benchmark.pl/testy_i_recenzje/najlepsze-gry-20-wieku-cz-3-2643.html
 British GQ	2023	All Time	The 100 greatest video games of all time, ranked by experts	https://www.gq-magazine.co.uk/article/best-video-games-all-time
 Thrillist	2020	Decade	The 20 Best Video Games of the 2010s	https://web.archive.org/web/20230123005558/https://www.thrillist.com/entertainment/nation/best-video-games-of-the-decade-2010s
-Business Insider	2019	Decade	The 10 video games that defined the decade and changed the world of gaming	https://www.businessinsider.com/best-video-games-of-decade-2010s-2020-list-2019-12
 Business Insider	2019	EOY	The best video games of 2019, from 'Apex Legends' to the 'Legend of Zelda'	https://www.businessinsider.com/best-video-games-of-the-year-2019-list-2019-12
+Business Insider	2019	Decade	The 10 video games that defined the decade and changed the world of gaming	https://www.businessinsider.com/best-video-games-of-decade-2010s-2020-list-2019-12
 BuzzFeed	2019	Decade	The 20 Best Video Games Of The Decade, Ranked	https://www.buzzfeed.com/andyneuenschwander/20-best-video-games-of-the-2010s
+Mashable	2014	EOY	Top 10 must-play games of 2014	https://mashable.com/archive/best-games-of-2014
 Mashable	2012	EOY	10 Best Video Games of 2012	https://mashable.com/archive/best-video-games-2012
 Mashable	2013	EOY	The 10 Best Games of 2013	https://mashable.com/archive/games-of-the-year-2013
-Mashable	2014	EOY	Top 10 must-play games of 2014	https://mashable.com/archive/best-games-of-2014
-Rolling Stone	2025	EOY	The 25 Best Video Games of 2025	https://www.rollingstone.com/culture/rs-gaming-lists/best-video-games-of-2025-1235469710/
 Rolling Stone	2025	Misc	The 20 Best Xbox 360 Games of All Time	https://www.rollingstone.com/culture/rs-gaming-lists/best-xbox-360-games-of-all-time-1235454240/
 Rolling Stone	2025	Misc	The 20 Best NES Games of All Time	https://www.rollingstone.com/culture/rs-gaming-lists/best-nes-games-of-all-time-1235442260/
+Rolling Stone	2025	Misc	The 25 Best PlayStation 2 Games of All Time	https://www.rollingstone.com/culture/rs-gaming-lists/best-ps2-games-1235451115/
+Rolling Stone	2025	EOY	The 25 Best Video Games of 2025	https://www.rollingstone.com/culture/rs-gaming-lists/best-video-games-of-2025-1235469710/
 Rolling Stone	2023	EOY	20 Best Video Games of 2023	https://www.rollingstone.com/culture/culture-lists/best-video-games-2023-1234923415/
 Rolling Stone	2024	EOY	The 20 Best Video Games of 2024	https://www.rollingstone.com/culture/rs-gaming-lists/best-video-games-2024-1235046259/
-Rolling Stone	2025	Misc	The 25 Best PlayStation 2 Games of All Time	https://www.rollingstone.com/culture/rs-gaming-lists/best-ps2-games-1235451115/
 Thrillist	2016	EOY	The Best Video Games of 2016, Ranked	https://www.thrillist.com/entertainment/nation/best-video-games-2016
 Thrillist	2015	EOY	The 11 Best Video Games of 2015	https://www.thrillist.com/entertainment/nation/best-2015-video-games
 CNET	2019	Decade	The 30 best video games of the decade, ranked	https://www.cnet.com/news/the-30-best-video-games-of-the-decade-ranked/
 CNET	2019	EOY	Best games of 2019: CNET's staff picks	https://www.cnet.com/tech/computing/best-games-of-2019-cnets-staff-picks/
 CNET	2018	EOY	The best video games of 2018	https://www.cnet.com/pictures/the-best-video-games-of-2018/
+CNET	2000	All Time	The Top 40 Games of the Millennium	https://web.archive.org/web/20000612222357/http://www.gamecenter.com/Features/Exclusives/Top40games/index.html
 CNET	2025	EOY	Our 10 Favorite Games of 2025	https://www.cnet.com/tech/gaming/our-10-favorite-games-of-2025-and-why-only-one-wins-game-of-the-year/
-CNN	2019	EOY	These are our favorite video games of 2019	https://web.archive.org/web/20200203230443/https://us.cnn.com/2019/12/26/cnn-underscored/best-video-games-2019/index.html
 CNN	2020	EOY	Our favorite video games of 2020	https://edition.cnn.com/cnn-underscored/electronics/best-video-games-2020
+CNN	2019	EOY	These are our favorite video games of 2019	https://web.archive.org/web/20200203230443/https://us.cnn.com/2019/12/26/cnn-underscored/best-video-games-2019/index.html
+Complex	2009	Decade	The 100 Best Video Games and PC Games From the 2000s	https://www.complex.com/pop-culture/a/complex/the-best-video-games-of-the-2000s
 Complex	2015	EOY	The Best Video Games of 2015	https://www.complex.com/pop-culture/2015/12/best-video-games-of-2015
 Complex	2013	EOY	The Best Video Games of 2013	https://www.complex.com/pop-culture/2013/12/best-video-games-2013/
-Complex	2009	Decade	The 100 Best Video Games and PC Games From the 2000s	https://www.complex.com/pop-culture/a/complex/the-best-video-games-of-the-2000s
 Computer and Video Games	2007	All Time	The 101 best PC games ever	https://web.archive.org/web/20080711032338/http://www.computerandvideogames.com/article.php?id=164289
 Computer Gaming World	1996	All Time	150 Best Games of All Time	
 Business Insider	2016	Decade	The 11 best games from the '90s	https://www.businessinsider.com/best-video-game-1990s-super-mario-chrono-trigger-2017-1
 Culture of Gaming	2020	Decade	CoG’s Top 20 Games of the Decade	https://web.archive.org/web/20201021042216/https://cultureofgaming.com/cogs-top-20-games-of-the-decade-part-one/
-D.I.C.E. Awards	2011	EOY	Game of the Year 2010	https://www.interactive.org/awards/award_category_details.asp?idAward=2011&idGameAwardType=65
 D.I.C.E. Awards	2012	EOY	Game of the Year 2011	https://www.interactive.org/awards/award_category_details.asp?idAward=2012&idGameAwardType=65
+D.I.C.E. Awards	2011	EOY	Game of the Year 2010	https://www.interactive.org/awards/award_category_details.asp?idAward=2011&idGameAwardType=65
 D.I.C.E. Awards	2013	EOY	Game of the Year 2012	https://www.interactive.org/awards/award_category_details.asp?idAward=2013&idGameAwardType=65
-D.I.C.E. Awards	2010	EOY	Game of the Year 2009	https://www.interactive.org/awards/award_category_details.asp?idAward=2010&idGameAwardType=65
-D.I.C.E. Awards	2014	EOY	Game of the Year 2013	https://www.interactive.org/awards/award_category_details.asp?idAward=2014&idGameAwardType=65
-D.I.C.E. Awards	2016	EOY	Game of the Year 2015	https://www.interactive.org/awards/award_category_details.asp?idAward=2016&idGameAwardType=65
-D.I.C.E. Awards	2017	EOY	Game of the Year 2016	https://www.interactive.org/awards/award_category_details.asp?idAward=2017&idGameAwardType=65
-D.I.C.E. Awards	2009	EOY	Game of the Year 2008	https://www.interactive.org/awards/award_category_details.asp?idAward=2009&idGameAwardType=109
 D.I.C.E. Awards	2015	EOY	Game of the Year 2014	https://www.interactive.org/awards/award_category_details.asp?idAward=2015&idGameAwardType=65
-D.I.C.E. Awards	2007	EOY	Game of the Year 2006	https://www.interactive.org/awards/award_category_details.asp?idAward=2007&idGameAwardType=109
-D.I.C.E. Awards	2008	EOY	Game of the Year 2007	https://www.interactive.org/awards/award_category_details.asp?idAward=2008&idGameAwardType=109
-D.I.C.E. Awards	2022	EOY	Game of the Year 2021	https://www.interactive.org/awards/award_category_details.asp?idAward=2022&idGameAwardType=65
+D.I.C.E. Awards	2014	EOY	Game of the Year 2013	https://www.interactive.org/awards/award_category_details.asp?idAward=2014&idGameAwardType=65
+D.I.C.E. Awards	2009	EOY	Game of the Year 2008	https://www.interactive.org/awards/award_category_details.asp?idAward=2009&idGameAwardType=109
+D.I.C.E. Awards	2010	EOY	Game of the Year 2009	https://www.interactive.org/awards/award_category_details.asp?idAward=2010&idGameAwardType=65
+D.I.C.E. Awards	2019	EOY	Game of the Year 2018	https://www.interactive.org/awards/award_category_details.asp?idAward=2019&idGameAwardType=65
+D.I.C.E. Awards	2020	EOY	Game of the Year 2019	https://www.interactive.org/awards/award_category_details.asp?idAward=2020&idGameAwardType=65
+D.I.C.E. Awards	2021	EOY	Game of the Year 2020	https://www.interactive.org/awards/award_category_details.asp?idAward=2021&idGameAwardType=65
+D.I.C.E. Awards	2018	EOY	Game of the Year 2017	https://www.interactive.org/awards/award_category_details.asp?idAward=2018&idGameAwardType=65
 D.I.C.E. Awards	2023	EOY	Game of the Year 2022	https://www.interactive.org/awards/award_category_details.asp?idAward=2023&idGameAwardType=65
 D.I.C.E. Awards	2025	EOY	Game of the Year 2024	https://www.interactive.org/awards/84Kd_28th_annual_dice_awards_finalists_revealed_8ufL.asp
-D.I.C.E. Awards	2002	EOY	Game of the Year 2001	https://www.interactive.org/awards/award_category_details.asp?idAward=2002&idGameAwardType=65
+D.I.C.E. Awards	2008	EOY	Game of the Year 2007	https://www.interactive.org/awards/award_category_details.asp?idAward=2008&idGameAwardType=109
+D.I.C.E. Awards	2016	EOY	Game of the Year 2015	https://www.interactive.org/awards/award_category_details.asp?idAward=2016&idGameAwardType=65
+D.I.C.E. Awards	2017	EOY	Game of the Year 2016	https://www.interactive.org/awards/award_category_details.asp?idAward=2017&idGameAwardType=65
+D.I.C.E. Awards	2007	EOY	Game of the Year 2006	https://www.interactive.org/awards/award_category_details.asp?idAward=2007&idGameAwardType=109
 D.I.C.E. Awards	2000	EOY	Game of the Year 1999	https://www.interactive.org/awards/award_category_details.asp?idAward=2000&idGameAwardType=65
-D.I.C.E. Awards	1999	EOY	Game of the Year 1998	https://www.interactive.org/awards/award_category_details.asp?idAward=1999&idGameAwardType=65
+D.I.C.E. Awards	2022	EOY	Game of the Year 2021	https://www.interactive.org/awards/award_category_details.asp?idAward=2022&idGameAwardType=65
 D.I.C.E. Awards	1998	EOY	Game of the Year 1997	https://www.interactive.org/awards/award_category_details.asp?idAward=1998&idGameAwardType=71
-D.I.C.E. Awards	2021	EOY	Game of the Year 2020	https://www.interactive.org/awards/award_category_details.asp?idAward=2021&idGameAwardType=65
+D.I.C.E. Awards	1999	EOY	Game of the Year 1998	https://www.interactive.org/awards/award_category_details.asp?idAward=1999&idGameAwardType=65
 D.I.C.E. Awards	2006	EOY	Game of the Year 2005	https://www.interactive.org/awards/award_category_details.asp?idAward=2006&idGameAwardType=109
-D.I.C.E. Awards	2005	EOY	Game of the Year 2004	https://www.interactive.org/awards/award_category_details.asp?idAward=2005&idGameAwardType=65
-D.I.C.E. Awards	2004	EOY	Game of the Year 2003	https://www.interactive.org/awards/award_category_details.asp?idAward=2004&idGameAwardType=65
-D.I.C.E. Awards	2018	EOY	Game of the Year 2017	https://www.interactive.org/awards/award_category_details.asp?idAward=2018&idGameAwardType=65
-D.I.C.E. Awards	2019	EOY	Game of the Year 2018	https://www.interactive.org/awards/award_category_details.asp?idAward=2019&idGameAwardType=65
+D.I.C.E. Awards	2002	EOY	Game of the Year 2001	https://www.interactive.org/awards/award_category_details.asp?idAward=2002&idGameAwardType=65
 D.I.C.E. Awards	2003	EOY	Game of the Year 2002	https://www.interactive.org/awards/award_category_details.asp?idAward=2003&idGameAwardType=65
-D.I.C.E. Awards	2020	EOY	Game of the Year 2019	https://www.interactive.org/awards/award_category_details.asp?idAward=2020&idGameAwardType=65
+D.I.C.E. Awards	2004	EOY	Game of the Year 2003	https://www.interactive.org/awards/award_category_details.asp?idAward=2004&idGameAwardType=65
+D.I.C.E. Awards	2005	EOY	Game of the Year 2004	https://www.interactive.org/awards/award_category_details.asp?idAward=2005&idGameAwardType=65
 Business Insider	2014	EOY	The Best Video Games Of 2014 — RANKED	https://www.businessinsider.com/the-best-video-games-of-2014--ranked-2014-12
 Empire	2015	EOY	The 15 best games of 2015	https://www.empireonline.com/movies/features/15-best-games-2015/
-Den of Geek	2023	EOY	Den of Geek’s Best Games of 2023	https://www.denofgeek.com/games/den-of-geeks-best-games-of-2023/
 Den of Geek	2024	EOY	The 16 Best Games of 2024, Ranked	https://www.denofgeek.com/games/best-games-2024-ranked/
 Den of Geek	2022	EOY	The Best Games of 2022	https://www.denofgeek.com/games/best-games-of-2022/
-Den of Geek	2019	Decade	100 Best Games of the Decade	https://www.denofgeek.com/games/best-video-games-2010s-decade/
-Den of Geek	2020	EOY	The Best Games of 2020	https://www.denofgeek.com/games/best-games-2020/
-Den of Geek	2021	EOY	The Best Games of 2021	https://www.denofgeek.com/games/the-best-games-of-2021/
-Den of Geek	2023	Misc	35 Best SNES Games of All Time	https://www.denofgeek.com/games/best-snes-games/
-Den of Geek	2019	EOY	10 Best Video Games of 2019	https://www.denofgeek.com/games/best-video-games-to-play-2019/
-Den of Geek	2012	EOY	10 Best Video Games of 2012	https://www.denofgeek.com/comics/10-best-video-games-of-2012/
-Den of Geek	2025	EOY	The Best Games of 2025	https://www.denofgeek.com/games/best-games-of-2025/
-Den of Geek	2015	EOY	Top 12 Video Games of 2015	https://www.denofgeek.com/games/top-12-video-games-of-2015/
 Den of Geek	2021	Misc	25 Best Nintendo 64 Games Ever Made	https://www.denofgeek.com/games/best-nintendo-64-games-ever/
+Den of Geek	2021	EOY	The Best Games of 2021	https://www.denofgeek.com/games/the-best-games-of-2021/
+Den of Geek	2023	EOY	Den of Geek’s Best Games of 2023	https://www.denofgeek.com/games/den-of-geeks-best-games-of-2023/
+Den of Geek	2020	EOY	The Best Games of 2020	https://www.denofgeek.com/games/best-games-2020/
+Den of Geek	2019	Decade	100 Best Games of the Decade	https://www.denofgeek.com/games/best-video-games-2010s-decade/
 Den of Geek	2014	EOY	Top 10 videogames of 2014	https://www.denofgeek.com/games/top-10-videogames-of-2014/
-Den of Geek	2018	EOY	10 Best Video Games of 2018	https://www.denofgeek.com/games/best-video-games-to-play-2018/
+Den of Geek	2012	EOY	10 Best Video Games of 2012	https://www.denofgeek.com/comics/10-best-video-games-of-2012/
+Den of Geek	2015	EOY	Top 12 Video Games of 2015	https://www.denofgeek.com/games/top-12-video-games-of-2015/
+Den of Geek	2023	Misc	35 Best SNES Games of All Time	https://www.denofgeek.com/games/best-snes-games/
+Den of Geek	2025	EOY	The Best Games of 2025	https://www.denofgeek.com/games/best-games-of-2025/
+Den of Geek	2019	EOY	10 Best Video Games of 2019	https://www.denofgeek.com/games/best-video-games-to-play-2019/
 Den of Geek	2017	EOY	The 15 Best Video Games of 2017	https://www.denofgeek.com/games/best-video-games-of-2017/
 Den of Geek	2016	EOY	Top 5 Video Games of 2016	https://www.denofgeek.com/games/top-5-video-games-of-2016/
+Den of Geek	2018	EOY	10 Best Video Games of 2018	https://www.denofgeek.com/games/best-video-games-to-play-2018/
 Destructoid	2009	EOY	Destructoid Game of the Year 2009	https://www.destructoid.com/the-winner-of-destructoid-game-of-the-year-2009/
 Destructoid	2024	Misc	20 best SNES games of all time, ranked	https://www.destructoid.com/best-snes-games-of-all-time-ranked/
+Destructoid	2008	EOY	Destructoid Game of the Year 2008	https://www.destructoid.com/the-winner-of-destructoid-game-of-the-year-2008/
+Destructoid	2007	EOY	Destructoid Game of the Year 2007	https://www.destructoid.com/the-winner-of-destructoid-game-of-the-year-2007/
 Destructoid	2013	EOY	Destructoid’s 2013 Game of the Year	https://www.destructoid.com/the-winner-of-destructoids-2013-game-of-the-year/
 Destructoid	2014	EOY	Destructoid's Best Game of 2014	https://www.destructoid.com/destructoids-award-for-overall-best-game-of-2014-goes-to/
 Destructoid	2011	EOY	Destructoid Game of the Year 2011	https://www.destructoid.com/the-winner-of-destructoid-game-of-the-year-2011/
 Destructoid	2012	EOY	Destructoid’s Game of the Year 2012	https://www.destructoid.com/the-winner-of-destructoids-game-of-the-year-2012/
-Destructoid	2010	EOY	Destructoid Game of the Year 2010	https://www.destructoid.com/the-winner-of-destructoid-game-of-the-year-2010/
 Destructoid	2009	Decade	The Top 50 Videogames of the Decade	https://www.destructoid.com/the-top-50-videogames-of-the-decade-10-1/
-Destructoid	2008	EOY	Destructoid Game of the Year 2008	https://www.destructoid.com/the-winner-of-destructoid-game-of-the-year-2008/
-Destructoid	2007	EOY	Destructoid Game of the Year 2007	https://www.destructoid.com/the-winner-of-destructoid-game-of-the-year-2007/
-Dexerto	2024	All Time	These are the 100 best games of all time	https://www.dexerto.com/gaming/best-games-all-time-2855973/
-Dexerto	2025	All Time	These are the 100 best games of all time	https://www.dexerto.com/gaming/best-games-all-time-2855973/
+Destructoid	2010	EOY	Destructoid Game of the Year 2010	https://www.destructoid.com/the-winner-of-destructoid-game-of-the-year-2010/
+Dexerto	2026	All Time	These are the 100 best games of all time	https://www.dexerto.com/gaming/best-games-all-time-2855973/
 Dexerto	2025	EOY	The 20 best games of 2025	https://www.dexerto.com/gaming/best-2025-games-3011799/
-Digital Spy	2023	EOY	The 30 best games of 2023	https://www.digitalspy.com/tech/g46154192/best-games-of-2023/
-Digital Spy	2015	EOY	Counting down the 20 best games of 2015	https://www.digitalspy.com/videogames/a777616/counting-down-the-20-best-games-of-2015-heres-what-we-ranked-20-16/
-Digital Spy	2012	EOY	Digital Spy 2012 Game of the Year	https://www.digitalspy.com/videogames/a445968/digital-spys-best-games-of-2012-5-1-the-walking-dead-xcom-more/
-Digital Spy	2024	EOY	The 30 best games of 2024	https://www.digitalspy.com/tech/g63044444/best-games-2024/
-Digital Spy	2011	EOY	Digital Spy's Games of 2011	https://www.digitalspy.com/videogames/a355978/digital-spys-games-of-2011-entries-5-1/
-Digital Spy	2025	EOY	The 20 best video games of 2025, ranked	https://www.digitalspy.com/tech/g69531615/best-games-2025/
+Dexerto	2025	All Time	These are the 100 best games of all time	https://www.dexerto.com/gaming/best-games-all-time-2855973/
+Dexerto	2024	All Time	These are the 100 best games of all time	https://www.dexerto.com/gaming/best-games-all-time-2855973/
 Digital Spy	2022	EOY	The best games of 2022	https://www.digitalspy.com/tech/g42295874/best-games-2022/
-Digital Spy	2013	EOY	Digital Spy's best games of 2013	https://www.digitalspy.com/videogames/a537206/digital-spys-best-games-of-2013-5-1/
-Digital Spy	2014	EOY	Digital Spy's best games of the year 2014	https://www.digitalspy.com/videogames/a617594/digital-spys-best-games-of-the-year-2014-5-1/
+Digital Spy	2011	EOY	Digital Spy's Games of 2011	https://www.digitalspy.com/videogames/a355978/digital-spys-games-of-2011-entries-5-1/
 Digital Spy	2007	EOY	The top 20 titles of 2007	https://web.archive.org/web/20211117031813/https://www.digitalspy.com/videogames/a82465/games-the-top-20-titles-of-2007/
-Digital Spy	2010	EOY	Top Ten Games of 2010	https://web.archive.org/web/20220327133321/https://www.digitalspy.com/videogames/a294782/feature-top-ten-games-of-2010/
-Digital Spy	2008	EOY	Top Ten Games Of 2008	https://www.digitalspy.com/videogames/a138960/feature-top-ten-games-of-2008/
+Digital Spy	2015	EOY	Counting down the 20 best games of 2015	https://www.digitalspy.com/videogames/a777616/counting-down-the-20-best-games-of-2015-heres-what-we-ranked-20-16/
+Digital Spy	2014	EOY	Digital Spy's best games of the year 2014	https://www.digitalspy.com/videogames/a617594/digital-spys-best-games-of-the-year-2014-5-1/
+Digital Spy	2013	EOY	Digital Spy's best games of 2013	https://www.digitalspy.com/videogames/a537206/digital-spys-best-games-of-2013-5-1/
+Digital Spy	2012	EOY	Digital Spy 2012 Game of the Year	https://www.digitalspy.com/videogames/a445968/digital-spys-best-games-of-2012-5-1-the-walking-dead-xcom-more/
 Digital Spy	2009	EOY	Top Ten Games Of 2009	https://www.digitalspy.com/videogames/a191878/feature-top-ten-games-of-2009/
-Digital Trends	2022	EOY	The 10 best video games of 2022	https://www.digitaltrends.com/gaming/best-video-games-2022-top-10/
+Digital Spy	2010	EOY	Top Ten Games of 2010	https://web.archive.org/web/20220327133321/https://www.digitalspy.com/videogames/a294782/feature-top-ten-games-of-2010/
+Digital Spy	2025	EOY	The 20 best video games of 2025, ranked	https://www.digitalspy.com/tech/g69531615/best-games-2025/
+Digital Spy	2008	EOY	Top Ten Games Of 2008	https://www.digitalspy.com/videogames/a138960/feature-top-ten-games-of-2008/
+Digital Spy	2024	EOY	The 30 best games of 2024	https://www.digitalspy.com/tech/g63044444/best-games-2024/
+Digital Spy	2023	EOY	The 30 best games of 2023	https://www.digitalspy.com/tech/g46154192/best-games-of-2023/
 Digital Trends	2023	EOY	The 10 best video games of 2023	https://www.digitaltrends.com/gaming/10-best-games-of-2023/
-Digital Trends	2024	EOY	The 10 best video games of 2024	https://www.digitaltrends.com/gaming/10-best-video-games-of-2024/
+Digital Trends	2022	EOY	The 10 best video games of 2022	https://www.digitaltrends.com/gaming/best-video-games-2022-top-10/
 Digital Trends	2021	EOY	The 10 best video games of 2021	https://www.digitaltrends.com/gaming/best-video-games-2021/
-Digital Trends	2017	EOY	Best game of 2017	https://www.digitaltrends.com/gaming/best-game-of-the-year/
-Digital Trends	2015	EOY	Best Products of 2015: Gaming	https://www.digitaltrends.com/gaming/best-products-of-year-gaming-2015/
 Digital Trends	2023	All Time	The 50 best video games of all time	https://www.digitaltrends.com/gaming/50-best-games-of-all-time/
+Digital Trends	2024	EOY	The 10 best video games of 2024	https://www.digitaltrends.com/gaming/10-best-video-games-of-2024/
+Digital Trends	2017	EOY	Best game of 2017	https://www.digitaltrends.com/gaming/best-game-of-the-year/
 Digital Trends	2016	EOY	Best Products of 2016: Gaming	https://www.digitaltrends.com/gaming/best-products-of-2016-gaming/
+Digital Trends	2015	EOY	Best Products of 2015: Gaming	https://www.digitaltrends.com/gaming/best-products-of-year-gaming-2015/
 Digital Trends	2010	EOY	The best video games of 2010	https://www.digitaltrends.com/gaming/best-video-games-of-2010/
 Digitally Downloaded	2016	All Time	The top 100 of all time!	https://www.digitallydownloaded.net/2016/09/the-top-100-of-all-time-how-many-have.html
-Esquire	2019	EOY	The 10 Best Video Games of 2019 Reshaped the Industry in Remarkable Ways	https://www.esquire.com/lifestyle/a25693289/best-video-games-2019/
+Esquire	2020	All Time	The 15 Best Video Games of All Time, Ranked	https://www.esquire.com/lifestyle/g26572573/best-video-games-ranked/
 Esquire	2021	EOY	The Best Video Games of 2021	https://www.esquire.com/lifestyle/g35429823/best-video-games-2021/
 Esquire	2020	EOY	The 11 Best Video Games of 2020	https://www.esquire.com/lifestyle/a30284795/best-video-games-2020/
-Esquire	2020	All Time	The 15 Best Video Games of All Time, Ranked	https://www.esquire.com/lifestyle/g26572573/best-video-games-ranked/
+Esquire	2019	EOY	The 10 Best Video Games of 2019 Reshaped the Industry in Remarkable Ways	https://www.esquire.com/lifestyle/a25693289/best-video-games-2019/
 Complex	2012	All Time	The 50 Best PC Games Of All Time	https://web.archive.org/web/20121116014156/https://www.complex.com/video-games/2012/11/the-50-best-pc-games-of-all-time
 DualShockers	2019	Decade	The 50 Best Video Games of the Decade (2010-2019)	https://www.dualshockers.com/50-best-video-games-of-the-decade-2010s/
 Edge	2024	Decade	The 50 best games of the '80s	https://www.gamesradar.com/best-games-80s/
+Edge	2019	EOY	Game of the Year 2019	
 Edge	2024	EOY	EDGE Awards 2023 - Top 10 Games	
 Edge	2024	EOY	Top 10 games of the year 2024	
-Edge	2023	Misc	The 100 Greatest Games of Edge's Lifetime	
-Edge	2018	EOY	Top 10 Games of the Year 2018	
-Edge	2015	All Time	The 100 Greatest Videogames	https://archive.org/details/EDGE.the.100.greatest.videogames.2015/mode/2up
-Edge	2015	EOY	EDGE Magazine Best Games of 2015	
-Edge	2014	EOY	Top Ten Video Games Of 2014	
-Edge	1999	EOY	Game of the Year 1998	https://web.archive.org/web/20190628131008/https://retrocdn.net/index.php?title=File:Edge_UK_067.pdf&page=72
-Edge	2022	EOY	EDGE Magazine’s best games of 2022	
-Edge	2000	All Time	The 100 best games of all time	
-Edge	2000	EOY	Game of the Year 1999	https://web.archive.org/web/20190321093603/https://retrocdn.net/images/7/7a/Edge_UK_082.pdf
-Edge	2021	EOY	Top 10 Games of the Year 2021	
-Edge	2019	EOY	Game of the Year 2019	
 Edge	2007	All Time	Edge's Top 100 Games of All Time	https://web.archive.org/web/20120616065128/http://www.edge-online.com/features/edges-top-100-games-all-time
-Edge	2017	EOY	Top 10 Games of the Year 2017	
-Edge	2017	All Time	The 100 Greatest Videogames	
+Edge	2023	Misc	The 100 Greatest Games of Edge's Lifetime	
+Edge	2022	EOY	EDGE Magazine’s best games of 2022	
 Edge	2009	All Time	The 100 Best Games To Play Today	https://web.archive.org/web/20120325194117/http://www.edge-online.com/features/100-best-games-play-today
-Edge	2011	EOY	Mainstream Game of the Year	
-Edge	2012	EOY	Best Games of 2012	
 Edge	2025	EOY	2025 EDGE awards: top 10 games of the year	
+Edge	2000	EOY	Game of the Year 1999	https://web.archive.org/web/20190321093603/https://retrocdn.net/images/7/7a/Edge_UK_082.pdf
+Edge	2017	All Time	The 100 Greatest Videogames	
+Edge	2021	EOY	Top 10 Games of the Year 2021	
+Edge	2015	All Time	The 100 Greatest Videogames	https://archive.org/details/EDGE.the.100.greatest.videogames.2015/mode/2up
+Edge	2014	EOY	Top Ten Video Games Of 2014	
+Edge	2012	EOY	Best Games of 2012	
+Edge	1999	EOY	Game of the Year 1998	https://web.archive.org/web/20190628131008/https://retrocdn.net/index.php?title=File:Edge_UK_067.pdf&page=72
+Edge	2000	All Time	The 100 best games of all time	
+Edge	2018	EOY	Top 10 Games of the Year 2018	
+Edge	2011	EOY	Mainstream Game of the Year	
+Edge	2017	EOY	Top 10 Games of the Year 2017	
+Edge	2015	EOY	EDGE Magazine Best Games of 2015	
 Electronic Fun with Computers & Games	1984	All Time	EF's 50 Best Games	
-Electronic Gaming Monthly	2017	EOY	EGM’s Best of 2017	https://web.archive.org/web/20180328113716/https://egmnow.com/tag/best-of-2017/
-Electronic Gaming Monthly	2019	EOY	EGM’s Game of the Year 2019	https://egmnow.com/tag/best-of-2019/
-Electronic Gaming Monthly	2015	EOY	EGM's Best of 2015	https://web.archive.org/web/20160102052110/http://www.egmnow.com/
-Electronic Gaming Monthly	2022	EOY	EGM’s Best of 2022	https://egmnow.com/tag/best-of-2022/
-Electronic Gaming Monthly	2021	EOY	EGM’s Best of 2021	https://egmnow.com/tag/best-of-2021/
-Electronic Gaming Monthly	2014	EOY	EGM’s Best of 2014	https://web.archive.org/web/20150101175727/http://www.egmnow.com/platforms/xbox_360/egms-best-of-2014-part-five-05-01/
-Electronic Gaming Monthly	2018	EOY	EGM’s Best of 2018	https://web.archive.org/web/20190103083332/http://www.egmnow.com/tag/best-of-2018/
+Electronic Gaming Monthly	2020	EOY	EGM’s Best of 2020	https://egmnow.com/tag/best-of-2020/
 Electronic Gaming Monthly	2013	EOY	EGM’s Best of 2013	https://web.archive.org/web/20150404050035/http://www.egmnow.com/platforms/xbox_360/egms-best-of-2013-part-five-05-01/#
+Electronic Gaming Monthly	2014	EOY	EGM’s Best of 2014	https://web.archive.org/web/20150101175727/http://www.egmnow.com/platforms/xbox_360/egms-best-of-2014-part-five-05-01/
+Electronic Gaming Monthly	2015	EOY	EGM's Best of 2015	https://web.archive.org/web/20160102052110/http://www.egmnow.com/
 Electronic Gaming Monthly	2012	EOY	EGM’s Best of 2012	https://web.archive.org/web/20130530113933/http://www.egmnow.com/articles/xbox_360/egms-best-of-2012-part-five-05-01/
+Electronic Gaming Monthly	2022	EOY	EGM’s Best of 2022	https://egmnow.com/tag/best-of-2022/
+Electronic Gaming Monthly	2018	EOY	EGM’s Best of 2018	https://web.archive.org/web/20190103083332/http://www.egmnow.com/tag/best-of-2018/
+Electronic Gaming Monthly	2016	EOY	EGM’s Best of 2016	https://web.archive.org/web/20161231083413/http://www.egmnow.com/tag/best-of-2016/
+Electronic Gaming Monthly	2021	EOY	EGM’s Best of 2021	https://egmnow.com/tag/best-of-2021/
 Electronic Gaming Monthly	2011	EOY	EGM’s Top 25 of 2011	https://web.archive.org/web/20170118064758/http://www.egmnow.com/articles/news/egms-top-25-of-2011-part-5-5-1/
 Electronic Gaming Monthly	2002	All Time	100 Best Games Ever	https://archive.org/details/electronic-gaming-monthly-issue-150-january-2002/page/n1/mode/2up
 Electronic Gaming Monthly	1997	All Time	100 Best Games of All Time	https://archive.org/details/electronic-gaming-monthly-issue-100-november-1997_202106/page/n105/mode/2up
-Electronic Gaming Monthly	2016	EOY	EGM’s Best of 2016	https://web.archive.org/web/20161231083413/http://www.egmnow.com/tag/best-of-2016/
-Electronic Gaming Monthly	2020	EOY	EGM’s Best of 2020	https://egmnow.com/tag/best-of-2020/
+Electronic Gaming Monthly	2017	EOY	EGM’s Best of 2017	https://web.archive.org/web/20180328113716/https://egmnow.com/tag/best-of-2017/
+Electronic Gaming Monthly	2019	EOY	EGM’s Game of the Year 2019	https://egmnow.com/tag/best-of-2019/
+Empire	2023	EOY	The Best Games Of 2023	https://www.empireonline.com/gaming/features/best-games-2023/
+Empire	2022	EOY	The Best Games Of 2022	https://www.empireonline.com/gaming/features/best-games-2022/
+Empire	2017	EOY	The Best Games Of 2017	https://www.empireonline.com/movies/features/best-games-2017/
 Empire	2024	EOY	The Best Games Of 2024	https://www.empireonline.com/gaming/features/best-games-2024/
 Empire	2009	All Time	The 100 Greatest Games	https://web.archive.org/web/20110706095032/http://www.empireonline.com/100greatestgames/default.asp?p=1
-Empire	2017	EOY	The Best Games Of 2017	https://www.empireonline.com/movies/features/best-games-2017/
-Empire	2022	EOY	The Best Games Of 2022	https://www.empireonline.com/gaming/features/best-games-2022/
-Empire	2023	EOY	The Best Games Of 2023	https://www.empireonline.com/gaming/features/best-games-2023/
 Empire	2019	EOY	The Best Games Of 2019	https://www.empireonline.com/movies/features/best-games-2019/
 Empire	2018	EOY	The Best Games of 2018	https://www.empireonline.com/movies/features/best-games-2018-far/
-Entertainment Weekly	2021	EOY	The 5 best video games of 2021	https://ew.com/gaming/best-video-games-of-2021/
+Entertainment Weekly	2018	EOY	The best games of 2018	https://ew.com/gaming/the-best-games-of-2018/#1-god-of-war
 Entertainment Weekly	2020	EOY	The best videogames of 2020	https://ew.com/gaming/best-videogames-of-2020/
 Entertainment Weekly	2019	EOY	The 10 best videogames of 2019	https://ew.com/gaming/best-videogames-2019/
-Entertainment Weekly	2018	EOY	The best games of 2018	https://ew.com/gaming/the-best-games-of-2018/#1-god-of-war
+Entertainment Weekly	2021	EOY	The 5 best video games of 2021	https://ew.com/gaming/best-video-games-of-2021/
 Entertainment Weekly	2003	All Time	We rank the 100 greatest early video games	https://ew.com/article/2003/05/13/we-rank-100-greatest-videogames/
 EP Daily	2013	All Time	Top 100 Games & Movies Of All Time!	https://www.youtube.com/playlist?list=PL6uoO3csitWN_KHRByq0eyPagW2z9FKYW
+Forbes	2017	EOY	The 20 Best Video Games Of 2017	https://www.forbes.com/sites/games/2017/12/22/the-best-video-games-of-2017/
 Forbes	2025	EOY	The Top 5 Video Games Of 2025	https://www.forbes.com/sites/erikkain/2025/12/06/best-video-games-2025-split-fiction-arc-raiders-dispatch-clair-obscur-blue-prince/
 Forbes	2017	EOY	The 10 Best Video Games Of 2016	https://www.forbes.com/sites/erikkain/2017/01/10/the-10-best-video-games-of-2016/
-Forbes	2017	EOY	The 20 Best Video Games Of 2017	https://www.forbes.com/sites/games/2017/12/22/the-best-video-games-of-2017/
 Forbes	2013	EOY	The Best Video Games Of 2013	https://www.forbes.com/sites/games/2013/12/23/the-best-video-games-of-2013/
 Esquire	2017	EOY	The Best Video Games Of 2017	https://www.esquire.com/uk/culture/a14677/best-video-games-2017/
-Esquire	2024	EOY	The 2024 Esquire Gaming Awards	https://www.esquire.com/entertainment/a62939499/esquire-gaming-awards-2024/
-Esquire	2023	EOY	The 2023 Esquire Gaming Awards	https://www.esquire.com/entertainment/a46092025/esquire-gaming-awards-2023/
 Esquire	2025	EOY	The 5 Best Video Games of 2025	https://www.esquire.com/entertainment/a69678261/esquire-gaming-awards-2025/
+Esquire	2023	EOY	The 2023 Esquire Gaming Awards	https://www.esquire.com/entertainment/a46092025/esquire-gaming-awards-2023/
+Esquire	2024	EOY	The 2024 Esquire Gaming Awards	https://www.esquire.com/entertainment/a62939499/esquire-gaming-awards-2024/
 Esquire	2018	All Time	The (Real) Greatest Video Games of All-Time	https://web.archive.org/web/20181107001605/https://www.esquire.com/uk/culture/a24173497/the-greatest-video-games-of-all-time/
+Eurogamer	2021	EOY	Counting down our top 10 games of 2021	https://www.eurogamer.net/eurogamers-game-of-the-year-is
 Eurogamer	2020	Misc	The top 10 games of the generation	https://www.eurogamer.net/articles/2020-09-18-the-top-10-games-of-the-generation
 Eurogamer	2019	EOY	Games of the Year 2019	https://www.eurogamer.net/topics/games-of-the-year-2019
-Eurogamer	2021	EOY	Counting down our top 10 games of 2021	https://www.eurogamer.net/eurogamers-game-of-the-year-is
-Eurogamer	2013	Misc	Games of the Generation	https://www.eurogamer.net/eurogamers-games-of-the-generation-the-top-50
-Eurogamer	2016	EOY	Eurogamer's top 50 games of 2015	https://www.eurogamer.net/articles/2016-01-01-eurogamers-top-50-games-of-2015
 Eurogamer	2024	EOY	The 50 best games of 2024, ranked	https://www.eurogamer.net/the-50-best-games-of-2024-ranked
-Eurogamer	2023	EOY	Here are Eurogamer's favourite games of 2023	https://www.eurogamer.net/here-are-eurogamers-favourite-games-of-2023
-Eurogamer	2022	EOY	The 37 best games of 2022	https://www.eurogamer.net/the-best-games-of-2022
-Eurogamer	2025	EOY	The 50 best games of 2025, ranked	https://www.eurogamer.net/the-50-best-games-of-2025-ranked
+Eurogamer	2019	Decade	Games of the Decade	https://www.eurogamer.net/archive/games-of-the-decade
 Eurogamer	2017	EOY	Eurogamer's Top 50 Games of 2017	https://www.eurogamer.net/eurogamers-top-50-games-of-2017-10-1
 Eurogamer	2017	EOY	Eurogamer's top 50 games of 2016	https://www.eurogamer.net/articles/2017-01-02-eurogamers-top-50-games-of-2016
-Eurogamer	2019	Decade	Games of the Decade	https://www.eurogamer.net/archive/games-of-the-decade
+Eurogamer	2016	EOY	Eurogamer's top 50 games of 2015	https://www.eurogamer.net/articles/2016-01-01-eurogamers-top-50-games-of-2015
+Eurogamer	2013	Misc	Games of the Generation	https://www.eurogamer.net/eurogamers-games-of-the-generation-the-top-50
+Eurogamer	2022	EOY	The 37 best games of 2022	https://www.eurogamer.net/the-best-games-of-2022
+Eurogamer	2023	EOY	Here are Eurogamer's favourite games of 2023	https://www.eurogamer.net/here-are-eurogamers-favourite-games-of-2023
 Eurogamer	2018	EOY	The 30 best games of 2018	https://www.eurogamer.net/articles/2018-12-30-the-30-best-games-of-2018
+Eurogamer	2025	EOY	The 50 best games of 2025, ranked	https://www.eurogamer.net/the-50-best-games-of-2025-ranked
 Everyeye	2019	Decade	I giochi del decennio: i migliori videogame dal 2010 al 2019	https://www.everyeye.it/articoli/speciale-i-migliori-videogiochi-decennio-2010-2019-46424.html
 Fanbyte	2019	Decade	Fanbyte’s Top 50 Games of the Decade	https://web.archive.org/web/20200127192413/https://www.fanbyte.com/podcasts/fanbytes-top-50-games-of-the-decade-16-1/
 FHM	2010	All Time	FHM's 100 Greatest Games of All Time	https://web.archive.org/web/20130430073137/http://www.fhm.com/reviews/console-games/fhms-100-greatest-games-of-all-time-20090901
 Fire Escape	2025	EOY	Game of the Year 2025	https://youtu.be/CmsRbVs9ZC4
 Flux	1995	All Time	The Top 100 Video Games	http://www.brettweisswords.com/2017/12/the-top-100-video-games-flux-magazine.html
-FZ	2025	EOY	FZ utser Årets spel 2025!	https://www.fz.se/artikel/301829-fz-utser-arets-spel-2025
 FZ	2024	EOY	FZ utser Årets spel 2024!	https://www.fz.se/artikel/299310-fz-utser-arets-spel-2024
+FZ	2025	All Time	FZ utser de 100 bästa spelen genom tiderna!	https://www.fz.se/artikel/300118-fz-utser-de-100-basta-spelen-genom-tiderna
+FZ	2025	EOY	FZ utser Årets spel 2025!	https://www.fz.se/artikel/301829-fz-utser-arets-spel-2025
 G4	2012	All Time	Top 100 Video Games of All Time	https://web.archive.org/web/20121006174125/http://www.g4tv.com/top-100/
-Game Developer	2012	EOY	The 10 Best Games of 2012	https://www.gamedeveloper.com/audio/the-10-best-games-of-2012
-Game Developer	2023	EOY	Game Developer's 2023 Wrap-Up: The best games of the year	https://www.gamedeveloper.com/design/game-developer-s-best-of-2023-the-best-games-of-the-year
-Game Developer	2018	EOY	Gamasutra's Best of 2018: The top 10 games of the year	https://www.gamedeveloper.com/audio/gamasutra-s-best-of-2018-the-top-10-games-of-the-year
-Game Developer	2016	EOY	Gamasutra's Best of 2016: Top 10 Games of the Year	https://www.gamedeveloper.com/audio/gamasutra-s-best-of-2016-top-10-games-of-the-year
-Game Developer	2017	EOY	Best of 2017: Gamasutra's top games, devs, events and trends	https://www.gamedeveloper.com/audio/best-of-2017-gamasutra-s-top-games-devs-events-and-trends
-Game Developer	2014	EOY	Best of 2014: Gamasutra's Top Games of the Year	https://www.gamedeveloper.com/design/best-of-2014-gamasutra-s-top-games-of-the-year
-Game Developer	2015	EOY	Gamasutra's Best of 2015: Top 10 Games of the Year	https://www.gamedeveloper.com/design/gamasutra-s-best-of-2015-top-10-games-of-the-year
-Game Developer	2025	EOY	Game Developer's top 10 games of the year - 2025	https://www.gamedeveloper.com/design/game-developer-s-2025-wrap-up-the-top-games-of-the-year
 Game Developer	2010	EOY	Gamasutra's Best Of 2010: The Top 10 Games Of The Year	https://www.gamedeveloper.com/pc/gamasutra-s-best-of-2010-the-top-10-games-of-the-year
+Game Developer	2012	EOY	The 10 Best Games of 2012	https://www.gamedeveloper.com/audio/the-10-best-games-of-2012
+Game Developer	2015	EOY	Gamasutra's Best of 2015: Top 10 Games of the Year	https://www.gamedeveloper.com/design/gamasutra-s-best-of-2015-top-10-games-of-the-year
+Game Developer	2014	EOY	Best of 2014: Gamasutra's Top Games of the Year	https://www.gamedeveloper.com/design/best-of-2014-gamasutra-s-top-games-of-the-year
+Game Developer	2017	EOY	Best of 2017: Gamasutra's top games, devs, events and trends	https://www.gamedeveloper.com/audio/best-of-2017-gamasutra-s-top-games-devs-events-and-trends
+Game Developer	2016	EOY	Gamasutra's Best of 2016: Top 10 Games of the Year	https://www.gamedeveloper.com/audio/gamasutra-s-best-of-2016-top-10-games-of-the-year
 Game Developer	2020	EOY	Gamasutra's Best of 2019: The top 10 games of the year	https://www.gamedeveloper.com/audio/gamasutra-s-best-of-2019-the-top-10-games-of-the-year
+Game Developer	2018	EOY	Gamasutra's Best of 2018: The top 10 games of the year	https://www.gamedeveloper.com/audio/gamasutra-s-best-of-2018-the-top-10-games-of-the-year
+Game Developer	2025	EOY	Game Developer's top 10 games of the year - 2025	https://www.gamedeveloper.com/design/game-developer-s-2025-wrap-up-the-top-games-of-the-year
+Game Developer	2023	EOY	Game Developer's 2023 Wrap-Up: The best games of the year	https://www.gamedeveloper.com/design/game-developer-s-best-of-2023-the-best-games-of-the-year
 Game Developer	2011	EOY	Gamasutra's Best Of 2011: Top 10 Games Of The Year	https://www.gamedeveloper.com/business/gamasutra-s-best-of-2011-top-10-games-of-the-year
+Game Developers Choice Awards	2021	EOY	GDCA Game of the Year 2020	https://gamechoiceawards.com/archive/gdca_21st
 Game Developers Choice Awards	2019	EOY	GDCA Game of the Year 2018	https://gamechoiceawards.com/archive/gdca_19th
 Game Developers Choice Awards	2020	EOY	GDCA Game of the Year 2019	https://gamechoiceawards.com/archive/gdca_20th
-Game Developers Choice Awards	2018	EOY	GDCA Game of the Year 2017	https://gamechoiceawards.com/archive/gdca_18th
 Game Developers Choice Awards	2017	EOY	GDCA Game of the Year 2016	https://gamechoiceawards.com/archive/gdca_17th
-Game Developers Choice Awards	2025	EOY	GDCA Game of the Year 2024	
+Game Developers Choice Awards	2018	EOY	GDCA Game of the Year 2017	https://gamechoiceawards.com/archive/gdca_18th
 Game Developers Choice Awards	2015	EOY	GDCA Game of the Year 2014	http://www.gamechoiceawards.com/archive/gdca_15th.html
-Game Developers Choice Awards	2021	EOY	GDCA Game of the Year 2020	https://gamechoiceawards.com/archive/gdca_21st
 Game Developers Choice Awards	2016	EOY	GDCA Game of the Year 2015	https://gamechoiceawards.com/archive/gdca_16th
-Game Developers Choice Awards	2010	EOY	GDCA Game of the Year 2009	http://www.gamechoiceawards.com/archive/gdca_10th.html
+Game Developers Choice Awards	2022	EOY	GDCA Game of the Year 2021	https://gamechoiceawards.com/archive/gdca_22nd
 Game Developers Choice Awards	2013	EOY	GDCA Game of the Year 2012	http://gamechoiceawards.com/archive/gdca_13th.html
 Game Developers Choice Awards	2014	EOY	GDCA Game of the Year 2013	http://gamechoiceawards.com/archive/gdca_14th.html
-Game Developers Choice Awards	2011	EOY	GDCA Game of the Year 2010	https://gamechoiceawards.com/archive/gdca_11th
-Game Developers Choice Awards	2023	EOY	GDCA Game of the Year 2022	https://gamechoiceawards.com/archive/gdca_23rd
 Game Developers Choice Awards	2012	EOY	GDCA Game of the Year 2011	http://gamechoiceawards.com/archive/gdca_12th.html
+Game Developers Choice Awards	2023	EOY	GDCA Game of the Year 2022	https://gamechoiceawards.com/archive/gdca_23rd
 Game Developers Choice Awards	2024	EOY	GDCA Game of the Year 2023	https://gamechoiceawards.com/recipients
-Game Developers Choice Awards	2022	EOY	GDCA Game of the Year 2021	https://gamechoiceawards.com/archive/gdca_22nd
+Game Developers Choice Awards	2011	EOY	GDCA Game of the Year 2010	https://gamechoiceawards.com/archive/gdca_11th
+Game Developers Choice Awards	2025	EOY	GDCA Game of the Year 2024	
 Game Developers Choice Awards	2009	EOY	GDCA Game of the Year 2008	http://www.gamechoiceawards.com/archive/gdca_9th.html
+Game Developers Choice Awards	2001	EOY	GDCA Game of the Year 2000	https://gamechoiceawards.com/archive/gdca_1st
 Game Developers Choice Awards	2008	EOY	GDCA Game of the Year 2007	http://www.gamechoiceawards.com/archive/gdca_8th.html
-Game Developers Choice Awards	2003	EOY	GDCA Game of the Year 2002	http://www.gamechoiceawards.com/archive/gdca_3rd.html
-Game Developers Choice Awards	2002	EOY	GDCA Game of the Year 2001	https://gamechoiceawards.com/archive/gdca_2nd
 Game Developers Choice Awards	2007	EOY	GDCA Game of the Year 2006	http://www.gamechoiceawards.com/archive/gdca_7th.html
 Game Developers Choice Awards	2006	EOY	GDCA Game of the Year 2005	https://gamechoiceawards.com/archive/gdca_6th
-Game Developers Choice Awards	2001	EOY	GDCA Game of the Year 2000	https://gamechoiceawards.com/archive/gdca_1st
 Game Developers Choice Awards	2005	EOY	GDCA Game of the Year 2004	http://www.gamechoiceawards.com/archive/gdca_5th.html
 Game Developers Choice Awards	2004	EOY	GDCA Game of the Year 2003	https://gamechoiceawards.com/archive/gdca_4th
-Game Informer	2020	EOY	2020 Games of the Year	https://web.archive.org/web/20210305111550/https://www.gameinformer.com/2020/12/11/counting-down-the-top-10-games-of-the-year
-Game Informer	2009	All Time	The Top 200 Games Of All Time	https://archive.org/details/game-informer-issue-200-december-2009/mode/2up
+Game Developers Choice Awards	2003	EOY	GDCA Game of the Year 2002	http://www.gamechoiceawards.com/archive/gdca_3rd.html
+Game Developers Choice Awards	2002	EOY	GDCA Game of the Year 2001	https://gamechoiceawards.com/archive/gdca_2nd
+Game Developers Choice Awards	2010	EOY	GDCA Game of the Year 2009	http://www.gamechoiceawards.com/archive/gdca_10th.html
 Game Informer	2018	All Time	The Top 300 Games of All Time	https://archive.gamehistory.org/item/39a2674e-8ace-41d1-8ab1-fd4f48c68019
-Game Informer	2025	EOY	The Top Ten Games of 2025	https://gameinformer.com/best-of-2025/2025/12/16/the-top-ten-games-of-2025
-Game Informer	2023	EOY	Game Informer's Top 10 Games of 2023	https://web.archive.org/web/20240302075104/https://www.gameinformer.com/2023/12/19/game-informers-top-10-games-of-2023
+Game Informer	2020	EOY	2020 Games of the Year	https://web.archive.org/web/20210305111550/https://www.gameinformer.com/2020/12/11/counting-down-the-top-10-games-of-the-year
 Game Informer	2021	EOY	Game Informer's Top 10 Games Of 2021	https://web.archive.org/web/20220205211629/https://www.gameinformer.com/feature/game-informers-top-10-games-of-2021
+Game Informer	2025	EOY	The Top Ten Games of 2025	https://gameinformer.com/best-of-2025/2025/12/16/the-top-ten-games-of-2025
 Game Informer	2022	EOY	Game Informer's Top 10 Games Of 2022	https://web.archive.org/web/20240716125946/https://www.gameinformer.com/goty-2022/2022/12/23/game-informers-top-10-games-of-2022
+Game Informer	2023	EOY	Game Informer's Top 10 Games of 2023	https://web.archive.org/web/20240302075104/https://www.gameinformer.com/2023/12/19/game-informers-top-10-games-of-2023
 Game Informer	2025	EOY	Game Informer's (Belated) Top 10 Games Of 2024 Awards	https://www.gameinformer.com/2025/03/20/game-informers-belated-top-10-games-of-2024-awards
+Game Informer	2009	All Time	The Top 200 Games Of All Time	https://archive.org/details/game-informer-issue-200-december-2009/mode/2up
 NA	2006	All Time	Game On! The 50 Greatest Video Games Of All Time	https://archive.org/details/gameonfrompongto0000simo/page/246/mode/2up
-Game Rant	2015	EOY	Game Rant's Top 10 Games of 2014	https://gamerant.com/top-10-best-video-games-2014-list/
 Game Rant	2014	EOY	Game Rant's 10 Favorite Games of 2013	https://gamerant.com/top-10-best-games-2013/
-Game Rant	2023	EOY	Game Rant's Top 10 Games of 2023	https://gamerant.com/top-best-video-game-2023/
+Game Rant	2015	EOY	Game Rant's Top 10 Games of 2014	https://gamerant.com/top-10-best-video-games-2014-list/
 Game Rant	2012	EOY	Game Rant's Top 10 Games of 2012	https://gamerant.com/top-10-games-2012/
-Game Rant	2024	EOY	Game Rant's Top 10 Games of 2024	https://gamerant.com/top-best-video-game-2024/
-Game Rant	2016	EOY	Game Rant's Top 10 Games of 2016	https://gamerant.com/top-games-2016/
 Game Rant	2015	EOY	Game Rant's Top 10 Games of 2015	https://gamerant.com/top-10-best-video-games-2015-list/
+Game Rant	2016	EOY	Game Rant's Top 10 Games of 2016	https://gamerant.com/top-games-2016/
 Game Rant	2025	EOY	Game Rant's Top 10 Games of 2025	https://gamerant.com/top-best-video-game-2025/
-Game Two	2025	Decade	Die 20 BESTEN GAMES der 2000er!	https://youtu.be/HrqtYjpKxE4
+Game Rant	2024	EOY	Game Rant's Top 10 Games of 2024	https://gamerant.com/top-best-video-game-2024/
+Game Rant	2023	EOY	Game Rant's Top 10 Games of 2023	https://gamerant.com/top-best-video-game-2023/
 Game Two	2025	Decade	Die 20 BESTEN GAMES der 90er!	https://youtu.be/uWHb-CozfaM
+Game Two	2025	Decade	Die 20 BESTEN GAMES der 2000er!	https://youtu.be/HrqtYjpKxE4
 GamePlayer.se	2010	Decade	Decenniets bästa spel	https://web.archive.org/web/20111013063043/http://gameplayer.se/pub_text.php?pub_id=15292
 GamePro	2008	All Time	The 32 Best PC Games	https://web.archive.org/web/20081102234825/http://www.gamepro.com/article/features/207295/the-32-best-pc-games/
 Gamer.nl	2019	Decade	De 100 beste games van het decennium	https://gamer.nl/nieuws/overig/archief/de-100-beste-games-van-het-decennium-nummers-25-tm-1/
-Gamer.no	2025	EOY	Dette er årets 10 beste spill	https://www.gamer.no/artikler/dette-er-arets-10-beste-spill/519755
+Gamer.no	2010	Decade	Tiårets beste spill	https://www.gamer.no/artikler/toppen-av-kransekaka/140949
 Gamer.no	2023	EOY	Vi kårer årets 10 beste spill	https://www.gamer.no/artikler/vi-karer-arets-10-beste-spill/516985
 Gamer.no	2024	EOY	De beste og mest skuffende spillopplevelsene fra 2024	https://www.gamer.no/artikler/de-beste-og-mest-skuffende-spillopplevelsene-fra-2024/518165
-Gamer.no	2010	Decade	Tiårets beste spill	https://www.gamer.no/artikler/toppen-av-kransekaka/140949
-Gamereactor	2017	All Time	Gamereactor's Top 100 bedste spil nogensinde	https://www.gamereactor.dk/gamereactors-top-100-bedste-spil-nogensinde-101-438333/
-Gamereactor	2012	Misc	De 10 bästa Gamecube-spelen	https://www.gamereactor.se/de-10-basta-gamecubespelen-48841/
-Gamereactor	2010	Misc	De 10 bästa Playstation-spelen	https://www.gamereactor.se/de-10-basta-playstationspelen-24526/
-Gamereactor	2022	All Time	Best Ever: Spel	https://www.gamereactor.se/best-ever-spel-101-1066613/%7C
+Gamer.no	2025	EOY	Dette er årets 10 beste spill	https://www.gamer.no/artikler/dette-er-arets-10-beste-spill/519755
 Gamereactor	2019	Decade	Decenniets 30 bästa spel	https://www.gamereactor.se/decenniets-30-basta-spel-3-814773/
-Gamereactor	2023	EOY	Årets bästa spel 2023	https://www.gamereactor.se/arets-basta-spel-2023-1281453/
-Gamereactor	2012	Misc	De 10 bästa Super Nintendo-spelen	https://www.gamereactor.se/de-10-basta-super-nintendospelen-47361/
+Gamereactor	2010	Misc	De 10 bästa Playstation-spelen	https://www.gamereactor.se/de-10-basta-playstationspelen-24526/
 Gamereactor	2010	Decade	Decenniets Dundertitlar	https://www.gamereactor.se/decenniets-dundertitlar-del-3-22174/
 Gamereactor	2011	All Time	Game Reactor top 100	https://www.gamereactor.no/topp100/100/
+Gamereactor	2012	Misc	De 10 bästa Super Nintendo-spelen	https://www.gamereactor.se/de-10-basta-super-nintendospelen-47361/
+Gamereactor	2012	Misc	De 10 bästa Gamecube-spelen	https://www.gamereactor.se/de-10-basta-gamecubespelen-48841/
+Gamereactor	2017	All Time	Gamereactor's Top 100 bedste spil nogensinde	https://www.gamereactor.dk/gamereactors-top-100-bedste-spil-nogensinde-101-438333/
+Gamereactor	2022	All Time	Best Ever: Spel	https://www.gamereactor.se/best-ever-spel-101-1066613/%7C
+Gamereactor	2023	EOY	Årets bästa spel 2023	https://www.gamereactor.se/arets-basta-spel-2023-1281453/
 GamesHub	2024	EOY	GamesHub’s Top 10 Best Games of 2024	https://www.gameshub.com/news/features/best-games-of-2024-goty-gameshub-2647776/
 GamesHub	2023	EOY	The Best Video Games of 2023	https://www.gameshub.com/news/features/best-video-games-2023-2634973/
 GamesMaster	1996	All Time	Top 100 Games of All Time	
 GamesMaster	1994	All Time	The All Time Top 100 Ever	
+GameSpew	2019	Decade	The 50 Best Games of the Decade	https://www.gamespew.com/2019/12/games-of-the-decade-50-41/
 GameSpew	2024	EOY	The 15 best games of 2024: GameSpew Edition	https://www.gamespew.com/2024/12/best-games-of-2024/
 GameSpew	2025	EOY	The 15 best games of 2025	https://www.gamespew.com/2025/12/the-15-best-games-of-2025/
-GameSpew	2019	Decade	The 50 Best Games of the Decade	https://www.gamespew.com/2019/12/games-of-the-decade-50-41/
 GameSpot	2000	All Time	GameSpot's 100 Games of the Millennium	https://web.archive.org/web/20000815090929/http://www.gamespot.co.uk/pc.gamespot/features/gotm_uk/
 GameSpot	2003	All Time	The Greatest Games of All Time	https://web.archive.org/web/20080726155641/http://www.gamespot.com/gamespot/features/all/greatestgames/index.html
-GameSpot	2016	EOY	Game of the Year 2016 Countdown	https://www.gamespot.com/best-of-games-2016/
 GameSpot	2015	EOY	Top 25 Games of 2015	https://www.gamespot.com/gallery/top-25-games-of-2015/2900-430/
+GameSpot	2016	EOY	Game of the Year 2016 Countdown	https://www.gamespot.com/best-of-games-2016/
 GameSpot	2017	EOY	Best of 2017 Games	https://www.gamespot.com/best-of-games-2017/
-GameSpot	2025	EOY	GameSpot's 10 Best Games Of 2025	https://www.gamespot.com/gallery/gamespots-10-best-games-of-2025/2900-7322/
 GameSpot	2018	EOY	Best Games of 2018	https://www.gamespot.com/best-games-of-2018/
+GameSpot	2025	EOY	GameSpot's 10 Best Games Of 2025	https://www.gamespot.com/gallery/gamespots-10-best-games-of-2025/2900-7322/
 GameSpot	2019	EOY	The 21 Absolute Best Games of 2014	https://www.gamespot.com/gallery/the-21-absolute-best-games-of-2014/2900-26/#1
 GameSpot	2019	EOY	Best Games of 2019	https://www.gamespot.com/best-games-of-2019/
 GameSpot	2023	EOY	GameSpot's 10 Best Games Of 2023	https://www.gamespot.com/gallery/gamespots-10-best-games-of-2023/2900-4972/
+GameSpy	2011	Decade	GameSpy's Top 25 PC Games of the 2000s	http://pc.gamespy.com/articles/114/1145626p1.html
+GameSpy	2005	Misc	Top 25 PSone Games of All-Time	https://web.archive.org/web/20051028040913/http://ps2.gamespy.com/articles/649/649048p1.html
+GameSpy	2009	Decade	GameSpy's 25 Favorite PC Games of the '90s	http://pc.gamespy.com/articles/103/1030011p1.html
+GameSpy	2009	Decade	GameSpy's 50 Favorite Console Games of the '80s	http://www.gamespy.com/articles/104/1042297p1.html
 GameSpy	2009	Decade	The Greatest PC Games of All Time: The '80s	http://pc.gamespy.com/articles/950/950214p1.html
 GameSpy	2001	All Time	GameSpy's Top 50 Games of All Time	https://web.archive.org/web/20040604135802/http://archive.gamespy.com/articles/july01/top50index/
-GameSpy	2005	Misc	Top 25 PSone Games of All-Time	https://web.archive.org/web/20051028040913/http://ps2.gamespy.com/articles/649/649048p1.html
-GameSpy	2009	Decade	GameSpy's 50 Favorite Console Games of the '80s	http://www.gamespy.com/articles/104/1042297p1.html
-GameSpy	2011	Decade	GameSpy's Top 25 PC Games of the 2000s	http://pc.gamespy.com/articles/114/1145626p1.html
-GameSpy	2009	Decade	GameSpy's 25 Favorite PC Games of the '90s	http://pc.gamespy.com/articles/103/1030011p1.html
-GamesRadar+	2024	Misc	The 25 best Wii games of all time	https://www.gamesradar.com/best-wii-games-all-time/
-GamesRadar+	2024	Misc	The best SNES games of all time	https://www.gamesradar.com/best-snes-games-all-time/
-GamesRadar+	2024	Misc	The 10 best NES games of all time	https://www.gamesradar.com/best-nes-games-all-time/
+GamesRadar+	2024	Misc	The 25 best N64 games of all time	https://www.gamesradar.com/best-n64-games-all-time/
 GamesRadar+	2024	EOY	The 25 best games of 2024	https://www.gamesradar.com/games/best-games-2024-game-of-the-year-awards-goty/
-GamesRadar+	2019	EOY	The 25 best games of 2019	https://www.gamesradar.com/au/best-games-2019/
-GamesRadar+	2022	EOY	The 25 best games of 2022	https://www.gamesradar.com/best-games-2022/
+GamesRadar+	2024	Misc	The best SNES games of all time	https://www.gamesradar.com/best-snes-games-all-time/
+GamesRadar+	2021	EOY	The 25 best games of 2021	https://www.gamesradar.com/best-games-2021/
+GamesRadar+	2024	Misc	The 10 best NES games of all time	https://www.gamesradar.com/best-nes-games-all-time/
+GamesRadar+	2020	EOY	The 25 best games of 2020	https://www.gamesradar.com/best-games-2020/
 GamesRadar+	2021	All Time	The 50 best games of all time	https://www.gamesradar.com/best-games-of-all-time/
+GamesRadar+	2019	Decade	The 100 best games of the decade	https://www.gamesradar.com/decade-best-games-2010-2019/
 GamesRadar+	2018	EOY	The best games of 2018	https://www.gamesradar.com/au/best-games-2018/
 GamesRadar+	2018	EOY	The best games of 2017	https://www.gamesradar.com/au/best-games-2017/
 GamesRadar+	2016	EOY	GamesRadar+'s Game of the Year 2016	https://www.gamesradar.com/au/best-games-2016/
 GamesRadar+	2016	EOY	Game of the Year 2015	https://www.gamesradar.com/best-games-2015/
-GamesRadar+	2019	Decade	The 100 best games of the decade	https://www.gamesradar.com/decade-best-games-2010-2019/
-GamesRadar+	2006	EOY	GamesRadar's potentially annual Platinum Chalice awards 2006	https://www.gamesradar.com/gamesradars-potentially-annual-platinum-chalice-awards-2006/
-GamesRadar+	2021	EOY	The 25 best games of 2021	https://www.gamesradar.com/best-games-2021/
-GamesRadar+	2020	EOY	The 25 best games of 2020	https://www.gamesradar.com/best-games-2020/
-GamesRadar+	2007	EOY	GamesRadar's seemingly annual Platinum Chalice Awards 2007	https://web.archive.org/web/20110616003541/http://www.gamesradar.com/f/gamesradars-seemingly-annual-platinum-chalice-awards-2007/a-2007122091726139085/p-17
-GamesRadar+	2015	All Time	The 100 Best Games of All-Time	https://web.archive.org/web/20150319223433/http://www.gamesradar.com/best-games-ever/
+GamesRadar+	2019	EOY	The 25 best games of 2019	https://www.gamesradar.com/au/best-games-2019/
 GamesRadar+	2014	All Time	The 100 best games of all time	https://web.archive.org/web/20140321161256/http://gamesradar.com/best-games-ever/
 GamesRadar+	2013	EOY	Game of the year 2013	https://www.gamesradar.com/best-games-2013/
 GamesRadar+	2013	All Time	The 100 best games of all time	https://web.archive.org/web/20140123082433/http://www.gamesradar.com/best-games-ever/
+GamesRadar+	2015	All Time	The 100 Best Games of All-Time	https://web.archive.org/web/20150319223433/http://www.gamesradar.com/best-games-ever/
 GamesRadar+	2012	EOY	Game of the Year 2012	https://www.gamesradar.com/au/best-games-2012/
 GamesRadar+	2012	All Time	The 100 best games of all time	https://web.archive.org/web/20120509195913/http://www.gamesradar.com/best-games-ever/
 GamesRadar+	2012	Misc	Best Atari 2600 games of all time	https://www.gamesradar.com/best-atari-2600-games-all-time/
@@ -383,520 +383,531 @@ GamesRadar+	2012	EOY	Best Games of 2011	https://www.gamesradar.com/best-games-of
 GamesRadar+	2011	All Time	The 100 best games of all time	https://web.archive.org/web/20120118151554/http://www.gamesradar.com/the-100-best-games-of-all-time/
 GamesRadar+	2010	EOY	The Platinum Chalice Awards 2010	https://www.gamesradar.com/the-platinum-chalice-awards-2010/6/
 GamesRadar+	2009	EOY	The Platinum Chalice Awards 2009	https://www.gamesradar.com/the-platinum-chalice-awards-2009/
-GamesRadar+	2024	Misc	The 25 best N64 games of all time	https://www.gamesradar.com/best-n64-games-all-time/
 GamesRadar+	2008	EOY	GamesRadar's Officially Annual Platinum Chalice Awards 2008	http://www.gamesradar.com/f/gamesradars-officially-annual-platinum-chalice-awards-2008/a-2008121817178666006/p-6
+GamesRadar+	2007	EOY	GamesRadar's seemingly annual Platinum Chalice Awards 2007	https://web.archive.org/web/20110616003541/http://www.gamesradar.com/f/gamesradars-seemingly-annual-platinum-chalice-awards-2007/a-2007122091726139085/p-17
+GamesRadar+	2006	EOY	GamesRadar's potentially annual Platinum Chalice awards 2006	https://www.gamesradar.com/gamesradars-potentially-annual-platinum-chalice-awards-2006/
+GamesRadar+	2024	Misc	The 25 best Wii games of all time	https://www.gamesradar.com/best-wii-games-all-time/
+GamesRadar+	2022	EOY	The 25 best games of 2022	https://www.gamesradar.com/best-games-2022/
 GamesRadar+	2025	EOY	GamesRadar+ GOTY: The 25 Best Games of 2025	https://www.gamesradar.com/games/gamesradar-goty-the-25-best-games-of-2025/
 GameStar	2018	All Time	Die 250 besten PC-Spiele aller Zeiten - Das große GameStar-Ranking	https://web.archive.org/web/20181114001118/https://www.gamestar.de/artikel/die-250-besten-pc-spiele-aller-zeiten,3331911.html
 GameStar	2023	All Time	Die 300 besten PC-Spiele: Das große Ranking	https://www.gamestar.de/artikel/300-beste-pc-spiele,3388068.html
-GamesTM	2018	All Time	The 200 Greatest Games of All Time	
 GamesTM	2010	All Time	100 Greatest Games Of All Time	https://www.retromags.com/magazines/uk/games-tm/games-tm-issue-100/
 GamesTM	2015	All Time	100 Greatest Games of All Time	https://archive.org/details/GamesTM100GreatestGamesOfAllTime/mode/2up
+GamesTM	2018	All Time	The 200 Greatest Games of All Time	
 Gameswelt	2012	All Time	Gameswelt Top 100	https://www.gameswelt.de/gameswelttv/video/plaetze-81-100-165185
-Gameswelt	2024	EOY	Top 20: Unsere Spiele des Jahres 2024	https://www.gameswelt.de/top-10/special/das-sind-die-favoriten-der-gameswelt-redaktion-329134/8
-Gameswelt	2025	EOY	Top 20: Unsere Spiele des Jahres 2025	https://www.gameswelt.de/top-10/special/die-favoriten-der-gameswelt-redaktion-332517
 Gameswelt	2016	All Time	Gameswelt Top 100	https://www.gameswelt.de/top-100/kampagne/gameswelt-top-100-260134
+Gameswelt	2025	EOY	Top 20: Unsere Spiele des Jahres 2025	https://www.gameswelt.de/top-10/special/die-favoriten-der-gameswelt-redaktion-332517
+Gameswelt	2024	EOY	Top 20: Unsere Spiele des Jahres 2024	https://www.gameswelt.de/top-10/special/das-sind-die-favoriten-der-gameswelt-redaktion-329134/8
 Gaming Age	2019	Decade	Gaming Age’s Games of the Decade	https://gaming-age.com/2019/12/gaming-ages-games-of-the-decade-20-1/
-GAMINGbible	2019	EOY	GAMINGbible's 25 Greatest Video Games Of 2019	https://web.archive.org/web/20191224140350mp_/https://www.ladbible.com/technology/gaming-gamingbibles-25-greatest-games-of-2019-20191205
 GAMINGbible	2023	EOY	GAMINGbible's 10 greatest video games of 2023	https://www.gamingbible.com/features/gamingbibles-10-greatest-video-games-2023-877417-20231212
-GAMINGbible	2019	Decade	GAMINGbible's Greatest Games Of The Decade	https://web.archive.org/web/20191109133800/https://www.ladbible.com/technology/gaming-the-25-greatest-games-of-the-decade-20191029
+GAMINGbible	2019	EOY	GAMINGbible's 25 Greatest Video Games Of 2019	https://web.archive.org/web/20191224140350mp_/https://www.ladbible.com/technology/gaming-gamingbibles-25-greatest-games-of-2019-20191205
 GAMINGbible	2020	All Time	The Greatest Video Games Of All Time	https://web.archive.org/web/20211019140731/https://www.gamingbible.co.uk/features/games-the-greatest-video-games-of-all-time-100-81-20201130
 GAMINGbible	2025	EOY	GOTY Crowned, GAMINGbible’s 10 Greatest Video Games of 2025	https://www.gamingbible.com/features/goty-crowned-gamingbible-10-greatest-video-games-2025-884253-20251205
-GamingBolt	2025	EOY	GamingBolt’s Game of the Year – Top 25 Games of 2025	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2025
-GamingBolt	2024	EOY	GamingBolt’s Game of the Year – Top 30 Games of 2024	https://gamingbolt.com/gamingbolts-game-of-the-year-top-30-games-of-2024
-GamingBolt	2023	EOY	GamingBolt’s Game of the Year – Top 30 Games of 2023	https://gamingbolt.com/gamingbolts-game-of-the-year-top-30-games-of-2023
+GAMINGbible	2019	Decade	GAMINGbible's Greatest Games Of The Decade	https://web.archive.org/web/20191109133800/https://www.ladbible.com/technology/gaming-the-25-greatest-games-of-the-decade-20191029
 GamingBolt	2012	EOY	GamingBolt’s Top 25 Games of 2011	https://gamingbolt.com/gamingbolts-top-25-games-of-2011
-GamingBolt	2013	All Time	Top 100 greatest video games ever made	https://gamingbolt.com/top-100-greatest-video-games-ever-made
-GamingBolt	2013	EOY	GamingBolt Game of the Year Awards 2013	https://gamingbolt.com/gamingbolt-game-of-the-year-awards-2013/22
-GamingBolt	2016	EOY	Game of the Year 2015	https://gamingbolt.com/game-of-the-year-2015
 GamingBolt	2015	EOY	Game of the Year 2014	https://gamingbolt.com/game-of-the-year-2014
+GamingBolt	2016	EOY	Game of the Year 2015	https://gamingbolt.com/game-of-the-year-2015
+GamingBolt	2016	EOY	Game of the Year 2016	https://gamingbolt.com/game-of-the-year-2016
+GamingBolt	2013	All Time	Top 100 greatest video games ever made	https://gamingbolt.com/top-100-greatest-video-games-ever-made
 GamingBolt	2017	EOY	GamingBolt’s Game of The Year – Top 25 Games of 2017	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2017
 GamingBolt	2018	EOY	GamingBolt’s Game of The Year – Top 25 Games of 2018	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2018
-GamingBolt	2021	EOY	GamingBolt’s Game of the Year – Top 25 Games of 2021	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2021
-GamingBolt	2016	EOY	Game of the Year 2016	https://gamingbolt.com/game-of-the-year-2016
-GamingBolt	2022	EOY	GamingBolt’s Game of the Year – Top 25 Games of 2022	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2022
 GamingBolt	2019	EOY	GamingBolt’s Game of the Year – Top 25 Games of 2019	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2019
 GamingBolt	2020	EOY	GamingBolt’s Game of the Year – Top 25 Games of 2020	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2020
-Giant Bomb	2021	EOY	Giant Bomb Game of the Year 2020: Day Five	https://youtu.be/rPnIRD3GgwA
-Giant Bomb	2022	EOY	Giant Bomb's Game of the Year 2022: Day 3	https://youtu.be/DTlcuUFdQss
+GamingBolt	2025	EOY	GamingBolt’s Game of the Year – Top 25 Games of 2025	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2025
+GamingBolt	2021	EOY	GamingBolt’s Game of the Year – Top 25 Games of 2021	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2021
+GamingBolt	2022	EOY	GamingBolt’s Game of the Year – Top 25 Games of 2022	https://gamingbolt.com/gamingbolts-game-of-the-year-top-25-games-of-2022
+GamingBolt	2023	EOY	GamingBolt’s Game of the Year – Top 30 Games of 2023	https://gamingbolt.com/gamingbolts-game-of-the-year-top-30-games-of-2023
+GamingBolt	2024	EOY	GamingBolt’s Game of the Year – Top 30 Games of 2024	https://gamingbolt.com/gamingbolts-game-of-the-year-top-30-games-of-2024
+GamingBolt	2013	EOY	GamingBolt Game of the Year Awards 2013	https://gamingbolt.com/gamingbolt-game-of-the-year-awards-2013/22
+Giant Bomb	2011	EOY	Giant Bomb's Game of the Year 2010: Day Six	https://www.giantbomb.com/shows/giant-bomb-game-of-the-year-2010-day-six/2970-17456/free-podcast
+Giant Bomb	2011	EOY	Game of the Year 2011: Giant Bomb's Top 10	https://youtu.be/1vTzpuYRF1s
 Giant Bomb	2025	EOY	Giant Bomb's Game of the Year 2024	https://www.giantbomb.com/giant-bomb-game-of-the-year-2024/3015-13360/
+Giant Bomb	2012	EOY	Giant Bombcast Giant Bomb Game of the Year 2012: Day Five	https://www.giantbomb.com/shows/giant-bomb-game-of-the-year-2012-day-five/2970-17261/free-podcast
 Giant Bomb	2023	EOY	THE REAL GAME OF THE YEAR: Finale!	https://youtu.be/gxmbtML-LXw
+Giant Bomb	2026	EOY	Game of the Year 2025	https://giantbomb.com/videos/giant-bombcast/game-of-the-year-2025-day-4
+Giant Bomb	2022	EOY	Giant Bomb's Game of the Year 2022: Day 3	https://youtu.be/DTlcuUFdQss
 Giant Bomb	2022	EOY	Giant Bomb's Game of the Year 2021: Day 3	https://youtu.be/998x-g0pizI
+Giant Bomb	2021	EOY	Giant Bomb Game of the Year 2020: Day Five	https://youtu.be/rPnIRD3GgwA
+Giant Bomb	2019	EOY	Game of the Year 2019: Day Five Deliberations	https://youtu.be/CbhWKNehRIM
 Giant Bomb	2018	EOY	Game of the Year 2018: Day Five Deliberations	https://youtu.be/lArZV7gJ-7A
+Giant Bomb	2017	EOY	Game of the Year 2017: Best Game	https://youtu.be/Vkx17u_FbZE
+Giant Bomb	2016	EOY	Game of the Year 2016: Day Five Deliberations	https://youtu.be/gvrMlFa173A
+Giant Bomb	2016	EOY	Giant Bomb's 2015 Game of the Year Awards: Day Five Text Recap	https://www.giantbomb.com/articles/giant-bombs-2015-game-of-the-year-awards-day-five-text-recap/1100-5320/
 Giant Bomb	2014	EOY	Giant Bomb's 2014 Game of the Year Awards: Day Five Text Recap	https://www.giantbomb.com/shows/giant-bomb-game-of-the-year-2014-day-five/2970-16665/free-podcast
 Giant Bomb	2013	EOY	Giant Bomb's 2013 Game of the Year Awards: Day Five	https://www.giantbomb.com/articles/giant-bombs-2013-game-of-the-year-awards-day-five/1100-4807/
-Giant Bomb	2012	EOY	Giant Bombcast Giant Bomb Game of the Year 2012: Day Five	https://www.giantbomb.com/shows/giant-bomb-game-of-the-year-2012-day-five/2970-17261/free-podcast
-Giant Bomb	2016	EOY	Giant Bomb's 2015 Game of the Year Awards: Day Five Text Recap	https://www.giantbomb.com/articles/giant-bombs-2015-game-of-the-year-awards-day-five-text-recap/1100-5320/
-Giant Bomb	2011	EOY	Game of the Year 2011: Giant Bomb's Top 10	https://youtu.be/1vTzpuYRF1s
-Giant Bomb	2016	EOY	Game of the Year 2016: Day Five Deliberations	https://youtu.be/gvrMlFa173A
-Giant Bomb	2011	EOY	Giant Bomb's Game of the Year 2010: Day Six	https://www.giantbomb.com/shows/giant-bomb-game-of-the-year-2010-day-six/2970-17456/free-podcast
-Giant Bomb	2010	EOY	Giant Bomb's Game of the Year, 2009	https://www.giantbomb.com/articles/giant-bombs-game-of-the-year-2009/1100-1821/
 Giant Bomb	2008	EOY	Giant Bomb Game of the Year 2008	https://www.giantbomb.com/giant-bomb-game-of-the-year-2008/3015-12809/
-Giant Bomb	2026	EOY	Game of the Year 2025	https://giantbomb.com/videos/giant-bombcast/game-of-the-year-2025-day-4
-Giant Bomb	2017	EOY	Game of the Year 2017: Best Game	https://youtu.be/Vkx17u_FbZE
-Giant Bomb	2019	EOY	Game of the Year 2019: Day Five Deliberations	https://youtu.be/CbhWKNehRIM
+Giant Bomb	2010	EOY	Giant Bomb's Game of the Year, 2009	https://www.giantbomb.com/articles/giant-bombs-game-of-the-year-2009/1100-1821/
+GLHF	2023	All Time	The best 100 games of all time, ranked	https://web.archive.org/web/20230128031847/https://videogames.si.com/guides/best-games
 GLHF	2024	EOY	The top 20 best video games of 2024	https://www.si.com/videogames/guides/best-video-games-2024
-GLHF	2023	All Time	The best 100 games of all time, ranked	https://videogames.si.com/guides/best-games
 GLHF	2023	EOY	The 20 best games of 2023	https://videogames.si.com/guides/best-games-2023
 GLHF	2022	All Time	The 100 best video games of all time, ranked	https://ftw.usatoday.com/lists/best-video-games
-Goomba Stomp	2021	Misc	50 Best SNES Games	https://goombastomp.com/top-50-snes-games/
+Goomba Stomp	2021	EOY	The Best Games of the 2000s (2002)	https://goombastomp.com/the-best-games-of-the-2000s/
+Goomba Stomp	2021	EOY	The Best Games of the 2000s (2001)	https://goombastomp.com/the-best-games-of-the-2000s/
+Goomba Stomp	2021	EOY	The Best Games of the 2000s (2005)	https://goombastomp.com/the-best-games-of-the-2000s/
 Goomba Stomp	2022	Misc	The 40 Best Nintendo 64 Games	https://goombastomp.com/40-best-nintendo-64-games/
+Goomba Stomp	2021	EOY	The Best Games of the 2000s (2003)	https://goombastomp.com/the-best-games-of-the-2000s/
+Goomba Stomp	2021	Misc	50 Best SNES Games	https://goombastomp.com/top-50-snes-games/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1999)	https://goombastomp.com/best-games-of-the-1990s/
-Goomba Stomp	2021	EOY	The Best Games of the 2000s (2007)	https://goombastomp.com/the-best-games-of-the-2000s/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1998)	https://goombastomp.com/best-games-of-the-1990s/
-Goomba Stomp	2021	EOY	30 Best Video Games of 2021	https://goombastomp.com/the-best-video-games-of-2021/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1997)	https://goombastomp.com/best-games-of-the-1990s/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1996)	https://goombastomp.com/best-games-of-the-1990s/
+Goomba Stomp	2021	EOY	30 Best Video Games of 2021	https://goombastomp.com/the-best-video-games-of-2021/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1995)	https://goombastomp.com/best-games-of-the-1990s/
-Goomba Stomp	2021	EOY	The Best Games of the 1990s (1994)	https://goombastomp.com/best-games-of-the-1990s/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1993)	https://goombastomp.com/best-games-of-the-1990s/
+Goomba Stomp	2021	EOY	The Best Games of the 2000s (2000)	https://goombastomp.com/the-best-games-of-the-2000s/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1992)	https://goombastomp.com/best-games-of-the-1990s/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1991)	https://goombastomp.com/best-games-of-the-1990s/
 Goomba Stomp	2021	EOY	The Best Games of the 1990s (1990)	https://goombastomp.com/best-games-of-the-1990s/
 Goomba Stomp	2021	EOY	The Best Games of the 2000s (2009)	https://goombastomp.com/the-best-games-of-the-2000s/
-Goomba Stomp	2022	EOY	The 22 Best Video Games of 2022	https://goombastomp.com/the-best-video-games-of-2022-so-far/
-Goomba Stomp	2021	EOY	The Best Games of the 2000s (2002)	https://goombastomp.com/the-best-games-of-the-2000s/
-Goomba Stomp	2021	EOY	The Best Games of the 2000s (2003)	https://goombastomp.com/the-best-games-of-the-2000s/
-Goomba Stomp	2019	EOY	The Best Games of 2019	https://goombastomp.com/best-games-of-2019/
-Goomba Stomp	2016	Misc	The 20 Best Games of the Century (So Far…)	https://goombastomp.com/20-best-video-games-century-far/
-Goomba Stomp	2021	EOY	The Best Games of the 2000s (2008)	https://goombastomp.com/the-best-games-of-the-2000s/
-Goomba Stomp	2016	EOY	The 20 Best Games of 2016	https://goombastomp.com/best-games-2016/
-Goomba Stomp	2017	EOY	The Very Best Games of 2017	https://goombastomp.com/best-video-games-2017/
-Goomba Stomp	2018	EOY	The Best Video Games of 2018	https://goombastomp.com/ten-best-video-games-of-2018/
-Goomba Stomp	2021	EOY	The Best Games of the 2000s (2001)	https://goombastomp.com/the-best-games-of-the-2000s/
 Goomba Stomp	2020	EOY	Best Video Games of 2020	https://goombastomp.com/best-games-of-2020/
+Goomba Stomp	2019	EOY	The Best Games of 2019	https://goombastomp.com/best-games-of-2019/
+Goomba Stomp	2018	EOY	The Best Video Games of 2018	https://goombastomp.com/ten-best-video-games-of-2018/
+Goomba Stomp	2017	EOY	The Very Best Games of 2017	https://goombastomp.com/best-video-games-2017/
+Goomba Stomp	2016	EOY	The 20 Best Games of 2016	https://goombastomp.com/best-games-2016/
+Goomba Stomp	2016	Misc	The 20 Best Games of the Century (So Far…)	https://goombastomp.com/20-best-video-games-century-far/
+Goomba Stomp	2022	EOY	The 22 Best Video Games of 2022	https://goombastomp.com/the-best-video-games-of-2022-so-far/
+Goomba Stomp	2021	EOY	The Best Games of the 1990s (1994)	https://goombastomp.com/best-games-of-the-1990s/
+Goomba Stomp	2021	EOY	The Best Games of the 2000s (2007)	https://goombastomp.com/the-best-games-of-the-2000s/
+Goomba Stomp	2021	EOY	The Best Games of the 2000s (2008)	https://goombastomp.com/the-best-games-of-the-2000s/
 Goomba Stomp	2021	EOY	The Best Games of the 2000s (2006)	https://goombastomp.com/the-best-games-of-the-2000s/
-Goomba Stomp	2021	EOY	The Best Games of the 2000s (2005)	https://goombastomp.com/the-best-games-of-the-2000s/
 Goomba Stomp	2021	EOY	The Best Games of the 2000s (2004)	https://goombastomp.com/the-best-games-of-the-2000s/
-Goomba Stomp	2021	EOY	The Best Games of the 2000s (2000)	https://goombastomp.com/the-best-games-of-the-2000s/
 GQ	2019	EOY	The Best Video Games of 2019	https://www.gq.com/story/the-best-video-games-of-2019
 GQ	2019	Decade	The 17 Best Games That Shaped the Decade	https://www.gq.com/story/the-best-video-games-of-the-2010s
 GQ Spain	2020	All Time	Los 100 mejores videojuegos de la historia	https://www.revistagq.com/noticias/tecnologia/galerias/los-100-mejores-videojuegos-de-la-historia/8951
 Collider	2020	All Time	The Greatest and Most Influential Video Games of All Time	https://web.archive.org/web/20201025213541/https://collider.com/galleries/greatest-video-games-of-all-time/
-Hardcore Gamer	2013	EOY	2013 Game of the Year	https://web.archive.org/web/20141230111304/http://www.hardcoregamer.com/2013/12/23/top-10-games-of-the-year/66160/
-Hardcore Gamer	2013	Misc	Top 100 Games of the Generation	https://hardcoregamer.com/features/articles/the-top-ten-games-of-the-generation/60954/
-Hardcore Gamer	2022	EOY	Top 10 Games of 2022	https://hardcoregamer.com/features/top-10-games-of-2022-game-of-the-year/435048/
+Hardcore Gamer	2021	EOY	Top 10 Games of 2021	https://web.archive.org/web/20211220173721/https://hardcoregamer.com/features/top-10-games-of-2021-game-of-the-year/416250/
 Hardcore Gamer	2019	EOY	Top 10 Games of 2018	https://web.archive.org/web/20190108033654/https://www.hardcoregamer.com/2019/01/07/top-10-games-of-2018-game-of-the-year/321613/
 Hardcore Gamer	2020	EOY	Top 10 Games of 2020	https://web.archive.org/web/20231015191440/https://hardcoregamer.com/features/top-10-games-of-2020-game-of-the-year/393729/
-Hardcore Gamer	2012	EOY	Game of the Year	https://web.archive.org/web/20190321134307/https://www.hardcoregamer.com/2012/12/31/game-of-the-year/21190/
-Hardcore Gamer	2015	EOY	Best of 2014 – Day Ten: Game of the Year	https://web.archive.org/web/20190108145451/https://www.hardcoregamer.com/2015/01/01/best-of-2014-day-ten-game-of-the-year/126826/
-Hardcore Gamer	2017	EOY	Best of 2016 – Day Nine: Game of the Year	https://web.archive.org/web/20181223175234/http://www.hardcoregamer.com/2017/01/09/best-of-2016-day-nine-game-of-the-year/242362/
-Hardcore Gamer	2024	EOY	Top 10 Games of 2024	https://hardcoregamer.com/top-10-games-of-2024-game-of-the-year/
-Hardcore Gamer	2021	EOY	Top 10 Games of 2021	https://web.archive.org/web/20211220173721/https://hardcoregamer.com/features/top-10-games-of-2021-game-of-the-year/416250/
-Hardcore Gamer	2020	EOY	Top 10 Games of 2019	https://web.archive.org/web/20200115133229/https://www.hardcoregamer.com/2020/01/07/top-10-games-of-2019-game-of-the-year/364183/
+Hardcore Gamer	2022	EOY	Top 10 Games of 2022	https://hardcoregamer.com/features/top-10-games-of-2022-game-of-the-year/435048/
 Hardcore Gamer	2016	EOY	Best of 2015 – Day Nine: Game of the Year	https://web.archive.org/web/20181019125645/http://www.hardcoregamer.com/2016/01/09/best-of-2015-day-nine-game-of-the-year/186298
-Hardcore Gamer	2025	EOY	Hardcore Gamer’s 2025 Game of the Year Awards: Top 10 Games of the Year	https://hardcoregamer.com/hardcore-gamers-2025-game-of-the-year-awards-top-10/
+Hardcore Gamer	2015	EOY	Best of 2014 – Day Ten: Game of the Year	https://web.archive.org/web/20190108145451/https://www.hardcoregamer.com/2015/01/01/best-of-2014-day-ten-game-of-the-year/126826/
+Hardcore Gamer	2013	EOY	2013 Game of the Year	https://web.archive.org/web/20141230111304/http://www.hardcoregamer.com/2013/12/23/top-10-games-of-the-year/66160/
+Hardcore Gamer	2013	Misc	Top 100 Games of the Generation	https://hardcoregamer.com/features/articles/the-top-ten-games-of-the-generation/60954/
+Hardcore Gamer	2012	EOY	Game of the Year	https://web.archive.org/web/20190321134307/https://www.hardcoregamer.com/2012/12/31/game-of-the-year/21190/
+Hardcore Gamer	2024	EOY	Top 10 Games of 2024	https://hardcoregamer.com/top-10-games-of-2024-game-of-the-year/
 Hardcore Gamer	2018	EOY	Top 10 Games of 2017	https://web.archive.org/web/20190108100929/https://www.hardcoregamer.com/2018/01/08/top-10-games-of-2017-game-of-the-year/285258/
+Hardcore Gamer	2017	EOY	Best of 2016 – Day Nine: Game of the Year	https://web.archive.org/web/20181223175234/http://www.hardcoregamer.com/2017/01/09/best-of-2016-day-nine-game-of-the-year/242362/
+Hardcore Gamer	2020	EOY	Top 10 Games of 2019	https://web.archive.org/web/20200115133229/https://www.hardcoregamer.com/2020/01/07/top-10-games-of-2019-game-of-the-year/364183/
+Hardcore Gamer	2025	EOY	Hardcore Gamer’s 2025 Game of the Year Awards: Top 10 Games of the Year	https://hardcoregamer.com/hardcore-gamers-2025-game-of-the-year-awards-top-10/
 Hardcore Gaming 101	2020	All Time	HG101 Presents: The 200 Best Video Games of All Time	http://www.hardcoregaming101.net/books/hg101-presents-the-200-best-video-games-of-all-time/
 HeadStuff	2019	Decade	The Best Games Of The Decade	https://headstuff.org/entertainment/gaming/headstuff-best-games-of-the-decade/
-Hyper	1999	All Time	The Top 50 Games of All Time	
+Humo	2020	Misc	De 50 beste games van de 21ste eeuw	https://www.humo.be/tv/de-50-beste-games-van-de-21ste-eeuw-50-21~b50768b6/
 Hyper	1995	All Time	Top 100 Video Games of All Time	
+Hyper	1999	All Time	The Top 50 Games of All Time	
 Hyper	2018	All Time	The 200 Games You Must Play	
 Hyper	1997	All Time	The 50 Best Games Ever!	
 Complex	2014	EOY	The 10 Best Video Games of 2014	https://www.complex.com/pop-culture/2014/12/best-video-games-2014/
-IGN	2019	EOY	Game of the Year 2019	https://www.ign.com/articles/2019/12/10/best-games-2019
-IGN	2020	Decade	The Best Games of the Decade	https://www.ign.com/articles/2019/12/31/best-games-of-the-decade-2010-2019
-IGN	2020	Misc	The 25 Best PS1 Games Of All Time	https://www.ign.com/articles/best-ps1-games-playstation
-IGN	2020	EOY	IGN's Game of the Year 2020	https://www.ign.com/articles/game-of-the-year-2020
-IGN	2019	All Time	Top 100 Video Games of All Time	https://www.ign.com/lists/top-100-games
+IGN	2021	Misc	The 25 Best Original Xbox Games of All Time	https://www.ign.com/articles/the-25-best-original-xbox-games-of-all-time
 IGN	2021	EOY	The Best Game of the Year 2021	https://www.ign.com/articles/game-of-the-year-2021
 IGN	2022	All Time	The Top 100 Video Games of All Time	https://www.ign.com/articles/the-best-100-video-games-of-all-time
-IGN	2018	EOY	Best Game of the Year 2018	https://www.ign.com/articles/2018/12/10/best-game-of-the-year-2018
-IGN	2022	Misc	The 10 Best Dreamcast Games	https://www.ign.com/articles/the-10-best-dreamcast-games
+IGN	2020	EOY	IGN's Game of the Year 2020	https://www.ign.com/articles/game-of-the-year-2020
+IGN	2020	Misc	The 25 Best PS1 Games Of All Time	https://www.ign.com/articles/best-ps1-games-playstation
 IGN	2022	Misc	The 25 Best Nintendo 64 Games of All Time	https://www.ign.com/articles/best-n64-games
-IGN	2017	Misc	Top 100 SNES Games of All Time	https://www.ign.com/lists/top-100-snes-games/100
-IGN	2018	All Time	Top 100 Video Games of All Time	https://web.archive.org/web/20180628102927/http://www.ign.com/lists/top-100-games
-IGN	2021	Misc	The 25 Best Original Xbox Games of All Time	https://www.ign.com/articles/the-25-best-original-xbox-games-of-all-time
-IGN	2022	Misc	The 25 Best Wii Games of All Time	https://www.ign.com/articles/best-wii-games
-IGN	2023	Misc	The 25 Best GameCube Games of All Time	https://www.ign.com/articles/the-best-gamecube-games-of-all-time
-IGN	2023	EOY	The Best Game of 2023	https://www.ign.com/articles/best-video-games-2023
-IGN	2024	Misc	The 100 Best PlayStation Games of All Time	https://www.ign.com/articles/the-100-best-playstation-games-of-all-time
-IGN	2024	EOY	The Best Game of 2024	https://www.ign.com/articles/the-best-game-of-2024
-IGN	2017	Misc	Top 100 NES Games	https://www.ign.com/lists/top-100-nes-games
-IGN	2023	Misc	The Best PS2 Games Of All Time	https://www.ign.com/articles/best-ps2-games
-IGN	2017	EOY	Game of the Year (2016)	https://www.ign.com/wikis/best-of-2016-awards/Game_of_the_Year
-IGN	2016	EOY	IGN's Game of the Year 2015	https://www.ign.com/wikis/best-of-2015/Game_of_the_Year
-IGN	2014	EOY	Best Overall Game (2013)	https://www.ign.com/wikis/best-of-2013/Best_Overall_Game
-IGN	2012	EOY	Best Overall Game (2012)	https://www.ign.com/wikis/best-of-2012/Best_Overall_Game
-IGN	2012	EOY	Game of the Year	https://www.ign.com/wikis/best-of-2011/Game_of_the_Year
-IGN	2011	Misc	Top 100 Modern Video Games	https://www.ign.com/lists/modern-games
-IGN	2015	All Time	Top 100 Games of All Time	https://web.archive.org/web/20180201091940/http://www.ign.com/lists/top-100-games/100
-IGN	2011	EOY	Game of the Year	https://www.ign.com/wikis/best-of-2010/Game_of_the_Year
-IGN	2010	Misc	Best of the Decade	https://www.ign.com/wikis/best-of-the-decade/Overall_-_Games
-IGN	2017	EOY	Game of the Year (2017)	https://www.ign.com/wikis/best-of-2017-awards/Game_of_the_Year
-IGN	2023	Misc	The Best PS3 Games of All Time	https://www.ign.com/articles/the-10-best-ps3-games-of-all-time
 IGN	2022	EOY	IGN's Best Games of 2022 - Ranked	https://www.ign.com/playlist/igneditorial/lists/best-game-of-2022-ign-nominees
 IGN	2023	Misc	The 25 Best Xbox 360 Games of All Time	https://www.ign.com/articles/best-xbox-360-games
-IGN	2014	EOY	IGN's Game of the Year 2014	https://www.ign.com/videos/2014s-game-of-the-year-nominees-revealed
-IGN	2005	All Time	IGN's Top 100 Games	https://web.archive.org/web/20050724021903/http://top100.ign.com/2005/
-IGN	2010	EOY	Best of the Decade (2002)	https://www.ign.com/wikis/best-of-the-decade/2002_-_Games
-IGN	2010	EOY	Best of the Decade (2001)	https://www.ign.com/wikis/best-of-the-decade/2001_-_Games
-IGN	2003	All Time	IGN's Top 100 Games of All Time	https://web.archive.org/web/20141207120250/http://top100.ign.com/2003/
-IGN	2010	EOY	Best of the Decade (2004)	https://www.ign.com/wikis/best-of-the-decade/2004_-_Games
+IGN	2023	Misc	The Best PS2 Games Of All Time	https://www.ign.com/articles/best-ps2-games
+IGN	2023	Misc	The Best PS3 Games of All Time	https://www.ign.com/articles/the-10-best-ps3-games-of-all-time
+IGN	2022	Misc	The 25 Best Wii Games of All Time	https://www.ign.com/articles/best-wii-games
+IGN	2022	Misc	The 10 Best Dreamcast Games	https://www.ign.com/articles/the-10-best-dreamcast-games
+IGN	2020	Decade	The Best Games of the Decade	https://www.ign.com/articles/2019/12/31/best-games-of-the-decade-2010-2019
+IGN	2019	EOY	Game of the Year 2019	https://www.ign.com/articles/2019/12/10/best-games-2019
+IGN	2019	All Time	Top 100 Video Games of All Time	https://www.ign.com/lists/top-100-games
+IGN	2018	EOY	Best Game of the Year 2018	https://www.ign.com/articles/2018/12/10/best-game-of-the-year-2018
 IGN	2007	All Time	The Top 100 Games of All Time	https://web.archive.org/web/20071203021612/http://top100.ign.com/2007/
-IGN	2010	EOY	Best of the Decade (2003)	https://www.ign.com/wikis/best-of-the-decade/2003_-_Games
+IGN	2005	All Time	IGN's Top 100 Games	https://web.archive.org/web/20050724021903/http://top100.ign.com/2005/
+IGN	2017	Misc	Top 100 NES Games	https://www.ign.com/lists/top-100-nes-games
+IGN	2017	EOY	Game of the Year (2016)	https://www.ign.com/wikis/best-of-2016-awards/Game_of_the_Year
+IGN	2016	EOY	IGN's Game of the Year 2015	https://www.ign.com/wikis/best-of-2015/Game_of_the_Year
+IGN	2015	All Time	Top 100 Games of All Time	https://web.archive.org/web/20180201091940/http://www.ign.com/lists/top-100-games/100
+IGN	2003	All Time	IGN's Top 100 Games of All Time	https://web.archive.org/web/20141207120250/http://top100.ign.com/2003/
+IGN	2014	EOY	IGN's Game of the Year 2014	https://www.ign.com/videos/2014s-game-of-the-year-nominees-revealed
+IGN	2014	EOY	Best Overall Game (2013)	https://www.ign.com/wikis/best-of-2013/Best_Overall_Game
+IGN	2024	Misc	The 100 Best PlayStation Games of All Time	https://www.ign.com/articles/the-100-best-playstation-games-of-all-time
+IGN	2018	All Time	Top 100 Video Games of All Time	https://web.archive.org/web/20180628102927/http://www.ign.com/lists/top-100-games
+IGN	2017	EOY	Game of the Year (2017)	https://www.ign.com/wikis/best-of-2017-awards/Game_of_the_Year
+IGN	2024	EOY	The Best Game of 2024	https://www.ign.com/articles/the-best-game-of-2024
+IGN	2023	Misc	The 25 Best GameCube Games of All Time	https://www.ign.com/articles/the-best-gamecube-games-of-all-time
+IGN	2023	EOY	The Best Game of 2023	https://www.ign.com/articles/best-video-games-2023
+IGN	2017	Misc	Top 100 SNES Games of All Time	https://www.ign.com/lists/top-100-snes-games/100
 IGN	2009	Misc	The Top 25 Dreamcast Games	https://www.ign.com/articles/2009/09/11/the-top-25-dreamcast-games
-IGN	2010	EOY	Best of the Decade (2000)	https://www.ign.com/wikis/best-of-the-decade/2000_-_Games
-IGN	2010	EOY	Best of the Decade (2009)	https://www.ign.com/wikis/best-of-the-decade/2009_-_Games
-IGN	2010	EOY	Best of the Decade (2008)	https://www.ign.com/wikis/best-of-the-decade/2008_-_Games
 IGN	2025	EOY	The Best Game of 2025	https://www.ign.com/articles/the-best-game-of-2025
-IGN	2010	EOY	Best of the Decade (2005)	https://www.ign.com/wikis/best-of-the-decade/2005_-_Games
+IGN	2010	Misc	Best of the Decade	https://www.ign.com/wikis/best-of-the-decade/Overall_-_Games
 IGN	2010	EOY	Best of the Decade (2006)	https://www.ign.com/wikis/best-of-the-decade/2006_-_Games
+IGN	2010	EOY	Best of the Decade (2005)	https://www.ign.com/wikis/best-of-the-decade/2005_-_Games
+IGN	2010	EOY	Best of the Decade (2009)	https://www.ign.com/wikis/best-of-the-decade/2009_-_Games
+IGN	2007	All Time	Top 25 PC Games of All Time	https://web.archive.org/web/20070315182913/https://pc.ign.com/articles/772/772285p1.html
+IGN	2007	Misc	Top 25 Game Boy Advance Games of All Time	https://web.archive.org/web/20070901205642/http://gameboy.ign.com/articles/772/772284p1.html
+IGN	2007	Misc	The Top 25 Xbox Games of All Time	https://web.archive.org/web/20070315183208/https://xbox.ign.com/articles/772/772315p1.html
+IGN	2007	Misc	The Top 25 GameCube Games of All Time	https://web.archive.org/web/20070315182700/https://cube.ign.com/articles/772/772300p1.html
+IGN	2007	Misc	The Top 25 PS2 Games of All Time	https://web.archive.org/web/20070315182750/https://ps2.ign.com/articles/772/772296p1.html
+IGN	2012	EOY	Best Overall Game (2012)	https://www.ign.com/wikis/best-of-2012/Best_Overall_Game
 IGN	2010	EOY	Best of the Decade (2007)	https://www.ign.com/wikis/best-of-the-decade/2007_-_Games
+IGN	2010	EOY	Best of the Decade (2003)	https://www.ign.com/wikis/best-of-the-decade/2003_-_Games
+IGN	2010	EOY	Best of the Decade (2008)	https://www.ign.com/wikis/best-of-the-decade/2008_-_Games
+IGN	2010	EOY	Best of the Decade (2001)	https://www.ign.com/wikis/best-of-the-decade/2001_-_Games
+IGN	2011	EOY	Game of the Year	https://www.ign.com/wikis/best-of-2010/Game_of_the_Year
+IGN	2010	EOY	Best of the Decade (2004)	https://www.ign.com/wikis/best-of-the-decade/2004_-_Games
+IGN	2011	Misc	Top 100 Modern Video Games	https://www.ign.com/lists/modern-games
+IGN	2012	EOY	Game of the Year	https://www.ign.com/wikis/best-of-2011/Game_of_the_Year
+IGN	2010	EOY	Best of the Decade (2002)	https://www.ign.com/wikis/best-of-the-decade/2002_-_Games
+IGN	2010	EOY	Best of the Decade (2000)	https://www.ign.com/wikis/best-of-the-decade/2000_-_Games
 IGN + Nintendo Life	2025	Misc	The 100 Best Nintendo Games of All Time	https://www.ign.com/articles/the-100-best-nintendo-games-of-all-time#picks-20-1
+IGN + Outside Xbox	2026	Misc	The 100 Best Xbox Games of All Time	https://www.ign.com/articles/best-xbox-games-of-all-time
 IGN Japan	2020	Decade	2010年代のゲームを振り返ろう！ここ10年で最高の30本はこれだ！	https://jp.ign.com/games/41122/feature/20101030
-Indy100	2025	EOY	Indy100's top 10 games of 2025	https://www.indy100.com/gaming/best-games-2025-goty-year
 Indy100	2025	All Time	The best 100 video games of all time	https://www.indy100.com/gaming/best-video-games-ever-all-time-100-81
-Inverse	2023	EOY	The 10 Best Video Games of 2023, Ranked	https://www.inverse.com/gaming/best-video-games-of-2023-ranking
+Indy100	2025	EOY	Indy100's top 10 games of 2025	https://www.indy100.com/gaming/best-games-2025-goty-year
 Inverse	2025	EOY	The 25 Best Games Of 2025, Ranked	https://www.inverse.com/gaming/25-best-games-of-2025-ranked
 Inverse	2024	EOY	The 10 Best Video Games of 2024, Ranked	https://www.inverse.com/gaming/best-video-games-of-2024-ranked
-Empire	2025	EOY	The Best Games Of 2025	https://www.empireonline.com/gaming/features/best-games-2025/
+Inverse	2023	EOY	The 10 Best Video Games of 2023, Ranked	https://www.inverse.com/gaming/best-video-games-of-2023-ranking
 Empire	2014	EOY	The 10 Best Games Of The Year	https://www.empireonline.com/movies/features/10-best-games-2014/
 Empire	2021	EOY	The Best Video Games Of 2020	https://www.empireonline.com/gaming/features/best-video-games-2020/
+Empire	2025	EOY	The Best Games Of 2025	https://www.empireonline.com/gaming/features/best-games-2025/
 NME	2019	Decade	The 50 Best Games Of The Decade	https://www.nme.com/features/50-best-games-2010s-2589240
-Bloomberg	2022	EOY	These Are the 10 Best Video Games We Played in 2021	https://www.bloomberg.com/news/newsletters/2021-12-31/best-video-games-2021-includes-deathloop-metroid-dread
-Bloomberg	2025	EOY	The Best Video Games of 2025	https://www.bloomberg.com/news/newsletters/2025-12-22/the-best-video-games-of-2025-from-blue-prince-to-silksong-to-avowed
+Bloomberg	2022	EOY	The 10 Best Video Games of the Year	https://www.bloomberg.com/news/newsletters/2022-12-30/the-10-best-video-games-of-the-year
 Bloomberg	2023	EOY	The Best Video Games of 2023	https://www.bloomberg.com/news/newsletters/2023-12-29/the-best-video-games-of-2023
 Bloomberg	2020	EOY	The Best Video Games of 2020	https://www.bloomberg.com/news/articles/2020-12-24/the-best-video-games-of-2020
+Bloomberg	2022	EOY	These Are the 10 Best Video Games We Played in 2021	https://www.bloomberg.com/news/newsletters/2021-12-31/best-video-games-2021-includes-deathloop-metroid-dread
+Bloomberg	2025	EOY	The Best Video Games of 2025	https://www.bloomberg.com/news/newsletters/2025-12-22/the-best-video-games-of-2025-from-blue-prince-to-silksong-to-avowed
 Bloomberg	2024	EOY	The Best Video Games of 2024	https://www.bloomberg.com/news/newsletters/2024-12-27/the-best-video-games-of-2024
-Bloomberg	2022	EOY	The 10 Best Video Games of the Year	https://www.bloomberg.com/news/newsletters/2022-12-30/the-10-best-video-games-of-the-year
-CNET	2015	EOY	The best video games of 2015	https://www.cnet.com/pictures/the-best-video-games-of-2015/
-CNET	2014	EOY	The best games of 2014	https://www.cnet.com/pictures/the-best-games-of-2014/
-CNET	2017	EOY	Here are the greatest video games of 2017	https://www.cnet.com/pictures/here-are-the-greatest-video-games-of-2017/
-CNET	2013	EOY	The 15 best video games of 2013	https://www.cnet.com/tech/computing/the-15-best-video-games-of-2013/
-CNET	2011	EOY	The 10 best games of 2011	https://www.cnet.com/news/the-10-best-games-of-2011/
-CNET	2007	EOY	CNET's Top 10 games of 2007	https://www.cnet.com/pictures/cnets-top-10-games-of-2007/
-CNET	2016	EOY	Here are the best video games of 2016	https://www.cnet.com/pictures/here-are-the-best-videogames-of-2016/
-CNET	2010	EOY	The 10 best games of 2010	https://www.cnet.com/pictures/the-top-10-best-games-of-2010-screenshots/
-CNET	2012	EOY	The top 11 games of 2012	https://www.cnet.com/tech/computing/the-top-11-games-of-2012/
 CNET	2008	EOY	Top 10 video games of 2008	https://www.cnet.com/pictures/top-10-video-games-of-2008/
+CNET	2015	EOY	The best video games of 2015	https://www.cnet.com/pictures/the-best-video-games-of-2015/
+CNET	2011	EOY	The 10 best games of 2011	https://www.cnet.com/news/the-10-best-games-of-2011/
+CNET	2014	EOY	The best games of 2014	https://www.cnet.com/pictures/the-best-games-of-2014/
+CNET	2010	EOY	The 10 best games of 2010	https://www.cnet.com/pictures/the-top-10-best-games-of-2010-screenshots/
+CNET	2007	EOY	CNET's Top 10 games of 2007	https://www.cnet.com/pictures/cnets-top-10-games-of-2007/
+CNET	2017	EOY	Here are the greatest video games of 2017	https://www.cnet.com/pictures/here-are-the-greatest-video-games-of-2017/
+CNET	2016	EOY	Here are the best video games of 2016	https://www.cnet.com/pictures/here-are-the-best-videogames-of-2016/
+CNET	2013	EOY	The 15 best video games of 2013	https://www.cnet.com/tech/computing/the-15-best-video-games-of-2013/
+CNET	2012	EOY	The top 11 games of 2012	https://www.cnet.com/tech/computing/the-top-11-games-of-2012/
 Rolling Stone	2013	EOY	10 Best Video Games of 2013	https://www.rollingstone.com/culture/culture-lists/10-best-video-games-of-2013-33516/
 Jeux Video Network	2009	All Time	Les 100 meilleurs jeux vidéo de tous les temps	https://web.archive.org/web/20100312043951/https://www.jvn.com/jeux/articles/les-100-meilleurs-jeux-de-tous-les-temps.html
 Jeuxvideo	2011	All Time	Les 100 meilleurs jeux de tous les temps	https://www.jeuxvideo.com/dossiers/00014196/les-100-meilleurs-jeux-de-tous-les-temps.htm
 Jeuxvideo	2017	All Time	Top 100 des meilleurs jeux de tous les temps	https://www.jeuxvideo.com/dossier/694881/top-100-des-meilleurs-jeux-de-tous-les-temps/
 Thrillist	2017	EOY	The Best Video Games of 2017	https://www.thrillist.com/entertainment/nation/best-video-games-of-2017
 Thrillist	2019	EOY	The 30 Best Video Games of 2019	https://web.archive.org/web/20230123010027/https://www.thrillist.com/entertainment/nation/best-video-games-2019
-Business Insider	2021	EOY	These were the 11 must-play video games of 2021	https://www.businessinsider.com/guides/tech/best-video-games-2021
 Business Insider	2018	EOY	The 20 best video games of 2018, from 'Red Dead Redemption 2' to 'God of War'	https://www.businessinsider.com/best-video-games-released-in-2018-2018-11
-Complex	2018	EOY	The Best Video Games of 2018	https://www.complex.com/life/best-video-games-2018/
-Complex	2019	EOY	The Best Video Games of 2019	https://www.complex.com/pop-culture/best-video-games-of-2019/
+Business Insider	2021	EOY	These were the 11 must-play video games of 2021	https://www.businessinsider.com/guides/tech/best-video-games-2021
 Complex	2023	EOY	The Best Video Games of 2023, Ranked	https://www.complex.com/pop-culture/a/kevin-wong/best-video-games-of-2023
-Complex	2025	EOY	The 10 Best Video Games of 2025	https://www.complex.com/pop-culture/a/marc-griffin/best-video-games-2025-ranked
-Complex	2021	EOY	The Best Video Games of 2021	https://www.complex.com/pop-culture/a/kevin-wong/best-video-games-2021
+Complex	2019	EOY	The Best Video Games of 2019	https://www.complex.com/pop-culture/best-video-games-of-2019/
 Complex	2020	EOY	The Best Video Games of 2020	https://www.complex.com/pop-culture/best-video-games-of-2020/
-Kinda Funny	2021	EOY	Kinda Funny's Game of the Year 2020	https://youtu.be/k6aVhye8TEk
+Complex	2018	EOY	The Best Video Games of 2018	https://www.complex.com/life/best-video-games-2018/
+Complex	2021	EOY	The Best Video Games of 2021	https://www.complex.com/pop-culture/a/kevin-wong/best-video-games-2021
+Complex	2025	EOY	The 10 Best Video Games of 2025	https://www.complex.com/pop-culture/a/marc-griffin/best-video-games-2025-ranked
 Kinda Funny	2025	EOY	Kinda Funny's Game of the Year 2024	https://youtu.be/Lg08kmuXT7w
-Kinda Funny	2026	EOY	Kinda Funny's Game of the Year 2025	https://youtu.be/0Bs4GfwE9uk
 Kinda Funny	2022	EOY	Kinda Funny's Game of the Year 2021	https://youtu.be/ePZ9yC8g0cI
+Kinda Funny	2026	EOY	Kinda Funny's Game of the Year 2025	https://youtu.be/0Bs4GfwE9uk
 Kinda Funny	2024	EOY	Kinda Funny's Game of the Year 2023	https://youtu.be/k5jWxxrW2GA
+Kinda Funny	2021	EOY	Kinda Funny's Game of the Year 2020	https://youtu.be/k6aVhye8TEk
 Kinda Funny	2023	EOY	Kinda Funny's Game of the Year 2022	https://youtu.be/LSqgZ_X6ios
-Kotaku	2018	EOY	The 12 Best Video Games Of 2017	https://www.kotaku.com.au/2018/01/the-12-best-video-games-of-2017/
-Kotaku	2015	EOY	Kotaku US’ 12 Best Video Games Of 2014	https://www.kotaku.com.au/2015/01/the-12-best-games-of-2014/
-Kotaku	2022	EOY	Kotaku's 2021 Games Of The Year	https://kotaku.com/kotakus-2021-games-of-the-year-1848303306
-Kotaku	2026	EOY	The 12 Best Video Games Of 2025	https://kotaku.com/the-12-best-video-games-of-2025-2000656161
-Kotaku	2023	EOY	Kotaku’s Top 10 Games Of 2022	https://kotaku.com/goty-best-games-2022-elden-ring-god-war-ragnarok-marvel-1849934499
-Kotaku	2019	EOY	The 12 Best Video Games Of 2018	https://www.kotaku.com.au/2019/01/the-12-best-video-games-of-2018/
 Kotaku	2021	EOY	The 12 Best Video Games Of 2020	https://www.kotaku.com.au/2021/01/the-12-best-video-games-of-2020/
-Kotaku	2020	EOY	The 12 Best Video Games Of 2019	https://www.kotaku.com.au/2020/01/the-12-best-video-games-of-2019/
-Kotaku	2023	EOY	GotY: Kotaku’s Top 12 Games Of 2023, Ranked	https://kotaku.com/goty-best-games-2023-totk-baldurs-gate-3-alan-wake-2-1851109182
-Kotaku	2017	EOY	The 12 Best Video Games Of 2016	https://www.kotaku.com.au/2017/01/the-12-best-video-games-of-2016/
 Kotaku	2024	EOY	Kotaku’s 15 Best Games Of 2024, Ranked	https://kotaku.com/goty-best-games-2024-astro-bot-dragon-age-star-wars-1851726357
+Kotaku	2022	EOY	Kotaku's 2021 Games Of The Year	https://kotaku.com/kotakus-2021-games-of-the-year-1848303306
+Kotaku	2023	EOY	Kotaku’s Top 10 Games Of 2022	https://kotaku.com/goty-best-games-2022-elden-ring-god-war-ragnarok-marvel-1849934499
+Kotaku	2020	EOY	The 12 Best Video Games Of 2019	https://www.kotaku.com.au/2020/01/the-12-best-video-games-of-2019/
+Kotaku	2019	EOY	The 12 Best Video Games Of 2018	https://www.kotaku.com.au/2019/01/the-12-best-video-games-of-2018/
+Kotaku	2017	EOY	The 12 Best Video Games Of 2016	https://www.kotaku.com.au/2017/01/the-12-best-video-games-of-2016/
+Kotaku	2018	EOY	The 12 Best Video Games Of 2017	https://www.kotaku.com.au/2018/01/the-12-best-video-games-of-2017/
+Kotaku	2023	EOY	GotY: Kotaku’s Top 12 Games Of 2023, Ranked	https://kotaku.com/goty-best-games-2023-totk-baldurs-gate-3-alan-wake-2-1851109182
+Kotaku	2026	EOY	The 12 Best Video Games Of 2025	https://kotaku.com/the-12-best-video-games-of-2025-2000656161
+Kotaku	2015	EOY	Kotaku US’ 12 Best Video Games Of 2014	https://www.kotaku.com.au/2015/01/the-12-best-games-of-2014/
 Business Insider	2013	EOY	15 Video Games From 2013 Everyone Should Play	https://www.businessinsider.com/best-video-games-of-2013-2013-12
 CNN	2013	EOY	2013: The year in video gaming	https://edition.cnn.com/2013/12/20/tech/gaming-gadgets/top-video-games-2013/index.html
 CNN	2011	EOY	The top 10 video games of 2011	https://edition.cnn.com/2011/12/23/tech/gaming-gadgets/top-10-video-games/index.html
 CNN	2012	EOY	The 10 best video games of 2012	https://edition.cnn.com/2012/12/26/tech/gaming-gadgets/best-video-games-2012/index.html
 Complex	2012	EOY	The 25 Best Video Games Of 2012	https://www.complex.com/pop-culture/2012/12/the-25-best-video-games-of-2012/
+Kotaku	2019	EOY	The Best Games Of 2015	https://web.archive.org/web/20191218051215/https://www.kotaku.com.au/2019/12/best-games-of-2015-pc-ps4-xbox-one/
 Kotaku	2019	EOY	The 10 Best Games Of 2011	https://www.kotaku.com.au/2019/12/the-10-best-games-of-2011/
 Kotaku	2019	EOY	The 10 Best Games Of 2013	https://web.archive.org/web/20240725072520/https://www.kotaku.com.au/2019/12/best-games-of-2013-pc-ps4-xbox-one-xbox-360-ps3/
-Kotaku	2019	EOY	The Best Games Of 2015	https://web.archive.org/web/20191218051215/https://www.kotaku.com.au/2019/12/best-games-of-2015-pc-ps4-xbox-one/
-Les Inrockuptibles	2019	EOY	Voici nos 10 jeux vidéo préférés de 2019	https://www.lesinrocks.com/actu/voici-nos-20-jeux-video-preferes-de-2019-299827-18-12-2019/
+Les Inrockuptibles	2023	EOY	Notre top 10 des meilleurs jeux vidéo de 2023	https://www.lesinrocks.com/jeux-video/notre-top-10-des-meilleurs-jeux-video-de-2023-604472-20-12-2023/
+Les Inrockuptibles	2022	EOY	Notre top 10 des meilleurs jeux vidéo de 2022	https://www.lesinrocks.com/jeux-video/notre-top-10-des-meilleurs-jeux-video-de-2022-523133-19-12-2022/
 Les Inrockuptibles	2017	EOY	Nos dix meilleurs jeux vidéo de l’année 2017	https://www.lesinrocks.com/actu/nos-dix-meilleurs-jeux-video-de-lannee-2017-127484-23-12-2017/
+Les Inrockuptibles	2019	EOY	Les 10 meilleurs jeux de 2018	https://www.lesinrocks.com/actu/les-10-meilleurs-jeux-de-2018-186617-02-01-2019/
+Les Inrockuptibles	2019	EOY	Voici nos 10 jeux vidéo préférés de 2019	https://www.lesinrocks.com/actu/voici-nos-20-jeux-video-preferes-de-2019-299827-18-12-2019/
+Les Inrockuptibles	2025	EOY	Notre top 10 des meilleurs jeux vidéo de 2025	https://www.lesinrocks.com/jeux-video/notre-top-10-des-meilleurs-jeux-video-de-2025-686294-17-12-2025/
 Les Inrockuptibles	2019	Decade	Voici les 50 meilleurs jeux vidéo de la décennie	https://www.lesinrocks.com/actu/notre-top-50-des-meilleurs-jeux-video-de-la-decennie-300987-26-12-2019/
 Les Inrockuptibles	2020	EOY	Voici nos 10 jeux vidéo préférés de 2020	https://www.lesinrocks.com/actu/voici-nos-10-jeux-videos-preferes-de-2020-191671-10-12-2020/
 Les Inrockuptibles	2021	EOY	Les 10 jeux vidéo à glisser sous le sapin cette année	https://www.lesinrocks.com/jeux-video/les-10-jeux-video-a-glisser-sous-le-sapin-en-2021-424791-22-12-2021/
-Les Inrockuptibles	2019	EOY	Les 10 meilleurs jeux de 2018	https://www.lesinrocks.com/actu/les-10-meilleurs-jeux-de-2018-186617-02-01-2019/
-Les Inrockuptibles	2022	EOY	Notre top 10 des meilleurs jeux vidéo de 2022	https://www.lesinrocks.com/jeux-video/notre-top-10-des-meilleurs-jeux-video-de-2022-523133-19-12-2022/
-Les Inrockuptibles	2025	EOY	Notre top 10 des meilleurs jeux vidéo de 2025	https://www.lesinrocks.com/jeux-video/notre-top-10-des-meilleurs-jeux-video-de-2025-686294-17-12-2025/
-Les Inrockuptibles	2023	EOY	Notre top 10 des meilleurs jeux vidéo de 2023	https://www.lesinrocks.com/jeux-video/notre-top-10-des-meilleurs-jeux-video-de-2023-604472-20-12-2023/
 Les Inrockuptibles	2024	EOY	Les 10 meilleurs jeux vidéo de 2024	https://www.lesinrocks.com/jeux-video/les-10-des-meilleurs-jeux-video-de-2024-637309-16-12-2024/
 Vulture	2025	EOY	The Best Video Games of 2025	https://www.vulture.com/article/best-video-games-2025.html
 Business Insider	2012	EOY	These Were The Best Video Games Of 2012	https://www.businessinsider.com/best-video-games-of-2012-2012-12
 Collider	2025	EOY	The 10 Greatest Video Games of 2025, Ranked	https://collider.com/best-video-games-2025-ranked/
 NME	2018	EOY	The ten best video games of 2018	https://www.nme.com/blogs/nme-blogs/2416061-2416061
 Mashable	2020	EOY	The best video games of 2020	https://mashable.com/article/2020-best-video-games
-Mashable	2020	All Time	What are the best video games of all time? I asked our team to help decide.	https://mashable.com/article/best-video-games-of-all-time
+Mashable	2019	Decade	Our 15 favorite video games from the 2010s	https://mashable.com/article/15-favorites-video-games-2010s
 Mashable	2023	EOY	Mashable's best games 2023	https://mashable.com/article/best-game-of-the-year-2023
 Mashable	2019	EOY	The 10 best video games of 2019	https://mashable.com/article/best-video-games-2019
-Mashable	2019	Decade	Our 15 favorite video games from the 2010s	https://mashable.com/article/15-favorites-video-games-2010s
-Time	2015	EOY	Top 10 Video Games (2015)	https://time.com/collection-post/4106659/top-10-video-games/
+Mashable	2020	All Time	What are the best video games of all time? I asked our team to help decide.	https://mashable.com/article/best-video-games-of-all-time
 Time	2016	EOY	The 15 Best Video Games of 2016	https://time.com/4599490/best-video-games-2016/
+Time	2015	EOY	Top 10 Video Games (2015)	https://time.com/collection-post/4106659/top-10-video-games/
 Time	2019	Decade	The 10 Best Video Games of the 2010s	https://time.com/5752663/best-video-games-2010s-decade/
 Complex	2011	EOY	The 25 Best Video Games of 2011	https://www.complex.com/pop-culture/a/michael-rougeau/the-25-best-video-games-of-2011
 Thrillist	2021	EOY	The 18 Best Video Games of 2021	https://www.thrillist.com/entertainment/nation/best-video-games-2021
+MinnMax	2021	EOY	The Game Of The Year Debate 2021	https://youtu.be/Y_C3NaZMFAE
+MinnMax	2026	EOY	Game Of The Year 2025	https://youtu.be/lIQd-zokVnQ
+MinnMax	2021	EOY	Game Of The Year Debate 2020	https://youtu.be/KlcVjkqqnic
+MinnMax	2022	EOY	The Game Of The Year Debate 2022	https://youtu.be/1vaeSJi4ZdA
 MinnMax	2024	EOY	Game Of The Year 2024	https://youtu.be/IYRt2Tx5JTw
 MinnMax	2024	EOY	Game Of The Year 2023	https://youtu.be/dqyn0aIvBCU
-MinnMax	2022	EOY	The Game Of The Year Debate 2022	https://youtu.be/1vaeSJi4ZdA
-MinnMax	2026	EOY	Game Of The Year 2025	https://youtu.be/lIQd-zokVnQ
-MinnMax	2021	EOY	The Game Of The Year Debate 2021	https://youtu.be/Y_C3NaZMFAE
-MinnMax	2021	EOY	Game Of The Year Debate 2020	https://youtu.be/KlcVjkqqnic
 Moustique	2024	All Time	On a classé les 100 meilleurs jeux vidéo depuis la sortie de Pong en 1972 (pour fêter les 100 ans de Moustique)	https://www.moustique.be/culture/2024/11/02/on-a-classe-les-100-meilleurs-jeux-video-depuis-la-sortie-de-pong-en-1972-pour-feter-les-100-ans-de-moustique-JH7WZ3VXJZEYNCWWPS6P5MEGPE/
-Multiplayer.it	2025	All Time	I 100 migliori videogiochi della storia	https://multiplayer.it/articoli/i-100-migliori-videogiochi-della-storia.html
-Multiplayer.it	2022	EOY	Il Gioco dell’Anno 2021 di Multiplayer.it	https://multiplayer.it/articoli/il-gioco-anno-2021-di-multiplayerit.html
-Multiplayer.it	2026	EOY	Il Gioco Migliore del 2025 per Multiplayer.it	https://multiplayer.it/articoli/il-gioco-del-2025-di-multiplayerit.html
 Multiplayer.it	2024	EOY	Il Gioco dell'Anno 2023 di Multiplayer.it	https://multiplayer.it/articoli/gioco-anno-2023-goty-multiplayerit.html
-Multiplayer.it	2023	EOY	Il Gioco dell'Anno 2022 di Multiplayer.it	https://multiplayer.it/articoli/gioco-anno-2022-di-multiplayerit.html
 Multiplayer.it	2025	EOY	Il Gioco Migliore del 2024 per Multiplayer.it	https://multiplayer.it/articoli/il-gioco-del-2024-di-multiplayerit.html
+Multiplayer.it	2025	All Time	I 100 migliori videogiochi della storia	https://multiplayer.it/articoli/i-100-migliori-videogiochi-della-storia.html
+Multiplayer.it	2026	EOY	Il Gioco Migliore del 2025 per Multiplayer.it	https://multiplayer.it/articoli/il-gioco-del-2025-di-multiplayerit.html
+Multiplayer.it	2022	EOY	Il Gioco dell’Anno 2021 di Multiplayer.it	https://multiplayer.it/articoli/il-gioco-anno-2021-di-multiplayerit.html
+Multiplayer.it	2023	EOY	Il Gioco dell'Anno 2022 di Multiplayer.it	https://multiplayer.it/articoli/gioco-anno-2022-di-multiplayerit.html
 Esquire	2018	EOY	The 13 Best Video Games of 2018	https://www.esquire.com/lifestyle/a14457144/best-video-games-2018/
-New York Game Awards	2019	EOY	Big Apple Award for Game of the Year (2018)	https://nygamecritics.com/2019/01/03/new-york-game-awards-all-the-nominees-announced-for-our-1-22-19-celebration/
-New York Game Awards	2020	EOY	Big Apple Award fo Game of the Year (2019)	https://nygamecritics.com/2020/01/02/awards-here-are-all-the-nominees-for-the-9th-new-york-game-awards/
-New York Game Awards	2012	EOY	Big Apple Award for Best Game (2011)	https://nygamecritics.com/2012/01/11/new-york-videogame-critics-circle-awards-the-nominees/
 New York Game Awards	2013	EOY	Big Apple Award for Best Game (2012)	https://nygamecritics.com/2013/01/04/nominees-new-york-videogame-critics-circle-awards/
 New York Game Awards	2014	EOY	Big Apple Award for Best Game (2013)	https://nygamecritics.com/2014/01/03/the-nominees-new-york-videogame-critics-circle-awards-2013/
 New York Game Awards	2016	EOY	Big Apple Award for Best Game (2015)	https://nygamecritics.com/2016/01/07/awards-nominees/
-New York Game Awards	2017	EOY	Big Apple Award for Game of the Year (2016)	https://nygamecritics.com/2017/01/07/nominees-2017-new-york-game-awards/
-New York Game Awards	2018	EOY	Big Apple Award for Game of the Year (2017)	https://nygamecritics.com/2018/01/08/92704/
-New York Game Awards	2022	EOY	Big Apple Award for Game of the Year (2021)	https://nygamecritics.com/2022/01/11/awards-all-the-awesome-nominees-plus-much-more-new-york-game-awards-info/
-New York Game Awards	2021	EOY	Big Apple Award for Game of the Year (2020)	https://nygamecritics.com/2021/01/05/nominees-all-nominees-for-the-10th-annual-new-york-game-awards/
 New York Game Awards	2023	EOY	Big Apple Award for Game of the Year (2022)	https://nygamecritics.com/2023/01/04/awards-here-are-all-the-nominees-for-the-12th-annual-new-york-game-awards/
-Next Generation	1996	All Time	Top 100 Games of All Time	https://archive.org/details/nextgen-issue-021/page/n39/mode/2up?view=theater
+New York Game Awards	2018	EOY	Big Apple Award for Game of the Year (2017)	https://nygamecritics.com/2018/01/08/92704/
+New York Game Awards	2019	EOY	Big Apple Award for Game of the Year (2018)	https://nygamecritics.com/2019/01/03/new-york-game-awards-all-the-nominees-announced-for-our-1-22-19-celebration/
+New York Game Awards	2021	EOY	Big Apple Award for Game of the Year (2020)	https://nygamecritics.com/2021/01/05/nominees-all-nominees-for-the-10th-annual-new-york-game-awards/
+New York Game Awards	2022	EOY	Big Apple Award for Game of the Year (2021)	https://nygamecritics.com/2022/01/11/awards-all-the-awesome-nominees-plus-much-more-new-york-game-awards-info/
+New York Game Awards	2012	EOY	Big Apple Award for Best Game (2011)	https://nygamecritics.com/2012/01/11/new-york-videogame-critics-circle-awards-the-nominees/
+New York Game Awards	2017	EOY	Big Apple Award for Game of the Year (2016)	https://nygamecritics.com/2017/01/07/nominees-2017-new-york-game-awards/
+New York Game Awards	2020	EOY	Big Apple Award fo Game of the Year (2019)	https://nygamecritics.com/2020/01/02/awards-here-are-all-the-nominees-for-the-9th-new-york-game-awards/
 Next Generation	1999	All Time	The Fifty Best Games of All Time	https://archive.org/details/NextGeneration50Feb1999/page/n73/mode/2up
+Next Generation	1996	All Time	Top 100 Games of All Time	https://archive.org/details/nextgen-issue-021/page/n39/mode/2up?view=theater
 Esquire	2016	EOY	Ignore The Blockbusters, These Are The Greatest Videogames Of 2016	https://www.esquire.com/uk/culture/advice/g9816/the-best-video-games-of-2016/
-Nintendo Power	2005	Misc	Nintendo Power's Top 200 Games	https://archive.org/details/nintendo-power-issue-200-february-2006/mode/2up
 Nintendo Power	1997	Misc	Nintendo Power's 100 Best Games of All Time	https://archive.org/details/nintendo-power-issue-100-september-1997
-NME	2022	EOY	The 20 best games of 2022	https://www.nme.com/en_au/features/gaming-features/the-20-best-games-of-2022-3362053
-NME	2023	EOY	The 20 best games of 2023	https://www.nme.com/en_au/features/gaming-features/best-games-2023-switch-xbox-playstation-pc-3553559
-NME	2020	EOY	The 20 best games of 2020	https://www.nme.com/en_au/features/nme-best-games-of-the-year-2020-2838019
+Nintendo Power	2005	Misc	Nintendo Power's Top 200 Games	https://archive.org/details/nintendo-power-issue-200-february-2006/mode/2up
 NME	2024	EOY	The 20 best games of 2024	https://www.nme.com/lists/end-of-year/best-games-2024-3817060
+NME	2022	EOY	The 20 best games of 2022	https://www.nme.com/en_au/features/gaming-features/the-20-best-games-of-2022-3362053
 NME	2021	EOY	The 20 best games of 2021	https://www.nme.com/en_au/features/nme-best-games-of-the-year-2021-3112573
+NME	2020	EOY	The 20 best games of 2020	https://www.nme.com/en_au/features/nme-best-games-of-the-year-2020-2838019
+NME	2023	EOY	The 20 best games of 2023	https://www.nme.com/en_au/features/gaming-features/best-games-2023-switch-xbox-playstation-pc-3553559
 NME	2016	EOY	NME’s Games Of The Year 2016	https://www.nme.com/list/nme-best-games-2016-1869262
+NPR	2021	EOY	The top five video games of 2021 selected by the NPR staff	https://www.npr.org/2021/12/18/1064945778/top-five-video-games-2021
 NPR	2011	EOY	The 10 Best Video Games Of 2011	https://www.npr.org/2011/12/29/144429597/the-10-best-video-games-of-2011
 Parade	2023	All Time	We Ranked the 25 Best Video Games of All Time	https://parade.com/entertainment/best-video-games-of-all-time
-Paste	2024	EOY	The 40 Best Games of 2024	https://www.pastemagazine.com/games/best-of-2024/the-40-best-games-of-2024
-Paste	2011	EOY	The 20 Best Videogames of 2011	https://www.pastemagazine.com/games/the-20-best-videogames-of-2011/
-Paste	2008	EOY	The 10 Best Videogames of 2008	https://www.pastemagazine.com/games/signs-of-life-2008-best-games
-Paste	2009	Decade	The 20 Best Video Games of the Decade	https://www.pastemagazine.com/games/the-20-best-video-games-of-the-decade/
-Paste	2015	EOY	The 25 Best Videogames of 2015	https://www.pastemagazine.com/games/the-25-best-videogames-of-2015/
-Paste	2024	Misc	The 50 Best Games of the 2020s So Far	https://www.pastemagazine.com/games/best-games/the-50-best-games-of-the-2020s-so-far
-Paste	2010	EOY	The 20 Best Videogames of 2010	https://www.pastemagazine.com/games/the-20-best-videogames-of-2010/
-Paste	2017	EOY	The 30 Best Games of 2017	https://www.pastemagazine.com/article/the-30-best-videogames-of-2017
-Paste	2023	EOY	The Best Games of 2023	https://www.pastemagazine.com/games/best-games/the-best-games-of-2023
-Paste	2012	EOY	The 30 Best Videogames of 2012	https://www.pastemagazine.com/games/the-30-best-videogames-of-2012/
-Paste	2013	EOY	The 25 Best Videogames of 2013	https://www.pastemagazine.com/games/the-25-best-videogames-of-2013/
-Paste	2014	EOY	The 25 Best Videogames of 2014	https://www.pastemagazine.com/games/the-25-best-videogames-of-2014/
-Paste	2018	EOY	The 30 Best Videogames of 2018	https://www.pastemagazine.com/games/best-of-2018/goty-2018/
 Paste	2016	EOY	The 25 Best Videogames of 2016	https://www.pastemagazine.com/games/best-of-2016/the-25-best-videogames-of-2016/
-Paste	2020	EOY	The 40 Best Games of 2020	https://www.pastemagazine.com/games/best-of-2020/best-games-of-2020/
-Paste	2021	EOY	The 30 Best Games of 2021	https://www.pastemagazine.com/games/best-games/best-games-of-2021
-Paste	2019	Decade	The 100 Best Videogames of the 2010s	https://www.pastemagazine.com/games/best-of-the-decade/best-videogames-of-the-decade/
-Paste	2019	EOY	The 30 Best Videogames of 2019	https://www.pastemagazine.com/games/best-of-2019/best-games-of-2019-goty/
+Paste	2015	EOY	The 25 Best Videogames of 2015	https://www.pastemagazine.com/games/the-25-best-videogames-of-2015/
+Paste	2009	Decade	The 20 Best Video Games of the Decade	https://www.pastemagazine.com/games/the-20-best-video-games-of-the-decade/
+Paste	2008	EOY	The 10 Best Videogames of 2008	https://www.pastemagazine.com/games/signs-of-life-2008-best-games
+Paste	2010	EOY	The 20 Best Videogames of 2010	https://www.pastemagazine.com/games/the-20-best-videogames-of-2010/
+Paste	2011	EOY	The 20 Best Videogames of 2011	https://www.pastemagazine.com/games/the-20-best-videogames-of-2011/
 Paste	2023	EOY	The 30 Best Games of 2022	https://www.pastemagazine.com/games/best-of-2022/best-games-of-2022
+Paste	2024	EOY	The 40 Best Games of 2024	https://www.pastemagazine.com/games/best-of-2024/the-40-best-games-of-2024
+Paste	2024	Misc	The 50 Best Games of the 2020s So Far	https://www.pastemagazine.com/games/best-games/the-50-best-games-of-the-2020s-so-far
+Paste	2023	EOY	The Best Games of 2023	https://www.pastemagazine.com/games/best-games/the-best-games-of-2023
+Paste	2019	EOY	The 30 Best Videogames of 2019	https://www.pastemagazine.com/games/best-of-2019/best-games-of-2019-goty/
+Paste	2021	EOY	The 30 Best Games of 2021	https://www.pastemagazine.com/games/best-games/best-games-of-2021
+Paste	2020	EOY	The 40 Best Games of 2020	https://www.pastemagazine.com/games/best-of-2020/best-games-of-2020/
+Paste	2018	EOY	The 30 Best Videogames of 2018	https://www.pastemagazine.com/games/best-of-2018/goty-2018/
+Paste	2019	Decade	The 100 Best Videogames of the 2010s	https://www.pastemagazine.com/games/best-of-the-decade/best-videogames-of-the-decade/
+Paste	2017	EOY	The 30 Best Games of 2017	https://www.pastemagazine.com/article/the-30-best-videogames-of-2017
+Paste	2012	EOY	The 30 Best Videogames of 2012	https://www.pastemagazine.com/games/the-30-best-videogames-of-2012/
+Paste	2014	EOY	The 25 Best Videogames of 2014	https://www.pastemagazine.com/games/the-25-best-videogames-of-2014/
+Paste	2013	EOY	The 25 Best Videogames of 2013	https://www.pastemagazine.com/games/the-25-best-videogames-of-2013/
 PC and Tech Authority	2013	All Time	100 games to play before you die	https://web.archive.org/web/20131107131900/http://www.pcauthority.com.au/Feature/362415,100-games-to-play-before-you-die.aspx
 CBC	2010	EOY	The best video games of 2010	https://www.cbc.ca/news/entertainment/the-best-video-games-of-2010-1.968693
 Complex	2010	EOY	The 25 Best Video Games Of 2010	https://www.complex.com/pop-culture/2010/12/25-best-video-games-of-2010/25-best-video-games-of-2010
 Polygon	2025	EOY	The 50 best games of 2025	https://www.polygon.com/best-games-2025/
-Polygon	2013	EOY	Polygon's 2012 Games of the Year	https://www.polygon.com/2013/1/9/3855652/polygons-2012-games-of-the-year
-Polygon	2017	All Time	The 500 best games of all time	https://www.polygon.com/features/2017/11/27/16158276/polygon-500-best-games-of-all-time-500-401
-Polygon	2024	EOY	The 50 best video games of 2024	https://www.polygon.com/what-to-play/24078256/best-video-games-2024
-Polygon	2013	EOY	Polygon's 2013 Games of the Year	https://www.polygon.com/pages/2013-game-of-the-year
-Polygon	2023	EOY	The 50 best video games of 2023	https://www.polygon.com/23648669/best-video-games-2023
-Polygon	2022	EOY	The 50 best video games of 2022	https://www.polygon.com/what-to-play/22956981/best-games-2022-list
-Polygon	2022	EOY	The Best Video Games of 2021	https://www.polygon.com/c/22796149/50-best-video-games-of-2021-polygon-goty
+Polygon	2019	Decade	The 100 best games of the decade (2010-2019)	https://www.polygon.com/features/2019/11/4/20944265/best-games-2019-2010-ps4-switch-xbox-pc-100-51
+Polygon	2017	EOY	Polygon’s 2016 Games of the Year	https://www.polygon.com/2017/1/6/14057018/doom-games-of-the-year-2016
 Polygon	2020	EOY	The 50 best games of 2020	https://www.polygon.com/2020/12/14/22166004/best-games-2020-ps4-xbox-one-switch-pc-series-x
 Polygon	2019	EOY	The 50 best games of 2019	https://www.polygon.com/best-games/2019/12/13/21002670/best-games-2019-ps4-pc-xbox-one-nintendo-switch-ios
-Polygon	2019	Decade	The 100 best games of the decade (2010-2019)	https://www.polygon.com/features/2019/11/4/20944265/best-games-2019-2010-ps4-switch-xbox-pc-100-51
-Polygon	2018	EOY	The 50 best games of 2018	https://www.polygon.com/2018/5/29/17386324/best-games-2018-ps4-pc-xbox-one
-Polygon	2017	EOY	The 50 best games of 2017	https://www.polygon.com/2017-best-games/2017/12/18/16781674/best-video-games-2017-top-50-mario-pubg-zelda
-Polygon	2014	EOY	Polygon's 2014 Games of the Year	https://www.polygon.com/pages/2014-game-of-the-year
-Polygon	2017	EOY	Polygon’s 2016 Games of the Year	https://www.polygon.com/2017/1/6/14057018/doom-games-of-the-year-2016
+Polygon	2024	EOY	The 50 best video games of 2024	https://www.polygon.com/what-to-play/24078256/best-video-games-2024
+Polygon	2022	EOY	The 50 best video games of 2022	https://www.polygon.com/what-to-play/22956981/best-games-2022-list
 Polygon	2015	EOY	Polygon's 2015 Games of the Year	https://www.polygon.com/a/game-of-the-year-2015
+Polygon	2022	EOY	The Best Video Games of 2021	https://www.polygon.com/c/22796149/50-best-video-games-of-2021-polygon-goty
+Polygon	2017	All Time	The 500 best games of all time	https://www.polygon.com/features/2017/11/27/16158276/polygon-500-best-games-of-all-time-500-401
+Polygon	2017	EOY	The 50 best games of 2017	https://www.polygon.com/2017-best-games/2017/12/18/16781674/best-video-games-2017-top-50-mario-pubg-zelda
+Polygon	2018	EOY	The 50 best games of 2018	https://www.polygon.com/2018/5/29/17386324/best-games-2018-ps4-pc-xbox-one
+Polygon	2023	EOY	The 50 best video games of 2023	https://www.polygon.com/23648669/best-video-games-2023
+Polygon	2013	EOY	Polygon's 2012 Games of the Year	https://www.polygon.com/2013/1/9/3855652/polygons-2012-games-of-the-year
+Polygon	2013	EOY	Polygon's 2013 Games of the Year	https://www.polygon.com/pages/2013-game-of-the-year
+Polygon	2014	EOY	Polygon's 2014 Games of the Year	https://www.polygon.com/pages/2014-game-of-the-year
 PopMatters	2012	EOY	The Best Games of 2011	https://www.popmatters.com/153592-the-best-games-of-2011-2495893921.html
 PopMatters	2024	EOY	The 24 Best Video Games of 2024	https://www.popmatters.com/best-video-games-of-2024
 Popular Mechanics	2014	All Time	The 100 Greatest Video Games of All Time	https://web.archive.org/web/20150905121049/http://www.popularmechanics.com/culture/gaming/g134/the-100-greatest-video-games-of-all-time/
-Popular Mechanics	2019	All Time	The 100 Greatest Video Games of All Time	https://www.popularmechanics.com/culture/gaming/g134/the-100-greatest-video-games-of-all-time/
 Popular Mechanics	2019	EOY	The 40 Best Video Games of 2019	https://www.popularmechanics.com/culture/gaming/g28277199/best-video-games-2019/
+Popular Mechanics	2019	All Time	The 100 Greatest Video Games of All Time	https://www.popularmechanics.com/culture/gaming/g134/the-100-greatest-video-games-of-all-time/
 Power Unlimited	2015	All Time	Top 100 Beste Video Games Aller Tijden	https://web.archive.org/web/20180316202451/https://www.pu.nl/artikelen/feature/top-100-games-aller-tijden/
 Power Up Gaming	2016	All Time	The 100 Greatest Games Ever	https://powerupgaming.co.uk/2016/06/04/the-100-greatest-games-ever-part-4-25-1/
-Press Start	2025	EOY	Press Start’s GOTY #1 – Death Stranding 2: On The Beach	https://press-start.com.au/features/2025/12/31/press-starts-goty-1-death-stranding-2-on-the-beach/
 Press Start	2023	EOY	Press Start’s GOTY 2023	https://press-start.com.au/features/2023/12/31/press-starts-goty-2023-1-alan-wake-ii/
+Press Start	2025	EOY	Press Start’s GOTY #1 – Death Stranding 2: On The Beach	https://press-start.com.au/features/2025/12/31/press-starts-goty-1-death-stranding-2-on-the-beach/
 Press Start	2024	EOY	Press Start's Game of the Year 2024	https://press-start.com.au/features/2024/12/31/press-starts-goty-1-astro-bot/
-Time	2023	EOY	The 10 Best Video Games of 2023	https://time.com/6340124/best-video-games-2023/
-Time	2025	EOY	The 10 Best Video Games of 2025	https://time.com/7333802/best-video-games-2025/
-Time	2022	EOY	The 10 Best Video Games of 2022	https://time.com/6235588/best-video-games-2022/
 Time	2024	EOY	The 10 Best Video Games of 2024	https://time.com/7199868/best-video-games-2024/
+Time	2023	EOY	The 10 Best Video Games of 2023	https://time.com/6340124/best-video-games-2023/
+Time	2022	EOY	The 10 Best Video Games of 2022	https://time.com/6235588/best-video-games-2022/
+Time	2025	EOY	The 10 Best Video Games of 2025	https://time.com/7333802/best-video-games-2025/
 Rock Paper Shotgun	2019	Decade	The greatest PC games of the 2010s	https://www.rockpapershotgun.com/the-best-games-of-the-decade-on-pc
 Rolling Stone	2025	All Time	The 50 Greatest Video Games of All Time	https://www.rollingstone.com/culture/rs-gaming-lists/best-video-games-of-all-time-1235215978/
 Rolling Stone Italia	2019	Decade	La classifica definitiva dei 50 videogiochi del decennio 2010-2019	https://www.rollingstone.it/cultura/gaming/la-classifica-definitiva-dei-50-videogiochi-del-decennio-2010-2019/494387/
 Kotaku	2019	EOY	The 10 Best Games Of 2012	https://web.archive.org/web/20191216101735/https://www.kotaku.com.au/2019/12/the-10-best-games-of-2012/
-GQ	2024	EOY	The Best Video Games of 2024	https://www.gq.com/story/the-best-video-games-of-2024
-GQ	2025	EOY	The 20 Best Video Games of 2025	https://www.gq.com/story/the-best-video-games-of-2025-so-far
 GQ	2022	EOY	The Best Video Games of 2022	https://www.gq.com/story/best-video-games-2022
+GQ	2024	EOY	The Best Video Games of 2024	https://www.gq.com/story/the-best-video-games-of-2024
 GQ	2023	EOY	The 15 Best Video Games of 2023	https://www.gq.com/story/the-fifteen-best-video-games-of-2023
-CNN	2010	EOY	The 10 best video games of 2010	https://edition.cnn.com/2010/TECH/gaming.gadgets/12/29/best.games.2010/index.html
+GQ	2025	EOY	The 20 Best Video Games of 2025	https://www.gq.com/story/the-best-video-games-of-2025-so-far
 CNN	2010	Decade	The top 10 video games of the past decade	https://web.archive.org/web/20100722064629/http://edition.cnn.com/2010/TECH/gaming.gadgets/06/15/best.video.games.decade/index.html
-Screen Rant	2016	EOY	The Best 20 Video Games of 2015	https://screenrant.com/best-video-games-of-2015-list/
-Screen Rant	2019	EOY	The Best Video Games of 2019	https://screenrant.com/best-video-games-2019-death-stranding-fire-emblem-outer-worlds/
+CNN	2010	EOY	The 10 best video games of 2010	https://edition.cnn.com/2010/TECH/gaming.gadgets/12/29/best.games.2010/index.html
 Screen Rant	2024	All Time	Screen Rant's Best Games Of All Time	https://screenrant.com/best-video-games-all-time-ranked/
+Screen Rant	2019	EOY	The Best Video Games of 2019	https://screenrant.com/best-video-games-2019-death-stranding-fire-emblem-outer-worlds/
 Screen Rant	2024	EOY	20 Best Games Of 2024	https://screenrant.com/20-best-games-of-2024/
+Screen Rant	2016	EOY	The Best 20 Video Games of 2015	https://screenrant.com/best-video-games-of-2015-list/
 Screen Rant	2017	EOY	These Are The Best Video Games of 2017	https://screenrant.com/best-video-games-2017/
 ShortList	2025	EOY	The best video games of 2025	https://www.shortlist.com/tech/the-best-video-games-of-2025-our-top-11-picks
 ShortList	2015	EOY	The 50 greatest games of 2015	https://www.shortlist.com/news/the-greatest-games-of-2015
 ShortList	2010	EOY	10 Best Games Of 2010	https://www.shortlist.com/news/10-best-games-of-2010
-Siliconera	2025	EOY	Siliconera’s Overall Game of the Year 2024	https://www.siliconera.com/siliconeras-overall-game-of-the-year-2024/
 Siliconera	2025	EOY	Siliconera’s Best Overall Game of the Year 2025	https://www.siliconera.com/siliconeras-best-overall-game-of-the-year-2025/
-The New Yorker	2013	EOY	The Best Video Games of 2013	https://www.newyorker.com/tech/annals-of-technology/the-best-video-games-of-2013
-The New Yorker	2014	EOY	The Best Video Games of 2014	https://www.newyorker.com/tech/annals-of-technology/2014-year-review-best-video-games
-The New Yorker	2019	EOY	The Best Video Games of 2019	https://www.newyorker.com/culture/2019-in-review/the-best-video-games-of-2019
-The New Yorker	2020	EOY	The Best Video Games of 2020	https://www.newyorker.com/culture/2020-in-review/the-best-video-games-of-2020
+Siliconera	2025	EOY	Siliconera’s Overall Game of the Year 2024	https://www.siliconera.com/siliconeras-overall-game-of-the-year-2024/
 The New Yorker	2017	EOY	The Best Video Games of 2017	https://www.newyorker.com/culture/2017-in-review/the-best-video-games-of-2017
 The New Yorker	2018	EOY	The Best Video Games of 2018	https://www.newyorker.com/culture/2018-in-review/the-best-video-games-of-2018
-The New Yorker	2021	EOY	The Best Video Games of 2021	https://www.newyorker.com/culture/2021-in-review/the-best-video-games-of-2021
-The New Yorker	2016	EOY	The Best Video Games of 2016	https://www.newyorker.com/tech/annals-of-technology/the-best-video-games-of-2016
 The New Yorker	2022	EOY	The Best Video Games of 2022	https://www.newyorker.com/culture/2022-in-review/the-best-video-games-of-2022
+The New Yorker	2020	EOY	The Best Video Games of 2020	https://www.newyorker.com/culture/2020-in-review/the-best-video-games-of-2020
+The New Yorker	2019	EOY	The Best Video Games of 2019	https://www.newyorker.com/culture/2019-in-review/the-best-video-games-of-2019
+The New Yorker	2013	EOY	The Best Video Games of 2013	https://www.newyorker.com/tech/annals-of-technology/the-best-video-games-of-2013
+The New Yorker	2014	EOY	The Best Video Games of 2014	https://www.newyorker.com/tech/annals-of-technology/2014-year-review-best-video-games
 The New Yorker	2015	EOY	The Best Video Games of 2015	https://www.newyorker.com/tech/annals-of-technology/best-video-games-2015
-Slant Magazine	2025	EOY	The 25 Best Video Games of 2025	https://www.slantmagazine.com/features/the-25-best-video-games-of-2025/
-Slant Magazine	2022	EOY	The 25 Best Video Games of 2022	https://www.slantmagazine.com/features/the-25-best-video-games-of-2022/
-Slant Magazine	2021	EOY	The 25 Best Video Games of 2021	https://www.slantmagazine.com/features/the-25-best-video-games-of-2021/
-Slant Magazine	2020	EOY	The 25 Best Video Games of 2020	https://www.slantmagazine.com/features/the-25-best-video-games-of-2020/
-Slant Magazine	2020	All Time	The 100 Best Video Games of All Time	https://www.slantmagazine.com/games/the-100-best-video-games-of-all-time/
+The New Yorker	2016	EOY	The Best Video Games of 2016	https://www.newyorker.com/tech/annals-of-technology/the-best-video-games-of-2016
+The New Yorker	2021	EOY	The Best Video Games of 2021	https://www.newyorker.com/culture/2021-in-review/the-best-video-games-of-2021
 Slant Magazine	2024	EOY	The 25 Best Video Games of 2024	https://www.slantmagazine.com/features/the-25-best-video-games-of-2024/
+Slant Magazine	2021	EOY	The 25 Best Video Games of 2021	https://www.slantmagazine.com/features/the-25-best-video-games-of-2021/
+Slant Magazine	2020	All Time	The 100 Best Video Games of All Time	https://www.slantmagazine.com/games/the-100-best-video-games-of-all-time/
 Slant Magazine	2019	Decade	The 100 Best Video Games of the 2010s	https://www.slantmagazine.com/features/the-100-best-video-games-of-the-2010s/
+Slant Magazine	2023	EOY	The 25 Best Video Games of 2023	https://www.slantmagazine.com/features/the-25-best-video-games-of-2023/
 Slant Magazine	2019	EOY	The 25 Best Video Games of 2019	https://www.slantmagazine.com/features/the-25-best-video-games-of-2019/
 Slant Magazine	2018	EOY	The 25 Best Video Games of 2018	https://www.slantmagazine.com/games/the-25-best-video-games-of-2018/
 Slant Magazine	2018	All Time	The 100 Greatest Video Games of All Time	https://web.archive.org/web/20190204225303/https://www.slantmagazine.com/features/the-100-greatest-video-games-of-all-time/
-Slant Magazine	2017	EOY	The 25 Best Video Games of 2017	https://www.slantmagazine.com/games/the-25-best-video-games-of-2017/
-Slant Magazine	2016	EOY	The 25 Best Video Games of 2016	https://www.slantmagazine.com/games/the-25-best-video-games-of-2016/
-Slant Magazine	2015	EOY	The 25 Best Video Games of 2015	https://www.slantmagazine.com/games/the-25-best-video-games-of-2015/
+Slant Magazine	2020	EOY	The 25 Best Video Games of 2020	https://www.slantmagazine.com/features/the-25-best-video-games-of-2020/
 Slant Magazine	2014	EOY	The 25 Best Video Games of 2014	https://www.slantmagazine.com/games/the-25-best-video-games-of-2014/
 Slant Magazine	2014	All Time	100 Greatest Video Games of All Time	https://web.archive.org/web/20150716193354/http://www.slantmagazine.com/features/article/100-greatest-video-games-of-all-time
-Slant Magazine	2023	EOY	The 25 Best Video Games of 2023	https://www.slantmagazine.com/features/the-25-best-video-games-of-2023/
+Slant Magazine	2022	EOY	The 25 Best Video Games of 2022	https://www.slantmagazine.com/features/the-25-best-video-games-of-2022/
 Slant Magazine	2013	EOY	The 25 Best Video Games of 2013	https://www.slantmagazine.com/games/the-25-best-video-games-of-2013/
+Slant Magazine	2017	EOY	The 25 Best Video Games of 2017	https://www.slantmagazine.com/games/the-25-best-video-games-of-2017/
 Slant Magazine	2012	EOY	The 25 Best Video Games of 2012	https://www.slantmagazine.com/games/the-25-best-video-games-of-2012/
+Slant Magazine	2016	EOY	The 25 Best Video Games of 2016	https://www.slantmagazine.com/games/the-25-best-video-games-of-2016/
 Slant Magazine	2011	EOY	The 25 Best Video Games of 2011	https://www.slantmagazine.com/features/the-25-best-video-games-of-2011/
-Spike Video Game Awards	2007	EOY	Game of the Year (2007)	
-Spike Video Game Awards	2013	EOY	Game of the Year (2013)	
+Slant Magazine	2015	EOY	The 25 Best Video Games of 2015	https://www.slantmagazine.com/games/the-25-best-video-games-of-2015/
+Slant Magazine	2025	EOY	The 25 Best Video Games of 2025	https://www.slantmagazine.com/features/the-25-best-video-games-of-2025/
 Spike Video Game Awards	2003	EOY	Game of the Year (2003)	
-Spike Video Game Awards	2004	EOY	Game of the Year (2004)	
-Spike Video Game Awards	2011	EOY	Game of the Year (2011)	
 Spike Video Game Awards	2005	EOY	Game of the Year (2005)	
 Spike Video Game Awards	2006	EOY	Game of the Year (2006)	
-Spike Video Game Awards	2012	EOY	Game of the Year (2012)	
+Spike Video Game Awards	2007	EOY	Game of the Year (2007)	
+Spike Video Game Awards	2004	EOY	Game of the Year (2004)	
 Spike Video Game Awards	2008	EOY	Game of the Year (2008)	
 Spike Video Game Awards	2009	EOY	Game of the Year (2009)	
 Spike Video Game Awards	2010	EOY	Game of the Year (2010)	
+Spike Video Game Awards	2011	EOY	Game of the Year (2011)	
+Spike Video Game Awards	2012	EOY	Game of the Year (2012)	
+Spike Video Game Awards	2013	EOY	Game of the Year (2013)	
 Empire	2016	EOY	The best games of 2016	https://www.empireonline.com/movies/features/best-games-2016/
+Stuff	2011	All Time	Countdown of top 100 games	https://web.archive.org/web/20111215115058/http://top100.stuff.tv/
 Stuff	2008	All Time	100 Greatest Games	
-Stuff	2022	EOY	The best video games of 2022	https://web.archive.org/web/20221228152034/https://www.stuff.tv/features/the-best-video-games-of-2022/
 Stuff	2014	All Time	Best Games Ever: the 20 greatest games of all time	https://web.archive.org/web/20160401100654/https://www.stuff.tv/my/features/best-games-ever-20-greatest-games-all-time
 Stuff	2017	All Time	Stuff's Best Games Ever: The 50 greatest games of all time	https://web.archive.org/web/20171015054923/https://www.stuff.tv/features/stuffs-best-games-ever-50-greatest-games-all-time
-Stuff	2011	All Time	Countdown of top 100 games	https://web.archive.org/web/20111215115058/http://top100.stuff.tv/
+Stuff	2022	EOY	The best video games of 2022	https://web.archive.org/web/20221228152034/https://www.stuff.tv/features/the-best-video-games-of-2022/
 Stuff	2023	EOY	The best games of 2023	https://www.stuff.tv/features/the-best-video-games/
-Time	2013	EOY	Top 10 Video Games (2013)	https://techland.time.com/2013/12/04/technology/slide/top-10-video-games/
 Time	2012	All Time	All-TIME 100 Video Games	https://techland.time.com/2012/11/15/all-time-100-video-games/
+Time	2013	EOY	Top 10 Video Games (2013)	https://techland.time.com/2013/12/04/technology/slide/top-10-video-games/
 TechRadar	2025	EOY	TechRadar Gaming’s Game of the Year list 2025	https://www.techradar.com/gaming/techradar-gaming-game-of-the-year-2025
-The A.V. Club	2018	EOY	The A.V. Club’s favorite games of 2018	https://www.avclub.com/the-a-v-club-s-favorite-games-of-2018-1830750674
-The A.V. Club	2011	EOY	The best games of 2011	https://www.avclub.com/the-best-games-of-2011-1798230452
+The A.V. Club	2009	Decade	The 15 best videogames of the ’00s	https://www.avclub.com/the-15-best-videogames-of-the-00s-1798219405
 The A.V. Club	2019	EOY	The A.V. Club’s favorite games of 2019	https://www.avclub.com/the-a-v-club-s-favorite-games-of-2019-1840356377
-The A.V. Club	2021	EOY	The 17 best games of 2021	https://www.avclub.com/the-17-best-games-of-2021-1848184033
+The A.V. Club	2018	EOY	The A.V. Club’s favorite games of 2018	https://www.avclub.com/the-a-v-club-s-favorite-games-of-2018-1830750674
 The A.V. Club	2010	EOY	The best games of 2010	https://www.avclub.com/the-best-games-of-2010-1798224370
+The A.V. Club	2021	EOY	The 17 best games of 2021	https://www.avclub.com/the-17-best-games-of-2021-1848184033
 The A.V. Club	2023	EOY	The best games of 2023	https://www.avclub.com/the-best-games-of-2023-1851110743
 The A.V. Club	2024	EOY	The best games of 2024	https://www.avclub.com/best-games-2024
-The A.V. Club	2022	EOY	The 15 best games of 2022	https://www.avclub.com/the-15-best-games-of-2022-1849891249
-The A.V. Club	2009	Decade	The 15 best videogames of the ’00s	https://www.avclub.com/the-15-best-videogames-of-the-00s-1798219405
 The A.V. Club	2020	EOY	The A.V. Club’s favorite games of 2020	https://www.avclub.com/the-a-v-club-s-favorite-games-of-2020-1845891514
+The A.V. Club	2011	EOY	The best games of 2011	https://www.avclub.com/the-best-games-of-2011-1798230452
 The A.V. Club	2025	EOY	The best games of 2025	https://www.avclub.com/best-games-2025-clair-obscur-silksong-despelote
+The A.V. Club	2022	EOY	The 15 best games of 2022	https://www.avclub.com/the-15-best-games-of-2022-1849891249
 The Age	2005	All Time	The 50 best games	https://www.theage.com.au/technology/the-50-best-games-20051006-gdm6uh.html
 The Escapist	2025	EOY	The Escapist’s Best Games of 2024	https://www.escapistmagazine.com/the-escapists-best-games-of-2024/
-The Game Awards	2016	EOY	Game of the Year 2016	https://thegameawards.com/rewind/year-2016
-The Game Awards	2017	EOY	Game of the Year 2017	https://thegameawards.com/rewind/year-2017
-The Game Awards	2018	EOY	Game of the Year 2018	https://thegameawards.com/rewind/year-2018
-The Game Awards	2021	EOY	Game of the Year 2021	https://thegameawards.com/rewind/year-2021
-The Game Awards	2014	EOY	Game of the Year 2014	https://thegameawards.com/rewind/year-2014
-The Game Awards	2019	EOY	Game of the Year 2019	https://thegameawards.com/rewind/year-2019
-The Game Awards	2024	EOY	Game of the Year 2024	https://thegameawards.com/nominees/game-of-the-year
-The Game Awards	2020	EOY	Game of the Year 2020	https://thegameawards.com/rewind/year-2020
 The Game Awards	2015	EOY	Game of the Year 2015	https://thegameawards.com/rewind/year-2015
-The Game Awards	2023	EOY	Game of the Year 2023	https://thegameawards.com/nominees/game-of-the-year
+The Game Awards	2014	EOY	Game of the Year 2014	https://thegameawards.com/rewind/year-2014
+The Game Awards	2016	EOY	Game of the Year 2016	https://thegameawards.com/rewind/year-2016
+The Game Awards	2018	EOY	Game of the Year 2018	https://thegameawards.com/rewind/year-2018
+The Game Awards	2019	EOY	Game of the Year 2019	https://thegameawards.com/rewind/year-2019
+The Game Awards	2020	EOY	Game of the Year 2020	https://thegameawards.com/rewind/year-2020
+The Game Awards	2021	EOY	Game of the Year 2021	https://thegameawards.com/rewind/year-2021
 The Game Awards	2022	EOY	Game of the Year 2022	https://thegameawards.com/rewind/year-2022
+The Game Awards	2017	EOY	Game of the Year 2017	https://thegameawards.com/rewind/year-2017
+The Game Awards	2024	EOY	Game of the Year 2024	https://thegameawards.com/nominees/game-of-the-year
+The Game Awards	2023	EOY	Game of the Year 2023	https://thegameawards.com/nominees/game-of-the-year
 The Game Awards	2025	EOY	Game of the Year 2025	https://thegameawards.com/winners/game-of-the-year
 NA	1985	All Time	The Greatest Games: The 93 Best Computer Games of All Time	
-The Guardian	2015	EOY	The 25 best games of 2015	https://www.theguardian.com/technology/2015/dec/14/the-25-best-games-of-2015-25-21
-The Guardian	2017	EOY	The top 10 video games of 2017	https://www.theguardian.com/culture/2017/dec/13/the-top-10-video-games-of-2017
-The Guardian	2013	EOY	Top 25 games of 2013	https://www.theguardian.com/technology/gamesblog/2013/dec/20/top-25-video-games-2013-top-five
-The Guardian	2016	EOY	The 10 best video games of 2016	https://www.theguardian.com/culture/2016/dec/08/the-10-best-video-games-of-2016
-The Guardian	2014	EOY	The 25 best video games of 2014	https://www.theguardian.com/technology/2014/dec/15/the-best-video-games-of-2014
-The Guardian	2019	EOY	Top 20 games of 2019	https://www.theguardian.com/games/2019/dec/17/top-20-games-of-2019
 The Guardian	2010	EOY	Top 20 Games of 2010	https://www.theguardian.com/technology/gamesblog/2010/dec/22/top-20-games-20101
-The Guardian	2021	Decade	The 15 greatest video games of the 1990s – ranked	https://www.theguardian.com/games/2021/jun/23/the-15-greatest-video-games-of-the-1990s-ranked
-The Guardian	2011	EOY	Top 20 games of 2011	https://www.theguardian.com/technology/gamesblog/2011/dec/22/top-20-games-of-2011
-The Guardian	2018	EOY	The 20 best video games of 2018	https://www.theguardian.com/games/2018/jun/26/best-video-games-of-2018-so-far
-The Guardian	2024	EOY	The 20 best video games of 2024	https://www.theguardian.com/games/2024/dec/19/the-20-best-video-games-of-2024
-The Guardian	2025	EOY	The 20 best video games of 2025	https://www.theguardian.com/games/2025/dec/19/the-20-best-video-games-of-2025
+The Guardian	2013	EOY	Top 25 games of 2013	https://www.theguardian.com/technology/gamesblog/2013/dec/20/top-25-video-games-2013-top-five
+The Guardian	2014	EOY	The 25 best video games of 2014	https://www.theguardian.com/technology/2014/dec/15/the-best-video-games-of-2014
+The Guardian	2015	EOY	The 25 best games of 2015	https://www.theguardian.com/technology/2015/dec/14/the-25-best-games-of-2015-25-21
+The Guardian	2016	EOY	The 10 best video games of 2016	https://www.theguardian.com/culture/2016/dec/08/the-10-best-video-games-of-2016
+The Guardian	2017	EOY	The top 10 video games of 2017	https://www.theguardian.com/culture/2017/dec/13/the-top-10-video-games-of-2017
+The Guardian	2019	EOY	Top 20 games of 2019	https://www.theguardian.com/games/2019/dec/17/top-20-games-of-2019
 The Guardian	2019	Misc	The 50 best video games of the 21st century	https://www.theguardian.com/games/2019/sep/19/50-best-video-games-of-the-21st-century
-The Guardian	2012	EOY	Top 25 games of 2012	https://www.theguardian.com/technology/gamesblog/2012/dec/21/top-25-games-of-2012
+The Guardian	2011	EOY	Top 20 games of 2011	https://www.theguardian.com/technology/gamesblog/2011/dec/22/top-20-games-of-2011
+The Guardian	2021	Decade	The 15 greatest video games of the 1990s – ranked	https://www.theguardian.com/games/2021/jun/23/the-15-greatest-video-games-of-the-1990s-ranked
 The Guardian	2021	Decade	The 15 greatest video games of the 00s – ranked!	https://www.theguardian.com/games/2021/aug/13/the-15-greatest-video-games-of-the-00s-ranked
 The Guardian	2021	Decade	The 15 greatest games of the 2010s – ranked!	https://www.theguardian.com/games/2021/sep/07/the-15-greatest-games-of-the-2010s-ranked
 The Guardian	2021	EOY	The 15 best video games of 2021	https://www.theguardian.com/culture/2021/dec/23/the-15-best-video-games-of-2021
 The Guardian	2022	EOY	The 20 best video games of 2022	https://www.theguardian.com/culture/2022/dec/21/the-20-best-video-games-of-2022
 The Guardian	2023	EOY	The 20 best video games of 2023	https://www.theguardian.com/culture/2023/dec/18/the-20-best-video-games-of-2023
+The Guardian	2024	EOY	The 20 best video games of 2024	https://www.theguardian.com/games/2024/dec/19/the-20-best-video-games-of-2024
+The Guardian	2012	EOY	Top 25 games of 2012	https://www.theguardian.com/technology/gamesblog/2012/dec/21/top-25-games-of-2012
+The Guardian	2025	EOY	The 20 best video games of 2025	https://www.theguardian.com/games/2025/dec/19/the-20-best-video-games-of-2025
+The Guardian	2018	EOY	The 20 best video games of 2018	https://www.theguardian.com/games/2018/jun/26/best-video-games-of-2018-so-far
 The Guardian	2020	EOY	The 15 best video games of 2020	https://www.theguardian.com/games/2020/dec/23/the-15-best-video-games-of-2020
 The Hollywood Reporter	2019	Decade	The Best Games of the Decade	https://www.hollywoodreporter.com/lists/20-best-games-decade-1258724/mass-effect-2/
-The Independent	2024	EOY	The Indiependent’s Game of The Year 2024	https://www.indiependent.co.uk/the-indiependents-game-of-the-year-2024/
 The Independent	2016	EOY	The 25 best games of 2016	https://www.independent.co.uk/life-style/gadgets-and-tech/gaming/best-games-year-overwatch-firewatch-uncharted-4-battlefield-1-a7490291.html
+The Independent	2024	EOY	The Indiependent’s Game of The Year 2024	https://www.indiependent.co.uk/the-indiependents-game-of-the-year-2024/
 The Independent	1999	All Time	The 50 Best Video games: A Legend In Your Own Living-Room	https://www.independent.co.uk/arts-entertainment/the-50-best-video-games-a-legend-in-your-own-livingroom-1068932.html
 The Irish Times	2013	All Time	The 50 best videogames of all time	https://www.irishtimes.com/culture/the-50-best-videogames-of-all-time-1.1610521
 The New York Times	2023	EOY	Best Video Games of 2023	https://www.nytimes.com/2023/12/02/arts/best-video-games-2023.html
 The Phoenix	2010	All Time	Top 50 Games of All Time	https://web.archive.org/web/20130107220543/http://supplements.thephoenix.com/supplements/2010/50games/
 The Sydney Morning Herald	2002	All Time	Top 50 video games of all time	https://www.smh.com.au/lifestyle/top-50-video-games-of-all-time-20020606-gdfcdk.html
 The Times	2023	All Time	20 best video games of all time — ranked by an expert jury	https://www.thetimes.co.uk/article/20-best-video-games-of-all-time-ranked-by-an-expert-jury-l5zgrxmw8
-The Verge	2019	EOY	The 10 best video games of 2019	https://www.theverge.com/2019/12/20/21009919/best-video-games-2019-zelda-control-untitled-goose-game
-The Verge	2017	EOY	The 15 best video games of 2017	https://www.theverge.com/2017/12/15/16776632/best-games-2017-zelda-mario-pubg-destiny
-The Verge	2018	EOY	The 15 best video games of 2018	https://www.theverge.com/2018/12/17/18137458/best-video-games-2018-xbox-ps4-switch
 The Verge	2015	EOY	The 10 best video games of 2015	https://www.theverge.com/2015/12/19/10130146/best-video-games-2015-xbox-one-playstation-ps4-nintendo
+The Verge	2019	EOY	The 10 best video games of 2019	https://www.theverge.com/2019/12/20/21009919/best-video-games-2019-zelda-control-untitled-goose-game
+The Verge	2018	EOY	The 15 best video games of 2018	https://www.theverge.com/2018/12/17/18137458/best-video-games-2018-xbox-ps4-switch
 The Verge	2016	EOY	The 11 best video games of 2016	https://www.theverge.com/2016/12/14/13936494/best-games-of-2016
-The Washington Post	2021	EOY	The best video games of 2021	https://www.washingtonpost.com/video-games/2021/12/09/best-video-games-2021/
+The Verge	2017	EOY	The 15 best video games of 2017	https://www.theverge.com/2017/12/15/16776632/best-games-2017-zelda-mario-pubg-destiny
 The Washington Post	2020	EOY	The best games of 2020	https://www.washingtonpost.com/video-games/reviews/best-video-games-2020/
+The Washington Post	2021	EOY	The best video games of 2021	https://www.washingtonpost.com/video-games/2021/12/09/best-video-games-2021/
 The Washington Post	2016	EOY	The best video games of 2016	https://www.washingtonpost.com/news/comic-riffs/wp/2016/11/30/the-top-10-video-games-of-2016/
 The Young Folks	2019	Decade	The Young Folks’ Top 50 Video Games of the 2010s	https://www.theyoungfolks.com/video-games/138137/top-50-video-games-of-the-2010s-decade-the-young-folks/
 TheWrap	2017	All Time	The 30 Best Video Games of All Time, Ranked	https://www.thewrap.com/the-30-best-video-games-of-all-time-photos/
 Thrillist	2018	EOY	The Best Video Games of 2018	https://web.archive.org/web/20190407061607/https://www.thrillist.com/entertainment/nation/best-video-games-2018
-The Sydney Morning Herald	2015	EOY	The 10 best games of 2015	https://www.smh.com.au/technology/the-10-best-games-of-2015-20151201-glc0bg.html
-The Sydney Morning Herald	2020	EOY	The 10 best video games of 2020	https://www.smh.com.au/technology/video-games/the-10-best-video-games-of-2020-20201214-p56n5y.html
-The Sydney Morning Herald	2025	EOY	The best video games of 2025	https://www.smh.com.au/technology/video-games/the-best-video-games-of-2025-from-ghost-of-yotei-to-hades-2-20251127-p5niz7.html
-The Sydney Morning Herald	2019	EOY	The 10 best video games of 2019	https://www.smh.com.au/technology/video-games/the-10-best-video-games-of-2019-20191210-p53igg.html
 The Sydney Morning Herald	2014	EOY	The best games of 2014	https://www.smh.com.au/technology/the-best-games-of-2014-20141217-128paz.html
-Time	2016	All Time	The 50 Best Video Games of All Time	https://time.com/4458554/best-video-games-all-time/
+The Sydney Morning Herald	2019	EOY	The 10 best video games of 2019	https://www.smh.com.au/technology/video-games/the-10-best-video-games-of-2019-20191210-p53igg.html
+The Sydney Morning Herald	2015	EOY	The 10 best games of 2015	https://www.smh.com.au/technology/the-10-best-games-of-2015-20151201-glc0bg.html
+The Sydney Morning Herald	2025	EOY	The best video games of 2025	https://www.smh.com.au/technology/video-games/the-best-video-games-of-2025-from-ghost-of-yotei-to-hades-2-20251127-p5niz7.html
+The Sydney Morning Herald	2020	EOY	The 10 best video games of 2020	https://www.smh.com.au/technology/video-games/the-10-best-video-games-of-2020-20201214-p56n5y.html
 Time	2018	EOY	The 10 Best Video Games of 2018	https://time.com/5455710/best-video-games-2018/
-Time	2020	EOY	The 10 Best Video Games of 2020	https://time.com/5912417/best-video-games-2020/
+Time	2016	All Time	The 50 Best Video Games of All Time	https://time.com/4458554/best-video-games-all-time/
 Time	2021	EOY	The 10 Best Video Games of 2021	https://time.com/6126797/best-video-games-2021/
 Time	2017	EOY	The Top 10 Video Games of 2017	https://time.com/5030122/top-10-video-games-2017/
+Time	2020	EOY	The 10 Best Video Games of 2020	https://time.com/5912417/best-video-games-2020/
 TNW	2015	EOY	The 15 best games of 2015	https://thenextweb.com/news/the-15-best-games-of-2015
-Tom's Guide	2019	Decade	The 30 best games of the decade	https://www.tomsguide.com/round-up/best-games-of-the-decade
 Tom's Guide	2024	EOY	Our favorite games of 2024	https://www.tomsguide.com/gaming/our-favorite-games-of-2024-ps5-nintendo-switch-xbox-series-x-and-pc
+Tom's Guide	2019	Decade	The 30 best games of the decade	https://www.tomsguide.com/round-up/best-games-of-the-decade
 Trusted Reviews	2020	Decade	Trusted Reviews’ top 25 games of the decade	https://www.trustedreviews.com/opinion/best-games-of-the-decade-3963789
-USgamer	2016	EOY	USgamer's Game of the Year for 2015	https://web.archive.org/web/20180102073436/http://www.usgamer.net/articles/usgamers-game-of-the-year-for-2015
-USgamer	2019	EOY	USG's Top 20 Games of 2018	https://web.archive.org/web/20190403034857/https://www.usgamer.net/articles/usg-top-20-games-of-the-year
 USgamer	2016	EOY	USgamer's Best Games of 2016	https://web.archive.org/web/20180102191403/http://www.usgamer.net/articles/usgamers-best-games-of-2016-the-game-of-the-year
 USgamer	2017	EOY	USgamer's 20 Best Games of 2017	https://www.vg247.com/usgamers-20-best-games-of-2017
-USgamer	2020	Decade	USG's Top 100 Games of the Decade	https://web.archive.org/web/20221001235714/https://www.usgamer.net/articles/usgamers-top-100-games-of-the-decade-100-51
 USgamer	2020	EOY	USG's Top 20 Games of 2019	https://web.archive.org/web/20200531204437/https://www.usgamer.net/articles/usgamer-top-20-games-of-2019
-VentureBeat	2016	EOY	The 10 best games of 2016 and GamesBeat’s Game of the Year	https://venturebeat.com/2016/12/30/the-10-best-games-of-2016-and-gamesbeats-game-of-the-year/
-VentureBeat	2018	EOY	The 10 best games of 2018	https://venturebeat.com/2018/12/28/goty-2018/
+USgamer	2020	Decade	USG's Top 100 Games of the Decade	https://web.archive.org/web/20221001235714/https://www.usgamer.net/articles/usgamers-top-100-games-of-the-decade-100-51
+USgamer	2016	EOY	USgamer's Game of the Year for 2015	https://web.archive.org/web/20180102073436/http://www.usgamer.net/articles/usgamers-game-of-the-year-for-2015
+USgamer	2019	EOY	USG's Top 20 Games of 2018	https://web.archive.org/web/20190403034857/https://www.usgamer.net/articles/usg-top-20-games-of-the-year
 VentureBeat	2011	EOY	The 10 Best Games of 2011	https://venturebeat.com/2011/12/16/the-deanbeat-uncharted-3-drakes-deception-tops-our-list-of-the-10-best-games-of-2011/
 VentureBeat	2015	EOY	The 10 best games of 2015 and GamesBeat’s Game of the Year	https://venturebeat.com/2015/12/18/watch-gamesbeat-pick-2015s-game-of-the-year-right-now/
+VentureBeat	2016	EOY	The 10 best games of 2016 and GamesBeat’s Game of the Year	https://venturebeat.com/2016/12/30/the-10-best-games-of-2016-and-gamesbeats-game-of-the-year/
 VentureBeat	2017	EOY	The 10 best games of 2017 and GamesBeat’s Game of the Year	https://venturebeat.com/2017/12/30/the-10-best-games-of-2017-and-gamesbeats-game-of-the-year/
+VentureBeat	2018	EOY	The 10 best games of 2018	https://venturebeat.com/2018/12/28/goty-2018/
 VentureBeat	2019	EOY	GamesBeat’s top 10 games of the year for 2019	https://venturebeat.com/2019/12/31/top-10-best-games-of-2019/
 VG247	2019	Decade	The top 50 games from 2010-2020, ranked	https://www.vg247.com/best-video-games-of-the-decade-the-top-50-games-from-2010-2020-ranked
-Vulture	2018	EOY	The 10 Best Video Games of 2018	https://www.vulture.com/article/best-video-games-2018.html
-Vulture	2024	EOY	The Best Video Games of 2024	https://www.vulture.com/article/best-video-games-2024.html
-Vulture	2020	EOY	The 10 Best Video Games of the Year (2020)	https://www.vulture.com/article/best-video-games-2020.html
-Vulture	2019	EOY	The Best Video Games of 2019	https://www.vulture.com/article/best-video-games-2019.html
-Vulture	2022	EOY	The Best Video Games of 2022	https://www.vulture.com/article/best-video-games-2022.html
-Vulture	2021	EOY	The Best Video Games of 2021	https://www.vulture.com/article/best-video-games-2021.html
 Vulture	2017	EOY	The 10 Best Video Games of 2017	https://www.vulture.com/2017/12/10-best-video-games-2017.html
+Vulture	2018	EOY	The 10 Best Video Games of 2018	https://www.vulture.com/article/best-video-games-2018.html
+Vulture	2019	EOY	The Best Video Games of 2019	https://www.vulture.com/article/best-video-games-2019.html
+Vulture	2020	EOY	The 10 Best Video Games of the Year (2020)	https://www.vulture.com/article/best-video-games-2020.html
+Vulture	2021	EOY	The Best Video Games of 2021	https://www.vulture.com/article/best-video-games-2021.html
+Vulture	2022	EOY	The Best Video Games of 2022	https://www.vulture.com/article/best-video-games-2022.html
 Vulture	2023	EOY	The Best Video Games of 2023	https://www.vulture.com/article/best-video-games-2023.html
-Wired	2013	EOY	The 10 Best Videogames of 2013	https://www.wired.com/2013/12/games-of-2013/
+Vulture	2024	EOY	The Best Video Games of 2024	https://www.vulture.com/article/best-video-games-2024.html
 Wired	2012	EOY	Indie Passion Fuels the 10 Best Games of 2012	https://www.wired.com/2012/12/the-10-best-games-of-2012/
+Wired	2013	EOY	The 10 Best Videogames of 2013	https://www.wired.com/2013/12/games-of-2013/
 Wired	2014	EOY	What Were the Best Videogames of 2014? WIRED and Smosh Games Debate	https://www.wired.com/2014/12/wired-smosh-best-games-2014/
-Wired	2016	EOY	Our 10 Favorite Videogames of 2016	https://www.wired.com/2016/12/10-best-games-2016/
 Wired	2018	EOY	The 10 Best Games of 2018	https://www.wired.com/story/best-games-2018/
 Wired	2017	EOY	The Best Games of 2017	https://www.wired.com/story/best-games-of-2017/
+Wired	2016	EOY	Our 10 Favorite Videogames of 2016	https://www.wired.com/2016/12/10-best-games-2016/
 Yahoo! UK	2005	All Time	The 100 Greatest Computer Games of All Time	https://web.archive.org/web/20050731012158/http://uk.videogames.games.yahoo.com/specials/100games/1.html

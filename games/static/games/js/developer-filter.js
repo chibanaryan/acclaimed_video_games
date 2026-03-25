@@ -41,6 +41,8 @@ function developerFilter() {
         gameMap: new Map(),  // Map of game ID -> game data with playtime
         rootDeveloperName: '',
         rootIgdbUrl: '',
+        rankDistributionMaxRank: 0,
+        rankDistributionBinCount: 10,
 
         /**
          * Check if a game should be visible based on selected developers
@@ -111,16 +113,24 @@ function developerFilter() {
 
         /**
          * Dispatch rank distribution update event for the SVG chart component
-         * Uses 10 bins of 100 ranks each (same format as games list page)
+         * Uses the same global max-rank/bin-count config as the games list page
          */
         dispatchRankDistribution() {
             const visibleGameIds = this.getVisibleGameIds();
             const bins = [];
-            const binSize = 100;
+            const maxRank = this.rankDistributionMaxRank || Math.max(...Object.values(this.gameRankMap), 0);
+            const binCount = this.rankDistributionBinCount || 10;
 
-            for (let i = 0; i < 10; i++) {
+            if (maxRank <= 0) {
+                window.dispatchEvent(new CustomEvent('rank-distribution-update', { detail: [] }));
+                return;
+            }
+
+            const binSize = Math.ceil(maxRank / binCount);
+
+            for (let i = 0; i < binCount; i++) {
                 const binStart = i * binSize + 1;
-                const binEnd = (i + 1) * binSize;
+                const binEnd = Math.min((i + 1) * binSize, maxRank);
                 let count = 0;
                 for (const gameId of visibleGameIds) {
                     const rank = this.gameRankMap[gameId];
@@ -520,6 +530,8 @@ function developerFilter() {
             this.gameRankMap = window.GAME_RANK_MAP || {};
             this.rootDeveloperName = window.ROOT_DEVELOPER_NAME || '';
             this.rootIgdbUrl = window.ROOT_DEVELOPER_IGDB_URL || '';
+            this.rankDistributionMaxRank = window.RANK_DISTRIBUTION_MAX_RANK || 0;
+            this.rankDistributionBinCount = window.RANK_DISTRIBUTION_BIN_COUNT || 10;
 
             // Initialize game data map for playtime sorting
             const gameDataMap = window.GAME_DATA_MAP || {};

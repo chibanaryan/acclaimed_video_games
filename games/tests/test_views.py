@@ -50,6 +50,28 @@ class ImportViewIntegrationTests(TestCase):
         self.assertEqual(response.wsgi_request.session.get("import_success"), "Deleted")
         mock_import.assert_called_once()
 
+    @mock.patch("games.views.utils.import_data")
+    @mock.patch("games.views.utils.import_batch", return_value=(True, "Imported"))
+    def test_batch_files_take_precedence_over_delete_flag(
+        self, mock_import_batch, mock_import_data
+    ):
+        self.client.login(username="tester", password="pass")
+        fake_file = SimpleUploadedFile("PlatformDB.txt", b"PC\tPersonal Computer")
+        response = self.client.post(
+            reverse("import"),
+            {
+                "platforms_file": fake_file,
+                "delete": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.wsgi_request.session.get("import_success"), "Imported"
+        )
+        mock_import_batch.assert_called_once()
+        mock_import_data.assert_not_called()
+
     @mock.patch("games.views.utils.import_data", return_value=(True, "IGDB"))
     def test_igdb_import_triggers_command(self, mock_import):
         self.client.login(username="tester", password="pass")
@@ -137,6 +159,14 @@ class ImportViewIntegrationTests(TestCase):
         self.assertIn("Error loading page data", response.context["import_errors"][0])
         self.assertIsNone(response.context["import_success_message"])
 
+    def test_import_page_uses_generic_games_file_copy(self):
+        self.client.login(username="tester", password="pass")
+        response = self.client.get(reverse("import"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Games File (e.g. Top1400.txt)")
+        self.assertContains(response, "You do not need to delete data first.")
+
     @mock.patch("games.views.utils.import_batch", return_value=(True, "Loaded"))
     @mock.patch("builtins.open", new_callable=mock_open, read_data=b"test data")
     @mock.patch("games.views.Path")
@@ -162,6 +192,47 @@ class ImportViewIntegrationTests(TestCase):
             response.wsgi_request.session.get("import_success"),
         )
         mock_import.assert_called_once()
+
+    @mock.patch("games.views.utils.import_batch", return_value=(True, "Loaded"))
+    @mock.patch("builtins.open", new_callable=mock_open, read_data=b"test data")
+    @mock.patch("games.views.Path")
+    def test_seed_test_data_falls_back_to_top1000_when_top1400_missing(
+        self, mock_path, mock_file, mock_import
+    ):
+        """Test seed_test_data falls back to Top1000 when Top1400 is absent."""
+        self.client.login(username="tester", password="pass")
+
+        class FakePath:
+            def __init__(self, *parts):
+                self.parts = tuple(str(part) for part in parts)
+
+            def __truediv__(self, other):
+                return FakePath(*self.parts, other)
+
+            def exists(self):
+                return self.parts[-1] != "Top1400.txt"
+
+        mock_path.side_effect = FakePath
+
+        response = self.client.post(
+            reverse("import"),
+            {
+                "seed_test_data": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            "Loaded bundled test data",
+            response.wsgi_request.session.get("import_success"),
+        )
+        mock_import.assert_called_once()
+        self.assertTrue(
+            any(
+                call.args[0].parts[-1] == "Top1000.txt"
+                for call in mock_file.call_args_list
+            )
+        )
 
     @mock.patch("builtins.open", side_effect=FileNotFoundError)
     @mock.patch("games.views.Path")

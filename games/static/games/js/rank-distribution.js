@@ -36,6 +36,34 @@
         return bins;
     }
 
+    function getMaxRankFromBins(bins) {
+        if (!isValidBinsArray(bins) || bins.length === 0) return 0;
+        var maxRank = 0;
+        for (var i = 0; i < bins.length; i++) {
+            maxRank = Math.max(maxRank, bins[i].binEnd || 0);
+        }
+        return maxRank;
+    }
+
+    function parseMaxRank(value) {
+        if (typeof value === 'number') {
+            return isNaN(value) ? 0 : Math.max(value, 0);
+        }
+        if (typeof value === 'string' && value.length > 0) {
+            var parsed = parseInt(value, 10);
+            return isNaN(parsed) ? 0 : Math.max(parsed, 0);
+        }
+        return 0;
+    }
+
+    function resolveMaxRank(explicitMaxRank, bins) {
+        var parsedMaxRank = parseMaxRank(explicitMaxRank);
+        if (parsedMaxRank > 0) {
+            return parsedMaxRank;
+        }
+        return getMaxRankFromBins(bins);
+    }
+
     function parseBinsFromDataAttribute(container) {
         if (!container) return [];
         var dataAttr = container.getAttribute('data-bins');
@@ -67,7 +95,8 @@
 
     function RankDistributionChart(container, initialBins, maxRank) {
         this.container = container;
-        this.maxRank = maxRank || 1000;
+        this.hasExplicitMaxRank = parseMaxRank(maxRank) > 0;
+        this.maxRank = resolveMaxRank(maxRank, initialBins);
         this.binCount =
             Array.isArray(initialBins) && initialBins.length > 0
                 ? initialBins.length
@@ -75,6 +104,9 @@
         this.bins = isValidBinsArray(initialBins)
             ? initialBins
             : createZeroBins(this.maxRank, this.binCount);
+        if (!this.maxRank) {
+            this.maxRank = resolveMaxRank(maxRank, this.bins);
+        }
         this.hoveredBin = null;
 
         this.svg = container.querySelector('.rank-distribution-svg');
@@ -267,6 +299,9 @@
                     if (Array.isArray(nextBins) && nextBins.length > 0) {
                         chart.binCount = nextBins.length;
                     }
+                    if (!chart.hasExplicitMaxRank) {
+                        chart.maxRank = resolveMaxRank(null, nextBins);
+                    }
                     chart.render();
                     return true;
                 }
@@ -295,12 +330,14 @@
                 }
             }
 
-            // Get max rank from data attribute (defaults to 1000 for backwards compatibility)
+            // Prefer the explicit server max rank; otherwise infer it from bins.
             var maxRankAttr = container.getAttribute('data-max-rank');
-            var maxRank = maxRankAttr ? parseInt(maxRankAttr, 10) : 1000;
+            var maxRank = parseMaxRank(maxRankAttr);
 
             if (!isValidBinsArray(initialBins)) {
                 initialBins = createZeroBins(maxRank, DEFAULT_BIN_COUNT);
+            } else if (maxRank === 0) {
+                maxRank = getMaxRankFromBins(initialBins);
             }
 
             var chart = new RankDistributionChart(container, initialBins, maxRank);

@@ -85,6 +85,31 @@ class HomePageViewTest(TestCase):
         games = list(response.context["games"])
         self.assertEqual(len(games), 2)  # We created 2 games
 
+    def test_rank_distribution_uses_dynamic_global_max_rank(self):
+        """Rank distribution should scale to the true highest rank."""
+        Game.objects.bulk_create(
+            [
+                Game(
+                    name=f"Ranked Game {rank}",
+                    rank=rank,
+                    year_of_release=2024,
+                )
+                for rank in range(3, 1401)
+            ]
+        )
+
+        response = self.client.get(reverse("home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["max_rank"], 1400)
+        self.assertEqual(
+            response.context["rank_distribution_bin_count"],
+            config.RANK_DISTRIBUTION_BIN_COUNT,
+        )
+        self.assertEqual(len(response.context["rank_distribution"]), 10)
+        self.assertEqual(response.context["rank_distribution"][-1]["binEnd"], 1400)
+        self.assertContains(response, 'data-max-rank="1400"')
+
     def test_context_contains_counts(self):
         """Test that context includes list and publication counts."""
         response = self.client.get(reverse("home"))
@@ -1207,6 +1232,29 @@ class GameSearchLoadMoreTest(TestCase):
         self.assertFalse(response.context["has_more"])
         self.assertIsNone(response.context["next_page"])
 
+    def test_page_ten_still_has_more_when_total_exceeds_1000(self):
+        """Load-more metadata should remain open-ended past 1000 results."""
+        Game.objects.bulk_create(
+            [
+                Game(
+                    name=f"Game {i:04d}",
+                    rank=i + 1,
+                    year_of_release=2020,
+                )
+                for i in range(150, 1400)
+            ]
+        )
+
+        response = self.client.get(reverse("home"), {"page": 10})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["loaded_count"], 1000)
+        self.assertEqual(response.context["total_count"], 1400)
+        self.assertEqual(response.context["remaining_count"], 400)
+        self.assertTrue(response.context["has_more"])
+        self.assertEqual(response.context["next_page"], 11)
+        self.assertFalse(response.context["max_loaded"])
+
     def test_filter_with_few_results_no_load_more(self):
         """Test that filters with few results don't show load more."""
         Game.objects.create(name="Unique2021Game", rank=200, year_of_release=2021)
@@ -1348,6 +1396,7 @@ class DeveloperDetailViewTest(TestCase):
     """Test the developer detail view."""
 
     def setUp(self):
+        cache.clear()
         self.dev = Developer.objects.create(name="Nintendo", slug="nintendo", igdb_id=1)
 
         # Create games for this developer
@@ -1620,6 +1669,46 @@ class DeveloperDetailViewTest(TestCase):
         game_data = json.loads(response.context["game_data_map_json"])
         # Should contain our game IDs
         self.assertIn(str(self.game1.id), game_data)
+
+    def test_rank_distribution_uses_global_max_rank_and_exposes_chart_config(self):
+        """Developer detail chart should use the global max rank and expose it to JS."""
+        Game.objects.bulk_create(
+            [
+                Game(
+                    name=f"Catalog Game {rank}",
+                    rank=rank,
+                    year_of_release=2024,
+                )
+                for rank in range(3, 1400)
+            ]
+        )
+        game_1400 = Game.objects.create(
+            name="Late Catalog Game", rank=1400, year_of_release=2024
+        )
+        game_1400.developers.add(self.dev)
+
+        response = self.client.get(
+            reverse("developer-detail", kwargs={"slug": self.dev.slug})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["max_rank"], 1400)
+        self.assertEqual(
+            response.context["rank_distribution_bin_count"],
+            config.RANK_DISTRIBUTION_BIN_COUNT,
+        )
+        self.assertEqual(response.context["rank_distribution"][-1]["binEnd"], 1400)
+        self.assertEqual(response.context["rank_distribution"][-1]["count"], 1)
+        self.assertContains(response, 'data-max-rank="1400"')
+        self.assertContains(response, "window.RANK_DISTRIBUTION_MAX_RANK = 1400;")
+        bin_count_script = (
+            "window.RANK_DISTRIBUTION_BIN_COUNT = "
+            f"{config.RANK_DISTRIBUTION_BIN_COUNT};"
+        )
+        self.assertContains(
+            response,
+            bin_count_script,
+        )
 
     def test_unique_game_count_with_sibling_developers(self):
         """

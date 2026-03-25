@@ -2,6 +2,7 @@ from io import StringIO
 from unittest import mock
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models import Max
 from django.test import TestCase
 
 from core.models import User
@@ -1091,7 +1092,7 @@ class ImportBatchWithProgressTests(TestCase):
         """Test import_batch_with_progress with validation error (lines 256-265)."""
         # Try to import games without platforms (should fail validation)
         games_file = SimpleUploadedFile(
-            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ44444\r\n"
+            "Top1400.txt", b"1\tGame\t2024\tPC\t12345\tQ44444\r\n"
         )
         data = {"games_file": games_file}
 
@@ -1216,7 +1217,7 @@ class ImportBatchWithProgressTests(TestCase):
         """Test import_batch_with_progress validation error handling (lines 256-265)."""
         # Try to import games without platforms - should trigger validation error
         games_file = SimpleUploadedFile(
-            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ88888\r\n"
+            "Top1400.txt", b"1\tGame\t2024\tPC\t12345\tQ88888\r\n"
         )
         data = {"games_file": games_file}
 
@@ -1245,7 +1246,7 @@ class ImportBatchWithProgressTests(TestCase):
         mock_validate.return_value = (False, "Missing prerequisites")
 
         games_file = SimpleUploadedFile(
-            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ77777\r\n"
+            "Top1400.txt", b"1\tGame\t2024\tPC\t12345\tQ77777\r\n"
         )
         data = {"games_file": games_file}
 
@@ -1279,7 +1280,7 @@ class ImportBatchTests(TestCase):
             "PlatformDB.txt", b"PC\tPersonal Computer\r\n"
         )
         games_file = SimpleUploadedFile(
-            "Top1000.txt", b"1\tTest Game\t2024\tPC\t12345\tQ66666\r\n"
+            "Top1400.txt", b"1\tTest Game\t2024\tPC\t12345\tQ66666\r\n"
         )
 
         data = {
@@ -1292,6 +1293,48 @@ class ImportBatchTests(TestCase):
         self.assertTrue(success)
         self.assertIn("Platforms", message)
         self.assertIn("Games", message)
+
+    def test_import_batch_supports_1400_ranked_games(self):
+        """Test full batch import succeeds with 1400 ranked games."""
+        platforms_file = SimpleUploadedFile(
+            "PlatformDB.txt", b"PC\tPersonal Computer\r\n"
+        )
+        lists_file = SimpleUploadedFile(
+            "SourceLists.txt",
+            b"Acclaimed Games\t2024\tE\tTop Ranked Games\thttps://example.com/list\r\n",
+        )
+        games_lines = [
+            f"{rank}\tGame {rank:04d}\t2024\tPC\t{rank}\tQ{rank}"
+            for rank in range(1, 1401)
+        ]
+        memberships_lines = [f"0:{rank}" for rank in range(1, 1401)]
+        games_file = SimpleUploadedFile(
+            "Top1400.txt", ("\r\n".join(games_lines) + "\r\n").encode("utf-8")
+        )
+        memberships_file = SimpleUploadedFile(
+            "GamePositions.txt",
+            ("\r\n".join(memberships_lines) + "\r\n").encode("utf-8"),
+        )
+
+        success, message = utils.import_batch(
+            {
+                "platforms_file": platforms_file,
+                "lists_file": lists_file,
+                "games_file": games_file,
+                "memberships_file": memberships_file,
+            }
+        )
+
+        self.assertTrue(success)
+        self.assertIn("Games: 1400 created", message)
+        self.assertEqual(models.Game.objects.count(), 1400)
+        self.assertEqual(
+            models.Game.objects.aggregate(max_rank=Max("rank"))["max_rank"], 1400
+        )
+        self.assertEqual(models.ListMembership.objects.count(), 1400)
+        self.assertTrue(
+            models.ListMembership.objects.filter(game__rank=1400, rank=1400).exists()
+        )
 
     def test_import_batch_no_files(self):
         """Test import_batch with no files returns error."""
@@ -1323,7 +1366,7 @@ class ImportDataTests(TestCase):
         """Test import_batch validation error return (line 355)."""
         # Try to import games without platforms
         games_file = SimpleUploadedFile(
-            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ55555\r\n"
+            "Top1400.txt", b"1\tGame\t2024\tPC\t12345\tQ55555\r\n"
         )
         data = {"games_file": games_file}
 

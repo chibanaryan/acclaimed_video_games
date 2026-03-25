@@ -434,7 +434,8 @@ async function fetchPage(page) {
     const metaScript = doc.getElementById('load-more-meta');
     const meta = metaScript ? JSON.parse(metaScript.textContent) : null;
 
-    // Get all game rows (wrapper for desktop, card for mobile)
+    // Get all game rows (select top-level wrappers, not inner .game-row divs,
+    // so desktop rows include the played button container)
     const rows = doc.querySelectorAll('.game-row-wrapper, .game-card-mobile');
 
     return { page, rows, meta };

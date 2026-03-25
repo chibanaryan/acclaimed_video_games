@@ -77,12 +77,19 @@ class ImportFormTests(TestCase):
         """Test clean_games_file with valid file."""
         form = ImportForm()
         file_obj = SimpleUploadedFile(
-            "Top1000.txt", b"1\tGame\t2024\tPC\t12345\tQ12345"
+            "Top1400.txt", b"1\tGame\t2024\tPC\t12345\tQ12345"
         )
         form.cleaned_data = {"games_file": file_obj}
 
         result = form.clean_games_file()
         self.assertEqual(result, file_obj)
+
+    def test_games_file_label_is_future_proof(self):
+        """Test games file label is not tied to a 1000-row ceiling."""
+        form = ImportForm()
+        self.assertEqual(
+            form.fields["games_file"].label, "Games File (e.g. Top1400.txt)"
+        )
 
     def test_clean_memberships_file_valid(self):
         """Test clean_memberships_file with valid file."""

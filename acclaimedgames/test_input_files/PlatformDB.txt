@@ -21,6 +21,7 @@ PS4	PlayStation 4
 PS5	PlayStation 5
 PSP	PlayStation Portable
 PSV	PlayStation Vita
+MIC	Microcomputer
 SAT	Sega Saturn
 SMS	Sega Master System
 SNES	Super Nintendo Entertainment System
@@ -58,8 +59,10 @@ SX1	Sharp X1
 MSX	MSX
 FM7	Fujitsu Micro 7
 CV	ColecoVision
+GW	Game & Watch
 FDS	Famicom Disk System
 VC20	VIC-20
+D32	Dragon 32/64
 BBCM	BBC Micro
 PDP	DEC PDP
 A78	Atari 7800
@@ -68,6 +71,8 @@ SCD	Sega CD
 T80	TRS-80 Micro Computer System
 CD32	Amiga CD32
 LYNX	Atari Lynx
+TT	Tomy Tutor
+VECT	Vectrex
 ARCH	Acorn Archimedes
 HP21	HP 2100
 TCC	TRS-80 / Tandy Color Computer

@@ -126,7 +126,7 @@ The `/import/` page is for adding **new source lists** to the database (not for 
 ### Quick Actions
 
 - **Load Test Data** - Load bundled test files (development only)
-- **Delete All Data** - Wipe the database before fresh import
+- **Delete All Data** - Destructive maintenance reset for ranking data
 - **Fetch IGDB Data** - Pull cover art, descriptions, and genres
 
 ### Batch Import
@@ -134,8 +134,10 @@ The `/import/` page is for adding **new source lists** to the database (not for 
 Upload tab-separated files in order:
 1. **PlatformDB.txt** - `CODE<tab>Name`
 2. **SourceLists.txt** - `Publisher<tab>Year<tab>Type<tab>Name<tab>URL`
-3. **Top1000.txt** - `Rank<tab>Name<tab>Year<tab>IGDB_ID<tab>Platforms`
+3. **Games file (for example `Top1400.txt`)** - `Rank<tab>Name<tab>Year<tab>Platforms<tab>IGDB_ID<tab>Wikidata_ID`
 4. **GamePositions.txt** - `ListID:Position<tab>ListID:Position...`
+
+Regular batch import replaces the existing ranking dataset in place. You do not need to run the delete action first.
 
 ### IGDB Import on Heroku
 

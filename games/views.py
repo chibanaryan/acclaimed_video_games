@@ -1722,8 +1722,8 @@ class HomePageView(RobustPaginationMixin, ListView):
         )
         context["hltb_counts_json"] = hltb_counts
 
-        # Rank distribution (10 bins of 100 ranks each)
-        # Uses the filtered queryset to show distribution of current results
+        # Rank distribution uses a fixed bin count across the current global max
+        # rank so filtered views stay comparable to the full dataset.
         rank_dist_cache_key = _build_filter_cache_key(
             "home_rank_dist",
             filters,
@@ -1785,6 +1785,7 @@ class HomePageView(RobustPaginationMixin, ListView):
 
         context["rank_distribution"] = rank_bins
         context["max_rank"] = max_rank
+        context["rank_distribution_bin_count"] = config.RANK_DISTRIBUTION_BIN_COUNT
 
         # Load More context
         page_obj = context.get("page_obj")
@@ -2540,6 +2541,7 @@ class DeveloperDetailView(DetailView):
 
         context["rank_distribution"] = rank_bins
         context["max_rank"] = max_rank
+        context["rank_distribution_bin_count"] = config.RANK_DISTRIBUTION_BIN_COUNT
 
         # Cache the expensive context data (excluding objects that can't be cached)
         # We cache everything that's JSON-serializable or simple Python objects
@@ -2560,6 +2562,7 @@ class DeveloperDetailView(DetailView):
             "game_developer_map": game_developer_map,
             "rank_distribution": rank_bins,
             "max_rank": max_rank,
+            "rank_distribution_bin_count": config.RANK_DISTRIBUTION_BIN_COUNT,
         }
         self._set_cached_context(developer, cacheable_context)
 
@@ -3431,10 +3434,13 @@ class ImportView(LoginRequiredMixin, FormView):
         # Quick action: load bundled test data files from the repo
         if import_data.get("seed_test_data"):
             seed_dir = Path(settings.BASE_DIR) / "acclaimedgames" / "test_input_files"
+            sample_games_file = "Top1400.txt"
+            if not (seed_dir / sample_games_file).exists():
+                sample_games_file = "Top1000.txt"
             file_map = {
                 "platforms_file": "PlatformDB.txt",
                 "lists_file": "SourceLists.txt",
-                "games_file": "Top1000.txt",
+                "games_file": sample_games_file,
                 "memberships_file": "GamePositions.txt",
             }
 
@@ -3478,8 +3484,8 @@ class ImportView(LoginRequiredMixin, FormView):
             ]
         )
 
-        # If batch files are provided, process them directly
-        if has_batch_files and not import_data.get("delete"):
+        # Uploaded batch files always take precedence over maintenance actions.
+        if has_batch_files:
             # Process batch import immediately
             res, message = utils.import_batch(import_data)
             if res:
@@ -3492,7 +3498,7 @@ class ImportView(LoginRequiredMixin, FormView):
             self.request.session.modified = True
             return super().form_valid(form)
 
-        # For delete/igdb operations, use the standard import flow
+        # For maintenance operations, use the standard import flow
         res, message = utils.import_data(import_data)
         if res:
             # Store success message in session (persist across redirect)

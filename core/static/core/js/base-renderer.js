@@ -232,13 +232,13 @@ class BaseMediaListRenderer {
         }
 
         const loaded = Math.min(this.currentPage * this.PAGE_SIZE, this.currentItems.length);
-        const hasMore = loaded < this.currentItems.length && loaded < 1000;
+        const hasMore = loaded < this.currentItems.length;
 
         return {
             loaded,
             total: this.currentItems.length,
             hasMore,
-            remaining: Math.min(this.currentItems.length - loaded, 1000 - loaded)
+            remaining: Math.max(this.currentItems.length - loaded, 0)
         };
     }
 
@@ -320,11 +320,7 @@ class BaseMediaListRenderer {
     getLoadMoreHtml(state) {
         const { hasMore, remaining, maxLoaded } = state;
 
-        if (maxLoaded) {
-            return '<div class="alert alert-info"><span class="mdi mdi-information-outline"></span><span>Showing maximum of 1,000 results. Refine your filters to see more specific results.</span></div>';
-        }
-
-        if (!hasMore) {
+        if (maxLoaded || !hasMore) {
             return '<div class="text-base-content/70 text-center">All results loaded</div>';
         }
 

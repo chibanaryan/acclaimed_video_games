@@ -88,8 +88,8 @@ class ImportForm(forms.Form):
     )
     games_file = forms.FileField(
         required=False,
-        label="Games (Top1000.txt)",
-        help_text="Tab-separated file with game data",
+        label="Games File (e.g. Top1400.txt)",
+        help_text="Tab-separated file with ranked game data",
     )
     memberships_file = forms.FileField(
         required=False,
@@ -107,7 +107,7 @@ class ImportForm(forms.Form):
         required=False,
         label=(
             "Load bundled test data "
-            "(PlatformDB, SourceLists, Top1000, GamePositions)"
+            "(PlatformDB, SourceLists, sample games file, GamePositions)"
         ),
     )
     clear_igdb_metadata = forms.BooleanField(

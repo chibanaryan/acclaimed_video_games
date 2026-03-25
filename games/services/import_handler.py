@@ -28,16 +28,8 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
     Handles both legacy single-file imports and new batch imports.
     """
 
-    if data.get("delete"):
-        return delete_existing_data()
-
-    if data.get("clear_igdb_metadata"):
-        return clear_igdb_metadata()
-
-    if data.get("clear_wikipedia_metadata"):
-        return clear_wikipedia_metadata()
-
-    # Check if this is a batch import (new form format)
+    # Uploaded batch files replace ranking data in a single transaction and take
+    # precedence over maintenance flags that may also be present in the POST body.
     if any(
         [
             data.get(f)
@@ -46,6 +38,15 @@ def import_data(data: Dict[str, Any]) -> Optional[Tuple[bool, str]]:
     ):
         success, message = import_batch(data)
         return (success, message)
+
+    if data.get("delete"):
+        return delete_existing_data()
+
+    if data.get("clear_igdb_metadata"):
+        return clear_igdb_metadata()
+
+    if data.get("clear_wikipedia_metadata"):
+        return clear_wikipedia_metadata()
 
     # Legacy single-file import
     if data.get("file"):
