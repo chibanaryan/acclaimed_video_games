@@ -95,19 +95,30 @@ def _canonicalize_genre_name(value):
     return stripped
 
 
-def _ensure_root_genre(WikipediaGenre, name):
-    genre, _ = WikipediaGenre.objects.get_or_create(
-        name=name,
-        defaults={
-            "slug": slugify(name),
-            "parent": None,
-            "level": 0,
-            "path": name,
-            "display_order": 0,
-        },
+def _find_genre_by_name_or_slug(WikipediaGenre, name):
+    slug = slugify(name)
+    return (
+        WikipediaGenre.objects.filter(name=name).first()
+        or WikipediaGenre.objects.filter(slug=slug).first()
     )
 
+
+def _ensure_root_genre(WikipediaGenre, name):
+    genre = _find_genre_by_name_or_slug(WikipediaGenre, name)
+    if genre is None:
+        genre = WikipediaGenre.objects.create(
+            name=name,
+            slug=slugify(name),
+            parent=None,
+            level=0,
+            path=name,
+            display_order=0,
+        )
+
     update_fields = []
+    if genre.name != name:
+        genre.name = name
+        update_fields.append("name")
     if genre.slug != slugify(name):
         genre.slug = slugify(name)
         update_fields.append("slug")
@@ -129,18 +140,21 @@ def _ensure_root_genre(WikipediaGenre, name):
 
 def _ensure_child_genre(WikipediaGenre, parent, name):
     expected_path = f"{parent.name} > {name}"
-    genre, _ = WikipediaGenre.objects.get_or_create(
-        name=name,
-        defaults={
-            "slug": slugify(name),
-            "parent": parent,
-            "level": 1,
-            "path": expected_path,
-            "display_order": 0,
-        },
-    )
+    genre = _find_genre_by_name_or_slug(WikipediaGenre, name)
+    if genre is None:
+        genre = WikipediaGenre.objects.create(
+            name=name,
+            slug=slugify(name),
+            parent=parent,
+            level=1,
+            path=expected_path,
+            display_order=0,
+        )
 
     update_fields = []
+    if genre.name != name:
+        genre.name = name
+        update_fields.append("name")
     if genre.slug != slugify(name):
         genre.slug = slugify(name)
         update_fields.append("slug")

@@ -176,8 +176,33 @@ class OrphanGenreCleanupMigrationTests(TestCase):
         auto_battler_source = self._create_source_root("Auto battler")
         turn_based_source = self._create_source_root("Turn-based")
         monster_tamer_source = self._create_source_root("Monster tamer")
-        management_sim_source = self._create_source_root("Management simulation")
-        vehicle_sim_source = self._create_source_root("Vehicle simulation")
+        management_sim_source = WikipediaGenre.objects.filter(
+            slug=slugify("Management simulation")
+        ).first() or WikipediaGenre.objects.create(
+            name="Management simulation",
+            slug=slugify("Management simulation"),
+            level=0,
+            path="Management simulation",
+        )
+        management_sim_source.name = "Management simulation"
+        management_sim_source.parent = None
+        management_sim_source.level = 0
+        management_sim_source.path = "Management simulation"
+        management_sim_source.save(update_fields=["name", "parent", "level", "path"])
+
+        vehicle_sim_source = WikipediaGenre.objects.filter(
+            slug=slugify("Vehicle simulation")
+        ).first() or WikipediaGenre.objects.create(
+            name="Vehicle simulation",
+            slug=slugify("Vehicle simulation"),
+            level=0,
+            path="Vehicle simulation",
+        )
+        vehicle_sim_source.name = "Vehicle simulation"
+        vehicle_sim_source.parent = None
+        vehicle_sim_source.level = 0
+        vehicle_sim_source.path = "Vehicle simulation"
+        vehicle_sim_source.save(update_fields=["name", "parent", "level", "path"])
 
         games = {
             "auto": Game.objects.create(name="Auto", rank=10),
@@ -211,6 +236,14 @@ class OrphanGenreCleanupMigrationTests(TestCase):
         self.assertEqual(
             WikipediaGenre.objects.get(name="Vehicle Simulation").parent.name,
             "Simulation",
+        )
+        self.assertEqual(
+            WikipediaGenre.objects.get(name="Management Simulation").slug,
+            "management-simulation",
+        )
+        self.assertEqual(
+            WikipediaGenre.objects.get(name="Vehicle Simulation").slug,
+            "vehicle-simulation",
         )
 
         games["auto"].refresh_from_db()
