@@ -1206,8 +1206,9 @@ class ImportBatchWithProgressTests(TestCase):
         events = list(generator)
         # Should have received timeout error event
         self.assertGreater(len(events), 0)
+        self.assertTrue(any("keepalive" in e.lower() for e in events))
         timeout_events = [
-            e for e in events if "timeout" in e.lower() or "30 seconds" in e.lower()
+            e for e in events if "timeout" in e.lower() or "30 minutes" in e.lower()
         ]
         self.assertGreater(
             len(timeout_events), 0, f"Expected timeout error, got events: {events[:2]}"

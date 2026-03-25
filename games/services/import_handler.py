@@ -829,24 +829,41 @@ def import_batch_with_progress(data: Dict[str, Any]):
 
         # Stream events as they come in from the queue
         try:
+            no_progress_count = 0
+            max_no_progress = 120  # 120 * 15s = 30 minutes max idle time
+
             while True:
                 try:
-                    # Wait for event with timeout to detect if thread is stuck
-                    event_json = event_queue.get(timeout=30)
+                    # Wait for event with a shorter timeout so we can emit
+                    # keepalive chunks before Gunicorn's 30-second worker timeout.
+                    event_json = event_queue.get(timeout=15)
 
                     # None signals the end of the import
                     if event_json is None:
                         break
 
-                    # Yield the event in SSE format
-                    yield f"data: {event_json}\n\n"
+                    # Reset no-progress counter on successful event
+                    no_progress_count = 0
+
+                    # Yield the event in SSE format with padding to encourage
+                    # immediate flush through proxies/buffers.
+                    yield f"data: {event_json}\n\n" + (" " * 2048) + "\n"
                 except queue.Empty:
-                    # Timeout waiting for events
-                    error_msg = "Import timeout - no progress for 30 seconds"
-                    yield (
-                        f"data: {json.dumps({'event': 'error', 'message': error_msg})}\n\n"
-                    )
-                    break
+                    # No event in 15 seconds - send keepalive ping so the
+                    # request stays active while large imports continue.
+                    no_progress_count += 1
+
+                    if no_progress_count >= max_no_progress:
+                        error_msg = "Import timeout - no progress for 30 minutes"
+                        error_data = json.dumps(
+                            {"event": "error", "message": error_msg}
+                        )
+                        yield f"data: {error_data}\n\n"
+                        break
+
+                    # SSE comments are ignored by the client but keep the
+                    # stream active for Gunicorn/Heroku.
+                    yield ": keepalive\n\n"
         except GeneratorExit:  # pragma: no cover
             stop_event.set()
             raise
