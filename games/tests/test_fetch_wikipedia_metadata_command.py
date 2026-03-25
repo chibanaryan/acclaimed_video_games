@@ -8,7 +8,7 @@ from unittest import mock
 from django.core.management import call_command
 from django.test import TestCase
 
-from games.models import Game, WikipediaGameData
+from games.models import Game, WikipediaGameData, WikipediaGenre
 from games.services.wiki_genre_service import GenreResult, GenreSource
 from games.services.wiki_page_lookup_service import PageLookupResult
 
@@ -350,8 +350,8 @@ class FetchWikipediaMetadataCommandTests(TestCase):
         # Should only process 1 game due to limit
         self.assertEqual(mock_page_service.lookup_page.call_count, 1)
 
-    def test_command_capitalizes_genre_names(self):
-        """Test command properly capitalizes genre names."""
+    def test_command_normalizes_genre_names(self):
+        """Test command stores canonical genre names, not prettified raw labels."""
         out = StringIO()
 
         with mock.patch(
@@ -383,11 +383,11 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 stdout=out,
             )
 
-        # Check genres were capitalized
+        # Check genres were normalized to canonical labels
         self.game1.refresh_from_db()
         wiki_data = self.game1.primary_wikipedia_game_data
-        self.assertEqual(wiki_data.primary_genre, "Action-adventure")
-        self.assertEqual(wiki_data.all_genres, "Action-adventure, Rpg")
+        self.assertEqual(wiki_data.primary_genre, "Action-Adventure")
+        self.assertEqual(wiki_data.all_genres, "Action-Adventure, Role-Playing")
 
     def test_command_handles_genre_scraping_exception(self):
         """Test command handles exceptions during genre scraping."""
@@ -560,10 +560,48 @@ class FetchWikipediaMetadataCommandTests(TestCase):
                 stdout=out,
             )
 
-        # Invalid genres should be skipped
+    def test_command_maps_orphan_root_labels_to_canonical_genres(self):
+        """Test future Wikipedia fetches do not recreate orphan root genres."""
+        out = StringIO()
+
+        with mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiPageLookupService"
+        ) as mock_page_service_class, mock.patch(
+            "games.management.commands.fetch_wikipedia_metadata.WikiGenreService"
+        ) as mock_genre_service_class:
+            mock_page_service = mock_page_service_class.return_value
+            mock_page_service.lookup_page.return_value = PageLookupResult(
+                game_name="Test Game 1",
+                page_title="Test Game 1",
+                lookup_source="wikidata",
+            )
+
+            mock_genre_service = mock_genre_service_class.return_value
+            mock_genre_service.get_genre_from_url.return_value = GenreResult(
+                game_name="Test Game 1",
+                source=GenreSource.WIKIPEDIA,
+                primary_genre="Action role-playing game",
+                all_genres=["Action role-playing game", "First-person"],
+            )
+
+            call_command(
+                "fetch_wikipedia_metadata",
+                "--game",
+                "Test Game 1",
+                "--save",
+                stdout=out,
+            )
+
         self.game1.refresh_from_db()
+        wiki_data = self.game1.primary_wikipedia_game_data
+        self.assertEqual(wiki_data.primary_genre, "Action RPG")
+        self.assertEqual(wiki_data.all_genres, "Action RPG")
         self.assertEqual(self.game1.wikipedia_genres.count(), 1)
-        self.assertEqual(self.game1.wikipedia_genres.first().name, "Action")
+        self.assertEqual(self.game1.wikipedia_genres.first().name, "Action RPG")
+        self.assertFalse(
+            WikipediaGenre.objects.filter(name="Action role-playing game").exists()
+        )
+        self.assertFalse(WikipediaGenre.objects.filter(name="First-person").exists())
 
     def test_cleanup_orphans_flag_deletes_unlinked_genres(self):
         """Test --cleanup-orphans flag deletes WikipediaGenre records with no games."""

@@ -654,7 +654,7 @@ class GameWikipediaTests(TestCase):
         # First API record should be primary
         primary = models.WikipediaGameData.objects.get(game=game, is_primary=True)
         self.assertEqual(primary.page_title, "Pokémon Red and Blue")
-        self.assertEqual(primary.primary_genre, "RPG")
+        self.assertEqual(primary.primary_genre, "Role-Playing")
 
         # Second API record should not be primary
         secondary = models.WikipediaGameData.objects.get(
@@ -705,10 +705,10 @@ class GameWikipediaTests(TestCase):
         self.assertEqual(wiki_data.page_title, "123")
 
     @mock.patch("games.services.genre_normalizer.get_or_create_genre")
-    @mock.patch("games.services.genre_normalizer.normalize_genre")
+    @mock.patch("games.services.genre_normalizer.canonicalize_genre_payload")
     @mock.patch("games.services.wiki_genre_service.WikiGenreService")
     def test_get_wikipedia_data_skips_invalid_and_duplicate_genres(
-        self, mock_service_class, mock_normalize, mock_get_or_create
+        self, mock_service_class, mock_canonicalize, mock_get_or_create
     ):
         """Test get_wikipedia_data skips invalid and duplicate genres."""
         from games.services.wiki_genre_service import GenreResult, GenreSource
@@ -727,7 +727,7 @@ class GameWikipediaTests(TestCase):
         action_genre, _ = models.WikipediaGenre.objects.get_or_create(
             name="Action", slug="action", defaults={"level": 0}
         )
-        mock_normalize.side_effect = lambda name: None if name == "Invalid" else name
+        mock_canonicalize.return_value = ("Action", ["Action"], "Action")
         mock_get_or_create.return_value = action_genre
 
         game.get_wikipedia_data(page_titles="Test Game")

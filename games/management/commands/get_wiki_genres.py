@@ -15,6 +15,7 @@ from django.core.management.base import BaseCommand
 
 from games import config
 from games.models import Game
+from games.services.genre_normalizer import canonicalize_genre_payload
 from games.services.wiki_genre_service import GenreSource, WikiGenreService
 
 logger = logging.getLogger(__name__)
@@ -230,13 +231,19 @@ class Command(BaseCommand):
                     )
 
                     # Create or update WikipediaGameData record
+                    normalized_primary, _, normalized_all_str = (
+                        canonicalize_genre_payload(
+                            result.primary_genre,
+                            result.all_genres,
+                        )
+                    )
                     wiki_game_data, created = (
                         WikipediaGameData.objects.update_or_create(
                             game=game,
                             page_title=result.game_name,
                             defaults={
-                                "primary_genre": result.primary_genre,
-                                "all_genres": result.all_genres_str,
+                                "primary_genre": normalized_primary,
+                                "all_genres": normalized_all_str,
                                 "lookup_source": result.source_url,
                                 "is_primary": True,
                             },

@@ -11,6 +11,7 @@ from django.test import TestCase
 
 from games.models import Game, WikipediaGenre
 from games.services.genre_normalizer import (
+    canonicalize_genre_payload,
     GENRE_MAPPING,
     get_genre_parent_name,
     get_mapping_stats,
@@ -57,6 +58,7 @@ class GenreNormalizerTest(TestCase):
         """Test that Action RPG variants normalize correctly."""
         self.assertEqual(normalize_genre("Action RPG"), "Action RPG")
         self.assertEqual(normalize_genre("Action role-playing"), "Action RPG")
+        self.assertEqual(normalize_genre("Action role-playing game"), "Action RPG")
 
     def test_normalize_shooter_variants(self):
         """Test that shooter variants normalize correctly."""
@@ -105,6 +107,66 @@ class GenreNormalizerTest(TestCase):
         """Test that unknown genres are returned as-is."""
         self.assertEqual(normalize_genre("Unknown Genre XYZ"), "Unknown Genre XYZ")
         self.assertEqual(normalize_genre("NewGenre2025"), "NewGenre2025")
+
+    def test_normalize_new_orphan_root_mappings(self):
+        """Test canonical mappings for newly discovered orphan root genres."""
+        self.assertEqual(normalize_genre("Auto battler"), "Strategy")
+        self.assertEqual(normalize_genre("Monster tamer"), "Role-Playing")
+        self.assertEqual(normalize_genre("Turn-based"), "Strategy")
+        self.assertEqual(normalize_genre("Wargame"), "Strategy")
+        self.assertEqual(
+            normalize_genre("Management simulation"), "Management Simulation"
+        )
+        self.assertEqual(normalize_genre("Vehicle simulation"), "Vehicle Simulation")
+
+    def test_normalize_descriptor_genres_to_none(self):
+        """Test descriptor labels are dropped instead of preserved as genres."""
+        self.assertIsNone(normalize_genre("First-person"))
+        self.assertIsNone(normalize_genre("Hacking"))
+        self.assertIsNone(normalize_genre("Level editor"))
+        self.assertIsNone(normalize_genre("Vehicle construction"))
+        self.assertIsNone(normalize_genre("Cooking"))
+        self.assertIsNone(normalize_genre("Art tool"))
+        self.assertIsNone(normalize_genre("Lunar Lander"))
+
+    def test_normalize_is_case_insensitive_for_known_values(self):
+        """Test known mappings work even when Wikipedia casing drifts."""
+        self.assertEqual(normalize_genre("rpg"), "Role-Playing")
+        self.assertEqual(normalize_genre("action-adventure"), "Action-Adventure")
+        self.assertEqual(normalize_genre("sport"), "Sports")
+
+    def test_canonicalize_genre_payload_uses_first_surviving_genre_for_primary(self):
+        """
+        Test payload canonicalization drops descriptor primaries and promotes
+        the first surviving canonical genre.
+        """
+        primary, all_genres, all_genres_str = canonicalize_genre_payload(
+            "First-person",
+            ["First-person", "Third-person shooter", "Action-adventure"],
+        )
+        self.assertEqual(primary, "Third-Person Shooter")
+        self.assertEqual(all_genres, ["Third-Person Shooter", "Action-Adventure"])
+        self.assertEqual(all_genres_str, "Third-Person Shooter, Action-Adventure")
+
+    def test_canonicalize_genre_payload_inserts_primary_when_only_secondary_list_exists(
+        self,
+    ):
+        """Test canonicalization preserves a distinct normalized primary first."""
+        primary, all_genres, all_genres_str = canonicalize_genre_payload(
+            "Action role-playing game",
+            ["Platforming"],
+        )
+        self.assertEqual(primary, "Action RPG")
+        self.assertEqual(all_genres, ["Action RPG", "Platform"])
+        self.assertEqual(all_genres_str, "Action RPG, Platform")
+
+        primary, all_genres, all_genres_str = canonicalize_genre_payload(
+            "Action role-playing game",
+            None,
+        )
+        self.assertEqual(primary, "Action RPG")
+        self.assertEqual(all_genres, ["Action RPG"])
+        self.assertEqual(all_genres_str, "Action RPG")
 
     def test_normalize_empty_string_returns_none(self):
         """Test that empty strings return None."""
@@ -262,6 +324,8 @@ class GetGenreParentNameTest(TestCase):
         # Sandbox moved from Hybrid & Specialized
         self.assertEqual(get_genre_parent_name("Sandbox"), "Simulation")
         self.assertEqual(get_genre_parent_name("Life Simulation"), "Simulation")
+        self.assertEqual(get_genre_parent_name("Management Simulation"), "Simulation")
+        self.assertEqual(get_genre_parent_name("Vehicle Simulation"), "Simulation")
 
     def test_role_playing_genres_hierarchy(self):
         """Test that role-playing genres are correctly parented."""

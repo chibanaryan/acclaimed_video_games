@@ -1320,28 +1320,30 @@ class Game(MediaItemBase):
                 # Use normalization to map scraped genres to canonical names
                 if capitalized_all:
                     from games.services.genre_normalizer import (
+                        canonicalize_genre_payload,
                         get_or_create_genre,
-                        normalize_genre,
                     )
 
-                    wikipedia_genres = []
-                    seen_genres = set()  # Track seen genres to avoid duplicates
+                    normalized_primary, normalized_all, normalized_all_str = (
+                        canonicalize_genre_payload(
+                            result.primary_genre,
+                            result.all_genres,
+                        )
+                    )
 
-                    for genre_name in capitalized_all:
-                        # Normalize the genre name to canonical form
-                        normalized_name = normalize_genre(genre_name)
+                    if (
+                        normalized_primary != wiki_game_data.primary_genre
+                        or normalized_all_str != (wiki_game_data.all_genres or "")
+                    ):
+                        wiki_game_data.primary_genre = normalized_primary
+                        wiki_game_data.all_genres = normalized_all_str
+                        wiki_game_data.save(
+                            update_fields=["primary_genre", "all_genres"]
+                        )
 
-                        # Skip None (invalid genres) and duplicates
-                        if normalized_name is None:
-                            continue
-                        if normalized_name in seen_genres:
-                            continue
-                        seen_genres.add(normalized_name)
-
-                        # Get or create the normalized genre with hierarchy
-                        genre = get_or_create_genre(normalized_name)
-                        wikipedia_genres.append(genre)
-
+                    wikipedia_genres = [
+                        get_or_create_genre(genre_name) for genre_name in normalized_all
+                    ]
                     self.wikipedia_genres.set(wikipedia_genres)
 
             action = "Created" if created else "Updated"

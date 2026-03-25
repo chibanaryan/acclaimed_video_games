@@ -25,7 +25,10 @@ from games.models import (
     WikipediaGameData,
     WikipediaGenre,
 )
-from games.services.genre_normalizer import get_or_create_genre, normalize_genre
+from games.services.genre_normalizer import (
+    canonicalize_genre_payload,
+    get_or_create_genre,
+)
 from games.services.wiki_page_lookup_service import WikiPageLookupService
 from games.services.wiki_genre_service import WikiGenreService
 
@@ -215,57 +218,35 @@ class Command(BaseCommand):
                             if genre_result.primary_genre:
                                 genre_success_count += 1
 
-                                # Capitalize first letter if lowercase
-                                def capitalize_first(name):
-                                    return (
-                                        name[0].upper() + name[1:]
-                                        if name and name[0].islower()
-                                        else name
-                                    )
-
-                                # Capitalize all genre names
-                                capitalized_primary = capitalize_first(
-                                    genre_result.primary_genre
+                                (
+                                    normalized_primary,
+                                    normalized_all,
+                                    normalized_all_str,
+                                ) = canonicalize_genre_payload(
+                                    genre_result.primary_genre,
+                                    genre_result.all_genres,
                                 )
-                                capitalized_all = [
-                                    capitalize_first(g) for g in genre_result.all_genres
-                                ]
 
-                                primary_genre = capitalized_primary
-                                all_genres = ", ".join(capitalized_all)
+                                primary_genre = normalized_primary or ""
+                                all_genres = normalized_all_str
 
                                 # Update WikipediaGameData with genres
-                                wiki_game_data.primary_genre = capitalized_primary
-                                if capitalized_all:
-                                    wiki_game_data.all_genres = all_genres
+                                wiki_game_data.primary_genre = normalized_primary
+                                wiki_game_data.all_genres = normalized_all_str
                                 wiki_game_data.save(
                                     update_fields=["primary_genre", "all_genres"]
                                 )
 
                                 # Create WikipediaGenre objects and link to game
-                                if capitalized_all:
-                                    wikipedia_genres = []
-                                    seen_genres = set()
-
-                                    for genre_name in capitalized_all:
-                                        # Normalize the genre name to canonical form
-                                        normalized_name = normalize_genre(genre_name)
-
-                                        # Skip None (invalid genres) and duplicates
-                                        if normalized_name is None:
-                                            continue
-                                        if normalized_name in seen_genres:
-                                            continue
-                                        seen_genres.add(normalized_name)
-
-                                        # Get or create normalized genre
-                                        genre = get_or_create_genre(normalized_name)
-                                        wikipedia_genres.append(genre)
-                                    game.wikipedia_genres.set(wikipedia_genres)
+                                wikipedia_genres = [
+                                    get_or_create_genre(genre_name)
+                                    for genre_name in normalized_all
+                                ]
+                                game.wikipedia_genres.set(wikipedia_genres)
 
                                 self.stdout.write(
-                                    f"  └─ Genre: {capitalized_primary} "
-                                    f"({len(capitalized_all)} total)"
+                                    f"  └─ Genre: {normalized_primary} "
+                                    f"({len(normalized_all)} total)"
                                 )
                             else:
                                 genre_failure_count += 1

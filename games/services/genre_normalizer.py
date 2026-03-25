@@ -17,7 +17,7 @@ Usage:
     # Returns: ["MMORPG", "Platform"]
 """
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 # Comprehensive mapping from all Wikipedia genre variants to canonical names
 # This mapping consolidates 146 Wikipedia genres into ~80 canonical genres
@@ -61,6 +61,7 @@ GENRE_MAPPING = {
     "Action-adventure": "Action-Adventure",
     "Action adventure": "Action-Adventure",
     "Action role-playing": "Action RPG",
+    "Action role-playing game": "Action RPG",
     "Action RPG": "Action RPG",
     "Platform-adventure": "Action-Adventure",
     "Adventure": "Adventure",
@@ -89,6 +90,7 @@ GENRE_MAPPING = {
     # Role-playing genres
     "Role-playing": "Role-Playing",
     "RPG": "Role-Playing",
+    "Monster tamer": "Role-Playing",
     "Tactical role-playing": "Tactical RPG",
     "Tactical RPG": "Tactical RPG",
     "MMORPG": "MMORPG",
@@ -97,9 +99,11 @@ GENRE_MAPPING = {
     "Roguelike": "Roguelike",
     "Roguelite": "Roguelike",
     "Roguelike deck-building": "Roguelike",
-    "Dungeon management game": "Role-Playing",  # Consolidated: only 1 game
+    "Dungeon management": "Management Simulation",
+    "Dungeon management game": "Management Simulation",
     # Strategy genres
     "Strategy": "Strategy",
+    "Auto battler": "Strategy",
     "Real-time strategy": "Real-Time Strategy",
     "Real-Time Strategy": "Real-Time Strategy",
     "RTS": "Real-Time Strategy",
@@ -113,10 +117,14 @@ GENRE_MAPPING = {
     "4X": "4X Strategy",
     "4X Strategy": "4X Strategy",
     "Grand strategy": "Grand Strategy",
+    "Turn-based": "Strategy",
+    "Wargame": "Strategy",
     "Tower defense": "Strategy",  # Consolidated: only 1 game
     # Simulation genres
     "Simulation": "Simulation",
+    "Air combat simulation": "Flight Simulation",
     "Life simulation": "Life Simulation",
+    "Management simulation": "Management Simulation",
     "Business simulation": "Simulation",  # Consolidated: only 1 game
     "Business simulation game": "Simulation",  # Consolidated: only 1 game
     "City-building": "City Building",
@@ -134,7 +142,10 @@ GENRE_MAPPING = {
     "Space simulation": "Space Simulation",
     "Space trading and combat": "Space Combat",
     "Space trading and combat simulator": "Space Combat",
-    "Vehicle simulation game": "Simulation",  # Consolidated: only 1 game
+    "Factory simulation": "Management Simulation",
+    "Vehicle simulation": "Vehicle Simulation",
+    "Vehicle simulation game": "Vehicle Simulation",
+    "Submarine simulator": "Vehicle Simulation",
     "Delivery sim": "Simulation",  # Consolidated: singleton variant
     "delivery sim": "Simulation",  # Lowercase variant
     "Delivery simulation": "Simulation",  # Variant from infobox wording
@@ -164,10 +175,14 @@ GENRE_MAPPING = {
     "Ice hockey": "Sports",  # Consolidated: only 1 game
     "Boxing": "Sports",  # Consolidated: only 1 game
     "Snowboarding": "Snowboarding",  # Keep: 3 games
+    "Sport": "Sports",
+    "Tennis": "Sports",
     "Extreme sports": "Sports",  # Consolidated: only 1 game
     "Sports management": "Sports",  # Consolidated: only 1 game
     # Puzzle genres
     "Puzzle": "Puzzle",
+    "Action puzzle": "Puzzle",
+    "Falling block puzzle": "Puzzle",
     "Match-three": "Match-Three",
     "Match three": "Match-Three",
     "Tile-matching": "Match-Three",
@@ -175,8 +190,10 @@ GENRE_MAPPING = {
     "Maze": "Maze",
     "Incremental": "Puzzle",  # Consolidated: only 1 game
     # Puzzle & Casual genres (Party, Music, Educational are children of Puzzle & Casual)
+    "Cooking": None,
     "Party": "Party",
     "Music": "Music",
+    "Music video game": "Music",
     "Rhythm": "Music",
     "Rhythm game": "Music",
     "Karaoke": "Music",
@@ -200,6 +217,12 @@ GENRE_MAPPING = {
     # Additional adventure variants
     "Graphic adventure": "Point-and-Click",  # Classic adventure games
     "Exploration": "Walking Simulator",  # Only 1 game (Edith Finch) - walking sim fits
+    "Platforming": "Platform",
+    "Action platformer": "Platform",
+    "Point-and-click adventure game": "Point-and-Click",
+    "Puzzle adventure": "Adventure",
+    "Racing game": "Racing",
+    "Fighting game": "Fighting",
     # Invalid/removed entries (map to None)
     "Dystopian": None,  # Setting, not genre
     "(minigame)": None,
@@ -209,8 +232,14 @@ GENRE_MAPPING = {
     "Snake": None,  # Too specific (single game type)
     "Art": None,  # Too vague
     "Art game": None,  # Too vague
+    "Art tool": None,
     "Augmented reality": None,  # Platform, not genre
     "Artillery": None,  # Too specific
+    "First-person": None,
+    "Hacking": None,
+    "Level editor": None,
+    "Lunar Lander": None,
+    "Vehicle construction": None,
 }
 
 # Hierarchy structure: category -> list of child genres
@@ -284,11 +313,13 @@ GENRE_HIERARCHY = {
     "Simulation": [
         "Simulation",
         "Life Simulation",
+        "Management Simulation",
         "City Building",
         "Construction & Management",
         "Flight Simulation",
         "Space Combat",
         "Space Simulation",
+        "Vehicle Simulation",
         "God Game",
         "Sandbox",  # Moved from Hybrid & Specialized
     ],
@@ -301,6 +332,10 @@ for category, children in GENRE_HIERARCHY.items():
     for child in children:
         if child != category:  # Don't map category to itself
             _GENRE_TO_PARENT[child] = category
+
+_GENRE_MAPPING_CASEFOLD = {}
+for source_name, canonical_name in GENRE_MAPPING.items():
+    _GENRE_MAPPING_CASEFOLD.setdefault(source_name.casefold(), canonical_name)
 
 
 def get_genre_parent_name(genre_name: str) -> Optional[str]:
@@ -389,6 +424,10 @@ def normalize_genre(name: str) -> Optional[str]:
     if name in GENRE_MAPPING:
         return GENRE_MAPPING[name]
 
+    canonical = _GENRE_MAPPING_CASEFOLD.get(name.casefold())
+    if canonical is not None:
+        return canonical
+
     # If no mapping exists, return the name as-is (unknown genre)
     # This allows for graceful handling of new genres not in our mapping
     return name
@@ -427,6 +466,47 @@ def normalize_genres(names: List[str]) -> List[str]:
             seen.add(canonical)
 
     return normalized
+
+
+def normalize_primary_and_all_genres(
+    primary_name: Optional[str], all_names: Optional[List[str]]
+) -> Tuple[Optional[str], List[str]]:
+    """
+    Normalize primary and secondary genres into a canonical ordered list.
+
+    The returned primary genre is the normalized primary when possible. If the
+    primary normalizes away (for example, a dropped descriptor like
+    "First-person"), it falls back to the first surviving canonical genre from
+    the full list.
+    """
+    source_all = list(all_names or [])
+    if primary_name and not source_all:
+        source_all = [primary_name]
+
+    normalized_all = normalize_genres(source_all)
+    normalized_primary = normalize_genre(primary_name) if primary_name else None
+
+    if normalized_primary is None:
+        normalized_primary = normalized_all[0] if normalized_all else None
+    elif normalized_primary not in normalized_all:
+        normalized_all = [normalized_primary, *normalized_all]
+
+    return normalized_primary, normalized_all
+
+
+def canonicalize_genre_payload(
+    primary_name: Optional[str], all_names: Optional[List[str]]
+) -> Tuple[Optional[str], List[str], str]:
+    """
+    Return canonical metadata values for Wikipedia genre storage.
+
+    Returns:
+        Tuple of (primary_genre, all_genres_list, all_genres_csv)
+    """
+    normalized_primary, normalized_all = normalize_primary_and_all_genres(
+        primary_name, all_names
+    )
+    return normalized_primary, normalized_all, ", ".join(normalized_all)
 
 
 # Statistics about the mapping
