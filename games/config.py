@@ -19,7 +19,7 @@ CACHE_TIMEOUT_DEFAULT = CACHE_TIMEOUT_24_HOURS
 CACHE_TIMEOUT_HOME_PAGE = CACHE_TIMEOUT_5_MINUTES
 
 # Cache version - bump this to invalidate all caches after schema/data changes
-CACHE_VERSION = "v8"
+CACHE_VERSION = "v9"
 
 # =============================================================================
 # Cache Keys

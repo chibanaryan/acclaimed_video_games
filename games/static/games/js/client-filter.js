@@ -12,10 +12,10 @@
 const PLATFORM_HIERARCHY = (typeof window !== 'undefined' && window.AV_PLATFORM_HIERARCHY) || {
     nintendo: {
         name: 'Nintendo',
-        codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'SW2', 'GB', 'GBA', 'GBC', 'FDS'],
+        codes: ['NES', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'DS', '3DS', 'SW', 'SW2', 'GW', 'GB', 'GBA', 'GBC', 'FDS'],
         formFactors: {
             home: { name: 'Home Consoles', codes: ['NES', 'FDS', 'SNES', 'N64', 'GC', 'Wii', 'WiiU', 'SW', 'SW2'] },
-            handheld: { name: 'Handhelds', codes: ['GB', 'GBC', 'GBA', 'DS', '3DS'] }
+            handheld: { name: 'Handhelds', codes: ['GW', 'GB', 'GBC', 'GBA', 'DS', '3DS'] }
         }
     },
     playstation: {
@@ -48,17 +48,17 @@ const PLATFORM_HIERARCHY = (typeof window !== 'undefined' && window.AV_PLATFORM_
     },
     retro: {
         name: 'Retro Consoles',
-        codes: ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX']
+        codes: ['A26', 'A52', 'A78', 'INTV', 'CV', 'TG16', '3DO', 'NG', 'JAG', 'LYNX', 'VECT']
     },
     computers: {
         name: 'Microcomputers',
-        codes: ['C64', 'AMI', 'CD32', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'VC20', 'A8', 'A2', 'ARCH', 'E60', 'HP21', 'PDP'],
+        codes: ['C64', 'AMI', 'CD32', 'D32', 'MIC', 'MSX', 'CPC', 'ZXS', 'AST', 'BBCM', 'PC88', 'PC98', 'FMT', 'FM7', 'SX1', 'T80', 'TCC', 'TT', 'VC20', 'A8', 'A2', 'ARCH', 'E60', 'HP21', 'PDP'],
         formFactors: {
             commodore: { name: 'Commodore', codes: ['VC20', 'C64', 'AMI', 'CD32'] },
-            uk: { name: 'UK', codes: ['ZXS', 'CPC', 'BBCM', 'ARCH'] },
-            japan: { name: 'Japan', codes: ['PC88', 'PC98', 'FM7', 'FMT', 'SX1', 'MSX'] },
+            uk: { name: 'UK', codes: ['ZXS', 'CPC', 'BBCM', 'ARCH', 'D32'] },
+            japan: { name: 'Japan', codes: ['PC88', 'PC98', 'FM7', 'FMT', 'SX1', 'MSX', 'TT'] },
             atari: { name: 'Atari', codes: ['A8', 'AST'] },
-            other: { name: 'Other', codes: ['A2', 'T80', 'TCC', 'PDP', 'HP21', 'E60'] }
+            other: { name: 'Other', codes: ['A2', 'T80', 'TCC', 'PDP', 'HP21', 'E60', 'MIC'] }
         }
     }
 };

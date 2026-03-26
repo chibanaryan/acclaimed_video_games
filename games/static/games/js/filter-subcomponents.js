@@ -12,7 +12,7 @@
                 },
                 handheld: {
                     name: "Handhelds",
-                    platforms: ["GB", "GBC", "GBA", "DS", "3DS"],
+                    platforms: ["GW", "GB", "GBC", "GBA", "DS", "3DS"],
                 },
             },
         },
@@ -62,17 +62,17 @@
         retro: {
             name: "Retro Consoles",
             icon: "mdi-pac-man",
-            platforms: ["A26", "A52", "A78", "INTV", "CV", "TG16", "3DO", "NG", "JAG", "LYNX"],
+            platforms: ["A26", "A52", "A78", "INTV", "CV", "TG16", "3DO", "NG", "JAG", "LYNX", "VECT"],
         },
         computers: {
             name: "Microcomputers",
             icon: "mdi-desktop-classic",
             formFactors: {
                 commodore: { name: "Commodore", platforms: ["VC20", "C64", "AMI", "CD32"] },
-                uk: { name: "UK", platforms: ["ZXS", "CPC", "BBCM", "ARCH"] },
-                japan: { name: "Japan", platforms: ["PC88", "PC98", "FM7", "FMT", "SX1", "MSX"] },
+                uk: { name: "UK", platforms: ["ZXS", "CPC", "BBCM", "ARCH", "D32"] },
+                japan: { name: "Japan", platforms: ["PC88", "PC98", "FM7", "FMT", "SX1", "MSX", "TT"] },
                 atari: { name: "Atari", platforms: ["A8", "AST"] },
-                other: { name: "Other", platforms: ["A2", "T80", "TCC", "PDP", "HP21", "E60"] },
+                other: { name: "Other", platforms: ["A2", "T80", "TCC", "PDP", "HP21", "E60", "MIC"] },
             },
         },
     };
