@@ -195,6 +195,7 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
                 "JAG",
                 "LYNX",
                 "NGP",
+                "VECT",
                 "WS",
             ],
         ),
@@ -205,6 +206,8 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
                 "C64",
                 "AMI",
                 "CD32",
+                "D32",
+                "MIC",
                 "ZXS",
                 "CPC",
                 "BBCM",
@@ -218,6 +221,7 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
                 "A8",
                 "AST",
                 "A2",
+                "TT",
                 "T80",
                 "TCC",
                 "PDP",
@@ -226,7 +230,7 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
             ],
         ),
         # Form factor groups (checked after manufacturer groups)
-        ("Nintendo Handheld", ["GB", "GBC", "GBA", "DS", "3DS"]),
+        ("Nintendo Handheld", ["GW", "GB", "GBC", "GBA", "DS", "3DS"]),
         (
             "Nintendo Home Console",
             ["NES", "FDS", "SNES", "N64", "GC", "Wii", "WiiU", "SW", "SW2"],
@@ -237,8 +241,8 @@ def _build_platform_segment(selected_platform_ids, platforms, include_games=True
         ("Sega Home Console", ["SMS", "GEN", "SCD", "SAT", "DC"]),
         # Microcomputer form factor groups
         ("Commodore", ["VC20", "C64", "AMI", "CD32"]),
-        ("UK Microcomputer", ["ZXS", "CPC", "BBCM", "ARCH"]),
-        ("Japanese Microcomputer", ["PC88", "PC98", "FM7", "FMT", "SX1", "MSX"]),
+        ("UK Microcomputer", ["ZXS", "CPC", "BBCM", "ARCH", "D32"]),
+        ("Japanese Microcomputer", ["PC88", "PC98", "FM7", "FMT", "SX1", "MSX", "TT"]),
         ("Atari Microcomputer", ["A8", "AST"]),
     ]
 
@@ -299,6 +303,7 @@ def _expand_platform_virtual_ids(platforms_param, platforms):
             "GBA",
             "DS",
             "3DS",
+            "GW",
         ],
         "mfr-playstation": ["PS", "PS2", "PS3", "PS4", "PS5", "PSVR", "PSP", "PSV"],
         "mfr-xbox": ["Xbox", "X360", "XB1", "XBXS"],
@@ -317,6 +322,7 @@ def _expand_platform_virtual_ids(platforms_param, platforms):
             "JAG",
             "LYNX",
             "NGP",
+            "VECT",
             "WS",
         ],
         "mfr-computers": [
@@ -324,6 +330,8 @@ def _expand_platform_virtual_ids(platforms_param, platforms):
             "C64",
             "AMI",
             "CD32",
+            "D32",
+            "MIC",
             "ZXS",
             "CPC",
             "BBCM",
@@ -337,6 +345,7 @@ def _expand_platform_virtual_ids(platforms_param, platforms):
             "A8",
             "AST",
             "A2",
+            "TT",
             "T80",
             "TCC",
             "PDP",
@@ -355,17 +364,17 @@ def _expand_platform_virtual_ids(platforms_param, platforms):
             "SW",
             "SW2",
         ],
-        "ff-nintendo-handheld": ["GB", "GBC", "GBA", "DS", "3DS"],
+        "ff-nintendo-handheld": ["GW", "GB", "GBC", "GBA", "DS", "3DS"],
         "ff-playstation-home": ["PS", "PS2", "PS3", "PS4", "PS5", "PSVR"],
         "ff-playstation-handheld": ["PSP", "PSV"],
         "ff-sega-home": ["SMS", "GEN", "SCD", "SAT", "DC"],
         "ff-sega-handheld": ["GG"],
         # Microcomputer form factor virtual IDs
         "ff-computers-commodore": ["VC20", "C64", "AMI", "CD32"],
-        "ff-computers-uk": ["ZXS", "CPC", "BBCM", "ARCH"],
-        "ff-computers-japan": ["PC88", "PC98", "FM7", "FMT", "SX1", "MSX"],
+        "ff-computers-uk": ["ZXS", "CPC", "BBCM", "ARCH", "D32"],
+        "ff-computers-japan": ["PC88", "PC98", "FM7", "FMT", "SX1", "MSX", "TT"],
         "ff-computers-atari": ["A8", "AST"],
-        "ff-computers-other": ["A2", "T80", "TCC", "PDP", "HP21", "E60"],
+        "ff-computers-other": ["A2", "T80", "TCC", "PDP", "HP21", "E60", "MIC"],
     }
 
     # Build code -> ID lookup from platforms list (ensure int IDs)

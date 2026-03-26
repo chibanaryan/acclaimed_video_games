@@ -543,6 +543,12 @@ class PlatformFamiliesFilterTest(TestCase):
         self.assertEqual(result[0]["platform_id"], 42)
         self.assertEqual(result[0]["platform_name"], "PlayStation 5")
 
+    def test_game_and_watch_maps_to_nintendo_family(self):
+        """Test Game & Watch is categorized with Nintendo platforms."""
+        gw = self._make_platform("GW", 7, "Game & Watch")
+        result = platform_families([gw])
+        self.assertEqual(result[0]["key"], "nintendo")
+
     def test_empty_list_returns_empty(self):
         """Test that empty list returns empty list."""
         result = platform_families([])
@@ -724,6 +730,15 @@ class PlatformFamiliesGroupedFilterTest(TestCase):
         # Nintendo (NES 1983) should come before PlayStation (PS5 2020)
         self.assertEqual(result[0]["key"], "nintendo")
         self.assertEqual(result[1]["key"], "playstation")
+
+    def test_new_retro_and_computer_platforms_are_grouped(self):
+        """Test newly mapped prod platforms land in the expected families."""
+        vectrex = self._make_platform("VECT", 1, "Vectrex", 1982, 1984)
+        dragon = self._make_platform("D32", 2, "Dragon 32/64", 1982, 1987)
+        result = platform_families_grouped([vectrex, dragon])
+        keys = [family["key"] for family in result]
+        self.assertIn("retro", keys)
+        self.assertIn("computers", keys)
 
 
 class GenreIconFilterTest(TestCase):

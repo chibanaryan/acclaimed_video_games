@@ -3990,6 +3990,11 @@ class PlatformVirtualIdTests(TestCase):
         )
         self.snes = Platform.objects.create(code="SNES", name="Super Nintendo")
         self.sw2 = Platform.objects.create(code="SW2", name="Nintendo Switch 2")
+        self.gw = Platform.objects.create(code="GW", name="Game & Watch")
+        self.d32 = Platform.objects.create(code="D32", name="Dragon 32/64")
+        self.tt = Platform.objects.create(code="TT", name="Tomy Tutor")
+        self.mic = Platform.objects.create(code="MIC", name="Microcomputer")
+        self.vect = Platform.objects.create(code="VECT", name="Vectrex")
         self.pc = Platform.objects.create(code="PC", name="PC")
 
     def test_expand_virtual_id_nintendo_manufacturer(self):
@@ -4021,6 +4026,49 @@ class PlatformVirtualIdTests(TestCase):
         result = _expand_platform_virtual_ids("ff-nintendo-home", platforms)
         self.assertIn(self.nes.id, result)
         self.assertIn(self.sw2.id, result)
+        self.assertNotIn(self.pc.id, result)
+
+    def test_expand_virtual_id_nintendo_handheld_includes_game_and_watch(self):
+        """Test that ff-nintendo-handheld expands to include Game & Watch."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [
+            {"id": self.gw.id, "code": "GW"},
+            {"id": self.pc.id, "code": "PC"},
+        ]
+        result = _expand_platform_virtual_ids("ff-nintendo-handheld", platforms)
+        self.assertIn(self.gw.id, result)
+        self.assertNotIn(self.pc.id, result)
+
+    def test_expand_virtual_id_microcomputer_subgroups_include_new_codes(self):
+        """Test new prod microcomputer codes land in the expected subgroups."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [
+            {"id": self.d32.id, "code": "D32"},
+            {"id": self.tt.id, "code": "TT"},
+            {"id": self.mic.id, "code": "MIC"},
+        ]
+        self.assertIn(
+            self.d32.id, _expand_platform_virtual_ids("ff-computers-uk", platforms)
+        )
+        self.assertIn(
+            self.tt.id, _expand_platform_virtual_ids("ff-computers-japan", platforms)
+        )
+        self.assertIn(
+            self.mic.id, _expand_platform_virtual_ids("ff-computers-other", platforms)
+        )
+
+    def test_expand_virtual_id_retro_manufacturer_includes_vectrex(self):
+        """Test that mfr-retro expands to include Vectrex."""
+        from games.views import _expand_platform_virtual_ids
+
+        platforms = [
+            {"id": self.vect.id, "code": "VECT"},
+            {"id": self.pc.id, "code": "PC"},
+        ]
+        result = _expand_platform_virtual_ids("mfr-retro", platforms)
+        self.assertIn(self.vect.id, result)
         self.assertNotIn(self.pc.id, result)
 
     def test_expand_regular_id(self):

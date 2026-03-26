@@ -103,6 +103,7 @@ PLATFORM_FAMILIES = {
     "DS": "nintendo",  # Nintendo DS
     "3DS": "nintendo",
     "FDS": "nintendo",  # Famicom Disk System
+    "GW": "nintendo",  # Game & Watch
     # PlayStation
     "PS5": "playstation",
     "PS4": "playstation",
@@ -140,10 +141,13 @@ PLATFORM_FAMILIES = {
     "NG": "retro",
     "JAG": "retro",
     "LYNX": "retro",
+    "VECT": "retro",  # Vectrex
     # Microcomputers
     "C64": "computers",
     "AMI": "computers",
     "CD32": "computers",
+    "D32": "computers",  # Dragon 32/64
+    "MIC": "computers",  # Generic microcomputer
     "MSX": "computers",
     "CPC": "computers",
     "ZXS": "computers",
@@ -159,6 +163,7 @@ PLATFORM_FAMILIES = {
     "VC20": "computers",
     "A8": "computers",
     "A2": "computers",
+    "TT": "computers",  # Tomy Tutor
     "ARCH": "computers",  # Acorn Archimedes
     "E60": "computers",  # Electronika 60
     "HP21": "computers",  # HP 2100

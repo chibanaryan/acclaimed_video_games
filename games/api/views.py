@@ -543,7 +543,8 @@ def _compute_game_data_version():
     # v9: Updated HLTB bucket boundaries (short: 0-10h, medium: 10-30h, long: 30+h)
     # v10: Removed game_modes - no longer supported
     # v11: Populated platform year_start/year_end data for all 74 platforms
-    SCHEMA_VERSION = "11"
+    # v12: Added remaining prod platform year ranges and refreshed cached platform data
+    SCHEMA_VERSION = "12"
 
     # Get latest game modification time
     latest_game = models.Game.objects.order_by("-modified").first()

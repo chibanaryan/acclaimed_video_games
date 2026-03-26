@@ -90,6 +90,11 @@ PLATFORM_YEAR_RANGES = {
     "VC20": (1980, 1985),
     "A8": (1979, 1992),
     "A2": (1977, 1993),
+    "D32": (1982, 1987),  # Dragon 32/64
+    "GW": (1980, 1991),  # Game & Watch
+    "MIC": (1973, None),  # Generic microcomputer catch-all
+    "TT": (1982, 1985),  # Tomy Tutor / Pyuuta
+    "VECT": (1982, 1984),  # Vectrex
     # Additional platforms
     "ARCH": (1987, 1995),  # Acorn Archimedes
     "PDP": (1959, 1997),  # DEC PDP (PDP-1 through PDP-11)
