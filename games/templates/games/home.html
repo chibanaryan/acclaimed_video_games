@@ -8,7 +8,7 @@
 {% block pre_alpine %}
     {# Filter subcomponents + filter component factories (must load before Alpine core) #}
     <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-subcomponents.min.js" %}?v=1');</script>
-    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=5');</script>
+    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=6');</script>
 {% endblock %}
 
 {% block extra_head %}
@@ -18,7 +18,7 @@
         if ('requestIdleCallback' in window) {
             requestIdleCallback(function() {
                 var script = document.createElement('script');
-                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=3';
+                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=4';
                 script.defer = true;
                 script.nonce = '{{ csp_nonce }}';
                 document.head.appendChild(script);
@@ -27,7 +27,7 @@
             // Fallback for browsers without requestIdleCallback
             setTimeout(function() {
                 var script = document.createElement('script');
-                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=3';
+                script.src = '{% static 'games/js/utils-loadmore.min.js' %}?v=4';
                 script.defer = true;
                 script.nonce = '{{ csp_nonce }}';
                 document.head.appendChild(script);
@@ -61,7 +61,7 @@
         var csfLoaded = false;
         var csfLoading = false;
         var interactionEvents = ['pointerdown', 'touchstart', 'keydown'];
-        var csfScriptUrl = '{% static "games/js/client-side-filtering.bundle.min.js" %}?v=13';
+        var csfScriptUrl = '{% static "games/js/client-side-filtering.bundle.min.js" %}?v=14';
 
         function hasActiveFilterParams() {
             var params = new URLSearchParams(window.location.search);

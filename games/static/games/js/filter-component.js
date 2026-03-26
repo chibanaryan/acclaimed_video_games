@@ -1278,6 +1278,7 @@ document.addEventListener('alpine:init', () => {
         updateSort(newSort) {
             this.filters.sort = newSort;
             if (this.initialized) {
+                this.requestClientFilteringInit('sort-change');
                 this.debouncedFilterUpdate();
             }
         },
@@ -1285,6 +1286,7 @@ document.addEventListener('alpine:init', () => {
         toggleSortDirection() {
             this.filters.sortDirection = this.filters.sortDirection === 'asc' ? 'desc' : 'asc';
             if (this.initialized) {
+                this.requestClientFilteringInit('sort-direction');
                 this.debouncedFilterUpdate();
             }
         },

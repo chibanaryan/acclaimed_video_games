@@ -515,6 +515,7 @@ class TemplateIDAttributeTests(TestCase):
     """
 
     def setUp(self):
+        cache.clear()
         self.client = Client()
         self.game = models.Game.objects.create(
             name="ID Test Game",

@@ -68,14 +68,28 @@ function initLoadMore() {
  */
 let jumpToRankInitialized = false;
 
+function requestClientFilteringBundle() {
+    window.dispatchEvent(new CustomEvent('acclaimed:need-csf'));
+}
+
 /**
  * Initializes Jump to Rank functionality using event delegation
  */
 function initJumpToRank() {
     if (jumpToRankInitialized) return;
 
+    document.addEventListener('focusin', function(e) {
+        if (e.target.classList.contains('jump-to-rank-input')) {
+            requestClientFilteringBundle();
+        }
+    });
+
     // Use event delegation on document for robustness
     document.addEventListener('click', function(e) {
+        if (e.target.closest('.jump-to-rank-btn')) {
+            requestClientFilteringBundle();
+        }
+
         const button = e.target.closest('.jump-to-rank-btn');
         if (button) {
             e.preventDefault();
@@ -91,6 +105,7 @@ function initJumpToRank() {
 
     document.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && e.target.classList.contains('jump-to-rank-input')) {
+            requestClientFilteringBundle();
             e.preventDefault();
             handleJumpToRank(e.target);
         }
@@ -220,6 +235,8 @@ function hasActiveFilters(filters, csf) {
  * @param {HTMLInputElement} input - The rank input element
  */
 async function handleJumpToRank(input) {
+    requestClientFilteringBundle();
+
     const targetRank = parseInt(input.value);
     const perPage = parseInt(input.dataset.perPage) || 100;
 

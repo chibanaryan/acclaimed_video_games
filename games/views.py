@@ -1283,14 +1283,29 @@ class HomePageView(RobustPaginationMixin, ListView):
 
         # Sort order
         sort = self.request.GET.get("sort", "rank")
+        if sort not in {"rank", "year", "name", "playtime"}:
+            sort = "rank"
+
+        sort_direction = self.request.GET.get("dir", "asc")
+        if sort_direction not in {"asc", "desc"}:
+            sort_direction = "asc"
+
+        def sort_field(field_name):
+            return f"-{field_name}" if sort_direction == "desc" else field_name
 
         # Apply sorting
         if sort == "year":
-            return qs.distinct().order_by("year_of_release", "rank")
+            return qs.distinct().order_by(sort_field("year_of_release"), "rank")
         elif sort == "name":
-            return qs.distinct().order_by("name")
+            return qs.distinct().order_by(sort_field("name"), "rank")
+        elif sort == "playtime":
+            return (
+                qs.exclude(**{field_prefix: None})
+                .distinct()
+                .order_by(sort_field(field_prefix), "rank")
+            )
         else:  # Default to rank
-            return qs.distinct().order_by("rank")
+            return qs.distinct().order_by(sort_field("rank"))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1396,7 +1411,12 @@ class HomePageView(RobustPaginationMixin, ListView):
         # Build filters dict from query params
         q_param = self.request.GET.get("q", "")
         sort_param = self.request.GET.get("sort", "rank")
+        if sort_param not in {"rank", "year", "name", "playtime"}:
+            sort_param = "rank"
+
         dir_param = self.request.GET.get("dir", "asc")
+        if dir_param not in {"asc", "desc"}:
+            dir_param = "asc"
         genres_param = self.request.GET.get("genres")
         platforms_param = self.request.GET.get("platforms")
         series_param = self.request.GET.get("series")

@@ -910,6 +910,34 @@ class HomePageFilterTest(TestCase):
         self.assertEqual(games[1], self.game1)  # The Legend of Zelda
         self.assertEqual(games[2], self.game2)  # Zelda II
 
+    def test_sort_by_year_descending(self):
+        """Test sorting by year descending."""
+        response = self.client.get(reverse("home") + "?sort=year&dir=desc")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        self.assertEqual(games[0], self.game2)  # 1987
+        self.assertEqual(games[1], self.game1)  # 1986
+        self.assertEqual(games[2], self.game3)  # 1985
+
+    def test_sort_by_rank_descending(self):
+        """Test sorting by rank descending."""
+        response = self.client.get(reverse("home") + "?sort=rank&dir=desc")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        self.assertEqual(games[0], self.game2)  # rank 50
+        self.assertEqual(games[1], self.game3)  # rank 2
+        self.assertEqual(games[2], self.game1)  # rank 1
+
+    def test_invalid_sort_direction_defaults_to_ascending(self):
+        """Invalid sort direction should fall back to ascending."""
+        response = self.client.get(reverse("home") + "?sort=year&dir=sideways")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        self.assertEqual(games[0], self.game3)  # 1985
+        self.assertEqual(games[1], self.game1)  # 1986
+        self.assertEqual(games[2], self.game2)  # 1987
+        self.assertEqual(response.context["filters"]["sortDirection"], "asc")
+
     def test_sort_with_filters(self):
         """Test that sort persists with genre and platform filters."""
         response = self.client.get(
@@ -937,6 +965,7 @@ class HomePageFilterTest(TestCase):
         # Should fall back to rank sorting
         self.assertEqual(games[0], self.game1)  # rank 1
         self.assertEqual(games[1], self.game3)  # rank 2
+        self.assertEqual(response.context["filters"]["sort"], "rank")
 
 
 class GameSearchPlayedFilterTest(TestCase):
@@ -3742,6 +3771,40 @@ class HLTBFilteringTests(TestCase):
         response = self.client.get(reverse("home") + "?hltb_min=abc&hltb_max=xyz")
         self.assertEqual(response.status_code, 200)
         # Should return all games since invalid values are ignored
+
+    def test_sort_by_playtime_ascending(self):
+        """Playtime sort should use main-story hours ascending."""
+        response = self.client.get(reverse("home") + "?sort=playtime")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        self.assertEqual(games, [self.game1, self.game2, self.game3])
+
+    def test_sort_by_playtime_descending(self):
+        """Playtime sort should use main-story hours descending."""
+        response = self.client.get(reverse("home") + "?sort=playtime&dir=desc")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        self.assertEqual(games, [self.game3, self.game2, self.game1])
+
+    def test_sort_by_playtime_completionist_mode(self):
+        """Playtime sort should honor completionist mode."""
+        hltb = HLTBGameData.objects.get(game=self.game1, is_primary=True)
+        hltb.completionist_hours = 70
+        hltb.save(update_fields=["completionist_hours"])
+
+        response = self.client.get(
+            reverse("home") + "?sort=playtime&hltb_mode=completionist"
+        )
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        self.assertEqual(games, [self.game2, self.game1, self.game3])
+
+    def test_sort_by_playtime_excludes_games_without_hltb(self):
+        """Playtime sort should exclude games without the relevant HLTB data."""
+        response = self.client.get(reverse("home") + "?sort=playtime")
+        self.assertEqual(response.status_code, 200)
+        games = list(response.context["games"])
+        self.assertNotIn(self.game_no_hltb, games)
 
     def test_hltb_max_less_than_min_corrected(self):
         """Test that max < min is corrected to max = min."""
