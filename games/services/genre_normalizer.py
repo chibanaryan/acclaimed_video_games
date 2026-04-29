@@ -229,17 +229,19 @@ GENRE_MAPPING = {
     "Minigame": None,  # Not a meaningful genre classification
     "Minigames": None,
     "Various": None,  # Too vague (UFO 50)
-    "Snake": None,  # Too specific (single game type)
-    "Art": None,  # Too vague
-    "Art game": None,  # Too vague
+    "Snake": "Maze",  # Specific arcade variant; group with maze/action games
+    "Art": "Adventure",  # Broad descriptor; experimental games fit Adventure best
+    "Art game": "Adventure",  # Broad descriptor; experimental games fit Adventure best
     "Art tool": None,
     "Augmented reality": None,  # Platform, not genre
     "Artillery": None,  # Too specific
+    "Electronic literature": "Interactive Drama",
     "First-person": None,
     "Hacking": None,
     "Level editor": None,
     "Lunar Lander": None,
-    "Vehicle construction": None,
+    "Puzzle game": "Puzzle",
+    "Vehicle construction": "Construction & Management",
 }
 
 # Hierarchy structure: category -> list of child genres
@@ -326,6 +328,9 @@ GENRE_HIERARCHY = {
     # REMOVED: "Hybrid & Specialized" - genres redistributed to other categories
 }
 
+OTHER_GENRE_NAME = "Other"
+ALLOWED_ROOT_GENRES = frozenset(GENRE_HIERARCHY) | {OTHER_GENRE_NAME}
+
 # Build reverse mapping: genre -> parent category
 _GENRE_TO_PARENT = {}
 for category, children in GENRE_HIERARCHY.items():
@@ -346,9 +351,11 @@ def get_genre_parent_name(genre_name: str) -> Optional[str]:
         genre_name: Canonical genre name
 
     Returns:
-        Parent category name, or None if genre is a root category or unknown
+        Parent category name, Other for unknown genres, or None for root categories
     """
-    return _GENRE_TO_PARENT.get(genre_name)
+    if genre_name in ALLOWED_ROOT_GENRES:
+        return None
+    return _GENRE_TO_PARENT.get(genre_name, OTHER_GENRE_NAME)
 
 
 def get_or_create_genre(genre_name: str):

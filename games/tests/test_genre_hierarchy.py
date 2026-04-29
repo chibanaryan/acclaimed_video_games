@@ -88,9 +88,10 @@ class GenreNormalizerTest(TestCase):
         self.assertIsNone(normalize_genre("Minigame"))
         self.assertIsNone(normalize_genre("Minigames"))
         self.assertIsNone(normalize_genre("Various"))
-        self.assertIsNone(normalize_genre("Art game"))
         # Exploration maps to Walking Simulator (only 1 game: Edith Finch)
         self.assertEqual(normalize_genre("Exploration"), "Walking Simulator")
+        self.assertEqual(normalize_genre("Art game"), "Adventure")
+        self.assertEqual(normalize_genre("Snake"), "Maze")
 
     def test_normalize_hack_and_slash(self):
         """Test that Hack and slash normalizes to its own genre, not Beat 'em Up."""
@@ -111,8 +112,14 @@ class GenreNormalizerTest(TestCase):
     def test_normalize_new_orphan_root_mappings(self):
         """Test canonical mappings for newly discovered orphan root genres."""
         self.assertEqual(normalize_genre("Auto battler"), "Strategy")
+        self.assertEqual(normalize_genre("art"), "Adventure")
+        self.assertEqual(normalize_genre("Electronic literature"), "Interactive Drama")
         self.assertEqual(normalize_genre("Monster tamer"), "Role-Playing")
+        self.assertEqual(normalize_genre("puzzle game"), "Puzzle")
         self.assertEqual(normalize_genre("Turn-based"), "Strategy")
+        self.assertEqual(
+            normalize_genre("vehicle construction"), "Construction & Management"
+        )
         self.assertEqual(normalize_genre("Wargame"), "Strategy")
         self.assertEqual(
             normalize_genre("Management simulation"), "Management Simulation"
@@ -124,7 +131,9 @@ class GenreNormalizerTest(TestCase):
         self.assertIsNone(normalize_genre("First-person"))
         self.assertIsNone(normalize_genre("Hacking"))
         self.assertIsNone(normalize_genre("Level editor"))
-        self.assertIsNone(normalize_genre("Vehicle construction"))
+        self.assertEqual(
+            normalize_genre("Vehicle construction"), "Construction & Management"
+        )
         self.assertIsNone(normalize_genre("Cooking"))
         self.assertIsNone(normalize_genre("Art tool"))
         self.assertIsNone(normalize_genre("Lunar Lander"))
@@ -339,11 +348,13 @@ class GetGenreParentNameTest(TestCase):
         self.assertIsNone(get_genre_parent_name("Adventure"))
         self.assertIsNone(get_genre_parent_name("Role-Playing"))
         self.assertIsNone(get_genre_parent_name("Shooter"))  # New root category
+        self.assertIsNone(get_genre_parent_name("Simulation"))
+        self.assertIsNone(get_genre_parent_name("Other"))
 
-    def test_returns_none_for_unknown_genre(self):
-        """Test that unknown genres return None."""
-        self.assertIsNone(get_genre_parent_name("Unknown Genre"))
-        self.assertIsNone(get_genre_parent_name("Made Up Category"))
+    def test_returns_other_for_unknown_genre(self):
+        """Test that unknown genres are parented under Other."""
+        self.assertEqual(get_genre_parent_name("Unknown Genre"), "Other")
+        self.assertEqual(get_genre_parent_name("Made Up Category"), "Other")
 
 
 class GetOrCreateGenreTest(TestCase):
@@ -361,16 +372,17 @@ class GetOrCreateGenreTest(TestCase):
         result = get_or_create_genre("Existing Test Genre GCT")
         self.assertEqual(result.id, existing.id)
 
-    def test_creates_new_root_genre(self):
-        """Test creating a new root-level genre."""
+    def test_creates_unknown_genre_under_other(self):
+        """Test creating an unknown genre under the Other fallback root."""
         # Use a name that's not in GENRE_HIERARCHY
         result = get_or_create_genre("Completely New Genre GCT")
 
         self.assertEqual(result.name, "Completely New Genre GCT")
         self.assertEqual(result.slug, "completely-new-genre-gct")
-        self.assertEqual(result.level, 0)
-        self.assertIsNone(result.parent)
-        self.assertEqual(result.path, "Completely New Genre GCT")
+        self.assertEqual(result.level, 1)
+        self.assertIsNotNone(result.parent)
+        self.assertEqual(result.parent.name, "Other")
+        self.assertEqual(result.path, "Other > Completely New Genre GCT")
 
     def test_creates_child_genre_with_parent(self):
         """Test creating a child genre with proper parent from hierarchy."""

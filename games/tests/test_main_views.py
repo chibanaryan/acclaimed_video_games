@@ -85,6 +85,53 @@ class HomePageViewTest(TestCase):
         games = list(response.context["games"])
         self.assertEqual(len(games), 2)  # We created 2 games
 
+    def test_other_genre_root_hidden_without_games_underneath(self):
+        """Other should not appear in filters unless it has games below it."""
+        WikipediaGenre.objects.create(
+            name="Other",
+            slug="other",
+            level=0,
+            path="Other",
+            display_order=99,
+        )
+
+        response = self.client.get(reverse("home"))
+
+        genre_names = {genre["name"] for genre in response.context["genres"]}
+        self.assertNotIn("Other", genre_names)
+
+    def test_other_genre_root_visible_with_descendant_games(self):
+        """Other should appear when a descendant genre has linked games."""
+        other = WikipediaGenre.objects.create(
+            name="Other",
+            slug="other",
+            level=0,
+            path="Other",
+            display_order=99,
+        )
+        unknown_parent = WikipediaGenre.objects.create(
+            name="Experimental",
+            slug="experimental",
+            parent=other,
+            level=1,
+            path="Other > Experimental",
+        )
+        unknown_leaf = WikipediaGenre.objects.create(
+            name="Micro Narrative",
+            slug="micro-narrative",
+            parent=unknown_parent,
+            level=2,
+            path="Other > Experimental > Micro Narrative",
+        )
+        self.game1.wikipedia_genres.add(unknown_leaf)
+
+        response = self.client.get(reverse("home"))
+
+        genre_names = {genre["name"] for genre in response.context["genres"]}
+        self.assertIn("Other", genre_names)
+        self.assertIn("Experimental", genre_names)
+        self.assertIn("Micro Narrative", genre_names)
+
     def test_rank_distribution_uses_dynamic_global_max_rank(self):
         """Rank distribution should scale to the true highest rank."""
         Game.objects.bulk_create(

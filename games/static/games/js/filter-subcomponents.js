@@ -683,6 +683,7 @@
                 Simulation: "mdi-cog",
                 "Racing & Sports": "mdi-car-sports",
                 "Puzzle & Casual": "mdi-puzzle",
+                Other: "mdi-layers",
             },
 
             init: function () {

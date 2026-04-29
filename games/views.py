@@ -97,6 +97,24 @@ def _build_filter_cache_key(prefix, filters, keys, user_id=None):
     return f"{prefix}:{config.CACHE_VERSION}:{digest}"
 
 
+def _genre_ids_with_games_or_descendant_games(genres):
+    """Return genre IDs that have games plus every ancestor ID."""
+    by_id = {genre["id"]: genre for genre in genres}
+    visible_ids = set()
+
+    for genre in genres:
+        if genre["game_count"] <= 0:
+            continue
+
+        current = genre
+        while current and current["id"] not in visible_ids:
+            visible_ids.add(current["id"])
+            parent_id = current["parent_id"]
+            current = by_id.get(parent_id) if parent_id else None
+
+    return visible_ids
+
+
 def _get_played_game_ids(user):
     """Return cached list of played game IGDB IDs for a user."""
     cache_key = f"played_games_{user.id}"
@@ -1343,13 +1361,7 @@ class HomePageView(RobustPaginationMixin, ListView):
                     "slug",
                 )
             )
-            # Find parent IDs that have children with games
-            parents_with_games = {
-                g["parent_id"]
-                for g in all_genres
-                if g["game_count"] > 0 and g["parent_id"]
-            }
-            # Keep genres that have games OR are parents with children that have games
+            visible_genre_ids = _genre_ids_with_games_or_descendant_games(all_genres)
             genres = [
                 {
                     **g,
@@ -1357,7 +1369,7 @@ class HomePageView(RobustPaginationMixin, ListView):
                     "parent_id": str(g["parent_id"]) if g["parent_id"] else None,
                 }
                 for g in all_genres
-                if g["game_count"] > 0 or g["id"] in parents_with_games
+                if g["id"] in visible_genre_ids
             ]
             cache.set(
                 genre_cache_key,
