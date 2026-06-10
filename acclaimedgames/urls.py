@@ -124,7 +124,7 @@ urlpatterns = [
         name="developer-alias-redirect",
     ),
     path("lists/", views.ListListView.as_view(), name="list-list"),
-    path("news/", views.NewsListView.as_view(), name="news-list"),
+    path("news/", views.news_gone, name="news-list"),
     # Blog/Articles
     path("blog/", views.ArticleListView.as_view(), name="article-list"),
     path("blog/<slug:slug>/", views.ArticleDetailView.as_view(), name="article-detail"),

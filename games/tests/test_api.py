@@ -1029,44 +1029,6 @@ class DeveloperSerializerTests(TestCase):
         self.assertEqual(serializer.data["games_count"], 1)
 
 
-class PostSerializerTests(TestCase):
-    """Tests for PostSerializer get_author method."""
-
-    def test_get_author_with_full_name(self):
-        """Test that author's full name is returned when available."""
-        from django.contrib.auth import get_user_model
-
-        User = get_user_model()
-        user = User.objects.create_user(
-            username="testuser-ps", first_name="John", last_name="Doe"
-        )
-        post = models.Post.objects.create(
-            title="Test Post", text="Content", author=user, active=True
-        )
-        serializer = serializers.PostSerializer(post)
-        self.assertEqual(serializer.data["author"], "John Doe")
-
-    def test_get_author_fallback_to_username(self):
-        """Test that author's username is used when full name is empty."""
-        from django.contrib.auth import get_user_model
-
-        User = get_user_model()
-        user = User.objects.create_user(username="testuser2-ps")
-        post = models.Post.objects.create(
-            title="Test Post 2", text="Content", author=user, active=True
-        )
-        serializer = serializers.PostSerializer(post)
-        self.assertEqual(serializer.data["author"], "testuser2-ps")
-
-    def test_get_author_returns_none_when_no_author(self):
-        """Test that None is returned when post has no author."""
-        post = models.Post.objects.create(
-            title="Test Post 3", text="Content", active=True
-        )
-        serializer = serializers.PostSerializer(post)
-        self.assertIsNone(serializer.data["author"])
-
-
 class WikipediaGenreTreeSerializerTests(TestCase):
     """Tests for WikipediaGenreTreeSerializer methods."""
 

@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Remove public `/news/` page; route now returns 410 Gone so search engines deindex it (Posts kept for email notifications)
+- Drop unused `PostSerializer` and `/news/` links in auth forms
 - Add community forum at `/forum/` (django-machina) behind `FORUM_ENABLED` flag
 - Site Feedback forum plus Publications forum with auto-maintained "Publication reputation scores" sticky topic (ranked table, syncs on Publication save/delete)
 - Add `reputation_score` field to Publication (staff-edited in admin)

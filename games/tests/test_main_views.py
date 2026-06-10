@@ -70,13 +70,10 @@ class HomePageViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "games/includes/_game_list_content.html")
 
-    def test_news_page_contains_posts(self):
-        """Test that news page includes posts."""
+    def test_news_page_returns_410_gone(self):
+        """The removed /news/ page returns 410 so search engines deindex it."""
         response = self.client.get(reverse("news-list"))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("posts", response.context)
-        posts = list(response.context["posts"])
-        self.assertTrue(len(posts) > 0)
+        self.assertEqual(response.status_code, 410)
 
     def test_context_contains_top_games(self):
         """Test that context includes top 10 games."""
