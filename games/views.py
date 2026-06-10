@@ -1438,16 +1438,13 @@ class HomePageView(AnonymousResponseCacheMixin, RobustPaginationMixin, ListView)
         context["filters"] = filters
         # Slug map so client-side filtering can push the clean /games/...
         # SEO URLs when the filter state matches one (single root genre,
-        # single platform or manufacturer family, or a pure year/decade range)
+        # single qualifying platform, or a pure year/decade range)
         context["seo_url_data"] = {
             "genres": {
                 str(g["id"]): g["slug"] for g in landing_pages.get_landing_genres()
             },
             "platforms": {
                 str(p["id"]): p["slug"] for p in landing_pages.get_landing_platforms()
-            },
-            "families": {
-                f["slug"]: f["ids"] for f in landing_pages.get_landing_families()
             },
             "years": landing_pages.get_landing_years(),
             "decades": landing_pages.get_landing_decades(),
@@ -1847,7 +1844,7 @@ class SeoRankingPageView(HomePageView):
 
 
 class CategoryRankingView(SeoRankingPageView):
-    """Genre, platform, or platform-family rankings at /games/<slug>/."""
+    """Genre or platform rankings at /games/<slug>/."""
 
     def get_page_seo(self):
         slug = self.kwargs["slug"]
@@ -1858,8 +1855,6 @@ class CategoryRankingView(SeoRankingPageView):
 
         if kind == "genre":
             params = {"genres": str(entry["id"])}
-        elif kind == "family":
-            params = {"platforms": ",".join(str(i) for i in entry["ids"])}
         else:
             params = {"platforms": str(entry["id"])}
 
@@ -1930,12 +1925,6 @@ class BrowseIndexView(AnonymousResponseCacheMixin, TemplateView):
             for g in landing_pages.get_landing_genres()
         ]
         context["platform_pages"] = [
-            {
-                "label": f"{f['name']} Games",
-                "url": reverse("games-by-category", kwargs={"slug": f["slug"]}),
-            }
-            for f in landing_pages.get_landing_families()
-        ] + [
             {
                 "label": f"{p['name']} Games",
                 "url": reverse("games-by-category", kwargs={"slug": p["slug"]}),

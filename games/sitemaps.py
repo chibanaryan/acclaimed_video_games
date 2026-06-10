@@ -49,10 +49,6 @@ class LandingPageSitemap(Sitemap):
             for platform in landing_pages.get_landing_platforms()
         ]
         items += [
-            ("games-by-category", {"slug": family["slug"]})
-            for family in landing_pages.get_landing_families()
-        ]
-        items += [
             ("games-by-decade", {"decade": decade})
             for decade in landing_pages.get_landing_decades()
         ]

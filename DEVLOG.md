@@ -1,12 +1,10 @@
 # Developer Log
 
-## 2026-06-10 (clean URLs + family pages)
+## 2026-06-10 (clean URLs)
 
 - Client-side filtering now pushes clean SEO URLs (`/games/role-playing/`, `/games/1998/`) when the filter state matches a single SEO page; falls back to query params otherwise
 - Back/forward navigation maps clean paths back to filter state; SEO routes eager-load the client filtering bundle
-- Add manufacturer-family pages (`/games/pc/`, `/games/nintendo/`, `/games/playstation/`, `/games/xbox/`, `/games/sega/`) matching the UI's platform groups; family selections push the family URL
-- `/games/pc/` redefined from Windows-only to the PC family; Windows moves to `/games/windows/` (migration 0110 frees family slugs)
-- Drop PS1/original-Xbox individual pages (titles were identical to their family pages); their games count toward the family
+- Briefly trialed manufacturer-family pages (`/games/pc/` = Win+DOS+Linux+Mac etc.), then reverted to individual platform pages for every qualifying platform (migrations 0110/0111 net out to the original slugs)
 - Fix Django template comments leaking into rendered page (multi-line `{# #}`)
 
 ## 2026-06-10 (SEO ranking pages)

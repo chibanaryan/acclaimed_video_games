@@ -35,7 +35,7 @@ class LandingPageDataMixin:
         cls.empty_genre = cls._root_genre("Strategy")
 
         cls.ps5 = Platform.objects.create(code="PS5", name="PlayStation 5")
-        cls.pc = Platform.objects.create(code="WIN", name="Windows PC", slug="windows")
+        cls.pc = Platform.objects.create(code="WIN", name="Windows PC", slug="pc")
         cls.vectrex = Platform.objects.create(code="VECT", name="Vectrex")
 
         # 26 games in 1998 qualify the PS5/PC platforms, the 1998 year page,
@@ -90,7 +90,7 @@ class LandingPagesServiceTests(LandingPageDataMixin, TestCase):
     def test_landing_platforms_respect_threshold(self):
         slugs = {p["slug"] for p in landing_pages.get_landing_platforms()}
         self.assertIn("playstation-5", slugs)
-        self.assertIn("windows", slugs)
+        self.assertIn("pc", slugs)
         self.assertNotIn("vectrex", slugs)
 
     def test_landing_years_respect_threshold(self):
@@ -125,40 +125,10 @@ class LandingPagesServiceTests(LandingPageDataMixin, TestCase):
         self.assertIsNone(landing_pages.resolve_slug("vectrex"))
         self.assertIsNone(landing_pages.resolve_slug("does-not-exist"))
 
-    def test_genre_platform_and_family_slugs_never_collide(self):
+    def test_genre_and_platform_slugs_never_collide(self):
         genre_slugs = {g["slug"] for g in landing_pages.get_landing_genres()}
         platform_slugs = {p["slug"] for p in landing_pages.get_landing_platforms()}
-        family_slugs = set(landing_pages.FAMILY_PAGES)
         self.assertEqual(genre_slugs & platform_slugs, set())
-        self.assertEqual((genre_slugs | platform_slugs) & family_slugs, set())
-
-    def test_landing_families_resolve_member_ids(self):
-        families = {f["slug"]: f for f in landing_pages.get_landing_families()}
-        self.assertEqual(families["pc"]["ids"], [self.pc.id])
-        self.assertEqual(families["pc"]["name"], "PC")
-        self.assertEqual(families["playstation"]["ids"], [self.ps5.id])
-        # No Sega platforms in the fixture, so no sega page
-        self.assertNotIn("sega", families)
-
-    def test_resolve_slug_family_takes_precedence(self):
-        kind, entry = landing_pages.resolve_slug("pc")
-        self.assertEqual(kind, "family")
-        self.assertEqual(entry["ids"], [self.pc.id])
-
-    def test_family_label_platforms_are_excluded_from_individual_pages(self):
-        # "PlayStation" (PS1) and "Xbox" (original) would generate pages
-        # titled identically to their family pages
-        ps1 = Platform.objects.create(
-            code="PS", name="PlayStation", slug="playstation-1"
-        )
-        for game in self.games:
-            game.platforms.add(ps1)
-        cache.clear()
-        slugs = {p["slug"] for p in landing_pages.get_landing_platforms()}
-        self.assertNotIn("playstation-1", slugs)
-        # But its games still count toward the family page
-        families = {f["slug"]: f for f in landing_pages.get_landing_families()}
-        self.assertIn(ps1.id, families["playstation"]["ids"])
 
 
 class LandingPageViewTests(LandingPageDataMixin, TestCase):
@@ -224,10 +194,9 @@ class LandingPageViewTests(LandingPageDataMixin, TestCase):
         filters = json.loads(filters_match.group(1))
         self.assertEqual(filters["platforms"], [str(self.ps5.id)])
 
-    def test_family_page_uses_natural_filter_title(self):
+    def test_platform_page_uses_natural_filter_title(self):
         response = self.client.get("/games/pc/")
         self.assertContains(response, "Most Acclaimed PC Games of All Time")
-        # The family's member platforms are seeded into the filter component
         filters_match = re.search(
             r'<script id="filters-data" type="application/json">(.*?)</script>',
             response.content.decode(),
@@ -323,7 +292,6 @@ class LandingPageViewTests(LandingPageDataMixin, TestCase):
         self.assertEqual(data["platforms"][str(self.ps5.id)], "playstation-5")
         self.assertIn(1998, data["years"])
         self.assertIn(1990, data["decades"])
-        self.assertEqual(data["families"]["pc"], [self.pc.id])
         # Non-qualifying entries are excluded so JS never pushes their URLs
         self.assertNotIn(str(self.maze.id), data["genres"])
         self.assertNotIn(str(self.vectrex.id), data["platforms"])
@@ -505,6 +473,38 @@ class PlatformFamilySlugMigrationTests(TestCase):
         self.migration.backwards(_FakeApps(), None)
         self.win.refresh_from_db()
         self.assertEqual(self.win.slug, "pc")
+
+
+class RestoreIndividualSlugMigrationTests(TestCase):
+    """Tests for migration 0111 restoring individual platform slugs."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.migration = importlib.import_module(
+            "games.migrations.0111_restore_individual_platform_slugs"
+        )
+
+    def setUp(self):
+        self.win = Platform.objects.create(
+            code="WIN", name="Windows PC", slug="windows"
+        )
+        self.ps1 = Platform.objects.create(
+            code="PS", name="PlayStation", slug="playstation-1"
+        )
+
+    def test_forwards_restores_original_slugs(self):
+        self.migration.forwards(_FakeApps(), None)
+        self.win.refresh_from_db()
+        self.ps1.refresh_from_db()
+        self.assertEqual(self.win.slug, "pc")
+        self.assertEqual(self.ps1.slug, "playstation")
+
+    def test_backwards_reapplies_family_era_slugs(self):
+        self.migration.forwards(_FakeApps(), None)
+        self.migration.backwards(_FakeApps(), None)
+        self.win.refresh_from_db()
+        self.assertEqual(self.win.slug, "windows")
 
 
 class SiteDomainMigrationTests(TestCase):

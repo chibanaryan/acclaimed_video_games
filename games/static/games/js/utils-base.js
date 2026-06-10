@@ -308,17 +308,6 @@ function seoCleanUrl(params, minYear, maxYear) {
     } else if (keys === 'platforms') {
         const slug = data.platforms[p.get('platforms')];
         if (slug) return '/games/' + slug + '/';
-        // A selection of exactly one manufacturer family's platforms (e.g.
-        // the UI's PC group = Win+DOS+Linux+Mac) maps to the family page
-        if (data.families) {
-            const selected = p.get('platforms').split(',')
-                .map(Number).sort((a, b) => a - b).join(',');
-            for (const familySlug in data.families) {
-                if (data.families[familySlug].join(',') === selected) {
-                    return '/games/' + familySlug + '/';
-                }
-            }
-        }
     } else if (keys === 'end,start') {
         if (start === end && data.years.indexOf(start) !== -1) {
             return '/games/' + start + '/';
@@ -359,9 +348,6 @@ function seoPathSearch(pathname) {
     }
     const slugMatch = pathname.match(/^\/games\/([a-z0-9-]+)\/$/);
     if (slugMatch) {
-        if (data.families && data.families[slugMatch[1]]) {
-            return 'platforms=' + data.families[slugMatch[1]].join(',');
-        }
         for (const id in data.genres) {
             if (data.genres[id] === slugMatch[1]) return 'genres=' + id;
         }
