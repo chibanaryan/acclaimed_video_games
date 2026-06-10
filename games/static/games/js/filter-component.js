@@ -219,8 +219,14 @@ document.addEventListener('alpine:init', () => {
                             if (component) {
                                 // Sync filter state from URL params (Alpine reinitializes
                                 // from #filters-data which may not match the URL after
-                                // client-side filtering changed it via pushState)
-                                const params = new URLSearchParams(window.location.search);
+                                // client-side filtering changed it via pushState).
+                                // Clean SEO paths carry no search params, so map the
+                                // path back to its implied filter
+                                const params = new URLSearchParams(
+                                    window.location.search ||
+                                    (typeof seoPathSearch === 'function'
+                                        ? seoPathSearch(window.location.pathname) : '')
+                                );
                                 component.filters.q = params.get('q') || '';
                                 component.filters.start = params.get('start') ? parseInt(params.get('start')) : component.minYear;
                                 component.filters.end = params.get('end') ? parseInt(params.get('end')) : component.maxYear;
@@ -254,7 +260,13 @@ document.addEventListener('alpine:init', () => {
 
                 // Store and register instance-specific listeners (cleanup in destroy())
                 this._popstateListener = (event) => {
-                    const params = new URLSearchParams(window.location.search);
+                    // Clean SEO paths (/games/<slug>/ etc.) carry no search
+                    // params, so map the path back to its implied filter
+                    const params = new URLSearchParams(
+                        window.location.search ||
+                        (typeof seoPathSearch === 'function'
+                            ? seoPathSearch(window.location.pathname) : '')
+                    );
                     this.filters.q = params.get('q') || '';
                     this.filters.start = params.get('start') ? parseInt(params.get('start')) : this.minYear;
                     this.filters.end = params.get('end') ? parseInt(params.get('end')) : this.maxYear;
@@ -337,6 +349,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         hasActiveFilterParamsOnUrl() {
+            // Clean SEO paths imply a filter without any search params
+            if (!window.location.search &&
+                typeof seoPathSearch === 'function' &&
+                seoPathSearch(window.location.pathname)) {
+                return true;
+            }
             const params = new URLSearchParams(window.location.search);
             if (!params.toString()) return false;
 
@@ -1020,7 +1038,12 @@ document.addEventListener('alpine:init', () => {
                     }
                 }
 
-                window.history[historyMethod]({}, '', url);
+                // Push the clean SEO page URL when this filter state has one
+                // (single genre/platform/year/decade) so shared links point
+                // at the indexable page
+                const pushUrl = (typeof seoCleanUrl === 'function' &&
+                    seoCleanUrl(params, this.minYear, this.maxYear)) || url;
+                window.history[historyMethod]({}, '', pushUrl);
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Error fetching results:', err);
@@ -1108,7 +1131,10 @@ document.addEventListener('alpine:init', () => {
             }
 
             const params = buildFilterParams(this.filters);
-            const url = '/games/?' + normalizeUrl(params.toString());
+            // Prefer the clean SEO page URL when this filter state has one
+            const url = (typeof seoCleanUrl === 'function' &&
+                seoCleanUrl(params, this.minYear, this.maxYear)) ||
+                ('/games/?' + normalizeUrl(params.toString()));
             window.history[historyMethod]({}, '', url);
 
             this.isLoading = false;

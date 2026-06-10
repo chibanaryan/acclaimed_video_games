@@ -15,7 +15,7 @@
 {% block pre_alpine %}
     {# Filter subcomponents + filter component factories (must load before Alpine core) #}
     <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-subcomponents.min.js" %}?v=1');</script>
-    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=6');</script>
+    <script nonce="{{ csp_nonce }}">window.alpineScripts.push('{% static "games/js/filter-component.min.js" %}?v=7');</script>
 {% endblock %}
 
 {% block extra_head %}
@@ -41,6 +41,8 @@
             }, 100);
         }
     </script>
+    {# Clean SEO URL map: lets client-side filtering push /games/<slug>/ URLs when the filter state matches a single SEO ranking page #}
+    {{ seo_url_data|json_script:"seo-urls-data" }}
     {# Static URLs for client-side rendering (Django adds hashes in production) #}
     <script nonce="{{ csp_nonce }}">
     window.staticUrls = {
@@ -109,7 +111,9 @@
             document.head.appendChild(s);
         }
 
-        if (hasActiveFilterParams()) {
+        {# SEO routes (/games/<slug>/ etc.) carry path-implied filters with no query string, so treat them like deep-linked filter URLs #}
+        var pathFiltered = {% if seo_title %}true{% else %}false{% endif %};
+        if (pathFiltered || hasActiveFilterParams()) {
             loadCSF();
             removeInteractionListeners();
             return;

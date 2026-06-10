@@ -265,6 +265,114 @@ function normalizeUrl(url) {
 }
 
 /**
+ * Reads the SEO clean-URL map embedded by the home page template
+ * (#seo-urls-data json_script). Cached after first parse.
+ * @returns {Object|null} {genres: {id: slug}, platforms: {id: slug},
+ *                         years: [int], decades: [int]} or null
+ */
+function getSeoUrlData() {
+    if (window._seoUrlData !== undefined) return window._seoUrlData;
+    const el = document.getElementById('seo-urls-data');
+    window._seoUrlData = el ? JSON.parse(el.textContent) : null;
+    return window._seoUrlData;
+}
+
+/**
+ * Returns the clean SEO page URL (/games/<slug>/, /games/<year>/,
+ * /games/<decade>s/) when the built filter params match exactly one SEO
+ * ranking page, otherwise null. Used so pushed history URLs are the
+ * canonical, indexable pages whenever possible (shared links then point
+ * at them instead of query-param URLs that canonicalize to /).
+ * @param {URLSearchParams} params - Params from buildFilterParams
+ * @param {number} minYear - Global minimum release year
+ * @param {number} maxYear - Global maximum release year
+ * @returns {string|null} Clean URL path or null
+ */
+function seoCleanUrl(params, minYear, maxYear) {
+    const data = getSeoUrlData();
+    if (!data) return null;
+
+    // Work on a copy; a full year range means "no year filter"
+    const p = new URLSearchParams(params.toString());
+    const start = parseInt(p.get('start'));
+    const end = parseInt(p.get('end'));
+    if (start === minYear && end === maxYear) {
+        p.delete('start');
+        p.delete('end');
+    }
+
+    const keys = Array.from(p.keys()).sort().join(',');
+    if (keys === 'genres') {
+        const slug = data.genres[p.get('genres')];
+        if (slug) return '/games/' + slug + '/';
+    } else if (keys === 'platforms') {
+        const slug = data.platforms[p.get('platforms')];
+        if (slug) return '/games/' + slug + '/';
+        // A selection of exactly one manufacturer family's platforms (e.g.
+        // the UI's PC group = Win+DOS+Linux+Mac) maps to the family page
+        if (data.families) {
+            const selected = p.get('platforms').split(',')
+                .map(Number).sort((a, b) => a - b).join(',');
+            for (const familySlug in data.families) {
+                if (data.families[familySlug].join(',') === selected) {
+                    return '/games/' + familySlug + '/';
+                }
+            }
+        }
+    } else if (keys === 'end,start') {
+        if (start === end && data.years.indexOf(start) !== -1) {
+            return '/games/' + start + '/';
+        }
+        if (start % 10 === 0 && end === start + 9 && data.decades.indexOf(start) !== -1) {
+            return '/games/' + start + 's/';
+        }
+    }
+    return null;
+}
+
+/**
+ * Maps a clean SEO page path back to its equivalent query string so
+ * history navigation (popstate/bfcache) can restore filter state from
+ * URLs that carry no search params.
+ * @param {string} pathname - window.location.pathname
+ * @returns {string} Query string like 'genres=201' or '' if not an SEO path
+ */
+function seoPathSearch(pathname) {
+    const data = getSeoUrlData();
+    if (!data) return '';
+
+    const decadeMatch = pathname.match(/^\/games\/(\d{3}0)s\/$/);
+    if (decadeMatch) {
+        const decade = parseInt(decadeMatch[1]);
+        if (data.decades.indexOf(decade) !== -1) {
+            return 'start=' + decade + '&end=' + (decade + 9);
+        }
+        return '';
+    }
+    const yearMatch = pathname.match(/^\/games\/(\d{4})\/$/);
+    if (yearMatch) {
+        const year = parseInt(yearMatch[1]);
+        if (data.years.indexOf(year) !== -1) {
+            return 'start=' + year + '&end=' + year;
+        }
+        return '';
+    }
+    const slugMatch = pathname.match(/^\/games\/([a-z0-9-]+)\/$/);
+    if (slugMatch) {
+        if (data.families && data.families[slugMatch[1]]) {
+            return 'platforms=' + data.families[slugMatch[1]].join(',');
+        }
+        for (const id in data.genres) {
+            if (data.genres[id] === slugMatch[1]) return 'genres=' + id;
+        }
+        for (const id in data.platforms) {
+            if (data.platforms[id] === slugMatch[1]) return 'platforms=' + id;
+        }
+    }
+    return '';
+}
+
+/**
  * Updates URL with filter parameter and navigates
  * @param {string} paramName - Parameter name
  * @param {string} value - Parameter value
