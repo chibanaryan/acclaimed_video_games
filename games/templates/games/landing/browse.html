@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Most Acclaimed Video Games by Genre, Platform, and Year | Acclaimed Video Games{% endblock %}
+{% block meta_description %}Browse rankings of the most critically acclaimed video games by genre, platform, year, and decade, built by aggregating hundreds of critic lists.{% endblock %}
+{% block og_title %}Most Acclaimed Video Games by Genre, Platform, and Year | Acclaimed Video Games{% endblock %}
+{% block og_description %}Browse rankings of the most critically acclaimed video games by genre, platform, year, and decade.{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-3">Most Acclaimed Video Games by Genre, Platform, and Year</h1>
+<p class="text-base-content/80 mb-8 max-w-3xl">
+    Rankings of the most critically acclaimed video games by genre, platform,
+    year, and decade, built by aggregating hundreds of critic lists from major
+    gaming publications.
+</p>
+
+<div class="mb-8">
+    <h2 class="text-xl font-bold mb-3">By genre</h2>
+    <div class="flex flex-wrap gap-2">
+        {% for link in genre_pages %}
+        <a href="{{ link.url }}" class="badge badge-outline badge-lg link-hover">{{ link.label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mb-8">
+    <h2 class="text-xl font-bold mb-3">By platform</h2>
+    <div class="flex flex-wrap gap-2">
+        {% for link in platform_pages %}
+        <a href="{{ link.url }}" class="badge badge-outline badge-lg link-hover">{{ link.label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mb-8">
+    <h2 class="text-xl font-bold mb-3">By decade</h2>
+    <div class="flex flex-wrap gap-2">
+        {% for link in decade_pages %}
+        <a href="{{ link.url }}" class="badge badge-outline badge-lg link-hover">{{ link.label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mb-8">
+    <h2 class="text-xl font-bold mb-3">By year</h2>
+    <div class="flex flex-wrap gap-2">
+        {% for link in year_pages %}
+        <a href="{{ link.url }}" class="badge badge-outline badge-lg link-hover">{{ link.label }}</a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

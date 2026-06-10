@@ -22,7 +22,12 @@ from django.db.models import (
 )
 from django.db.models.functions import Lower
 from django.forms import Form
-from django.http import HttpResponse, HttpResponseGone, StreamingHttpResponse
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseGone,
+    StreamingHttpResponse,
+)
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse, reverse_lazy
@@ -35,12 +40,16 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 
 from core.cache_helpers import get_year_bounds
-from core.mixins import HTMXPartialMixin, RobustPaginationMixin
+from core.mixins import (
+    AnonymousResponseCacheMixin,
+    HTMXPartialMixin,
+    RobustPaginationMixin,
+)
 from core.models import User
 from games import config, constants, models, utils
 from games.cache import invalidate_played_games_cache, invalidate_want_to_play_cache
 from games.forms import ImportForm, ContactForm
-from games.services import contact_spam_guard
+from games.services import contact_spam_guard, landing_pages
 from games.services.percentile_service import calculate_percentile
 
 logger = logging.getLogger(__name__)
@@ -549,7 +558,7 @@ def _build_filter_title(
         )
     else:
         title = f"Most Acclaimed {platform_label}{genre_label}{series_label} Games"
-    return f"{title}{time_suffix}{played_suffix}"
+    return " ".join(f"{title}{time_suffix}{played_suffix}".split())
 
 
 class ContactFormView(FormView):
@@ -1032,131 +1041,20 @@ class GameDetailView(DetailView):
 
 
 @method_decorator(vary_on_headers("X-Requested-With", "HX-Request"), name="dispatch")
-class HomePageView(RobustPaginationMixin, ListView):
+class HomePageView(AnonymousResponseCacheMixin, RobustPaginationMixin, ListView):
     model = models.Game
     template_name = "games/home.html"
     context_object_name = "games"
     paginate_by = 100
     paginate_orphans = 0
-    CACHE_HEADER_SKIP = {
-        "content-length",
-        "content-type",
-        "transfer-encoding",
-        "connection",
-    }
+    page_cache_timeout = config.CACHE_TIMEOUT_HOME_PAGE
 
-    @classmethod
-    def _serialize_headers(cls, response):
-        headers = {}
-        for name, value in response.headers.items():
-            if name.lower() in cls.CACHE_HEADER_SKIP:
-                continue
-            headers[name] = value
-        return headers
-
-    @staticmethod
-    def _serialize_cookies(response):
-        cookies = {}
-        for name, morsel in response.cookies.items():
-            max_age = morsel["max-age"] or None
-            if max_age is not None:
-                try:
-                    max_age = int(max_age)
-                except (TypeError, ValueError):
-                    max_age = None
-            cookies[name] = {
-                "value": morsel.value,
-                "expires": morsel["expires"] or None,
-                "max_age": max_age,
-                "path": morsel["path"] or "/",
-                "domain": morsel["domain"] or None,
-                "secure": bool(morsel["secure"]),
-                "httponly": bool(morsel["httponly"]),
-                "samesite": morsel["samesite"] or None,
-            }
-        return cookies
-
-    @classmethod
-    def _apply_cached_headers(cls, response, headers):
-        for name, value in (headers or {}).items():
-            if name.lower() in cls.CACHE_HEADER_SKIP:
-                continue
-            response[name] = value
-
-    @staticmethod
-    def _apply_cached_cookies(response, cookies):
-        for name, data in (cookies or {}).items():
-            response.set_cookie(
-                name,
-                data.get("value", ""),
-                expires=data.get("expires") or None,
-                max_age=data.get("max_age"),
-                path=data.get("path") or "/",
-                domain=data.get("domain") or None,
-                secure=bool(data.get("secure")),
-                httponly=bool(data.get("httponly")),
-                samesite=data.get("samesite") or None,
-            )
-
-    def dispatch(self, request, *args, **kwargs):
+    def get_page_cache_key(self):
         """Cache rendered home page content for anonymous users to reduce TTFB."""
-        # Only cache for anonymous, non-HTMX full-page requests
-        is_htmx = (
-            request.headers.get("HX-Request")
-            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
-            or request.GET.get("partial") == "true"
-            or request.GET.get("append") == "true"
-        )
-
-        if request.user.is_authenticated or is_htmx or request.method != "GET":
-            return super().dispatch(request, *args, **kwargs)
-
         # Only cache the default home page (no query string)
-        query_string = request.META.get("QUERY_STRING", "")
-        if query_string:
-            return super().dispatch(request, *args, **kwargs)
-        cache_key = f"home_page:{config.CACHE_VERSION}:default"
-
-        # Check cache (store only rendered content to avoid retaining request/context)
-        cached_payload = cache.get(cache_key)
-        if cached_payload is not None:
-            if isinstance(cached_payload, dict) and "content" in cached_payload:
-                from django.http import HttpResponse
-
-                content = cached_payload.get("content", b"")
-                status = cached_payload.get("status", 200)
-                content_type = cached_payload.get("content_type")
-                response = HttpResponse(
-                    content,
-                    status=status,
-                    content_type=content_type or "text/html; charset=utf-8",
-                )
-                self._apply_cached_headers(response, cached_payload.get("headers"))
-                self._apply_cached_cookies(response, cached_payload.get("cookies"))
-                return response
-            # Drop legacy cached payloads (response objects) and rebuild.
-            cache.delete(cache_key)
-
-        # Generate response and cache it
-        response = super().dispatch(request, *args, **kwargs)
-
-        # Only cache successful, non-streaming responses (render first)
-        if response.status_code == 200 and not getattr(response, "streaming", False):
-            if hasattr(response, "render"):
-                response.render()
-            cache.set(
-                cache_key,
-                {
-                    "content": response.content,
-                    "status": response.status_code,
-                    "content_type": response.get("Content-Type"),
-                    "headers": self._serialize_headers(response),
-                    "cookies": self._serialize_cookies(response),
-                },
-                config.CACHE_TIMEOUT_HOME_PAGE,
-            )
-
-        return response
+        if self.request.META.get("QUERY_STRING", ""):
+            return None
+        return f"home_page:{config.CACHE_VERSION}:default"
 
     def get_paginate_by(self, queryset):
         """Always use standard page size - client-side handles deep jumps."""
@@ -1860,6 +1758,180 @@ class HomePageView(RobustPaginationMixin, ListView):
         metadata = models.SiteMetadata.get_instance()
         context["last_update"] = metadata.last_full_update
 
+        return context
+
+
+# Production base for absolute URLs in structured data (matches base.html)
+LANDING_SITE_BASE = "https://www.acclaimedvideogames.com"
+
+
+def _landing_itemlist_json(name, games):
+    """Build ItemList JSON-LD for a landing page's ranked games."""
+    payload = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": name,
+        "numberOfItems": len(games),
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": position,
+                "name": game.name,
+                "url": LANDING_SITE_BASE
+                + reverse("game-detail", kwargs={"slug": game.slug}),
+            }
+            for position, game in enumerate(games, start=1)
+        ],
+    }
+    # Escape "<" so the JSON can never close the surrounding <script> tag
+    return json.dumps(payload).replace("<", "\\u003c")
+
+
+class SeoRankingPageView(HomePageView):
+    """Serve the interactive rankings page at a crawlable /games/... URL.
+
+    The slug/year/decade in the path is translated into the equivalent
+    filter params and injected into request.GET before the normal home
+    page machinery runs, so the full filter UI, pagination, and
+    client-side filtering work unchanged while the URL stays clean and
+    self-canonical for search engines. Explicit query params from user
+    interactions take precedence over the path-implied filters.
+    """
+
+    page_cache_timeout = config.CACHE_TIMEOUT_LANDING_PAGE
+
+    def get_page_cache_key(self):
+        if self.request.META.get("QUERY_STRING", ""):
+            return None
+        return f"landing_page:{config.CACHE_VERSION}:{self.request.path}"
+
+    def get_page_seo(self):
+        """Return filter params and head copy for this URL, or raise 404."""
+        raise NotImplementedError
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.seo = self.get_page_seo()
+        params = request.GET.copy()
+        for key, value in self.seo["params"].items():
+            if key not in params:
+                params[key] = value
+        request.GET = params
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # The natural filter title doubles as the page title so the SEO
+        # routes stay consistent with the interactively filtered page
+        context["seo_title"] = context["filter_title"]
+        context["seo_meta_description"] = self.seo["meta_description"]
+        context["itemlist_json"] = _landing_itemlist_json(
+            context["filter_title"], list(context["games"])[: landing_pages.TOP_N]
+        )
+        return context
+
+
+class CategoryRankingView(SeoRankingPageView):
+    """Genre or platform rankings at /games/<slug>/."""
+
+    def get_page_seo(self):
+        slug = self.kwargs["slug"]
+        resolved = landing_pages.resolve_slug(slug)
+        if resolved is None:
+            raise Http404("No landing page for this slug")
+        kind, entry = resolved
+
+        if kind == "genre":
+            params = {"genres": str(entry["id"])}
+        else:
+            params = {"platforms": str(entry["id"])}
+
+        return {
+            "params": params,
+            "meta_description": (
+                f"The most critically acclaimed {entry['name']} games of all "
+                f"time, ranked by aggregating hundreds of critic lists. "
+                f"Explore {entry['game_count']} acclaimed games."
+            ),
+        }
+
+
+class YearRankingView(SeoRankingPageView):
+    """Year rankings at /games/<year>/."""
+
+    def get_page_seo(self):
+        year = int(self.kwargs["year"])
+        years = landing_pages.get_landing_years()
+        if year not in years:
+            raise Http404("No landing page for this year")
+
+        return {
+            "params": {"start": str(year), "end": str(year)},
+            "meta_description": (
+                f"The most critically acclaimed video games of {year}, ranked "
+                f"by critic consensus across hundreds of published lists."
+            ),
+        }
+
+
+class DecadeRankingView(SeoRankingPageView):
+    """Decade rankings at /games/<decade>s/."""
+
+    def get_page_seo(self):
+        decade = int(self.kwargs["decade"])
+        if decade not in landing_pages.get_landing_decades():
+            raise Http404("No landing page for this decade")
+
+        return {
+            "params": {"start": str(decade), "end": str(decade + 9)},
+            "meta_description": (
+                f"The most critically acclaimed video games of the {decade}s, "
+                f"ranked by critic consensus across hundreds of published "
+                f"lists."
+            ),
+        }
+
+
+class BrowseIndexView(AnonymousResponseCacheMixin, TemplateView):
+    """Index of all /games/... SEO ranking pages."""
+
+    template_name = "games/landing/browse.html"
+    page_cache_timeout = config.CACHE_TIMEOUT_LANDING_PAGE
+
+    def get_page_cache_key(self):
+        if self.request.META.get("QUERY_STRING", ""):
+            return None
+        return f"landing_page:{config.CACHE_VERSION}:{self.request.path}"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["genre_pages"] = [
+            {
+                "label": f"{g['name']} Games",
+                "url": reverse("games-by-category", kwargs={"slug": g["slug"]}),
+            }
+            for g in landing_pages.get_landing_genres()
+        ]
+        context["platform_pages"] = [
+            {
+                "label": f"{p['name']} Games",
+                "url": reverse("games-by-category", kwargs={"slug": p["slug"]}),
+            }
+            for p in landing_pages.get_landing_platforms()
+        ]
+        context["decade_pages"] = [
+            {
+                "label": f"Games of the {decade}s",
+                "url": reverse("games-by-decade", kwargs={"decade": decade}),
+            }
+            for decade in landing_pages.get_landing_decades()
+        ]
+        context["year_pages"] = [
+            {
+                "label": f"Games of {year}",
+                "url": reverse("games-by-year", kwargs={"year": year}),
+            }
+            for year in landing_pages.get_landing_years()
+        ]
         return context
 
 

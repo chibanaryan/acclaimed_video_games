@@ -1,5 +1,15 @@
 # Developer Log
 
+## 2026-06-10 (SEO ranking pages)
+
+- Add 94 crawlable SEO ranking pages: `/games/<genre|platform>/`, `/games/<year>/`, `/games/<decade>s/`, index at `/games/browse/`
+- Pages serve the full interactive rankings page (HomePageView subclass injects path-implied filters into request.GET); titles reuse the natural `filter_title`
+- Add unique meta descriptions, self-canonicals, and ItemList JSON-LD per page; sitemap-only discovery (deliberately no nav/footer/badge links)
+- Add `Platform.slug` with SEO-friendly backfill (`pc`, `sega-genesis`, `snes`, ...)
+- Extract `AnonymousResponseCacheMixin` from HomePageView; landing pages cached 1h for anonymous users
+- Fix sitemap domain to canonical `www` host (Site record migration) and drop staff-only book pages that 404 for crawlers
+- Fix double-space in generated filter titles
+
 ## 2026-06-10
 
 - Remove public `/news/` page; route now returns 410 Gone so search engines deindex it (Posts kept for email notifications)

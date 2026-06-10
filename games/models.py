@@ -172,6 +172,14 @@ class Platform(models.Model):
 
     code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(
+        max_length=110,
+        unique=True,
+        null=True,  # Allow null initially for migration
+        blank=True,
+        db_index=True,
+        help_text="URL-friendly identifier",
+    )
     year_start = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -188,6 +196,15 @@ class Platform(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        from django.utils.text import slugify
+
+        # Auto-generate slug from name if not set
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
 
 
 class Developer(CreatorBase):

@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import RedirectView
 
 from games import views
@@ -105,6 +105,26 @@ urlpatterns = [
         "games/search/",
         RedirectView.as_view(url="/", permanent=True, query_string=True),
         name="games-search",
+    ),
+    # SEO ranking pages under /games/ (the bare /games/ redirect above must
+    # stay - the client-side filter JS pushes /games/?params URLs whose
+    # reloads depend on it). Order matters: browse, then decade (digits+s),
+    # then year (digits), then the catch-all slug.
+    path("games/browse/", views.BrowseIndexView.as_view(), name="games-browse"),
+    re_path(
+        r"^games/(?P<decade>\d{3}0)s/$",
+        views.DecadeRankingView.as_view(),
+        name="games-by-decade",
+    ),
+    re_path(
+        r"^games/(?P<year>\d{4})/$",
+        views.YearRankingView.as_view(),
+        name="games-by-year",
+    ),
+    re_path(
+        r"^games/(?P<slug>[a-z0-9-]+)/$",
+        views.CategoryRankingView.as_view(),
+        name="games-by-category",
     ),
     path("game/<slug:slug>/", views.GameDetailView.as_view(), name="game-detail"),
     path(

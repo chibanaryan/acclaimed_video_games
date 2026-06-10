@@ -3,7 +3,14 @@
 {% load humanize %}
 {% load static %}
 
-{% block title %}Acclaimed Video Games{% endblock %}
+{% block title %}{% if seo_title %}{{ seo_title }} | Acclaimed Video Games{% else %}Acclaimed Video Games{% endif %}{% endblock %}
+
+{% block meta_description %}{% if seo_meta_description %}{{ seo_meta_description }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block og_title %}{% if seo_title %}{{ seo_title }} | Acclaimed Video Games{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block og_description %}{% if seo_meta_description %}{{ seo_meta_description }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block twitter_title %}{% if seo_title %}{{ seo_title }} | Acclaimed Video Games{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block twitter_description %}{% if seo_meta_description %}{{ seo_meta_description }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block structured_data %}{% if itemlist_json %}{{ itemlist_json|safe }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block pre_alpine %}
     {# Filter subcomponents + filter component factories (must load before Alpine core) #}

@@ -18,6 +18,9 @@ CACHE_TIMEOUT_DEFAULT = CACHE_TIMEOUT_24_HOURS
 # Page-level cache for anonymous users (reduces TTFB significantly)
 CACHE_TIMEOUT_HOME_PAGE = CACHE_TIMEOUT_5_MINUTES
 
+# SEO landing pages (/top/...) change only when game data is refreshed
+CACHE_TIMEOUT_LANDING_PAGE = CACHE_TIMEOUT_1_HOUR
+
 # Cache version - bump this to invalidate all caches after schema/data changes
 CACHE_VERSION = "v9"
 

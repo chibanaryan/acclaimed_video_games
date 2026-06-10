@@ -10,8 +10,6 @@ from django.urls import reverse
 
 from games.models import Developer, Game
 from games.sitemaps import (
-    AuthorSitemap,
-    BookSitemap,
     DeveloperSitemap,
     GameSitemap,
     StaticViewSitemap,
@@ -28,10 +26,7 @@ class StaticViewSitemapTests(TestCase):
     def test_items_returns_expected_pages(self):
         """Test that items() returns the correct static page names."""
         items = self.sitemap.items()
-        self.assertEqual(
-            items,
-            ["home", "developers-list", "list-list", "books:home", "books:author-list"],
-        )
+        self.assertEqual(items, ["home", "developers-list", "list-list"])
 
     def test_location_returns_valid_urls(self):
         """Test that location() returns valid URLs for each item."""
@@ -159,70 +154,3 @@ class SitemapsConfigurationTests(TestCase):
         self.assertEqual(sitemaps["static"], StaticViewSitemap)
         self.assertEqual(sitemaps["games"], GameSitemap)
         self.assertEqual(sitemaps["developers"], DeveloperSitemap)
-
-
-class BookSitemapTests(TestCase):
-    """Tests for the BookSitemap class."""
-
-    def setUp(self):
-        from books.models import Book
-
-        self.sitemap = BookSitemap()
-        self.book = Book.objects.create(
-            name="Test Book",
-            slug="test-book",
-            rank=1,
-        )
-
-    def test_items_returns_all_books(self):
-        """Test that items() returns all books."""
-        items = list(self.sitemap.items())
-        self.assertEqual(len(items), 1)
-        self.assertIn(self.book, items)
-
-    def test_location_returns_book_detail_url(self):
-        """Test that location() returns the correct book detail URL."""
-        location = self.sitemap.location(self.book)
-        expected = reverse("books:book-detail", kwargs={"slug": self.book.slug})
-        self.assertEqual(location, expected)
-
-    def test_priority_is_set(self):
-        """Test that priority is correctly set."""
-        self.assertEqual(self.sitemap.priority, 0.8)
-
-    def test_changefreq_is_set(self):
-        """Test that changefreq is correctly set."""
-        self.assertEqual(self.sitemap.changefreq, "monthly")
-
-
-class AuthorSitemapTests(TestCase):
-    """Tests for the AuthorSitemap class."""
-
-    def setUp(self):
-        from books.models import Author
-
-        self.sitemap = AuthorSitemap()
-        self.author = Author.objects.create(
-            name="Test Author",
-            slug="test-author",
-        )
-
-    def test_items_returns_all_authors(self):
-        """Test that items() returns all authors."""
-        items = list(self.sitemap.items())
-        self.assertEqual(len(items), 1)
-        self.assertIn(self.author, items)
-
-    def test_location_returns_author_detail_url(self):
-        """Test that location() returns the correct author detail URL."""
-        location = self.sitemap.location(self.author)
-        expected = reverse("books:author-detail", kwargs={"slug": self.author.slug})
-        self.assertEqual(location, expected)
-
-    def test_priority_is_set(self):
-        """Test that priority is correctly set."""
-        self.assertEqual(self.sitemap.priority, 0.6)
-
-    def test_changefreq_is_set(self):
-        """Test that changefreq is correctly set."""
-        self.assertEqual(self.sitemap.changefreq, "monthly")
