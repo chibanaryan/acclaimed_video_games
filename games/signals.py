@@ -7,11 +7,14 @@ import logging
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 
+from django.conf import settings
+
 from games.models import (
     Developer,
     Game,
     PlayedGame,
     Post,
+    Publication,
     WantToPlayGame,
     WikipediaGenre,
 )
@@ -213,3 +216,40 @@ def invalidate_want_to_play_game_cache(sender, instance, **kwargs):
 
     invalidate_want_to_play_cache(instance.user_id)
     logger.debug(f"Want-to-play games cache invalidated (user {instance.user_id})")
+
+
+# =============================================================================
+# Forum integration (django-machina)
+# =============================================================================
+
+
+@receiver([post_save, post_delete], sender=Publication)
+def sync_publication_forum_topic(sender, instance, raw=False, **kwargs):
+    """
+    Keep the consolidated 'Publication reputation scores' forum topic in
+    sync whenever a publication changes.
+    """
+    if raw:  # fixture loading
+        return
+    from games.forum import sync_publication_scores_topic
+
+    try:
+        sync_publication_scores_topic()
+    except Exception:
+        logger.exception(
+            f"Failed to sync publication scores topic (publication {instance.pk})"
+        )
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def add_staff_to_forum_moderators(sender, instance, raw=False, **kwargs):
+    """Staff users automatically become forum moderators."""
+    if raw or not instance.is_staff:
+        return
+    from games.forum import ensure_forum_moderators_group
+
+    try:
+        group = ensure_forum_moderators_group()
+        instance.groups.add(group)
+    except Exception:
+        logger.exception(f"Failed to add staff user {instance.pk} to forum moderators")

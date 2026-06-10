@@ -1,0 +1,147 @@
+{# Project override of machina's board_base.html: renders the forum inside the site chrome (sidebar, nav, theme) instead of machina's standalone Bootstrap page. Machina page templates extend this file and fill the content / sub_title / css / js blocks. #}
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% load forum_permission_tags %}
+
+{% block title %}{% block sub_title %}{% endblock sub_title %} &mdash; {{ MACHINA_FORUM_NAME|default:"Forum" }}{% endblock title %}
+
+{% block meta_description %}Community forum for Acclaimed Video Games: site feedback and discussion of the publications behind our rankings.{% endblock %}
+
+{% block extra_head %}
+{% block css %}
+{# machina-scoped.css = machina's Bootstrap CSS with every selector prefixed with #main-content, so it can never restyle the sidebar/nav chrome. Regenerate with scripts/scope_machina_css.py after upgrading machina. #}
+<link rel="stylesheet" href="{% static 'games/css/machina-scoped.css' %}" />
+<style>
+/* machina uses Bootstrap-3-era markup in its forms. DaisyUI's .checkbox /
+   .radio component classes collide with machina's <div class="checkbox">
+   wrappers (styling the div as a 24px checkbox square), and Bootstrap 4
+   dropped the .btn-default class machina still uses. Neutralize/restore
+   them inside the forum content only. */
+#main-content div.checkbox,
+#main-content div.radio {
+  appearance: none;
+  width: auto;
+  height: auto;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  display: block;
+  margin: 0.5rem 0;
+}
+#main-content div.checkbox label,
+#main-content div.radio label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  width: auto;
+  height: auto;
+}
+#main-content div.checkbox input[type="checkbox"],
+#main-content div.radio input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+}
+#main-content .btn-default {
+  color: #212529;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+}
+#main-content .btn-default:hover {
+  background-color: #e2e6ea;
+}
+/* DaisyUI's .divider component clobbers machina's <div class="divider">
+   layout wrapper (profile statistics) - restore plain block behavior. */
+#main-content div.divider {
+  display: block;
+  height: auto;
+  margin: 0;
+  white-space: normal;
+}
+#main-content div.divider::before,
+#main-content div.divider::after {
+  content: none;
+  display: none;
+}
+/* RSS feed icons are removed via the forum/forum_list.html override. */
+/* The scoped Bootstrap `pre` rule (#main-content pre {margin-bottom:1rem})
+   outweighs EasyMDE's own `.CodeMirror pre {margin:0}` reset and shifts
+   the editor cursor a line below the text - restore the reset. */
+#main-content .CodeMirror pre {
+  margin: 0;
+  font-size: inherit;
+  color: inherit;
+}
+/* Compact post signatures - machina gives them 20px margins and the
+   rendered markdown adds paragraph margins on top of that. */
+#main-content .post-signature {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+  padding-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+#main-content .post-signature p {
+  margin: 0;
+}
+/* Markdown tables in posts (markdown2 emits bare <table> tags) -
+   e.g. the publication reputation scores topic. */
+#main-content .post-content table {
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+}
+#main-content .post-content th,
+#main-content .post-content td {
+  border: 1px solid #dee2e6;
+  padding: 0.3rem 0.75rem;
+}
+#main-content .post-content th {
+  background-color: #f8f9fa;
+}
+#main-content .post-content tbody tr:nth-child(even) {
+  background-color: #fcfcfd;
+}
+</style>
+{% endblock css %}
+{# Form media CSS (EasyMDE markdown editor) injected by machina's create/edit templates #}
+{% block extra_css %}{% endblock extra_css %}
+{% endblock extra_head %}
+
+{% block pre_content %}
+<div class="mb-4">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    {% block breadcrumb %}{% include "partials/breadcrumb.html" %}{% endblock breadcrumb %}
+    <div class="flex flex-wrap items-center gap-3 text-sm">
+      <form role="search" action="{% url 'forum_search:search' %}" class="inline-flex">
+        <input type="search" name="q" placeholder="{% trans 'Search the forum' %}" aria-label="{% trans 'Search the forum' %}" class="input input-sm input-bordered" />
+      </form>
+      {% if not request.user.is_anonymous %}
+        <a href="{% url 'forum_member:user_subscriptions' %}" class="link">{% trans "Subscriptions" %}</a>
+        <a href="{% url 'forum_member:user_posts' request.user.id %}" class="link">{% trans "My posts" %}</a>
+      {% endif %}
+      {% get_permission 'can_access_moderation_queue' request.user as can_access_moderation_queue %}
+      {% if can_access_moderation_queue %}
+        <a href="{% url 'forum_moderation:queue' %}" class="link">{% trans "Moderation queue" %}</a>
+      {% endif %}
+    </div>
+  </div>
+  {% block messages %}{% include "partials/messages.html" %}{% endblock messages %}
+</div>
+{% endblock pre_content %}
+
+{% block extra_scripts %}
+{% block js %}
+<script src="{% static 'js/machina.packages.min.js' %}" type="text/javascript" charset="utf-8"></script>
+<script src="{% static 'js/machina.min.js' %}" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+  $(function() {
+    machina.init();
+    {% block onbodyload %}{% endblock onbodyload %}
+  });
+</script>
+{% endblock js %}
+{# Form media JS (EasyMDE markdown editor) injected by machina's create/edit templates #}
+{% block extra_js %}{% endblock extra_js %}
+{% endblock extra_scripts %}

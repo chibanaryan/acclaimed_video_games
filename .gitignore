@@ -22,5 +22,7 @@ staticfiles/*
 venv/*
 .playwright-mcp/
 django_cache/
+machina_attachments_cache/
+media/
 games/fixtures/prod_dump.json
 core/fixtures/

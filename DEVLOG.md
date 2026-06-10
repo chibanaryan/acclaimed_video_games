@@ -1,5 +1,15 @@
 # Developer Log
 
+## 2026-06-10
+
+- Add community forum at `/forum/` (django-machina) behind `FORUM_ENABLED` flag
+- Site Feedback forum plus Publications forum with auto-maintained "Publication reputation scores" sticky topic (ranked table, syncs on Publication save/delete)
+- Add `reputation_score` field to Publication (staff-edited in admin)
+- Existing users can post automatically; staff auto-join Forum Moderators group; anonymous read access
+- Render forum inside site chrome; scope machina's Bootstrap CSS under `#main-content` to protect DaisyUI sidebar/nav
+- Replace machina search (broken on haystack simple backend) with working form/view
+- Disable avatars until persistent file hosting exists; add Forum nav links with new `mdi-forum` icon
+
 ## 2026-03-11
 
 - Fix played button (star icon) not appearing on "Load More" rows for logged-in users

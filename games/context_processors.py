@@ -18,10 +18,13 @@ def feature_flags(request):
     """
     import os
 
+    from django.conf import settings
+
     return {
         # Books feature is hidden until ready for public release
-        "BOOKS_ENABLED": os.environ.get("BOOKS_ENABLED", "").lower()
-        == "true",
+        "BOOKS_ENABLED": os.environ.get("BOOKS_ENABLED", "").lower() == "true",
+        # Forum is hidden until FORUM_ENABLED=True is set in production
+        "FORUM_ENABLED": settings.FORUM_ENABLED,
     }
 
 

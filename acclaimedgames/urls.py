@@ -134,6 +134,27 @@ urlpatterns = [
     # path("books/", include("books.urls", namespace="books")),
 ]
 
+# Forum routes (django-machina) - only mounted when the feature flag is on.
+# Machina's apps/migrations are always installed so the tables exist in
+# production before the flag is flipped (mirrors the books rollout pattern).
+if settings.FORUM_ENABLED:
+    from haystack.views import search_view_factory
+    from machina import urls as machina_urls
+
+    from games.forum import ForumSearchForm, ForumSearchView
+
+    urlpatterns = [
+        # Shadows machina's forum_search:search URL (must come first):
+        # the stock form's SearchQuerySet filters return zero results on
+        # haystack's simple backend - see games.forum.ForumSearchForm.
+        path(
+            "forum/search/",
+            search_view_factory(view_class=ForumSearchView, form_class=ForumSearchForm),
+            name="forum-search",
+        ),
+        path("forum/", include(machina_urls)),
+    ] + urlpatterns
+
 # Books routes - always included, but views require staff access
 # Access is controlled at the view level via StaffOnlyMixin / IsStaffOrHide permission
 # Search endpoints are now in books/api/urls.py
@@ -148,13 +169,18 @@ if settings.DEBUG:
 
     from django.views.defaults import page_not_found
 
-    urlpatterns = [
-        path("__debug__/", include(debug_toolbar.urls)),
-        # Test route to preview custom 404 page
-        path(
-            "test-404/", lambda request: page_not_found(request, Exception("Test 404"))
-        ),
-        *urlpatterns,
-    ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns = (
+        [
+            path("__debug__/", include(debug_toolbar.urls)),
+            # Test route to preview custom 404 page
+            path(
+                "test-404/",
+                lambda request: page_not_found(request, Exception("Test 404")),
+            ),
+            *urlpatterns,
+        ]
+        + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+        + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    )
 else:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

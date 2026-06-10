@@ -277,6 +277,57 @@ Book routes (behind `BOOKS_ENABLED` feature flag):
 - Maintains browser back/forward functionality with HTMX
 - Uses `HX-Push-Url` header for selective history updates
 
+## Forum (django-machina)
+
+The site has a community forum at `/forum/` powered by django-machina,
+behind the `FORUM_ENABLED` feature flag (on in DEBUG/TEST, off in production
+until the env var is set).
+
+**Purpose:** Site feedback and discussion of publication reputation scores.
+
+**Structure:**
+- **Site Feedback** forum - general feedback, suggestions, bug reports
+- **Publications** forum - holds one auto-maintained sticky topic,
+  "Publication reputation scores", whose first post is a table of every
+  publication's `reputation_score` (staff-edited in Django admin) so the
+  scores can be compared directly; users discuss them in the replies
+
+**Disabled features:** avatars (`MACHINA_PROFILE_AVATARS_ENABLED = False`
+until persistent file hosting exists - Heroku's filesystem is ephemeral)
+and the RSS feed column (removed in the `forum_list.html` override).
+
+**Key files:**
+- `games/forum.py` - forum structure, permission grants, publication topic sync
+- `games/signals.py` - `Publication` post_save keeps topics in sync;
+  `User` post_save adds staff to the "Forum Moderators" group
+- `acclaimedgames/forum_apps.py` - pins machina apps to AutoField PKs so the
+  global `DEFAULT_AUTO_FIELD = BigAutoField` doesn't generate migrations
+  inside site-packages (do not remove machina entries from INSTALLED_APPS -
+  machina's class loader matches those module strings)
+- `templates/machina/board_base.html` - renders machina pages inside the
+  site chrome via the `pre_content`/`content`/`extra_head`/`extra_scripts`
+  blocks of `base.html`
+
+**Permissions:**
+- Anonymous: global read access (DB rows created by `setup_forum`)
+- Authenticated: post/reply/edit-own via
+  `MACHINA_DEFAULT_AUTHENTICATED_USER_FORUM_PERMISSIONS` in settings
+- Staff: automatically added to the "Forum Moderators" group (all machina
+  permissions granted globally); superusers implicitly have everything
+
+**Setup command (idempotent, run once per environment after migrating):**
+```bash
+python manage.py setup_forum
+```
+Creates the forums, grants anonymous read permissions, adds existing staff
+to the moderators group, and creates/syncs the publication scores topic.
+Run it on Heroku after the first deploy, and again after `sync_from_prod`
+locally if publications changed.
+
+**Production rollout:** deploy, run `heroku run -- python manage.py migrate`
+then `heroku run -- python manage.py setup_forum`, and set the
+`FORUM_ENABLED=True` config var when ready to launch.
+
 ### Google Analytics Integration
 
 The site uses Google Analytics 4 (GA4) with custom HTMX tracking for comprehensive page view analytics:

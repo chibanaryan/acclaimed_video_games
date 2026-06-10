@@ -28,6 +28,14 @@
                         Source Lists
                     </a>
                 </li>
+                {% if FORUM_ENABLED %}
+                <li>
+                    <a href="{% url 'forum:index' %}" class="{% if request.resolver_match.namespace|slice:':5' == 'forum' %}active{% endif %}">
+                        <span class="mdi mdi-forum text-xl"></span>
+                        Forum
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </nav>
 

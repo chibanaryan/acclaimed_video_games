@@ -150,6 +150,12 @@
                 Lists
             </a>
 
+            {% if FORUM_ENABLED %}
+            <a href="{% url 'forum:index' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.namespace|slice:':5' == 'forum' %} btn-active{% endif %}" data-nav-item="forum" data-menu-label="Forum">
+                Forum
+            </a>
+            {% endif %}
+
             {% has_published_articles as show_blog %}
             {% if show_blog %}
             <a href="{% url 'article-list' %}" class="btn btn-ghost btn-sm shrink-0 nav-item{% if request.resolver_match.url_name == 'article-list' or request.resolver_match.url_name == 'article-detail' %} btn-active{% endif %}" data-nav-item="blog" data-menu-label="Blog">

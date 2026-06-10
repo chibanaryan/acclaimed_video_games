@@ -350,7 +350,9 @@ class ListMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(models.Publication)
 class PublicationAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "slug"]
+    list_display = ["__str__", "slug", "reputation_score"]
+    list_editable = ["reputation_score"]
+    search_fields = ["name"]
 
 
 @admin.register(models.Snippet)

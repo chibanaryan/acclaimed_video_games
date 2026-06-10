@@ -1530,6 +1530,15 @@ class Publication(PublicationBase):
     - __str__, save methods
     """
 
+    reputation_score = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text=(
+            "Editorial reputation score. Shown in the consolidated "
+            "'Publication reputation scores' forum topic."
+        ),
+    )
+
     class Meta:
         db_table = "games_publication"  # Preserve existing table name
         ordering = ["name"]
@@ -1618,7 +1627,8 @@ class Post(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="posts",
+        # "posts" clashes with machina's forum_conversation.Post.poster
+        related_name="news_posts",
     )
 
     class Meta:

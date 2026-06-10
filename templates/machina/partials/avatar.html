@@ -1,0 +1,10 @@
+{% comment %}
+Project override: avatars are disabled (MACHINA_PROFILE_AVATARS_ENABLED =
+False) until persistent file hosting exists, so never render uploaded
+images - only the generic placeholder.
+{% endcomment %}
+{% if show_placeholder %}
+<span class="avatar empty">
+  <i class="far fa-user fa-4x"></i>
+</span>
+{% endif %}
