@@ -1,5 +1,11 @@
 # Developer Log
 
+## 2026-06-18 (account fixes)
+
+- Usernames held only by abandoned, never-verified accounts are now reclaimable: signup and profile rename treat such names as available and delete the dead account so a real user can claim it (staff/superuser and verified accounts are never touched)
+- Fix admin "Bad Request (400)" when saving users with many tracked games: replace the per-game editable inlines on the User admin with read-only "Game Tracking" summaries so the change form no longer exceeds `DATA_UPLOAD_MAX_NUMBER_FIELDS`
+- Confirm post-notification emails already go only to users who are both subscribed and email-verified (no change needed)
+
 ## 2026-06-10 (clean URLs)
 
 - Client-side filtering now pushes clean SEO URLs (`/games/role-playing/`, `/games/1998/`) when the filter state matches a single SEO page; falls back to query params otherwise

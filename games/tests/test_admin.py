@@ -1,7 +1,7 @@
 from unittest import mock
 
 from django.contrib.admin.sites import AdminSite
-from django.test import RequestFactory, TestCase
+from django.test import Client, RequestFactory, TestCase
 
 from core.models import User
 from games import admin, models
@@ -714,12 +714,66 @@ class AdditionalAdminCoverageTests(TestCase):
         self.assertIsNotNone(qs)
 
     def test_inline_has_add_permission_methods(self):
-        played_inline = admin.PlayedGameInline(User, self.site)
-        want_inline = admin.WantToPlayGameInline(User, self.site)
         email_inline = admin.EmailAddressInline(User, self.site)
-        self.assertFalse(played_inline.has_add_permission(self.request))
-        self.assertFalse(want_inline.has_add_permission(self.request))
         self.assertFalse(email_inline.has_add_permission(self.request))
+
+    def test_user_change_page_has_no_tracking_formsets(self):
+        # Regression: tracked games used to render one editable inline form per
+        # row, exceeding DATA_UPLOAD_MAX_NUMBER_FIELDS and causing a 400 on save
+        # for users with many games. They are now read-only summaries instead.
+        game = models.Game.objects.create(
+            name="Trackee Game", rank=11, igdb_id=5151, year_of_release=2016
+        )
+        target = User.objects.create_user(
+            username="trackee", email="trackee@example.com", password="pw"
+        )
+        models.PlayedGame.objects.create(user=target, game=game, igdb_id=5151)
+        models.WantToPlayGame.objects.create(user=target, game=game, igdb_id=5151)
+
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(f"/admin/core/user/{target.pk}/change/")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn("played_games-TOTAL_FORMS", content)
+        self.assertNotIn("want_to_play_games-TOTAL_FORMS", content)
+        self.assertIn("Trackee Game", content)
+
+    def test_user_admin_tracking_summaries_empty(self):
+        user_admin = admin.UserAdmin(User, self.site)
+        self.assertEqual(user_admin.played_games_list(self.user), "None")
+        self.assertEqual(user_admin.want_to_play_list(self.user), "None")
+
+    def test_user_admin_tracking_summaries_list_games(self):
+        user_admin = admin.UserAdmin(User, self.site)
+        game = models.Game.objects.create(
+            name="Tracked Game", rank=7, igdb_id=4242, year_of_release=2019
+        )
+        models.PlayedGame.objects.create(user=self.user, game=game, igdb_id=4242)
+        models.WantToPlayGame.objects.create(user=self.user, game=game, igdb_id=4242)
+        played = user_admin.played_games_list(self.user)
+        want = user_admin.want_to_play_list(self.user)
+        self.assertIn("Tracked Game", played)
+        self.assertIn("1</strong> total", played)
+        self.assertIn("Tracked Game", want)
+
+    def test_user_admin_tracking_summary_falls_back_to_igdb_id(self):
+        user_admin = admin.UserAdmin(User, self.site)
+        # A tracking row whose game was removed falls back to the igdb id.
+        models.PlayedGame.objects.create(user=self.user, game=None, igdb_id=222)
+        summary = user_admin.played_games_list(self.user)
+        self.assertIn("(igdb 222)", summary)
+
+    def test_user_admin_tracking_summary_caps_long_lists(self):
+        user_admin = admin.UserAdmin(User, self.site)
+        user_admin._TRACKING_LIST_CAP = 1
+        g1 = models.Game.objects.create(name="Cap Game 1", rank=8, year_of_release=2018)
+        g2 = models.Game.objects.create(name="Cap Game 2", rank=9, year_of_release=2017)
+        models.PlayedGame.objects.create(user=self.user, game=g1, igdb_id=111)
+        models.PlayedGame.objects.create(user=self.user, game=g2, igdb_id=222)
+        summary = user_admin.played_games_list(self.user)
+        self.assertIn("2</strong> total", summary)
+        self.assertIn("+1 more", summary)
 
     def test_user_admin_queryset_and_display_fields(self):
         game = models.Game.objects.create(

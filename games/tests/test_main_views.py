@@ -2926,6 +2926,84 @@ class AuthModalViewsTest(TestCase):
         self.assertTrue(hasattr(user, "email_subscribed"))
         self.assertFalse(user.email_subscribed)  # Default False
 
+    def _make_user(self, username, email, verified=False, **kwargs):
+        from allauth.account.models import EmailAddress
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user = User.objects.create(username=username, email=email, **kwargs)
+        user.set_password("SecurePass123!")
+        user.save()
+        EmailAddress.objects.create(
+            user=user, email=email, verified=verified, primary=True
+        )
+        return user
+
+    def test_auth_modal_signup_reclaims_unverified_username(self):
+        """A username held only by an unverified account can be reclaimed."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        stale = self._make_user("groovie", "typo@example.com", verified=False)
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "correct@example.com",
+                "username": "groovie",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Check Your Email", response.content.decode("utf-8"))
+
+        # Stale account gone; the new account owns the username.
+        self.assertFalse(User.objects.filter(pk=stale.pk).exists())
+        new_user = User.objects.get(email="correct@example.com")
+        self.assertEqual(new_user.username, "groovie")
+
+    def test_auth_modal_signup_rejects_verified_username(self):
+        """A username held by a verified account stays taken."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        real = self._make_user("groovie", "real@example.com", verified=True)
+
+        response = self.client.post(
+            reverse("auth-modal-signup"),
+            {
+                "email": "other@example.com",
+                "username": "groovie",
+                "password1": "SecurePass123!",
+                "password2": "SecurePass123!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("already taken", response.content.decode("utf-8"))
+        # The verified holder is untouched and no new account was created.
+        self.assertTrue(User.objects.filter(pk=real.pk).exists())
+        self.assertFalse(User.objects.filter(email="other@example.com").exists())
+
+    def test_auth_modal_profile_rename_reclaims_unverified_username(self):
+        """Renaming to a name held by an unverified account reclaims it."""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        stale = self._make_user("wanted", "typo@example.com", verified=False)
+        owner = self._make_user("current", "owner@example.com", verified=True)
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("auth-modal-profile"),
+            {"username": "wanted"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["HX-Refresh"], "true")
+        self.assertFalse(User.objects.filter(pk=stale.pk).exists())
+        owner.refresh_from_db()
+        self.assertEqual(owner.username, "wanted")
+
     def test_auth_modal_signup_back_button(self):
         """Test that signup form has back button to login."""
         response = self.client.get(reverse("auth-modal-signup"))
@@ -3360,9 +3438,14 @@ class AuthModalViewsTest(TestCase):
         """Test signup with existing username shows error."""
         from django.contrib.auth import get_user_model
 
+        from allauth.account.models import EmailAddress
+
         User = get_user_model()
-        User.objects.create_user(
+        holder = User.objects.create_user(
             username="takenuser", email="taken@example.com", password="testpass123"
+        )
+        EmailAddress.objects.create(
+            user=holder, email="taken@example.com", verified=True, primary=True
         )
 
         response = self.client.post(
@@ -3468,11 +3551,16 @@ class AuthModalViewsTest(TestCase):
         """Test profile edit with taken username shows error."""
         from django.contrib.auth import get_user_model
 
+        from allauth.account.models import EmailAddress
+
         User = get_user_model()
-        User.objects.create_user(
+        holder = User.objects.create_user(
             username="existingname",
             email="existing2@example.com",
             password="testpass123",
+        )
+        EmailAddress.objects.create(
+            user=holder, email="existing2@example.com", verified=True, primary=True
         )
         User.objects.create_user(
             username="myuser", email="myuser@example.com", password="testpass123"
@@ -3590,12 +3678,17 @@ class AuthModalViewsTest(TestCase):
         """Test profile update error re-renders with backlog playtime."""
         from django.contrib.auth import get_user_model
 
+        from allauth.account.models import EmailAddress
+
         from games.models import HLTBGameData, WantToPlayGame
 
         # Create two users with same username to trigger error
         User = get_user_model()
-        User.objects.create_user(
+        holder = User.objects.create_user(
             username="existing", email="existing@example.com", password="testpass123"
+        )
+        EmailAddress.objects.create(
+            user=holder, email="existing@example.com", verified=True, primary=True
         )
         user = User.objects.create_user(
             username="myuser", email="myuser@example.com", password="testpass123"

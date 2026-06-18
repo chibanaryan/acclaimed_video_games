@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.flatpages.models import FlatPage
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import (
     Case,
     Count,
@@ -3824,12 +3825,16 @@ class AuthModalSignupView(View):
                     "Username can only contain letters, numbers, "
                     "underscores, and hyphens."
                 )
-            elif User.objects.filter(username__iexact=username).exists():
+            elif User.username_claimed(username):
                 username_error = "This username is already taken."
 
         if form.is_valid() and not username_error:
-            # Save the user (creates user and EmailAddress, but doesn't send email)
-            user = form.save(request)
+            # Reclaim the username/email from any abandoned, never-verified
+            # account before creating the new one, then create the user
+            # (and EmailAddress) atomically so the unique constraint holds.
+            with transaction.atomic():
+                User.reclaim_username(username or email)
+                user = form.save(request)
 
             # Set email subscription preference from checkbox
             email_subscribed = request.POST.get("email_subscribed") == "on"
@@ -4064,11 +4069,7 @@ class AuthModalProfileView(View):
                     "Username can only contain letters, numbers, "
                     "underscores, and hyphens."
                 )
-            elif (
-                User.objects.filter(username__iexact=new_username)
-                .exclude(pk=user.pk)
-                .exists()
-            ):
+            elif User.username_claimed(new_username, exclude_pk=user.pk):
                 username_error = "This username is already taken."
 
             if username_error:
@@ -4113,6 +4114,8 @@ class AuthModalProfileView(View):
                         "percentile_message": percentile_data["message"],
                     },
                 )
+            # Free the name from any abandoned, never-verified account first.
+            User.reclaim_username(new_username)
             user.username = new_username
 
         email_subscribed = request.POST.get("email_subscribed") == "on"

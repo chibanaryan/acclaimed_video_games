@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models import Count
 from django.forms import ModelForm
 from django.http import HttpRequest
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 from core.models import User
 from . import models
@@ -510,34 +510,6 @@ class SavedFilterSetAdmin(admin.ModelAdmin):
         return ", ".join(parts) if parts else "(no filters)"
 
 
-class PlayedGameInline(admin.TabularInline):
-    """Inline admin for PlayedGame on User admin."""
-
-    model = models.PlayedGame
-    extra = 0
-    fields = ["game", "igdb_id", "created"]
-    readonly_fields = ["game", "igdb_id", "created"]
-    can_delete = True
-    ordering = ["-created"]
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-
-class WantToPlayGameInline(admin.TabularInline):
-    """Inline admin for WantToPlayGame on User admin."""
-
-    model = models.WantToPlayGame
-    extra = 0
-    fields = ["game", "igdb_id", "created"]
-    readonly_fields = ["game", "igdb_id", "created"]
-    can_delete = True
-    ordering = ["-created"]
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-
 class EmailAddressInline(admin.TabularInline):
     """Inline admin for allauth EmailAddress to show verification status."""
 
@@ -575,7 +547,11 @@ class UserAdmin(BaseUserAdmin):
     ]
     search_fields = ["email", "username"]
     ordering = ["-date_joined"]
-    inlines = [EmailAddressInline, PlayedGameInline, WantToPlayGameInline]
+    # Tracked games are shown as read-only summaries (see below) instead of
+    # editable inline formsets: a formset renders one form per related row,
+    # and a user with hundreds of tracked games exceeds Django's
+    # DATA_UPLOAD_MAX_NUMBER_FIELDS limit, causing a 400 on save.
+    inlines = [EmailAddressInline]
 
     # Extend the default fieldsets with our custom fields
     fieldsets = BaseUserAdmin.fieldsets + (
@@ -589,9 +565,23 @@ class UserAdmin(BaseUserAdmin):
                 ),
             },
         ),
+        (
+            "Game Tracking",
+            {
+                "fields": (
+                    "played_games_list",
+                    "want_to_play_list",
+                ),
+            },
+        ),
     )
 
-    readonly_fields = ["unsubscribe_token", "date_subscribed"]
+    readonly_fields = [
+        "unsubscribe_token",
+        "date_subscribed",
+        "played_games_list",
+        "want_to_play_list",
+    ]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -614,3 +604,43 @@ class UserAdmin(BaseUserAdmin):
     def want_to_play_count(self, obj):
         """Show count of games marked as want to play."""
         return obj._want_to_play_count
+
+    # Cap the read-only lists so the change page stays small for power users.
+    _TRACKING_LIST_CAP = 100
+
+    def _tracking_summary(self, queryset):
+        """Render a read-only, capped list of tracked games (no form fields)."""
+        total = queryset.count()
+        if not total:
+            return "None"
+        rows = queryset.select_related("game").order_by("-created")[
+            : self._TRACKING_LIST_CAP
+        ]
+        items = format_html_join(
+            "\n",
+            "<li>{}</li>",
+            (
+                (row.game.name if row.game else "(igdb {})".format(row.igdb_id),)
+                for row in rows
+            ),
+        )
+        summary = format_html(
+            "<p><strong>{}</strong> total</p><ul>{}</ul>", total, items
+        )
+        if total > self._TRACKING_LIST_CAP:
+            summary += format_html(
+                "<p>+{} more (showing most recent {})</p>",
+                total - self._TRACKING_LIST_CAP,
+                self._TRACKING_LIST_CAP,
+            )
+        return summary
+
+    @admin.display(description="Played games")
+    def played_games_list(self, obj):
+        """Read-only summary of games the user marked as played."""
+        return self._tracking_summary(obj.played_games.all())
+
+    @admin.display(description="Want to play")
+    def want_to_play_list(self, obj):
+        """Read-only summary of games the user wants to play."""
+        return self._tracking_summary(obj.want_to_play_games.all())

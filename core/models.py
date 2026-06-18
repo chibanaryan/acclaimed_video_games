@@ -61,6 +61,54 @@ class User(AbstractUser):
             user=self, email__iexact=self.email, verified=True
         ).exists()
 
+    @classmethod
+    def username_claimed(cls, username: str, exclude_pk: Any = None) -> bool:
+        """Return True if the username is held by a verified account.
+
+        A username is treated as available only when its sole holder is an
+        abandoned, never-verified, non-staff account: verification is
+        mandatory, so such accounts can never log in and carry no value, and
+        ``reclaim_username`` will delete them. Verified accounts and
+        staff/superuser accounts always count as claiming the name (this
+        mirrors what ``reclaim_username`` refuses to delete, so the two stay
+        consistent).
+        """
+        from allauth.account.models import EmailAddress
+
+        verified_user_ids = EmailAddress.objects.filter(verified=True).values_list(
+            "user_id", flat=True
+        )
+        qs = cls.objects.filter(username__iexact=username)
+        if exclude_pk is not None:
+            qs = qs.exclude(pk=exclude_pk)
+        return qs.filter(
+            models.Q(id__in=verified_user_ids)
+            | models.Q(is_staff=True)
+            | models.Q(is_superuser=True)
+        ).exists()
+
+    @classmethod
+    def reclaim_username(cls, username: str) -> int:
+        """Delete abandoned, never-verified accounts holding ``username``.
+
+        Frees the username (which has a unique constraint) so a real account
+        can claim it. Staff and superuser accounts are never deleted. Returns
+        the number of accounts removed.
+        """
+        from allauth.account.models import EmailAddress
+
+        verified_user_ids = EmailAddress.objects.filter(verified=True).values_list(
+            "user_id", flat=True
+        )
+        stale = (
+            cls.objects.filter(username__iexact=username)
+            .exclude(id__in=verified_user_ids)
+            .filter(is_staff=False, is_superuser=False)
+        )
+        count = stale.count()
+        stale.delete()
+        return count
+
     def generate_unsubscribe_token(self) -> None:
         """Generate unsubscribe token for newsletter."""
         if not self.unsubscribe_token:
