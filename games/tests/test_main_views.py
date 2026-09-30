@@ -3898,13 +3898,42 @@ class HLTBFilteringTests(TestCase):
         """Rows show main-story playtime in the default mode."""
         response = self.client.get(reverse("home"))
         self.assertContains(response, 'title="HowLongToBeat playtime">~20h<')
-        self.assertNotContains(response, "~40h")
+        self.assertNotContains(response, ">~40h<")
 
     def test_rows_show_completionist_playtime_in_completionist_mode(self):
         """Rows show 100% playtime when completionist mode is selected."""
         response = self.client.get(reverse("home") + "?hltb_mode=completionist")
         self.assertContains(response, 'title="HowLongToBeat playtime (100%)">~40h<')
-        self.assertNotContains(response, "~20h")
+        self.assertNotContains(response, ">~20h<")
+
+    def test_rows_carry_both_playtimes_for_instant_toggle(self):
+        """Rows embed both formatted times so the mode toggle can swap in place."""
+        response = self.client.get(reverse("home"))
+        self.assertContains(
+            response,
+            'data-playtime-main="~20h" data-playtime-completionist="~40h"',
+        )
+
+    def test_row_playtime_hidden_when_mode_has_no_time(self):
+        """A game without 100% data keeps its row item, hidden in that mode."""
+        HLTBGameData.objects.filter(game=self.game2).update(completionist_hours=None)
+        response = self.client.get(reverse("home") + "?hltb_mode=completionist")
+        self.assertContains(
+            response,
+            'data-playtime-main="~20h" data-playtime-completionist=""',
+        )
+        self.assertContains(response, 'class="whitespace-nowrap hidden"')
+
+    def test_hltb_counts_include_both_modes(self):
+        """Preset counts are provided for both modes so toggling needs no refetch."""
+        response = self.client.get(reverse("home"))
+        self.assertEqual(
+            response.context["hltb_counts_json"],
+            {
+                "main": {"short": 1, "medium": 1, "long": 1},
+                "completionist": {"short": 0, "medium": 1, "long": 2},
+            },
+        )
 
     def test_hltb_negative_values_corrected(self):
         """Test that negative HLTB values are corrected to 0."""

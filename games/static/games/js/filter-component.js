@@ -756,6 +756,19 @@ document.addEventListener('alpine:init', () => {
         },
 
         handleFilterChange(type, data) {
+            if (type === 'hltb' && data.modeOnly && this.initialized) {
+                // Only the mode changed. With no playtime range or playtime sort,
+                // the result set and order are unchanged, so swap the displayed
+                // times in place instead of re-filtering.
+                if (!this._resultsDependOnHltbMode()) {
+                    this.applyPlaytimeMode(data.mode);
+                    return;
+                }
+                // Results change: update right away (a click needs no debounce)
+                this.requestClientFilteringInit('filter-change');
+                this.performUpdate({ partial: true, historyMethod: 'pushState' });
+                return;
+            }
             if (type === 'hltb') {
                 this.filters.hltb_mode = data.mode;
                 this.filters.hltb_min = data.min;
@@ -779,6 +792,42 @@ document.addEventListener('alpine:init', () => {
             if (this.initialized) {
                 this.debouncedFilterUpdate();
             }
+        },
+
+        _resultsDependOnHltbMode() {
+            return this.filters.hltb_min !== null ||
+                   this.filters.hltb_max !== null ||
+                   this.filters.sort === 'playtime';
+        },
+
+        /**
+         * Switch displayed playtimes between Main and 100% without re-filtering.
+         * Rows carry both formatted times in data-playtime-* attributes
+         * (see _game_row_*.html and game-list-renderer.js).
+         */
+        applyPlaytimeMode(mode) {
+            const completionist = mode === 'completionist';
+            if (this._csf && this._csf.renderer) {
+                // Rows rendered later (Load More, Jump to Rank) use the same mode
+                this._csf.renderer.hltbMode = mode;
+            }
+            document.querySelectorAll('[data-slot="playtime"][data-playtime-title]').forEach(el => {
+                const text = completionist ? el.dataset.playtimeCompletionist : el.dataset.playtimeMain;
+                el.textContent = text || '';
+                el.title = completionist ? `${el.dataset.playtimeTitle} (100%)` : el.dataset.playtimeTitle;
+                // Grid cards hide the element itself; list rows hide the meta-row item
+                const item = el.classList.contains('game-card-playtime') ? el : el.parentElement;
+                item.classList.toggle('hidden', !text);
+            });
+            window.history.pushState({}, '', this._filterUrl());
+        },
+
+        _filterUrl() {
+            const params = buildFilterParams(this.filters);
+            // Prefer the clean SEO page URL when this filter state has one
+            return (typeof seoCleanUrl === 'function' &&
+                seoCleanUrl(params, this.minYear, this.maxYear)) ||
+                ('/games/?' + normalizeUrl(params.toString()));
         },
 
         resetSearch() {
@@ -1130,12 +1179,7 @@ document.addEventListener('alpine:init', () => {
                 }
             }
 
-            const params = buildFilterParams(this.filters);
-            // Prefer the clean SEO page URL when this filter state has one
-            const url = (typeof seoCleanUrl === 'function' &&
-                seoCleanUrl(params, this.minYear, this.maxYear)) ||
-                ('/games/?' + normalizeUrl(params.toString()));
-            window.history[historyMethod]({}, '', url);
+            window.history[historyMethod]({}, '', this._filterUrl());
 
             this.isLoading = false;
 

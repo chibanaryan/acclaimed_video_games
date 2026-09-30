@@ -117,6 +117,36 @@ class GameListRenderer extends BaseMediaListRenderer {
     }
 
     /**
+     * Whether the game has playtime for either completion mode
+     * @private
+     */
+    _hasAnyPlaytime(game) {
+        return (game.pt !== null && game.pt !== undefined) ||
+               (game.ptc !== null && game.ptc !== undefined);
+    }
+
+    /**
+     * Data attributes carrying both formatted playtimes so the Main/100%
+     * toggle can swap them in place (must match _game_row_*.html)
+     * @private
+     */
+    _playtimeDataAttrs(game, baseTitle) {
+        return `data-playtime-main="${this._formatPlaytime(game.pt)}" ` +
+               `data-playtime-completionist="${this._formatPlaytime(game.ptc)}" ` +
+               `data-playtime-title="${baseTitle}"`;
+    }
+
+    /**
+     * Meta-row playtime item; hidden when the active mode has no time
+     * @private
+     */
+    _playtimeMetaHtml(game, bullet, baseTitle) {
+        const playtime = this._getPlaytime(game);
+        const hidden = (playtime === null || playtime === undefined) ? ' hidden' : '';
+        return ` <span class="whitespace-nowrap${hidden}">${bullet}<span class="tabular-nums" data-slot="playtime" ${this._playtimeDataAttrs(game, baseTitle)} title="${this._playtimeTitle(baseTitle)}">${this._formatPlaytime(playtime)}</span></span>`;
+    }
+
+    /**
      * Sort key for platforms: (year_start, year_end, name).
      * Null values sort to end (9999).
      * @private
@@ -585,10 +615,9 @@ class GameListRenderer extends BaseMediaListRenderer {
             }
 
             // Playtime (HLTB)
-            const playtime = this._getPlaytime(game);
-            if (playtime !== null && playtime !== undefined) {
+            if (this._hasAnyPlaytime(game)) {
                 const bullet = metaHtml ? '<span class="text-base-content/30">|</span> ' : '';
-                metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="${this._playtimeTitle('HowLongToBeat playtime')}">${this._formatPlaytime(playtime)}</span></span>`;
+                metaHtml += this._playtimeMetaHtml(game, bullet, 'HowLongToBeat playtime');
             }
 
             // List count
@@ -671,10 +700,9 @@ class GameListRenderer extends BaseMediaListRenderer {
             const bullet = metaRowHtml ? '<span class="text-base-content/30">|</span> ' : '';
             metaRowHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
         }
-        const playtime = this._getPlaytime(game);
-        if (playtime !== null && playtime !== undefined) {
+        if (this._hasAnyPlaytime(game)) {
             const bullet = metaRowHtml ? '<span class="text-base-content/30">|</span> ' : '';
-            metaRowHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="${this._playtimeTitle('HowLongToBeat playtime')}">${this._formatPlaytime(playtime)}</span></span>`;
+            metaRowHtml += this._playtimeMetaHtml(game, bullet, 'HowLongToBeat playtime');
         }
         if (game.lc) {
             const bullet = metaRowHtml ? '<span class="text-base-content/30">|</span> ' : '';
@@ -859,10 +887,9 @@ class GameListRenderer extends BaseMediaListRenderer {
         }
 
         // Playtime
-        const playtime = this._getPlaytime(game);
-        if (playtime !== null && playtime !== undefined) {
+        if (this._hasAnyPlaytime(game)) {
             const bullet = metaHtml ? '<span class="text-base-content/30">|</span> ' : '';
-            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="${this._playtimeTitle('Playtime')}">${this._formatPlaytime(playtime)}</span></span>`;
+            metaHtml += this._playtimeMetaHtml(game, bullet, 'Playtime');
         }
 
         // List count
@@ -983,10 +1010,9 @@ class GameListRenderer extends BaseMediaListRenderer {
         }
 
         // Playtime
-        const playtime = this._getPlaytime(game);
-        if (playtime !== null && playtime !== undefined) {
+        if (this._hasAnyPlaytime(game)) {
             const bullet = metaHtml ? '<span class="text-base-content/30">|</span> ' : '';
-            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="${this._playtimeTitle('Playtime')}">${this._formatPlaytime(playtime)}</span></span>`;
+            metaHtml += this._playtimeMetaHtml(game, bullet, 'Playtime');
         }
 
         // List count
@@ -1126,10 +1152,14 @@ class GameListRenderer extends BaseMediaListRenderer {
         // Playtime (HLTB)
         const playtimeEl = card.querySelector('[data-slot="playtime"]');
         if (playtimeEl) {
-            const playtime = this._getPlaytime(game);
-            if (playtime !== null && playtime !== undefined) {
+            if (this._hasAnyPlaytime(game)) {
+                const playtime = this._getPlaytime(game);
                 playtimeEl.textContent = this._formatPlaytime(playtime);
                 playtimeEl.title = this._playtimeTitle('HowLongToBeat playtime');
+                playtimeEl.dataset.playtimeMain = this._formatPlaytime(game.pt);
+                playtimeEl.dataset.playtimeCompletionist = this._formatPlaytime(game.ptc);
+                playtimeEl.dataset.playtimeTitle = 'HowLongToBeat playtime';
+                playtimeEl.classList.toggle('hidden', playtime === null || playtime === undefined);
             } else {
                 playtimeEl.remove();
             }
@@ -1178,9 +1208,10 @@ class GameListRenderer extends BaseMediaListRenderer {
         if (expanded.genres.length > 0) {
             overlayContent += `<div class="game-card-genres">${this._escapeHtml(expanded.genres.map(g => g.name).join(' / '))}</div>`;
         }
-        const playtime = this._getPlaytime(game);
-        if (playtime !== null && playtime !== undefined) {
-            overlayContent += `<div class="game-card-playtime" title="${this._playtimeTitle('HowLongToBeat playtime')}">${this._formatPlaytime(playtime)}</div>`;
+        if (this._hasAnyPlaytime(game)) {
+            const playtime = this._getPlaytime(game);
+            const hidden = (playtime === null || playtime === undefined) ? ' hidden' : '';
+            overlayContent += `<div class="game-card-playtime${hidden}" data-slot="playtime" ${this._playtimeDataAttrs(game, 'HowLongToBeat playtime')} title="${this._playtimeTitle('HowLongToBeat playtime')}">${this._formatPlaytime(playtime)}</div>`;
         }
         if (game.lc) {
             overlayContent += `<div class="game-card-lists">${game.lc} lists</div>`;

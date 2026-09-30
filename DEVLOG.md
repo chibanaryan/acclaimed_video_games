@@ -3,6 +3,7 @@
 ## 2026-09-30 (playtime mode)
 
 - Fix game rows always showing main-story playtime: rows (list, mobile, grid; client- and server-rendered) now show 100% completion time when the Completion toggle is set to 100%, with a "(100%)" tooltip label
+- Make the Main/100% toggle instant: rows carry both times and preset counts are computed for both modes, so switching swaps text in place with no re-filter, debounce, or server fetch (full re-filter only when a playtime range or playtime sort is active)
 
 ## 2026-06-18 (account fixes)
 

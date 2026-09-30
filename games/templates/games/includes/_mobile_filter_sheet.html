@@ -215,7 +215,7 @@
         <div class="pb-3 border-b border-base-100"
              x-data="{ expanded: JSON.parse(localStorage.getItem('mobileFilterExpanded_hltb') || 'true') }"
              x-init="$watch('expanded', val => localStorage.setItem('mobileFilterExpanded_hltb', JSON.stringify(val)))"
-             @filter-changed="debouncedFilterUpdate()">
+             @filter-changed="handleFilterChange($event.detail.type, $event.detail)">
             <div class="flex items-center w-full text-base font-semibold">
                 <button type="button"
                         @click="expanded = !expanded"

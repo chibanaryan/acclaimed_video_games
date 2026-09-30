@@ -103,12 +103,14 @@
                     {% endif %}
 
                     {% hltb_hours game as pt %}
-                    {% if pt %}
-                    <span class="whitespace-nowrap">
+                    {% with hltb=game.primary_hltb_game_data %}
+                    {% if hltb.main_story_hours or hltb.completionist_hours %}
+                    <span class="whitespace-nowrap{% if not pt %} hidden{% endif %}">
                         {% if game.wikipedia_genres.count > 0 or game.platforms.count > 0 or display_devs %}<span class="text-base-content/30">|</span> {% endif %}
-                        <span class="tabular-nums" data-slot="playtime" title="HowLongToBeat playtime{% if filters.hltb_mode == 'completionist' %} (100%){% endif %}">{{ pt|format_playtime }}</span>
+                        <span class="tabular-nums" data-slot="playtime" data-playtime-main="{{ hltb.main_story_hours|format_playtime }}" data-playtime-completionist="{{ hltb.completionist_hours|format_playtime }}" data-playtime-title="HowLongToBeat playtime" title="HowLongToBeat playtime{% if filters.hltb_mode == 'completionist' %} (100%){% endif %}">{{ pt|format_playtime }}</span>
                     </span>
                     {% endif %}
+                    {% endwith %}
 
                     {% if game.list_count %}
                     <span class="whitespace-nowrap">

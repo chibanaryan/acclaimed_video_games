@@ -67,11 +67,11 @@
                 <div class="join" title="Playtime mode">
                     <input type="radio" name="hltb-mode" class="join-item btn btn-sm"
                            :checked="filters.hltb_mode !== 'completionist'"
-                           @click="filters.hltb_mode = 'main'; dispatchFilterChange()"
+                           @click="setMode('main')"
                            aria-label="▶ Main">
                     <input type="radio" name="hltb-mode" class="join-item btn btn-sm"
                            :checked="filters.hltb_mode === 'completionist'"
-                           @click="filters.hltb_mode = 'completionist'; dispatchFilterChange()"
+                           @click="setMode('completionist')"
                            aria-label="✔ 100%">
                 </div>
             </div>

@@ -1683,8 +1683,16 @@
                 this.dispatchFilterChange();
             },
 
-            dispatchFilterChange: function () {
+            setMode: function (mode) {
+                if ((filters.hltb_mode || "main") === mode) return;
+                filters.hltb_mode = mode;
+                // modeOnly lets the parent swap displayed times without re-filtering
+                this.dispatchFilterChange({ modeOnly: true });
+            },
+
+            dispatchFilterChange: function (extra) {
                 this.$dispatch("filter-changed", {
+                    modeOnly: !!(extra && extra.modeOnly),
                     type: "hltb",
                     mode: filters.hltb_mode,
                     min: filters.hltb_min,
@@ -1697,7 +1705,10 @@
             },
 
             getPresetCount: function (preset) {
-                return this.presetCounts[preset] || 0;
+                // Counts arrive for both modes ({main: {...}, completionist: {...}})
+                var mode = filters.hltb_mode === "completionist" ? "completionist" : "main";
+                var counts = this.presetCounts[mode] || this.presetCounts;
+                return counts[preset] || 0;
             },
 
             getRangeText: function () {

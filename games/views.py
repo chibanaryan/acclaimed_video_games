@@ -1649,31 +1649,35 @@ class HomePageView(AnonymousResponseCacheMixin, RobustPaginationMixin, ListView)
             str(k): v for k, v in platform_counts.items()
         }
 
-        # HLTB preset counts for filter (short/medium/long buckets)
-        # Uses main_story_hours by default (same as client-side filter initial state)
-        hltb_counts = models.Game.objects.filter(
-            primary_hltb_game_data__main_story_hours__isnull=False
-        ).aggregate(
-            short=Count(
+        # HLTB preset counts for filter (short/medium/long buckets), for both
+        # completion modes so the Main/100% toggle can switch without a refetch
+        hltb_fields = {
+            "main": "primary_hltb_game_data__main_story_hours",
+            "completionist": "primary_hltb_game_data__completionist_hours",
+        }
+        aggregates = {}
+        for mode, field in hltb_fields.items():
+            aggregates[f"{mode}_short"] = Count(
+                "id", filter=Q(**{f"{field}__lt": 10}), distinct=True
+            )
+            aggregates[f"{mode}_medium"] = Count(
                 "id",
-                filter=Q(primary_hltb_game_data__main_story_hours__lt=10),
+                filter=Q(**{f"{field}__gte": 10, f"{field}__lt": 30}),
                 distinct=True,
-            ),
-            medium=Count(
-                "id",
-                filter=Q(
-                    primary_hltb_game_data__main_story_hours__gte=10,
-                    primary_hltb_game_data__main_story_hours__lt=30,
-                ),
-                distinct=True,
-            ),
-            long=Count(
-                "id",
-                filter=Q(primary_hltb_game_data__main_story_hours__gte=30),
-                distinct=True,
-            ),
-        )
-        context["hltb_counts_json"] = hltb_counts
+            )
+            aggregates[f"{mode}_long"] = Count(
+                "id", filter=Q(**{f"{field}__gte": 30}), distinct=True
+            )
+        totals = models.Game.objects.filter(
+            primary_hltb_game_data__isnull=False
+        ).aggregate(**aggregates)
+        context["hltb_counts_json"] = {
+            mode: {
+                bucket: totals[f"{mode}_{bucket}"]
+                for bucket in ("short", "medium", "long")
+            }
+            for mode in hltb_fields
+        }
 
         # Rank distribution uses a fixed bin count across the current global max
         # rank so filtered views stay comparable to the full dataset.

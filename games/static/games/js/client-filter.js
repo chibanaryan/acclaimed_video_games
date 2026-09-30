@@ -446,7 +446,17 @@ class GameFilterEngine {
         const platformCounts = new Map();
         const yearCounts = new Map();
         const seriesCounts = new Map();
-        const hltbPresetCounts = { 'short': 0, 'medium': 0, 'long': 0 };
+        // Preset counts for both completion modes so the Main/100% toggle can switch instantly
+        const hltbPresetCounts = {
+            main: { 'short': 0, 'medium': 0, 'long': 0 },
+            completionist: { 'short': 0, 'medium': 0, 'long': 0 }
+        };
+        const bucketPlaytime = (counts, hours) => {
+            if (hours === null || hours === undefined) return;
+            if (hours < 10) counts['short']++;
+            else if (hours < 30) counts['medium']++;
+            else counts['long']++;
+        };
 
         // Track unique games per manufacturer and form factor for deduplicated counts
         const manufacturerGameSets = new Map();
@@ -592,11 +602,8 @@ class GameFilterEngine {
 
             // HLTB preset counts: apply base + platform + genre + series (exclude HLTB)
             if (passesBase && passesPlatform && passesGenre && passesSeries) {
-                if (playtime !== null && playtime !== undefined) {
-                    if (playtime < 10) hltbPresetCounts['short']++;
-                    else if (playtime < 30) hltbPresetCounts['medium']++;
-                    else hltbPresetCounts['long']++;
-                }
+                bucketPlaytime(hltbPresetCounts.main, game.pt);
+                bucketPlaytime(hltbPresetCounts.completionist, game.ptc);
             }
         }
 

@@ -46,9 +46,11 @@
                     <div class="game-card-genres" data-slot="genres">{% for g in game.wikipedia_genres.all %}{{ g.name }}{% if not forloop.last %} / {% endif %}{% endfor %}</div>
                     {% endif %}
                     {% hltb_hours game as pt %}
-                    {% if pt %}
-                    <div class="game-card-playtime" data-slot="playtime" title="HowLongToBeat playtime{% if filters.hltb_mode == 'completionist' %} (100%){% endif %}">{{ pt|format_playtime }}</div>
+                    {% with hltb=game.primary_hltb_game_data %}
+                    {% if hltb.main_story_hours or hltb.completionist_hours %}
+                    <div class="game-card-playtime{% if not pt %} hidden{% endif %}" data-slot="playtime" data-playtime-main="{{ hltb.main_story_hours|format_playtime }}" data-playtime-completionist="{{ hltb.completionist_hours|format_playtime }}" data-playtime-title="HowLongToBeat playtime" title="HowLongToBeat playtime{% if filters.hltb_mode == 'completionist' %} (100%){% endif %}">{{ pt|format_playtime }}</div>
                     {% endif %}
+                    {% endwith %}
                     {% if game.list_count %}
                     <div class="game-card-lists" data-slot="list-count">{{ game.list_count }} lists</div>
                     {% endif %}
