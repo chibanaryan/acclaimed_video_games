@@ -848,6 +848,36 @@ class FormatPlaytimeFilterTest(TestCase):
         self.assertEqual(format_playtime(1), "~1h")
 
 
+class HltbHoursFilterTest(TestCase):
+    """Test the hltb_hours template tag."""
+
+    def test_main_mode_returns_main_story_hours(self):
+        from games.templatetags.game_filters import hltb_hours
+
+        game = Mock()
+        game.primary_hltb_game_data.main_story_hours = 20
+        game.primary_hltb_game_data.completionist_hours = 40
+        self.assertEqual(hltb_hours({"filters": {"hltb_mode": "main"}}, game), 20)
+        self.assertEqual(hltb_hours({}, game), 20)
+
+    def test_completionist_mode_returns_completionist_hours(self):
+        from games.templatetags.game_filters import hltb_hours
+
+        game = Mock()
+        game.primary_hltb_game_data.main_story_hours = 20
+        game.primary_hltb_game_data.completionist_hours = 40
+        self.assertEqual(
+            hltb_hours({"filters": {"hltb_mode": "completionist"}}, game), 40
+        )
+
+    def test_no_hltb_data_returns_none(self):
+        from games.templatetags.game_filters import hltb_hours
+
+        game = Mock(primary_hltb_game_data=None)
+        self.assertIsNone(hltb_hours({"filters": {"hltb_mode": "main"}}, game))
+        self.assertIsNone(hltb_hours({"filters": {"hltb_mode": "completionist"}}, game))
+
+
 class GetDeveloperIdsFilterTest(TestCase):
     """Test the get_developer_ids template filter."""
 

@@ -29,6 +29,8 @@ class GameListRenderer extends BaseMediaListRenderer {
             marioStar: '/static/games/images/mario-star.png',
             marioStar2x: '/static/games/images/mario-star@2x.png'
         };
+        // HLTB completion mode ('main' or 'completionist'), set by ClientSideFiltering
+        this.hltbMode = 'main';
     }
 
     /**
@@ -96,6 +98,22 @@ class GameListRenderer extends BaseMediaListRenderer {
             return `~${minutes}m`;
         }
         return `~${Math.round(hours)}h`;
+    }
+
+    /**
+     * Playtime for the active HLTB completion mode (100% or main story)
+     * @private
+     */
+    _getPlaytime(game) {
+        return this.hltbMode === 'completionist' ? game.ptc : game.pt;
+    }
+
+    /**
+     * Playtime tooltip text, labeled with the completion mode
+     * @private
+     */
+    _playtimeTitle(base) {
+        return this.hltbMode === 'completionist' ? `${base} (100%)` : base;
     }
 
     /**
@@ -567,10 +585,10 @@ class GameListRenderer extends BaseMediaListRenderer {
             }
 
             // Playtime (HLTB)
-            const playtime = game.pt;
+            const playtime = this._getPlaytime(game);
             if (playtime !== null && playtime !== undefined) {
                 const bullet = metaHtml ? '<span class="text-base-content/30">|</span> ' : '';
-                metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="HowLongToBeat playtime">${this._formatPlaytime(playtime)}</span></span>`;
+                metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="${this._playtimeTitle('HowLongToBeat playtime')}">${this._formatPlaytime(playtime)}</span></span>`;
             }
 
             // List count
@@ -653,10 +671,10 @@ class GameListRenderer extends BaseMediaListRenderer {
             const bullet = metaRowHtml ? '<span class="text-base-content/30">|</span> ' : '';
             metaRowHtml += ` <span class="whitespace-nowrap">${bullet}<span data-slot="genres">${genresHtml}</span></span>`;
         }
-        const playtime = game.pt;
+        const playtime = this._getPlaytime(game);
         if (playtime !== null && playtime !== undefined) {
             const bullet = metaRowHtml ? '<span class="text-base-content/30">|</span> ' : '';
-            metaRowHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="HowLongToBeat playtime">${this._formatPlaytime(playtime)}</span></span>`;
+            metaRowHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="${this._playtimeTitle('HowLongToBeat playtime')}">${this._formatPlaytime(playtime)}</span></span>`;
         }
         if (game.lc) {
             const bullet = metaRowHtml ? '<span class="text-base-content/30">|</span> ' : '';
@@ -841,10 +859,10 @@ class GameListRenderer extends BaseMediaListRenderer {
         }
 
         // Playtime
-        const playtime = game.pt;
+        const playtime = this._getPlaytime(game);
         if (playtime !== null && playtime !== undefined) {
             const bullet = metaHtml ? '<span class="text-base-content/30">|</span> ' : '';
-            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="Playtime">${this._formatPlaytime(playtime)}</span></span>`;
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="${this._playtimeTitle('Playtime')}">${this._formatPlaytime(playtime)}</span></span>`;
         }
 
         // List count
@@ -965,10 +983,10 @@ class GameListRenderer extends BaseMediaListRenderer {
         }
 
         // Playtime
-        const playtime = game.pt;
+        const playtime = this._getPlaytime(game);
         if (playtime !== null && playtime !== undefined) {
             const bullet = metaHtml ? '<span class="text-base-content/30">|</span> ' : '';
-            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="Playtime">${this._formatPlaytime(playtime)}</span></span>`;
+            metaHtml += ` <span class="whitespace-nowrap">${bullet}<span class="tabular-nums" data-slot="playtime" title="${this._playtimeTitle('Playtime')}">${this._formatPlaytime(playtime)}</span></span>`;
         }
 
         // List count
@@ -1108,9 +1126,10 @@ class GameListRenderer extends BaseMediaListRenderer {
         // Playtime (HLTB)
         const playtimeEl = card.querySelector('[data-slot="playtime"]');
         if (playtimeEl) {
-            if (game.pt !== null && game.pt !== undefined) {
-                playtimeEl.textContent = this._formatPlaytime(game.pt);
-                playtimeEl.title = 'HowLongToBeat playtime';
+            const playtime = this._getPlaytime(game);
+            if (playtime !== null && playtime !== undefined) {
+                playtimeEl.textContent = this._formatPlaytime(playtime);
+                playtimeEl.title = this._playtimeTitle('HowLongToBeat playtime');
             } else {
                 playtimeEl.remove();
             }
@@ -1159,8 +1178,9 @@ class GameListRenderer extends BaseMediaListRenderer {
         if (expanded.genres.length > 0) {
             overlayContent += `<div class="game-card-genres">${this._escapeHtml(expanded.genres.map(g => g.name).join(' / '))}</div>`;
         }
-        if (game.pt !== null && game.pt !== undefined) {
-            overlayContent += `<div class="game-card-playtime" title="HowLongToBeat playtime">${this._formatPlaytime(game.pt)}</div>`;
+        const playtime = this._getPlaytime(game);
+        if (playtime !== null && playtime !== undefined) {
+            overlayContent += `<div class="game-card-playtime" title="${this._playtimeTitle('HowLongToBeat playtime')}">${this._formatPlaytime(playtime)}</div>`;
         }
         if (game.lc) {
             overlayContent += `<div class="game-card-lists">${game.lc} lists</div>`;

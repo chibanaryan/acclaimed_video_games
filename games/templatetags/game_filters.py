@@ -350,6 +350,25 @@ def format_playtime(hours):
         return ""
 
 
+@register.simple_tag(takes_context=True)
+def hltb_hours(context, game):
+    """
+    HLTB hours for the active completion mode (``filters.hltb_mode``).
+    Returns completionist (100%) hours in completionist mode, otherwise
+    main story hours. None if the game has no HLTB data.
+
+    Usage: {% hltb_hours game as pt %}
+    """
+    data = getattr(game, "primary_hltb_game_data", None)
+    if data is None:
+        return None
+    filters = context.get("filters")
+    mode = filters.get("hltb_mode") if isinstance(filters, dict) else None
+    if mode == "completionist":
+        return data.completionist_hours
+    return data.main_story_hours
+
+
 @register.filter
 def platform_icon(platform):
     """

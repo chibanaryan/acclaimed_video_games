@@ -3894,6 +3894,18 @@ class HLTBFilteringTests(TestCase):
         self.assertIn("Medium Game", game_names)
         self.assertNotIn("Long Game", game_names)
 
+    def test_rows_show_main_playtime_by_default(self):
+        """Rows show main-story playtime in the default mode."""
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, 'title="HowLongToBeat playtime">~20h<')
+        self.assertNotContains(response, "~40h")
+
+    def test_rows_show_completionist_playtime_in_completionist_mode(self):
+        """Rows show 100% playtime when completionist mode is selected."""
+        response = self.client.get(reverse("home") + "?hltb_mode=completionist")
+        self.assertContains(response, 'title="HowLongToBeat playtime (100%)">~40h<')
+        self.assertNotContains(response, "~20h")
+
     def test_hltb_negative_values_corrected(self):
         """Test that negative HLTB values are corrected to 0."""
         response = self.client.get(reverse("home") + "?hltb_min=-5&hltb_max=10")

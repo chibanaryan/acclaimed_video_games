@@ -168,6 +168,11 @@ class ClientSideFiltering {
             hltb_max: hltb_max
         };
 
+        // Rows show playtime for the active completion mode
+        if (this.renderer) {
+            this.renderer.hltbMode = engineFilters.hltb_mode;
+        }
+
         // Apply filters
         const result = this.engine.filter(engineFilters);
 
