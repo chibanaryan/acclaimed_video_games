@@ -1,5 +1,9 @@
 # Developer Log
 
+## 2026-09-30 (playtime mode)
+
+- Fix game rows always showing main-story playtime: rows (list, mobile, grid; client- and server-rendered) now show 100% completion time when the Completion toggle is set to 100%, with a "(100%)" tooltip label
+
 ## 2026-06-18 (account fixes)
 
 - Usernames held only by abandoned, never-verified accounts are now reclaimable: signup and profile rename treat such names as available and delete the dead account so a real user can claim it (staff/superuser and verified accounts are never touched)
