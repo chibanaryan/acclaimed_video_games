@@ -162,6 +162,48 @@ class WikiGenreServiceTests(SimpleTestCase):
 
         self.assertEqual(genres, ["Action-adventure", "Survival horror", "Shooter"])
 
+    def test_scrape_infobox_genres_skips_conjunction_tokens(self):
+        """Joining words between linked genres are not returned as genres."""
+        html = """
+        <html>
+        <table class="infobox">
+            <tr>
+                <th>Genre</th>
+                <td><a>Platform</a><br/>and<br/><a>Level editor</a></td>
+            </tr>
+        </table>
+        </html>
+        """
+        mock_response = DummyResponse(200, text=html)
+
+        with mock.patch.object(self.service.session, "get", return_value=mock_response):
+            genres = self.service._scrape_infobox_genres(
+                "https://en.wikipedia.org/wiki/Test"
+            )
+
+        self.assertEqual(genres, ["Platform", "Level editor"])
+
+    def test_scrape_infobox_genres_skips_conjunction_list_items(self):
+        """A bare conjunction list item is skipped."""
+        html = """
+        <html>
+        <table class="infobox">
+            <tr>
+                <th>Genre</th>
+                <td><ul><li>And</li><li>Platform</li></ul></td>
+            </tr>
+        </table>
+        </html>
+        """
+        mock_response = DummyResponse(200, text=html)
+
+        with mock.patch.object(self.service.session, "get", return_value=mock_response):
+            genres = self.service._scrape_infobox_genres(
+                "https://en.wikipedia.org/wiki/Test"
+            )
+
+        self.assertEqual(genres, ["Platform"])
+
     def test_scrape_infobox_genres_handles_list_items(self):
         """Test that <li> list items are handled."""
         html = """

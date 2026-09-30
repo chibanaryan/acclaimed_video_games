@@ -21,6 +21,9 @@ from games import config
 
 logger = logging.getLogger(__name__)
 
+# Joining words that survive splitting when an infobox mixes links with prose
+_CONJUNCTIONS = frozenset({"and", "or", "&"})
+
 
 class GenreSource(Enum):
     """Source of detected genre."""
@@ -593,7 +596,7 @@ class WikiGenreService:
                     genres = []
                     for li in list_items:
                         text = self._clean_genre_text(li.get_text(strip=True))
-                        if text:
+                        if text and text.casefold() not in _CONJUNCTIONS:
                             genres.append(text)
                     if genres:
                         return genres
@@ -618,7 +621,11 @@ class WikiGenreService:
                 for part in parts:
                     cleaned = part.strip().strip(",").strip()
                     # Skip empty or very short parts (likely artifacts)
-                    if cleaned and len(cleaned) > 1:
+                    if (
+                        cleaned
+                        and len(cleaned) > 1
+                        and cleaned.casefold() not in _CONJUNCTIONS
+                    ):
                         genres.append(cleaned)
 
                 return genres

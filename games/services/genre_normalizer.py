@@ -32,6 +32,8 @@ GENRE_MAPPING = {
     "First-person shooter": "First-Person Shooter",
     "First-person hero shooter": "First-Person Shooter",
     "Hero shooter": "First-Person Shooter",
+    "MMOFPS": "First-Person Shooter",  # PlanetSide
+    "Massively multiplayer online first-person shooter": "First-Person Shooter",
     "Third-person shooter": "Third-Person Shooter",
     "Light gun shooter": "Light Gun Shooter",
     "Shooter": "Shooter",
@@ -189,6 +191,11 @@ GENRE_MAPPING = {
     "Block breaker": "Puzzle",  # Consolidated: only 1 game
     "Maze": "Maze",
     "Incremental": "Puzzle",  # Consolidated: only 1 game
+    "Incremental game": "Puzzle",
+    "Clicker": "Puzzle",  # Synonym of Incremental (Universal Paperclips)
+    "Clicker game": "Puzzle",
+    "Idle": "Puzzle",
+    "Idle game": "Puzzle",
     # Puzzle & Casual genres (Party, Music, Educational are children of Puzzle & Casual)
     "Cooking": None,
     "Party": "Party",
@@ -224,6 +231,10 @@ GENRE_MAPPING = {
     "Racing game": "Racing",
     "Fighting game": "Fighting",
     # Invalid/removed entries (map to None)
+    # Conjunctions left over when an infobox joins links with prose
+    "and": None,
+    "or": None,
+    "&": None,
     "Dystopian": None,  # Setting, not genre
     "(minigame)": None,
     "Minigame": None,  # Not a meaningful genre classification
@@ -338,6 +349,8 @@ for category, children in GENRE_HIERARCHY.items():
         if child != category:  # Don't map category to itself
             _GENRE_TO_PARENT[child] = category
 
+_GENRE_NAME_SUFFIXES = (" video game", " game")
+
 _GENRE_MAPPING_CASEFOLD = {}
 for source_name, canonical_name in GENRE_MAPPING.items():
     _GENRE_MAPPING_CASEFOLD.setdefault(source_name.casefold(), canonical_name)
@@ -431,9 +444,16 @@ def normalize_genre(name: str) -> Optional[str]:
     if name in GENRE_MAPPING:
         return GENRE_MAPPING[name]
 
-    canonical = _GENRE_MAPPING_CASEFOLD.get(name.casefold())
-    if canonical is not None:
-        return canonical
+    key = name.casefold()
+    if key in _GENRE_MAPPING_CASEFOLD:
+        return _GENRE_MAPPING_CASEFOLD[key]
+
+    # Retry without a trailing "game"/"video game" (e.g. "Stealth game")
+    for suffix in _GENRE_NAME_SUFFIXES:
+        if key.endswith(suffix) and len(key) > len(suffix):
+            stripped = key[: -len(suffix)].strip()
+            if stripped in _GENRE_MAPPING_CASEFOLD:
+                return _GENRE_MAPPING_CASEFOLD[stripped]
 
     # If no mapping exists, return the name as-is (unknown genre)
     # This allows for graceful handling of new genres not in our mapping

@@ -210,6 +210,35 @@ class GenreNormalizerTest(TestCase):
         result = normalize_genres(["Delivery sim", "Simulation"])
         self.assertEqual(result, ["Simulation"])
 
+    def test_normalize_clicker_and_mmofps(self):
+        """Genres that previously leaked under Other map to canonical genres."""
+        self.assertEqual(normalize_genre("Clicker"), "Puzzle")
+        self.assertEqual(normalize_genre("clicker game"), "Puzzle")
+        self.assertEqual(normalize_genre("Idle game"), "Puzzle")
+        self.assertEqual(normalize_genre("MMOFPS"), "First-Person Shooter")
+
+    def test_normalize_drops_conjunction_tokens(self):
+        """Conjunctions split out of infobox prose are not genres."""
+        for token in ["and", "And", "or", "&"]:
+            self.assertIsNone(normalize_genre(token))
+        _, all_genres = canonicalize_genre_payload("and", ["and", "Platform"])[:2]
+        self.assertEqual(all_genres, ["Platform"])
+
+    def test_normalize_case_insensitive_none_mapping(self):
+        """A case variant of a dropped genre is dropped too."""
+        self.assertIsNone(normalize_genre("minigames"))
+
+    def test_normalize_strips_trailing_game_suffix(self):
+        """Unmapped '... game' variants fall back to the base mapping."""
+        self.assertEqual(normalize_genre("Stealth game"), "Stealth")
+        self.assertEqual(normalize_genre("Sandbox video game"), "Sandbox")
+        self.assertEqual(normalize_genre("Horror game"), "Horror")
+        # Explicit entries still win
+        self.assertEqual(normalize_genre("Rhythm game"), "Music")
+        # Unknown bases are left unchanged (and so still fall under Other)
+        self.assertEqual(normalize_genre("Snorkel game"), "Snorkel game")
+        self.assertEqual(normalize_genre("Game"), "Game")
+
     def test_get_mapping_stats(self):
         """Test the mapping statistics function."""
         stats = get_mapping_stats()

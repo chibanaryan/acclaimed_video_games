@@ -1,5 +1,11 @@
 # Developer Log
 
+## 2026-09-30 (stray Other genres)
+
+- Fix stray genres under the "Other" filter category (`and` on Super Mario Maker, `Clicker` on Universal Paperclips, `MMOFPS` on PlanetSide): unmapped Wikipedia infobox wording was passed through unchanged and filed under Other on each metadata refresh
+- Map Clicker/Idle/Incremental variants to Puzzle and MMOFPS to First-Person Shooter; drop bare conjunctions ("and", "or", "&") in both the infobox scraper and the normalizer; retry unmapped "… game" / "… video game" names without the suffix
+- Migration 0112 moves existing links and Wikipedia metadata to the canonical genres and deletes the strays; Other drops out of the filter once nothing under it has games
+
 ## 2026-09-30 (playtime mode)
 
 - Fix game rows always showing main-story playtime: rows (list, mobile, grid; client- and server-rendered) now show 100% completion time when the Completion toggle is set to 100%, with a "(100%)" tooltip label
