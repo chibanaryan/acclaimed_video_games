@@ -1,12 +1,8 @@
-# AGENTS.md (Canonical)
+# AGENTS.md
 
-Last synchronized: 2026-10-25
+This file provides guidance to Claude Code and Codex when working with code in this repository.
 
-This file is the canonical instruction source for Codex in this repository.
-
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+`CLAUDE.md` is a symlink to this file: edit this one, and keep the link. Claude Code would load this file without it, but `/code-review`'s conventions check reads only `CLAUDE.md` files (checked 2026-10-31, Claude Code 2.1.309), so deleting the link stops the review checking the rules below.
 
 ## Project Overview
 

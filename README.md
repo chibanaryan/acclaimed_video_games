@@ -7,7 +7,7 @@ Acclaimed Games is a video game ranking and aggregation website built with:
 - **Tailwind CSS v4** - Utility-first CSS framework
 - **DaisyUI v5** - Component library for Tailwind
 
-For detailed documentation, see [CLAUDE.md](CLAUDE.md).
+For detailed documentation, see [AGENTS.md](AGENTS.md).
 
 ## Setup Local Development Environment
 
@@ -26,6 +26,10 @@ cd acclaimed_media
 heroku login
 heroku git:remote -a acclaimedgames
 ```
+
+On Windows, enable Developer Mode and clone with
+`git clone -c core.symlinks=true ...`. `CLAUDE.md` is a symlink to `AGENTS.md`,
+and without that setting it arrives as a one-line text file.
 
 ### Install Dependencies
 

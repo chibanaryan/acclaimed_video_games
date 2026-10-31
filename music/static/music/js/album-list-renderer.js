@@ -5,7 +5,7 @@
  * declares, which hold the same `_album_row.html` partial the server renders
  * rows with. That shared partial is the single source of truth for the
  * markup; this file only fills its data-slot hooks. Changing one without the
- * other is what the dual-rendering section of CLAUDE.md warns about.
+ * other is what the dual-rendering section of AGENTS.md warns about.
  *
  * Extends BaseMediaListRenderer from core, which owns paging, load-more,
  * highlight scrolling and the result summary.
