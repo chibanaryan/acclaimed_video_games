@@ -1093,3 +1093,164 @@ class NameSortSurvivesAnOldPayloadTests(SimpleTestCase):
                     r"\.ni\s*!==\s*(void 0|undefined)"
                     r"|(void 0|undefined)\s*!==\s*\w+\.ni",
                 )
+
+
+class YearGridGapsFadeWithTheirTilesTests(SimpleTestCase):
+    """A range draws and undraws as one fade, its gaps with its tiles.
+
+    The gaps were box-shadows on a selected tile, so under `transition-all`
+    they grew from no offset while the tile cross-faded: 60 ms into the 150 ms,
+    a tile was 55% there and its gaps 92%. Colour-only shadows fixed that and
+    still failed on the Clear button: the tile's background ran off the main
+    thread, the shadow could not, and the list render Clear sets off blocks it,
+    so at 4x CPU the tiles finished at ~220 ms and the gaps started at ~640 ms.
+    A background-color on a generated box waits the same way. So the fill and
+    the gaps are all boxes fading opacity, and one tile owns each gap, or their
+    alphas would stack. Nothing frozen shows this; measure real frames, and
+    look at them: a matching percentage is not a matching colour.
+    """
+
+    GRID_RULE = r"([^{}]*year-grid[^{}]*)\{([^{}]*)\}"
+
+    def _source(self, relative_path):
+        return (Path(settings.BASE_DIR) / relative_path).read_text()
+
+    def _rules(self):
+        built = self._source("theme/static/css/dist/styles.css")
+        return re.findall(self.GRID_RULE, built)
+
+    def test_the_state_classes_only_turn_the_boxes_on(self):
+        for path in (
+            "theme/static_src/src/styles.css",
+            "theme/static/css/dist/styles.css",
+        ):
+            with self.subTest(path=path):
+                source = self._source(path)
+                for name in ("right", "bottom", "corner"):
+                    self.assertRegex(source, rf"--gap-bridge-{name}:\s*1\b")
+                self.assertRegex(source, r"--year-fill:\s*1\b")
+                self.assertNotRegex(source, r"--gap-bridge-[a-z-]+:[^;}]*px")
+
+    def test_every_part_of_a_tile_fades_opacity(self):
+        rules = self._rules()
+        for selector, opacity in (
+            (".year-grid-cell:before", "--year-fill"),
+            (".year-grid-decade:before", "--year-fill"),
+            (".year-grid-cell:after", "--gap-bridge-right"),
+            (".year-grid-decade:after", "--gap-bridge-right"),
+            (".year-grid-cell-label:before", "--gap-bridge-bottom"),
+            (".year-grid-decade>span:before", "--gap-bridge-bottom"),
+            (".year-grid-cell-label:after", "--gap-bridge-corner"),
+            (".year-grid-decade>span:after", "--gap-bridge-corner"),
+        ):
+            with self.subTest(selector=selector):
+                declarations = " ".join(
+                    body
+                    for selectors, body in rules
+                    if selector in selectors.split(",")
+                )
+                self.assertIn(f"opacity:var({opacity})", declarations)
+                self.assertIn("transition-property:opacity", declarations)
+
+    def test_the_gaps_leave_first_and_arrive_last(self):
+        # In exact step with the fill they read as lingering: the primary
+        # colour stays green over the page background, and turns tan over the
+        # heatmap by half way. Both fades still span the fill's 150 ms.
+        source = self._source("theme/static_src/src/styles.css")
+        self.assertIn("transition-duration: 100ms;", source)
+        self.assertRegex(
+            source,
+            r"\.year-grid-cell\.is-in-range\.sharp-right::after,"
+            r"[^{}]*\{\s*transition-delay: 50ms;",
+        )
+
+    def test_the_boxes_overlap_at_every_join(self):
+        # Meeting exactly left a hairline at every join at a fractional display
+        # scale (browser zoom, or Windows scaling), and only there.
+        source = self._source("theme/static_src/src/styles.css")
+        self.assertIn("left-[calc(100%-1px)] w-1", source)
+        self.assertIn("top-[calc(100%-1px)] left-0 right-0 h-1", source)
+        self.assertIn("-right-[3px] -bottom-[3px] size-1", source)
+        for side, flag in (
+            ("top", "--shared-top"),
+            ("right", "--gap-bridge-right"),
+            ("bottom", "--gap-bridge-bottom"),
+            ("left", "--shared-left"),
+        ):
+            with self.subTest(side=side):
+                self.assertIn(f"{side}: calc(-1px * var({flag}));", source)
+
+    def test_a_range_fades_nothing_but_opacity(self):
+        # Whatever fades in a range has to keep moving through a list render,
+        # or it lags the rest. The tile's own fades are the heatmap's and the
+        # hover's, which are no part of a range.
+        steps = {
+            "border-top-left-radius",
+            "border-top-right-radius",
+            "border-bottom-right-radius",
+            "border-bottom-left-radius",
+            "top",
+            "right",
+            "bottom",
+            "left",
+        }
+        tile = {"background-color", "filter", "outline-color"}
+        rules = self._rules()
+        self.assertTrue(rules)
+        for selectors, body in rules:
+            with self.subTest(selectors=selectors):
+                self.assertNotIn("box-shadow", body)
+                for listed in re.findall(r"transition-property:([^;]+)", body):
+                    names = set(listed.split(","))
+                    if ":before" in selectors or ":after" in selectors:
+                        if names & steps:
+                            # Not fades: zero-length, at the fade's far end
+                            self.assertEqual(names - steps, {"opacity"})
+                            self.assertRegex(
+                                body, r"transition-duration:[^;]*(,\s*0s){8}"
+                            )
+                        else:
+                            self.assertEqual(names, {"opacity"})
+                    else:
+                        self.assertLessEqual(names, tile, selectors)
+
+    def test_a_corner_rounds_off_only_when_the_fill_has_gone(self):
+        # Rounding a tile while the fill and gaps were solid opened a star
+        # where four tiles meet, on Clear and on any range that shrank.
+        rules = self._rules()
+        for selectors, body in rules:
+            if ".is-in-range" in selectors:
+                with self.subTest(selectors=selectors):
+                    self.assertNotIn("radius", body)
+        fill = " ".join(
+            body
+            for selectors, body in rules
+            if ".year-grid-cell:before" in selectors.split(",")
+        )
+        for corner in ("tl", "tr", "br", "bl"):
+            with self.subTest(corner=corner):
+                self.assertRegex(fill, rf"transition-delay:[^;]*--square-{corner}\b")
+
+    def test_a_range_has_its_own_state_class(self):
+        # The shared `.is-selected` brings a ring and a tint that only source
+        # order kept off, at the same specificity.
+        template = self._source("core/templates/core/includes/_year_grid.html")
+        self.assertIn("'is-in-range':", template)
+        self.assertNotIn("is-selected", template)
+
+    def test_reduced_motion_waits_for_nothing(self):
+        # The delays are on generated boxes, and would split a snap in two.
+        source = self._source("theme/static_src/src/styles.css")
+        block = re.search(
+            r"@media \(prefers-reduced-motion: reduce\) \{(.*?)\n\}", source, re.S
+        ).group(1)
+        self.assertIn("*::before", block)
+        self.assertIn("*::after", block)
+        self.assertIn("transition-delay: 0s !important", block)
+
+    def test_a_corner_has_one_owner(self):
+        template = self._source("core/templates/core/includes/_year_grid.html")
+        self.assertEqual(
+            set(re.findall(r"corner-[a-z]+", template)),
+            {"corner-br"},
+        )

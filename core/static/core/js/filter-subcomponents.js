@@ -527,11 +527,6 @@
             },
 
             _rebuildCaches: function () {
-                this._yearSet = new Set(
-                    this.originalYearCounts.map(function (yc) {
-                        return yc.year;
-                    })
-                );
                 var nonZero = this.originalYearCounts.filter(function (yc) {
                     return yc.count > 0;
                 });
@@ -607,13 +602,19 @@
                         return b - a;
                     });
 
+                // Every year with a cell, so the zero-count years filled in
+                // below too: a neighbouring tile bridges the gap to them
+                var yearSet = new Set();
                 this._decadeStructure = decadeStarts.map(function (ds) {
                     var maxPos = decadeMap[ds].maxOriginalPos || 0;
                     var cells = [];
                     for (var i = 0; i < 10; i++) {
                         if (i > maxPos) {
                             cells.push({ hidden: true });
-                        } else if (decadeMap[ds][i]) {
+                            continue;
+                        }
+                        yearSet.add(ds + i);
+                        if (decadeMap[ds][i]) {
                             cells.push({
                                 year: decadeMap[ds][i].year,
                                 originalCount: decadeMap[ds][i].originalCount,
@@ -627,6 +628,8 @@
                     }
                     return { start: ds, label: ds + "s", cells: cells };
                 });
+
+                this._yearSet = yearSet;
 
                 this.decades = this._decadeStructure.map(function (decade) {
                     return {
@@ -973,33 +976,6 @@
                 var diagYear = year + 1 - 10;
                 var position = year % 10;
                 if (position === 9) {
-                    return false;
-                }
-                return this.yearExists(diagYear) && this.isInRange(diagYear);
-            },
-
-            hasSelectedDiagonalBL: function (year) {
-                var diagYear = year - 1 - 10;
-                var position = year % 10;
-                if (position === 0) {
-                    return false;
-                }
-                return this.yearExists(diagYear) && this.isInRange(diagYear);
-            },
-
-            hasSelectedDiagonalTR: function (year) {
-                var diagYear = year + 1 + 10;
-                var position = year % 10;
-                if (position === 9) {
-                    return false;
-                }
-                return this.yearExists(diagYear) && this.isInRange(diagYear);
-            },
-
-            hasSelectedDiagonalTL: function (year) {
-                var diagYear = year - 1 + 10;
-                var position = year % 10;
-                if (position === 0) {
                     return false;
                 }
                 return this.yearExists(diagYear) && this.isInRange(diagYear);

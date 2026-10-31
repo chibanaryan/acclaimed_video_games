@@ -6,7 +6,8 @@
  * Builds the grid as a page loaded with a narrow filter would - its
  * `year-counts-data` the filter's counts - once with the page's whole-corpus
  * `year-baseline-counts-data` and once without, and prints the colour scale
- * each ends up with, plus the opacity of a count above a stale scale.
+ * each ends up with, plus the opacity of a count above a stale scale. Also
+ * reports which neighbours a tile sees around a year missing from the counts.
  */
 const fs = require('fs');
 const path = require('path');
@@ -54,7 +55,20 @@ function build(withBaseline) {
 const stale = factories.yearGridComponent({ filters: {}, minYear: 1970, maxYear: 1972 });
 stale.maxCount = 1;
 
+// 1971 has no count, so its cell is filled in; 1983 on have no cell at all.
+elements = {
+    'year-counts-data': [1970, 1972, 1980, 1981, 1982].map(year => ({ year, count: 1 })),
+};
+const gappy = factories.yearGridComponent({ filters: { start: 1970, end: 1989 }, minYear: 1960, maxYear: 1990 });
+gappy.init();
+
 process.stdout.write(JSON.stringify({
+    neighbours: {
+        rightOntoFilledCell: gappy.hasSelectedRight(1970),
+        belowOntoFilledCell: gappy.hasSelectedBelow(1981),
+        cornerOntoFilledCell: gappy.hasSelectedDiagonalBR(1980),
+        rightOntoNoCell: gappy.hasSelectedRight(1982),
+    },
     withBaseline: build(true),
     withoutBaseline: build(false),
     opacityAboveScale: stale.getOpacity(20),

@@ -44,6 +44,20 @@ class YearGridScaleTests(SimpleTestCase):
     def test_a_count_above_the_scale_is_full_colour_not_invalid(self):
         self.assertEqual(self.output["opacityAboveScale"], "100%")
 
+    def test_a_tile_bridges_the_gap_to_a_year_with_no_count(self):
+        # A tile alone paints the gaps to its right and below, so a cell the
+        # grid filled in has to count as a neighbour, and a cell it never
+        # drew must not.
+        self.assertEqual(
+            self.output["neighbours"],
+            {
+                "rightOntoFilledCell": True,
+                "belowOntoFilledCell": True,
+                "cornerOntoFilledCell": True,
+                "rightOntoNoCell": False,
+            },
+        )
+
 
 @music_site
 class AlbumYearBaselineTests(MusicDataMixin, TestCase):

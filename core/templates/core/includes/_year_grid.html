@@ -43,11 +43,10 @@
                      :aria-label="decade.label + ', ' + getDecadeCount(decade) + ' {{ item_noun_plural|default:'games' }}'"
                      @focus="focusRow = row; focusCol = 0"
                      :class="{
-                         'is-selected': isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start),
+                         'is-in-range': isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start),
                          'sharp-top': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedAbove(decade.start),
                          'sharp-bottom': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedBelow(decade.start),
                          'sharp-right': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedRight(decade.start),
-                         'corner-tr': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedAbove(decade.start) && decadeHasSelectedRight(decade.start) && isInRange(decade.start + 10),
                          'corner-br': (isDecadeSelected(decade.start) || isDecadeInDragRange(decade.start)) && decadeHasSelectedBelow(decade.start) && decadeHasSelectedRight(decade.start) && isInRange(decade.start - 10)
                      }"
                      @mousedown="startDragDecade(decade.start, $event)"
@@ -68,16 +67,12 @@
                          :aria-label="cell && cell.year ? cell.year + ', ' + cell.count + ' {{ item_noun_plural|default:'games' }}' : null"
                          @focus="focusRow = row; focusCol = idx + 1"
                          :class="{
-                             'is-selected': cell && cell.year && isInRange(cell.year),
-                             'is-dragging': cell && cell.year && isDragging && isInRange(cell.year),
+                             'is-in-range': cell && cell.year && isInRange(cell.year),
                              'sharp-top': cell && cell.year && isInRange(cell.year) && hasSelectedAbove(cell.year),
                              'sharp-bottom': cell && cell.year && isInRange(cell.year) && hasSelectedBelow(cell.year),
                              'sharp-left': cell && cell.year && isInRange(cell.year) && hasSelectedLeft(cell.year),
                              'sharp-right': cell && cell.year && isInRange(cell.year) && hasSelectedRight(cell.year),
                              'corner-br': cell && cell.year && isInRange(cell.year) && hasSelectedRight(cell.year) && hasSelectedBelow(cell.year) && hasSelectedDiagonalBR(cell.year),
-                             'corner-bl': cell && cell.year && isInRange(cell.year) && hasSelectedLeft(cell.year) && hasSelectedBelow(cell.year) && hasSelectedDiagonalBL(cell.year),
-                             'corner-tr': cell && cell.year && isInRange(cell.year) && hasSelectedRight(cell.year) && hasSelectedAbove(cell.year) && hasSelectedDiagonalTR(cell.year),
-                             'corner-tl': cell && cell.year && isInRange(cell.year) && hasSelectedLeft(cell.year) && hasSelectedAbove(cell.year) && hasSelectedDiagonalTL(cell.year),
                              'year-grid-cell-empty': !cell,
                              'year-grid-cell-hidden': cell && cell.hidden,
                              'is-unavailable': cell && cell.year && !cell.available && !isInRange(cell.year)

@@ -2,6 +2,11 @@
 
 ## 2026-10-31
 
+- **A year range draws and clears as one fade, on both sites.** The gaps were
+  shadows that fell behind the cells, and Clear's list render froze them
+  outright. The fill and gaps are now boxes fading `opacity`, which keeps
+  running through a render; the gaps take 100 ms of the fill's 150, because
+  green over the page stays green longer than green over amber
 - **`MUSIC_ENABLED` is gone.** Production had it on, so the off state was dead
   code. `music/access.py`, the CSRF failure view and every hidden-section
   branch went with it. Readers see no change; music is now public in

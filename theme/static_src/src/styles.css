@@ -401,56 +401,24 @@
 
   /* Decade label (e.g., "1980s") */
   .year-grid-decade {
-    @apply w-[50px] min-w-[50px] flex items-center justify-center py-1.5 px-1;
+    @apply w-[50px] min-w-[50px] relative isolate flex items-center justify-center py-1.5 px-1;
     @apply bg-base-100 rounded-sm cursor-pointer font-semibold text-base-content/70;
-    @apply transition-all duration-150;
+    @apply transition-[background-color] duration-150;
   }
 
   .year-grid-decade:hover {
     @apply bg-base-content/20 text-base-content;
   }
 
-  .year-grid-decade.is-selected {
-    @apply bg-primary text-primary-content rounded-sm;
-    /* CSS custom properties for directional and corner gap-bridging shadows */
-    --gap-bridge-right: 0 0 0 0 transparent;
-    --gap-bridge-top: 0 0 0 0 transparent;
-    --gap-bridge-bottom: 0 0 0 0 transparent;
-    --gap-bridge-corner-tr: 0 0 0 0 transparent;
-    --gap-bridge-corner-br: 0 0 0 0 transparent;
-    box-shadow: var(--gap-bridge-right), var(--gap-bridge-top), var(--gap-bridge-bottom),
-                var(--gap-bridge-corner-tr), var(--gap-bridge-corner-br);
-  }
-
-  /* Sharp corner classes for decade labels - remove corners and bridge gaps when adjacent to other selected cells */
-  .year-grid-decade.is-selected.sharp-top {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    --gap-bridge-top: 0 -2px 0 0 var(--color-primary);
-  }
-  .year-grid-decade.is-selected.sharp-bottom {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    --gap-bridge-bottom: 0 2px 0 0 var(--color-primary);
-  }
-  .year-grid-decade.is-selected.sharp-right {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    --gap-bridge-right: 2px 0 0 0 var(--color-primary);
-  }
-
-  /* Corner gap fills for decade labels - requires all 4 surrounding cells selected */
-  .year-grid-decade.is-selected.corner-tr {
-    --gap-bridge-corner-tr: 2px -2px 0 0 var(--color-primary);
-  }
-  .year-grid-decade.is-selected.corner-br {
-    --gap-bridge-corner-br: 2px 2px 0 0 var(--color-primary);
+  .year-grid-decade.is-in-range {
+    @apply text-primary-content;
   }
 
   /* Year cell with heatmap background */
   .year-grid-cell {
     @apply flex-1 min-w-0 h-7 flex items-center justify-center;
-    @apply rounded-sm cursor-pointer relative transition-all duration-150;
+    @apply rounded-sm cursor-pointer relative isolate;
+    @apply transition-[background-color,filter,outline-color] duration-150;
     /* Golden amber heatmap with opacity-based intensity */
     background-color: color-mix(in oklch, var(--color-heatmap) var(--heatmap-opacity, 10%), transparent);
   }
@@ -459,66 +427,144 @@
     @apply outline outline-2 outline-primary -outline-offset-2 z-[1];
   }
 
-  .year-grid-cell.is-selected,
-  .year-grid-cell.is-dragging {
-    @apply !bg-primary text-primary-content rounded-sm;
-    /* CSS custom properties for directional and corner gap-bridging shadows */
-    --gap-bridge-right: 0 0 0 0 transparent;
-    --gap-bridge-left: 0 0 0 0 transparent;
-    --gap-bridge-top: 0 0 0 0 transparent;
-    --gap-bridge-bottom: 0 0 0 0 transparent;
-    --gap-bridge-corner-br: 0 0 0 0 transparent;
-    --gap-bridge-corner-bl: 0 0 0 0 transparent;
-    --gap-bridge-corner-tr: 0 0 0 0 transparent;
-    --gap-bridge-corner-tl: 0 0 0 0 transparent;
-    box-shadow: var(--gap-bridge-right), var(--gap-bridge-left),
-                var(--gap-bridge-top), var(--gap-bridge-bottom),
-                var(--gap-bridge-corner-br), var(--gap-bridge-corner-bl),
-                var(--gap-bridge-corner-tr), var(--gap-bridge-corner-tl);
+  /* A selected range reads as one shape, and draws as one fade. Each tile
+     carries four boxes in the primary colour: its fill over the heatmap colour,
+     the gaps to its right and below, and the corner between them, so each gap
+     is painted once. All four fade opacity and nothing else, because an opacity
+     fade runs off the main thread in every browser. A box-shadow, or a
+     background-color on a generated box, waits out the list render a filter
+     change sets off, and Clear left the gaps behind the finished tiles. For the
+     same reason text colour changes at once, not in a fade. Square corners
+     belong to the fill, not the tile, which stays round under it. A corner
+     squares up at once and rounds off only when the fade is over: rounding it
+     while the fill and gaps were still solid opened a star at each join.
+     The gaps fade in 100ms of the fill's 150ms: leaving first, arriving last.
+     Over the page background the primary colour stays recognisably itself until
+     it is nearly gone, while over the heatmap it turns to tan by half way, so a
+     gap that kept the fill's exact timing looked as if it lingered.
+     The gap boxes reach a pixel past the 2px gap at each end, and a fill a pixel
+     past its tile on each side it shares with the range: at a fractional display
+     scale a box and its tile round to different device pixels, and the tile's
+     soft heatmap edge paints over its neighbour's boxes, so meeting exactly left
+     a hairline at every join.
+     The label's two boxes are anchored to the tile: the label is not positioned. */
+  .year-grid-cell,
+  .year-grid-decade {
+    --year-fill: 0;
+    --gap-bridge-right: 0;
+    --gap-bridge-bottom: 0;
+    --gap-bridge-corner: 0;
+    --shared-top: 0;
+    --shared-left: 0;
+    --square-tl: 0;
+    --square-tr: 0;
+    --square-br: 0;
+    --square-bl: 0;
   }
 
-  /* Sharp corner classes for year cells - remove corners and bridge gaps when adjacent to other selected cells */
-  .year-grid-cell.is-selected.sharp-top,
-  .year-grid-cell.is-dragging.sharp-top {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    --gap-bridge-top: 0 -2px 0 0 var(--color-primary);
-  }
-  .year-grid-cell.is-selected.sharp-bottom,
-  .year-grid-cell.is-dragging.sharp-bottom {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    --gap-bridge-bottom: 0 2px 0 0 var(--color-primary);
-  }
-  .year-grid-cell.is-selected.sharp-left,
-  .year-grid-cell.is-dragging.sharp-left {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    --gap-bridge-left: -2px 0 0 0 var(--color-primary);
-  }
-  .year-grid-cell.is-selected.sharp-right,
-  .year-grid-cell.is-dragging.sharp-right {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    --gap-bridge-right: 2px 0 0 0 var(--color-primary);
+  .year-grid-cell.is-in-range,
+  .year-grid-decade.is-in-range {
+    --year-fill: 1;
   }
 
-  /* Corner gap fills - only when all 4 tiles around the corner are selected (requires diagonal check) */
-  .year-grid-cell.is-selected.corner-br,
-  .year-grid-cell.is-dragging.corner-br {
-    --gap-bridge-corner-br: 2px 2px 0 0 var(--color-primary);
+  .year-grid-cell::before,
+  .year-grid-decade::before,
+  .year-grid-cell::after,
+  .year-grid-decade::after,
+  .year-grid-cell-label::before,
+  .year-grid-decade > span::before,
+  .year-grid-cell-label::after,
+  .year-grid-decade > span::after {
+    content: "";
+    @apply absolute bg-primary pointer-events-none transition-opacity duration-150;
   }
-  .year-grid-cell.is-selected.corner-bl,
-  .year-grid-cell.is-dragging.corner-bl {
-    --gap-bridge-corner-bl: -2px 2px 0 0 var(--color-primary);
+  .year-grid-cell::before,
+  .year-grid-decade::before {
+    @apply -z-10;
+    top: calc(-1px * var(--shared-top));
+    right: calc(-1px * var(--gap-bridge-right));
+    bottom: calc(-1px * var(--gap-bridge-bottom));
+    left: calc(-1px * var(--shared-left));
+    opacity: var(--year-fill);
+    border-top-left-radius: calc(var(--radius-sm) * (1 - var(--square-tl)));
+    border-top-right-radius: calc(var(--radius-sm) * (1 - var(--square-tr)));
+    border-bottom-right-radius: calc(var(--radius-sm) * (1 - var(--square-br)));
+    border-bottom-left-radius: calc(var(--radius-sm) * (1 - var(--square-bl)));
+    /* Steps, not fades. A corner rounds off once the fill has gone. The fill
+       reaches past its tile once it has arrived, or it would bring the gaps in
+       with it, and draws back at once, so the gaps can leave first. */
+    transition-property:
+      opacity, border-top-left-radius, border-top-right-radius,
+      border-bottom-right-radius, border-bottom-left-radius,
+      top, right, bottom, left;
+    transition-duration: 150ms, 0s, 0s, 0s, 0s, 0s, 0s, 0s, 0s;
+    transition-delay:
+      0s, calc(150ms * (1 - var(--square-tl))), calc(150ms * (1 - var(--square-tr))),
+      calc(150ms * (1 - var(--square-br))), calc(150ms * (1 - var(--square-bl))),
+      calc(150ms * var(--shared-top)), calc(150ms * var(--gap-bridge-right)),
+      calc(150ms * var(--gap-bridge-bottom)), calc(150ms * var(--shared-left));
   }
-  .year-grid-cell.is-selected.corner-tr,
-  .year-grid-cell.is-dragging.corner-tr {
-    --gap-bridge-corner-tr: 2px -2px 0 0 var(--color-primary);
+  .year-grid-cell::after,
+  .year-grid-decade::after {
+    @apply top-0 bottom-0 left-[calc(100%-1px)] w-1;
+    opacity: var(--gap-bridge-right);
   }
-  .year-grid-cell.is-selected.corner-tl,
-  .year-grid-cell.is-dragging.corner-tl {
-    --gap-bridge-corner-tl: -2px -2px 0 0 var(--color-primary);
+  .year-grid-cell-label::before,
+  .year-grid-decade > span::before {
+    @apply top-[calc(100%-1px)] left-0 right-0 h-1;
+    opacity: var(--gap-bridge-bottom);
+  }
+  .year-grid-cell-label::after,
+  .year-grid-decade > span::after {
+    @apply -right-[3px] -bottom-[3px] size-1;
+    opacity: var(--gap-bridge-corner);
+  }
+  .year-grid-cell.is-in-range.corner-br,
+  .year-grid-decade.is-in-range.corner-br {
+    --gap-bridge-corner: 1;
+  }
+
+  .year-grid-cell::after,
+  .year-grid-decade::after,
+  .year-grid-cell-label::before,
+  .year-grid-decade > span::before,
+  .year-grid-cell-label::after,
+  .year-grid-decade > span::after {
+    transition-duration: 100ms;
+  }
+  .year-grid-cell.is-in-range.sharp-right::after,
+  .year-grid-decade.is-in-range.sharp-right::after,
+  .year-grid-cell.is-in-range.sharp-bottom .year-grid-cell-label::before,
+  .year-grid-decade.is-in-range.sharp-bottom > span::before,
+  .year-grid-cell.is-in-range.corner-br .year-grid-cell-label::after,
+  .year-grid-decade.is-in-range.corner-br > span::after {
+    transition-delay: 50ms;
+  }
+
+  /* Sides shared with the rest of the range: those corners of the fill go
+     square, and on the right and below the tile turns on the gap it owns */
+  .year-grid-cell.is-in-range.sharp-top,
+  .year-grid-decade.is-in-range.sharp-top {
+    --shared-top: 1;
+    --square-tl: 1;
+    --square-tr: 1;
+  }
+  .year-grid-cell.is-in-range.sharp-bottom,
+  .year-grid-decade.is-in-range.sharp-bottom {
+    --square-bl: 1;
+    --square-br: 1;
+    --gap-bridge-bottom: 1;
+  }
+  .year-grid-cell.is-in-range.sharp-left {
+    --shared-left: 1;
+    --square-tl: 1;
+    --square-bl: 1;
+  }
+  .year-grid-cell.is-in-range.sharp-right,
+  .year-grid-decade.is-in-range.sharp-right {
+    --square-tr: 1;
+    --square-br: 1;
+    --gap-bridge-right: 1;
   }
 
   .year-grid-cell-empty {
@@ -554,8 +600,7 @@
   }
 
   /* Selected cells: inherit text-primary-content from parent */
-  .year-grid-cell.is-selected .year-grid-cell-label,
-  .year-grid-cell.is-dragging .year-grid-cell-label {
+  .year-grid-cell.is-in-range .year-grid-cell-label {
     @apply text-primary-content;
     text-shadow: none;  /* No shadow needed on solid background */
   }
@@ -1729,6 +1774,7 @@ html.quick-mark-game .played-button-wrapper:hover .played-button {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

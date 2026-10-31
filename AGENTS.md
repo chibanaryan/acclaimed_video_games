@@ -382,6 +382,34 @@ Row and card styling is shared the same way but through CSS selector lists -
 its own class names. One rule block, both families; a fourth copy of the
 `.game-row` rules is what left album rows without a hover state.
 
+A selected year range reads as one shape, and fades as one, because each tile
+carries four generated boxes in the primary colour: its fill over the heatmap
+colour, the gaps to its right and below, and the corner between them
+(`::before` and `::after` on the tile and on its label). All four fade
+`opacity`, which runs off the main thread in every browser. A filter change's
+list render blocks that thread, so a fade on it waits: with box-shadow gaps, and
+again with `background-color` on the boxes, Clear finished the tiles at ~220 ms
+and started the gaps at ~550-640 ms (4x CPU). Text colour changes at once for
+the same reason. Square corners are the fill's, and the tile under it stays
+round: a corner squares up at once and rounds off only when the fade is over,
+since rounding it while the fill and gaps were solid opened a star at every
+join. The gaps take 100 ms of the fill's 150, leaving first and arriving last.
+In exact step they still looked as if they lingered: at 127 ms of a Clear the
+tile was `147,139,79`, already tan, and the gap `169,192,186`, still green,
+because the primary colour stays itself over the page background and turns
+muddy over the heatmap. 80 ms overshoots, and the range falls apart before it
+fades. Each gap has one owner because two half-opaque fills stack, and that is
+why `yearExists` counts the zero-count years `buildDecades` fills in. The gap
+boxes reach a pixel past the gap, and a fill a pixel past its tile on each side
+it shares, once it has arrived: meeting exactly left a hairline at every join at
+any fractional display scale (browser zoom 110%, Windows at 125%), and 1x and 2x
+hide that. A range is
+`.is-in-range`, not the shared `.is-selected`, whose ring and tint only source
+order would keep off. Measure all this from real frames after a real click, and
+look at them: freezing a transition takes the threads out of the picture, and a
+matching percentage is not a matching colour. Pinned by
+`core/tests/test_static_bundles.py::YearGridGapsFadeWithTheirTilesTests`.
+
 Facet counts (the number beside a year cell or a genre row) are counted with
 their own dimension left out, so an option never leads to an empty page:
 `apply_album_filters(..., skip=("year",))` server-side and
