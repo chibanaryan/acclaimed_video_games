@@ -75,9 +75,10 @@ on `origin/main` (`git diff origin/main` covers both).
 
 - **Answer every finding.** Fix it, or say in chat why it is a false
   positive or out of scope. Never drop one silently.
-- **Re-review after fixing.** Run it again on the new diff until no
-  confirmed findings remain, at most two rounds; then list what is left
-  for the user and let them decide.
+- **Re-review after fixing.** Run it again on the new diff, with no limit
+  on rounds, until one comes back with nothing left to answer. Any code
+  changed since the last round gets another, even a small fix made after
+  the review. A finding already waived does not need answering twice.
 - **Skip only when** the user explicitly says so ("commit without
   review"), or the diff touches no code or templates (DEVLOG or docs
   only). Say in chat that the review was skipped and why.

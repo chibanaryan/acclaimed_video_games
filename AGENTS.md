@@ -35,7 +35,8 @@ protection, and the only PRs are Dependabot's, so the review is a workflow
 rule rather than a GitHub one. `/commit` and `/deploy` run it as their step
 5. A hand-run `git push origin main` or merge is covered by the same rule,
 and so is merging a Dependabot PR with `gh pr merge`. Fix every finding or
-say in chat why it is waived; skip the review only when the user says to,
+say in chat why it is waived, and review again after any fix, for as many
+rounds as it takes; skip the review only when the user says to,
 or the diff touches no code or templates (a Dependabot PR that changes
 only lock files touches none). Codex has no `/code-review`: a Codex
 session asks the user before pushing to `main` or merging a PR.
