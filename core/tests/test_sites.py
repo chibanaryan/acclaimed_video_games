@@ -13,7 +13,6 @@ from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.test import (
-    Client,
     RequestFactory,
     SimpleTestCase,
     TestCase,
@@ -175,16 +174,14 @@ class RoutingTests(TestCase):
         # still records, where the templates rendered would be none
         self.assertEqual(self.get(ROOT_HOST, "/").resolver_match.view_name, "landing")
         self.assertEqual(self.get(GAMES_HOST, "/").resolver_match.view_name, "home")
-        with self.settings(MUSIC_ENABLED=True):
-            self.assertEqual(
-                self.get(MUSIC_HOST, "/").resolver_match.view_name, "music:home"
-            )
+        self.assertEqual(
+            self.get(MUSIC_HOST, "/").resolver_match.view_name, "music:home"
+        )
 
     def test_music_lives_at_the_root_of_its_host(self):
-        with self.settings(MUSIC_ENABLED=True):
-            self.assertEqual(self.get(MUSIC_HOST, "/artists/").status_code, 200)
-            self.assertEqual(self.get(MUSIC_HOST, "/api/meta/").status_code, 200)
-            self.assertEqual(self.get(GAMES_HOST, "/music/").status_code, 404)
+        self.assertEqual(self.get(MUSIC_HOST, "/artists/").status_code, 200)
+        self.assertEqual(self.get(MUSIC_HOST, "/api/meta/").status_code, 200)
+        self.assertEqual(self.get(GAMES_HOST, "/music/").status_code, 404)
 
     def test_the_shared_pages_are_on_every_host(self):
         page = FlatPage.objects.create(url="/about/", title="About", content="Hi")
@@ -259,38 +256,6 @@ class EveryHostCanServeTheSharedRoutesTests(TestCase):
         self.assertEqual(article.get_absolute_url(), "/blog/a-post/")
 
 
-class HiddenMusicHostTests(TestCase):
-    """With MUSIC_ENABLED off, the music host names nothing to an outsider."""
-
-    def setUp(self):
-        clear_all_caches()
-
-    def get(self, path):
-        return self.client.get(path, HTTP_HOST=MUSIC_HOST, secure=True)
-
-    def assert_hidden(self, response, status):
-        self.assertEqual(response.status_code, status)
-        html = response.content.decode()
-        self.assertNotIn("The music site is in beta", html)
-        self.assertNotIn("<aside", html)
-        self.assertNotIn('data-nav-item="albums"', html)
-        self.assertIn('href="https://acclaimedmedia.org/"', html)
-
-    def test_a_404_shows_no_music_chrome(self):
-        self.assert_hidden(self.get("/no-such-page/"), 404)
-
-    def test_a_shared_page_shows_no_music_chrome(self):
-        page = FlatPage.objects.create(url="/about/", title="About", content="Hi")
-        page.sites.add(Site.objects.get_current())
-        self.assert_hidden(self.get("/page/about/"), 200)
-
-    def test_a_stale_token_on_a_shared_form_is_the_real_403(self):
-        # Only music's own routes are hidden behind a 404
-        client = Client(enforce_csrf_checks=True)
-        response = client.post("/contact/", HTTP_HOST=MUSIC_HOST, secure=True)
-        self.assertEqual(response.status_code, 403)
-
-
 class ApexRedirectTests(TestCase):
     """Every path the apex served before the split still leads somewhere."""
 
@@ -305,7 +270,6 @@ class ApexRedirectTests(TestCase):
             "https://games.acclaimedmedia.org/game/half-life-2/?x=1",
         )
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_a_music_path_moves_to_the_root_of_the_music_host(self):
         for old, new in (
             ("/music/", "/"),
@@ -321,12 +285,6 @@ class ApexRedirectTests(TestCase):
                 self.assertEqual(
                     response["Location"], "https://music.acclaimedmedia.org" + new
                 )
-
-    def test_a_hidden_music_path_stays_a_404(self):
-        # A redirect would name the host of a section still hidden
-        for path in ("/music/", "/music/artists/prince/", "/api/music/all/"):
-            with self.subTest(path=path):
-                self.assertEqual(self.get(path).status_code, 404)
 
     def test_a_path_that_only_starts_like_music_is_a_games_path(self):
         self.assertEqual(
@@ -389,8 +347,7 @@ class PerSiteSeoTests(TestCase):
         games = self.get(GAMES_HOST, "/sitemap.xml").content.decode()
         self.assertIn("<loc>https://games.acclaimedmedia.org/</loc>", games)
         self.assertNotIn("/page/about/", games)
-        with self.settings(MUSIC_ENABLED=True):
-            music = self.get(MUSIC_HOST, "/sitemap.xml").content.decode()
+        music = self.get(MUSIC_HOST, "/sitemap.xml").content.decode()
         self.assertIn("<loc>https://music.acclaimedmedia.org/</loc>", music)
 
     def test_each_site_is_canonical_on_its_own_origin(self):
@@ -427,11 +384,9 @@ class LandingPageTests(TestCase):
     def get(self):
         return self.client.get("/", HTTP_HOST=ROOT_HOST, secure=True)
 
-    def test_without_music_the_page_offers_games_alone(self):
+    def test_the_games_card_shows_the_top_games(self):
         response = self.get()
         self.assertContains(response, 'href="https://games.acclaimedmedia.org/"')
-        self.assertNotContains(response, MUSIC_HOST)
-        self.assertNotIn("music_card", response.context)
         card = response.context["games_card"]
         self.assertEqual((card["count"], card["list_count"]), (6, 1))
         self.assertEqual(
@@ -454,8 +409,7 @@ class LandingPageTests(TestCase):
             f'{image}/t_cover_small_2x/art.jpg 2x"',
         )
 
-    @override_settings(MUSIC_ENABLED=True)
-    def test_with_music_on_the_page_offers_both(self):
+    def test_the_music_card_shows_the_top_albums(self):
         def stored_cover(album, size):
             return "/cover/a/b-250.jpg" if album.name == "Revolver" else None
 
@@ -474,12 +428,10 @@ class LandingPageTests(TestCase):
             ],
         )
 
-    def test_the_page_is_cached_for_anonymous_visitors_per_flag(self):
+    def test_the_page_is_cached_for_anonymous_visitors(self):
         self.get()
         Game.objects.filter(rank=1).update(name="Renamed")
         self.assertNotContains(self.get(), "Renamed")
-        with self.settings(MUSIC_ENABLED=True):
-            self.assertContains(self.get(), "Renamed")
 
     def test_an_old_filter_link_redirects_even_with_the_page_cached(self):
         """The cache is read before the view's redirect."""
@@ -595,6 +547,6 @@ class ThemeFollowsTheReaderTests(TestCase):
         html = self.client.get("/", HTTP_HOST=GAMES_HOST, secure=True).content.decode()
         self.assertIn("window.saveThemeCookie=function(t)", html)
         self.assertIn("';domain=.'+p.join('.')", html)
-        # And it names no site: this runs on every page while music is hidden
+        # And it names no site: the same script runs on all three
         self.assertNotIn("(games|music)", html)
         self.assertIn("window.saveThemeCookie(t);document.documentElement", html)

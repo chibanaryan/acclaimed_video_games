@@ -20,7 +20,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from music import models
-from music.tests.test_views import StaffUserTestMixin
+from music.tests.test_views import ClearsCachesMixin
 from music.tests.site import setUpModule, tearDownModule  # noqa: F401
 from core import sites
 from core.tests.utils import get_on_site
@@ -37,7 +37,7 @@ def _credits(response):
     return DATA_CREDIT_LINK.findall(response.content.decode())
 
 
-class DiscogsAttributionTests(StaffUserTestMixin, TestCase):
+class DiscogsAttributionTests(ClearsCachesMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.rock = models.MusicGenre.objects.create(name="Rock")

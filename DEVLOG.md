@@ -2,6 +2,10 @@
 
 ## 2026-10-31
 
+- **`MUSIC_ENABLED` is gone.** Production had it on, so the off state was dead
+  code. `music/access.py`, the CSRF failure view and every hidden-section
+  branch went with it. Readers see no change; music is now public in
+  development and tests too, and its test suites run as a reader, not staff
 - **`rimraf` is gone from the CSS build.** It only deleted one folder and held
   `glob` and `minimatch` on versions with new advisories, so `build:clean` now
   uses Node's `fs.rmSync`. Nine packages leave the lock; the CSS is unchanged

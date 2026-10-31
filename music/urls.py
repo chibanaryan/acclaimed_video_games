@@ -20,7 +20,7 @@ urlpatterns = [
     ),
     # Source lists behind the rankings
     path("lists/", views.MusicListListView.as_view(), name="list-list"),
-    # Data import (staff only, whatever MUSIC_ENABLED says)
+    # Data import (staff only)
     path("import/", views.MusicImportView.as_view(), name="import"),
     # Cover art, served from our own store rather than hotlinked. Before
     # <slug:slug>/ so "cover" is not read as an album slug.

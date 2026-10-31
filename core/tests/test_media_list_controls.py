@@ -105,7 +105,7 @@ class BothRankingPagesRenderTheControlsTests(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username="controls", password="controlspass", is_staff=True
+            username="controls", password="controlspass"
         )
         self.client.login(username="controls", password="controlspass")
 
@@ -264,7 +264,7 @@ class MusicRendersTheSavedFilterUiTests(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username="musicsaved", password="savedpass", is_staff=True
+            username="musicsaved", password="savedpass"
         )
         self.client.login(username="musicsaved", password="savedpass")
         music_models.Album.objects.create(

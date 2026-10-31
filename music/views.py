@@ -1,10 +1,8 @@
 """
 Music views for the multi-media platform.
 
-Every view is behind ``music.access.MusicVisibleMixin``: public once
-``settings.MUSIC_ENABLED`` is on, and until then a staff-only beta that looks
-absent, not forbidden, to everyone else (404). The import page is the
-exception and stays behind ``core.mixins.StaffOnlyMixin`` either way.
+Every view is public but the import page, which is behind
+``core.mixins.StaffOnlyMixin``.
 
 The album list is server-rendered with HTMX filtering and progressively
 enhanced by music/static/music/js/, so every variable these templates read is
@@ -51,7 +49,6 @@ from core import sites
 from core.services import genre_tree, seo
 from core.services.query_params import parse_id_list, parse_int
 from music import config, models
-from music.access import MusicVisibleMixin
 from music.forms import MusicImportForm
 from music.services import caching, import_handler, landing_pages
 from music.services.credits import (
@@ -646,7 +643,7 @@ def group_list_appearances(memberships):
     ]
 
 
-class AlbumHomePageView(MusicVisibleMixin, RobustPaginationMixin, ListView):
+class AlbumHomePageView(RobustPaginationMixin, ListView):
     """
     The album rankings page, with search, filtering and HTMX updates.
 
@@ -686,7 +683,6 @@ class AlbumHomePageView(MusicVisibleMixin, RobustPaginationMixin, ListView):
 
     def get(self, request, *args, **kwargs):
         # Every cached value the page reads, in one shared-cache round trip.
-        # Here rather than in dispatch, so the gate 404s a hidden section first.
         with batched_cache_reads(self._prefetch_cache_keys()):
             return self.render_rankings(request, *args, **kwargs)
 
@@ -932,11 +928,8 @@ class MusicLandingPageView(AlbumHomePageView):
     ``games.views.SeoRankingPageView`` does. A param the request names
     itself wins over the path's.
 
-    The injection happens in ``render_rankings()`` (called from ``get()``),
-    not ``setup()`` as games does it:
-    ``setup()`` runs before ``dispatch()``, so resolving the page there
-    would query the database for a request the section's gate is about to
-    404.
+    The injection happens in ``render_rankings()``, not ``setup()`` as games
+    does it, so that ``get()``'s ``batched_cache_reads`` covers it.
     """
 
     def get_page_seo(self):
@@ -1019,7 +1012,7 @@ class DecadeLandingView(MusicLandingPageView):
         }
 
 
-class MusicBrowseIndexView(MusicVisibleMixin, TemplateView):
+class MusicBrowseIndexView(TemplateView):
     """Index of every music landing page, reached from the sitemap only."""
 
     template_name = "music/landing/browse.html"
@@ -1044,7 +1037,7 @@ class MusicBrowseIndexView(MusicVisibleMixin, TemplateView):
         return context
 
 
-class AlbumDownloadView(MusicVisibleMixin, View):
+class AlbumDownloadView(View):
     """The current filter state as a CSV, as the games sidebar offers.
 
     Same filters as the rankings page, so the file is exactly what the
@@ -1107,7 +1100,7 @@ class AlbumDownloadView(MusicVisibleMixin, View):
         return response
 
 
-class ToggleListenedAlbumView(MusicVisibleMixin, LoginRequiredMixin, View):
+class ToggleListenedAlbumView(LoginRequiredMixin, View):
     """Set an album's listen status, answering with the re-rendered button.
 
     ``?status=none|want|listened|own`` sets a status directly. ``own`` and
@@ -1117,10 +1110,8 @@ class ToggleListenedAlbumView(MusicVisibleMixin, LoginRequiredMixin, View):
     ever sets a status outright, so a cycle would be a second code path
     nothing reaches.
 
-    ``MusicVisibleMixin`` comes first deliberately: while the section is
-    hidden, a signed-out visitor should get its 404, not a login redirect
-    advertising that the URL exists. Once it is public, a signed-out visitor
-    gets ``LoginRequiredMixin``'s redirect, as games' toggle does.
+    A signed-out visitor gets ``LoginRequiredMixin``'s redirect, as games'
+    toggle does.
 
     Two things games and books both get wrong here are fixed. The delete and
     the write run in one transaction, so a failure between them cannot leave
@@ -1175,7 +1166,7 @@ class ToggleListenedAlbumView(MusicVisibleMixin, LoginRequiredMixin, View):
         return response
 
 
-class AlbumDetailView(MusicVisibleMixin, DetailView):
+class AlbumDetailView(DetailView):
     """One album, with every list it appears on grouped by list type."""
 
     model = models.Album
@@ -1255,9 +1246,7 @@ class AlbumDetailView(MusicVisibleMixin, DetailView):
         return context
 
 
-class ArtistListView(
-    MusicVisibleMixin, RobustPaginationMixin, HTMXPartialMixin, ListView
-):
+class ArtistListView(RobustPaginationMixin, HTMXPartialMixin, ListView):
     """Artists that have at least one ranked album, with search and sorting."""
 
     model = models.Artist
@@ -1342,7 +1331,7 @@ class ArtistListView(
         return context
 
 
-class ArtistDetailView(MusicVisibleMixin, HTMXPartialMixin, DetailView):
+class ArtistDetailView(HTMXPartialMixin, DetailView):
     """One artist, with their ranked albums and any subsidiary acts."""
 
     model = models.Artist
@@ -1406,7 +1395,7 @@ class ArtistDetailView(MusicVisibleMixin, HTMXPartialMixin, DetailView):
         return context
 
 
-class AlbumSearchView(MusicVisibleMixin, ListView):
+class AlbumSearchView(ListView):
     """HTMX search results for the album search box."""
 
     model = models.Album
@@ -1491,7 +1480,7 @@ def _publication_importance(group):
     )
 
 
-class MusicListListView(MusicVisibleMixin, HTMXPartialMixin, ListView):
+class MusicListListView(HTMXPartialMixin, ListView):
     """The source lists behind the album rankings, grouped by publication."""
 
     model = models.MusicList
@@ -1579,7 +1568,7 @@ class MusicListListView(MusicVisibleMixin, HTMXPartialMixin, ListView):
         return context
 
 
-class AlbumCoverView(MusicVisibleMixin, View):
+class AlbumCoverView(View):
     """Serve our own stored copy of an album cover.
 
     The Cover Art Archive is the source of this art, but hotlinking it means

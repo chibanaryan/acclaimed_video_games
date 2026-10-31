@@ -9,7 +9,7 @@ put - a per-row query (an N+1) is the only thing that makes it grow.
 import itertools
 
 from django.db import connection
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 
 from core.tests.utils import clear_all_caches
@@ -155,7 +155,6 @@ class LandingPageQueryBudgetTests(QueryBudgetTestCase):
         self.assertDoesNotGrow("/games/1990s/", add)
 
 
-@override_settings(MUSIC_ENABLED=True)
 class GameDeleteQueryBudgetTests(QueryBudgetTestCase):
     def test_a_deep_studio_chain_costs_a_deleted_game_nothing_more(self):
         """`pre_delete` runs for every game an import replaces."""
@@ -204,7 +203,6 @@ class AccountModalQueryBudgetTests(QueryBudgetTestCase):
         self.assertDoesNotGrow("/auth/modal/profile/", add)
 
 
-@override_settings(MUSIC_ENABLED=True)
 @music_site
 class MusicListsQueryBudgetTests(QueryBudgetTestCase):
     def test_more_lists_cost_nothing_more(self):

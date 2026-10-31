@@ -1,8 +1,6 @@
-{# The Account modal's games stats. Props: played_count, total_games, percentile_message, want_to_play_count, backlog_playtime, and music_stats, whose presence says a second block is showing and so this one needs naming. #}
+{# The Account modal's games stats. Props: played_count, total_games, percentile_message, want_to_play_count, backlog_playtime. #}
 {% load static %}
-{% if music_stats %}
 <h4 class="text-sm font-semibold mb-2">Games</h4>
-{% endif %}
 
 {# Played Games Stats #}
 <div class="flex flex-col gap-1 mb-4">

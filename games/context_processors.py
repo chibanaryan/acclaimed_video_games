@@ -9,18 +9,12 @@ def feature_flags(request):
     """
     import os
 
-    from django.conf import settings
-
     from music import config as music_config
 
     return {
         # Books feature is hidden until ready for public release
         "BOOKS_ENABLED": os.environ.get("BOOKS_ENABLED", "").lower() == "true",
-        # Music's public-launch switch. Nav entries key off this alone, not
-        # off staff status, so staff see no links while the section is a
-        # beta, exactly as before the flag existed.
-        "MUSIC_ENABLED": settings.MUSIC_ENABLED,
-        # The "Beta" badge on music pages, public or not
+        # The "Beta" badge on music pages
         "MUSIC_BETA": music_config.MUSIC_BETA,
     }
 
@@ -37,21 +31,9 @@ def media_type(request):
     the shared ones (About, Contact, sign-in) included, so they keep the
     sidebar of the site the visitor is on.
     """
-    from django.contrib.auth.models import AnonymousUser
-
     from core import sites
-    from music.access import music_visible_to
 
     site = sites.request_site(request)
-    # The shared pages and the 404s on a hidden music host must not name the
-    # section, so they wear the apex's bare chrome
-    user = getattr(request, "user", AnonymousUser())
-    if site == sites.MUSIC and not music_visible_to(user):
-        return {
-            "site_key": sites.ROOT,
-            "media_type": sites.ROOT,
-            "site_home_url": sites.site_url(sites.ROOT, "landing", request=request),
-        }
     resolver_match = getattr(request, "resolver_match", None)
     namespace = getattr(resolver_match, "namespace", "") or ""
     if site == sites.GAMES and namespace.startswith("books"):

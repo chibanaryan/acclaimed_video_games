@@ -1,15 +1,11 @@
-"""Tests for the music views.
-
-Every music view is staff-only, so the tests authenticate as staff and each
-suite also asserts that an anonymous visitor gets 404 rather than 403.
-"""
+"""Tests for the music views."""
 
 import re
 from unittest import mock
 
 from django.core.cache import cache
 from django.db import connection
-from django.test import Client, TestCase, override_settings
+from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
@@ -22,11 +18,10 @@ from music.api import views as music_api_views
 from music.services import caching, landing_pages, listening_stats
 from music.views import _filter_title, group_list_appearances
 from music.tests.site import setUpModule, tearDownModule  # noqa: F401
-from core.sites import GAMES, site_reverse
 
 
-class StaffUserTestMixin:
-    """Provides a logged-in staff user, as the books tests do."""
+class ClearsCachesMixin:
+    """Starts each test with empty caches."""
 
     def setUp(self):
         super().setUp()
@@ -36,13 +31,20 @@ class StaffUserTestMixin:
         # the next, which is how a genre created in setUp went missing from
         # the options it was supposed to appear in.
         clear_all_caches()
-        self.staff_user = User.objects.create_user(
-            username="musicstaff", password="musicpass", is_staff=True
+
+
+class SignedInReaderMixin(ClearsCachesMixin):
+    """Provides a logged-in reader."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(
+            username="musicreader", password="musicpass"
         )
-        self.client.login(username="musicstaff", password="musicpass")
+        self.client.login(username="musicreader", password="musicpass")
 
 
-class MusicDataMixin(StaffUserTestMixin):
+class MusicDataMixin(SignedInReaderMixin):
     """A small but complete ranking: three albums over three lists."""
 
     def setUp(self):
@@ -126,15 +128,6 @@ class AlbumHomePageViewTests(MusicDataMixin, TestCase):
         response = self.client.get(reverse("music:home"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual([a.rank for a in response.context["albums"]], [1, 2, 3])
-
-    def test_anonymous_gets_404_not_403(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(reverse("music:home")).status_code, 404)
-
-    def test_non_staff_user_gets_404(self):
-        User.objects.create_user(username="plain", password="plainpass")
-        self.client.login(username="plain", password="plainpass")
-        self.assertEqual(self.client.get(reverse("music:home")).status_code, 404)
 
     def test_search_matches_the_album_title(self):
         response = self.client.get(reverse("music:home"), {"q": "revolver"})
@@ -494,12 +487,6 @@ class AlbumDetailViewTests(MusicDataMixin, TestCase):
         self.assertEqual(response.context["album"], self.revolver)
         self.assertContains(response, "Revolver")
 
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(
-            self.client.get(self.revolver.get_absolute_url()).status_code, 404
-        )
-
     def test_the_artist_is_linked_once_under_the_title(self):
         # The subtitle under the title carries the credit; the properties
         # table used to repeat it as an "Artist:" row.
@@ -720,10 +707,6 @@ class ArtistListViewTests(MusicDataMixin, TestCase):
         self.assertNotIn("No Albums", names)
         self.assertIn("The Beatles", names)
 
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(reverse("music:artist-list")).status_code, 404)
-
     def test_search_filters_by_name(self):
         response = self.client.get(reverse("music:artist-list"), {"q": "beatles"})
         self.assertEqual([a.name for a in response.context["artists"]], ["The Beatles"])
@@ -914,12 +897,6 @@ class ArtistDetailViewTests(MusicDataMixin, TestCase):
         self.assertEqual(response.context["best_album"], self.revolver)
         self.assertContains(response, "Revolver")
 
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(
-            self.client.get(self.beatles.get_absolute_url()).status_code, 404
-        )
-
     def test_unknown_slug_is_404(self):
         self.assertEqual(self.client.get("/artists/nobody/").status_code, 404)
 
@@ -1065,42 +1042,6 @@ class ArtistDetailAlbumSortTests(MusicDataMixin, TestCase):
             self.client.get(self.bowie.get_absolute_url() + "?sort=year")
 
 
-class CsrfFailureTests(StaffUserTestMixin, TestCase):
-    """A failed CSRF check must not reveal which music paths resolve.
-
-    The ordinary test client skips CSRF entirely, so these use a client that
-    enforces it - which is the only way to see the production answer.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.csrf_client = Client(enforce_csrf_checks=True)
-
-    def test_anonymous_post_to_a_music_path_gets_404(self):
-        for url in (reverse("music:home"), "/nonexistent-slug/"):
-            with self.subTest(url=url):
-                self.assertEqual(self.csrf_client.post(url).status_code, 404)
-
-    def test_non_staff_post_gets_404(self):
-        User.objects.create_user(username="plain", password="plainpass")
-        self.csrf_client.login(username="plain", password="plainpass")
-        self.assertEqual(self.csrf_client.post(reverse("music:home")).status_code, 404)
-
-    def test_staff_still_see_the_real_403(self):
-        self.csrf_client.login(username="musicstaff", password="musicpass")
-        response = self.csrf_client.post(reverse("music:home"))
-        self.assertEqual(response.status_code, 403)
-        self.assertContains(response, "CSRF", status_code=403)
-
-    def test_the_other_sites_keep_the_403(self):
-        # The music host 404s a failed check while hidden; the games host,
-        # where the section was never hidden, answers as Django does
-        response = self.csrf_client.post(
-            site_reverse(GAMES, "contact"), HTTP_HOST="games.acclaimedmedia.org"
-        )
-        self.assertEqual(response.status_code, 403)
-
-
 class AlbumSearchViewTests(MusicDataMixin, TestCase):
     def test_returns_matching_albums(self):
         response = self.client.get(reverse("music:search"), {"q": "revolver"})
@@ -1116,10 +1057,6 @@ class AlbumSearchViewTests(MusicDataMixin, TestCase):
         self.assertEqual(len(response.context["albums"]), 0)
         self.assertContains(response, "No albums found")
 
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(reverse("music:search")).status_code, 404)
-
 
 class MusicListListViewTests(MusicDataMixin, TestCase):
     def test_lists_every_source_in_order(self):
@@ -1128,10 +1065,6 @@ class MusicListListViewTests(MusicDataMixin, TestCase):
         self.assertEqual(
             [source.order for source in response.context["music_lists"]], [1, 2, 3]
         )
-
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(reverse("music:list-list")).status_code, 404)
 
     def test_album_count_is_annotated(self):
         response = self.client.get(reverse("music:list-list"))
@@ -1262,7 +1195,7 @@ class MusicListListViewTests(MusicDataMixin, TestCase):
         self.assertEqual(len(response.context["music_lists"]), 4)
 
 
-class AlbumCoverViewTests(StaffUserTestMixin, TestCase):
+class AlbumCoverViewTests(ClearsCachesMixin, TestCase):
     """Serving our own stored copy of a cover.
 
     The remote Cover Art Archive URL redirects to archive.org, which 500s
@@ -1320,15 +1253,6 @@ class AlbumCoverViewTests(StaffUserTestMixin, TestCase):
             },
         )
         self.assertEqual(self.client.get(url).status_code, 404)
-
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(self.url).status_code, 404)
-
-    def test_a_non_staff_user_gets_404(self):
-        User.objects.create_user(username="plaincover", password="plainpass")
-        self.client.login(username="plaincover", password="plainpass")
-        self.assertEqual(self.client.get(self.url).status_code, 404)
 
     def test_the_cover_route_is_not_read_as_an_album_slug(self):
         """It sits above the catch-all <slug:slug>/ pattern."""
@@ -1578,10 +1502,10 @@ class ListenStatusPageTests(MusicDataMixin, TestCase):
             album.save(update_fields=["wikidata_id"])
 
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.revolver, wikidata_id="Q-revolver"
+            user=self.user, album=self.revolver, wikidata_id="Q-revolver"
         )
         models.WantToListenAlbum.objects.create(
-            user=self.staff_user, album=self.rust, wikidata_id="Q-rust"
+            user=self.user, album=self.rust, wikidata_id="Q-rust"
         )
         self.url = reverse("music:home")
 
@@ -1725,7 +1649,7 @@ class ListenStatusPageTests(MusicDataMixin, TestCase):
 
     def _own_kid_a(self):
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.kid_a, wikidata_id="Q-kid-a", owned=True
+            user=self.user, album=self.kid_a, wikidata_id="Q-kid-a", owned=True
         )
 
     def _names(self, query):
@@ -1798,7 +1722,6 @@ class ListenStatusAnonymousPageTests(MusicDataMixin, TestCase):
         response = self.client.get(reverse("music:home") + "?listened=yes")
         self.assertEqual(len(response.context["albums"]), 0)
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_a_signed_out_reader_gets_no_quick_mark_picker(self):
         # There is nothing they could mark.
         self.client.logout()
@@ -1818,7 +1741,7 @@ class AlbumDetailListenButtonTests(MusicDataMixin, TestCase):
 
     def test_the_flags_reach_the_template(self):
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.revolver, wikidata_id="Q-revolver"
+            user=self.user, album=self.revolver, wikidata_id="Q-revolver"
         )
         response = self.client.get(self.url)
         self.assertTrue(response.context["is_listened"])
@@ -1826,7 +1749,7 @@ class AlbumDetailListenButtonTests(MusicDataMixin, TestCase):
 
     def test_the_owned_flag_reaches_the_template(self):
         models.ListenedAlbum.objects.create(
-            user=self.staff_user,
+            user=self.user,
             album=self.revolver,
             wikidata_id="Q-revolver",
             owned=True,
@@ -1844,7 +1767,7 @@ class AlbumDetailListenButtonTests(MusicDataMixin, TestCase):
 
     def test_the_want_flag_reaches_the_template(self):
         models.WantToListenAlbum.objects.create(
-            user=self.staff_user, album=self.revolver, wikidata_id="Q-revolver"
+            user=self.user, album=self.revolver, wikidata_id="Q-revolver"
         )
         response = self.client.get(self.url)
         self.assertTrue(response.context["is_want_to_listen"])
@@ -1880,7 +1803,7 @@ class AlbumDetailListenButtonTests(MusicDataMixin, TestCase):
         # They render the same row partial, so without the annotation every
         # button there would read "untracked".
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.rust, wikidata_id="Q-rust"
+            user=self.user, album=self.rust, wikidata_id="Q-rust"
         )
         other = models.Album.objects.create(
             name="Harvest", rank=9, year_released=1972, wikidata_id="Q-harvest"
@@ -1903,7 +1826,7 @@ class ArtistDetailListenButtonTests(MusicDataMixin, TestCase):
         self.revolver.wikidata_id = "Q-revolver"
         self.revolver.save()
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.revolver, wikidata_id="Q-revolver"
+            user=self.user, album=self.revolver, wikidata_id="Q-revolver"
         )
         response = self.client.get(
             reverse("music:artist-detail", args=[self.beatles.slug])

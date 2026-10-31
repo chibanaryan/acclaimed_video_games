@@ -149,13 +149,11 @@
             </a>
             {% endif %}
 
-            {% if MUSIC_ENABLED %}
             {# The Music icon carries the beta badge beside it, as the sidebar tab does #}
             <a href="{% site_url 'music' 'music:home' %}" class="btn btn-ghost btn-sm shrink-0 nav-item gap-1 px-2" data-nav-item="music" data-menu-label="Music{% if MUSIC_BETA %} (beta){% endif %}" aria-label="Music{% if MUSIC_BETA %} (beta){% endif %}">
                 <span class="mdi mdi-album text-xl" aria-hidden="true"></span>
                 <span aria-hidden="true">{% include 'music/includes/_beta_badge.html' with size='badge-xs' %}</span>
             </a>
-            {% endif %}
 
             {# Search dropdown #}
             <div class="relative shrink-0 nav-item" data-nav-item="search" x-data="{

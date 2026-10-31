@@ -1,8 +1,6 @@
 """The music SEO ranking pages: /genres/<slug>/, /<decade>s/ on the music host.
 
-Modelled on ``games/tests/test_landing_pages.py``. They inherit the section's
-gate, so with ``MUSIC_ENABLED`` off they 404 for everyone but staff even at a
-valid slug; most tests run with it on, as a crawler would meet them.
+Modelled on ``games/tests/test_landing_pages.py``.
 """
 
 import json
@@ -10,9 +8,7 @@ import re
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import connection
-from django.test import TestCase, override_settings
-from django.test.utils import CaptureQueriesContext
+from django.test import TestCase
 from django.urls import get_resolver, resolve, reverse
 from django.urls.resolvers import URLResolver
 
@@ -111,7 +107,6 @@ class LandingServiceTests(LandingFixtureMixin, TestCase):
             landing_pages.get_landing_decades()
 
 
-@override_settings(MUSIC_ENABLED=True)
 class GenreLandingViewTests(LandingFixtureMixin, TestCase):
     def setUp(self):
         super().setUp()
@@ -189,7 +184,6 @@ class GenreLandingViewTests(LandingFixtureMixin, TestCase):
                 self.assertEqual(self.client.get(url).status_code, 404)
 
 
-@override_settings(MUSIC_ENABLED=True)
 class DecadeLandingViewTests(LandingFixtureMixin, TestCase):
     def test_the_page_is_titled_by_its_decade(self):
         response = self.client.get(reverse("music:by-decade", kwargs={"decade": 1970}))
@@ -213,7 +207,6 @@ class DecadeLandingViewTests(LandingFixtureMixin, TestCase):
         self.assertContains(response, '"@type": "WebSite"')
 
 
-@override_settings(MUSIC_ENABLED=True)
 class BrowseIndexTests(LandingFixtureMixin, TestCase):
     def test_the_index_links_every_landing_page(self):
         response = self.client.get(reverse("music:browse"))
@@ -226,43 +219,13 @@ class BrowseIndexTests(LandingFixtureMixin, TestCase):
         self.assertNotContains(response, "/genres/jazz/")
 
 
-class HiddenLandingPageTests(LandingFixtureMixin, TestCase):
-    """With ``MUSIC_ENABLED`` off the pages share the section's 404."""
-
-    def urls(self):
-        return [
-            reverse("music:browse"),
-            reverse("music:by-genre", kwargs={"slug": "rock"}),
-            reverse("music:by-decade", kwargs={"decade": 1970}),
-        ]
-
-    def test_an_outsider_gets_404_at_a_valid_url(self):
-        for url in self.urls():
-            with self.subTest(url=url):
-                self.assertEqual(self.client.get(url).status_code, 404)
-
-    def test_the_gate_runs_before_the_page_is_resolved(self):
-        # The path's filters are resolved in get(), after dispatch() has
-        # gated the request, so a hidden-section request never touches the
-        # music tables (the 404 page's own queries aside).
-        with CaptureQueriesContext(connection) as queries:
-            self.client.get(reverse("music:by-genre", kwargs={"slug": "rock"}))
-        self.assertFalse([q["sql"] for q in queries if "music_" in q["sql"]])
-
-    def test_staff_preview_them(self):
-        User.objects.create_user(username="lstaff", password="lpass", is_staff=True)
-        self.client.login(username="lstaff", password="lpass")
-        for url in self.urls():
-            with self.subTest(url=url):
-                self.assertEqual(self.client.get(url).status_code, 200)
-
+class MusicLandingPageViewTests(TestCase):
     def test_the_base_view_names_no_page(self):
         view = views.MusicLandingPageView()
         with self.assertRaises(NotImplementedError):
             view.get_page_seo()
 
 
-@override_settings(MUSIC_ENABLED=True)
 class MusicCacheRoundTripTests(LandingFixtureMixin, DatabaseCacheTestCase):
     """The rankings pages read the shared cache in one batch, not per value.
 

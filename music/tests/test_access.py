@@ -1,44 +1,19 @@
-"""Who can reach the music section, with ``MUSIC_ENABLED`` off and on.
-
-Off is the staff-only beta every other music suite runs under (the setting is
-forced off under test). These tests pin what turning it on changes - reads go
-public, writes want a login, the import page does not move - and the one
-hole the off state had: a signed-in outsider's token-less POST to the
-saved-filter API was answered with DRF's CSRF 403, not the section's 404.
+"""Who can reach the music section: reads are public, writes want a login,
+and the import page is for staff.
 """
 
 import json
 from unittest import mock
 
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from core.models import User
 from core.tests.utils import clear_all_caches
+from core.throttling import ClientIPAnonRateThrottle
 from music import config, models
-from music.access import music_visible_to
 from music.tests.site import setUpModule, tearDownModule  # noqa: F401
-
-
-class MusicVisibleToTests(TestCase):
-    """The single predicate every music gate asks."""
-
-    def setUp(self):
-        self.staff = User.objects.create_user(username="pstaff", is_staff=True)
-        self.plain = User.objects.create_user(username="pplain")
-
-    def test_only_staff_see_the_hidden_section(self):
-        self.assertTrue(music_visible_to(self.staff))
-        self.assertFalse(music_visible_to(self.plain))
-        self.assertFalse(music_visible_to(AnonymousUser()))
-
-    @override_settings(MUSIC_ENABLED=True)
-    def test_everyone_sees_the_public_section(self):
-        for user in (self.staff, self.plain, AnonymousUser()):
-            with self.subTest(user=user):
-                self.assertTrue(music_visible_to(user))
 
 
 class AccessFixtureMixin:
@@ -83,53 +58,15 @@ class AccessFixtureMixin:
             reverse("music-api:meta"),
             reverse("music-api:genre-list"),
             reverse("music-api:album-detail", kwargs={"slug": self.album.slug}),
+            reverse("music-api:album-search") + "?q=album",
+            reverse("music-api:artist-list"),
+            reverse("music-api:artist-detail", kwargs={"slug": self.artist.slug}),
+            reverse("music-api:musiclist-list"),
         ]
 
 
-class HiddenSectionTests(AccessFixtureMixin, TestCase):
-    """``MUSIC_ENABLED`` off: the section is absent for everyone but staff."""
-
-    def test_every_read_url_404s_for_an_anonymous_visitor(self):
-        for url in self.read_urls():
-            with self.subTest(url=url):
-                self.assertEqual(self.client.get(url).status_code, 404)
-
-    def test_every_read_url_404s_for_a_signed_in_outsider(self):
-        self.client.login(username="plain", password="plainpass")
-        for url in self.read_urls():
-            with self.subTest(url=url):
-                self.assertEqual(self.client.get(url).status_code, 404)
-
-    def test_staff_reach_every_read_url(self):
-        self.client.login(username="staff", password="staffpass")
-        for url in self.read_urls():
-            with self.subTest(url=url):
-                self.assertEqual(self.client.get(url).status_code, 200)
-
-    def test_an_outsiders_tokenless_post_to_saved_filters_is_a_404(self):
-        # DRF authenticates before it checks permissions, and session
-        # authentication enforces CSRF for any signed-in user, so with the
-        # gate as a permission this answered "CSRF Failed" with a 403 - which
-        # told the caller the endpoint existed.
-        client = Client(enforce_csrf_checks=True)
-        client.login(username="plain", password="plainpass")
-        response = client.post(
-            reverse("music-api:saved-filter-list"),
-            json.dumps({"name": "Probe", "filters": {}}),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 404)
-        self.assertFalse(models.SavedAlbumFilterSet.objects.exists())
-
-    def test_an_anonymous_toggle_is_a_404_not_a_login_redirect(self):
-        url = reverse("music:toggle-listened", args=[self.album.pk])
-        response = self.client.post(f"{url}?status=listened")
-        self.assertEqual(response.status_code, 404)
-
-
-@override_settings(MUSIC_ENABLED=True)
 class PublicSectionTests(AccessFixtureMixin, TestCase):
-    """``MUSIC_ENABLED`` on: reads are public, writes want a login."""
+    """Reads are public, writes want a login."""
 
     def test_every_read_url_renders_for_an_anonymous_visitor(self):
         for url in self.read_urls():
@@ -187,7 +124,7 @@ class PublicSectionTests(AccessFixtureMixin, TestCase):
             models.SavedAlbumFilterSet.objects.get().user_id, self.plain.pk
         )
 
-    def test_a_failed_csrf_check_is_the_real_403_once_public(self):
+    def test_a_failed_csrf_check_is_a_403(self):
         client = Client(enforce_csrf_checks=True)
         response = client.post(reverse("music:home"))
         self.assertEqual(response.status_code, 403)
@@ -196,10 +133,46 @@ class PublicSectionTests(AccessFixtureMixin, TestCase):
         response = self.client.get(reverse("music:home"))
         self.assertContains(response, "window.isAuthenticated = false;")
 
-    def test_the_public_launch_keeps_the_beta_badge(self):
-        # MUSIC_BETA, not MUSIC_ENABLED, decides the badge: the launch is a beta
+    def test_music_beta_decides_the_badge(self):
         response = self.client.get(reverse("music:home"))
         self.assertContains(response, "Beta</span>")
         with mock.patch.object(config, "MUSIC_BETA", False):
             response = self.client.get(reverse("music:home"))
         self.assertNotContains(response, "Beta</span>")
+
+
+LOCMEM = {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+
+
+@override_settings(
+    CACHES={
+        alias: dict(LOCMEM, LOCATION=alias)
+        for alias in ("default", "local", "ratelimit")
+    }
+)
+class ReadThrottleTests(AccessFixtureMixin, TestCase):
+    """A session login keeps a reader out of the anonymous limit.
+
+    ``AnonRateThrottle`` skips an authenticated request, and a read looks at
+    the user for nothing else, so this is the only thing that notices
+    ``SessionAuthentication`` going. ``ratelimit`` is a DummyCache under test,
+    which never counts, hence the override.
+    """
+
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch.object(
+            ClientIPAnonRateThrottle, "rate", "1/minute", create=True
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.url = reverse("music-api:meta")
+
+    def test_an_anonymous_reader_is_throttled(self):
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+        self.assertEqual(self.client.get(self.url).status_code, 429)
+
+    def test_a_signed_in_reader_is_not(self):
+        self.client.login(username="plain", password="plainpass")
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+        self.assertEqual(self.client.get(self.url).status_code, 200)

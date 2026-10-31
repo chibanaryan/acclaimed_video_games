@@ -36,9 +36,7 @@ DEFAULT_MIN_YEAR = 1950  # The supplied rankings start at 1955
 # Cache Keys
 # =============================================================================
 
-# Whether music pages carry a "Beta" badge. Separate from MUSIC_ENABLED,
-# which makes the section public: the public launch is itself a beta, so
-# the badge outlives the flag until this is turned off.
+# Whether music pages carry a "Beta" badge and notice
 MUSIC_BETA = True
 
 # Every key carries CACHE_VERSION, so one bump invalidates the whole set, and

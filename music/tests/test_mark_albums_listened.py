@@ -19,9 +19,7 @@ from music import models
 
 class MarkAlbumsListenedTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="ColonelChibbers", password="pw", is_staff=True
-        )
+        self.user = User.objects.create_user(username="ColonelChibbers", password="pw")
         self.pet_sounds = models.Album.objects.create(
             name="Pet Sounds", rank=1, slug="pet-sounds", wikidata_id="Q212863"
         )

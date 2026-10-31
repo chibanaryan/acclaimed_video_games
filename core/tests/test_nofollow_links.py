@@ -89,7 +89,7 @@ class RenderedHighlightLinksAreNofollowTests(TestCase):
         # Three rank links and a platform, genre and series badge
         self._assert_all_nofollow(links, 6)
 
-    @override_settings(MUSIC_ENABLED=True, ROOT_URLCONF=settings.SITE_URLCONFS["music"])
+    @override_settings(ROOT_URLCONF=settings.SITE_URLCONFS["music"])
     def test_album_detail(self):
         album = Album.objects.create(
             name="Nofollow Album",

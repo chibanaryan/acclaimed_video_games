@@ -1,10 +1,9 @@
 """Tests for saved album filters.
 
-The API is staff-only *and* owner-scoped, so there are two different ways to
-be refused and they answer differently: an outsider gets 404, because the
-whole music section has to look absent, while a staff member reaching for
-another staff member's row gets 404 too - from the owner scoping rather than
-from the permission.
+The API wants a login and is owner-scoped, so there are two different ways to
+be refused and they answer differently: a signed-out caller gets 403, as
+games' saved filters answer, while a reader reaching for another reader's row
+gets 404 from the owner scoping.
 
 These use the ordinary Django test client with a session login rather than
 DRF's ``force_authenticate``, for the reason ``test_api`` gives: the project
@@ -40,10 +39,10 @@ class SavedFilterTestMixin:
     def setUp(self):
         super().setUp()
         clear_all_caches()
-        self.staff_user = User.objects.create_user(
-            username="filterstaff", password="filterpass", is_staff=True
+        self.user = User.objects.create_user(
+            username="filterreader", password="filterpass"
         )
-        self.client.login(username="filterstaff", password="filterpass")
+        self.client.login(username="filterreader", password="filterpass")
         self.list_url = reverse("music-api:saved-filter-list")
 
     def detail_url(self, pk):
@@ -59,9 +58,7 @@ class SavedFilterTestMixin:
 
 class SavedAlbumFilterSetModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="modeluser", password="modelpass", is_staff=True
-        )
+        self.user = User.objects.create_user(username="modeluser", password="modelpass")
 
     def test_a_saved_filter_keeps_the_json_it_was_given(self):
         saved = models.SavedAlbumFilterSet.objects.create(
@@ -127,9 +124,7 @@ class SavedAlbumFilterSetListTests(SavedFilterTestMixin, TestCase):
         self.assertIn("id", entry)
 
     def test_only_the_owners_filters_are_listed(self):
-        other = User.objects.create_user(
-            username="otherstaff", password="otherpass", is_staff=True
-        )
+        other = User.objects.create_user(username="otherreader", password="otherpass")
         models.SavedAlbumFilterSet.objects.create(
             user=other, name="Not mine", filters={}
         )
@@ -140,7 +135,7 @@ class SavedAlbumFilterSetListTests(SavedFilterTestMixin, TestCase):
     def test_the_listing_is_capped_at_the_configured_ceiling(self):
         for index in range(config.MAX_SAVED_FILTERS + 2):
             models.SavedAlbumFilterSet.objects.create(
-                user=self.staff_user, name=f"Filter {index}", filters={}
+                user=self.user, name=f"Filter {index}", filters={}
             )
         payload = self.client.get(self.list_url).json()
         self.assertEqual(payload["count"], config.MAX_SAVED_FILTERS)
@@ -162,7 +157,7 @@ class SavedAlbumFilterSetCreateTests(SavedFilterTestMixin, TestCase):
         self.assertEqual(body["name"], "Seventies rock")
         self.assertEqual(body["filters"], SAMPLE_FILTERS)
         saved = models.SavedAlbumFilterSet.objects.get(pk=body["id"])
-        self.assertEqual(saved.user, self.staff_user)
+        self.assertEqual(saved.user, self.user)
 
     def test_the_name_is_trimmed(self):
         response = self.post_filter("   Padded   ")
@@ -201,9 +196,7 @@ class SavedAlbumFilterSetCreateTests(SavedFilterTestMixin, TestCase):
         self.assertEqual(models.SavedAlbumFilterSet.objects.count(), 1)
 
     def test_another_user_may_reuse_the_same_name(self):
-        other = User.objects.create_user(
-            username="namesharer", password="sharerpass", is_staff=True
-        )
+        other = User.objects.create_user(username="namesharer", password="sharerpass")
         models.SavedAlbumFilterSet.objects.create(
             user=other, name="Seventies rock", filters={}
         )
@@ -212,7 +205,7 @@ class SavedAlbumFilterSetCreateTests(SavedFilterTestMixin, TestCase):
     def test_the_cap_is_enforced(self):
         for index in range(config.MAX_SAVED_FILTERS):
             models.SavedAlbumFilterSet.objects.create(
-                user=self.staff_user, name=f"Filter {index}", filters={}
+                user=self.user, name=f"Filter {index}", filters={}
             )
         response = self.post_filter("One too many")
         self.assertEqual(response.status_code, 400)
@@ -246,7 +239,7 @@ class SavedAlbumFilterSetRenameTests(SavedFilterTestMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.saved = models.SavedAlbumFilterSet.objects.create(
-            user=self.staff_user, name="Original", filters=SAMPLE_FILTERS
+            user=self.user, name="Original", filters=SAMPLE_FILTERS
         )
 
     def patch_name(self, name, pk=None):
@@ -282,7 +275,7 @@ class SavedAlbumFilterSetRenameTests(SavedFilterTestMixin, TestCase):
 
     def test_renaming_onto_another_of_my_filters_is_refused(self):
         models.SavedAlbumFilterSet.objects.create(
-            user=self.staff_user, name="Taken", filters={}
+            user=self.user, name="Taken", filters={}
         )
         response = self.patch_name("Taken")
         self.assertEqual(response.status_code, 400)
@@ -296,16 +289,12 @@ class SavedAlbumFilterSetRenameTests(SavedFilterTestMixin, TestCase):
         self.assertEqual(self.patch_name("Original").status_code, 200)
 
     def test_renaming_onto_another_users_name_is_allowed(self):
-        other = User.objects.create_user(
-            username="renamesharer", password="sharerpass", is_staff=True
-        )
+        other = User.objects.create_user(username="renamesharer", password="sharerpass")
         models.SavedAlbumFilterSet.objects.create(user=other, name="Theirs", filters={})
         self.assertEqual(self.patch_name("Theirs").status_code, 200)
 
     def test_renaming_someone_elses_filter_is_a_404(self):
-        other = User.objects.create_user(
-            username="renametarget", password="targetpass", is_staff=True
-        )
+        other = User.objects.create_user(username="renametarget", password="targetpass")
         theirs = models.SavedAlbumFilterSet.objects.create(
             user=other, name="Theirs", filters={}
         )
@@ -322,7 +311,7 @@ class SavedAlbumFilterSetDeleteTests(SavedFilterTestMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.saved = models.SavedAlbumFilterSet.objects.create(
-            user=self.staff_user, name="Doomed", filters={}
+            user=self.user, name="Doomed", filters={}
         )
 
     def test_deleting_removes_the_row(self):
@@ -331,9 +320,7 @@ class SavedAlbumFilterSetDeleteTests(SavedFilterTestMixin, TestCase):
         self.assertEqual(models.SavedAlbumFilterSet.objects.count(), 0)
 
     def test_deleting_someone_elses_filter_is_a_404(self):
-        other = User.objects.create_user(
-            username="deletetarget", password="targetpass", is_staff=True
-        )
+        other = User.objects.create_user(username="deletetarget", password="targetpass")
         theirs = models.SavedAlbumFilterSet.objects.create(
             user=other, name="Theirs", filters={}
         )
@@ -348,42 +335,30 @@ class SavedAlbumFilterSetDeleteTests(SavedFilterTestMixin, TestCase):
 
 
 class SavedAlbumFilterAccessTests(TestCase):
-    """The section has to look absent, so every refusal here is a 404."""
+    """A signed-out caller gets 403; someone else's row is a 404."""
 
     def setUp(self):
         clear_all_caches()
         self.list_url = reverse("music-api:saved-filter-list")
         self.owner = User.objects.create_user(
-            username="accessowner", password="ownerpass", is_staff=True
+            username="accessowner", password="ownerpass"
         )
         self.saved = models.SavedAlbumFilterSet.objects.create(
             user=self.owner, name="Private", filters={}
         )
         self.detail_url = reverse("music-api:saved-filter-detail", args=[self.saved.pk])
 
-    def test_an_anonymous_visitor_gets_404_on_the_listing(self):
-        self.assertEqual(self.client.get(self.list_url).status_code, 404)
+    def test_an_anonymous_visitor_gets_403_on_the_listing(self):
+        self.assertEqual(self.client.get(self.list_url).status_code, 403)
 
-    def test_an_anonymous_visitor_gets_404_rather_than_403(self):
-        # Games answers 403 here, from `IsAuthenticated`. Music must not:
-        # a 403 would confirm the path resolves.
+    def test_an_anonymous_visitor_cannot_save_a_filter(self):
         response = self.client.post(
             self.list_url, {"name": "Sneaky"}, content_type="application/json"
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(models.SavedAlbumFilterSet.objects.count(), 1)
 
-    def test_a_signed_in_non_staff_user_gets_404(self):
-        User.objects.create_user(username="plain", password="plainpass")
-        self.client.login(username="plain", password="plainpass")
-        self.assertEqual(self.client.get(self.list_url).status_code, 404)
-        response = self.client.post(
-            self.list_url, {"name": "Sneaky"}, content_type="application/json"
-        )
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(models.SavedAlbumFilterSet.objects.count(), 1)
-
-    def test_a_non_staff_user_cannot_delete(self):
+    def test_another_reader_cannot_delete(self):
         User.objects.create_user(username="plain2", password="plainpass")
         self.client.login(username="plain2", password="plainpass")
         self.assertEqual(self.client.delete(self.detail_url).status_code, 404)
@@ -404,14 +379,12 @@ class SavedAlbumFilterCsrfTests(TestCase):
 
     def setUp(self):
         clear_all_caches()
-        self.staff_user = User.objects.create_user(
-            username="csrfstaff", password="csrfpass", is_staff=True
-        )
+        self.user = User.objects.create_user(username="csrfreader", password="csrfpass")
         self.list_url = reverse("music-api:saved-filter-list")
 
     def test_a_post_without_a_token_is_rejected(self):
         client = Client(enforce_csrf_checks=True)
-        client.login(username="csrfstaff", password="csrfpass")
+        client.login(username="csrfreader", password="csrfpass")
         response = client.post(
             self.list_url,
             {"name": "No token", "filters": {}},
@@ -422,7 +395,7 @@ class SavedAlbumFilterCsrfTests(TestCase):
 
     def test_a_post_carrying_the_token_succeeds(self):
         client = Client(enforce_csrf_checks=True)
-        client.login(username="csrfstaff", password="csrfpass")
+        client.login(username="csrfreader", password="csrfpass")
         # The token the browser would have, obtained the way the browser
         # obtains it: by loading a music page.
         client.get(reverse("music:home"))

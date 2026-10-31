@@ -1,14 +1,13 @@
 """The Account modal's Music block, and the rank it shows.
 
 The modal is a shared route, so it is requested on each site's real host:
-which site it was opened on decides the order, and whether the reader may see
-music decides whether the block exists at all.
+which site it was opened on decides the order.
 """
 
 from django.core.cache import cache
 from django.core.management import call_command
 from django.db import connection
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
@@ -208,9 +207,7 @@ class RankMessageTests(TestCase):
 class ListenerDistributionCacheTests(TestCase):
     def setUp(self):
         cache.clear()
-        self.user = User.objects.create_user(
-            username="reader", password="pw", is_staff=True
-        )
+        self.user = User.objects.create_user(username="reader", password="pw")
         self.album = make_album(1)
         mark(self.user, self.album)
         self.second = make_album(2)
@@ -260,30 +257,25 @@ class ProfileModalTests(TestCase):
     def _page(self, site):
         return get_on_site(self.client, site, "auth-modal-profile").content.decode()
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_the_music_site_puts_music_first(self):
         page = self._page(sites.MUSIC)
         self.assertLess(page.index(MUSIC_ROW), page.index(GAMES_ROW))
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_the_games_site_puts_games_first(self):
         page = self._page(sites.GAMES)
         self.assertLess(page.index(GAMES_ROW), page.index(MUSIC_ROW))
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_both_sections_are_named_with_the_beta_badge(self):
         page = self._page(sites.GAMES)
         self.assertIn(">Games</h4>", page)
         self.assertIn("Music ", page)
         self.assertIn(">Beta<", page)
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_the_breakdown_shows_only_when_both_states_are_held(self):
         self.assertNotIn(" heard, ", self._page(sites.MUSIC))
         mark(self.reader, make_album(2), owned=True)
         self.assertIn("1 heard, 1 have", self._page(sites.MUSIC))
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_the_want_row_hides_at_zero(self):
         self.assertNotIn("want list", self._page(sites.MUSIC))
         album = make_album(2)
@@ -292,7 +284,6 @@ class ProfileModalTests(TestCase):
         )
         self.assertIn("album on your want list", self._page(sites.MUSIC))
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_a_reader_who_only_owns_albums_gets_haves_mark(self):
         self.assertIn("gold-record", self._page(sites.MUSIC))
         models.ListenedAlbum.objects.filter(user=self.reader).update(owned=True)
@@ -300,25 +291,6 @@ class ProfileModalTests(TestCase):
         self.assertIn("record-sleeve", page)
         self.assertNotIn("gold-record", page)
 
-    def test_staff_see_both_while_the_section_is_hidden(self):
-        self.reader.is_staff = True
-        self.reader.save()
-        page = self._page(sites.MUSIC)
-        self.assertIn(MUSIC_ROW, page)
-        self.assertIn(GAMES_ROW, page)
-
-    def test_a_hidden_section_leaves_todays_modal_on_every_host(self):
-        for site in (sites.GAMES, sites.MUSIC):
-            with self.subTest(site=site):
-                with CaptureQueriesContext(connection) as captured:
-                    page = self._page(site)
-                self.assertNotIn("albums", page)
-                self.assertNotIn(">Games</h4>", page)
-                self.assertIn(GAMES_ROW, page)
-                tables = " ".join(q["sql"] for q in captured.captured_queries)
-                self.assertNotIn("music_", tables)
-
-    @override_settings(MUSIC_ENABLED=True)
     def test_a_rejected_username_keeps_the_music_block(self):
         response = self.client.post(
             sites.site_reverse(sites.MUSIC, "auth-modal-profile"),

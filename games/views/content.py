@@ -3,7 +3,6 @@
 import html
 import logging
 
-from django.conf import settings
 from django.contrib.flatpages.models import FlatPage
 from django.http import HttpResponse, HttpResponseGone
 from django.shortcuts import redirect, get_object_or_404
@@ -228,17 +227,12 @@ def robots_txt(request):
     Each host has its own: it blocks aggressive/low-value crawlers, disallows
     expensive filtered query patterns that can overwhelm the server, and
     names that host's own sitemap.
-
-    The music site's rules appear only once ``MUSIC_ENABLED`` is on; until
-    then it disallows everything, since every page 404s for crawlers.
     """
     site = sites.request_site(request)
     blocked = "".join(
         f"User-agent: {agent}\nDisallow: /\n\n" for agent in ROBOTS_BLOCKED_AGENTS
     )
-    if site == sites.MUSIC and not settings.MUSIC_ENABLED:
-        rules = "Disallow: /\n"
-    elif site == sites.ROOT:
+    if site == sites.ROOT:
         rules = "Allow: /\nDisallow: /admin/\n"
     else:
         rules = (

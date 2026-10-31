@@ -14,9 +14,8 @@ import re
 import tempfile
 from pathlib import Path
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
-from core.models import User
 from core.tests.node import node_available, run_node
 from core.tests.utils import clear_all_caches
 from games.models import Game, HLTBGameData, Platform, Series, WikipediaGenre
@@ -151,7 +150,6 @@ class GamesParityTests(ParityTestCase):
         )
 
 
-@override_settings(MUSIC_ENABLED=True)
 @music_site
 class MusicParityTests(ParityTestCase):
     @classmethod
@@ -252,13 +250,6 @@ class MusicParityTests(ParityTestCase):
             album=cls.quoted_album, list=lists[0], rank=2
         )
         music.AlbumListMembership.objects.create(album=variant, list=lists[0], rank=1)
-
-    def setUp(self):
-        super().setUp()
-        staff = User.objects.create_user(
-            username="parity", password="pw", is_staff=True
-        )
-        self.client.force_login(staff)
 
     def test_the_engine_matches_the_server(self):
         payload = self.client.get("/api/all/").json()

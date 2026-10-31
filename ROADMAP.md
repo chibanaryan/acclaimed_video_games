@@ -3,21 +3,18 @@
 What is left, why it matters, and what it costs. Ordered within each group.
 `DEVLOG.md` records what has shipped; this file records what has not.
 
-## Music: launch
+## Music: after launch
 
-The section moved to `music.acclaimedmedia.org`, beside the games site and a
-landing page at the apex (2026-10-30; AGENTS.md, "Domain"). Launching it is
-`heroku config:set MUSIC_ENABLED=true`; the pages keep a "Beta" badge while
-`music.config.MUSIC_BETA` is on.
+The section is public at `music.acclaimedmedia.org`, beside the games site and
+a landing page at the apex (2026-10-30; AGENTS.md, "Domain"). The pages keep a
+"Beta" badge while `music.config.MUSIC_BETA` is on.
 
 1. **Redirects for renamed artist slugs.** Every import and Wikidata pass
    rebuilds artist slugs from the current names, and nothing redirects the
-   old ones, so once the section is public a renamed act's inbound links
-   404. Launched without them by decision; an `ArtistSlugHistory` written by
+   old ones, so a renamed act's inbound links 404. Launched without them by decision; an `ArtistSlugHistory` written by
    `rebuild_artist_slugs` and read by `ArtistDetailView` would fix it.
-2. **An anonymous page cache for music**, once it is public. Games' rankings
-   and landing pages use `AnonymousResponseCacheMixin`; music's have none.
-   It must sit after `MusicVisibleMixin` in the MRO, and every cached page
+2. **An anonymous page cache for music.** Games' rankings and landing pages
+   use `AnonymousResponseCacheMixin`; music's have none. Every cached page
    spends from the 512 MB budget, so measure before adding it.
 3. **New brand artwork.** The favicons still read "Acclaimed Video Games"
    (`games/static/games/brand/`), and a page without artwork of its own has
@@ -40,7 +37,8 @@ budget").
 
 5. `BOOKS_ENABLED` is two flags that never meet: the setting is read by
    nothing, and `games.context_processors.feature_flags` reads the raw env
-   var instead. `MUSIC_ENABLED` is the working pattern to copy.
+   var instead. Make the setting read the env var, with `env.bool`, and
+   point the context processor at it.
 
 ## Music: not worth doing as parity
 

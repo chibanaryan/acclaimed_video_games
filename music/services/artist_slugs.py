@@ -2,8 +2,8 @@
 
 Every artist's slug is rebuilt from its name - by each import, and by each
 metadata run, which is when new artists get their Wikipedia titles - so a
-renamed act's URL follows its name. Music is a staff-only beta with nothing
-linking in; once it is public, a replaced slug will want a redirect.
+renamed act's URL follows its name. Nothing redirects a replaced slug yet, by
+decision, so a renamed act's old links 404.
 
 Most names are unique and get the plain slug. Where two acts' names slugify
 alike, the English Wikipedia titles their Wikidata ids point to tell them

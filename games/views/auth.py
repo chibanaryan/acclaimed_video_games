@@ -20,7 +20,6 @@ from core.models import User
 from games import models
 from games.services import playtime
 from games.services.percentile_service import calculate_percentile
-from music.access import music_visible_to
 from music.services.listening_stats import listening_stats
 
 logger = logging.getLogger(__name__)
@@ -342,7 +341,7 @@ class EmailConfirmationView(TemplateView):
 
 
 def _profile_stats(user):
-    """The Account modal's stats, games' and, if ``user`` may see it, music's."""
+    """The Account modal's stats, games' and music's."""
     # Only count non-orphaned games
     played_count = user.played_games.filter(game__isnull=False).count()
     want_to_play_count = user.want_to_play_games.filter(game__isnull=False).count()
@@ -353,8 +352,7 @@ def _profile_stats(user):
         "backlog_playtime": playtime.backlog_hours(user, want_to_play_count),
         "total_games": models.Game.objects.count(),
         "percentile_message": calculate_percentile(played_count)["message"],
-        # None hides the block, and the section's existence with it.
-        "music_stats": listening_stats(user) if music_visible_to(user) else None,
+        "music_stats": listening_stats(user),
     }
 
 

@@ -1,11 +1,10 @@
 """Tests for the music API.
 
-Every endpoint is staff-only. These tests use the ordinary Django test client
-with a session login rather than DRF's ``force_authenticate``, because
-session authentication is exactly what the mixin exists to make work: the
-project sets ``DEFAULT_AUTHENTICATION_CLASSES`` to an empty list, so a view
-that does not name an authenticator sees a logged-in staff member as
-anonymous and 404s.
+These tests use the ordinary Django test client with a session login rather
+than DRF's ``force_authenticate``, because session authentication is exactly
+what the mixins exist to make work: the project sets
+``DEFAULT_AUTHENTICATION_CLASSES`` to an empty list, so a view that does not
+name an authenticator sees a logged-in reader as anonymous.
 """
 
 import json
@@ -23,10 +22,8 @@ from music.tests.site import setUpModule, tearDownModule  # noqa: F401
 class MusicAPITestMixin:
     def setUp(self):
         super().setUp()
-        self.staff_user = User.objects.create_user(
-            username="apistaff", password="apipass", is_staff=True
-        )
-        self.client.login(username="apistaff", password="apipass")
+        self.user = User.objects.create_user(username="apireader", password="apipass")
+        self.client.login(username="apireader", password="apipass")
 
         self.artist = models.Artist.objects.create(
             name="Radiohead", slug="radiohead", wikidata_id="Q4075"
@@ -76,17 +73,6 @@ class AlbumListAPITests(MusicAPITestMixin, TestCase):
     def test_lists_albums_in_rank_order(self):
         data = self.payload(reverse("music-api:album-list"))
         self.assertEqual([a["rank"] for a in data["results"]], [1, 2])
-
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        response = self.client.get(reverse("music-api:album-list"))
-        self.assertEqual(response.status_code, 404)
-
-    def test_non_staff_gets_404(self):
-        User.objects.create_user(username="plain", password="plainpass")
-        self.client.login(username="plain", password="plainpass")
-        response = self.client.get(reverse("music-api:album-list"))
-        self.assertEqual(response.status_code, 404)
 
     def test_search_matches_title_or_credit(self):
         data = self.payload(reverse("music-api:album-list"), q="kid")
@@ -162,23 +148,6 @@ class AlbumDetailAPITests(MusicAPITestMixin, TestCase):
         data = self.payload(reverse("music-api:album-detail", kwargs={"slug": "kid-a"}))
         self.assertIn("description", data)
 
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        response = self.client.get(
-            reverse("music-api:album-detail", kwargs={"slug": "kid-a"})
-        )
-        self.assertEqual(response.status_code, 404)
-
-    def test_a_staff_response_is_not_replayed_to_anonymous_callers(self):
-        # cache_page wraps dispatch and would be consulted before permissions
-        # run, so these endpoints must stay uncached.
-        self.payload(reverse("music-api:album-detail", kwargs={"slug": "kid-a"}))
-        self.client.logout()
-        response = self.client.get(
-            reverse("music-api:album-detail", kwargs={"slug": "kid-a"})
-        )
-        self.assertEqual(response.status_code, 404)
-
     def test_unknown_slug_is_404(self):
         response = self.client.get(
             reverse("music-api:album-detail", kwargs={"slug": "nope"})
@@ -199,11 +168,6 @@ class AlbumSearchAPITests(MusicAPITestMixin, TestCase):
     def test_no_query_returns_an_empty_list(self):
         data = self.payload(reverse("music-api:album-search"))
         self.assertEqual(data, [])
-
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        response = self.client.get(reverse("music-api:album-search"), {"q": "kid"})
-        self.assertEqual(response.status_code, 404)
 
 
 class ArtistAPITests(MusicAPITestMixin, TestCase):
@@ -237,18 +201,6 @@ class ArtistAPITests(MusicAPITestMixin, TestCase):
             reverse("music-api:artist-detail", kwargs={"slug": "nope"})
         )
         self.assertEqual(response.status_code, 404)
-
-    def test_anonymous_gets_404_on_both_endpoints(self):
-        self.client.logout()
-        self.assertEqual(
-            self.client.get(reverse("music-api:artist-list")).status_code, 404
-        )
-        self.assertEqual(
-            self.client.get(
-                reverse("music-api:artist-detail", kwargs={"slug": "radiohead"})
-            ).status_code,
-            404,
-        )
 
     def _variant(self):
         """An album credited to Radiohead under another of its names."""
@@ -350,12 +302,6 @@ class MusicListAPITests(MusicAPITestMixin, TestCase):
         by_name = {entry["name"]: entry for entry in data["results"]}
         self.assertEqual(by_name["Unattributed"]["publication"], "")
 
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(
-            self.client.get(reverse("music-api:musiclist-list")).status_code, 404
-        )
-
 
 class MusicGenreAPITests(MusicAPITestMixin, TestCase):
     def test_lists_genres_ordered_for_tree_reassembly(self):
@@ -365,12 +311,6 @@ class MusicGenreAPITests(MusicAPITestMixin, TestCase):
         self.assertIsNone(data[0]["parent_id"])
         self.assertEqual(data[1]["parent_id"], self.genre.id)
         self.assertEqual(data[1]["path"], "Rock > Art Rock")
-
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(
-            self.client.get(reverse("music-api:genre-list")).status_code, 404
-        )
 
 
 class MusicMetaAPITests(MusicAPITestMixin, TestCase):
@@ -420,10 +360,6 @@ class MusicMetaAPITests(MusicAPITestMixin, TestCase):
         labels = {entry["type"]: entry["label"] for entry in by_type}
         self.assertEqual(labels[core_constants.LIST_DECADE], "Decade")
 
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(reverse("music-api:meta")).status_code, 404)
-
 
 class AlbumAllDataAPITests(MusicAPITestMixin, TestCase):
     """The bulk payload the client-side filtering bundle runs on."""
@@ -463,7 +399,7 @@ class AlbumAllDataAPITests(MusicAPITestMixin, TestCase):
         # browser session next. The album pk is the join key instead, and the
         # page renders window.listenedAlbumIds per request.
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.kid_a, wikidata_id="Q-kid-a"
+            user=self.user, album=self.kid_a, wikidata_id="Q-kid-a"
         )
         album = self.payload(self.url())["albums"][0]
         for key in ("listened", "l", "tracked", "w", "wikidata_id"):
@@ -475,7 +411,7 @@ class AlbumAllDataAPITests(MusicAPITestMixin, TestCase):
         # better not be either, or every user would miss the cache.
         before = self.payload(self.url())["version"]
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.kid_a, wikidata_id="Q-kid-a"
+            user=self.user, album=self.kid_a, wikidata_id="Q-kid-a"
         )
         self.assertEqual(self.payload(self.url())["version"], before)
 
@@ -610,23 +546,6 @@ class AlbumAllDataAPITests(MusicAPITestMixin, TestCase):
         )
         self.assertNotEqual(self.payload(self.url())["version"], before)
 
-    def test_anonymous_gets_404(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(self.url()).status_code, 404)
-
-    def test_non_staff_gets_404(self):
-        User.objects.create_user(username="plain", password="plainpass")
-        self.client.login(username="plain", password="plainpass")
-        self.assertEqual(self.client.get(self.url()).status_code, 404)
-
-    def test_a_staff_response_is_not_replayed_to_anonymous_callers(self):
-        # The whole unreleased catalogue in one response: the reason these
-        # endpoints must never be wrapped in cache_page, which is consulted
-        # before permissions run.
-        self.payload(self.url())
-        self.client.logout()
-        self.assertEqual(self.client.get(self.url()).status_code, 404)
-
 
 class MusicUnifiedSearchViewTests(MusicAPITestMixin, TestCase):
     """The endpoint behind the sidebar and mobile search boxes.
@@ -705,10 +624,6 @@ class MusicUnifiedSearchViewTests(MusicAPITestMixin, TestCase):
                 )
                 self.assertEqual(response.status_code, 200)
                 self.assertGreaterEqual(len(response.json()["albums"]), 1)
-
-    def test_anonymous_callers_get_404(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(self.url, {"q": "kid a"}).status_code, 404)
 
     def _album(self, name, rank, credit, artist=None):
         album = models.Album.objects.create(name=name, rank=rank, artist_credit=credit)

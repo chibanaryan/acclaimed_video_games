@@ -35,12 +35,12 @@
                    class="input input-bordered input-sm w-full input-disabled bg-base-200">
         </div>
 
-        {# Stats, the current site's first. music_stats is None for anyone the section is hidden from. #}
-        {% if music_stats and site_key == 'music' %}
+        {# Stats, the current site's first. #}
+        {% if site_key == 'music' %}
         {% include 'music/includes/_profile_stats.html' %}
         {% endif %}
         {% include 'auth/partials/_profile_games_stats.html' %}
-        {% if music_stats and site_key != 'music' %}
+        {% if site_key != 'music' %}
         {% include 'music/includes/_profile_stats.html' %}
         {% endif %}
 

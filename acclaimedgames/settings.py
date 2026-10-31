@@ -56,13 +56,6 @@ DEBUG = env("DEBUG", default=False)  # Default to True for development
 # Feature flags - Books app is in development, only show in DEBUG/TEST mode
 BOOKS_ENABLED = DEBUG or TEST_MODE
 
-# The music section's public-launch switch (music/access.py). Off, the
-# section is a staff-only beta that 404s for everyone else and is linked from
-# nowhere; on, it is public, in the nav and in the sitemap. Forced off under
-# test so a local .env cannot flip the hidden-section tests; flag-on
-# behaviour is tested with override_settings(MUSIC_ENABLED=True).
-MUSIC_ENABLED = env.bool("MUSIC_ENABLED", default=False) and not TEST_MODE
-
 SECRET_KEY = env(
     "SECRET_KEY",
     default=(
@@ -287,10 +280,6 @@ AUTH_USER_MODEL = "core.User"
 LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "/accounts/login/"
 LOGOUT_REDIRECT_URL = "/"
-
-# 404s a failed CSRF check under /music/ for non-staff, so a POST cannot
-# reveal which paths of the staff-only section resolve.
-CSRF_FAILURE_VIEW = "core.views.csrf_failure"
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = [

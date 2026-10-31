@@ -1,6 +1,6 @@
 {# The top of the sidebar: the shared name, the site you are on, and a menu of the others. Each site is its own host, so the menu's links are absolute ({% site_url %}). #}
 {# A <details>, not an Alpine component: it works before Alpine loads and costs nothing at init. It opens in place, pushing the nav down, rather than as an overlay. base.html closes it on an outside click or Escape. #}
-{# The current site is aria-current="true", not "page": it is the site, not the page. Music appears once it is public (MUSIC_ENABLED), Books under its own flag; both carry their state with them, so a link into music is always marked beta. #}
+{# The current site is aria-current="true", not "page": it is the site, not the page. Books appears under its own flag. A link into music carries the beta badge while MUSIC_BETA is on. #}
 {% load core_filters %}
 <details class="site-menu w-full mb-3 group">
     <summary class="flex items-center justify-between gap-1 cursor-pointer list-none rounded-lg px-1 py-1 hover:bg-base-300 [&::-webkit-details-marker]:hidden" aria-label="Acclaimed Media: switch site">
@@ -25,7 +25,6 @@
                 Games
             </a>
         </li>
-        {% if MUSIC_ENABLED %}
         <li>
             <a href="{% site_url 'music' 'music:home' %}"{% if media_type == 'music' %} class="active" aria-current="true"{% endif %}>
                 <span class="mdi mdi-album" aria-hidden="true"></span>
@@ -33,7 +32,6 @@
                 {% include 'music/includes/_beta_badge.html' with size='badge-xs' %}
             </a>
         </li>
-        {% endif %}
         {% if BOOKS_ENABLED %}
         <li>
             <a href="{% site_url 'games' 'books:home' %}"{% if media_type == 'books' %} class="active" aria-current="true"{% endif %}>

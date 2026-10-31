@@ -25,8 +25,7 @@ class StaticViewSitemap(Sitemap):
     def items(self):
         # Book pages are staff-only (they 404 for anonymous visitors and
         # crawlers), so they stay out of the sitemap until books launches.
-        # Music has its own sections in music/sitemaps.py, empty until
-        # MUSIC_ENABLED is on
+        # Music has its own sections in music/sitemaps.py
         return [
             "home",
             "developers-list",

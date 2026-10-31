@@ -24,7 +24,7 @@ from music.services import caching, import_handler
 from django.core.cache import cache
 from django.urls import reverse
 from games.models import SiteMetadata
-from music.tests.test_views import StaffUserTestMixin
+from music.tests.test_views import ClearsCachesMixin
 from music.tests.site import setUpModule, tearDownModule  # noqa: F401
 
 FIXTURE_DIR = Path(settings.BASE_DIR) / "acclaimedgames" / "test_input_files" / "music"
@@ -1180,7 +1180,7 @@ def _read_fixture_rows(filename):
         return [line.rstrip("\r\n").split("\t") for line in handle if line.strip()]
 
 
-class ImportInvalidatesCachesTests(StaffUserTestMixin, TestCase):
+class ImportInvalidatesCachesTests(ClearsCachesMixin, TestCase):
     """An import has to drop the counts it just made wrong.
 
     Only the import *page* used to invalidate, so a command-line import left

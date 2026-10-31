@@ -1,6 +1,6 @@
-"""The music sitemap sections, which stay empty until the section is public."""
+"""The music sitemap sections."""
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from core.tests.utils import clear_all_caches
 from music import models, sitemaps
@@ -17,12 +17,6 @@ class MusicSitemapTests(TestCase):
         )
         self.album.artists.set([self.artist])
 
-    def test_every_section_is_empty_while_the_section_is_hidden(self):
-        for name, section in sitemaps.music_sitemaps.items():
-            with self.subTest(section=name):
-                self.assertEqual(list(section().items()), [])
-
-    @override_settings(MUSIC_ENABLED=True)
     def test_the_sections_list_the_public_pages(self):
         static = sitemaps.MusicStaticSitemap()
         self.assertEqual(
@@ -34,7 +28,6 @@ class MusicSitemapTests(TestCase):
         self.assertEqual(albums.lastmod(self.album), self.album.modified)
         self.assertEqual(list(sitemaps.ArtistSitemap().items()), [self.artist])
 
-    @override_settings(MUSIC_ENABLED=True)
     def test_the_landing_section_follows_the_landing_service(self):
         rock = models.MusicGenre.objects.create(name="Rock")
         for index in range(10):
@@ -47,8 +40,3 @@ class MusicSitemapTests(TestCase):
             [landing.location(item) for item in landing.items()],
             ["/genres/rock/", "/1970s/"],
         )
-
-    def test_the_base_section_names_no_items(self):
-        with self.settings(MUSIC_ENABLED=True):
-            with self.assertRaises(NotImplementedError):
-                sitemaps.MusicSitemap().items()

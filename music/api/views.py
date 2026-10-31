@@ -1,12 +1,11 @@
 """
 Music API views.
 
-Behind ``music.access.MusicAPIGateMixin`` - public once ``MUSIC_ENABLED``
-is on, a staff-only 404 until then - and almost all read-only. ``all/`` is
-the bulk endpoint feeding the client-side filtering bundle; there is
-deliberately no ``version/`` endpoint beside it, because the album rankings
-page renders the same data version into the page itself, so the client can
-tell a stale copy from a current one without a second request.
+Public and almost all read-only. ``all/`` is the bulk endpoint feeding the
+client-side filtering bundle; there is deliberately no ``version/`` endpoint
+beside it, because the album rankings page renders the same data version into
+the page itself, so the client can tell a stale copy from a current one
+without a second request.
 
 ``saved-filters/`` is the exception and the only endpoint here that writes.
 It is why there are two mixins below rather than one: CSRF enforcement
@@ -18,6 +17,7 @@ from django.db.models import Count, Max, Min, Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView, Response
@@ -29,7 +29,6 @@ from core.services import search_ranking
 from core.services.query_params import parse_limit
 
 from .. import config, models
-from ..access import MusicAPIGateMixin
 from ..services.credits import (
     album_ids_by_artist,
     artist_summary,
@@ -42,22 +41,23 @@ from ..services.data_version import compute_album_data_version
 from . import serializers
 
 
-class MusicReadAPIMixin(MusicAPIGateMixin):
-    """The section's gate, and nothing more, for the read-only endpoints.
+class MusicReadAPIMixin:
+    """The read-only endpoints, as public as games' API.
 
-    ``MusicAPIGateMixin`` names ``SessionAuthentication`` - without it a DRF
-    view sees every request as anonymous, since
-    ``DEFAULT_AUTHENTICATION_CLASSES`` is empty project-wide - and 404s
-    anyone the section is hidden from. Past that gate a read needs no
-    permission, so once ``MUSIC_ENABLED`` is on these are as public as
-    games' API. The saved-filter views use :class:`MusicWriteAPIMixin`.
+    A read needs no permission and never looks at ``request.user``.
+    ``SessionAuthentication`` is here for the throttle:
+    ``DEFAULT_AUTHENTICATION_CLASSES`` is empty project-wide, so without it
+    a DRF view sees every request as anonymous, and ``AnonRateThrottle``'s
+    60/minute would apply to signed-in readers too. The saved-filter views
+    use :class:`MusicWriteAPIMixin`, which inherits it and cannot see a
+    login without it.
     """
 
-    permission_classes = []
+    authentication_classes = [SessionAuthentication]
 
 
-class MusicWriteAPIMixin(MusicAPIGateMixin):
-    """The same gate, for the endpoints that write, plus a login.
+class MusicWriteAPIMixin(MusicReadAPIMixin):
+    """The endpoints that write, which want a login.
 
     Separate from :class:`MusicReadAPIMixin` in name on purpose:
     ``SessionAuthentication`` enforces CSRF on unsafe methods, so every
@@ -65,29 +65,23 @@ class MusicWriteAPIMixin(MusicAPIGateMixin):
     reader can tell which endpoints that applies to without reading the
     methods.
 
-    Note the status codes this yields. While the section is hidden an
-    outsider gets 404 from the gate, because it has to look absent rather
-    than merely forbidden. Once it is public a signed-out caller gets
-    ``IsAuthenticated``'s 403, as games' saved filters answer.
+    A signed-out caller gets ``IsAuthenticated``'s 403, as games' saved
+    filters answer.
     """
 
     permission_classes = [IsAuthenticated]
 
 
-# Note on caching: these endpoints are deliberately uncached. `cache_page`
-# wraps `dispatch`, so it is consulted *before* the gate runs - a response
-# generated for a staff member is then replayed to anonymous callers, which
-# defeats the hidden section entirely, and one cached while `MUSIC_ENABLED`
-# was on would go on being served after it was turned off. The dataset is
-# 1000 albums, so there is nothing here worth that risk. Any future caching
-# must vary on the user and on the flag.
+# Note on caching: these endpoints are uncached, and nothing has measured
+# whether they should be. `all/` is the one to look at first: games caches its
+# equivalent for an hour.
 
 
 class AlbumAllDataView(MusicReadAPIMixin, APIView):
     """
     Every album in one payload, for client-side filtering.
 
-    The whole corpus is 500 albums, which is about 100 KB of JSON and 38 KB
+    The whole corpus is 1000 albums, which is about 270 KB of JSON and 95 KB
     over the wire, so the client fetches it once and filters in the browser
     instead of making an HTMX round trip per filter change. Field names are
     single letters for the same reason they are in the games and books
@@ -580,8 +574,7 @@ class SavedAlbumFilterSetDetailView(MusicWriteAPIMixin, APIView):
     """Rename or delete one saved album filter.
 
     Both methods go through an owner-scoped lookup, so another reader's id
-    is a 404 rather than a 403 - the same answer the whole section gives an
-    outsider.
+    is a 404 rather than a 403.
     """
 
     def get_object(self, pk, user):

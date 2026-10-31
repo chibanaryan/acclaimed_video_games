@@ -2,7 +2,7 @@
  * Acclaimed Albums - Client-Side Filtering Integration
  *
  * Takes over the album rankings page's filter form once the whole corpus is
- * in the browser: ~500 albums, about 38 KB gzipped, so filtering a 100-row
+ * in the browser: 1000 albums, about 95 KB gzipped, so filtering a 100-row
  * page costs nothing locally where every change was an HTMX round trip.
  *
  * Progressive enhancement, deliberately. The page is server-rendered and its
@@ -128,9 +128,9 @@ class AlbumClientSideFiltering {
      * Load the bulk payload: this session's copy if it matches the version
      * the page was rendered with, otherwise the network.
      *
-     * sessionStorage rather than IndexedDB or localStorage: the rankings are
-     * staff-only, unreleased editorial data, and a tab-scoped copy is the
-     * shortest lifetime that still avoids refetching on every navigation.
+     * sessionStorage rather than IndexedDB or localStorage: a tab-scoped copy
+     * is the shortest lifetime that still avoids refetching on every
+     * navigation.
      * @private
      */
     async _loadData() {

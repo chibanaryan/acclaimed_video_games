@@ -473,8 +473,7 @@ class Album(MediaItemBase):
         """``image`` as an absolute URL, for Open Graph and JSON-LD.
 
         A stored cover is a path on this site, which scrapers and search
-        engines cannot fetch on its own. The cover route is gated with the
-        rest of the section, so it is reachable whenever the page is.
+        engines cannot fetch on its own.
         """
         image = self.image
         if image and image.startswith("/"):

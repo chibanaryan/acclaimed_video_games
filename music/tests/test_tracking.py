@@ -30,10 +30,8 @@ class ToggleListenedAlbumViewTests(TestCase):
 
     def setUp(self):
         cache.clear()
-        self.user = User.objects.create_user(
-            username="staffer", password="pw", is_staff=True
-        )
-        self.client.login(username="staffer", password="pw")
+        self.user = User.objects.create_user(username="reader", password="pw")
+        self.client.login(username="reader", password="pw")
         self.album = models.Album.objects.create(
             name="Doolittle", rank=1, slug="doolittle", wikidata_id="Q123"
         )
@@ -234,7 +232,7 @@ class ToggleListenedAlbumViewTests(TestCase):
         self.assertIsNotNone(cache.get(key))
 
     def test_one_users_toggle_does_not_touch_another(self):
-        other = User.objects.create_user(username="other", password="pw", is_staff=True)
+        other = User.objects.create_user(username="other", password="pw")
         self._post("listened")
         self.assertFalse(models.ListenedAlbum.objects.filter(user=other).exists())
 
@@ -326,37 +324,9 @@ class ToggleListenedAlbumViewTests(TestCase):
         row = models.ListenedAlbum.objects.create(
             user=self.user, album=self.album, wikidata_id="Q123", owned=True
         )
-        self.assertEqual(str(row), "staffer has Doolittle")
+        self.assertEqual(str(row), "reader has Doolittle")
         row.owned = False
-        self.assertEqual(str(row), "staffer listened to Doolittle")
-
-
-class ToggleListenedAccessTests(TestCase):
-    """The section is hidden, so the toggle is too."""
-
-    def setUp(self):
-        self.album = models.Album.objects.create(
-            name="Doolittle", rank=1, slug="doolittle", wikidata_id="Q123"
-        )
-        self.url = reverse("music:toggle-listened", args=[self.album.pk])
-
-    def test_an_anonymous_user_gets_404_not_a_login_redirect(self):
-        # StaffOnlyMixin runs first on purpose: a redirect would advertise
-        # that the URL exists.
-        response = self.client.post(f"{self.url}?status=listened")
-        self.assertEqual(response.status_code, 404)
-
-    def test_a_signed_in_non_staff_user_gets_404(self):
-        User.objects.create_user(username="plain", password="pw")
-        self.client.login(username="plain", password="pw")
-        response = self.client.post(f"{self.url}?status=listened")
-        self.assertEqual(response.status_code, 404)
-
-    def test_no_row_is_written_for_someone_who_cannot_see_the_section(self):
-        User.objects.create_user(username="plain", password="pw")
-        self.client.login(username="plain", password="pw")
-        self.client.post(f"{self.url}?status=listened")
-        self.assertEqual(models.ListenedAlbum.objects.count(), 0)
+        self.assertEqual(str(row), "reader listened to Doolittle")
 
 
 class FilterSuppressorSourceTests(SimpleTestCase):

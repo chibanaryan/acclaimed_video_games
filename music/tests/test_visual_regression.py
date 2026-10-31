@@ -152,10 +152,8 @@ class ServerRenderedRowTests(TestCase):
     """The same row with an album in it."""
 
     def setUp(self):
-        self.staff_user = User.objects.create_user(
-            username="rowstaff", password="rowpass", is_staff=True
-        )
-        self.client.login(username="rowstaff", password="rowpass")
+        self.user = User.objects.create_user(username="rowreader", password="rowpass")
+        self.client.login(username="rowreader", password="rowpass")
 
         self.artist = models.Artist.objects.create(name="Pixies", slug="pixies")
         self.genre = models.MusicGenre.objects.create(name="Alternative Rock")
@@ -314,10 +312,8 @@ class RankedPageGridTests(TestCase):
     """The rankings page renders both views, as the games page does."""
 
     def setUp(self):
-        self.staff_user = User.objects.create_user(
-            username="gridstaff", password="gridpass", is_staff=True
-        )
-        self.client.login(username="gridstaff", password="gridpass")
+        self.user = User.objects.create_user(username="gridreader", password="gridpass")
+        self.client.login(username="gridreader", password="gridpass")
         self.album = models.Album.objects.create(
             name="Doolittle",
             rank=1,

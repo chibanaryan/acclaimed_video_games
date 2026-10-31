@@ -9,7 +9,7 @@ to scale by, and the grid caps the opacity.
 """
 
 from django.core.cache import cache
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from core.tests.node import node_available, run_node
@@ -45,7 +45,6 @@ class YearGridScaleTests(SimpleTestCase):
         self.assertEqual(self.output["opacityAboveScale"], "100%")
 
 
-@override_settings(MUSIC_ENABLED=True)
 @music_site
 class AlbumYearBaselineTests(MusicDataMixin, TestCase):
     def baseline(self, **params):

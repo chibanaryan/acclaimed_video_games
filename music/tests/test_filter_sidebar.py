@@ -293,10 +293,6 @@ class AlbumDownloadTests(MusicDataMixin, TestCase):
             response["Content-Disposition"],
         )
 
-    def test_anonymous_callers_get_404(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(reverse("music:download")).status_code, 404)
-
 
 class ListenStatusFilterTests(MusicDataMixin, TestCase):
     """The listen-status dimension of `apply_album_filters`."""
@@ -304,16 +300,16 @@ class ListenStatusFilterTests(MusicDataMixin, TestCase):
     def setUp(self):
         super().setUp()
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.revolver, wikidata_id="Q-revolver"
+            user=self.user, album=self.revolver, wikidata_id="Q-revolver"
         )
         models.WantToListenAlbum.objects.create(
-            user=self.staff_user, album=self.rust, wikidata_id="Q-rust"
+            user=self.user, album=self.rust, wikidata_id="Q-rust"
         )
         # Kid A is tracked by neither.
 
     def _names(self, params, **kwargs):
-        base = models.Album.objects.with_listen_status(self.staff_user)
-        kwargs.setdefault("user", self.staff_user)
+        base = models.Album.objects.with_listen_status(self.user)
+        kwargs.setdefault("user", self.user)
         return sorted(
             views.apply_album_filters(base, params, **kwargs).values_list(
                 "name", flat=True
@@ -402,10 +398,10 @@ class ListenStatusFacetTests(MusicDataMixin, TestCase):
     def setUp(self):
         super().setUp()
         models.ListenedAlbum.objects.create(
-            user=self.staff_user, album=self.revolver, wikidata_id="Q-revolver"
+            user=self.user, album=self.revolver, wikidata_id="Q-revolver"
         )
         models.WantToListenAlbum.objects.create(
-            user=self.staff_user, album=self.rust, wikidata_id="Q-rust"
+            user=self.user, album=self.rust, wikidata_id="Q-rust"
         )
 
     def test_the_year_counts_respect_the_status_filter(self):

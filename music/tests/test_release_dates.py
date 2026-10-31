@@ -26,7 +26,7 @@ from music.services.release_dates import (
     refresh_release_dates,
 )
 from music.templatetags.music_filters import release_date_label
-from music.tests.test_views import StaffUserTestMixin
+from music.tests.test_views import ClearsCachesMixin
 from music.tests.site import setUpModule, tearDownModule  # noqa: F401
 
 COMMAND = "music.management.commands.fetch_album_metadata"
@@ -169,7 +169,7 @@ class RefreshReleaseDatesTests(TestCase):
         self.assertIsNone(album.release_date)
 
 
-class YearSortTests(StaffUserTestMixin, TestCase):
+class YearSortTests(ClearsCachesMixin, TestCase):
     """Year, then release date within it, then rank - in both directions."""
 
     def setUp(self):
@@ -312,7 +312,7 @@ class ReleaseDateLabelTests(SimpleTestCase):
         self.assertEqual(self._label(date(1965, 12, 3), "day"), 1966)
 
 
-class ArtistPageShowsReleaseDatesTests(StaffUserTestMixin, TestCase):
+class ArtistPageShowsReleaseDatesTests(ClearsCachesMixin, TestCase):
     def test_rows_carry_the_full_date_where_known(self):
         artist = models.Artist.objects.create(name="The Band", slug="band")
         for name, rank, released, precision in (
